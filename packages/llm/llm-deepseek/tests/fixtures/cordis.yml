@@ -1,0 +1,25 @@
+- name: '@ocean/ocean-llm'
+- name: '@ocean/ocean-session'
+- name: '@ocean/ocean-session-projection'
+- name: '@ocean/ocean-system-prompt'
+- name: '@ocean/ocean-tools'
+- name: '@ocean/ocean-tool-executor-native'
+- name: '@ocean/ocean-agent'
+- name: '@ocean/ocean-agent-loop'
+  config:
+    agents: []
+- name: '@ocean/ocean-credentials-local'
+  config:
+    path: {{credentials}}
+    watch: false
+- name: '@ocean/ocean-llm-deepseek-api-key'
+  config:
+    apiKeyEnv: DEEPSEEK_API_KEY
+    baseURL: {{endpoint}}
+    thinking: enabled
+    reasoningEffort: high
+    maxTokens: 256000
+    streamIdleTimeoutMs: 300000
+- name: '@ocean/ocean-llm-deepseek-account'
+  config:
+    baseURL: {{endpoint}}

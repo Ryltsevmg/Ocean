@@ -1,0 +1,67 @@
+{
+  "name": "@ocean/ocean-client-ui-file-drag",
+  "description": "Application-owned file drag transfers and localized failure feedback",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-file-drag"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-client-ui-layout"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "react": "^18.2.0",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-util-file-drag": "workspace:*",
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for architecture.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/architecture.md
+/ocean-architecture:
+  en: e30e1600312ec51c
+  zh: 24c5ce8150c05906
+/ocean-architecture/cordis:
+  en: 7d13efd20d263a34
+  zh: cd540f701eb6256f
+/ocean-architecture/profiles-and-bundles:
+  en: 187058e8111cb706
+  zh: c26a742ebef6b502
+/ocean-architecture/application-launch:
+  en: 334b4f390b6e376b
+  zh: ce094f24c6162be3
+/ocean-architecture/desktop-application:
+  en: b9eeb18645121a8b
+  zh: 70d87a12c43e042a
+/ocean-architecture/core-packages:
+  en: 20ef882e44b06a10
+  zh: c10c3934ed5570e9
+/ocean-architecture/events:
+  en: ce17fde85eb384e1
+  zh: ba8a7a9c6900458b
+/ocean-architecture/turn-flow:
+  en: 1d496f1893bdbb8d
+  zh: f16d162a803fc791
+/ocean-architecture/session-log:
+  en: e452f43f7869ac28
+  zh: cc6427c77bad380f
+/ocean-architecture/capability-seams:
+  en: 86e345bd1ee35800
+  zh: 02afd9c468063f64
+/ocean-architecture/where-new-behavior-goes:
+  en: ee73b1861378b099
+  zh: 9a182be609485f67

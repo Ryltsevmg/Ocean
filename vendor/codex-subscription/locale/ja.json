@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Ocean Codex",
+    "description": "Ocean Codex はログイン、モデル、利用枠に対応します。このビルドでは検索、画像、音声、リモート操作、コネクター、ランタイムのインストールは利用できません。OpenAI のサブスクリプションサービスを利用する非公式の連携です。",
+    "detail": "docs/plugin/DETAIL.ja.md"
+  }
+}

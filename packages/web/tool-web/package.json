@@ -1,0 +1,68 @@
+{
+  "name": "@ocean/ocean-tool-web",
+  "description": "Model-facing web tools (web_search, web_fetch) over the Ocean web capability seam (ctx.web)",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/web/tool-web"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-web": "workspace:*"
+  },
+  "dependencies": {
+    "@ocean/ocean-output-retention": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@joplin/turndown-plugin-gfm": "^1.0.67",
+    "turndown": "^7.2.4"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-spill-local": "workspace:*",
+    "@ocean/ocean-spill-policy": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-tool-call-timeout-policy": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-web": "workspace:*",
+    "@ocean/ocean-web-deepseek-api": "workspace:*",
+    "@ocean/ocean-web-fetch-http": "workspace:*",
+    "@types/turndown": "^5.0.6",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-launch-environment": "workspace:*"
+  }
+}

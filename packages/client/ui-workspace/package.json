@@ -1,0 +1,98 @@
+{
+  "name": "@ocean/ocean-client-ui-workspace",
+  "description": "Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-workspace"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remote-access",
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-api-session-controller",
+        "@ocean/ocean-api-workspace-controller",
+        "@ocean/ocean-client-connection",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-shortcuts",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-layout",
+        "@ocean/ocean-client-ui-renderer",
+        "@ocean/ocean-client-ui-session",
+        "@ocean/ocean-client-ui-sidebar",
+        "@ocean/ocean-client-ui-context-menu"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-api-remote-access": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-preset-registry": "workspace:*",
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-api-workspace-controller": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-session": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-jobs": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-util-workspace-path": "workspace:*",
+    "clsx": "^2.0.0",
+    "react": "^18.2.0",
+    "@ocean/ocean-client-shortcuts": "workspace:*",
+    "@ocean/ocean-client-product-analytics": "workspace:*",
+    "@ocean/ocean-client-ui-context-menu": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

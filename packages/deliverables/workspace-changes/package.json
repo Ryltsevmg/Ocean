@@ -1,0 +1,73 @@
+{
+  "name": "@ocean/ocean-workspace-changes",
+  "description": "Per-turn workspace file changes recorded from git working-tree snapshots and whole-file captures, with per-file comparisons, for the Ocean",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/deliverables/workspace-changes"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "license": "MIT",
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
+    "diff": "^9.0.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-fs": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tool-str-replace-editor": "workspace:*",
+    "@ocean/ocean-fs-observation-policy": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@ocean/ocean-experimental-tool-subagent-oar",
+  "description": "Delegate standalone tasks to configured external subagent providers",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/tool-subagent-oar"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*"
+  }
+}

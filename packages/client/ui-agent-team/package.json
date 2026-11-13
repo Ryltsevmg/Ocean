@@ -1,0 +1,83 @@
+{
+  "name": "@ocean/ocean-client-ui-agent-team",
+  "description": "Web shared task board for a subagent tree",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-agent-team"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-session-controller",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-chat",
+        "@ocean/ocean-client-ui-layout",
+        "@ocean/ocean-client-ui-primitives"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-chat": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-agent-team": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@testing-library/react": "^16.3.3",
+    "@deepseek-ai/cordis": "workspace:~",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@ocean/ocean-client-ui-model-selection": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-ui-subagent": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

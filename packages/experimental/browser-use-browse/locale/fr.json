@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Contrôle du navigateur (browse)",
+    "description": "Contrôle facultatif des onglets de l’agent dans votre Chrome associé. Activer ce paquet ne connecte pas le navigateur ; une configuration séparée est nécessaire.",
+    "detail": "docs/DETAIL.md"
+  }
+}

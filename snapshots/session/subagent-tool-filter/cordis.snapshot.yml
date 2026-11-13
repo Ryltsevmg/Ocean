@@ -1,0 +1,87 @@
+# Replay patch shared by the ordinary headless snapshot composition. The model
+# script comes from the scenario's committed session JSONL.
+
+- id: llm-deepseek
+  name: '@ocean/ocean-llm-deepseek-api-key'
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
+  disabled: true
+
+- id: session-title-llm
+  disabled: true
+
+- id: session-persistence-jsonl
+  name: '@ocean/ocean-session-persistence-jsonl'
+  config:
+    root: !!js dshHomePath('sessions')
+    compression: none
+
+- id: sandbox
+  name: '@ocean/ocean-sandbox-local'
+  config:
+    runnerCommand:
+      - bash
+      - -c
+      - while [ "$1" != "--" ]; do shift; done; shift; exec "$@"
+      - passthrough-runner
+    runnerFailureSignatures:
+      - 'passthrough-runner: profile rejected'
+
+- insert:
+    - id: llm-replay
+      name: '@ocean/ocean-llm-replay'
+      config:
+        providers:
+          - id: deepseek-official
+            name: DeepSeek
+            models:
+              - id: deepseek-v4-flash
+              - id: deepseek-v4-pro
+
+# The parent owns its file and web tools; the child selects a separate preset.
+- id: tool-fs
+  disabled: true
+
+- id: tool-fs-search
+  disabled: true
+
+- id: tool-web
+  disabled: true
+
+- insert:
+    - id: agent-preset-registry
+      name: '@ocean/ocean-agent-preset-registry'
+      config:
+        default: parent
+    - id: preset-parent
+      name: '@ocean/ocean-agent-preset'
+      config:
+        id: parent
+        plugins:
+          - name: '@ocean/ocean-tool-fs'
+            config:
+              applyPatch: true
+          - name: '@ocean/ocean-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - name: '@ocean/ocean-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+    - id: preset-child
+      name: '@ocean/ocean-agent-preset'
+      config:
+        id: child
+        plugins: []
+    - id: parent-agent-preset
+      name: '../../../packages/test-support/session-snapshot/tests/fixtures/parent-agent-preset.ts'
+
+- id: tool-subagent
+  name: '@ocean/ocean-tool-subagent'
+  inject: [agentPresets]
+  config:
+    provider: spawn
+    toolName: subagent
+    maxDepth: 1
+    agentPreset: child

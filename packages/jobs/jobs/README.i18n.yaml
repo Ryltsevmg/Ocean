@@ -1,0 +1,61 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/jobs/jobs/README.md
+/:
+  en: 4055a3bc920e4ac2
+  zh: 3bc99f3b5bc2fd71
+/ocean-ocean-jobs:
+  en: fc4bd8d5672ff22a
+  zh: ff0de61855f3d97a
+/ocean-ocean-jobs/summary:
+  en: eea29995f4b49a6d
+  zh: acdded5ddee3a974
+/ocean-ocean-jobs/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-jobs/use-this-package:
+  en: 1246c880d1c61927
+  zh: 157c703fd2da6b9c
+/ocean-ocean-jobs/use-this-package/what-a-background-job-gives-you:
+  en: 3df0e02f9928afb2
+  zh: 63cae8da533ec266
+/ocean-ocean-jobs/use-this-package/the-ownership-boundary:
+  en: 167ab1eab8fad704
+  zh: 7da554826fb483c1
+/ocean-ocean-jobs/use-this-package/starting-background-work-needs-a-controller:
+  en: 68075d00cde8763d
+  zh: 4bc42c01d9e4dc8d
+/ocean-ocean-jobs/use-this-package/smallest-working-composition:
+  en: cce846c7e3b0c33e
+  zh: 17f353d970b4216d
+/ocean-ocean-jobs/use-this-package/what-can-go-wrong:
+  en: 11a642faa1856789
+  zh: ffdc16cd7214cff7
+/ocean-ocean-jobs/understand-the-implementation:
+  en: 7e13d669ecc96d59
+  zh: b5fe7ae65812d926
+/ocean-ocean-jobs/understand-the-implementation/design-philosophy:
+  en: 2a42e1e06dfc469e
+  zh: 5c2c77eca52846f0
+/ocean-ocean-jobs/understand-the-implementation/source-map:
+  en: 474dd94bf936e0e1
+  zh: bec0e9768a2d5d50
+/ocean-ocean-jobs/understand-the-implementation/service-operations:
+  en: b2e4ef34ccf1e749
+  zh: 128b57b57ed09316
+/ocean-ocean-jobs/further-exploration:
+  en: 4fc9212b452eb99b
+  zh: e2982ff18c4ff2c5
+/ocean-ocean-jobs/model-experience:
+  en: efb58cac0fc08163
+  zh: 838791f77fd79917
+/ocean-ocean-jobs/model-experience/kv-cache-effect:
+  en: e290ccc9b3c92c08
+  zh: d75d48f485447a74
+/ocean-ocean-jobs/known-limitations-and-deferred-work:
+  en: bf4e5e0bd25d579e
+  zh: ed995c02012f0c72
+/ocean-ocean-jobs/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

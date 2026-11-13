@@ -1,0 +1,43 @@
+.recovery {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.recovery p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 40vh;
+  overflow: auto;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.choice {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.choice input {
+  flex: none;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}

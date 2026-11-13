@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Linux Computer Use provider",
+    "description": "Experimental AT-SPI accessibility access and semantic actions in individually authorized Linux applications. Does not provide full-desktop control or global keyboard and mouse input."
+  }
+}

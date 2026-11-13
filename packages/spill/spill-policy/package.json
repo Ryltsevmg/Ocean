@@ -1,0 +1,82 @@
+{
+  "name": "@ocean/ocean-spill-policy",
+  "description": "Token-budgeted tool-result retention with recoverable text and image paths",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/spill/spill-policy"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./notice": {
+      "types": "./lib/types/notice.d.ts",
+      "default": "./lib/types/notice.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-output-retention": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-spill": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-ptc-runtime-node": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-output-retention": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-spill": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-mcp-client": "workspace:*",
+    "@ocean/ocean-spill-local": "workspace:*",
+    "@ocean/ocean-llm-deepseek": "workspace:*",
+    "@ocean/ocean-ptc-runtime": "workspace:*",
+    "@ocean/ocean-attachment-local": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-executor-ptc": "workspace:*",
+    "@ocean/ocean-tool-fs": "workspace:*",
+    "sharp": "0.35.5",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*"
+  }
+}

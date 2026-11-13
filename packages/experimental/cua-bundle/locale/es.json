@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Uso de la computadora",
+    "description": "Controla aplicaciones autorizadas en macOS, Windows y Linux. Linux admite controles AT-SPI, pero no capturas de pantalla ni entrada global de ratón o teclado. Requiere configuración.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -1,0 +1,10 @@
+- insert:
+    - id: experimental-inspector
+      name: '@ocean/ocean-experimental-inspector'
+      disabled: false
+      config:
+        captureFetch: true
+    - id: session-inspector
+      name: '@ocean/ocean-experimental-session-inspector'
+    - id: client-ui-stats
+      name: '@ocean/ocean-experimental-client-ui-stats'

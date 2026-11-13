@@ -1,0 +1,3 @@
+- insert:
+    - id: auto-review
+      name: '@ocean/ocean-experimental-auto-review'

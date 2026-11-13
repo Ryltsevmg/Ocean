@@ -1,0 +1,9 @@
+.panel { display: grid; gap: 12px; min-width: 0; font-size: 13px; }
+.panel h3, .panel h4, .panel p { margin: 0; }
+.panel p { color: var(--dsw-alias-label-secondary); line-height: 1.6; }
+.fields, .confirmation { display: grid; gap: 16px; padding: 16px; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: var(--dsw-radius-md); min-width: 0; }
+.fields label { display: grid; gap: 6px; }
+.fields input[type=text], .fields textarea { box-sizing: border-box; width: 100%; padding: 8px; color: var(--dsw-alias-label-primary); background: transparent; border: 0.5px solid var(--dsw-alias-border-l3); border-radius: var(--dsw-radius-sm); font: inherit; }
+.fields input:focus-visible, .fields textarea:focus-visible { outline: 2px solid var(--dsw-alias-border-focus); outline-offset: 2px; }
+.fields .toggle { display: flex; align-items: center; gap: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }

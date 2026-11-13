@@ -1,0 +1,4 @@
+# Built-in Ocean sign-in, model selection and quota; advanced integrations are blocked by host policy.
+- insert:
+    - id: codex-subscription
+      name: '@ocean/ocean-codex-subscription'

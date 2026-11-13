@@ -1,0 +1,58 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/boot/plugin-manager/README.md
+/:
+  en: 65283627208ef4c9
+  zh: aa3f833ec24bb65a
+/ocean-ocean-plugin-manager:
+  en: 812ae2b22ca037c8
+  zh: 0262a244aa8d5b02
+/ocean-ocean-plugin-manager/summary:
+  en: d6afcaa1594efcdb
+  zh: 459cb6ac0dcb2d46
+/ocean-ocean-plugin-manager/table-of-contents:
+  en: 87679c51aa3693f5
+  zh: 11684a48a5806afb
+/ocean-ocean-plugin-manager/use-this-package:
+  en: 332253a5cc97db8e
+  zh: 1e6cfd7e9fbc6e6d
+/ocean-ocean-plugin-manager/use-this-package/version-compatibility-and-exemptions:
+  en: 483285658e267dd5
+  zh: 846bec2daac59a96
+/ocean-ocean-plugin-manager/use-this-package/configuration:
+  en: ccec56c785b3ca28
+  zh: b945f933888fc7cb
+/ocean-ocean-plugin-manager/use-this-package/bundle-detail-documents:
+  en: 99b084ff497011d2
+  zh: 6c047796c1991784
+/ocean-ocean-plugin-manager/understand-the-implementation:
+  en: 482d2d785d294a1f
+  zh: 0740fc6e0d0c88cc
+/ocean-ocean-plugin-manager/further-exploration:
+  en: c6538243d8702a0d
+  zh: 04a82d923353c75f
+/ocean-ocean-plugin-manager/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-plugin-manager/model-experience/management-tool:
+  en: 1815ec6ce56c80d4
+  zh: 2d7ac75d3b25eb6b
+/ocean-ocean-plugin-manager/model-experience/management-tool/what-the-model-sees:
+  en: 4dcb79ab61543939
+  zh: 593eeb7a9c5ebea2
+/ocean-ocean-plugin-manager/model-experience/management-tool/token-effect:
+  en: bc70208bd361dbcd
+  zh: bb651d6066066c6c
+/ocean-ocean-plugin-manager/model-experience/management-tool/kv-cache-effect:
+  en: c29f60be7f3edc1a
+  zh: d9b9388b96ef95cc
+/ocean-ocean-plugin-manager/known-limitations-and-deferred-work:
+  en: 89306b478cb75b3b
+  zh: f2f50c88114fec99
+/ocean-ocean-plugin-manager/known-limitations-and-deferred-work/failure-behavior:
+  en: 3fde425e82bbd0f4
+  zh: 531e2365e7d67480
+/ocean-ocean-plugin-manager/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

@@ -1,0 +1,73 @@
+{
+  "name": "@ocean/ocean-client-shortcuts",
+  "description": "Application keyboard command registry and physical-key routing",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/shortcuts"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./protocol": {
+      "types": "./lib/types/protocol.d.ts",
+      "default": "./lib/protocol.js"
+    },
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-host-webserver": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/protocol.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~"
+  }
+}

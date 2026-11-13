@@ -1,0 +1,73 @@
+{
+  "name": "@ocean/ocean-acp",
+  "description": "Automation-only Agent Client Protocol server for driving Ocean agents over JSON-RPC stdio",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/acp/acp"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@agentclientprotocol/sdk": "1.4.0",
+    "@ocean/ocean-brand": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-mcp-client": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@ocean/ocean-token-meter": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-mcp-client": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*"
+  }
+}

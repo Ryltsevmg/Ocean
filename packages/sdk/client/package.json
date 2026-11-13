@@ -1,0 +1,47 @@
+{
+  "name": "@ocean/ocean-sdk-client",
+  "description": "TypeScript client SDK for driving a Ocean runtime subprocess over stdio JSON-RPC: the DeepSeekHarness high-level turns API and the lower-level HarnessClient",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/sdk/client"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean": "workspace:*"
+  },
+  "peerDependencies": {
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-sdk-protocol": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-sdk-protocol": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-experimental-translator": "workspace:*"
+  }
+}

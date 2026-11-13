@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Browsersteuerung (browse)",
+    "description": "Optionale Steuerung agenteigener Tabs in deinem gekoppelten Chrome. Das Aktivieren dieses Pakets verbindet keinen Browser; eine separate Einrichtung ist erforderlich.",
+    "detail": "docs/DETAIL.md"
+  }
+}

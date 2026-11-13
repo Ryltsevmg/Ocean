@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Computer use",
+    "description": "Control approved applications on macOS, Windows and Linux. Linux supports AT-SPI controls, not screenshots or global mouse/keyboard input. Setup is required.",
+    "detail": "docs/DETAIL.md"
+  }
+}

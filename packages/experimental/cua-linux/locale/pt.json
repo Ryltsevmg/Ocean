@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Provedor de controle do computador no Linux",
+    "description": "Acesso experimental à acessibilidade AT-SPI e ações semânticas em aplicativos Linux autorizados individualmente. Não oferece controle de toda a área de trabalho nem entrada global de teclado e mouse."
+  }
+}

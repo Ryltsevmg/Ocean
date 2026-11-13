@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/storage/storage-json/README.md
+/:
+  en: 322dcc67eb62e0eb
+  zh: 456d6b3d2514c508
+/ocean-ocean-storage-json:
+  en: 06081ea5f636ea81
+  zh: 4e29b778af117962
+/ocean-ocean-storage-json/summary:
+  en: ba875a866989d7d8
+  zh: 92e94db1d3d3577e
+/ocean-ocean-storage-json/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-storage-json/use-this-package:
+  en: 87ddc847b7024cac
+  zh: 6e97d0f216587d5b
+/ocean-ocean-storage-json/use-this-package/when-to-choose-it:
+  en: 40e60fa139e0d6f6
+  zh: 0c4ce58c26ee4bf7
+/ocean-ocean-storage-json/use-this-package/configuration:
+  en: c41590b91b70b553
+  zh: 4a48cf8ee4265d48
+/ocean-ocean-storage-json/use-this-package/observable-behavior:
+  en: 79d83481397cb10b
+  zh: e160178363a57ba6
+/ocean-ocean-storage-json/understand-the-implementation:
+  en: b7d222309b3e5438
+  zh: 807c7314ee341d94
+/ocean-ocean-storage-json/understand-the-implementation/design-concept:
+  en: 975a4b005d9f8d0d
+  zh: 71127701477ae358
+/ocean-ocean-storage-json/understand-the-implementation/file-formats:
+  en: b3de0a697db4f916
+  zh: 56b26f7823392bd5
+/ocean-ocean-storage-json/understand-the-implementation/source-map:
+  en: 77af81b16be4613e
+  zh: 29cb5047fa82d12a
+/ocean-ocean-storage-json/further-exploration:
+  en: 45589b2761e3d422
+  zh: 2c26217a94c648be
+/ocean-ocean-storage-json/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-storage-json/model-experience/stored-domain-records:
+  en: c5d5ffaf6b114f3e
+  zh: 97db23b0b14ff1c0
+/ocean-ocean-storage-json/model-experience/stored-domain-records/what-the-model-sees:
+  en: d0798e9e30583b55
+  zh: 968f7f595b4bf1ff
+/ocean-ocean-storage-json/model-experience/stored-domain-records/token-effect:
+  en: 592ed887c69e5c46
+  zh: cb9be9de6e38db55
+/ocean-ocean-storage-json/model-experience/stored-domain-records/kv-cache-effect:
+  en: c13c59d13a5f1651
+  zh: 5aab838ae3ff5324
+/ocean-ocean-storage-json/known-limitations-and-deferred-work:
+  en: 073ca8d8c9bb8123
+  zh: 088ca8438f11ce6c
+/ocean-ocean-storage-json/known-limitations-and-deferred-work/dev-note:
+  en: 36181e17ff2ce2db
+  zh: 708520b0eb711662

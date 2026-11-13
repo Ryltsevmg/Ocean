@@ -1,0 +1,84 @@
+{
+  "name": "@ocean/ocean-commands",
+  "description": "Plugin-owned human command registry for Ocean UIs",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/interaction/commands"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./brand": {
+      "types": "./lib/types/brand.d.ts",
+      "default": "./lib/types/brand.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./builtin": {
+      "types": "./lib/types/builtin.d.ts",
+      "default": "./lib/types/builtin.js"
+    }
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "zod": "4.6.6"
+  },
+  "devDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

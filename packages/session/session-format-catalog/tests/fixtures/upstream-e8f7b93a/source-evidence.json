@@ -1,0 +1,40 @@
+{
+  "repository": "https://github.com/deepseek-ai/deepseek-harness",
+  "commit": "e8f7b93a344964de3dca1ace9e72b6e4d6de87cb",
+  "description": "Unmodified upstream-authored test/demo fixtures; not private user sessions or evidence of production-history coverage.",
+  "files": [
+    {
+      "file": "v0.jsonl",
+      "upstreamPath": "packages/session/session-persistence-jsonl/tests/fixtures/released-v0-real-shapes.jsonl",
+      "sha256": "79f44919a664f867c22d91eb42f97b3de1c88df1a66bd79c0aa3945926873668",
+      "expected": "reject-pre-step-surface-without-mutating-source"
+    },
+    {
+      "file": "v2.jsonl",
+      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--dsh-workspace--/preview-showcase/session.v2.jsonl",
+      "sha256": "67102c6f7f9595505963ebd899bd98c00358d32bc1cc1fb9baa5474caaafe886",
+      "expected": "reject-pre-step-surface-without-mutating-source"
+    },
+    {
+      "file": "v3.jsonl",
+      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--dsh-workspace--/preview-showcase/session.v3.jsonl",
+      "sha256": "eb7ecaf5fdd8a2b95959ef9cc5eebba5761848f014e4e1a99eaf6134515898cb",
+      "expected": "restore-v4-with-explicit-empty-child-facts"
+    },
+    {
+      "file": "v4.jsonl",
+      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--dsh-workspace--/preview-showcase/session.v4.jsonl",
+      "sha256": "d4483f4275785beff03ef3cabb3d75f2fc1f5d8dddbea1c77fbb958b2de2bcde",
+      "expected": "restore-v4-with-explicit-empty-child-facts"
+    }
+  ],
+  "retrievedAt": "2026-11-13",
+  "license": "MIT; upstream copyright retained in repository LICENSE",
+  "scope": "Decoder-only regressions on frozen upstream test/demo bytes. No claim of real-user histories, filesystem migration, or child-session coverage.",
+  "refusalAnalysis": {
+    "classification": "Intentional fail-closed behavior, also a migration compatibility limitation. Not introduced by Ocean: the pinned upstream v2-to-v3 migration has the same refusal.",
+    "cause": "A surface message precedes the first step/system head. Inserting a head would change chronology, so the migration deliberately refuses instead of fabricating history.",
+    "userImpact": "Affected old histories cannot currently be opened through the current format chain. Retain the original data and a compatible old application or explicit export; do not repair or rewrite in place.",
+    "remainingCoverage": "No real user histories, v1 fixture, filesystem successor publication or historical child-session evidence in this regression. RMG-337 remains open."
+  }
+}

@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for maintaining-dsh-code-review.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/cookbook/maintaining-dsh-code-review.md
+/maintaining-the-dsh-code-review-skill:
+  en: db591b66e09d061d
+  zh: 9d97515aa89e571f
+/maintaining-the-dsh-code-review-skill/what-the-maintainer-receives:
+  en: 1c4d0f340591ca39
+  zh: 81bd728a7c2296cb
+/maintaining-the-dsh-code-review-skill/what-the-operator-does-with-a-candidate-diff:
+  en: 1423d67e7c440cc6
+  zh: bc6d30d6615377f5
+/maintaining-the-dsh-code-review-skill/when-a-run-produces-no-candidate:
+  en: feb6d261939d6c19
+  zh: 044d8238cd6537d3
+/maintaining-the-dsh-code-review-skill/interruptions-and-handoff:
+  en: 7167e2ff7f6e1919
+  zh: 6b588784d369b4b9
+/maintaining-the-dsh-code-review-skill/where-the-operator-s-private-setup-lives:
+  en: 70a2b923df9f563e
+  zh: a0748fa40cef811c

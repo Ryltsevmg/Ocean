@@ -1,0 +1,13 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .sourcecraft/README.md
+/sourcecraft-release-preparation:
+  en: fb540ae2c53d43f0
+  zh: 1b8c8acb05db0be9
+/sourcecraft-release-preparation/activation-checklist:
+  en: 2873442fe2a5e73c
+  zh: 436dbbef6cdd0aa6
+/sourcecraft-release-preparation/signing-requirements:
+  en: ceb43795f916329a
+  zh: 19b7d8a037e0db32

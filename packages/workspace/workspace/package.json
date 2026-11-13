@@ -1,0 +1,59 @@
+{
+  "name": "@ocean/ocean-workspace",
+  "description": "Workspace entity registry (ctx.workspaceRegistry): durable workspace records with validated session attachment over the domain data form for the Ocean",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/workspace/workspace"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-storage": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*"
+  },
+  "dependencies": {
+    "@ocean/ocean-brand": "workspace:*",
+    "zod": "4.6.6"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-storage": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*"
+  }
+}

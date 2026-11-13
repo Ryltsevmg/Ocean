@@ -1,0 +1,87 @@
+# The SDK application over dsh-base. Stdout belongs exclusively to JSON-RPC.
+
+- id: system-prompt
+  config:
+    personaPrefix: >-
+      You are a coding agent powered by the {{model}} model.
+
+- id: session-title-llm
+  disabled: true
+
+- insert:
+    - id: sdk-app-startup
+      name: '@ocean/ocean-sdk-app'
+      config:
+        profile: sdk
+
+    - id: sdk-jsonrpc-server
+      name: '@ocean/ocean-sdk-jsonrpc-server'
+      inject: [sdkAppStartup, loader]
+      config:
+        maxTokensAsSuccess: !!js "process.env.DSH_MAX_TOKENS_AS_SUCCESS === undefined ? true : JSON.parse(process.env.DSH_MAX_TOKENS_AS_SUCCESS)"
+
+- id: hmr
+  disabled: true
+
+- id: tool-plugin-manager
+  disabled: false
+
+# DSH_PRIMARY_RUNTIME names the primary runtime; the packaged launcher fills it
+# from its download cache when unset, and an empty value opts out. Each row can
+# be patched independently. Office skills and the Office tools always load, and
+# the skills use their packaged assets. With a primary runtime the skills select
+# `workspace-dependencies` and use its Python environment; without one they
+# select `user` and direct the model to the user's Python.
+- insert:
+    - id: office-kit
+      name: '@ocean/ocean-office-kit'
+      config:
+        outputDirectory: !!js dshHomePath('office-kit', 'outputs')
+
+    # The Office tools stay registered without Kit; calls report the service's unavailable error.
+    - id: tool-office
+      name: '@ocean/ocean-tool-office'
+
+    - id: workspace-dependencies
+      name: '@ocean/ocean-tool-workspace-dependencies'
+      disabled: !!js "!process.env.DSH_PRIMARY_RUNTIME"
+      config:
+        source: !!js "process.getBuiltinModule('node:path').resolve(process.env.DSH_PRIMARY_RUNTIME ?? '')"
+
+    - id: skill-office
+      name: '@ocean/ocean-skill-office'
+      config:
+        pythonEnvironment: !!js "process.env.DSH_PRIMARY_RUNTIME ? 'workspace-dependencies' : 'user'"
+
+# Share native desktop tools and model context without starting a Web server.
+- insert:
+    - id: connection
+      name: '@ocean/ocean-client-connection'
+
+    - id: file-upload
+      name: '@ocean/ocean-client-file-upload'
+
+    - id: workspace
+      name: '@ocean/ocean-workspace'
+
+    - id: schedule
+      name: '@ocean/ocean-schedule'
+      inject: [sdkSessionActivation]
+
+    - id: time-context
+      name: '@ocean/ocean-time-context'
+
+    - id: tool-schedule
+      name: '@ocean/ocean-tool-schedule'
+
+    - id: tool-ask-user
+      name: '@ocean/ocean-tool-ask-user'
+
+    - id: present
+      name: '@ocean/ocean-tool-present'
+
+    - id: file-reference-local
+      name: '@ocean/ocean-file-reference-local'
+
+    - id: deliverable-file-references
+      name: '@ocean/ocean-deliverable-file-references'

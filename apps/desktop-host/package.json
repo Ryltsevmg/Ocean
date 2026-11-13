@@ -1,0 +1,36 @@
+{
+  "name": "@ocean/ocean-desktop-host",
+  "description": "Private Node-mode host process for the Electron desktop application",
+  "version": "0.2.2-rc.2",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib/index.js",
+    "lib/cli.js"
+  ],
+  "dependencies": {
+    "koffi": "3.1.1",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-host-webserver": "workspace:*",
+    "@ocean/ocean-jobs": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-deepseek-account": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@ocean/ocean-plugin-manager": "workspace:*"
+  },
+  "devDependencies": {
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-util-workspace-path": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*"
+  }
+}

@@ -1,0 +1,55 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/util/home-paths/README.md
+/:
+  en: 5f3b36ce413fadc1
+  zh: 81aebf4ea13d2bc5
+/ocean-ocean-home-paths:
+  en: edfa42340bc93930
+  zh: 7279e29d2ecca6fe
+/ocean-ocean-home-paths/summary:
+  en: 78e3e077d96012a8
+  zh: b68922620ebdf2d2
+/ocean-ocean-home-paths/table-of-contents:
+  en: 80b31a934611cb4a
+  zh: 05f3f7f9cb2fd881
+/ocean-ocean-home-paths/use-this-package:
+  en: 5322022224da2f27
+  zh: d5cba67f4ea3e429
+/ocean-ocean-home-paths/use-this-package/resolving-the-home:
+  en: 9a3f3248fe81fc51
+  zh: 2c9c36e6535fc4c9
+/ocean-ocean-home-paths/use-this-package/resolving-the-shared-agents-root:
+  en: 899c53a36b4a77cd
+  zh: 216532c8876d201d
+/ocean-ocean-home-paths/use-this-package/displaying-a-home:
+  en: 64b5a1f80d03c460
+  zh: 949fe0ed7e5f60b7
+/ocean-ocean-home-paths/use-this-package/expanding-user-paths:
+  en: 80bf5dead177c1d8
+  zh: 6faf257afbb9c246
+/ocean-ocean-home-paths/use-this-package/canonicalizing-watch-paths:
+  en: 55c5d8179de704c5
+  zh: b86395e9605807cd
+/ocean-ocean-home-paths/understand-the-implementation:
+  en: 3f97bd4606e12d4a
+  zh: 8f09f108141a478e
+/ocean-ocean-home-paths/understand-the-implementation/source-map:
+  en: 584610e67c4aa386
+  zh: 766f77e35c65193d
+/ocean-ocean-home-paths/understand-the-implementation/resolution-rules:
+  en: c9dd26d7bc6d26b6
+  zh: c23b2e1b0d9e0a43
+/ocean-ocean-home-paths/understand-the-implementation/canonicalization-mechanics:
+  en: a79aecd162317dc2
+  zh: 342f9bae0231c3de
+/ocean-ocean-home-paths/further-exploration:
+  en: 20c1a7aad2c891e7
+  zh: 66977a9714e6eff8
+/ocean-ocean-home-paths/known-limitations-and-deferred-work:
+  en: aa4aecf31a596da0
+  zh: 22dea997610fae2d
+/ocean-ocean-home-paths/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

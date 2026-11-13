@@ -1,0 +1,4 @@
+- status:
+  - text: Disconnected.
+  - paragraph: The terminal connection was interrupted.
+  - button "Reconnect"

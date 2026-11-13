@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types-client",
+    "allowJs": true,
+    "checkJs": false,
+    "emitDeclarationOnly": true
+  },
+  "files": [
+    "src/client.jsx",
+    "src/client-sketch.jsx",
+    "src/client-image-viewer.jsx"
+  ]
+}

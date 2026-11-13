@@ -1,0 +1,62 @@
+{
+  "name": "@ocean/ocean-compaction-image-offload",
+  "description": "Durable image offload for image-capable routes: replace over-budget request images with placeholders and retry",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/compaction/compaction-image-offload"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json",
+    "./projection": {
+      "types": "./lib/types/projection.d.ts",
+      "default": "./lib/types/projection.js"
+    },
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-compaction": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-compaction": "workspace:*",
+    "@ocean/ocean-compaction-basic": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-deepseek": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*"
+  },
+  "dependencies": {
+    "@ocean/ocean-util-values": "workspace:*"
+  }
+}

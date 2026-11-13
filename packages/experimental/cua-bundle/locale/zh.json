@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Computer Use",
+    "description": "控制已授权的 macOS、Windows 和 Linux 应用。Linux 仅支持 AT-SPI 控件，不支持截图或全局鼠标、键盘输入。使用前需要设置。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

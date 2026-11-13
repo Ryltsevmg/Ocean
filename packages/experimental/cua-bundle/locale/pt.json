@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Uso do computador",
+    "description": "Controle aplicativos autorizados no macOS, Windows e Linux. No Linux, há suporte a controles AT-SPI, mas não a capturas de tela ou entrada global de mouse e teclado. Requer configuração.",
+    "detail": "docs/DETAIL.md"
+  }
+}

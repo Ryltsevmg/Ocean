@@ -1,0 +1,18 @@
+#!/bin/sh
+# Run the installed CLI without changing the invoking shell or working directory.
+set -e
+launcher=$0
+while [ -L "$launcher" ]; do
+  directory=$(CDPATH= cd -- "$(dirname -- "$launcher")" && pwd -P)
+  target=$(readlink "$launcher")
+  case "$target" in
+    /*) launcher=$target ;;
+    *) launcher=$directory/$target ;;
+  esac
+done
+resources=$(CDPATH= cd -- "$(dirname -- "$launcher")/../../.." && pwd -P)
+case "$(uname -s)" in
+  Linux) executable="$resources/runtime/primary-runtime/dependencies/node/bin/node"; runtime="$resources/dsh" ;;
+  *) executable="$resources/../MacOS/Ocean-Chat"; runtime="$resources/app.asar/dsh" ;;
+esac
+ELECTRON_RUN_AS_NODE=1 exec "$executable" --expose-internals "$runtime/node_modules/@ocean/ocean-desktop-host/lib/cli.js" "$@"

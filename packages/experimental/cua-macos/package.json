@@ -1,0 +1,109 @@
+{
+  "name": "@ocean/ocean-experimental-cua-macos",
+  "description": "macOS native provider for shared Computer Use application and window objects",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/cua-macos"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "native/bin",
+    "cua-helper.json",
+    "native/Package.swift",
+    "native/Info.plist",
+    "native/DSHComputerUse.icns",
+    "native/build_app.py",
+    "native/Sources",
+    "native/tests/swift",
+    "native/tests/test_swift.py",
+    "native/LICENSE.cua-driver",
+    "native/LICENSE.computer-use-icon",
+    "native/upstream.json",
+    "native/README.md",
+    "native/README.zh.md",
+    "native/protocol.schema.json",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-computer-use": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
+    "zod": "4.6.6",
+    "@ocean/ocean-cua": "workspace:*"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-attachment-local": "workspace:*",
+    "@ocean/ocean-computer-use": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-executor-ptc": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-llm-deepseek": "workspace:*",
+    "@ocean/ocean-ptc-runtime-node": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "sharp": "^0.35.3",
+    "@ocean/ocean-ptc-runtime": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-config-editor": "workspace:*",
+    "@ocean/ocean-hmr": "workspace:*",
+    "@deepseek-ai/cordis-plugin-timer": "workspace:~",
+    "@ocean/ocean-storage": "workspace:*",
+    "@ocean/ocean-storage-json": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*"
+  },
+  "scripts": {
+    "build:native": "xcrun python3 native/build_app.py",
+    "build:icon": "node native/generate_icon.mjs"
+  },
+  "os": [
+    "darwin"
+  ]
+}

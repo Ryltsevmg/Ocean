@@ -1,0 +1,80 @@
+{
+  "name": "@ocean/ocean-tool-bash",
+  "description": "Model-facing bash tool with optional generic background-job and sandbox-escalation support",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/shell/tool-bash"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-shell": "workspace:*",
+    "@ocean/ocean-shell-env": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-jobs": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-ptc-runtime": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-shell": "workspace:*",
+    "@ocean/ocean-shell-env": "workspace:*",
+    "@ocean/ocean-bash-local": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-jobs": "workspace:*",
+    "@ocean/ocean-jobs-local": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-executor-ptc": "workspace:*",
+    "@ocean/ocean-tool-jobs": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*"
+  }
+}

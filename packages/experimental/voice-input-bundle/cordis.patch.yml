@@ -1,0 +1,13 @@
+- insert:
+    - id: speech-to-text
+      name: '@ocean/ocean-experimental-speech-to-text'
+      config:
+        defaultProvider: sensevoice-local
+    - id: speech-to-text-sensevoice
+      name: '@ocean/ocean-experimental-speech-to-text-sensevoice'
+      config:
+        dataRoot: !!js dshHomePath('speech-to-text', 'sensevoice')
+    - id: api-speech-to-text
+      name: '@ocean/ocean-experimental-api-speech-to-text'
+    - id: ui-voice-input
+      name: '@ocean/ocean-experimental-client-ui-voice-input'

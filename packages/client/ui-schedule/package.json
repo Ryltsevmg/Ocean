@@ -1,0 +1,94 @@
+{
+  "name": "@ocean/ocean-client-ui-schedule",
+  "description": "Host task management page and Session reminder catalog",
+  "version": "0.2.2-rc.2",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-api-session-controller",
+        "@ocean/ocean-api-workspace-controller",
+        "@ocean/ocean-client-connection",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-layout",
+        "@ocean/ocean-client-ui-sidebar",
+        "@ocean/ocean-client-ui-sidebar-right",
+        "@ocean/ocean-client-ui-tool",
+        "@ocean/ocean-client-ui-workspace",
+        "@ocean/ocean-client-ui-primitives"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-schedule"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-api-remote-access": "workspace:*",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-api-workspace-controller": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-session": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar-right": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-tool": "workspace:*",
+    "@ocean/ocean-client-ui-workspace": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-util-time": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@testing-library/react": "^16.3.3",
+    "clsx": "^2.1.1",
+    "@deepseek-ai/cordis": "workspace:~",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

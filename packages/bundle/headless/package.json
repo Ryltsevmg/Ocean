@@ -1,0 +1,95 @@
+{
+  "name": "@ocean/ocean-headless",
+  "description": "The dsh one-shot bundle: a direct core Agent/Session runner over dsh-base with no Host, HTTP, or browser layer",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/bundle/headless"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./startup": {
+      "types": "./lib/types/startup.d.ts",
+      "default": "./lib/startup.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/startup.js",
+    "cordis.patch.yml",
+    "lib/json-stream-*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-cmdline": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "commander": "^15.0.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-default-model": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-permission-presets": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-default-model": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-permission-presets": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@ocean/ocean-permission-presets": {
+      "optional": true
+    },
+    "@ocean/ocean-sandbox-policy": {
+      "optional": true
+    },
+    "@ocean/ocean-subagent": {
+      "optional": true
+    }
+  }
+}

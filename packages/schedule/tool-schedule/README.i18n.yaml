@@ -1,0 +1,88 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/schedule/tool-schedule/README.md
+/:
+  en: d77b6ecc8e63e0f2
+  zh: 19ff500139aec118
+/ocean-ocean-tool-schedule:
+  en: b59a87857d9be6ee
+  zh: f14046fba4300f64
+/ocean-ocean-tool-schedule/summary:
+  en: 471ede76f0c479f9
+  zh: 05126fe2cb74a3f6
+/ocean-ocean-tool-schedule/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-tool-schedule/use-this-package:
+  en: d54bb40aa19d48e9
+  zh: 5ff029a30b4ee2c4
+/ocean-ocean-tool-schedule/use-this-package/when-to-choose-it:
+  en: 42f29063b463c0da
+  zh: 3dedbd632acc5d69
+/ocean-ocean-tool-schedule/use-this-package/user-authorization:
+  en: bf63fe71777703fe
+  zh: 3935ef0931f9b50f
+/ocean-ocean-tool-schedule/use-this-package/the-four-tools:
+  en: 7b192d94290c0e38
+  zh: fdb6963131cb1cab
+/ocean-ocean-tool-schedule/use-this-package/minimal-configuration:
+  en: 4da5d0e7bff6f5b3
+  zh: 093699c732eacf72
+/ocean-ocean-tool-schedule/understand-the-implementation:
+  en: b3bbc30caad60d2a
+  zh: a0c2fa3e8e085759
+/ocean-ocean-tool-schedule/understand-the-implementation/source-map:
+  en: 9d899dc328be7e20
+  zh: f0c353326e644395
+/ocean-ocean-tool-schedule/further-exploration:
+  en: 3109dccf217c9245
+  zh: 6c5ad723f3cff4cc
+/ocean-ocean-tool-schedule/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-tool-schedule/model-experience/shared-system-prompt:
+  en: eb7c154ebdf40bd7
+  zh: 40f739f10eb4c89e
+/ocean-ocean-tool-schedule/model-experience/shared-system-prompt/what-the-model-sees:
+  en: bf567fba90b70e70
+  zh: 9b2e01bd756c9b20
+/ocean-ocean-tool-schedule/model-experience/shared-system-prompt/what-the-model-sees/task-authorization:
+  en: 286eac8fa217213b
+  zh: 805ac84224bc2140
+/ocean-ocean-tool-schedule/model-experience/shared-system-prompt/token-effect:
+  en: f943e9c303ec4c7b
+  zh: f44cb084c17b6d2b
+/ocean-ocean-tool-schedule/model-experience/shared-system-prompt/kv-cache-effect:
+  en: 8ecdb4f045cb35e5
+  zh: 46cd350ee096511d
+/ocean-ocean-tool-schedule/model-experience/tool-schemas:
+  en: 3039bc5e7a796b21
+  zh: 6b7a9eaf69c9ea53
+/ocean-ocean-tool-schedule/model-experience/tool-schemas/what-the-model-sees:
+  en: bb797c9d322c494f
+  zh: 09dbd39e155ec435
+/ocean-ocean-tool-schedule/model-experience/tool-schemas/token-effect:
+  en: 70fb9094859d0804
+  zh: 30726b045484713c
+/ocean-ocean-tool-schedule/model-experience/tool-schemas/kv-cache-effect:
+  en: 332231fb9f1b8146
+  zh: eace0b2e789d1c0f
+/ocean-ocean-tool-schedule/model-experience/task-results:
+  en: c47b2272c94ac202
+  zh: 6a5bcfde187b3007
+/ocean-ocean-tool-schedule/model-experience/task-results/what-the-model-sees:
+  en: 18459cc1f3009e83
+  zh: 00a9e870dae49f58
+/ocean-ocean-tool-schedule/model-experience/task-results/token-effect:
+  en: 681160f74fec9bec
+  zh: c4cec94e94c56aa8
+/ocean-ocean-tool-schedule/model-experience/task-results/kv-cache-effect:
+  en: 2fbf2175168e8244
+  zh: 9c4c1964ae59e661
+/ocean-ocean-tool-schedule/known-limitations-and-deferred-work:
+  en: 5e49a827bc6ecf53
+  zh: 3a944de62775c9b2
+/ocean-ocean-tool-schedule/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: b2ee0fbaa165910d

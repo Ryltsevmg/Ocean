@@ -1,0 +1,85 @@
+{
+  "name": "@ocean/ocean-client-ui-plan",
+  "description": "Plan mode controls, persistent transcript plan cards, and sidebar Markdown previews",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-plan"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-sidebar-right",
+        "@ocean/ocean-client-ui-chat",
+        "@ocean/ocean-client-ui-user-questions",
+        "@ocean/ocean-client-resources",
+        "@ocean/ocean-api-session-controller"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-plan-mode": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "react": "^18.2.0",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-session": "workspace:*",
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-client-ui-chat": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar-right": "workspace:*",
+    "@ocean/ocean-client-ui-user-questions": "workspace:*",
+    "@ocean/ocean-client-resources": "workspace:*",
+    "@ocean/ocean-tool-executor-ptc": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-util-crypto": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

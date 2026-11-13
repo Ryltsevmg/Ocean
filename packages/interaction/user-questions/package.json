@@ -1,0 +1,76 @@
+{
+  "name": "@ocean/ocean-user-questions",
+  "description": "Abstract user-questions seam (ctx.userQuestions) for asking the human during agent runs",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/interaction/user-questions"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*"
+  },
+  "devDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-tool-executor-ptc": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*"
+  },
+  "dependencies": {
+    "zod": "4.6.6",
+    "@deepseek-ai/schemastery": "workspace:~"
+  }
+}

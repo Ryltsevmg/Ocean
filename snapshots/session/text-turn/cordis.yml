@@ -1,0 +1,86 @@
+# Live-recording patch shared by the ordinary headless snapshot composition.
+# The shipped profile owns application startup; this patch fixes only the
+# deterministic test composition and raw persistence needed for recording.
+
+- id: llm-deepseek
+  name: '@ocean/ocean-llm-deepseek-api-key'
+  config:
+    thinking: enabled
+    reasoningEffort: max
+    models:
+      - id: deepseek-v4-flash
+      - id: deepseek-v4-pro
+      - id: deepseek-v4-flash-vision-exp
+        inputModalities: [text, image]
+
+- id: sandbox-policy
+  name: '@ocean/ocean-sandbox-policy'
+  config:
+    mode: !!js "process.env.DSH_PERMISSION_MODE ?? (process.env.DSH_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')"
+    workspaceRoot: !!js process.cwd()
+
+- id: approval
+  name: '@ocean/ocean-user-approval'
+  config:
+    policy: !!js "(process.env.DSH_PERMISSION_MODE ?? (process.env.DSH_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')) === 'danger-full-access' ? 'never' : 'ask'"
+
+- id: session-persistence-jsonl
+  name: '@ocean/ocean-session-persistence-jsonl'
+  config:
+    root: !!js dshHomePath('sessions')
+    compression: none
+
+- id: session-title-llm
+  disabled: true
+
+- id: system-prompt
+  name: '@ocean/ocean-system-prompt'
+  config:
+    personaPrefix: |
+      You are a coding assistant powered by the {{model}} model. Your bash tool runs under a file sandbox — a `[sandbox: file access denied …]` result is policy, not a command bug.
+
+      Verify your work by running the code or tests. Keep answers brief and factual.
+
+- id: agent-instructions
+  name: '@ocean/ocean-agent-instructions'
+  config:
+    maxBytes: 65536
+
+- id: tool-subagent
+  name: '@ocean/ocean-tool-subagent'
+  config:
+    provider: spawn
+    toolName: subagent
+    maxDepth: 1
+
+- id: tool-subagent-fork
+  name: '@ocean/ocean-tool-subagent'
+  config:
+    provider: fork
+    toolName: subagent_fork
+    maxDepth: 1
+
+- id: fs-sandbox
+  name: '@ocean/ocean-fs-sandbox'
+  config:
+    cwd: !!js process.cwd()
+
+- insert:
+    - id: hooks-claude-code
+      name: '@ocean/ocean-hooks-claude-code'
+      config:
+        configPath: ./hooks.json
+
+    - id: hooks-codex
+      name: '@ocean/ocean-hooks-codex'
+      config:
+        configPath: ./codex-hooks.json
+
+- id: session-log-deepseek
+  config:
+    enabled: false
+
+# The recorded tool catalog includes the optional patch tool.
+- id: tool-fs
+  config:
+    applyPatch: true

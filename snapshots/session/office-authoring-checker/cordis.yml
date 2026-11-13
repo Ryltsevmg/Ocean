@@ -1,0 +1,21 @@
+- insert:
+    - id: office-kit
+      name: '@ocean/ocean-office-kit'
+      config:
+        outputDirectory: !!js dshHomePath('office-kit', 'outputs')
+
+    - id: tool-office
+      name: '@ocean/ocean-tool-office'
+
+    - id: skill-office
+      name: '@ocean/ocean-skill-office'
+      disabled: false
+      config:
+        assetRoot: !!js process.cwd() + '/office-skills'
+        pythonEnvironment: user
+
+- id: tool-bash
+  disabled: true
+
+- id: tool-pwsh
+  disabled: true

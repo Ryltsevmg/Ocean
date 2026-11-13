@@ -1,0 +1,60 @@
+{
+  "name": "@ocean/ocean-experimental-browser-use-chrome-devtools-mcp",
+  "description": "Experimental per-Session Chromium browser tools through chrome-devtools-mcp",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/browser-use-chrome-devtools-mcp"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-experimental-browser-use-runtime": "workspace:*",
+    "chrome-devtools-mcp": "1.9.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-browser-use": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@ocean/ocean-browser-use": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*"
+  }
+}

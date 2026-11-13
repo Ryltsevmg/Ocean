@@ -1,0 +1,160 @@
+# Per-launch SDK customization: retain only persistent Bash and the string
+# editor as model-facing tools, with process-local providers and an explicit
+# danger-full-access / never-ask policy.
+
+- insert:
+    - id: tool-str-replace-editor
+      name: '@ocean/ocean-tool-str-replace-editor'
+      config:
+        maxOutputChars: 16000
+
+- id: llm-deepseek
+  name: '@ocean/ocean-llm-deepseek-api-key'
+  config:
+    apiKeyEnv: DEEPSEEK_API_KEY
+    streamIdleTimeoutMs: 172800000
+    models:
+      - id: !!js process.env.DSH_MODEL ?? 'deepseek-v4-flash'
+        contextWindow: !!js Number(process.env.DSH_CONTEXT_WINDOW ?? 1000000)
+
+- id: sandbox-policy
+  name: '@ocean/ocean-sandbox-policy'
+  config:
+    mode: danger-full-access
+    workspaceRoot: !!js process.cwd()
+
+- id: approval
+  name: '@ocean/ocean-user-approval'
+  config:
+    policy: never
+
+- id: permission
+  name: '@ocean/ocean-permission-presets'
+  disabled: true
+
+- id: bash-sandbox
+  name: '@ocean/ocean-bash-sandbox'
+  disabled: true
+
+- id: pwsh-sandbox
+  name: '@ocean/ocean-pwsh-sandbox'
+  disabled: true
+
+- id: fs-sandbox
+  name: '@ocean/ocean-fs-sandbox'
+  disabled: true
+
+- id: tool-bash
+  name: '@ocean/ocean-tool-bash'
+  disabled: true
+
+- id: tool-pwsh
+  name: '@ocean/ocean-tool-pwsh'
+  disabled: true
+
+- id: agent-instructions
+  name: '@ocean/ocean-agent-instructions'
+  disabled: true
+
+- id: skill
+  name: '@ocean/ocean-skill'
+  disabled: true
+
+- id: skill-filesystem
+  name: '@ocean/ocean-skill-filesystem'
+  disabled: true
+
+- id: tool-skill
+  name: '@ocean/ocean-tool-skill'
+  disabled: true
+
+- id: tool-jobs
+  name: '@ocean/ocean-tool-jobs'
+  disabled: true
+
+- id: tool-fs
+  name: '@ocean/ocean-tool-fs'
+  disabled: true
+
+- id: tool-fs-search
+  name: '@ocean/ocean-tool-fs-search'
+  disabled: true
+
+- id: tool-subagent-control
+  name: '@ocean/ocean-tool-subagent-control'
+  disabled: true
+
+- id: tool-subagent
+  name: '@ocean/ocean-tool-subagent'
+  disabled: true
+
+- id: tool-subagent-fork
+  name: '@ocean/ocean-tool-subagent'
+  disabled: true
+
+- id: tool-workflow
+  name: '@ocean/ocean-tool-workflow'
+  disabled: true
+
+- id: tool-todo
+  name: '@ocean/ocean-tool-todo'
+  disabled: true
+
+- id: tool-goal
+  name: '@ocean/ocean-tool-goal'
+  disabled: true
+
+- id: tool-web
+  name: '@ocean/ocean-tool-web'
+  disabled: true
+
+- id: plan-mode
+  name: '@ocean/ocean-plan-mode'
+  disabled: true
+
+- id: system-prompt
+  name: '@ocean/ocean-system-prompt'
+  config:
+    includeHarnessIdentity: false
+    personaPrefix: !!js process.env.DSH_SYSTEM_PROMPT ?? 'You are a helpful software engineer assistant.'
+
+- id: session-persistence-jsonl
+  name: '@ocean/ocean-session-persistence-jsonl'
+  config:
+    root: !!js dshHomePath('sessions')
+    compression: none
+
+- insert:
+    - id: bash-local
+      name: '@ocean/ocean-bash-local'
+
+    - id: fs-local
+      name: '@ocean/ocean-fs-local'
+      config:
+        cwd: !!js process.cwd()
+
+    - id: terminal
+      name: '@ocean/ocean-terminal'
+
+    - id: terminal-bash
+      name: '@ocean/ocean-terminal-bash'
+      config:
+        timeoutMs: 300000
+
+    - id: persistent-bash
+      name: '@ocean/ocean-tool-bash-persistent'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a bash shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * You do have access to a mirror of common linux and python packages via apt and pip.
+          * State is persistent across command calls and discussions with the user.
+          * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
+          * Please avoid commands that may produce a very large amount of output.
+          * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
+
+- id: session-log-deepseek
+  config:
+    enabled: false

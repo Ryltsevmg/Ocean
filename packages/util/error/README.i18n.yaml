@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/util/error/README.md
+/:
+  en: 765d60b0cc7f8cf1
+  zh: 66b731f7143ccc5c
+/ocean-ocean-error:
+  en: 6d55a4103035749c
+  zh: 73e223cd9d7270e5
+/ocean-ocean-error/summary:
+  en: eefb4278f326243a
+  zh: 681e25fc7d65865e
+/ocean-ocean-error/table-of-contents:
+  en: c992e0cd2e7042d6
+  zh: 2e8cd826664632d1
+/ocean-ocean-error/use-this-package:
+  en: 9cf64dc708984950
+  zh: 82f98984054a8938
+/ocean-ocean-error/understand-the-implementation:
+  en: 42b15ac6321706aa
+  zh: 4ed0861911abaf5d
+/ocean-ocean-error/understand-the-implementation/source-map:
+  en: a2e80abfe169f97f
+  zh: eb37e22c32f66add
+/ocean-ocean-error/understand-the-implementation/why-it-stays-dependency-free:
+  en: 3eacdacaa91ea409
+  zh: d53d389bf4117c8c
+/ocean-ocean-error/further-exploration:
+  en: 530bc3a0690a4012
+  zh: 192682c5a8571dfe
+/ocean-ocean-error/dev-note:
+  en: 5de1d6304e00c58f
+  zh: 0087361e6f535488

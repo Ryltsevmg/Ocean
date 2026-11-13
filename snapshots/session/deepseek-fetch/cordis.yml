@@ -1,0 +1,20 @@
+- insert:
+    - id: deepseek-fetch-fixture
+      name: './deepseek-fetch-fixture.mjs'
+
+- id: web
+  name: '@ocean/ocean-web'
+  config:
+    searchProvider: deepseek-search-api
+    fetchProvider: deepseek-fetch-api
+
+- id: web-deepseek-api
+  name: '@ocean/ocean-web-deepseek-api'
+  config:
+    fetchApiKeyEnv: DSH_SNAPSHOT_FETCH_KEY
+    fetchBaseURL: http://127.0.0.1:43118/api/v1/tools
+
+- id: tool-web
+  name: '@ocean/ocean-tool-web'
+  config:
+    search: false

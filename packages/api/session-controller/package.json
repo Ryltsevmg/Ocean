@@ -1,0 +1,177 @@
+{
+  "name": "@ocean/ocean-api-session-controller",
+  "description": "Session Remote commands, cold reads, and live control transport",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/api/session-controller"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./remote-events": {
+      "types": "./lib/types/remote-events.d.ts",
+      "default": "./lib/types/remote-events.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "external": [
+        "@ocean/ocean-api-gateway/client"
+      ],
+      "inject": [
+        "@ocean/ocean-api-gateway",
+        "@ocean/ocean-client-file-upload"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-deque": "workspace:*",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "mime-types": "^3.0.2",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-default-model": "workspace:*",
+    "@ocean/ocean-agent-preset-registry": "workspace:*",
+    "@ocean/ocean-api-gateway": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-file-upload": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-file-reference": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-native-command": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session-projection-cache": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-session-title": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-skill": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-typert-registry": "workspace:*",
+    "@ocean/ocean-util-time": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-util-workspace-path": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@ocean/ocean-session-persistence": {
+      "optional": true
+    },
+    "@ocean/ocean-session-projection-cache": {
+      "optional": true
+    },
+    "@ocean/ocean-settings": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ocean/ocean-api-remote-access": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-default-model": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-agent-preset-registry": "workspace:*",
+    "@ocean/ocean-api-gateway": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-attachment-local": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-file-upload": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-file-reference": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-native-command": "workspace:*",
+    "@ocean/ocean-permission-presets": "workspace:*",
+    "@ocean/ocean-remote-mock": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session-projection-cache": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-session-title": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-skill": "workspace:*",
+    "@ocean/ocean-storage": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*",
+    "@ocean/ocean-storage-json": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-typert-registry": "workspace:*",
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "@ocean/ocean-util-time": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-util-workspace-path": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@types/mime-types": "^3.0.1",
+    "@ocean/ocean-working-directory": "workspace:*"
+  }
+}

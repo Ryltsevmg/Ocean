@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-rc.2/ocean-default-workspace/guide.md
+/:
+  en: 3121cbe1218db6ce
+  zh: bdc5d32736ca1452
+/ocean-default-workspace-directory:
+  en: 5223ae6d4d6b8fec
+  zh: 2ab92904ed2777af
+/ocean-default-workspace-directory/change:
+  en: 2c1f93c7c5463a5a
+  zh: 00db1749d6277c55
+/ocean-default-workspace-directory/migration:
+  en: 7fef7048164d638b
+  zh: 3b394505970d3188

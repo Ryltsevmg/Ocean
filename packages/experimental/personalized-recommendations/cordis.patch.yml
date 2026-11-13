@@ -1,0 +1,13 @@
+- insert:
+    - id: action-cards
+      name: '@ocean/ocean-action-cards'
+    - id: client-ui-action-cards
+      name: '@ocean/ocean-client-ui-action-cards'
+    - id: creation-recommendations
+      name: '@ocean/ocean-creation-recommendations'
+    - id: client-ui-creation-recommendations
+      name: '@ocean/ocean-client-ui-creation-recommendations'
+    - id: plugin-recommendations
+      name: '@ocean/ocean-plugin-recommendations'
+    - id: client-ui-plugin-recommendations
+      name: '@ocean/ocean-client-ui-plugin-recommendations'

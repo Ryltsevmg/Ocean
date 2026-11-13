@@ -1,0 +1,27 @@
+- insert:
+    - id: preset-delegate-a
+      name: '@ocean/ocean-agent-preset'
+      config:
+        id: delegate-a
+        plugins:
+          - name: '@ocean/ocean-tool-subagent'
+            config:
+              provider: spawn
+              allowedAgentPresets: [standard, ptc, minimal]
+          - name: '@ocean/ocean-tool-subagent'
+            config:
+              provider: fork
+              toolName: subagent_fork
+    - id: preset-delegate-b
+      name: '@ocean/ocean-agent-preset'
+      config:
+        id: delegate-b
+        plugins:
+          - name: '@ocean/ocean-tool-subagent'
+            config:
+              provider: spawn
+              allowedAgentPresets: [standard, ptc, minimal]
+          - name: '@ocean/ocean-tool-subagent'
+            config:
+              provider: fork
+              toolName: subagent_fork

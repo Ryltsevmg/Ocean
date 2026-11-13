@@ -1,0 +1,51 @@
+{
+  "name": "@ocean/ocean-pwsh-sandbox",
+  "description": "Sandbox-consuming implementation of the Ocean PowerShell executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts)",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/shell/pwsh-sandbox"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-shell": "workspace:*",
+    "@ocean/ocean-pwsh-local": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-shell": "workspace:*",
+    "@ocean/ocean-pwsh-local": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

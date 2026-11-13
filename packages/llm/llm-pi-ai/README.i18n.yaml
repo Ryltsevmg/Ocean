@@ -1,0 +1,100 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/llm/llm-pi-ai/README.md
+/:
+  en: 8a6ec0a589e6fd18
+  zh: e85fc352c9cba373
+/ocean-ocean-llm-pi-ai:
+  en: a5fab9334cf5cc22
+  zh: 7127e099a5ab7e26
+/ocean-ocean-llm-pi-ai/summary:
+  en: b9596b1e70149760
+  zh: 6582df2aa446635c
+/ocean-ocean-llm-pi-ai/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-llm-pi-ai/use-this-package:
+  en: 86cf1940fb8bb1dc
+  zh: 862c10b2ca45a893
+/ocean-ocean-llm-pi-ai/use-this-package/when-to-choose-it:
+  en: f3b761c7c7ecb82f
+  zh: e10d999aa348ef86
+/ocean-ocean-llm-pi-ai/use-this-package/configure-provider-routes:
+  en: 53c6355bb0ef48e1
+  zh: 4d0863f07e0440d6
+/ocean-ocean-llm-pi-ai/use-this-package/sign-in-to-a-provider:
+  en: c36f66438638ae08
+  zh: 066a2fc4cb97c86f
+/ocean-ocean-llm-pi-ai/use-this-package/resolve-the-model-catalog:
+  en: 376f83206858b601
+  zh: 38bb6993609c96a6
+/ocean-ocean-llm-pi-ai/use-this-package/run-with-reasoning-and-wire-compatibility:
+  en: b58b917e7f250aee
+  zh: aff599081bac08c3
+/ocean-ocean-llm-pi-ai/use-this-package/change-configuration-at-runtime:
+  en: 92f554e1718614ca
+  zh: f17ed3ad3e5d28e2
+/ocean-ocean-llm-pi-ai/use-this-package/discover-models-from-endpoints:
+  en: ac930f29006456cf
+  zh: 8d37c47f02761452
+/ocean-ocean-llm-pi-ai/use-this-package/failures-and-recovery:
+  en: 3c1edbc63de24a1a
+  zh: 01592718c3a2c79f
+/ocean-ocean-llm-pi-ai/understand-the-implementation:
+  en: 1598ac8a8bb9b6bf
+  zh: fdd089c5ae7722cd
+/ocean-ocean-llm-pi-ai/understand-the-implementation/design-philosophy:
+  en: db1ac8ccca2d858b
+  zh: 1d7cd4153aad22b0
+/ocean-ocean-llm-pi-ai/understand-the-implementation/request-headers:
+  en: 615ca9834bf6544f
+  zh: 2d70b548f99000d1
+/ocean-ocean-llm-pi-ai/understand-the-implementation/source-map:
+  en: 01520c709ee2202c
+  zh: de919d3f2ff61046
+/ocean-ocean-llm-pi-ai/understand-the-implementation/registration-and-directory:
+  en: 0c6df3e8b6a75372
+  zh: 476666a6f209542c
+/ocean-ocean-llm-pi-ai/understand-the-implementation/generated-provider-metadata:
+  en: 477d277e9ac35c8f
+  zh: 96870ca333fb6510
+/ocean-ocean-llm-pi-ai/understand-the-implementation/replay-and-vocabulary:
+  en: e68f92d78150d341
+  zh: 45850c739a7329d3
+/ocean-ocean-llm-pi-ai/further-exploration:
+  en: 06017640cf12ce48
+  zh: b007a86a4a580db3
+/ocean-ocean-llm-pi-ai/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-llm-pi-ai/model-experience/provider-request-through-pi-ai:
+  en: e7348db3f7115960
+  zh: 5fd5fb09d7d09982
+/ocean-ocean-llm-pi-ai/model-experience/provider-request-through-pi-ai/what-the-model-sees:
+  en: f618a730aaa904ce
+  zh: 0b77a5b799b049e3
+/ocean-ocean-llm-pi-ai/model-experience/provider-request-through-pi-ai/token-effect:
+  en: 820221e8ae37aa61
+  zh: 7e6ff4db10067fc0
+/ocean-ocean-llm-pi-ai/model-experience/provider-request-through-pi-ai/kv-cache-effect:
+  en: 6613d52e459d86da
+  zh: 7d0627e7ff8299e8
+/ocean-ocean-llm-pi-ai/model-experience/provider-response:
+  en: 802d7ff60a1d03ff
+  zh: c41c56e28f3e8680
+/ocean-ocean-llm-pi-ai/model-experience/provider-response/what-the-model-sees:
+  en: 94ca496012c92fa9
+  zh: 9539b08924b5022d
+/ocean-ocean-llm-pi-ai/model-experience/provider-response/token-effect:
+  en: f002b21d0f4c3df0
+  zh: 388c8ed4676ed1af
+/ocean-ocean-llm-pi-ai/model-experience/provider-response/kv-cache-effect:
+  en: b6bd570c0159ba08
+  zh: 7d2d91eea6a8d830
+/ocean-ocean-llm-pi-ai/known-limitations-and-deferred-work:
+  en: fdbe8ce850250b66
+  zh: d8b9a06a996850c1
+/ocean-ocean-llm-pi-ai/known-limitations-and-deferred-work/dev-note:
+  en: 81906fbee2f49fd5
+  zh: 24edf46deee28ed4

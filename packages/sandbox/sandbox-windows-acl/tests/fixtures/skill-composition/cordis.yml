@@ -1,0 +1,4 @@
+- id: sandbox
+  name: '@ocean/ocean-sandbox-local'
+- id: skills
+  name: '@ocean/ocean-skill'

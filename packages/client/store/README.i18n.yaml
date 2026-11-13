@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/store/README.md
+/:
+  en: f9e6c1b15e80658f
+  zh: 9127e32b7e5351d0
+/ocean-ocean-client-store:
+  en: 7501ae49b548b1fd
+  zh: 64ad8600239583f4
+/ocean-ocean-client-store/summary:
+  en: 8f3ab7a17eb88d71
+  zh: 98d6e5dca4b6b36d
+/ocean-ocean-client-store/table-of-contents:
+  en: b4683d2a53256fda
+  zh: 4e65ff63dc8c48fe
+/ocean-ocean-client-store/model-experience:
+  en: 444c8fcde6e159d8
+  zh: dc855e149c636bb4
+/ocean-ocean-client-store/model-experience/kv-cache-effect:
+  en: ed7581186c5b5a33
+  zh: a0efffb2631c1eec
+/ocean-ocean-client-store/known-limitations-and-deferred-work:
+  en: 313598f4a7a9911e
+  zh: c183d275b1207d5b
+/ocean-ocean-client-store/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: e88aeb617ffb74ea

@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/preset/persona/README.md
+/:
+  en: fca2b93080507b37
+  zh: 0a8c803deedc0731
+/ocean-ocean-persona:
+  en: c4bf8313df935ac0
+  zh: daa5f36c5c24c863
+/ocean-ocean-persona/summary:
+  en: c05b764e4f370ac6
+  zh: 27e6f3bf61fb651a
+/ocean-ocean-persona/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-persona/use-this-package:
+  en: 9b74e4172eaf5fdd
+  zh: ab94a985d1f96523
+/ocean-ocean-persona/use-this-package/configuration:
+  en: 3cc1df06bb4b6d9d
+  zh: 0ddd2e1938cc8c07
+/ocean-ocean-persona/use-this-package/persona-behavior:
+  en: c2dc9192f0658eeb
+  zh: 7ce8414d9e1a5b5a
+/ocean-ocean-persona/use-this-package/when-to-use-it:
+  en: 4721bb61679c0279
+  zh: 51aaa09929dd06d0
+/ocean-ocean-persona/understand-the-implementation:
+  en: 42b15ac6321706aa
+  zh: 4ed0861911abaf5d
+/ocean-ocean-persona/understand-the-implementation/how-the-row-registers:
+  en: 72eeb11ca6e5401e
+  zh: f8b036d1d0444b56
+/ocean-ocean-persona/understand-the-implementation/why-the-row-is-scope-only:
+  en: bcd57eaefa6d1ff8
+  zh: 8d7de63d2bfaa5ef
+/ocean-ocean-persona/understand-the-implementation/source-map:
+  en: 45e09ad507fbe1fb
+  zh: 006ec9c79c1771a7
+/ocean-ocean-persona/further-exploration:
+  en: feb7d8c9e22f56e2
+  zh: 49d9920c9d145e44
+/ocean-ocean-persona/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-persona/model-experience/the-persona-section:
+  en: 2b53c1d07ef68f24
+  zh: 33a3c17ab56adf57
+/ocean-ocean-persona/model-experience/the-persona-section/what-the-model-sees:
+  en: bf6f1c045961e762
+  zh: 2e42611e7c3ca35e
+/ocean-ocean-persona/model-experience/the-persona-section/token-effect:
+  en: 346e80f3b7a8c7fd
+  zh: da0e19a955d56c51
+/ocean-ocean-persona/model-experience/the-persona-section/kv-cache-effect:
+  en: e9f96cf496c544c7
+  zh: b986f1b22d1beb70
+/ocean-ocean-persona/known-limitations-and-deferred-work:
+  en: 9a7dba778a006276
+  zh: 3c2030dfcfe83e34
+/ocean-ocean-persona/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

@@ -1,0 +1,90 @@
+{
+  "name": "@ocean/ocean-ssh",
+  "description": "Shared OpenSSH connection and versioned POSIX remote helper",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/ssh/ssh"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json",
+    "./helper": {
+      "types": "./lib/types/helper-entry.d.ts",
+      "default": "./lib/helper.js"
+    },
+    "./protocol": {
+      "types": "./lib/types/protocol.d.ts",
+      "default": "./lib/protocol.js"
+    },
+    "./schemas": {
+      "types": "./lib/types/schemas.d.ts",
+      "default": "./lib/schemas.js"
+    }
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/helper.js",
+    "lib/protocol.js",
+    "lib/schemas.js",
+    "lib/protocol-*.js",
+    "lib/schemas-*.js",
+    "lib/stream-security-*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-fs-sandbox": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
+    "zod": "4.6.6"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-fs-sandbox": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-ptc-runtime-node": "workspace:*",
+    "@ocean/ocean-fs-ssh": "workspace:*",
+    "@ocean/ocean-subprocess-ssh": "workspace:*",
+    "@ocean/ocean-sandbox-ssh": "workspace:*",
+    "@ocean/ocean-lsp": "workspace:*",
+    "@ocean/ocean-lsp-stdio": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*"
+  }
+}

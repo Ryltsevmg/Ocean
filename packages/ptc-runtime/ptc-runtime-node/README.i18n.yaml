@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/ptc-runtime/ptc-runtime-node/README.md
+/:
+  en: 66cfe944c731a54f
+  zh: 30b9e7f852723301
+/ocean-ocean-ptc-runtime-node:
+  en: e0e856a0ca852177
+  zh: 5bd5c9acef3f5b6e
+/ocean-ocean-ptc-runtime-node/summary:
+  en: 7f80d74a7f87eb05
+  zh: 6aa31b97ac920ca6
+/ocean-ocean-ptc-runtime-node/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 725b47765ee8f30b
+/ocean-ocean-ptc-runtime-node/use-this-package:
+  en: 70e83ccdf8159a10
+  zh: 8282f1da5e844426
+/ocean-ocean-ptc-runtime-node/use-this-package/configuration:
+  en: daae436f3bb33af5
+  zh: a551a96a07587088
+/ocean-ocean-ptc-runtime-node/use-this-package/execution-and-results:
+  en: b1a7149f2981cf2e
+  zh: a218e2ab9a23465c
+/ocean-ocean-ptc-runtime-node/use-this-package/in-memory-modes:
+  en: 8bfad7ab538ee7e8
+  zh: de9971f5d7d08183
+/ocean-ocean-ptc-runtime-node/use-this-package/deadlines-and-cancellation:
+  en: d383ec7aeab8afec
+  zh: 7c9c49e205fbbcd8
+/ocean-ocean-ptc-runtime-node/use-this-package/failures:
+  en: 74411c07b1484746
+  zh: 65b826012219bbec
+/ocean-ocean-ptc-runtime-node/understand-the-implementation:
+  en: a604a3411db089eb
+  zh: a8c85d1727484ca3
+/ocean-ocean-ptc-runtime-node/understand-the-implementation/launch-and-control:
+  en: 5c93014a885ed89e
+  zh: 21daedcd9de8cd7f
+/ocean-ocean-ptc-runtime-node/understand-the-implementation/source-and-built-bootstraps:
+  en: b944263ce0b1d200
+  zh: c25a99f01a0d9af5
+/ocean-ocean-ptc-runtime-node/understand-the-implementation/runner-import-handling:
+  en: ccde763016c0e039
+  zh: fd881e88391a9d90
+/ocean-ocean-ptc-runtime-node/understand-the-implementation/source-map:
+  en: 287412993ada4d41
+  zh: bb5ee33f715f32e5
+/ocean-ocean-ptc-runtime-node/further-exploration:
+  en: fbb709fa83b0828f
+  zh: d5232d163c18b809
+/ocean-ocean-ptc-runtime-node/model-experience:
+  en: 4e89db2b3ccd585a
+  zh: 461b5e1e9caaf959
+/ocean-ocean-ptc-runtime-node/model-experience/kv-cache-effect:
+  en: 40294c1c31b74824
+  zh: d91e7b78c0619c7e
+/ocean-ocean-ptc-runtime-node/known-limitations-and-deferred-work:
+  en: e6bf2f090e9cdb3e
+  zh: 7a9b0577a3415cad
+/ocean-ocean-ptc-runtime-node/known-limitations-and-deferred-work/dev-note:
+  en: 79e98ed081685139
+  zh: 456f68c9da84bb8b

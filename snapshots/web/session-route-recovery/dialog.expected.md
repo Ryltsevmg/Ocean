@@ -1,0 +1,12 @@
+- dialog "Choose a model for the new conversation":
+  - heading "Choose a model for the new conversation" [level=2]
+  - button "Cancel"
+  - paragraph: The history is copied; the original stays unchanged. Nothing runs until you send a message.
+  - group "Model":
+    - text: Model
+    - radio "DeepSeek / DeepSeek-V4-Flash"
+    - text: DeepSeek / DeepSeek-V4-Flash
+    - radio "DeepSeek / DeepSeek-V4-Flash-Vision-Exp"
+    - text: DeepSeek / DeepSeek-V4-Flash-Vision-Exp
+  - button "Cancel"
+  - button "Create conversation" [disabled]

@@ -1,0 +1,3 @@
+- name: '@ocean/ocean-session'
+- name: '@ocean/ocean-session-projection'
+- name: './legacy-plugin.ts'

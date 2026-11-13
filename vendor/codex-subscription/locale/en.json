@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Ocean Codex",
+    "description": "Ocean Codex includes sign-in, models and quota. Search, images, voice, remote control, connectors and runtime installation are unavailable in this build. Connecting uses OpenAI subscription services; this community integration is not endorsed by OpenAI.",
+    "detail": "docs/plugin/DETAIL.md"
+  }
+}

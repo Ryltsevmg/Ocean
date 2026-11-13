@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/util/official-bundles/README.md
+/:
+  en: 6ef5705aaf6fee34
+  zh: e587b9572fc644bf
+/ocean-ocean-official-bundles:
+  en: 8cd7b67e8a273ae5
+  zh: 748cb1c7e1c2ad7e
+/ocean-ocean-official-bundles/summary:
+  en: adc38b02f9e94426
+  zh: e597d4ab771125d6
+/ocean-ocean-official-bundles/table-of-contents:
+  en: 80b31a934611cb4a
+  zh: 05f3f7f9cb2fd881
+/ocean-ocean-official-bundles/use-this-package:
+  en: 1cb89d16a6de115c
+  zh: 75925ae7a16278ad
+/ocean-ocean-official-bundles/use-this-package/profile-templates:
+  en: 60ef21314c76c3ec
+  zh: f769091957235e12
+/ocean-ocean-official-bundles/use-this-package/optional-and-retired-bundles:
+  en: 8d94e2b44efb9c1d
+  zh: c049a19e471d188b
+/ocean-ocean-official-bundles/use-this-package/plugin-manager-lists:
+  en: 27c22abdfff69a41
+  zh: e60d828cdb75c263
+/ocean-ocean-official-bundles/use-this-package/on-demand-bundles:
+  en: 6ba39ba5bfefec79
+  zh: 788a71b5b6f75404
+/ocean-ocean-official-bundles/understand-the-implementation:
+  en: 3fb2b58db529d8be
+  zh: 46064459a23d458d
+/ocean-ocean-official-bundles/understand-the-implementation/source-map:
+  en: bbd3b4f82e6349d9
+  zh: f1e056d14620519d
+/ocean-ocean-official-bundles/further-exploration:
+  en: 69d1fe2e37ad9419
+  zh: d6358dd0ce7a5bdf
+/ocean-ocean-official-bundles/known-limitations-and-deferred-work:
+  en: 6631976cc7404166
+  zh: edb2094b17bc4009
+/ocean-ocean-official-bundles/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

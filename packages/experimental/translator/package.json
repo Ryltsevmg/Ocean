@@ -1,0 +1,73 @@
+{
+  "name": "@ocean/ocean-experimental-translator",
+  "description": "Machine translation with reusable Session results",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/translator"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-launch-environment": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-launch-environment": "workspace:*",
+    "@ocean/ocean-llm-deepseek": "workspace:*",
+    "@ocean/ocean-llm-deepseek-api-key": "workspace:*",
+    "@ocean/ocean-llm-deepseek-account": "workspace:*",
+    "@ocean/ocean-deepseek-account": "workspace:*",
+    "@ocean/ocean-deepseek-llm-api-extensions": "workspace:*",
+    "@ocean/ocean-session-log-deepseek": "workspace:*",
+    "@ocean/ocean-session-query-sqlite": "workspace:*"
+  }
+}

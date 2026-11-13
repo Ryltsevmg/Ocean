@@ -1,0 +1,62 @@
+{
+  "name": "@ocean/ocean-jobs",
+  "description": "Background job registry (ctx.jobs) for the Ocean — shared ids, owner isolation, polling, cancellation, and completion listeners for long-running tool work",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/jobs/jobs"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./brand": {
+      "types": "./lib/types/brand.d.ts",
+      "default": "./lib/types/brand.js"
+    },
+    "./view": {
+      "types": "./lib/types/view.d.ts",
+      "default": "./lib/types/view.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-error": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "peerDependenciesMeta": {
+    "@ocean/ocean-workspace": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-error": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

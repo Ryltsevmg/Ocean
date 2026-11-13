@@ -1,0 +1,67 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/compaction/compaction-tool-result-pruner/README.md
+/:
+  en: 9ed7a84c51988fdb
+  zh: 4df60a349c2be7dc
+/ocean-ocean-compaction-tool-result-pruner:
+  en: 8d97e0adba9e6f95
+  zh: 90bd795bcd6d0e94
+/ocean-ocean-compaction-tool-result-pruner/summary:
+  en: a711510ce8293003
+  zh: 0150d10c05bc2e59
+/ocean-ocean-compaction-tool-result-pruner/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-compaction-tool-result-pruner/use-this-package:
+  en: 03aed6a1e84dad5f
+  zh: e9a62ff6294041a6
+/ocean-ocean-compaction-tool-result-pruner/use-this-package/smallest-working-composition:
+  en: 55eadf840a54d2f8
+  zh: cc6bf82f58058c7b
+/ocean-ocean-compaction-tool-result-pruner/use-this-package/what-gets-trimmed:
+  en: a5cb5c94edcd91e3
+  zh: ed95adc91d11bbda
+/ocean-ocean-compaction-tool-result-pruner/use-this-package/setting-the-size-limits:
+  en: adf7f624f7326336
+  zh: fb62e3c0cc59a554
+/ocean-ocean-compaction-tool-result-pruner/use-this-package/when-trimming-runs:
+  en: d72e0074faebe148
+  zh: dfb484a385a7ebbf
+/ocean-ocean-compaction-tool-result-pruner/understand-the-implementation:
+  en: 57aaa53880042873
+  zh: 667f54624411c37d
+/ocean-ocean-compaction-tool-result-pruner/understand-the-implementation/design-philosophy:
+  en: 5adff8207c6294e0
+  zh: ccba42d804989abb
+/ocean-ocean-compaction-tool-result-pruner/understand-the-implementation/pruning-mechanics:
+  en: 9813749e4f016897
+  zh: f2b2b5d6e5e8977a
+/ocean-ocean-compaction-tool-result-pruner/understand-the-implementation/source-map:
+  en: 4544e91902960a0e
+  zh: 0b07cb7e3d96267b
+/ocean-ocean-compaction-tool-result-pruner/further-exploration:
+  en: 314426af37515237
+  zh: 75d0d1a7dd01672e
+/ocean-ocean-compaction-tool-result-pruner/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-compaction-tool-result-pruner/model-experience/pruned-tool-result:
+  en: 0b0dfb7ec1bf906f
+  zh: 68f70bde796751cd
+/ocean-ocean-compaction-tool-result-pruner/model-experience/pruned-tool-result/what-the-model-sees:
+  en: 8514b5a6586bd65d
+  zh: 2a0648bea6cb81b6
+/ocean-ocean-compaction-tool-result-pruner/model-experience/pruned-tool-result/token-effect:
+  en: 1b11d405468e8d5d
+  zh: 06dc9aef281c776d
+/ocean-ocean-compaction-tool-result-pruner/model-experience/pruned-tool-result/kv-cache-effect:
+  en: aac7de507412ba39
+  zh: bdd8f391ad9c9a81
+/ocean-ocean-compaction-tool-result-pruner/known-limitations-and-deferred-work:
+  en: 2a7be98dc032e9bc
+  zh: d6710b1130722d12
+/ocean-ocean-compaction-tool-result-pruner/known-limitations-and-deferred-work/dev-note:
+  en: 2bf948d450eaebcb
+  zh: b7effff9e6dd58ff

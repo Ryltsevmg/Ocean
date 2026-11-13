@@ -1,0 +1,39 @@
+# Minimal tool-pwsh composition: real app boot path, real pwsh executor, real
+# foreground + background tool calls; driven by the package's loader.spec.ts.
+- id: system-prompt
+  name: '@ocean/ocean-system-prompt'
+
+- id: fs
+  name: '@ocean/ocean-fs-local'
+
+- id: session-projections
+  name: '@ocean/ocean-session-projection'
+
+- id: working-directory
+  name: '@ocean/ocean-working-directory'
+
+- id: tools
+  name: '@ocean/ocean-tools'
+
+- id: tool-executor-native
+  name: '@ocean/ocean-tool-executor-native'
+
+- id: subprocess
+  name: '@ocean/ocean-subprocess-local'
+
+- id: bash
+  name: '@ocean/ocean-pwsh-local'
+  config:
+    graceMs: 200
+
+- id: shell-env
+  name: '@ocean/ocean-shell-env'
+
+- id: tasks
+  name: '@ocean/ocean-jobs-local'
+
+- id: tool-jobs
+  name: '@ocean/ocean-tool-jobs'
+
+- id: tool-pwsh
+  name: '@ocean/ocean-tool-pwsh'

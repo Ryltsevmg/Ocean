@@ -1,0 +1,21 @@
+# Exercise the model-facing LSP tool through the shipped Loader entry path.
+# The scenario workspace supplies the deterministic stdio server used by this test composition.
+- insert:
+    - id: lsp
+      name: '@ocean/ocean-lsp'
+    - id: lsp-stdio
+      name: '@ocean/ocean-lsp-stdio'
+      config:
+        servers:
+          fixture:
+            command: !!js process.execPath
+            args: ['./lsp-server.mjs']
+            extensionToLanguage:
+              '.ts': typescript
+    - id: tool-lsp
+      name: '@ocean/ocean-tool-lsp'
+      config:
+        maxLocations: 1
+
+- id: timeout-policy
+  name: '@ocean/ocean-tool-call-timeout-policy'

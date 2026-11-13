@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.1/agent-instructions-chain-budgets/guide.md
+/:
+  en: 5b54c611d5154911
+  zh: 9e6a965addf6ed88
+/size-maxbytes-of-ocean-ocean-agent-instructions-per-instruction-chain:
+  en: cebb88a4fc79a716
+  zh: 1fa2f8ba07f096d5
+/size-maxbytes-of-ocean-ocean-agent-instructions-per-instruction-chain/change:
+  en: f59ff61103a0e694
+  zh: 4a2e1fe0882ba772
+/size-maxbytes-of-ocean-ocean-agent-instructions-per-instruction-chain/migration:
+  en: a26569c412f73a74
+  zh: 010a176ab6a80a4b

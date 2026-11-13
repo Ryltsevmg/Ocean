@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Utilisation de l'ordinateur",
+    "description": "Contrôlez les applications autorisées sur macOS, Windows et Linux. Linux prend en charge les contrôles AT-SPI, mais pas les captures ni la saisie globale par souris ou clavier. Configuration requise.",
+    "detail": "docs/DETAIL.md"
+  }
+}

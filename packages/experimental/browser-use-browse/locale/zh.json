@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "浏览器控制 (browse)",
+    "description": "在已配对的 Chrome 中控制代理专属标签页。启用此包不会连接浏览器，需要单独配置。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

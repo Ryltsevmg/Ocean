@@ -1,0 +1,63 @@
+{
+  "name": "@ocean/ocean-webhook-github",
+  "description": "Signed GitHub HTTP webhook adapter for the Ocean webhook runtime",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/webhook-github"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json",
+    "./examples/*": "./examples/*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "examples/github-review/cordis.yml",
+    "examples/github-review/github-ready-review-rule.mjs",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-host-webserver": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-webhook": "workspace:*"
+  },
+  "dependencies": {
+    "@ocean/ocean-util-values": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@octokit/webhooks": "^14.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-host-webserver": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-webhook": "workspace:*"
+  }
+}

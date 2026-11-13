@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/llm/llm/README.md
+/:
+  en: 860509fb08c860f4
+  zh: b2c4448e8afc1f12
+/ocean-ocean-llm:
+  en: 0264ea301365d54f
+  zh: 4795ca555078c61d
+/ocean-ocean-llm/summary:
+  en: f1822dcf633500c2
+  zh: acc035104e73fccd
+/ocean-ocean-llm/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-llm/use-this-package:
+  en: b8fbcecd62f6cad0
+  zh: d6eb81611ef0f3c5
+/ocean-ocean-llm/use-this-package/when-to-choose-it:
+  en: c3ecb5a1421f27db
+  zh: 4bbd3c0e513845e1
+/ocean-ocean-llm/use-this-package/minimal-composition:
+  en: 5a229502c3da75f0
+  zh: b087503df8519bc6
+/ocean-ocean-llm/use-this-package/what-you-can-do:
+  en: dc61eb86585f6e0d
+  zh: 9c0d6b240dfd2cda
+/ocean-ocean-llm/use-this-package/failures-and-recovery:
+  en: 47f4dab3c377a4cd
+  zh: 49ac1c366de19136
+/ocean-ocean-llm/understand-the-implementation:
+  en: 9630d7e26193a512
+  zh: 94222c2a487c4b8c
+/ocean-ocean-llm/understand-the-implementation/design-philosophy:
+  en: 12d0444c18a397c7
+  zh: 9d4a5468b4bb7fcd
+/ocean-ocean-llm/understand-the-implementation/source-map:
+  en: ae1618577f4e8364
+  zh: a6e8ab1563c08dfb
+/ocean-ocean-llm/understand-the-implementation/main-flow:
+  en: e879ad5874d5ec9a
+  zh: ada25fd618e14bc4
+/ocean-ocean-llm/understand-the-implementation/invariants:
+  en: 0163a050239248e5
+  zh: 885c95bedcbe2ff4
+/ocean-ocean-llm/further-exploration:
+  en: 10d2da13fed5c7d5
+  zh: 366a2bac39e242ac
+/ocean-ocean-llm/model-experience:
+  en: fa5677003ad6bc0a
+  zh: ba33cfc860d9c37c
+/ocean-ocean-llm/model-experience/kv-cache-effect:
+  en: a81634136baef72f
+  zh: b92dda883986b0e1
+/ocean-ocean-llm/known-limitations-and-deferred-work:
+  en: 44a713b30bc2a109
+  zh: bb09bdaa71b3e880
+/ocean-ocean-llm/known-limitations-and-deferred-work/dev-note:
+  en: 6d142467a0ab0741
+  zh: e1e14870b930186c
+/ocean-ocean-llm/known-limitations-and-deferred-work/dev-note/open-items:
+  en: 6b1a7e903e13ee21
+  zh: bb62f2b1cc484bd5

@@ -1,0 +1,86 @@
+/* Ocean.pen native design: shared geometry and semantic palette. */
+body,
+body[data-ds-dark-theme] {
+  --dsw-corner-shape: round;
+  --dsw-alias-bg-sidebar: #edf2f7;
+  --dsw-alias-bg-field: #f2f6fa;
+  --dsw-alias-bg-selected: #dce8f3;
+  --dsw-alias-bg-module-platform: var(--dsw-alias-bg-field);
+  --dsw-alias-label-disabled: #667787;
+  --dsw-alias-bg-disabled: #e6ecf2;
+  --dsw-alias-brand-primary: #1766bc;
+  --dsw-alias-brand-text: #1766bc;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: #2679d8;
+  --dsw-alias-button-primary-fill: #1766bc;
+  --dsw-alias-button-primary-hover: #2679d8;
+  --dsw-alias-label-primary-foreground: #ffffff;
+  --dsw-alias-state-business-primary: #1766bc;
+  --dsw-alias-link: #1766bc;
+  --dsw-specific-sidebar-fill: var(--dsw-alias-bg-sidebar);
+  --dsw-specific-sidebar-nav-item-active: var(--dsw-alias-bg-selected);
+  --dsw-specific-sidebar-nav-item-active-accent: var(--dsw-alias-bg-selected);
+  --dsw-specific-sidebar-glass-fill: var(--dsw-alias-bg-sidebar);
+  --dsw-specific-sidebar-tint: var(--dsw-alias-bg-sidebar);
+  --dsw-specific-sidebar-wash-top: transparent;
+  --dsw-specific-sidebar-wash-bottom: transparent;
+  --dsw-specific-input-major: var(--dsw-alias-bg-field);
+  --dsw-specific-selector: var(--dsw-alias-bg-field);
+  --dsw-menu-surface-fill: var(--dsw-alias-bg-base);
+  --dsw-menu-backdrop-filter: none;
+  --dsw-specific-menu: var(--dsw-alias-bg-base);
+  --dsw-alias-bg-mask-1: #000000a8;
+  --dsw-mask-blur: none;
+  font-size: 13px;
+}
+
+body[data-ds-dark-theme] {
+  --dsw-alias-bg-base: #0b111c;
+  --dsw-alias-bg-layer-1: #101925;
+  --dsw-alias-bg-layer-2: #152233;
+  --dsw-alias-bg-layer-3: #1b2939;
+  --dsw-alias-bg-sidebar: #101925;
+  --dsw-alias-bg-field: #152233;
+  --dsw-alias-bg-selected: #243648;
+  --dsw-alias-bg-disabled: #1b2939;
+  --dsw-alias-label-disabled: #7d8893;
+  --dsw-alias-label-primary: #eff4f8;
+  --dsw-alias-label-secondary: #9caab6;
+  --dsw-alias-label-tertiary: #9caab6;
+  --dsw-alias-label-caption: #9caab6;
+  --dsw-alias-label-dimmed: #7d8893;
+  --dsw-alias-label-primary-foreground: #ffffff;
+  --dsw-alias-border-l1: #1e242b;
+  --dsw-alias-border-l2: #26384b;
+  --dsw-alias-border-l2-darkmode-thin: #26384b;
+  --dsw-alias-border-l3: #3d4854;
+  --dsw-alias-border-l4: #3d4854;
+  --dsw-alias-border-selected: #2679d8;
+  --dsw-alias-interactive-bg-hover: #1c2b3a;
+  --dsw-alias-interactive-bg-hover-solid: #1c2b3a;
+  --dsw-alias-interactive-bg-active: #243648;
+  --dsw-alias-card-fill: #152233;
+  --dsw-alias-card-fill-hover: #1c2b3a;
+  --dsw-alias-bg-overlay: #152233;
+  --dsw-alias-state-business-primary: #6fb3f2;
+  --dsw-alias-link: #6fb3f2;
+  --dsw-alias-state-success-primary: #4fbf96;
+  --dsw-alias-state-error-primary: #f0736f;
+  --dsw-alias-state-warn-primary: #e0a75c;
+  --dsw-alias-state-warn-label: #e0a75c;
+  --dsw-specific-bubble: #152233;
+  --dsw-specific-bubble-highlight: #243648;
+  --dsw-alias-markdown-code-block: #101925;
+  --dsw-alias-markdown-code-block-banner: #152233;
+  --dsw-alias-markdown-inline-code: #152233;
+}
+
+/* Platform-owned material rules must retain the native opaque Ocean menu. */
+html[data-platform] body,
+html[data-platform] body[data-ds-dark-theme] {
+  --dsw-menu-surface-fill: var(--dsw-alias-bg-base);
+  --dsw-specific-menu: var(--dsw-alias-bg-base);
+  --dsw-specific-sidebar-glass-fill: var(--dsw-alias-bg-sidebar);
+  --dsw-specific-sidebar-tint: var(--dsw-alias-bg-sidebar);
+  --dsw-specific-sidebar-wash-top: transparent;
+  --dsw-specific-sidebar-wash-bottom: transparent;
+}

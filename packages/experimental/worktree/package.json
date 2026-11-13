@@ -1,0 +1,82 @@
+{
+  "name": "@ocean/ocean-experimental-worktree",
+  "description": "Creates a named Git worktree and changes the calling Session working directory",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/worktree"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@ocean/ocean-timeout": "workspace:*",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session-projection-cache": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session-projection-cache": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-storage": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*"
+  }
+}

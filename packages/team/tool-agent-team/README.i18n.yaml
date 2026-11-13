@@ -1,0 +1,85 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/team/tool-agent-team/README.md
+/:
+  en: ca1947ba4777c2a0
+  zh: bed18854b761aae4
+/ocean-ocean-tool-agent-team:
+  en: 059f7eb4b92727dd
+  zh: a09d0622b70d95ee
+/ocean-ocean-tool-agent-team/summary:
+  en: 3cfb2bbd5dd3b89e
+  zh: 070007c2ee2cec11
+/ocean-ocean-tool-agent-team/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-tool-agent-team/use-this-package:
+  en: f68ff2b5bff78176
+  zh: 0f4af045595bdffc
+/ocean-ocean-tool-agent-team/use-this-package/when-to-choose-it:
+  en: 6b0708f9c8286deb
+  zh: 44b3384c6b52af09
+/ocean-ocean-tool-agent-team/use-this-package/smallest-working-example:
+  en: 2158f8c3266b36c3
+  zh: b21bc4f814ca488b
+/ocean-ocean-tool-agent-team/use-this-package/what-the-model-can-do:
+  en: fc538392aac785b6
+  zh: 69690cd803cdb0c1
+/ocean-ocean-tool-agent-team/use-this-package/what-success-and-failure-look-like:
+  en: bf1eb0e693610f5b
+  zh: 2b29e5cf63623909
+/ocean-ocean-tool-agent-team/understand-the-implementation:
+  en: 3952eb1d9de1f988
+  zh: 789d51b88f41b710
+/ocean-ocean-tool-agent-team/understand-the-implementation/design-philosophy:
+  en: 3cbed45999a5e668
+  zh: 3f3b4854d65154be
+/ocean-ocean-tool-agent-team/understand-the-implementation/source-map:
+  en: 3b906bae9ec19393
+  zh: 42c8dd145c704cb3
+/ocean-ocean-tool-agent-team/understand-the-implementation/policy-and-tools:
+  en: 79c000a90c6c05a4
+  zh: 610e2cebc2431674
+/ocean-ocean-tool-agent-team/understand-the-implementation/scoped-registration-and-teardown:
+  en: ee8db166c0bc8a9b
+  zh: 6bfe192220e931a6
+/ocean-ocean-tool-agent-team/further-exploration:
+  en: bd1e8422b7432eaa
+  zh: 03b5fc667e7ea1b6
+/ocean-ocean-tool-agent-team/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-tool-agent-team/model-experience/team-policy-system-prompt:
+  en: 8757dc3caca9e4e2
+  zh: fd0b7535a1b24189
+/ocean-ocean-tool-agent-team/model-experience/team-policy-system-prompt/what-the-model-sees:
+  en: 25079a70c9a3ed87
+  zh: 34301e390669a887
+/ocean-ocean-tool-agent-team/model-experience/team-policy-system-prompt/what-the-model-sees/team-policy:
+  en: 824ebdbe434d7b6c
+  zh: 6a442dbca7cf3625
+/ocean-ocean-tool-agent-team/model-experience/team-policy-system-prompt/token-effect:
+  en: 7e2583f482a60938
+  zh: d3e68b204cd3d2b3
+/ocean-ocean-tool-agent-team/model-experience/team-policy-system-prompt/kv-cache-effect:
+  en: 6723f8e3f2497338
+  zh: ca68851b279362e1
+/ocean-ocean-tool-agent-team/model-experience/task-tool-schemas:
+  en: d6918434714cf05a
+  zh: eef799d16e0c8f4b
+/ocean-ocean-tool-agent-team/model-experience/task-tool-schemas/what-the-model-sees:
+  en: 7a3a2fd0ef4cac07
+  zh: 5409f67dfaedc034
+/ocean-ocean-tool-agent-team/model-experience/task-tool-schemas/token-effect:
+  en: 36eef5d7c07ed17c
+  zh: 1e85f1118a5a8277
+/ocean-ocean-tool-agent-team/model-experience/task-tool-schemas/kv-cache-effect:
+  en: 41bfcd6adb8058f5
+  zh: 73363ee21021a96a
+/ocean-ocean-tool-agent-team/known-limitations-and-deferred-work:
+  en: 863e528107d3b510
+  zh: bd0551f1f7e4607f
+/ocean-ocean-tool-agent-team/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

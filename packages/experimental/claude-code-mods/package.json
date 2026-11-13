@@ -1,0 +1,109 @@
+{
+  "name": "@ocean/ocean-experimental-claude-code-mods",
+  "description": "Experimental bridge: load Claude Code mods (hooks modules) and run their hook chains on Ocean extension points",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/claude-code-mods"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./testing": {
+      "types": "./lib/types/testing.d.ts",
+      "default": "./lib/types/testing.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./examples/*": "./examples/*",
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-storage": "workspace:*",
+    "@ocean/ocean-storage-domain": "workspace:*",
+    "@ocean/ocean-storage-json": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*"
+  }
+}

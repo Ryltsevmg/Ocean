@@ -1,0 +1,83 @@
+{
+  "name": "@ocean/ocean-sdk-minimal",
+  "description": "The standalone minimal SDK profile bundle: JSON-RPC, one DeepSeek adapter, persistent shell, and JSONL sessions",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/bundle/sdk-minimal"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis-plugin-timer": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-attachment-local": "workspace:*",
+    "@ocean/ocean-compaction-basic": "workspace:*",
+    "@ocean/ocean-compaction-image-offload": "workspace:*",
+    "@ocean/ocean-deepseek-llm-api-extensions": "workspace:*",
+    "@ocean/ocean-jobs-local": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-deepseek-api-key": "workspace:*",
+    "@ocean/ocean-llm-retry": "workspace:*",
+    "@ocean/ocean-mcp-resources": "workspace:*",
+    "@ocean/ocean-plugin-package-inventory-deepseek": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-sdk-app": "workspace:*",
+    "@ocean/ocean-sdk-jsonrpc-server": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-checkpoint-policy": "workspace:*",
+    "@ocean/ocean-session-log-deepseek": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session-title": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-terminal": "workspace:*",
+    "@ocean/ocean-terminal-bash": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-tool-bash-persistent": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-fs": "workspace:*",
+    "@ocean/ocean-tool-pwsh-persistent": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@ocean/ocean-tool-working-directory": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

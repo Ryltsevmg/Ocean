@@ -1,0 +1,212 @@
+import { recoveryCall } from './client-recovery.js'
+import { useEffect, useRef, useState } from 'react'
+import { Button } from './client-primitives.jsx'
+import { CHANNEL, unwrap, accessFailureText, usageFailureText, fill, uiLocale, percent, windowLabel, validDate, formatQuotaForecast, creditAmount, usePreferenceSnapshot } from './client-shared.js'
+import { creditExpiryStatus, creditExpiryDateText } from './credit-expiry.js'
+import { REQUEST_BLOCKED, isAccessFailureMessage } from './http-failure.js'
+import { useQuotaUsage } from './client-quota.jsx'
+import { quotaReadingIsStale } from './quota-forecast-view.js'
+import { QUICK_QUOTA_MODE_FORECAST } from './settings-contract.js'
+import { UsageHistory } from './client-usage-history.jsx'
+import { UsageOverview } from './client-usage-overview.jsx'
+
+const count = value => Number(value).toLocaleString(uiLocale())
+// The API reports credits as a long decimal string; two decimals are enough to read.
+
+export function CreditExpiry({ credits, t }) {
+  const date = validDate(credits.expiresAt)
+  if (date === undefined || credits.unlimited) return null
+  const status = creditExpiryStatus({ expiresAt: credits.expiresAt })
+  const estimate = credits.expirySource === 'estimate'
+  return <div className="codexSubscriptionCreditExpiry" data-soon={status.soon} role="status">
+    <p>{fill(t(status.daysLeft === 0 ? 'creditsExpiredToday' : 'creditsExpires'), { date: creditExpiryDateText(credits.expiresAt, credits.expirySource, uiLocale()), days: status.daysLeft })}{estimate ? ` ${t('creditsExpiryEstimate')}` : ''}</p>
+  </div>
+}
+export function ResetTime({ resetsAt, t }) {
+  const date = Number.isSafeInteger(resetsAt) ? validDate(resetsAt * 1_000) : undefined
+  if (date === undefined) return <span>{t('resetUnknown')}</span>
+  const value = date.toLocaleString(uiLocale(), {
+    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+  return <time dateTime={date.toISOString()} title={date.toLocaleString(uiLocale())}>{fill(t('resets'), { value })}</time>
+}
+
+export function ResetCreditExpiry({ expiresAt, t }) {
+  const date = validDate(expiresAt)
+  return <span className="codexSubscriptionResetExpiry">{date === undefined ? t('resetCreditExpiryUnknown') : <time dateTime={date.toISOString()} title={date.toLocaleString(uiLocale())}>{fill(t('resetCreditExpires'), { value: date.toLocaleDateString(uiLocale(), { month: 'long', day: 'numeric' }) })}</time>}</span>
+}
+
+export function ResetCreditList({ rpc, t, count, nextExpiresAt, initialCredits, refreshKey, hasExhaustedQuota, onConsumed }) {
+  const fallbackCredits = initialCredits ?? (nextExpiresAt === undefined ? [] : [{ expiresAt: nextExpiresAt }])
+  const [credits, setCredits] = useState(fallbackCredits)
+  const [state, setState] = useState('loading')
+
+  useEffect(() => {
+    let live = true
+    setState('loading')
+    void rpc.call(CHANNEL, 'reset-credit/inspect', {}).then(unwrap).then(value => {
+      if (!live) return
+      setCredits(Array.isArray(value.credits) ? value.credits : [])
+      setState('ready')
+    }).catch(error => {
+      if (!live) return
+      if (['No quota reset is available', 'No usable quota reset is available'].includes(error?.message)) setCredits([])
+      setState('error')
+    })
+    return () => { live = false }
+  }, [rpc, count, refreshKey])
+
+  return <div className="codexSubscriptionResetBalance" aria-label={t('resetCredits')}>
+    {credits.length === 0 ? <p className="codexSubscriptionCreditNote" role="status">{state === 'loading' ? t('resetCreditExpiryLoading') : t('resetCreditExpiryFailed')}</p> : credits.map((credit, index) => <ResetCreditControl key={credit.ref ?? `pending-${index}`} rpc={rpc} t={t} credit={credit} hasExhaustedQuota={hasExhaustedQuota} onConsumed={onConsumed} />)}
+    {state === 'error' ? <p className="codexSubscriptionCreditNote" role="status">{t('resetCreditExpiryFailed')}</p> : null}
+  </div>
+}
+
+export function ResetCreditControl({ rpc, t, credit, hasExhaustedQuota, onConsumed }) {
+  const [challenge, setChallenge] = useState()
+  const [resetBusy, setResetBusy] = useState(false)
+  const [resetAcknowledged, setResetAcknowledged] = useState(false)
+  const [resetCountdown, setResetCountdown] = useState(0)
+  const [resetError, setResetError] = useState()
+  const [resetResult, setResetResult] = useState()
+
+  useEffect(() => {
+    if (challenge === undefined) { setResetCountdown(0); return undefined }
+    const update = () => setResetCountdown(Math.max(0, Math.ceil((challenge.readyAt - Date.now()) / 1_000)))
+    update()
+    const timer = window.setInterval(update, 250)
+    return () => window.clearInterval(timer)
+  }, [challenge])
+
+  const prepareReset = () => {
+    if (resetBusy || typeof credit.ref !== 'string') return
+    setResetBusy(true); setResetError(undefined); setResetResult(undefined)
+    void rpc.call(CHANNEL, 'reset-credit/prepare', { creditRef: credit.ref }).then(unwrap)
+      .then(next => { setChallenge(next); setResetAcknowledged(false) })
+      .catch(error => setResetError(resetCreditErrorText(error, t)))
+      .finally(() => setResetBusy(false))
+  }
+  const cancelReset = () => {
+    if (resetBusy) return
+    setChallenge(undefined); setResetAcknowledged(false); setResetError(undefined)
+  }
+  const resetReady = challenge !== undefined
+    && resetAcknowledged && resetCountdown === 0
+  const consumeReset = () => {
+    if (resetBusy) return
+    if (!resetReady) return
+    setResetBusy(true); setResetError(undefined); setResetResult(undefined)
+    void rpc.call(CHANNEL, 'reset-credit/consume', {
+      challengeId: challenge.challengeId,
+      acknowledged: resetAcknowledged,
+    }).then(unwrap).then(result => {
+      setChallenge(undefined); setResetAcknowledged(false)
+      const message = result.code === 'reset' ? t('resetSuccess')
+        : result.code === 'nothing_to_reset' ? t('resetNothing')
+          : result.code === 'no_credit' ? t('resetNoCredit') : t('resetAlready')
+      setResetResult(message)
+      onConsumed()
+    }).catch(error => setResetError(resetCreditErrorText(error, t))).finally(() => setResetBusy(false))
+  }
+
+  return <div className="codexSubscriptionResetCard">
+    {challenge === undefined ? <>
+      <div className="codexSubscriptionResetMeta"><strong>{credit.name === undefined ? t('resetCreditDefaultName') : /^full reset$/iu.test(credit.name) ? t('resetFull') : credit.name}</strong><ResetCreditExpiry expiresAt={credit.expiresAt} t={t} /></div><div className="codexSubscriptionActions"><Button className="codexSubscriptionResetUse" type="button" variant="outline" disabled={resetBusy || typeof credit.ref !== 'string'} aria-busy={resetBusy} onClick={prepareReset}>{resetBusy ? t('resetPreparing') : t('resetUse')}</Button></div>
+    </> : <div className="codexSubscriptionResetFlow" role="group" aria-labelledby="codex-reset-confirm-title">
+      <h4 id="codex-reset-confirm-title">{challenge.title ?? t('resetConfirmTitle')}</h4>
+      {challenge.description ? <p className="codexSubscriptionResetWarning">{challenge.description}</p> : null}
+      <ResetCreditExpiry expiresAt={challenge.creditExpiresAt} t={t} />
+      <p className="codexSubscriptionResetWarning">{t(hasExhaustedQuota ? 'resetWarning' : 'resetEarlyWarning')}</p>
+      <label className="codexSubscriptionResetCheck"><input type="checkbox" checked={resetAcknowledged} disabled={resetBusy} onChange={event => setResetAcknowledged(event.target.checked)} /><span>{t('resetAcknowledge')}</span></label>
+      {resetCountdown > 0 ? <p className="codexSubscriptionCreditNote" role="status">{fill(t('resetWait'), { count: resetCountdown })}</p> : null}
+      <div className="codexSubscriptionActions"><Button type="button" variant="outline" disabled={resetBusy} onClick={cancelReset}>{t('cancel')}</Button><Button className="codexSubscriptionResetFinal" type="button" variant="outline" disabled={!resetReady || resetBusy} aria-busy={resetBusy} onClick={consumeReset}>{resetBusy ? t('resetUsing') : t('resetFinal')}</Button></div>
+    </div>}
+    {resetResult ? <p className="codexSubscriptionResetResult" role="status">{resetResult}</p> : null}
+    {resetError ? <p className="codexSubscriptionError" role="alert">{resetError || t('resetFailed')}</p> : null}
+  </div>
+}
+
+export function resetCreditErrorText(error, t) {
+  if (isAccessFailureMessage(error?.message)) return accessFailureText(error.message, t)
+  const key = new Map([
+    ['ChatGPT subscription is not signed in', 'resetRenewLogin'],
+    ['ChatGPT sign-in needs to be renewed', 'resetRenewLogin'],
+    [REQUEST_BLOCKED, 'resetBlocked'],
+    ['No quota reset is available', 'resetNoCredit'],
+    ['No usable quota reset is available', 'resetNoCredit'],
+    ['The available quota reset expires too soon', 'resetExpired'],
+    ['This quota reset confirmation is no longer valid', 'resetExpired'],
+    ['This quota reset is already in progress', 'resetInProgress'],
+    ['Wait before confirming this quota reset', 'resetTooEarly'],
+    ['You must acknowledge that this may consume one quota reset', 'resetAcknowledgeRequired'],
+    ['The signed-in ChatGPT account changed', 'resetAccountChanged'],
+    ['Quota reset result is uncertain; retry this confirmation to check the same request', 'resetUncertain'],
+  ]).get(error instanceof Error ? error.message : '')
+  return t(key ?? 'resetFailed')
+}
+
+export function UsageCard({ rpc, t, signedIn, resetKey, preference }) {
+  const { usage, busy, error, now, refresh } = useQuotaUsage(rpc, signedIn)
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
+  const preferenceSnapshot = usePreferenceSnapshot(preference)
+  const forecastMode = preferenceSnapshot.quickQuotaMode === QUICK_QUOTA_MODE_FORECAST
+  const load = force => {
+    if (!signedIn) return
+    if (force) setHistoryRefreshKey(value => value + 1)
+    void refresh(force).catch(() => {})
+  }
+  const usageRefreshGeneration = usage?.fetchedAt ?? 0
+  const visibleUsage = signedIn ? usage : undefined
+  const limits = visibleUsage?.rateLimits ?? []
+  const exhausted = limits.some(limit => limit.id !== 'code_review'
+    && limit.windows.some(window => window.usedPercent >= 100))
+  const hasUsageDetails = limits.length > 0 || visibleUsage?.chatPass !== undefined || visibleUsage?.credits !== undefined
+    || visibleUsage?.individualLimit !== undefined || visibleUsage?.resetCredits?.availableCount > 0
+  const fetchedAt = typeof visibleUsage?.fetchedAt === 'number' ? validDate(visibleUsage.fetchedAt) : undefined
+  const stale = visibleUsage !== undefined && (
+    quotaReadingIsStale({ fetchedAt: visibleUsage.fetchedAt, now, refreshError: error !== undefined })
+    || limits.some(limit => limit.windows.some(window => quotaReadingIsStale({ resetsAt: window.resetsAt, now })))
+    || visibleUsage.chatPass?.windows.some(window => quotaReadingIsStale({ resetsAt: window.resetsAt, now }))
+  )
+  return <div className="codexSubscriptionCard codexSubscriptionUsageCard">
+    <div className="codexSubscriptionSectionHead">
+      <div className="codexSubscriptionSectionTitle"><h3>{t('usage')}</h3>{fetchedAt === undefined ? null : <time className="codexSubscriptionFreshness" data-stale={stale || undefined} dateTime={fetchedAt.toISOString()}>{fill(t(stale ? 'usageLastKnown' : 'usageUpdated'), { value: fetchedAt.toLocaleString(uiLocale()) })}</time>}</div>
+      <Button className="codexSubscriptionRefresh" type="button" variant="outline" disabled={!signedIn || busy} aria-busy={busy} onClick={() => load(true)}>{busy ? t('refreshing') : t('refresh')}</Button>
+    </div>
+    <div aria-live="polite">
+      {!signedIn ? <p className="codexSubscriptionEmpty">{t('noUsage')}</p> : null}
+      {signedIn && busy && usage === undefined ? <p className="codexSubscriptionEmpty" role="status">{t('usageLoading')}</p> : null}
+      {signedIn && !busy && error === undefined && usage !== undefined && !hasUsageDetails ? <p className="codexSubscriptionEmpty" role="status">{t('usageEmpty')}</p> : null}
+    </div>
+    {error === undefined ? null : <p className="codexSubscriptionError" role="alert">{usageFailureText(error, t)}</p>}
+    {visibleUsage?.spendControlReached === true ? <p className="codexSubscriptionError" role="alert">{t('spendReached')}</p> : null}
+    {limits.length === 0 ? null : <div className="codexSubscriptionLimits">{limits.flatMap(limit => limit.windows.map((window, index) => <div className="codexSubscriptionLimit" key={`${limit.id}-${window.windowSeconds}-${index}`}>
+        <div className="codexSubscriptionLimitTop"><span className="codexSubscriptionLimitLabel">{limit.name ?? limit.id}</span><strong>{percent(window.remainingPercent)}%</strong></div>
+        <progress max="100" value={window.remainingPercent} aria-label={`${limit.name ?? limit.id} ${fill(t('remaining'), { value: percent(window.remainingPercent) })}`} />
+        <div className="codexSubscriptionLimitMeta"><span className="codexSubscriptionLimitPeriod"><span>{windowLabel(window.windowSeconds, t)}</span></span><ResetTime resetsAt={window.resetsAt} t={t} /></div>
+        {forecastMode ? <p className="codexSubscriptionForecast" role="status">{formatQuotaForecast(window.forecast, t, { ...window, fetchedAt: visibleUsage.fetchedAt, now, refreshError: error !== undefined })}</p> : null}
+      </div>))}</div>}
+    {limits.length === 0 ? null : <UsageOverview rpc={rpc} t={t} signedIn={signedIn} resetKey={resetKey} />}
+    {limits.length === 0 ? null : <UsageHistory rpc={rpc} t={t} signedIn={signedIn} resetKey={resetKey} refreshKey={usageRefreshGeneration} forceRefreshKey={historyRefreshKey} />}
+    {visibleUsage?.chatPass === undefined ? null : <div className="codexSubscriptionLimits">{visibleUsage.chatPass.windows.map((window, index) => <div className="codexSubscriptionLimit" key={`chatpass-${window.windowSeconds}-${index}`}>
+        <div className="codexSubscriptionLimitTop"><span className="codexSubscriptionLimitLabel">{t('chatPass')}</span><strong>{percent(window.remainingPercent)}%</strong></div>
+        <progress max="100" value={window.remainingPercent} aria-label={`${t('chatPass')} ${fill(t('remaining'), { value: percent(window.remainingPercent) })}`} />
+        <div className="codexSubscriptionLimitMeta"><span className="codexSubscriptionLimitPeriod"><span>{windowLabel(window.windowSeconds, t)}</span></span><ResetTime resetsAt={window.resetsAt} t={t} /></div>
+      </div>)}</div>}
+    {visibleUsage?.credits === undefined && visibleUsage?.individualLimit === undefined && !(visibleUsage?.resetCredits?.availableCount > 0) ? null : <details className="codexSubscriptionCreditSection codexAdvancedFold codexAdvancedInline">
+      <summary>{t('creditsFoldTitle')}<span>{visibleUsage?.credits ? (visibleUsage.credits.unlimited ? t('unlimited') : visibleUsage.credits.balance == null ? t('unavailable') : `${creditAmount(visibleUsage.credits.balance)} ${t('creditsUnit')}`) : ''}</span></summary>
+      <p className="codexSubscriptionCreditNote">{t('creditsNote')}</p>
+      <div className="codexSubscriptionCreditRows">
+        {visibleUsage?.credits ? <div className="codexSubscriptionCreditBalance"><span>{t('creditsBalance')}</span><strong>{visibleUsage.credits.unlimited ? t('unlimited') : visibleUsage.credits.balance == null ? t('unavailable') : `${creditAmount(visibleUsage.credits.balance)} ${t('creditsUnit')}`}</strong></div> : null}
+        {visibleUsage?.credits ? <CreditExpiry credits={visibleUsage.credits} t={t} /> : null}
+        {visibleUsage?.credits && !visibleUsage.credits.unlimited ? <p className="codexSubscriptionCreditNote">{t('creditsAfterAllowance')}</p> : null}
+        {visibleUsage?.credits?.approxLocalMessages ? <p className="codexSubscriptionCreditNote">{fill(t('creditsMessages'), { local: `${count(visibleUsage.credits.approxLocalMessages[0])}–${count(visibleUsage.credits.approxLocalMessages[1])}`, cloud: visibleUsage.credits.approxCloudMessages ? `${count(visibleUsage.credits.approxCloudMessages[0])}–${count(visibleUsage.credits.approxCloudMessages[1])}` : t('unavailable') })}</p> : null}
+        {visibleUsage?.individualLimit ? <div className="codexSubscriptionSpendLimit">
+          <div className="codexSubscriptionSpendTop"><span className="codexSubscriptionCreditLabel">{t('monthlyCreditLimit')}</span><strong>{fill(t('remaining'), { value: percent(visibleUsage.individualLimit.remainingPercent) })}</strong></div>
+          <progress max="100" value={visibleUsage.individualLimit.remainingPercent} aria-label={`${t('monthlyCreditLimit')} ${fill(t('remaining'), { value: percent(visibleUsage.individualLimit.remainingPercent) })}`} />
+          <div className="codexSubscriptionLimitMeta"><span>{fill(t('creditsUsed'), { used: creditAmount(visibleUsage.individualLimit.used), limit: creditAmount(visibleUsage.individualLimit.limit) })}</span><ResetTime resetsAt={visibleUsage.individualLimit.resetsAt} t={t} /></div>
+        </div> : null}
+      </div>
+    </details>}
+  </div>
+}

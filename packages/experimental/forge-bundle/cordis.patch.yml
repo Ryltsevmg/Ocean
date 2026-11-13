@@ -1,0 +1,13 @@
+- insert:
+    - id: worktree
+      name: '@ocean/ocean-experimental-worktree'
+    - id: tool-worktree
+      name: '@ocean/ocean-experimental-tool-worktree'
+    - id: forge
+      name: '@ocean/ocean-experimental-forge'
+    - id: forge-github
+      name: '@ocean/ocean-experimental-forge-github'
+    - id: forge-session
+      name: '@ocean/ocean-experimental-forge-session'
+    - id: forge-panel
+      name: '@ocean/ocean-experimental-client-ui-forge'

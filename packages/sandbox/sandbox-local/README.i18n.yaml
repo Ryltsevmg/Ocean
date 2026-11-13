@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/sandbox/sandbox-local/README.md
+/:
+  en: f172767891b86bf4
+  zh: e66e1cc8c96cc259
+/ocean-ocean-sandbox-local:
+  en: 4fe9dd05bea20aa6
+  zh: 251b7e32256dccf8
+/ocean-ocean-sandbox-local/summary:
+  en: e8341fe6e38c08f6
+  zh: e38d6ff18fd2b701
+/ocean-ocean-sandbox-local/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-sandbox-local/use-this-package:
+  en: 3759ad594d0a27fb
+  zh: 722010d952b9f87f
+/ocean-ocean-sandbox-local/use-this-package/when-to-choose-it:
+  en: 722ad601000b13c7
+  zh: d2723f3743fe160b
+/ocean-ocean-sandbox-local/use-this-package/minimal-configuration:
+  en: fa8198e30f853cac
+  zh: b6c46ff0d313864e
+/ocean-ocean-sandbox-local/use-this-package/confined-execution-and-enforcement:
+  en: 7282c9ec77fd6f01
+  zh: 10e385a9489105e3
+/ocean-ocean-sandbox-local/use-this-package/failures-and-recovery:
+  en: 3859a87c6122a1bf
+  zh: 55d7be15527f0347
+/ocean-ocean-sandbox-local/understand-the-implementation:
+  en: 15db6ec303151ccc
+  zh: 91f62c1f64192f92
+/ocean-ocean-sandbox-local/understand-the-implementation/runner-selection:
+  en: f0c44248c2ca6acc
+  zh: 554e9f706671d222
+/ocean-ocean-sandbox-local/understand-the-implementation/platform-profiles:
+  en: 23a1c93cc676b16a
+  zh: dea2e535e35e8dc1
+/ocean-ocean-sandbox-local/understand-the-implementation/denial-and-runner-failure-dialects:
+  en: 62adfc9229c656cc
+  zh: 11b1534b6d61e5de
+/ocean-ocean-sandbox-local/understand-the-implementation/source-map:
+  en: 215bb6bac514b8b4
+  zh: 41e7777eea10a480
+/ocean-ocean-sandbox-local/further-exploration:
+  en: 467407ece2340fd4
+  zh: e0024fc6dcec4a14
+/ocean-ocean-sandbox-local/model-experience:
+  en: 40d918676086c7fe
+  zh: d36023a60b28fd58
+/ocean-ocean-sandbox-local/model-experience/kv-cache-effect:
+  en: e290ccc9b3c92c08
+  zh: 469589ac12cdadab
+/ocean-ocean-sandbox-local/known-limitations-and-deferred-work:
+  en: c4fd6fc8acb85d78
+  zh: a0c552115e072418
+/ocean-ocean-sandbox-local/known-limitations-and-deferred-work/dev-note:
+  en: 620ffac670e74f75
+  zh: 34ec391f8636389f
+/ocean-ocean-sandbox-local/known-limitations-and-deferred-work/dev-note/future-environment-coherent-groups:
+  en: 30806aba33067e06
+  zh: 5c417e89d32a8eac

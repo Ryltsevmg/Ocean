@@ -1,0 +1,5 @@
+# Ocean Codex
+
+Ocean Codex inclut la connexion, les modèles et les quotas. Recherche, images, voix, contrôle à distance, connecteurs et installation du runtime ne sont pas disponibles dans cette version. Cette intégration indépendante utilise les services d’abonnement OpenAI sans être approuvée par OpenAI.
+
+[Ocean](https://github.com/Ryltsevmg/Ocean-Chat) · [Upstream source (MIT)](https://github.com/WSL043/dsh-codex-subscription)

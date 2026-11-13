@@ -1,0 +1,56 @@
+{
+  "name": "@ocean/ocean-experimental-ptc-runtime-python",
+  "description": "CPython subprocess implementation of the Ocean PTC execution seam",
+  "version": "0.2.2-rc.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/ptc-runtime-python"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "py/**/*.py",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-ptc-runtime": "workspace:*",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*"
+  },
+  "devDependencies": {
+    "@ocean/ocean-ptc-runtime": "workspace:*",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-session": "workspace:*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Controle do navegador (browse)",
+    "description": "Controle opcional das abas do agente no seu Chrome emparelhado. Ativar este pacote não conecta o navegador; é necessária uma configuração separada.",
+    "detail": "docs/DETAIL.md"
+  }
+}

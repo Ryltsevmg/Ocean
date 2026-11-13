@@ -1,0 +1,63 @@
+{
+  "name": "@ocean/ocean-session-log-deepseek",
+  "description": "Incremental lossless session-log request extension for the official DeepSeek LLM API",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/session/session-log-deepseek"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-deepseek-llm-api-extensions": "workspace:*",
+    "@ocean/ocean-session": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-command-feedback": "workspace:*",
+    "@ocean/ocean-deepseek-llm-api-extensions": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-deepseek": "workspace:*",
+    "@ocean/ocean-llm-deepseek-api-key": "workspace:*",
+    "@ocean/ocean-llm-mock-server": "workspace:*",
+    "@ocean/ocean-message-feedback": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*"
+  }
+}

@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/tool-worktree/README.md
+/:
+  en: 7c7c8316f315eee0
+  zh: dfd3abcef256029e
+/ocean-ocean-experimental-tool-worktree:
+  en: 0ef9506bd3a347cf
+  zh: 28ea4d476c59a3b0
+/ocean-ocean-experimental-tool-worktree/summary:
+  en: 106bccb04bd14134
+  zh: 579b316a56bebbb8
+/ocean-ocean-experimental-tool-worktree/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 2f8a621b991260a1
+/ocean-ocean-experimental-tool-worktree/use-this-package:
+  en: e5e58f135c91c8a9
+  zh: 3770c80534948181
+/ocean-ocean-experimental-tool-worktree/understand-the-implementation:
+  en: c03f875211ab69a8
+  zh: 8f49b82f90a60223
+/ocean-ocean-experimental-tool-worktree/further-exploration:
+  en: 6ec5bb0f5bfbbaa4
+  zh: 45009dd139621d0e
+/ocean-ocean-experimental-tool-worktree/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-experimental-tool-worktree/model-experience/creation-tool:
+  en: 4062fcaa4794bed7
+  zh: b56d35fc675fc430
+/ocean-ocean-experimental-tool-worktree/model-experience/creation-tool/what-the-model-sees:
+  en: 30b031aa6ac47ad4
+  zh: 40fb0f204e4f397b
+/ocean-ocean-experimental-tool-worktree/model-experience/creation-tool/token-effect:
+  en: 6c3f73ba01233a36
+  zh: d64d87a425db4fbd
+/ocean-ocean-experimental-tool-worktree/model-experience/creation-tool/kv-cache-effect:
+  en: 365f8ccedfa61bbb
+  zh: aa328044ba2528b8
+/ocean-ocean-experimental-tool-worktree/known-limitations-and-deferred-work:
+  en: 7cfc071dfc3f9c83
+  zh: f36ae822e801db12
+/ocean-ocean-experimental-tool-worktree/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

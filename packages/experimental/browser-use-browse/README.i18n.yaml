@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/browser-use-browse/README.md
+/:
+  en: 36422a3e1a8e595a
+  zh: 443b174d8d4ac74c
+/ocean-ocean-browser-use-browse:
+  en: 81d1210f6b79be57
+  zh: a9353b1ac0e60fc7
+/ocean-ocean-browser-use-browse/summary:
+  en: f4b56cda5354889f
+  zh: 71e01445754c583f
+/ocean-ocean-browser-use-browse/table-of-contents:
+  en: ec046f53d7842a16
+  zh: 12a9213b9aba64b4
+/ocean-ocean-browser-use-browse/use-this-package:
+  en: 23f34594c4499927
+  zh: 0d735cc11b72ac1c
+/ocean-ocean-browser-use-browse/tools-and-lifecycle:
+  en: d89ae798ed0a0225
+  zh: b148972a8c537410
+/ocean-ocean-browser-use-browse/upstream:
+  en: 037cc8fbd0c46ba1
+  zh: caad878624be165b
+/ocean-ocean-browser-use-browse/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-browser-use-browse/model-experience/browser-operations-and-guidance:
+  en: 446767a18d0e69e3
+  zh: 3ec7e6f91efadf37
+/ocean-ocean-browser-use-browse/model-experience/browser-operations-and-guidance/what-the-model-sees:
+  en: 25474adfd9444eda
+  zh: a152e9b61a1397b3
+/ocean-ocean-browser-use-browse/model-experience/browser-operations-and-guidance/token-effect:
+  en: 069c2446a013f4eb
+  zh: dfd1c33e01951dfd
+/ocean-ocean-browser-use-browse/model-experience/browser-operations-and-guidance/kv-cache-effect:
+  en: aa7fe5de3fb83bf7
+  zh: 461a75542988cfcc
+/ocean-ocean-browser-use-browse/known-limitations-and-deferred-work:
+  en: 5928b98b79e11cda
+  zh: 0d4ee6002f7c9f70
+/ocean-ocean-browser-use-browse/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

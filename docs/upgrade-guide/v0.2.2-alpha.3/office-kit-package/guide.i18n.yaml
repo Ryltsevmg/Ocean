@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-alpha.3/office-kit-package/guide.md
+/:
+  en: 31f1b1a660f7b953
+  zh: 3359c8ddddd6d342
+/ocean-ocean-office-kit-replaces-ocean-ocean-office-to-pdf:
+  en: acf17bb8eb39bc11
+  zh: 6f8f7272ad791743
+/ocean-ocean-office-kit-replaces-ocean-ocean-office-to-pdf/change:
+  en: 378c75784665b698
+  zh: 935be40642b04d87
+/ocean-ocean-office-kit-replaces-ocean-ocean-office-to-pdf/migration:
+  en: 8c16d4eebaf7781b
+  zh: 6ed5dbda0544821f

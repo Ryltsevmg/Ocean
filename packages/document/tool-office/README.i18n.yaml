@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/document/tool-office/README.md
+/:
+  en: 2ec7e66cd18356df
+  zh: 4862555b5a4c9f51
+/ocean-ocean-tool-office:
+  en: 64b05a542f71339b
+  zh: 7d94e0fb392796bc
+/ocean-ocean-tool-office/summary:
+  en: e74f50cd7e13fad9
+  zh: f234831ae934f60a
+/ocean-ocean-tool-office/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-tool-office/use-this-package:
+  en: 439daabf3a0f9534
+  zh: 1c643eee80f895c4
+/ocean-ocean-tool-office/understand-the-implementation:
+  en: 05a32b4fde4d8c21
+  zh: f6ce05a11f5ccb6d
+/ocean-ocean-tool-office/further-exploration:
+  en: 272ba51c6f1753ae
+  zh: 0f3033416e75ba2e
+/ocean-ocean-tool-office/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-tool-office/model-experience/office-render-office-convert-office-recalculate:
+  en: 3bc9eb9e036e6224
+  zh: 3bc9eb9e036e6224
+/ocean-ocean-tool-office/model-experience/office-render-office-convert-office-recalculate/what-the-model-sees:
+  en: 55b36c7879a4a82f
+  zh: c681a66de3859ee3
+/ocean-ocean-tool-office/model-experience/office-render-office-convert-office-recalculate/token-effect:
+  en: b8d5d8c33c7563d4
+  zh: 5b6cb183b690bdba
+/ocean-ocean-tool-office/model-experience/office-render-office-convert-office-recalculate/kv-cache-effect:
+  en: c4e3595dab58a800
+  zh: 65f7fcf46b1e3130
+/ocean-ocean-tool-office/known-limitations-and-deferred-work:
+  en: 41e64b075cac6b5d
+  zh: 56594dc602b63ca8
+/ocean-ocean-tool-office/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: e88aeb617ffb74ea

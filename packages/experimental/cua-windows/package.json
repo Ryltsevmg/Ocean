@@ -1,0 +1,92 @@
+{
+  "name": "@ocean/ocean-cua-windows",
+  "description": "Windows C# computer use through shared application and window objects",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/cua-windows"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-computer-use": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*"
+  },
+  "dependencies": {
+    "zod": "4.6.6",
+    "@ocean/ocean-cua": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@ocean/ocean-native-command": "workspace:*",
+    "@ocean/ocean-atomic-write": "workspace:*"
+  },
+  "devDependencies": {
+    "@ocean/ocean-working-directory": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-attachment-local": "workspace:*",
+    "@ocean/ocean-computer-use": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-llm-deepseek": "workspace:*",
+    "@ocean/ocean-ptc-runtime-node": "workspace:*",
+    "@ocean/ocean-sandbox-local": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "sharp": "^0.35.3",
+    "@ocean/ocean-ptc-runtime": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-config-editor": "workspace:*",
+    "@ocean/ocean-hmr": "workspace:*",
+    "@deepseek-ai/cordis-plugin-timer": "workspace:~"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "native/bin",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "scripts": {
+    "build:native": "dotnet publish native/entry/CuaWindows.csproj --configuration Release --self-contained false --output native/bin/local -p:EnableWindowsTargeting=true",
+    "build:native:x64": "dotnet publish native/entry/CuaWindows.csproj --configuration Release --runtime win-x64 --self-contained true --output native/bin/win-x64 -p:EnableWindowsTargeting=true",
+    "build:native:arm64": "dotnet publish native/entry/CuaWindows.csproj --configuration Release --runtime win-arm64 --self-contained true --output native/bin/win-arm64 -p:EnableWindowsTargeting=true"
+  },
+  "os": [
+    "win32",
+    "linux"
+  ]
+}

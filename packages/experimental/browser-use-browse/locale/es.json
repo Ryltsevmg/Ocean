@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Control del navegador (browse)",
+    "description": "Control opcional de pestañas del agente en tu Chrome emparejado. Activar este paquete no conecta el navegador; se requiere una configuración independiente.",
+    "detail": "docs/DETAIL.md"
+  }
+}

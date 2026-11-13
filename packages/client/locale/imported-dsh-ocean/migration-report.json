@@ -1,0 +1,150 @@
+{
+  "sourcePackage": "@dsh-ocean/builtin-locales",
+  "version": "0.4.0",
+  "sourceSha256": "16a34004fbc99c941f4f92ebce6e5ae340e90850165d5969c8b9ae6fd1e41972",
+  "changedTranslations": {
+    "de": 698,
+    "es": 733,
+    "fr": 758,
+    "ja": 632,
+    "pt-BR": 638,
+    "ru": 800
+  },
+  "koreanKeys": 1230,
+  "currentKeyCounts": {
+    "common": 41,
+    "settings.locale": 1,
+    "settings": 65,
+    "chat": 207,
+    "workspace": 119,
+    "model": 23,
+    "conversation": 390,
+    "settings.models": 173,
+    "settings.plugins": 5,
+    "settings.pluginInventory": 37,
+    "pluginManager": 293,
+    "sidebar": 10,
+    "settings.agentPreset": 39,
+    "settings.theme": 25,
+    "shortcuts": 56,
+    "settings.permission": 12,
+    "permission.access": 17,
+    "approval": 7
+  },
+  "skippedTokenMismatches": [
+    [
+      "ja",
+      "pluginManager",
+      "restartNotice"
+    ],
+    [
+      "ja",
+      "pluginManager",
+      "installDoneRestart"
+    ],
+    [
+      "ja",
+      "pluginManager",
+      "reasonIncompatibleVersion"
+    ],
+    [
+      "es",
+      "pluginManager",
+      "restartNotice"
+    ],
+    [
+      "es",
+      "pluginManager",
+      "installDoneRestart"
+    ],
+    [
+      "es",
+      "pluginManager",
+      "reasonIncompatibleVersion"
+    ],
+    [
+      "fr",
+      "pluginManager",
+      "restartNotice"
+    ],
+    [
+      "fr",
+      "pluginManager",
+      "installDoneRestart"
+    ],
+    [
+      "fr",
+      "pluginManager",
+      "reasonIncompatibleVersion"
+    ],
+    [
+      "de",
+      "pluginManager",
+      "restartNotice"
+    ],
+    [
+      "de",
+      "pluginManager",
+      "installDoneRestart"
+    ],
+    [
+      "de",
+      "pluginManager",
+      "reasonIncompatibleVersion"
+    ],
+    [
+      "ru",
+      "pluginManager",
+      "restartNotice"
+    ],
+    [
+      "ru",
+      "pluginManager",
+      "installDoneRestart"
+    ],
+    [
+      "ru",
+      "pluginManager",
+      "reasonIncompatibleVersion"
+    ],
+    [
+      "pt-BR",
+      "pluginManager",
+      "restartNotice"
+    ],
+    [
+      "pt-BR",
+      "pluginManager",
+      "installDoneRestart"
+    ],
+    [
+      "pt-BR",
+      "pluginManager",
+      "reasonIncompatibleVersion"
+    ]
+  ],
+  "files": [
+    "packages/client/locale/src/locales/de.ts",
+    "packages/client/locale/src/locales/es.ts",
+    "packages/client/locale/src/locales/fr.ts",
+    "packages/client/locale/src/locales/ja.ts",
+    "packages/client/locale/src/locales/pt.ts",
+    "packages/client/locale/src/locales/ru.ts",
+    "packages/client/ui-settings-general/src/client/locales.ts",
+    "packages/client/ui-chat/src/client/locale.ts",
+    "packages/client/ui-workspace/src/client/locales.ts",
+    "packages/client/ui-model-selection/src/client/locales.ts",
+    "packages/client/ui-conversation/src/client/locales.ts",
+    "packages/client/ui-settings-models/src/client/locales.ts",
+    "packages/client/ui-settings-plugins/src/client/locales.ts",
+    "packages/client/ui-settings-plugin-inventory/src/client/locales.ts",
+    "packages/client/ui-plugin-manager/src/client/locales.ts",
+    "packages/client/ui-sidebar/src/client/locales.ts",
+    "packages/client/ui-agent-preset/src/client/guide-locales.ts",
+    "packages/client/ui-agent-preset/src/client/locales.ts",
+    "packages/client/ui-theme/src/client/locales.ts",
+    "packages/client/ui-shortcuts/src/client/locales.ts",
+    "packages/client/ui-permission-presets/src/client/locales.ts",
+    "packages/client/ui-approval/src/client/locales.ts"
+  ]
+}

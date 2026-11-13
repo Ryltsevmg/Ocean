@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Computer Use",
+    "description": "macOS、Windows、Linux の許可したアプリを操作します。Linux は AT-SPI コントロールのみ対応し、スクリーンショットやグローバルなマウス・キーボード入力には非対応です。設定が必要です。",
+    "detail": "docs/DETAIL.md"
+  }
+}

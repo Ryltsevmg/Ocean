@@ -1,0 +1,83 @@
+{
+  "name": "@ocean/ocean-llm",
+  "description": "Provider-neutral LLM service interface for the Ocean",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/llm/llm"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./brand": {
+      "types": "./lib/types/brand.d.ts",
+      "default": "./lib/types/brand.js"
+    },
+    "./message": {
+      "types": "./lib/types/message.d.ts",
+      "default": "./lib/types/message.js"
+    },
+    "./assistant-stream": {
+      "types": "./lib/types/assistant-stream.d.ts",
+      "default": "./lib/types/assistant-stream.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-error": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "zod": "4.6.6",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-error": "workspace:*",
+    "@ocean/ocean-package-manifest": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

@@ -1,0 +1,5 @@
+- insert:
+    - id: worktree
+      name: '@ocean/ocean-experimental-worktree'
+    - id: tool-worktree
+      name: '@ocean/ocean-experimental-tool-worktree'

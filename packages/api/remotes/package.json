@@ -1,0 +1,109 @@
+{
+  "name": "@ocean/ocean-api-remotes",
+  "description": "Remote BFF assembly for application-selected Host capabilities",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/api/remotes"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-gateway"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "@ocean/ocean-deque": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-scope": "workspace:*"
+  },
+  "devDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-preset-registry": "workspace:*",
+    "@ocean/ocean-api-gateway": "workspace:*",
+    "@ocean/ocean-api-job-controller": "workspace:*",
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-api-settings-controller": "workspace:*",
+    "@ocean/ocean-api-workspace-controller": "workspace:*",
+    "@ocean/ocean-api-workspace-files": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-file-upload": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-cordis-host-runner": "workspace:*",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-file-reference": "workspace:*",
+    "@ocean/ocean-goal": "workspace:*",
+    "@ocean/ocean-host-plugin-inventory": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-message-feedback": "workspace:*",
+    "@ocean/ocean-permission-presets": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-reference": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "zod": "4.6.6",
+    "@ocean/ocean-command-feedback": "workspace:*",
+    "@ocean/ocean-api-terminal-controller": "workspace:*",
+    "@ocean/ocean-plugin-manager": "workspace:*",
+    "@ocean/ocean-mcp-manager": "workspace:*",
+    "@ocean/ocean-plugin-market": "workspace:*",
+    "@ocean/ocean-client-ui-plugin-manager": "workspace:*",
+    "@ocean/ocean-office-kit": "workspace:*",
+    "@ocean/ocean-deepseek-account": "workspace:*",
+    "@ocean/ocean-client-product-analytics": "workspace:*",
+    "@ocean/ocean-agent-team": "workspace:*",
+    "@ocean/ocean-client-ui-trajectory": "workspace:*",
+    "@ocean/ocean-web": "workspace:*"
+  }
+}

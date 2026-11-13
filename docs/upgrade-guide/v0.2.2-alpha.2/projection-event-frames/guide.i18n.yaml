@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-alpha.2/projection-event-frames/guide.md
+/:
+  en: e48b8561bd5e8c36
+  zh: 250e816f38495c97
+/projection-frames-list-every-key-one-event-changed:
+  en: 3f22f3e46a3903db
+  zh: 7694cef52b9aa7f0
+/projection-frames-list-every-key-one-event-changed/change:
+  en: 1bf74c347d57f759
+  zh: c6e3ebccc4e4d8a3
+/projection-frames-list-every-key-one-event-changed/migration:
+  en: 63091feaa883ebe4
+  zh: b30c1e7434bb9380

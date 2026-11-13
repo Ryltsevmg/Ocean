@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write apps/desktop/release/README.md
+/ocean-linux-release-preparation:
+  en: 45fc5f877bfb5e6d
+  zh: 99070a220b54e90d
+/ocean-linux-release-preparation/current-implementation:
+  en: 7483380c9f8aae18
+  zh: 9a11850287962719
+/ocean-linux-release-preparation/offline-operator-signing:
+  en: 815e2f87f200bb19
+  zh: 6afc4011783f0603
+/ocean-linux-release-preparation/transaction-policy:
+  en: 3ea1ba1b189cae25
+  zh: 388f3db2a6085a16
+/ocean-linux-release-preparation/archive-layout-policy:
+  en: 98ff102f54e4ab21
+  zh: b671bcb6a223a2df
+/ocean-linux-release-preparation/installation-requirements-not-implemented-here:
+  en: c4c72afd44b14301
+  zh: 7b50b570b4258492
+/ocean-linux-release-preparation/release-checklist:
+  en: bde69fd28a806f70
+  zh: 40619e8b9737f94b

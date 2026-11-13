@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/cua/README.md
+/:
+  en: ed2539c6d12f814a
+  zh: 55a6c9d7f0d21fb7
+/ocean-ocean-cua:
+  en: 9bba36d4402cb4e8
+  zh: e077e4ccd6da8acb
+/ocean-ocean-cua/summary:
+  en: 23eb2a4f1cb71986
+  zh: 62e2bec7155ed063
+/ocean-ocean-cua/table-of-contents:
+  en: 5db4d4fea25493b9
+  zh: 65ab64fc24eb0d09
+/ocean-ocean-cua/use-this-package:
+  en: 3afb11622f9c1f34
+  zh: af68155738b7e898
+/ocean-ocean-cua/use-this-package/permission-controls:
+  en: c8f4acedd2dc44f9
+  zh: f587fcc255ba13c8
+/ocean-ocean-cua/understand-the-implementation:
+  en: 59024ec9858280ca
+  zh: ce6636bf72543303
+/ocean-ocean-cua/further-exploration:
+  en: 166e3c1f9a67f753
+  zh: 698c5136c5350052
+/ocean-ocean-cua/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-cua/model-experience/authorized-application-operations:
+  en: 0faf1e4d409d61aa
+  zh: 1866dd0b702f2a26
+/ocean-ocean-cua/model-experience/authorized-application-operations/what-the-model-sees:
+  en: b613371a761f0ab8
+  zh: 826a85089ee3518c
+/ocean-ocean-cua/model-experience/authorized-application-operations/token-effect:
+  en: b9b9827c0baf946d
+  zh: 137bf1a711bba968
+/ocean-ocean-cua/model-experience/authorized-application-operations/kv-cache-effect:
+  en: 2d5df52dafa1d940
+  zh: 06e815759b9150c3
+/ocean-ocean-cua/known-limitations-and-deferred-work:
+  en: 6fec6eaa9c4a1468
+  zh: 5e4ac76ce3e9d6c7
+/ocean-ocean-cua/known-limitations-and-deferred-work/dev-note:
+  en: 0a1253c6f7b5e8b9
+  zh: 9f56528562c7c914

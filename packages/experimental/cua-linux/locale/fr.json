@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Fournisseur de contrôle de l’ordinateur sous Linux",
+    "description": "Accès expérimental à l’accessibilité AT-SPI et actions sémantiques dans des applications Linux autorisées individuellement. Ne fournit ni contrôle de tout le bureau ni saisie globale au clavier ou à la souris."
+  }
+}

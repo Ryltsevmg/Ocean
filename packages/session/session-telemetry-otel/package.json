@@ -1,0 +1,67 @@
+{
+  "name": "@ocean/ocean-session-telemetry-otel",
+  "description": "Feedback-authorized Session logs over byte-bounded OpenTelemetry HTTP requests",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/session/session-telemetry-otel"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@opentelemetry/api-logs": "0.222.0",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "peerDependencies": {
+    "@ocean/ocean-command-feedback": "workspace:*",
+    "@ocean/ocean-message-feedback": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-telemetry": "workspace:*",
+    "@ocean/ocean-anonymous-user-id": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-otel": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis-plugin-logger-console": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-bash-local": "workspace:*",
+    "@ocean/ocean-command-feedback": "workspace:*",
+    "@ocean/ocean-message-feedback": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-loader-smoke": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-checkpoint-policy": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-session-telemetry": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-anonymous-user-id": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-http-proxy": "workspace:*",
+    "@ocean/ocean-otel": "workspace:*"
+  }
+}

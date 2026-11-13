@@ -1,0 +1,89 @@
+{
+  "name": "@ocean/ocean-client-ui-settings-account",
+  "description": "Manage DeepSeek login and open Platform billing pages",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-settings-account"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./assets/*": "./lib/assets/*",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-chat",
+        "@ocean/ocean-client-ui-layout",
+        "@ocean/ocean-client-ui-settings",
+        "@ocean/ocean-client-ui-theme"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-api-remote-access": "workspace:*",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-chat": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-settings": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-theme": "workspace:*",
+    "@ocean/ocean-deepseek-account": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@testing-library/react": "^16.3.3",
+    "@types/big.js": "^6.2.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@ocean/ocean-client-ui-settings-models": "workspace:*",
+    "@ocean/ocean-host-webserver": "workspace:*",
+    "big.js": "^7.0.1",
+    "@ocean/ocean-client-product-analytics": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/assets",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~"
+  }
+}

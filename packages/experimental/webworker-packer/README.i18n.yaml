@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/webworker-packer/README.md
+/:
+  en: 5bf871fc6ff3da7c
+  zh: eae970e01432a92a
+/ocean-ocean-experimental-webworker-packer:
+  en: 7619a157a82ebdb3
+  zh: bd061ebcd7ede2b7
+/ocean-ocean-experimental-webworker-packer/summary:
+  en: 511b69c241632e21
+  zh: a59afd79170fcae7
+/ocean-ocean-experimental-webworker-packer/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 89582dc0294d0776
+/ocean-ocean-experimental-webworker-packer/use-this-package:
+  en: 23c33ae81d697c5e
+  zh: 30bfd620ff67a7f4
+/ocean-ocean-experimental-webworker-packer/model-experience:
+  en: e16b355530dadc1c
+  zh: 8488e03b253b7b33
+/ocean-ocean-experimental-webworker-packer/model-experience/kv-cache-effect:
+  en: ca75c51c89c2c9b0
+  zh: 64715dc7e6d02f71
+/ocean-ocean-experimental-webworker-packer/known-limitations-and-deferred-work:
+  en: e7b9c15073926be6
+  zh: bcfc43ed28641f26
+/ocean-ocean-experimental-webworker-packer/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: e88aeb617ffb74ea

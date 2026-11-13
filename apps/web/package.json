@@ -1,0 +1,81 @@
+{
+  "name": "@ocean/ocean-web-frontend",
+  "description": "Web application entry: vite build over the @ocean/ocean-client-web shell library; dist/ served by apps/cli's dsh web",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "apps/web"
+  },
+  "type": "module",
+  "exports": {
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/preview.html",
+    "!dist/preview",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "watch": "vite build --watch --no-emptyOutDir",
+    "build:preview": "pnpm --filter @ocean/ocean-experimental-webworker-runtime exec tsdown && pnpm --filter @ocean/ocean-experimental-webworker-packer exec tsdown && vite build && dsh-pack-vfs-image --out dist/preview/vfs-image.tar.gz",
+    "serve:preview": "http-server dist -a 0.0.0.0 -p 4173 -c-1",
+    "render:app-icons": "tsx scripts/render-app-icons.ts"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@deepseek-ai/cordis-plugin-group": "workspace:~",
+    "@ocean/ocean-client-modules": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-llm-mock-server": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-deliverables": "workspace:*",
+    "@ocean/ocean-client-ui-dockkit": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-web": "workspace:*",
+    "@ocean/ocean-cmdline": "workspace:*",
+    "@ocean/ocean-pwsh-local": "workspace:*",
+    "@ocean/ocean-agent-team": "workspace:*",
+    "@ocean/ocean-experimental-webworker-packer": "workspace:*",
+    "@ocean/ocean-experimental-webworker-runtime": "workspace:*",
+    "@ocean/ocean-remote-mock": "workspace:*",
+    "@ocean/ocean-session-projection-cache": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@types/node": "^22.20.1",
+    "@types/ws": "8.18.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "http-server": "^14.1.1",
+    "fflate": "^0.8.2",
+    "playwright": "^1.49.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sharp": "0.35.5",
+    "typescript": "^6.0.3",
+    "vite": "^6.4.3",
+    "vitest": "^4.1.11",
+    "ws": "8.21.3",
+    "@ocean/ocean-client-ui-theme": "workspace:*",
+    "@ocean/ocean-launch-environment": "workspace:*",
+    "@ocean/ocean-workspace-changes": "workspace:*",
+    "@ocean/ocean-subprocess-local": "workspace:*",
+    "@ocean/ocean-experimental-auto-review": "workspace:*",
+    "@ocean/ocean-experimental-speech-to-text": "workspace:*",
+    "@ocean/ocean-experimental-voice-input-bundle": "workspace:*",
+    "@ocean/ocean-experimental-cot-translation-bundle": "workspace:*",
+    "@ocean/ocean-experimental-worktree": "workspace:*",
+    "@ocean/ocean-experimental-plugin-market-bundle": "workspace:*",
+    "@ocean/ocean-experimental-forge-bundle": "workspace:*"
+  },
+  "dependencies": {
+    "@ocean/ocean-message-quotes": "workspace:*"
+  }
+}

@@ -1,0 +1,8 @@
+- insert:
+    - id: translator
+      name: '@ocean/ocean-experimental-translator'
+    - id: cot-translation
+      name: '@ocean/ocean-experimental-client-ui-cot-translation'
+      config:
+        provider: bing
+        targetLanguage: auto

@@ -1,0 +1,401 @@
+import { REQUEST_BLOCKED, isAccessFailureMessage } from './http-failure.js'
+import { PREFERENCE_FIELDS } from './preference-fields.js'
+import { normalizeSubagentModel } from './subagent-defaults.js'
+import { capabilityPatch } from './capability-settings.js'
+import { ORIGINAL_IMAGE_CHUNK_BYTES, ORIGINAL_IMAGE_ID_PATTERN } from './image-original-contract.js'
+import { AUTO_QUOTA_RETRY_FIELD, CUSTOM_CONTEXT_MODEL_CAPS, CUSTOM_CONTEXT_MODEL_FIELDS, CUSTOM_CONTEXT_WINDOW_FIELD, DISABLED_MODELS_FIELD, normalizeCustomContextWindow, normalizeDisabledModels } from './settings-contract.js'
+const publicError = (code, message) => ({
+  ok: false,
+  error: { code, message, details: { issues: [] } },
+})
+
+const sortedIfList = value => JSON.stringify(Array.isArray(value) ? [...value].sort() : value)
+
+/** True once the running settings report every written value; the host swaps its config shortly after a write. */
+export async function settlesLive(preferences, patch, signal, { attempts = 8, delayMs = 75 } = {}) {
+  const live = () => {
+    const current = preferences.status()
+    return Object.entries(patch).every(([field, value]) => sortedIfList(current[field]) === sortedIfList(value))
+  }
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (live()) return true
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+    signal?.throwIfAborted()
+  }
+  return live()
+}
+
+export function createSubscriptionRpcHandler({ authHandler, usageReader, accountUsageReader, planHistoryReader, usageProfileReader, resetCreditService, preferences, defaultModel, runtimeManagement, remoteControl, desktopVoice, nativeVoice, voicePreview, composerPredictions, diagnosticsReader, modelCatalog, subagentCatalog, originalImages, resolveInheritedOriginal, closeConnections, onAccountChanged, onCleanupFailure }) {
+  return async (endpoint, payload, signal) => {
+    if (endpoint === 'predictions/generate') {
+      try {
+        signal?.throwIfAborted()
+        return { ok: true, value: composerPredictions ? await composerPredictions.generate(payload, signal) : { prediction: null } }
+      } catch (error) {
+        if (signal?.aborted) throw error
+        return publicError(error?.code === 'invalid-input' ? 'invalid-input' : 'operation-error', 'Could not generate an input prediction')
+      }
+    }
+    if (endpoint.startsWith('voice/native/')) {
+      try {
+        signal.throwIfAborted()
+        if (!nativeVoice) return publicError('voice-native-unavailable', 'Native voice is unavailable')
+        const action = endpoint.slice('voice/native/'.length)
+        if (action === 'probe') return { ok: true, value: await nativeVoice.probe(signal) }
+        const sessionId = payload?.sessionId
+        if (typeof sessionId !== 'string' || !sessionId || sessionId.length > 512) return publicError('invalid-input', 'Invalid voice request')
+        if (action === 'start') {
+          const current = preferences?.status?.() ?? {}
+          if (current.voiceCall !== 'on') return publicError('unavailable', 'Voice is turned off')
+          if (payload.captureAllowed !== true) return publicError('invalid-input', 'Microphone permission is required')
+          return { ok: true, value: await nativeVoice.start({ sessionId, captureAllowed: true, voice: current.voiceVoice, language: current.voiceLanguage }, signal) }
+        }
+        const leaseToken = payload?.leaseToken
+        if (typeof leaseToken !== 'string' || leaseToken.length < 16 || leaseToken.length > 128) return publicError('invalid-input', 'Invalid voice owner')
+        if (action === 'status') return { ok: true, value: nativeVoice.status(sessionId, leaseToken) }
+        if (action === 'stop') return { ok: true, value: await nativeVoice.stop({ sessionId, leaseToken }) }
+        if (action === 'control' && ['mute', 'outputMute'].includes(payload.action) && typeof payload.muted === 'boolean') {
+          return { ok: true, value: await nativeVoice[payload.action]({ sessionId, leaseToken, muted: payload.muted }) }
+        }
+        return publicError('invalid-input', 'Invalid voice request')
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError(error?.code === 'voice-native-unavailable' ? 'voice-native-unavailable' : 'operation-error', 'Could not use native voice')
+      }
+    }
+    if (endpoint === 'default-model/status' || endpoint === 'default-model/select' || endpoint === 'default-model/reset') {
+      try {
+        signal.throwIfAborted()
+        if (!defaultModel) return publicError('unavailable', 'The default model is unavailable')
+        const value = endpoint === 'default-model/status'
+          ? defaultModel.status()
+          : endpoint === 'default-model/reset'
+            ? await defaultModel.reset()
+            : await defaultModel.select({ model: payload?.model })
+        return { ok: true, value }
+      } catch (error) {
+        if (signal.aborted) throw error
+        if (error?.code === 'invalid-model') return publicError('invalid-input', 'Invalid default model')
+        if (error?.code === 'unavailable') {
+          return publicError('unavailable', endpoint === 'default-model/status'
+            ? 'The default model is unavailable'
+            : 'Could not save the default model')
+        }
+        return publicError('internal', endpoint === 'default-model/status'
+          ? 'Could not read the default model'
+          : 'Could not save the default model')
+      }
+    }
+    if (endpoint === 'voice/status') {
+      try {
+        signal.throwIfAborted()
+        if (!desktopVoice || typeof payload?.sessionId !== 'string') return publicError('unavailable', 'Voice is unavailable')
+        return { ok: true, value: desktopVoice.status(payload.sessionId) }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('operation-error', 'Could not read the voice status')
+      }
+    }
+    if (endpoint === 'voice/playback') {
+      signal.throwIfAborted()
+      if (typeof payload?.sessionId !== 'string' || !['playing', 'waiting'].includes(payload.state)) return publicError('invalid-input', 'Invalid playback event')
+      desktopVoice?.playback?.(payload.sessionId, payload.state)
+      return { ok: true, value: {} }
+    }
+    if (endpoint === 'voice/start' || endpoint === 'voice/stop') {
+      try {
+        signal.throwIfAborted()
+        if (!desktopVoice) return publicError('unavailable', 'Voice is unavailable')
+        if (typeof payload?.sessionId !== 'string' || payload.sessionId.length === 0 || payload.sessionId.length > 512) return publicError('invalid-input', 'Invalid voice request')
+        if (endpoint === 'voice/stop') { desktopVoice.stop(payload.sessionId); return { ok: true, value: {} } }
+        const current = preferences?.status?.() ?? {}
+        if (current.voiceCall !== 'on') return publicError('unavailable', 'Voice is turned off')
+        // A browser call takes over only after the previous host microphone and
+        // its remote session have been released, so late cleanup cannot stop it.
+        await nativeVoice?.close()
+        signal.throwIfAborted()
+        return { ok: true, value: await desktopVoice.start({ sessionId: payload.sessionId, sdp: payload.sdp, voice: current.voiceVoice, language: current.voiceLanguage, signal }) }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('operation-error', 'Could not start the voice call')
+      }
+    }
+    if (endpoint === 'voice/catalog' || endpoint === 'voice/preview') {
+      try {
+        signal.throwIfAborted()
+        if (!voicePreview) return publicError('unavailable', 'Voice preview is unavailable')
+        if (endpoint === 'voice/catalog') return { ok: true, value: { voices: await voicePreview.available(payload?.language, signal) } }
+        const value = await voicePreview.preview(payload?.voice, payload?.language, signal)
+        return value === undefined ? publicError('not-found', 'No sample for this voice') : { ok: true, value }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError(['voice-auth', 'voice-catalog', 'voice-download'].includes(error?.code) ? error.code : 'operation-error', 'Could not load the voice sample')
+      }
+    }
+    if (['remote/status', 'remote/enable', 'remote/disable', 'remote/pair', 'remote/pair-status', 'remote/clients', 'remote/revoke'].includes(endpoint)) {
+      try {
+        signal.throwIfAborted()
+        if (!remoteControl) return publicError('unavailable', 'Remote Control is unavailable')
+        const action = endpoint.split('/')[1]
+        const value = action === 'status' ? remoteControl.status()
+          : action === 'enable' ? await remoteControl.enable()
+            : action === 'disable' ? await remoteControl.disable()
+              : action === 'clients' ? await remoteControl.clients(signal)
+                : action === 'revoke' ? await remoteControl.revoke(payload?.clientId, signal)
+                  : action === 'pair-status' ? await remoteControl.pairingStatus(payload?.pairingCode, signal)
+                    : await remoteControl.pair(signal)
+        return { ok: true, value }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError(typeof error?.code === 'string' ? error.code : 'operation-error', 'Remote Control request failed')
+      }
+    }
+    if (endpoint === 'storage/status' || endpoint === 'storage/clear-forecast') {
+      try {
+        signal.throwIfAborted()
+        if (endpoint === 'storage/clear-forecast') await usageReader.clear()
+        return { ok: true, value: await usageReader.storage() }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('operation-error', 'Could not manage forecast cache')
+      }
+    }
+    if (['runtime/status', 'runtime/install', 'runtime/remove', 'runtime/cancel'].includes(endpoint)) {
+      try {
+        signal.throwIfAborted()
+        if (!runtimeManagement) return publicError('unavailable', 'Runtime management is unavailable')
+        const action = endpoint.split('/')[1]
+        const value = action === 'status' ? await runtimeManagement.status() : action === 'cancel' ? await runtimeManagement.cancel() : await runtimeManagement.start(action)
+        return { ok: true, value }
+      } catch (error) {
+        if (signal.aborted) throw error
+        const code = ['busy', 'active-tasks', 'restart-required', 'unavailable'].includes(error.message) ? error.message : 'operation-error'
+        return publicError(code, code)
+      }
+    }
+    if (endpoint === 'image/original/chunk') {
+      try {
+        signal.throwIfAborted()
+        if (typeof payload?.sessionId !== 'string' || payload.sessionId.length === 0 || payload.sessionId.length > 512
+          || typeof payload?.assetId !== 'string' || !ORIGINAL_IMAGE_ID_PATTERN.test(payload.assetId)
+          || !Number.isSafeInteger(payload?.offset) || payload.offset < 0 || payload.offset % ORIGINAL_IMAGE_CHUNK_BYTES !== 0) {
+          return publicError('invalid-input', 'Invalid original image request')
+        }
+        const inherited = resolveInheritedOriginal?.(payload.sessionId, payload.assetId)
+        const chunk = await originalImages?.chunk(payload.sessionId, payload.assetId, payload.offset, inherited)
+        if (chunk === undefined) return publicError('not-found', 'Original image is unavailable')
+        return { ok: true, value: chunk }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('internal', 'Could not read the original image')
+      }
+    }
+    if (endpoint === 'diagnostics') {
+      try {
+        signal.throwIfAborted()
+        return { ok: true, value: await diagnosticsReader() }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('internal', 'Could not create support diagnostics')
+      }
+    }
+    if (endpoint === 'preferences/models') {
+      try {
+        signal.throwIfAborted()
+        if (typeof modelCatalog?.refresh !== 'function' || typeof preferences?.status !== 'function') {
+          return publicError('internal', 'Could not refresh Codex model catalog')
+        }
+        const native = subagentCatalog && preferences.status()?.subagentBackend === 'codex'
+          ? subagentCatalog.refresh({ signal }).catch(() => {}) : undefined
+        await Promise.all([modelCatalog.refresh({ signal }), native])
+        signal.throwIfAborted()
+        const value = preferences.status()
+        return {
+          ok: true,
+          value: {
+            availableModels: Array.isArray(value?.availableModels) ? value.availableModels : [],
+            subagentModels: Array.isArray(value?.subagentModels) ? value.subagentModels : [],
+            contextModels: Array.isArray(value?.contextModels) ? value.contextModels : [],
+            verbosityModels: Array.isArray(value?.verbosityModels) ? value.verbosityModels : [],
+            fastModels: Array.isArray(value?.fastModels) ? value.fastModels : [],
+            ultrafastModels: Array.isArray(value?.ultrafastModels) ? value.ultrafastModels : [],
+            ultraModels: Array.isArray(value?.ultraModels) ? value.ultraModels : [],
+            catalogStatus: value?.catalogStatus,
+          },
+        }
+      } catch (error) {
+        if (signal.aborted) throw error
+        if (error?.name === 'TimeoutError') return publicError('internal', 'Codex model catalog refresh timed out')
+        return publicError('internal', 'Could not refresh Codex model catalog')
+      }
+    }
+    if (endpoint === 'preferences/status' || endpoint === 'preferences/update') {
+      try {
+        signal.throwIfAborted()
+        let patch
+        let liveSynced = true
+        if (endpoint === 'preferences/update') {
+          patch = capabilityPatch(payload)
+          if (Object.hasOwn(payload ?? {}, DISABLED_MODELS_FIELD)) {
+            const disabled = payload[DISABLED_MODELS_FIELD]
+            if (!Array.isArray(disabled) || disabled.length > 100 || disabled.length !== normalizeDisabledModels(disabled).length) {
+              return publicError('internal', 'Invalid disabled models preference')
+            }
+            patch[DISABLED_MODELS_FIELD] = disabled
+          }
+          if (Object.hasOwn(payload ?? {}, AUTO_QUOTA_RETRY_FIELD)) {
+            if (typeof payload[AUTO_QUOTA_RETRY_FIELD] !== 'boolean') {
+              return publicError('internal', 'Invalid automatic quota retry preference')
+            }
+            patch[AUTO_QUOTA_RETRY_FIELD] = payload[AUTO_QUOTA_RETRY_FIELD]
+          }
+          for (const [field, rule] of Object.entries(PREFERENCE_FIELDS)) {
+            if (!Object.hasOwn(payload ?? {}, field)) continue
+            if (!rule.choices.includes(payload[field])) return publicError('internal', rule.error)
+            patch[field] = payload[field]
+          }
+          if (Object.hasOwn(payload ?? {}, 'subagentDefaultModel')) {
+            if (normalizeSubagentModel(payload.subagentDefaultModel) !== payload.subagentDefaultModel) return publicError('internal', 'Invalid subtask model')
+            patch.subagentDefaultModel = payload.subagentDefaultModel
+          }
+          if (Object.hasOwn(payload ?? {}, CUSTOM_CONTEXT_WINDOW_FIELD)) {
+            if (normalizeCustomContextWindow(payload[CUSTOM_CONTEXT_WINDOW_FIELD]) !== payload[CUSTOM_CONTEXT_WINDOW_FIELD]) {
+              return publicError('internal', 'Invalid custom context window')
+            }
+            patch[CUSTOM_CONTEXT_WINDOW_FIELD] = payload[CUSTOM_CONTEXT_WINDOW_FIELD]
+          }
+          for (const [modelKey, field] of Object.entries(CUSTOM_CONTEXT_MODEL_FIELDS)) {
+            if (!Object.hasOwn(payload ?? {}, field)) continue
+            if (normalizeCustomContextWindow(payload[field], CUSTOM_CONTEXT_MODEL_CAPS[modelKey]) !== payload[field]) {
+              return publicError('internal', 'Invalid custom model context window')
+            }
+            patch[field] = payload[field]
+          }
+          if (Object.keys(patch).length === 0) {
+            return publicError('internal', 'Invalid preference update')
+          }
+          await preferences.update(patch)
+          liveSynced = await settlesLive(preferences, patch, signal)
+        }
+        const status = preferences.status()
+        // A volatile write swaps the fiber's config asynchronously, so the in-flight
+        // fiber can still report the pre-write snapshot. Overlay the accepted patch
+        // so the receipt always describes the persisted state (issue #160).
+        // A write that reached the profile but never reached the running settings (a host that cannot hot-update them)
+        // is reported as such instead of looking applied, so the UI can say a restart is needed (issue #164).
+        return { ok: true, value: patch === undefined ? status : { ...status, ...patch, ...(liveSynced ? {} : { liveSynced: false }) } }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('internal', 'Could not update preferences')
+      }
+    }
+    if (endpoint === 'usage') {
+      try {
+        signal.throwIfAborted()
+        return { ok: true, value: await usageReader.read({ force: payload?.force === true, signal }) }
+      } catch (error) {
+        if (signal.aborted) throw error
+        const known = new Set([
+          'ChatGPT subscription is not signed in',
+          'ChatGPT sign-in needs to be renewed',
+          REQUEST_BLOCKED,
+        ])
+        const message = error instanceof Error && (known.has(error.message) || isAccessFailureMessage(error.message))
+          ? error.message
+          : 'Could not read ChatGPT usage'
+        return publicError('internal', message)
+      }
+    }
+    if (endpoint === 'usage/profile') {
+      try {
+        signal.throwIfAborted()
+        return { ok: true, value: await usageProfileReader.read({ force: payload?.force === true, signal }) }
+      } catch (error) {
+        if (signal.aborted) throw error
+        const known = new Set(['ChatGPT subscription is not signed in', 'ChatGPT sign-in needs to be renewed', REQUEST_BLOCKED])
+        return publicError('internal', error instanceof Error && (known.has(error.message) || isAccessFailureMessage(error.message)) ? error.message : 'Could not read ChatGPT usage profile')
+      }
+    }
+    if (endpoint === 'usage/accounts') {
+      try {
+        signal.throwIfAborted()
+        return { ok: true, value: { accounts: await accountUsageReader.readAll({ force: payload?.force === true, signal }) } }
+      } catch (error) {
+        if (signal.aborted) throw error
+        return publicError('internal', 'Could not read the usage of the signed-in accounts')
+      }
+    }
+    if (endpoint === 'usage/history') {
+      try {
+        signal.throwIfAborted()
+        return { ok: true, value: await planHistoryReader.read({ force: payload?.force === true, signal }) }
+      } catch (error) {
+        if (signal.aborted) throw error
+        const known = new Set(['ChatGPT subscription is not signed in', 'ChatGPT sign-in needs to be renewed', REQUEST_BLOCKED])
+        return publicError('internal', error instanceof Error && (known.has(error.message) || isAccessFailureMessage(error.message)) ? error.message : 'Could not read ChatGPT usage history')
+      }
+    }
+    if (endpoint === 'reset-credit/inspect' || endpoint === 'reset-credit/prepare' || endpoint === 'reset-credit/consume') {
+      try {
+        signal.throwIfAborted()
+        const value = endpoint === 'reset-credit/inspect'
+          ? await resetCreditService.inspect({ signal })
+          : endpoint === 'reset-credit/prepare'
+            ? await resetCreditService.prepare({ creditRef: payload?.creditRef, signal })
+            : await resetCreditService.consume({
+            challengeId: payload?.challengeId,
+            acknowledged: payload?.acknowledged,
+            signal,
+            })
+        return { ok: true, value }
+      } catch (error) {
+        if (signal.aborted) throw error
+        const known = new Set([
+          'ChatGPT subscription is not signed in',
+          'ChatGPT sign-in needs to be renewed',
+          REQUEST_BLOCKED,
+          'No quota reset is available',
+          'No usable quota reset is available',
+          'The available quota reset expires too soon',
+          'This quota reset confirmation is no longer valid',
+          'This quota reset is already in progress',
+          'Wait before confirming this quota reset',
+          'You must acknowledge that one quota reset will be consumed',
+          'The signed-in ChatGPT account changed',
+        ])
+        const fallback = endpoint === 'reset-credit/inspect'
+          ? 'Could not read quota reset details'
+          : endpoint === 'reset-credit/prepare'
+            ? 'Could not prepare a quota reset'
+            : 'Could not use the quota reset'
+        const message = error instanceof Error && (known.has(error.message) || isAccessFailureMessage(error.message)) ? error.message : fallback
+        return publicError('internal', message)
+      }
+    }
+    const result = await authHandler(endpoint, payload, signal)
+    if (result.ok === true && (endpoint === 'logout' || endpoint === 'account/select' || endpoint === 'account/remove'
+      || (endpoint === 'login/status' && result.value?.authenticated === true))) {
+      // The account transaction has committed. Auxiliary cache failures must not
+      // misreport that transaction or prevent the remaining invalidations.
+      const tasks = [() => closeConnections?.(), () => usageReader.clearCache(), () => planHistoryReader?.clear(), () => usageProfileReader?.clear(),
+        () => resetCreditService.clear(), () => modelCatalog?.clear(), () => onAccountChanged?.()]
+      if (endpoint === 'logout') tasks.push(() => usageReader.clear(), () => accountUsageReader?.clear())
+      if (endpoint === 'login/status') tasks.push(() => accountUsageReader?.clear())
+      if (endpoint === 'account/remove' && typeof payload?.id === 'string') tasks.push(() => usageReader.clearScope(payload.id))
+      const outcomes = await Promise.allSettled(tasks.map(task => Promise.resolve().then(task)))
+      const catalogOutcomes = endpoint === 'logout'
+        ? []
+        : await Promise.allSettled([Promise.resolve().then(() => modelCatalog?.initialize())])
+      if ([...outcomes, ...catalogOutcomes].some(value => value.status === 'rejected')) {
+        try { onCleanupFailure?.() } catch { /* Diagnostics must not change account results. */ }
+      }
+      if (endpoint !== 'logout') void Promise.resolve().then(() => modelCatalog?.refresh({ signal: undefined })).catch(() => {})
+    } else if (result.ok === true && result.value?.authenticated === true
+      && modelCatalog?.status?.().source === 'unavailable' && modelCatalog.status().refresh === 'idle') {
+      // Quota polling also reads sign-in status. Do not refresh the model catalog
+      // every five seconds; startup, account changes and explicit refresh own it.
+      void modelCatalog?.refresh({ signal: undefined }).catch(() => {})
+    }
+    return result
+  }
+}

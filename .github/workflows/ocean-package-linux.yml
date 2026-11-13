@@ -1,0 +1,72 @@
+name: Ocean unsigned Linux package
+on:
+  # Register the definition on GitHub; jobs still require a manual dispatch.
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ocean-package-linux.yml']
+  workflow_dispatch:
+    inputs:
+      architecture:
+        description: Native hosted runner architecture
+        type: choice
+        required: true
+        default: x64
+        options:
+          - x64
+          - arm64
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'Ryltsevmg/Ocean' && github.ref == 'refs/heads/main'
+    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 120
+    env:
+      OCEAN_ARCH: ${{ inputs.architecture }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '26.13.0'
+      - name: Test offline release verification
+        run: node --test apps/desktop/scripts/ocean-release-signing.test.mjs apps/desktop/scripts/ocean-release-manifest.test.mjs apps/desktop/scripts/ocean-linux-update-policy.test.mjs apps/desktop/scripts/ocean-linux-archive-policy.test.mjs
+      - name: Install pinned package manager
+        run: npm install --global pnpm@11.28.5
+      - name: Install locked dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Package unsigned native Linux archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$OCEAN_ARCH" in x64|arm64) ;; *) exit 1 ;; esac
+          test "$(node -p process.arch)" = "$OCEAN_ARCH"
+          pnpm --filter @ocean/ocean-desktop run "package:linux:$OCEAN_ARCH"
+      - name: Calculate archive checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "apps/desktop/.desktop-build/targets/linux-$OCEAN_ARCH/unsigned-artifacts"
+          sha256sum *.tar.gz > SHA256SUMS
+          node -e 'require("node:fs").writeFileSync("build-evidence.json", JSON.stringify({repository: process.env.GITHUB_REPOSITORY, commit: process.env.GITHUB_SHA, run: process.env.GITHUB_RUN_ID, architecture: process.env.OCEAN_ARCH, node: process.version, signed: false}, null, 2) + "\n")'
+      - name: Retain unsigned build for review, not release publication
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ocean-linux-${{ inputs.architecture }}-unsigned-${{ github.sha }}
+          path: |
+            apps/desktop/.desktop-build/targets/linux-${{ inputs.architecture }}/unsigned-artifacts/*.tar.gz
+            apps/desktop/.desktop-build/targets/linux-${{ inputs.architecture }}/unsigned-artifacts/SHA256SUMS
+            apps/desktop/.desktop-build/targets/linux-${{ inputs.architecture }}/unsigned-artifacts/build-evidence.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+# Manual-dispatch Linux packaging (Ocean; unsigned by default)

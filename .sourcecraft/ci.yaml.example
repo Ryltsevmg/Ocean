@@ -1,0 +1,38 @@
+# Disabled template: review runner, quota and repository access before renaming.
+# No automatic triggers, signing credentials or publication steps.
+workflows:
+  verify-linux-x64:
+    settings:
+      max_cube_duration: 90m
+    tasks:
+      - name: verify
+        cubes:
+          - name: build
+            image: node:26.13.0-bookworm
+            script:
+              - cd "$SOURCECRAFT_WORKSPACE"
+              - set -eu
+              - npm install --global pnpm@11.28.5
+              - pnpm install --frozen-lockfile --ignore-scripts
+              - pnpm run build
+              - pnpm run check:i18n
+  package-linux-x64-unsigned:
+    settings:
+      max_cube_duration: 120m
+    tasks:
+      - name: package
+        cubes:
+          - name: archive
+            image: node:26.13.0-bookworm
+            artifacts:
+              paths:
+                - apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts/*.tar.gz
+                - SHA256SUMS
+            script:
+              - cd "$SOURCECRAFT_WORKSPACE"
+              - set -eu
+              - apt-get update && apt-get install -y --no-install-recommends python3 make g++ ca-certificates
+              - npm install --global pnpm@11.28.5
+              - pnpm install --frozen-lockfile --ignore-scripts
+              - pnpm --filter @ocean/ocean-desktop run package:linux:x64
+              - sha256sum apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts/*.tar.gz > SHA256SUMS

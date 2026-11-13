@@ -1,0 +1,90 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { hostDshVersion, inspectSubagentRuntime, loadSubagentRuntime, matchingSubagentRuntimeVersion } from '../src/subagent-runtime.js'
+
+test('missing optional runtime never loads a module or launches a process', async () => {
+  const resolve = () => { throw Error('missing') }
+  assert.deepEqual(inspectSubagentRuntime(resolve), { installed: false })
+  await assert.rejects(loadSubagentRuntime({ resolve, run: () => assert.fail(), importModule: () => assert.fail() }), /not prepared/)
+})
+
+test('preparation checks the dedicated CLI without shell or PATH and supports retry', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'subscription-runtime-'))
+  try {
+    const provider = join(root, 'package.json'), host = join(root, 'host.json'), entry = join(root, 'index.js')
+    await writeFile(provider, JSON.stringify({ version: '0.1.7-rc.2' }))
+    await writeFile(host, JSON.stringify({ version: '0.1.7-rc.2' }))
+    for (const [name, data] of [['@openai/codex', {version:'0.153.4',bin:{codex:'bin/codex.js'}}], ['@ocean/ocean-sdk-protocol', {main:'index.js'}]]) {
+      const dir = join(root,'node_modules',name); await mkdir(dir,{recursive:true}); await writeFile(join(dir,'package.json'),JSON.stringify(data)); await writeFile(join(dir,'index.js'),'')
+    }
+    const resolve = name => name === '@ocean/ocean-llm/package.json' ? host : name.endsWith('/package.json') ? provider : entry
+    const cli = { inspect: () => ({ installed: true, wrapper: join(root,'dedicated','bin','codex.js') }) }
+    let fail = true, calls = 0
+    const run = async (command, argv, options) => {
+      calls++; assert.equal(command,process.execPath); assert.equal(argv[0],join(root,'dedicated','bin','codex.js')); assert.equal(argv[1],'--version')
+      assert.equal(options.windowsHide,true); assert.equal(options.timeout,10000); assert.equal(options.shell,undefined)
+      if (fail) throw Error('offline or missing binary')
+      return {stdout:'codex-cli 0.167.0\n'}
+    }
+    await assert.rejects(loadSubagentRuntime({resolve,run,cli}),/incomplete/)
+    fail = false
+    const result = await loadSubagentRuntime({resolve,run,cli,importModule:async url => url.endsWith('/index.js') ? {apply(){},JsonRpcLineTransport:class {}} : assert.fail()})
+    assert.equal(typeof result.Transport,'function'); assert.equal(calls,2)
+    for (const platform of ['win32', 'linux', 'darwin']) {
+      const runtime = await loadSubagentRuntime({ resolve, run, cli, platform, importModule: async () => ({ JsonRpcLineTransport: class {} }) })
+      assert.equal(runtime.argv.includes('features.prefer_mxc=true'), platform === 'win32')
+      assert.ok(runtime.argv.includes('stdio://'))
+      assert.ok(!runtime.argv.includes('--stdio'), 'the current official CLI uses --listen stdio://')
+      assert.ok(!runtime.argv.some(value => /danger|bypass/u.test(value)), 'preparation never disables the sandbox')
+    }
+    await writeFile(provider,JSON.stringify({version:'0.2.0-rc.1'}))
+    assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:false,present:true})
+    await writeFile(host,JSON.stringify({version:'0.2.0-rc.1'}))
+    assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:true,present:true,adapterInstalled:true})
+    await loadSubagentRuntime({resolve,run,cli,importModule:async()=>({JsonRpcLineTransport:class {}})})
+    await writeFile(provider,JSON.stringify({version:'0.2.0-rc.2'}))
+    await writeFile(host,JSON.stringify({version:'0.2.0-rc.2'}))
+    assert.equal(matchingSubagentRuntimeVersion(resolve),'0.2.0-rc.2')
+    assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:true,present:true,adapterInstalled:true})
+    await loadSubagentRuntime({resolve,run,cli,importModule:async()=>({JsonRpcLineTransport:class {}})})
+    await writeFile(provider,JSON.stringify({version:'0.1.7-rc.2'}))
+    await writeFile(host,JSON.stringify({version:'0.1.7-rc.2'}))
+    assert.equal(matchingSubagentRuntimeVersion(resolve),'0.1.7-rc.2')
+    assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:true,present:true,adapterInstalled:true})
+    await loadSubagentRuntime({resolve,run,cli,importModule:async()=>({JsonRpcLineTransport:class {}})})
+    await writeFile(provider,JSON.stringify({version:'0.2.0-rc.1'}))
+    await writeFile(host,JSON.stringify({version:'0.2.0-rc.1'}))
+    assert.equal(matchingSubagentRuntimeVersion(resolve),'0.2.0-rc.1')
+    assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:true,present:true,adapterInstalled:true})
+    await loadSubagentRuntime({resolve,run,cli,importModule:async()=>({JsonRpcLineTransport:class {}})})
+    for (const version of ['0.2.1-rc.3', '0.2.1-rc.4', '0.2.2-rc.2', '0.2.2-rc.3']) {
+      await writeFile(host,JSON.stringify({version}))
+      assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:false,present:true}, 'a different cohort must not load')
+      await writeFile(provider,JSON.stringify({version}))
+      assert.equal(matchingSubagentRuntimeVersion(resolve),version)
+      assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:true,present:true,adapterInstalled:true})
+      await loadSubagentRuntime({resolve,run,cli,importModule:async()=>({JsonRpcLineTransport:class {}})})
+    }
+    await writeFile(provider,JSON.stringify({version:'9.9.9'}))
+    assert.deepEqual(inspectSubagentRuntime(resolve,cli),{installed:false,present:true})
+    await writeFile(host,JSON.stringify({version:'9.9.9'}))
+    assert.equal(matchingSubagentRuntimeVersion(resolve),undefined)
+  } finally { await rm(root,{recursive:true,force:true}) }
+})
+
+test('component selection follows the host cohort instead of an auto-installed plugin peer', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'subscription-host-cohort-'))
+  try {
+    const sdk = join(root, 'host', 'node_modules', '@deepseek-ai', 'dsh-llm')
+    await mkdir(sdk, { recursive: true })
+    const entry = join(root, 'host', 'entry.js'), peer = join(root, 'plugin-sdk.json')
+    await writeFile(entry, '')
+    await writeFile(join(sdk, 'package.json'), JSON.stringify({ version: '0.2.1-rc.3' }))
+    await writeFile(peer, JSON.stringify({ version: '0.2.2-alpha.2' }))
+    assert.equal(hostDshVersion(() => peer, entry), '0.2.1-rc.3')
+    assert.equal(hostDshVersion(() => peer, join(root, 'missing-entry.js')), '0.2.2-alpha.2', 'embedded deployments retain the local SDK fallback')
+  } finally { await rm(root, { recursive: true, force: true }) }
+})

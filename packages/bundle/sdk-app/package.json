@@ -1,0 +1,68 @@
+{
+  "name": "@ocean/ocean-sdk-app",
+  "description": "The dsh SDK profile bundle: stdio JSON-RPC serving and process lifecycle over dsh-base",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/bundle/sdk-app"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@ocean/ocean-cmdline": "workspace:*",
+    "@ocean/ocean-office-kit": "workspace:*",
+    "@ocean/ocean-sdk-jsonrpc-server": "workspace:*",
+    "@ocean/ocean-tool-office": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "commander": "^15.0.0",
+    "@ocean/ocean-skill-office": "workspace:*",
+    "@ocean/ocean-tool-workspace-dependencies": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-file-upload": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-time-context": "workspace:*",
+    "@ocean/ocean-tool-schedule": "workspace:*",
+    "@ocean/ocean-tool-ask-user": "workspace:*",
+    "@ocean/ocean-tool-present": "workspace:*",
+    "@ocean/ocean-file-reference-local": "workspace:*",
+    "@ocean/ocean-deliverable-file-references": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Ocean Codex",
+    "description": "Ocean Codex incluye acceso, modelos y cuota. Esta versión no ofrece búsqueda, imágenes, voz, control remoto, conectores ni instalación del runtime. Usa servicios de suscripción de OpenAI; es una integración independiente no avalada por OpenAI.",
+    "detail": "docs/plugin/DETAIL.es.md"
+  }
+}

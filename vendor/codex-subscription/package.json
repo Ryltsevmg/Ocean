@@ -1,0 +1,164 @@
+{
+  "name": "@ocean/ocean-codex-subscription",
+  "version": "0.2.2-rc.2",
+  "description": "Ocean Codex subscription integration, adapted from WSL043/dsh-codex-subscription",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib/*.js",
+    "native/linux-voice-helper.py",
+    "locale/*.json",
+    "docs/plugin/*.md",
+    "cordis.patch.yml",
+    "README*.md",
+    "DIRECTORY.md",
+    "compatibility.json",
+    "LICENSE",
+    "SECURITY.md",
+    "THIRD_PARTY_NOTICES.md",
+    "UPSTREAM-README.md",
+    "README.md",
+    "icon.svg",
+    "OCEAN-SECURITY-REVIEW.md",
+    "OCEAN-VERIFICATION.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-client-connection",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-model-selection",
+        "@ocean/ocean-client-ui-settings",
+        "@ocean/ocean-client-ui-tool"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "tsdown --config tsdown.config.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:ocean": "node --test tests/auth-security.test.mjs tests/account-vault.test.mjs tests/account-status-controller.test.mjs tests/account-usage.test.mjs tests/subscription-transport.test.mjs tests/ocean-ui.test.mjs tests/ocean-policy.test.mjs tests/settings-adapter.test.mjs tests/host-settings-schema.test.mjs tests/transport-contract.test.mjs tests/oauth-network.test.mjs tests/subscription-settings-entry.test.mjs tests/client-chunks.test.mjs tests/ocean-package-version.test.mjs"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "openai-codex",
+    "chatgpt-oauth",
+    "chatgpt",
+    "chatgpt-plus",
+    "subscription",
+    "quota",
+    "quota-reset",
+    "fast-mode",
+    "usage",
+    "oauth",
+    "web-search",
+    "image-generation"
+  ],
+  "author": "WSL043",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "vendor/codex-subscription"
+  },
+  "bugs": {
+    "url": "https://github.com/Ryltsevmg/Ocean/issues"
+  },
+  "homepage": "https://github.com/Ryltsevmg/Ocean",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": "0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-alpha.1 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-alpha.4 || 0.2.1-alpha.5 || 0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3 || 0.2.1-rc.4 || 0.2.1-rc.5 || 0.2.2-alpha.2 || 0.2.2-alpha.3 || >=0.2.2-rc.1 <0.2.3-0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@earendil-works/pi-ai": "1.3.0",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-model-selection": "workspace:*",
+    "@ocean/ocean-client-ui-settings": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-tool": "workspace:*",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-pi-ai": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-subagent-codex": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-web": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@earendil-works/pi-ai": "1.3.0",
+    "@heroicons/react": "2.2.0",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-ui-chat": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-model-selection": "workspace:*",
+    "@ocean/ocean-client-ui-settings": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-tool": "workspace:*",
+    "@ocean/ocean-credentials": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-pi-ai": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-subagent-codex": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-web": "workspace:*",
+    "ajv": "8.20.0",
+    "fake-indexeddb": "6.2.5",
+    "qrcode": "1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsdown": "0.22.2"
+  },
+  "dependencies": {
+    "@ocean/ocean-home-paths": "workspace:*",
+    "https-proxy-agent": "7.0.6",
+    "jose": "^6.2.3",
+    "ws": "8.21.3"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "@ocean/ocean-subagent-codex": {
+      "optional": true
+    }
+  },
+  "icon": "./icon.svg",
+  "oceanUpstream": {
+    "repository": "https://github.com/WSL043/dsh-codex-subscription",
+    "version": "3.2.13",
+    "commit": "fb37c50a128aed84b230c520bf934cded97d851b"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Computernutzung",
+    "description": "Genehmigte Apps unter macOS, Windows und Linux steuern. Linux unterstützt AT-SPI-Steuerelemente, aber keine Screenshots oder globale Maus- und Tastatureingabe. Einrichtung erforderlich.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -1,0 +1,7 @@
+# Bilingual-pair consistency record for brand-guidelines.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/brand-guidelines.md
+/ocean-brand-guidelines:
+  en: 727867416692c1c0
+  zh: c22c9e90d36ba7fb

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Linux-Anbieter für Computersteuerung",
+    "description": "Experimenteller AT-SPI-Barrierefreiheitszugriff und semantische Aktionen in einzeln autorisierten Linux-Anwendungen. Keine Steuerung des gesamten Desktops und keine globalen Tastatur- oder Mauseingaben."
+  }
+}

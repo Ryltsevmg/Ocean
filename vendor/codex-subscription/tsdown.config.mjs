@@ -1,0 +1,177 @@
+import { dirname, resolve } from 'node:path'
+import { stat, utimes } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { defineConfig, Rolldown } from 'tsdown'
+
+const id = '@ocean/ocean-codex-subscription'
+const hostExternal = [
+  '@ocean/ocean-subagent-codex',
+  '@ocean/ocean-sdk-protocol',
+  '@ocean/ocean-client-connection',
+  '@deepseek-ai/cordis',
+  '@ocean/ocean-credentials',
+  '@ocean/ocean-llm',
+  '@ocean/ocean-llm-pi-ai',
+  '@ocean/ocean-settings',
+  '@ocean/ocean-tools',
+  '@deepseek-ai/schemastery',
+  '@earendil-works/pi-ai',
+  '@earendil-works/pi-ai/api/openai-codex-responses',
+  '@earendil-works/pi-ai/providers/openai-codex',
+]
+const clientExternal = [
+  'react', 'react/jsx-runtime', 'react-dom', '@deepseek-ai/cordis',
+]
+const root = dirname(fileURLToPath(import.meta.url))
+const clientFeatures = [
+  { entry: 'src/client-sketch.jsx', fileName: 'client.sketch.js' },
+  { entry: 'src/client-image-viewer.jsx', fileName: 'client.image-viewer.js' },
+]
+
+// Reused pnpm stores can sit outside this checkout. Keep that machine-specific
+// location out of region labels and maps, just as for a local node_modules tree.
+function portableSourcePath(source) {
+  const normalized = source.replaceAll('\\', '/')
+  const dependency = normalized.indexOf('node_modules/')
+  return dependency < 0 ? normalized : normalized.slice(dependency)
+}
+
+function portableSourcePaths() {
+  return {
+    name: 'dsh-client-portable-source-paths',
+    renderChunk(code) {
+      const transformed = new Rolldown.RolldownMagicString(code)
+      for (const match of code.matchAll(/^[\t ]*\/\/#region ([^\r\n]+)/gmu)) {
+        const stable = portableSourcePath(match[1])
+        if (stable === match[1]) continue
+        const start = match.index + match[0].length - match[1].length
+        transformed.overwrite(start, start + match[1].length, stable)
+      }
+      return transformed.hasChanged() ? { code: transformed.toString(), map: JSON.parse(transformed.generateMap({ hires: true }).toString()) } : null
+    },
+  }
+}
+
+// Each feature is built independently so Rolldown cannot introduce a synchronous
+// relative shared-chunk require, which DSH's module-table require cannot resolve.
+function featureImports() {
+  const entries = new Map(clientFeatures.map(feature => [resolve(root, feature.entry), feature]))
+  const escape = value => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+  return {
+    name: 'dsh-client-feature-imports',
+    resolveId(source, importer) {
+      if (!importer || !source.startsWith('.')) return null
+      const feature = entries.get(resolve(dirname(importer), source))
+      return feature ? { id: `./${feature.fileName}`, external: true } : null
+    },
+    renderChunk(code, chunk, options) {
+      if (options.format !== 'cjs') return null
+      const transformed = new Rolldown.RolldownMagicString(code)
+      for (const feature of clientFeatures) {
+        const specifier = `./${feature.fileName}`
+        // External imports may remain native import(), while internal CJS
+        // imports use Rolldown's Promise/require form. External imports are not
+        // always listed in chunk.dynamicImports, so inspect the emitted calls.
+        const call = new RegExp(`import\\((['"])${escape(specifier)}\\1\\)|Promise\\.resolve\\(\\)\\.then\\(\\(\\)\\s*=>\\s*require\\((['"])${escape(specifier)}\\2\\)\\)`, 'gu')
+        const matches = [...code.matchAll(call)]
+        if (!matches.length) {
+          if (chunk.dynamicImports?.some(name => name === specifier || name === feature.fileName)) {
+            throw new Error(`DSH feature import has no supported generated expression: ${specifier}`)
+          }
+          continue
+        }
+        for (const match of matches) transformed.overwrite(match.index, match.index + match[0].length, `require.async(${JSON.stringify(specifier)})`)
+      }
+      return transformed.hasChanged() ? { code: transformed.toString(), map: JSON.parse(transformed.generateMap({ hires: true }).toString()) } : null
+    },
+    generateBundle(_options, bundle) {
+      for (const output of Object.values(bundle)) {
+        if (output.type === 'chunk' && output.imports.some(name => /^\.?\/?client\..+\.js$/u.test(name))) {
+          throw new Error('DSH client chunks must not synchronously import relative shared chunks')
+        }
+        if (output.type === 'chunk' && /\bimport\(['"]\.\/client\.[^'"]+['"]\)/u.test(output.code ?? '')) {
+          throw new Error('DSH client features must use the host async chunk loader')
+        }
+      }
+    },
+  }
+}
+
+// DSH versions every package-local chunk with its client.js metadata. Separate
+// feature watchers must publish their completed write through that same entry.
+let featurePublication = Promise.resolve()
+function featureRebuildNotice() {
+  return {
+    name: 'dsh-client-feature-rebuild-notice',
+    async writeBundle(options) {
+      if (!options.dir) return
+      const publish = async () => {
+        const entryPath = resolve(options.dir, 'client.js')
+        try {
+          const current = await stat(entryPath)
+          // Serialize features and allow the clock to tick if necessary; never
+          // invent a future mtime merely to force a distinct generation.
+          const deadline = performance.now() + 100
+          while (Date.now() <= current.mtimeMs && performance.now() < deadline) {
+            await new Promise(done => setTimeout(done, 1))
+          }
+          await utimes(entryPath, current.atime, new Date())
+        } catch (error) {
+          // A clean build may finish a feature before the entry is written.
+          if (error.code !== 'ENOENT') throw error
+        }
+      }
+      const completion = featurePublication.catch(() => {}).then(publish)
+      featurePublication = completion
+      await completion
+    },
+  }
+}
+
+function clientBundle(entry, fileName, chunk) {
+  return {
+    name: `${id}/${fileName}`,
+    entry: { client: entry },
+    outDir: 'lib', format: 'cjs', platform: 'browser', target: 'es2022',
+    dts: false, sourcemap: true, clean: false,
+    // Resolve the installed entries once. Parallel browser builds on Windows
+    // can otherwise leave these pnpm subpaths as unresolved external imports.
+    alias: {
+      '@heroicons/react/16/solid': fileURLToPath(import.meta.resolve('@heroicons/react/16/solid')),
+      '@heroicons/react/24/outline': fileURLToPath(import.meta.resolve('@heroicons/react/24/outline')),
+      'qrcode/lib/core/qrcode.js': fileURLToPath(import.meta.resolve('qrcode/lib/core/qrcode.js')),
+    },
+    deps: { neverBundle: clientExternal },
+    plugins: [...(chunk ? [featureRebuildNotice()] : [featureImports()]), portableSourcePaths()],
+    define: { 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production') },
+    outputOptions: {
+      codeSplitting: false,
+      sourcemapPathTransform: portableSourcePath,
+      entryFileNames: fileName,
+      banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, ${chunk ? `chunk: ${JSON.stringify(fileName)}, ` : ''}factory: (require) => {`,
+      footer: 'return module.exports; } });',
+      intro: 'var module = { exports: {} }; var exports = module.exports;',
+    },
+  }
+}
+
+const configurations = [
+  {
+    name: id,
+    entry: { index: 'src/index.js' },
+    outDir: 'lib', format: ['esm'], platform: 'node', target: 'es2024',
+    fixedExtension: false, dts: false, clean: false,
+    deps: { neverBundle: hostExternal },
+  },
+  clientBundle('src/client.jsx', 'client.js', false),
+  ...clientFeatures.map(feature => clientBundle(feature.entry, feature.fileName, true)),
+]
+
+// Host and browser artifact steps run independently in the Ocean build graph.
+export default defineConfig(({ env }) => {
+  const face = env?.DSH_BUILD_FACE
+  if (face === undefined) return configurations
+  if (face === 'host') return configurations.slice(0, 1)
+  if (face === 'client') return configurations.slice(1)
+  throw new Error(`Unknown Ocean build face: ${face}`)
+})

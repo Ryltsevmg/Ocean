@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for llm-adapter.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/user/develop/practice/llm-adapter.md
+/llm-adapters:
+  en: b1773ae9a186fd66
+  zh: e0a190393f7215b7
+/llm-adapters/overview:
+  en: 41c0c7fd00acc50d
+  zh: 6ee6949e384e96f7
+/llm-adapters/minimal-implementation:
+  en: 2eeb1c65c2b1e67b
+  zh: 0dbee75ec52aa2d5
+/llm-adapters/streamchunk-protocol:
+  en: c5b80f3ab607300c
+  zh: 6d143add0d5fc44c
+/llm-adapters/streamchunk-protocol/key-rules:
+  en: c0138e6ba95197fa
+  zh: fc1e2b8047e08d2a
+/llm-adapters/generateoptions:
+  en: 0dceb0ca600920ab
+  zh: 968202274f4715dc
+/llm-adapters/register-an-adapter:
+  en: 8e0ac8990c049f29
+  zh: f8c3de63ee4d6757
+/llm-adapters/use-it-from-cordis-yml:
+  en: b83c91da871dca8c
+  zh: d21046627e3cb0c4
+/llm-adapters/reference-implementations:
+  en: e05d4b0a901e8ef0
+  zh: 9516cebb3e5c3692
+/llm-adapters/error-handling:
+  en: 08670c0bc7b8f494
+  zh: 37312af73d0acf91

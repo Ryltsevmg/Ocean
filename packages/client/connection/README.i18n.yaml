@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/connection/README.md
+/:
+  en: 13b131457d03a224
+  zh: 6dedd0706d5ffc0a
+/ocean-ocean-client-connection:
+  en: 09250af9ada72c71
+  zh: c55098e8da356e9c
+/ocean-ocean-client-connection/summary:
+  en: a83b5e9fd1968062
+  zh: ac68628e185a4bff
+/ocean-ocean-client-connection/table-of-contents:
+  en: 18792bf2fb4f8030
+  zh: 84c63acc7e0099ae
+/ocean-ocean-client-connection/use-this-package:
+  en: da6810858bf74a86
+  zh: d623e510ec74520f
+/ocean-ocean-client-connection/browser-authentication-and-request-trust:
+  en: 5f9dc2418831750a
+  zh: af41e7e8f442088f
+/ocean-ocean-client-connection/connection-generation:
+  en: 5eafe84017d33471
+  zh: ee8c4ce78919460f
+/ocean-ocean-client-connection/model-experience:
+  en: 88bbc33fe9ae9df8
+  zh: bfbab6d51b4abd40
+/ocean-ocean-client-connection/model-experience/kv-cache-effect:
+  en: ca75c51c89c2c9b0
+  zh: de54f3467ef3b9be
+/ocean-ocean-client-connection/known-limitations-and-deferred-work:
+  en: a860aa95302e4f02
+  zh: 4df79a08b5fe018e
+/ocean-ocean-client-connection/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: e88aeb617ffb74ea

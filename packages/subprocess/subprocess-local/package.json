@@ -1,0 +1,66 @@
+{
+  "name": "@ocean/ocean-subprocess-local",
+  "description": "Local-subprocess implementation of the Ocean subprocess seam",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/subprocess/subprocess-local"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./runner": {
+      "types": "./lib/types/bin.d.ts",
+      "default": "./lib/runner.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./output": {
+      "types": "./lib/types/output.d.ts",
+      "default": "./lib/output.js"
+    },
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/runner.js",
+    "lib/runner-*.js",
+    "lib/output.js",
+    "scripts/ensure-spawn-helper.mjs",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/ensure-spawn-helper.mjs"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "@ocean/ocean-lazy-require": "workspace:*",
+    "@ocean/ocean-win32-process": "workspace:*",
+    "koffi": "3.1.1",
+    "node-pty": "1.2.0-beta.15"
+  },
+  "devDependencies": {
+    "@ocean/ocean-loader-smoke": "workspace:*",
+    "@ocean/ocean-subprocess": "workspace:*",
+    "@ocean/ocean-timeout": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~"
+  }
+}

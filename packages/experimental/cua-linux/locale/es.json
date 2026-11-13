@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Proveedor de control del equipo en Linux",
+    "description": "Acceso experimental a la accesibilidad AT-SPI y acciones semánticas en aplicaciones Linux autorizadas individualmente. No ofrece control de todo el escritorio ni entrada global de teclado y ratón."
+  }
+}

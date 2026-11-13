@@ -1,0 +1,75 @@
+{
+  "name": "@ocean/ocean-creation-recommendations",
+  "description": "Create persistent removable interface plugins from explicit conversation needs",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/creation-recommendations"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./references/*.md": "./references/*.md",
+    "./skills/*.md": "./skills/*.md"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-skill": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-plugin-manager": "workspace:*",
+    "@ocean/ocean-api-remote-access": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-skill": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-tool-testkit": "workspace:*"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0",
+    "resolve.exports": "^2.0.3",
+    "zod": "4.6.6",
+    "@ocean/ocean-client-ui-creation-recommendations": "workspace:*",
+    "@ocean/ocean-action-cards": "workspace:*",
+    "@ocean/ocean-client-ui-action-cards": "workspace:*"
+  },
+  "files": [
+    "icon.svg",
+    "locale/*.json",
+    "lib/index.js",
+    "references/*.md",
+    "skills/*.md",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "icon": "./icon.svg"
+}

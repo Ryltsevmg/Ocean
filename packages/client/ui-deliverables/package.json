@@ -1,0 +1,99 @@
+{
+  "name": "@ocean/ocean-client-ui-deliverables",
+  "description": "Changed-files card with per-file comparison tabs, delivery cards, and clickable final-response file references for Web",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/client/ui-deliverables"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-client-connection",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-chat",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-renderer",
+        "@ocean/ocean-client-ui-sidebar-right",
+        "@ocean/ocean-client-ui-tool",
+        "@ocean/ocean-client-ui-settings",
+        "@ocean/ocean-client-ui-context-menu"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-chat": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-dockkit": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar-right": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@deepseek-ai/cordis": "workspace:~",
+    "react": "^18.2.0",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-system-prompt": "workspace:*",
+    "@ocean/ocean-session-query": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-client-ui-tool": "workspace:*",
+    "@ocean/ocean-tool-present": "workspace:*",
+    "@ocean/ocean-workspace-changes": "workspace:*",
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-util-workspace-path": "workspace:*",
+    "@ocean/ocean-api-workspace-files": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-client-ui-settings": "workspace:*",
+    "@ocean/ocean-client-ui-context-menu": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "dependencies": {
+    "@ocean/ocean-typert-protocol": "workspace:*"
+  }
+}

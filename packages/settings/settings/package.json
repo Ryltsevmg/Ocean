@@ -1,0 +1,63 @@
+{
+  "name": "@ocean/ocean-settings",
+  "description": "Abstract user-settings seam (ctx.settings) for the Ocean",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/settings/settings"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "@deepseek-ai/cordis-plugin-timer": "workspace:~",
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-hmr": "workspace:*",
+    "@ocean/ocean-agent-default-model": "workspace:*",
+    "yaml": "^2.8.1"
+  },
+  "dependencies": {
+    "@ocean/ocean-util-values": "workspace:*",
+    "@ocean/ocean-config-editor": "workspace:*",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@deepseek-ai/cosmokit": "workspace:~",
+    "yaml": "^2.8.1"
+  }
+}

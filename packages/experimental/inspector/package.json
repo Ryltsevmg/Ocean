@@ -1,0 +1,87 @@
+{
+  "name": "@ocean/ocean-experimental-inspector",
+  "description": "Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection",
+  "version": "0.2.2-rc.2",
+  "icon": "./icon.svg",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/inspector"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "files": [
+    "icon.svg",
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/client.*.js",
+    "lib/worker.js",
+    "lib/devtools/**",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-app-boot": "workspace:*",
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
+    "open": "^11.0.2",
+    "serve-static": "^2.2.1",
+    "ws": "^8.21.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "chrome-devtools-frontend": "1.0.1638082",
+    "@types/serve-static": "^2.2.0",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@testing-library/react": "^16.3.3",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "@ocean/ocean-client-shortcuts": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "react": "^18.2.0",
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-host-webserver": "workspace:*",
+    "@ocean/ocean-cmdline": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@types/ws": "^8.18.1",
+    "playwright": "^1.49.0",
+    "tsx": "^4.23.13",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-client-modules": "workspace:*"
+  }
+}

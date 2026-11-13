@@ -1,0 +1,61 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/ptc-runtime-python/README.md
+/:
+  en: d9caf4b17c0e6fe4
+  zh: 7233b09cfb890559
+/ocean-ocean-experimental-ptc-runtime-python:
+  en: ee29371710b581fe
+  zh: 5271f7cedb733916
+/ocean-ocean-experimental-ptc-runtime-python/summary:
+  en: bdcd4f38f97a3bab
+  zh: d93074f86ac2b9f5
+/ocean-ocean-experimental-ptc-runtime-python/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-experimental-ptc-runtime-python/use-this-package:
+  en: c5ae9318211c3fb9
+  zh: f297045a12d54098
+/ocean-ocean-experimental-ptc-runtime-python/use-this-package/what-you-get:
+  en: 5e339e8d7c293dd2
+  zh: ff6a86ce83918aa4
+/ocean-ocean-experimental-ptc-runtime-python/use-this-package/the-wire:
+  en: 41b810946d42571f
+  zh: e554283246453c78
+/ocean-ocean-experimental-ptc-runtime-python/use-this-package/what-can-go-wrong:
+  en: 9a0c3294b510cd22
+  zh: 5635886060044ae3
+/ocean-ocean-experimental-ptc-runtime-python/understand-the-implementation:
+  en: 7824816505e2b844
+  zh: 3603d1c332c2ed5d
+/ocean-ocean-experimental-ptc-runtime-python/understand-the-implementation/design-concept:
+  en: 706fb5750d6e766f
+  zh: b8f054bffb4c1ff2
+/ocean-ocean-experimental-ptc-runtime-python/understand-the-implementation/wire-contract:
+  en: d0646c356eb6983f
+  zh: f2a80e04f44467e4
+/ocean-ocean-experimental-ptc-runtime-python/understand-the-implementation/lossless-json-crossing:
+  en: 6252e86fa10e9dd0
+  zh: 9b95b033ea0b5463
+/ocean-ocean-experimental-ptc-runtime-python/understand-the-implementation/mirror-alignment:
+  en: 167a08a71870f227
+  zh: 43f671b45104849f
+/ocean-ocean-experimental-ptc-runtime-python/understand-the-implementation/source-map:
+  en: 4f322d79bbf578f6
+  zh: 7f7f9187f49af439
+/ocean-ocean-experimental-ptc-runtime-python/further-exploration:
+  en: 61c817767ff4e33e
+  zh: 6519fb9d13e100c7
+/ocean-ocean-experimental-ptc-runtime-python/model-experience:
+  en: 79863a171221fa59
+  zh: 961125d015b1e800
+/ocean-ocean-experimental-ptc-runtime-python/model-experience/kv-cache-effect:
+  en: 40294c1c31b74824
+  zh: d805c6bd7270505e
+/ocean-ocean-experimental-ptc-runtime-python/known-limitations-and-deferred-work:
+  en: 09cd151c631bd9c2
+  zh: 5c9a34fc6b4e9804
+/ocean-ocean-experimental-ptc-runtime-python/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3bb0c20c93f16f98

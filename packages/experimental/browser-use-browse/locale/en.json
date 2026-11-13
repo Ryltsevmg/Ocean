@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Browser control (browse)",
+    "description": "Optional control of agent-owned tabs in your paired Chrome. Enabling this bundle does not connect a browser; separate setup is required.",
+    "detail": "docs/DETAIL.md"
+  }
+}

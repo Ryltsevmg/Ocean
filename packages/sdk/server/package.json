@@ -1,0 +1,88 @@
+{
+  "name": "@ocean/ocean-sdk-jsonrpc-server",
+  "description": "Stdio JSON-RPC server plugin for out-of-process Ocean SDK clients",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/sdk/server"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-brand": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-goal": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-deepseek-api-key": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-sdk-protocol": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-attachment": "workspace:*",
+    "@ocean/ocean-command-compact": "workspace:*",
+    "@ocean/ocean-command-goal": "workspace:*",
+    "@ocean/ocean-commands": "workspace:*",
+    "@ocean/ocean-compaction-basic": "workspace:*",
+    "@ocean/ocean-goal": "workspace:*",
+    "@ocean/ocean-goal-round-driver": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-llm-deepseek-api-key": "workspace:*",
+    "@ocean/ocean-permission-presets": "workspace:*",
+    "@ocean/ocean-plan-mode": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-schedule": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-sdk-protocol": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-session-persistence-jsonl": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-shell": "workspace:*",
+    "@ocean/ocean-subagent": "workspace:*",
+    "@ocean/ocean-token-meter": "workspace:*",
+    "@ocean/ocean-tool-goal": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*",
+    "@ocean/ocean-user-questions": "workspace:*",
+    "@ocean/ocean-working-directory": "workspace:*"
+  }
+}

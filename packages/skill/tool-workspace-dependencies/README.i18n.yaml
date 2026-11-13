@@ -1,0 +1,67 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/skill/tool-workspace-dependencies/README.md
+/:
+  en: bf4fab5fbd2ca5b2
+  zh: d28dec535b3df130
+/ocean-ocean-tool-workspace-dependencies:
+  en: cf30e375c183bf0c
+  zh: 5ebe19bb059cddd2
+/ocean-ocean-tool-workspace-dependencies/summary:
+  en: 15df285dcbd3b2f8
+  zh: 24ca126cd7a0266f
+/ocean-ocean-tool-workspace-dependencies/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 43ad67236ccda19a
+/ocean-ocean-tool-workspace-dependencies/use-this-package:
+  en: 8c8373be022b65cd
+  zh: 3c2309d9b64b0f11
+/ocean-ocean-tool-workspace-dependencies/use-this-package/minimal-configuration:
+  en: 4d211687c8bed3af
+  zh: 641b9fd21b665a95
+/ocean-ocean-tool-workspace-dependencies/use-this-package/payload-layout:
+  en: 0575105cbe07c108
+  zh: 125d54d45a72bf43
+/ocean-ocean-tool-workspace-dependencies/use-this-package/build-a-carrier-payload:
+  en: eded51fac00ff89c
+  zh: 06d2325deb55cb50
+/ocean-ocean-tool-workspace-dependencies/understand-the-implementation:
+  en: 0121e57a754cb26f
+  zh: 2933fc0415da013d
+/ocean-ocean-tool-workspace-dependencies/further-exploration:
+  en: e78508a7d92652c4
+  zh: 5788b94b7af15ada
+/ocean-ocean-tool-workspace-dependencies/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-schema:
+  en: e4c7376d4f29dbd5
+  zh: 6b7a9eaf69c9ea53
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-schema/what-the-model-sees:
+  en: f50c931199e336e2
+  zh: 7e2e3b8835638a33
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-schema/token-effect:
+  en: 615cce9c7fcb746d
+  zh: 6b9f58e263a38d61
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-schema/kv-cache-effect:
+  en: 4ee92571a5f8a71a
+  zh: 6fa2a5b21b9f0150
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-result:
+  en: f8ffc2b983f05ffc
+  zh: 8573891441963be4
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-result/what-the-model-sees:
+  en: c25c9db51e7d06da
+  zh: a4cdcd37bd501503
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-result/token-effect:
+  en: 0efada793d1e65b1
+  zh: 3eed908f43174b88
+/ocean-ocean-tool-workspace-dependencies/model-experience/tool-result/kv-cache-effect:
+  en: 42325f307b6c259d
+  zh: d53a45f1c00ba16f
+/ocean-ocean-tool-workspace-dependencies/known-limitations-and-deferred-work:
+  en: 8aeacc5404854231
+  zh: 43d970fa23ac2473
+/ocean-ocean-tool-workspace-dependencies/known-limitations-and-deferred-work/dev-note:
+  en: f57d5fcd5b2e8a44
+  zh: b210a0dce56f2e8a

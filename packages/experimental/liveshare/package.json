@@ -1,0 +1,173 @@
+{
+  "name": "@ocean/ocean-experimental-liveshare",
+  "description": "Opt-in LiveShare host bundle: share a Session through a separate Relay at the view or bounded-write tier, with forking and attachment uploads as independent switches",
+  "version": "0.2.2-rc.2",
+  "icon": "./icon.svg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryltsevmg/Ocean.git",
+    "directory": "packages/experimental/liveshare"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./types": {
+      "types": "./lib/types/share-api-types.d.ts"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "icon.svg",
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "lib/owner-gateway/cli.js",
+    "lib/retry-backoff-*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@ocean/ocean-atomic-write": "workspace:*",
+    "@ocean/ocean-brand": "workspace:*",
+    "@ocean/ocean-experimental-liveshare-protocol": "workspace:*",
+    "@ocean/ocean-http-proxy": "workspace:*",
+    "@ocean/ocean-official-bundles": "workspace:*",
+    "@ocean/ocean-session": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-util-values": "workspace:*",
+    "undici": "8.12.2",
+    "ws": "^8.18.3",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-scope": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@ocean/ocean-agent": "workspace:*",
+    "@ocean/ocean-agent-loop-testkit": "workspace:*",
+    "@ocean/ocean-api-gateway": "workspace:*",
+    "@ocean/ocean-api-remote-access": "workspace:*",
+    "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-api-session-controller": "workspace:*",
+    "@ocean/ocean-api-settings-controller": "workspace:*",
+    "@ocean/ocean-api-workspace-controller": "workspace:*",
+    "@ocean/ocean-api-workspace-files": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
+    "@ocean/ocean-client-file-upload": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-modules": "workspace:*",
+    "@ocean/ocean-client-resources": "workspace:*",
+    "@ocean/ocean-client-shortcuts": "workspace:*",
+    "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*",
+    "@ocean/ocean-client-ui-agent-preset": "workspace:*",
+    "@ocean/ocean-client-ui-approval": "workspace:*",
+    "@ocean/ocean-client-ui-attachment": "workspace:*",
+    "@ocean/ocean-client-ui-brand-official": "workspace:*",
+    "@ocean/ocean-client-ui-chat": "workspace:*",
+    "@ocean/ocean-client-ui-commands": "workspace:*",
+    "@ocean/ocean-client-ui-context-menu": "workspace:*",
+    "@ocean/ocean-client-ui-conversation": "workspace:*",
+    "@ocean/ocean-client-ui-deliverables": "workspace:*",
+    "@ocean/ocean-client-ui-input-trigger": "workspace:*",
+    "@ocean/ocean-client-ui-jobs": "workspace:*",
+    "@ocean/ocean-client-ui-layout": "workspace:*",
+    "@ocean/ocean-client-ui-plan": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
+    "@ocean/ocean-client-ui-reference": "workspace:*",
+    "@ocean/ocean-client-ui-renderer": "workspace:*",
+    "@ocean/ocean-client-ui-session": "workspace:*",
+    "@ocean/ocean-client-ui-settings": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar-right": "workspace:*",
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-ui-subagent": "workspace:*",
+    "@ocean/ocean-client-ui-theme": "workspace:*",
+    "@ocean/ocean-client-ui-tool": "workspace:*",
+    "@ocean/ocean-client-ui-trajectory": "workspace:*",
+    "@ocean/ocean-client-ui-user-questions": "workspace:*",
+    "@ocean/ocean-client-ui-workflow-run": "workspace:*",
+    "@ocean/ocean-client-ui-workspace": "workspace:*",
+    "@ocean/ocean-client-web": "workspace:*",
+    "@ocean/ocean-cua": "workspace:*",
+    "@ocean/ocean-experimental-api-speech-to-text": "workspace:*",
+    "@ocean/ocean-experimental-claude-code-mods": "workspace:*",
+    "@ocean/ocean-experimental-client-ui-cot-translation": "workspace:*",
+    "@ocean/ocean-fs": "workspace:*",
+    "@ocean/ocean-fs-local": "workspace:*",
+    "@ocean/ocean-fs-observation-policy": "workspace:*",
+    "@ocean/ocean-fs-sandbox": "workspace:*",
+    "@ocean/ocean-host-webserver": "workspace:*",
+    "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-sandbox": "workspace:*",
+    "@ocean/ocean-sandbox-policy": "workspace:*",
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-session-projection": "workspace:*",
+    "@ocean/ocean-settings": "workspace:*",
+    "@ocean/ocean-tool-executor-native": "workspace:*",
+    "@ocean/ocean-tool-fs": "workspace:*",
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-typert-registry": "workspace:*",
+    "@ocean/ocean-workspace": "workspace:*",
+    "@types/ws": "^8.18.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml",
+      "listedByDefault": false
+    },
+    "client": {
+      "inject": [
+        "@ocean/ocean-api-remote-access",
+        "@ocean/ocean-api-remotes",
+        "@ocean/ocean-client-locale",
+        "@ocean/ocean-client-ui-conversation",
+        "@ocean/ocean-client-ui-primitives",
+        "@ocean/ocean-client-ui-renderer",
+        "@ocean/ocean-client-ui-session"
+      ],
+      "platform": "web"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

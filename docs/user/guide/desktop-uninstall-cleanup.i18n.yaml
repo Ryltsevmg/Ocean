@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for desktop-uninstall-cleanup.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/user/guide/desktop-uninstall-cleanup.md
+/uninstall-ocean-desktop:
+  en: 5d639efa89e37d2c
+  zh: 3ebaddd68bd9d310
+/uninstall-ocean-desktop/1-uninstall-the-app:
+  en: 7e2b3f8196801b6c
+  zh: 72375cbeb5c24aac
+/uninstall-ocean-desktop/2-inspect-local-data-before-cleanup:
+  en: 2752676f761b6619
+  zh: d889a510039f01b1
+/uninstall-ocean-desktop/3-remove-verified-data-and-check:
+  en: f7c9fdd2664fc3ba
+  zh: 8c35e2153eeea1cd

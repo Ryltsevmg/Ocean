@@ -1,0 +1,277 @@
+import { createSketchSessionRegistry, createSketchWorkspaceRegistry } from './sketch-session-state.js'
+import { withComposerSession, openComposerSession, createSessionOpeners } from './client-session-compat.js'
+import { ComposerImagePreviews, MessageImagePreviews, IMAGE_PREVIEWS_CSS } from './client-image-previews.jsx'
+import { nativeComposerAttachments, needsSubscriptionImageEnhancement } from './composer-attachment-native.js'
+import { imageConversationNode } from './image-conversation-node.js'
+import { CodexImageToolRow, CodexImageOutput } from './client-images.jsx'
+import { ImageWorkspace } from './image-workspace.jsx'
+import { SketchWorkspaceHost } from './sketch-workspace.jsx'
+import { attachImageFiles, appendImagePrompt } from './image-composer.js'
+import { createSketchTrigger, createImageTrigger } from './sketch-trigger.js'
+import { dictionaries } from './client-languages.js'
+import { STYLE } from './client-styles.js'
+import { createAnnotatedImageReference } from './image-edit-reference.js'
+import { DeferredImageViewer } from './client-deferred-image-viewer.jsx'
+import { SubscriptionImageViewerService } from './subscription-image-viewer.js'
+import { createPreferenceController } from './preference-controller.js'
+import { createDefaultModelController } from './default-model-controller.js'
+import { createAccountStatusController } from './account-status-controller.js'
+import { NS, CHANNEL, unwrap } from './client-shared.js'
+import { createSubscriptionRpcClient } from './rpc-contract.js'
+import { CodexComposerQuota } from './client-composer-quota.jsx'
+import { CodexModelOptionsOverlay, CodexModelSelect, CodexNativeModelOptions, CodexModelLabel, createModelOptionsMenu } from './client-model-select.jsx'
+import { registerLegacyModelPicker, watchComposerModelPickerConflict } from './client-model-picker-slot.js'
+import { quotaUsageController } from './client-quota.jsx'
+import { VoiceCallButton } from './client-voice-call.jsx'
+import { CodexSection, ProjectAction } from './client-section.jsx'
+import { registerSubscriptionSettings, subscriptionSettingsOpener } from './subscription-settings-entry.js'
+import { createHostDiagnostics } from './diagnostic-host.js'
+import { restoreVoiceConversation } from './voice-browser.js'
+import { ComposerPrediction, PREDICTION_CSS } from './client-predictions.jsx'
+
+export const inject = [
+  'slots', 'locale', 'connection', 'remote', 'modelDirectories', 'conversation', 'uiConversation', 'sessions',
+]
+
+// Keep DSH's model picker and its child label slot together. Subscription-only actions use the additive right slot.
+const ComposerRight = props => <CodexComposerQuota {...props} />
+
+export function apply(ctx) {
+  const diagnostics = createHostDiagnostics()
+  ctx.effect(() => diagnostics.register(ctx.slots), 'codex-subscription: host inspection')
+  const imageViewer = new SubscriptionImageViewerService()
+  ctx.effect(() => ctx.locale.register(NS, dictionaries), 'codex-subscription: copy')
+  ctx.effect(() => {
+    const tag = document.createElement('style')
+    tag.dataset.plugin = '@ocean/ocean-codex-subscription'
+    tag.textContent = STYLE + IMAGE_PREVIEWS_CSS + PREDICTION_CSS
+    document.head.append(tag)
+    return () => tag.remove()
+  }, 'codex-subscription: style')
+  const rpc = createSubscriptionRpcClient(ctx.get('connection').rpc)
+  const preference = createPreferenceController(rpc)
+  const quotaUsage = quotaUsageController(rpc)
+  ctx.effect(() => {
+    let mode = preference.getSnapshot().quickQuotaMode
+    return preference.subscribe(() => {
+      const next = preference.getSnapshot().quickQuotaMode
+      if (next !== mode) { mode = next; quotaUsage.invalidate({ preserveUsage: true }) }
+    })
+  }, 'codex-subscription: quota preference snapshot')
+  const defaultModel = createDefaultModelController(rpc)
+  ctx.effect(() => {
+    let previous = JSON.stringify(preference.getSnapshot(), (key,value) => key.startsWith('image') || key === '' ? value : undefined)
+    return preference.subscribe(() => {
+      const next = JSON.stringify(preference.getSnapshot(), (key,value) => key.startsWith('image') || key === '' ? value : undefined)
+      if (next !== previous) imageViewer.close()
+      previous = next
+    })
+  }, 'codex-subscription: image controls')
+  const accountStatus = createAccountStatusController(rpc)
+  ctx.effect(() => {
+    void preference.load()
+    void accountStatus.load()
+    const disposeReset = ctx.on('connection/reset', () => { quotaUsage.invalidate(); void preference.load(); void preference.refreshModels(); void accountStatus.reload() })
+    return () => {
+      disposeReset?.()
+      preference.dispose()
+      defaultModel.dispose()
+      accountStatus.dispose()
+    }
+  }, 'codex-subscription: preferences and account status')
+  const t = ctx.locale.bind(NS)
+  const optionsMenu = createModelOptionsMenu()
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay', id: 'codex-subscription-model-options', inject: () => ({ optionsMenu }),
+  }, CodexModelOptionsOverlay))
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay', id: 'codex-subscription-image-viewer', order: 20,
+    inject: () => ({ service: imageViewer, t }),
+  }, DeferredImageViewer))
+  registerSubscriptionSettings(ctx, { preference, rpc, accountStatus, t, diagnostics, defaultModel }, CodexSection, ProjectAction)
+  const sessions = ctx.get('sessions')
+  // The quota readout and the voice button sit in the composer's right slot. They register on the root context, like the
+  // composer's other entries, so DSH's composer always finds them (a session scope can be a different slot registry).
+  const rootDirectories = ctx.get('modelDirectories')
+  // The host's directory service reads remote.session from the context that asked for it; the root context does not inject it,
+  // so once the session-scoped install below has run, its instance is the one to use.
+  let scopedDirectories
+  ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
+    name: 'conversation.input.right', id: 'codex-subscription-quota', order: 15,
+    locale: NS,
+    inject: sessionId => ({
+      sessionId,
+      preference,
+      rpc: rpc,
+      t,
+      openSettings: subscriptionSettingsOpener(ctx),
+      directory: (scopedDirectories ?? rootDirectories).directoryFor(sessionId).store,
+    }),
+  }, ComposerRight))
+  const installDirectorySlots = scope => {
+    scope.effect(() => diagnostics.register(scope.slots), 'codex-subscription: scoped host inspection')
+    const modelDirectories = scope.get('modelDirectories')
+    scopedDirectories = modelDirectories
+    scope.effect(() => () => { if (scopedDirectories === modelDirectories) scopedDirectories = undefined }, 'codex-subscription: scoped model directories')
+    registerLegacyModelPicker(scope.slots, preference, sessionId => {
+      const directory = modelDirectories.directoryFor(sessionId)
+      const available = sessions.subagentAddress(sessionId) === undefined
+      return {
+        available, directory: directory.store, preference, t, optionsMenu, resolveText: text => ctx.locale.resolveText(text),
+        load: () => { if (available) void directory.load().catch(() => {}) },
+        select: async selection => {
+          if (!available) return false
+          try { return (await directory.select(selection))?.ok !== false } catch { return false }
+        },
+      }
+    }, CodexModelSelect, CodexNativeModelOptions, CodexModelLabel, () => watchComposerModelPickerConflict(
+      scope.get('remote.pluginManager'), scope.get('remote'), preference.setComposerModelPickerConflict,
+      refresh => scope.on('connection/reset', refresh),
+    ))
+  }
+  if (ctx.get('remote.session') === undefined) installDirectorySlots(ctx)
+  else ctx.inject(['remote.session'], installDirectorySlots)
+  const conversation = ctx.get('conversation')
+  const uiConversation = ctx.get('uiConversation')
+  const sketchOpeners = createSessionOpeners()
+  const sketchSessions = createSketchSessionRegistry()
+  const sketchWorkspaces = createSketchWorkspaceRegistry()
+  const lifetime = new AbortController()
+  ctx.effect(() => () => { lifetime.abort(); imageViewer.close(); sketchOpeners.clear(); sketchSessions.dispose() }, 'codex-subscription: sketch sessions')
+  ctx.inject(['inputTriggers'], triggerContext => triggerContext.effect(() => triggerContext.get('inputTriggers').registerSource(createSketchTrigger({
+    name: () => t('triggerSketchName'), description: () => t('triggerSketchHint'),
+    enabled: () => { const value = preference.getSnapshot(); return value.imageSketchAgent && value.imageSketch && value.imageEditing },
+    consume: (sessionId, span) => {
+      const actx = sessions.scope(sessionId)
+      return sketchWorkspaces.visible(sessionId) && actx?.bail(actx, 'slash/input-insert-text', { text: '@sketch ', span }) === true
+    },
+  })), 'codex-subscription: Sketch trigger'))
+  ctx.inject(['inputTriggers'], triggerContext => triggerContext.effect(() => triggerContext.get('inputTriggers').registerSource(createImageTrigger({
+    name: () => t('triggerImageName'), description: () => t('triggerImageHint'),
+    enabled: () => { const value = preference.getSnapshot(); return value.imageShortcut && (value.imageGeneration || value.imageEditing) },
+    open: () => {},
+    consume: (sessionId, span) => {
+      const actx = sessions.scope(sessionId)
+      return sketchWorkspaces.visible(sessionId) && actx?.bail(actx, 'slash/input-insert-text', { text: t('imageInlinePrompt'), span }) === true
+    },
+  })), 'codex-subscription: Image trigger'))
+  const sessionInput = sessionId => {
+    const actx = sessions.scope(sessionId)
+    if (!actx || !conversation.input?.for) throw new Error('Image composer is unavailable')
+    return conversation.input.for(actx)
+  }
+  const openSketchImage = sessionId => async (src, name) => {
+    const settings = preference.getSnapshot(), open = sketchOpeners.get(sessionId)
+    if (!settings.imageSketch || !settings.imageEditing || !open || !sketchWorkspaces.visible(sessionId)) throw Error('Sketch unavailable')
+    const response = await fetch(src, { signal: lifetime.signal })
+    if (!response.ok) throw Error('Image unavailable')
+    const blob = await response.blob()
+    if (blob.size > 20 * 1024 * 1024) throw Error('Image too large')
+    lifetime.signal.throwIfAborted()
+    const liveOpen = sketchOpeners.get(sessionId)
+    if (!liveOpen || !sketchWorkspaces.visible(sessionId) || !preference.getSnapshot().imageSketch || !preference.getSnapshot().imageEditing) throw Error('Sketch unavailable')
+    imageViewer.close()
+    liveOpen('sketch', document.activeElement, new File([blob], name || 'image.png', {type:blob.type || 'image/png'}))
+  }
+  const attachForEdit = sessionId => async (src, filename, draft, annotations = [], referenceName, sourceInDraft = false, extraFiles, operation = {}) => {
+    // Official image tools pass their own files (possibly none) and always carry an instruction.
+    const tool = Array.isArray(extraFiles)
+    if (!preference.getSnapshot().imageEditing) throw new Error('Image editing is disabled')
+    return withComposerSession(sessions, sessionId, async actx => {
+      const signal = operation.signal ? AbortSignal.any([lifetime.signal, operation.signal]) : lifetime.signal
+      signal.throwIfAborted()
+      const blob = typeof src === 'function' ? await src({ signal }) : await fetch(src, { signal }).then(response => {
+        if (!response.ok) throw new Error('Could not read generated image')
+        return response.blob()
+      })
+      signal.throwIfAborted()
+      const files = sourceInDraft ? [] : [new File([blob], filename, { type: blob.type || 'image/png' })]
+      if (annotations.length > 0) {
+        const reference = await createAnnotatedImageReference(blob, annotations)
+        files.push(new File([reference], referenceName, { type: 'image/png' }))
+      }
+      if (tool) files.push(...extraFiles)
+      signal.throwIfAborted()
+      const input = conversation.input.for(actx)
+      if (!preference.getSnapshot().imageEditing) throw new Error('Image editing is disabled')
+      const ids = input.state.getSnapshot().attachmentIds
+      if (operation.sourceId && Array.isArray(ids) && !ids.includes(operation.sourceId)) throw new Error('The source attachment was removed')
+      if (files.length) attachImageFiles(conversation, input, files, sessionId, { uploadImages: sessions.subagentAddress(sessionId) === undefined })
+      openComposerSession(sessions, ctx.get('uiWorkspace'), sessionId)
+      // Preserve text typed while the asynchronous image preparation ran.
+      if (sourceInDraft && !annotations.length && !tool) return
+      if (!input.state.getSnapshot().draft.trim()) input.setDraft(draft)
+      else if (annotations.length || tool) {
+        if (!input.state.getSnapshot().occurrences?.length) appendImagePrompt(input, draft)
+        else input.notify('info', draft)
+      }
+    })
+  }
+  const nativeAttachments = () => nativeComposerAttachments(ctx.slots.entries('conversation.input.attachments'), ComposerImagePreviews)
+  const watchNativeAttachments = callback => ctx.slots.subscribe('conversation.input.attachments',callback)
+  const nativeTranslate = ctx.locale.bind('conversation')
+  // Use the host's attachment presentation slots; restore its own renderer when
+  // enhancement is off. Intake, validation and draft ownership stay with DSH.
+  for (const [name, component] of [
+    ['conversation.input.attachments', ComposerImagePreviews],
+    ['conversation.chat.message.images', MessageImagePreviews],
+    ['conversation.chat.user.images', MessageImagePreviews],
+    ['tool.call.images', MessageImagePreviews],
+    ['conversation.trajectory.images', MessageImagePreviews],
+  ]) ctx.slots.inject(name, () => {
+    let dispose
+    const sync = () => {
+      if (needsSubscriptionImageEnhancement(preference.getSnapshot()) && (component !== ComposerImagePreviews || nativeAttachments())) {
+        // An equal-priority entry belongs to another extension. The host rejects
+        // duplicate priorities for a single slot, so leave its renderer in place.
+        if (!dispose && ctx.slots.entries(name).some(entry => entry.options.priority === -10)) return
+        dispose ??= ctx.slots.register({ name, priority: -10,
+          inject: sessionId => ({ preference, t, sessionId, nativeAttachments, watchNativeAttachments, nativeTranslate, service: imageViewer, openSketchImage: openSketchImage(sessionId), attachForEdit: attachForEdit(sessionId) }),
+        }, component)
+      } else { dispose?.(); dispose = undefined }
+    }
+    sync()
+    const unwatch = preference.subscribe(sync)
+    const unwatchSlot = ctx.slots.subscribe(name, sync)
+    return () => { unwatch(); unwatchSlot(); dispose?.() }
+  })
+  const attachSketch = (sessionId, blob) => {
+    const current = preference.getSnapshot()
+    if (!current.imageSketch || !current.imageEditing) throw new Error('Sketch editing is disabled')
+    attachImageFiles(conversation, sessionInput(sessionId), [new File([blob], 'sketch-reference.png', { type: 'image/png' })], sessionId, { uploadImages: sessions.subagentAddress(sessionId) === undefined })
+  }
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay', id: 'codex-sketch-workspaces', order: 21,
+    inject: () => ({ preference, rpc, t, workspaces: sketchWorkspaces, sketchSessions, openers: sketchOpeners, attachSketch }),
+  }, SketchWorkspaceHost))
+  const openSketch = (id, source) => sketchOpeners.get(id)?.('sketch', source)
+  ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
+    name: 'conversation.input.left', id: 'codex-image-workspace', order: 30,
+    inject: sessionId => ({ preference, t, sessionId, workspaces: sketchWorkspaces, openSketch }),
+  }, ImageWorkspace))
+  const imageProps = sessionId => ({
+      sessionId,
+      rpc: rpc,
+      t,
+      preference,
+      loadImage: attachment => uiConversation.imageUrl(sessionId, attachment),
+      getImageViewer: () => {
+        try {
+          return ctx.get('nativeImageViewer')
+        } catch {
+          return undefined
+        }
+      },
+      getInternalImageViewer: () => imageViewer,
+      openSketchImage: openSketchImage(sessionId),
+      attachForEdit: attachForEdit(sessionId),
+  })
+  ctx.effect(() => uiConversation.events.register(imageConversationNode), 'codex-subscription: image results in chat')
+  ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({
+    name: 'conversation.chat.node', key: 'codex-image-output', inject: imageProps,
+  }, CodexImageOutput))
+  ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
+    name: 'tool.call.toolview', key: 'codex_image_generate', locale: NS,
+    inject: imageProps,
+  }, CodexImageToolRow))
+}
