@@ -15,6 +15,8 @@ declare module '@ocean/ocean-client-ui-slots' {
 export const inject = ['remote', 'slots', 'locale']
 /** Mount transport and UI without pairing or starting a relay. */
 export async function apply(ctx: Context): Promise<() => Promise<void>> {
+  // Do not mount the legacy Browse settings widget in the Desktop RC. Saved profile rows stay intact.
+  if ('dshDesktop' in globalThis) return async () => {}
   const transport = ctx.plugin(async (owner) => { await owner.remote.$mount(browseRemote) })
   const ui = ctx.inject(['remote.browserSetup', 'slots', 'locale'], (ctx) => {
     ctx.effect(() => ctx.locale.register(NS, { en, ru, zh, ja, es, fr, de, pt }))

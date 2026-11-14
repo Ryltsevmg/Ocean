@@ -1239,6 +1239,22 @@ describe('PluginManagerPage', () => {
     expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('个人工具')
   })
 
+  it.each([false, true])('only offers the legacy Browse setup outside Desktop: %s', (desktop) => {
+    if (desktop) vi.stubGlobal('dshDesktop', { protocolVersion: 1 })
+    try {
+      const name = '@ocean/ocean-browser-use-browse'
+      const card = `[data-plugin-package="${name}"]`
+      const unrelated = '@acme/new-official'
+      renderTab({ packages: [pkg({ name, official: true, enabled: true }), pkg({ name: unrelated, official: true })] })
+      expect(Boolean(document.querySelector(card))).toBe(!desktop)
+      expect(document.querySelector(`[data-plugin-package="${unrelated}"]`)).not.toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
+      expect(Boolean(document.querySelector(card))).toBe(!desktop)
+    } finally {
+      if (desktop) vi.unstubAllGlobals()
+    }
+  })
+
   describe('configuration pages', () => {
     const bodies: SlotBodies = {
       'plugins.item:bash': view => view === 'summary' ? 'Limits every command.' : <form aria-label="bash form" />,

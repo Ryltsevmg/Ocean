@@ -45,6 +45,27 @@ test('every supported dictionary identifies Ocean and explains the restricted in
   assert.equal(PROJECT_URL, 'https://github.com/Ryltsevmg/Ocean-Chat')
 })
 
+test('Desktop RC does not register legacy Codex settings, composer quota or other contributions', async () => {
+  const source = await readFile(new URL('../src/client.jsx', import.meta.url), 'utf8')
+  const bundle = await rolldown({ input: 'client', transform: { jsx: { runtime: 'automatic' } }, plugins: [{
+    name: 'ocean-desktop-widget-fixture',
+    resolveId(id, importer) { return importer ? { id, external: true } : '\0client' },
+    load() { return { code: source, moduleType: 'jsx' } },
+  }] })
+  let code
+  try { code = (await bundle.generate({ format: 'cjs' })).output[0].code } finally { await bundle.close() }
+  const contextTouched = new Error('client registration reached')
+  const ctx = new Proxy({}, { get() { throw contextTouched } })
+  for (const desktop of [true, false]) {
+    const module = { exports: {} }
+    const externals = { createHostDiagnostics: () => ({}) }
+    new vm.Script(code).runInNewContext({ module, exports: module.exports, require: () => externals,
+      ...(desktop ? { dshDesktop: { protocolVersion: 1 } } : {}) })
+    if (desktop) assert.doesNotThrow(() => module.exports.apply(ctx))
+    else assert.throws(() => module.exports.apply(ctx), error => error === contextTouched)
+  }
+})
+
 test('Ocean client does not mount voice or prediction launchers or credit spending controls', async () => {
   const entry = await readFile(new URL('../src/client.jsx', import.meta.url), 'utf8')
   assert.doesNotMatch(entry, /<VoiceCallButton|codex-subscription-prediction|searchParams.has\('codexVoiceSession'\)/u)

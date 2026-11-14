@@ -37,6 +37,8 @@ export const inject = [
 const ComposerRight = props => <CodexComposerQuota {...props} />
 
 export function apply(ctx) {
+  // The legacy widget is withheld from Desktop RC; the Host still owns accounts and model routes.
+  if ('dshDesktop' in globalThis) return
   const diagnostics = createHostDiagnostics()
   ctx.effect(() => diagnostics.register(ctx.slots), 'codex-subscription: host inspection')
   const imageViewer = new SubscriptionImageViewerService()
