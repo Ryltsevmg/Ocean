@@ -105,12 +105,11 @@ export interface ClientTransportHooks {
    */
   resolveAsset?(reference: string): string
   /**
-   * The transport owner declares the page owns the Host outright: the Host
-   * runs inside a worker this page spawned, so no other party can reach it and
-   * the loopback stand-in for "the owner's own machine" is vacuous.
-   * `ctx.connection.isLoopback` then reports the privileged surface reachable
-   * regardless of the page authority. Only a shell that assembles its own
-   * transport can set this; served pages never carry the global at all.
+   * The shell declares that it owns a local Host, such as its Desktop process
+   * or page-spawned worker. Connection ignores browser network availability
+   * for this carrier and reports `isLoopback` regardless of page authority.
+   * Only the shell assembling the transport sets this; ordinary served pages
+   * omit it. Host authentication and request-trust checks still apply.
    */
   ownsHost?: boolean
   /** Authenticated WebSocket factory; omission uses the browser API and its cookie jar. */
@@ -325,7 +324,8 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
           sinks.onStateChange?.(state)
         },
       }, { ...recovery, ...config })
-      const current = { token, source, controller, stopNetworkWatch: watchBrowserNetwork(controller) }
+      const stopNetworkWatch = transport?.ownsHost === true ? () => {} : watchBrowserNetwork(controller)
+      const current = { token, source, controller, stopNetworkWatch }
       owner = current
       controller.start()
       return {

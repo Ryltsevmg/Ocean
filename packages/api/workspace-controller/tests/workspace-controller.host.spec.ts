@@ -51,7 +51,7 @@ function deferred<T>(): Deferred<T> {
   return { promise, resolve }
 }
 
-async function harness(options: { systemDocuments?: boolean } = {}) {
+async function harness(options: { systemDocuments?: boolean; documentsChild?: boolean } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-workspace-controller-')))
   tempDirs.push(root)
   const ctx = new Context()
@@ -71,7 +71,9 @@ async function harness(options: { systemDocuments?: boolean } = {}) {
     resources: { register: vi.fn(() => dispose) },
   } as never)
   new RemoteAccessService(ctx)
-  const controller = new WorkspaceController(ctx, options.systemDocuments === true ? {} : { documentsDirectory: root })
+  const controller = new WorkspaceController(ctx, options.systemDocuments === true ? {} : {
+    documentsDirectory: options.documentsChild === true ? join(root, 'Documents') : root,
+  })
   return { controller, ctx, root, storageDomain }
 }
 
@@ -582,6 +584,19 @@ describe('WorkspaceController follow', () => {
 })
 
 describe('first-use Remote', () => {
+  it.each([true, false])('creates the default Workspace when configured Documents exists (%s)', async (exists) => {
+    const { controller, ctx, root } = await harness({ documentsChild: true })
+    const documents = join(root, 'Documents')
+    if (exists) mkdirSync(documents)
+    expect(existsSync(documents)).toBe(exists)
+    const result = await controller.initializeDefault(new AbortController().signal)
+    expect(result?.workspace.path).toBe(join(documents, 'Ocean', DEFAULT_WORKSPACE_DIRECTORY))
+    expect(existsSync(result!.workspace.path)).toBe(true)
+    expect(ctx.workspaceRegistry.list()).toHaveLength(1)
+    expect(ctx.sessions.list()).toEqual([])
+    expect(await controller.initializeDefault(new AbortController().signal)).toEqual(result)
+  })
+
   it('reuses an initialized Workspace without looking up system Documents', async () => {
     const { controller, ctx, root } = await harness({ systemDocuments: true })
     const workspace = await ctx.workspaceRegistry.initializeDefault(async () => root)

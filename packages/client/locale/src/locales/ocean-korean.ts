@@ -323,6 +323,7 @@ export const oceanKoreanCatalogs: Readonly<Record<string, Record<string, string>
     'message.failure.interrupted': '이 턴이 끝나기 전에 Ocean 프로세스가 종료되었습니다(예: 강제 종료, 충돌 또는 종료 중 시간 초과). 따라서 Ocean 재시작 시 턴이 닫혔습니다. 완료되지 않은 도구 호출의 결과는 알 수 없습니다.',
   },
   'workspace': {
+    'defaultWorkspace.documentsUnavailable': '시스템 문서 폴더를 사용할 수 없습니다. ‘작업 공간 선택’에서 폴더를 선택하거나 만드세요.',
     'defaultWorkspace.failed': '기본 작업 공간을 만들 수 없습니다. ‘작업 공간 선택’에서 폴더를 선택하세요.',
     'group.ungrouped': '미분류',
     'session.new': '새 세션',

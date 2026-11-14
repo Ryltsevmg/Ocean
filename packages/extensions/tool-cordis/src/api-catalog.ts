@@ -4789,6 +4789,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Initialize or reuse the default Workspace during first-use startup. The directory name is fixed, so the Host never renames or relocates an existing default; its initial title is that same name, which browser consumers label in the reader\'s language.',
         parameters: [{ name: 'signal', description: 'caller lifetime; cancels native directory lookup.' }],
         returns: 'the durable Workspace, or undefined when first-use initialization is ineligible; creates no Session or message.',
+        throws: ['{RemoteError} `workspace/default-directory-unavailable` when system Documents cannot be resolved; no directory is created.'],
       },
       {
         signature: '@Remote(\'rename\') rename(request: WorkspaceRenameRequest): Promise<WorkspaceValue>',

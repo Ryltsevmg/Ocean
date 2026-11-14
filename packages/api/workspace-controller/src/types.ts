@@ -31,6 +31,8 @@ export interface WorkspaceView {
 
 declare module '@ocean/ocean-typert-protocol' {
   interface RemoteErrorDetailsMap {
+    /** System Documents lookup failed or returned no enabled directory; choose a folder explicitly. */
+    'workspace/default-directory-unavailable': {}
     /** The requested directory cannot back a Workspace. */
     'workspace/invalid-path': { readonly path: string }
     /** Another Workspace already uses the requested name. */

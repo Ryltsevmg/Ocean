@@ -395,6 +395,9 @@ describe('WorkspaceController', () => {
 
     mock.remote.workspace.initializeDefault.mockResolvedValueOnce(err(new RemoteError('gateway/internal', 'directory denied', {})))
     await expect(controller.initializeDefault()).rejects.toBeInstanceOf(WorkspaceCreateError)
+    const unavailable = new RemoteError('workspace/default-directory-unavailable', 'system Documents directory is unavailable', {})
+    mock.remote.workspace.initializeDefault.mockResolvedValueOnce(err(unavailable))
+    await expect(controller.initializeDefault()).rejects.toMatchObject({ name: 'WorkspaceCreateError', rpcError: unavailable })
 
     mock.remote.workspace.create.mockResolvedValueOnce(err(new RemoteError('workspace/invalid-path', 'missing path', { path: '/missing' })))
     const create = controller.create({ path: '/missing' })

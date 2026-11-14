@@ -647,6 +647,12 @@ describe('RowActionToast', () => {
     expect(screen.getByRole('button', { name: '撤销' })).toBeTruthy()
   })
 
+  it('explains unavailable Documents and directs users to choose or create a folder', async () => {
+    const { notify } = await toastSurface()
+    notify({ kind: 'defaultWorkspaceFailed', reason: 'documents-unavailable' })
+    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot('"系统 Documents 文件夹不可用。请通过“选择工作区”选择或新建文件夹。"')
+  })
+
   it.each([
     ['pinFailed', '置顶失败，请稍后重试'],
     ['unpinFailed', '取消置顶失败，请稍后重试'],

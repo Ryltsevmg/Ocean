@@ -325,7 +325,7 @@ export type RowToast =
   | { kind: 'pinFailed' }
   | { kind: 'unpinFailed' }
   | { kind: 'archivedNotOpenable' }
-  | { kind: 'defaultWorkspaceFailed' }
+  | { kind: 'defaultWorkspaceFailed'; reason?: 'documents-unavailable' }
   | { kind: 'forkRequiresOpen'; sessionId: SessionId }
   | { kind: 'shortcutForkFailed'; reason: 'unavailable' | 'failed' }
   /**

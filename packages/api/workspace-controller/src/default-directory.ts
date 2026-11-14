@@ -4,6 +4,8 @@ import { stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { posix, win32 } from 'node:path'
 import { runNativeCommand, type NativeCommandRunner } from '@ocean/ocean-native-command'
+import { RemoteError } from '@ocean/ocean-typert-protocol'
+import type {} from './types.ts'
 import { DEFAULT_WORKSPACE_DIRECTORY } from './default-workspace.ts'
 
 /** Platform observations replaceable in directory-resolution tests. */
@@ -61,34 +63,47 @@ export async function defaultWorkspaceDirectory(
   let directory = documentsDirectory
   if (directory === undefined) {
     const run = internals.run ?? runNativeCommand
+    const lookup = async (command: string, args: string[]): Promise<string> => {
+      try {
+        return (await run(command, args, signal, 'hidden')).stdout
+      } catch (error) {
+        signal.throwIfAborted()
+        if (!(error instanceof Error) || !('code' in error) || (typeof error.code !== 'string' && typeof error.code !== 'number')) throw error
+        throw new RemoteError('workspace/default-directory-unavailable', 'system Documents directory lookup failed', {}, { cause: error })
+      }
+    }
     let stdout: string
     switch (platform) {
       case 'darwin':
-        ({ stdout } = await run('osascript', [
+        stdout = await lookup('osascript', [
           '-e', 'POSIX path of (path to documents folder from user domain without folder creation)',
-        ], signal, 'hidden'))
+        ])
         break
       case 'win32':
-        ({ stdout } = await run('powershell.exe', [
+        stdout = await lookup('powershell.exe', [
           '-NoLogo', '-NoProfile', '-NonInteractive', '-Command',
           '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); '
           + '[Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments, '
           + '[Environment+SpecialFolderOption]::DoNotVerify)',
-        ], signal, 'hidden'))
+        ])
         break
       case 'linux':
-        ({ stdout } = await run('xdg-user-dir', ['DOCUMENTS'], signal, 'hidden'))
+        stdout = await lookup('xdg-user-dir', ['DOCUMENTS'])
         break
       default:
-        throw new Error(`system Documents directory is unavailable on ${platform}`)
+        throw new RemoteError('workspace/default-directory-unavailable', `system Documents directory is unavailable on ${platform}`, {})
     }
+    signal.throwIfAborted()
     directory = stdout.replace(/[\r\n]+$/, '')
-    // XDG reports the home directory when this user directory is disabled.
-    if (directory === '' || (platform === 'linux' && paths.normalize(directory) === (internals.home ?? homedir()))) {
-      throw new Error('system Documents directory is unavailable')
+    if (directory === '') {
+      throw new RemoteError('workspace/default-directory-unavailable', 'system Documents directory is unavailable', {})
     }
   }
   directory = validateDocumentsDirectory(directory, platform)
+  // XDG reports HOME, with or without a trailing separator, when Documents is disabled.
+  if (documentsDirectory === undefined && platform === 'linux' && paths.relative(internals.home ?? homedir(), directory) === '') {
+    throw new RemoteError('workspace/default-directory-unavailable', 'system Documents directory is unavailable', {})
+  }
   signal.throwIfAborted()
   const ocean = paths.join(directory, 'Ocean', DEFAULT_WORKSPACE_DIRECTORY)
   const legacy = paths.join(directory, 'deepseek-harness', DEFAULT_WORKSPACE_DIRECTORY)

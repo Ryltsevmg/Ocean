@@ -16,7 +16,7 @@ import type {} from '@ocean/ocean-agent-preset-registry/types'
 import { createSnapshotStore } from '@ocean/ocean-client-store'
 import type { SubagentAddress } from '@ocean/ocean-subagent/client'
 import type {
-  IWorkspaces, WorkspaceId, WorkspaceSnapshot, WorkspaceView,
+  IWorkspaces, WorkspaceCreateError, WorkspaceId, WorkspaceSnapshot, WorkspaceView,
 } from '@ocean/ocean-api-workspace-controller/client'
 import type { SessionId } from '@ocean/ocean-session/types'
 import type {} from '@ocean/ocean-client-ui-layout/client'
@@ -497,8 +497,12 @@ class UiWorkspaceService extends Service implements UiWorkspace {
   private async initializeDefaultWorkspace(signal: AbortSignal): Promise<WorkspaceView | undefined> {
     try {
       return await this.workspaces.initializeDefault(signal)
-    } catch (_error: unknown) {
-      if (!signal.aborted) this.notify({ kind: 'defaultWorkspaceFailed' })
+    } catch (error: unknown) {
+      if (!signal.aborted) {
+        const unavailable = error instanceof Error && error.name === 'WorkspaceCreateError'
+          && (error as WorkspaceCreateError).rpcError.code === 'workspace/default-directory-unavailable'
+        this.notify({ kind: 'defaultWorkspaceFailed', ...unavailable ? { reason: 'documents-unavailable' as const } : {} })
+      }
       return undefined
     }
   }

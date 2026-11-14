@@ -54,7 +54,10 @@ export function registerToasts(
     yield ctx.slots.register({
       name: 'workspace.toast', key: 'defaultWorkspaceFailed', locale: 'workspace',
       inject: (): ToastDisplayInjected<'defaultWorkspaceFailed'> => ({
-        display: (_notice, t) => ({ text: t('defaultWorkspace.failed'), tone: 'warning' }),
+        display: (notice, t) => ({
+          text: t(notice.reason === 'documents-unavailable' ? 'defaultWorkspace.documentsUnavailable' : 'defaultWorkspace.failed'),
+          tone: 'warning',
+        }),
       }),
     }, ToastEntry<PropsRuntime<'workspace.toast', 'defaultWorkspaceFailed'>>)
     yield ctx.slots.register({

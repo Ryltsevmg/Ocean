@@ -6,6 +6,7 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
+  'defaultWorkspace.documentsUnavailable': '系统 Documents 文件夹不可用。请通过“选择工作区”选择或新建文件夹。',
   'defaultWorkspace.failed': '无法创建默认工作区，请通过“选择工作区”选择文件夹',
   'draft.workspaceRequired': '请先选择工作区',
   'draft.initializationFailed': '暂时无法填入草稿，请稍后重试',
@@ -132,6 +133,7 @@ export type WorkspaceKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
+  'defaultWorkspace.documentsUnavailable': 'The system Documents folder is unavailable. Use Choose workspace to select or create a folder.',
   'defaultWorkspace.failed': 'Unable to create default workspace. Use Choose workspace to select a folder.',
   'draft.workspaceRequired': 'Choose a workspace first.',
   'draft.initializationFailed': 'Could not fill the draft. Please try again shortly.',
@@ -255,6 +257,7 @@ export const en = {
 
 /** Japanese copy, checked against the English keys. */
 export const ja = {
+  'defaultWorkspace.documentsUnavailable': 'システムの Documents フォルダーを利用できません。「ワークスペースを選択」からフォルダーを選択または作成してください。',
   'defaultWorkspace.failed': '既定のワークスペースを作成できません。「ワークスペースを選択」からフォルダーを選んでください。',
   'draft.workspaceRequired': '先にワークスペースを選択してください。',
   'draft.initializationFailed': '下書きを埋め込めませんでした。しばらくしてからもう一度お試しください。',
@@ -378,6 +381,7 @@ export const ja = {
 
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
+  'defaultWorkspace.documentsUnavailable': 'La carpeta Documentos del sistema no está disponible. Usa Elegir espacio de trabajo para seleccionar o crear una carpeta.',
   'defaultWorkspace.failed': 'No se pudo crear el espacio de trabajo predeterminado. Usa Elegir espacio de trabajo para seleccionar una carpeta.',
   'draft.workspaceRequired': 'Elija un espacio de trabajo primero.',
   'draft.initializationFailed': 'No se pudo completar el borrador. Inténtelo de nuevo en breve.',
@@ -501,6 +505,7 @@ export const es = {
 
 /** French dictionary, checked against the English keys. */
 export const fr = {
+  'defaultWorkspace.documentsUnavailable': 'Le dossier Documents du système est indisponible. Utilisez « Choisir un espace de travail » pour sélectionner ou créer un dossier.',
   'defaultWorkspace.failed': 'Impossible de créer l’espace de travail par défaut. Utilisez « Choisir un espace de travail » pour sélectionner un dossier.',
   'draft.workspaceRequired': "Choisissez d'abord un espace de travail.",
   'draft.initializationFailed': 'Impossible de remplir le projet. Veuillez réessayer sous peu.',
@@ -624,6 +629,7 @@ export const fr = {
 
 /** German dictionary, checked against the English keys. */
 export const de = {
+  'defaultWorkspace.documentsUnavailable': 'Der Dokumente-Ordner des Systems ist nicht verfügbar. Wähle über „Arbeitsbereich wählen“ einen Ordner aus oder erstelle einen.',
   'defaultWorkspace.failed': 'Standardarbeitsbereich konnte nicht erstellt werden. Wähle über „Arbeitsbereich wählen“ einen Ordner aus.',
   'draft.workspaceRequired': 'Wählen Sie zunächst einen Arbeitsbereich.',
   'draft.initializationFailed': 'Der Entwurf konnte nicht ausgefüllt werden. Bitte versuchen Sie es in Kürze noch einmal.',
@@ -747,6 +753,7 @@ export const de = {
 
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
+  'defaultWorkspace.documentsUnavailable': 'Системная папка «Документы» недоступна. Через «Выбрать рабочее пространство» выберите или создайте папку.',
   'defaultWorkspace.failed': 'Не удалось создать рабочее пространство по умолчанию. Укажите папку через «Выбрать рабочее пространство».',
   'draft.workspaceRequired': 'Сначала выберите рабочее место.',
   'draft.initializationFailed': 'Не удалось заполнить черновик. Повторите попытку позже.',
@@ -870,6 +877,7 @@ export const ru = {
 
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
+  'defaultWorkspace.documentsUnavailable': 'A pasta Documentos do sistema está indisponível. Use Escolher espaço de trabalho para selecionar ou criar uma pasta.',
   'defaultWorkspace.failed': 'Não foi possível criar o espaço de trabalho padrão. Use Escolher espaço de trabalho para selecionar uma pasta.',
   'draft.workspaceRequired': 'Escolha um espaço de trabalho primeiro.',
   'draft.initializationFailed': 'Não foi possível preencher o rascunho. Por favor, tente novamente em breve.',

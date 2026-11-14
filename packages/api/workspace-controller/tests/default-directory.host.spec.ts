@@ -24,20 +24,67 @@ describe('system Documents directory', () => {
     expect(run).not.toHaveBeenCalled()
   })
 
-  it.each(['', '\r\n', '/home/a\n'])('rejects an unavailable XDG directory %j', async (stdout) => {
-    const run: NativeCommandRunner = async () => ({ stdout, stderr: '' })
-    await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'linux', home: '/home/a', run }))
-      .rejects.toThrow('unavailable')
+  it.each(['', '\r\n', '/home/a\n', '/home/a/\n', '/home/a//\n', '/home/a/.\n'])(
+    'rejects an unavailable XDG directory %j before inspecting workspace paths', async (stdout) => {
+      const run: NativeCommandRunner = async () => ({ stdout, stderr: '' })
+      const directoryExists = vi.fn(async () => false)
+      await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'linux', home: '/home/a', run, directoryExists }))
+        .rejects.toMatchObject({ code: 'workspace/default-directory-unavailable', details: {} })
+      expect(directoryExists).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each(['ENOENT', 1])('retains the native lookup failure %s as the typed error cause', async (code) => {
+    const cause = Object.assign(new Error('lookup denied'), { code })
+    const run: NativeCommandRunner = async () => { throw cause }
+    await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'linux', run }))
+      .rejects.toMatchObject({ code: 'workspace/default-directory-unavailable', details: {}, cause })
   })
 
-  it('propagates lookup failure and cancellation', async () => {
-    const run: NativeCommandRunner = async () => { throw new Error('lookup denied') }
-    await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'darwin', run }))
-      .rejects.toThrow('lookup denied')
-    await expect(defaultWorkspaceDirectory('/documents', AbortSignal.abort(), { platform: 'linux' }))
-      .rejects.toThrow()
+  it('leaves unexpected lookup defects unchanged', async () => {
+    const failure = new Error('unexpected lookup defect')
+    const run: NativeCommandRunner = async () => { throw failure }
+    await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'linux', run })).rejects.toBe(failure)
+  })
+
+  it('does not reject a Documents descendant of HOME as disabled', async () => {
+    const run: NativeCommandRunner = async () => ({ stdout: '/home/a/Documents/\n', stderr: '' })
+    await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'linux', home: '/home/a/', run, directoryExists: async () => false }))
+      .resolves.toBe('/home/a/Documents/Ocean/default-workspace')
+  })
+
+  it('preserves cancellation before and during lookup', async () => {
+    await expect(defaultWorkspaceDirectory('/documents', AbortSignal.abort(), { platform: 'linux' })).rejects.toThrow()
+    const controller = new AbortController()
+    const reason = new Error('caller cancelled')
+    const run: NativeCommandRunner = async () => { controller.abort(reason); throw new Error('native abort') }
+    await expect(defaultWorkspaceDirectory(undefined, controller.signal, { platform: 'linux', run })).rejects.toBe(reason)
+  })
+
+  it('preserves cancellation when native lookup settles with an unavailable directory', async () => {
+    const controller = new AbortController()
+    const reason = new Error('caller cancelled')
+    const run: NativeCommandRunner = async () => { controller.abort(reason); return { stdout: '/home/a/', stderr: '' } }
+    await expect(defaultWorkspaceDirectory(undefined, controller.signal, { platform: 'linux', home: '/home/a', run })).rejects.toBe(reason)
+  })
+
+  it('reports an unsupported system lookup as unavailable', async () => {
     await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: 'freebsd' }))
-      .rejects.toThrow('unavailable')
+      .rejects.toMatchObject({ code: 'workspace/default-directory-unavailable' })
+  })
+
+  it.each([true, false])('accepts configured system Documents whether the directory exists (%s)', async (exists) => {
+    const root = await mkdtemp(join(tmpdir(), 'ocean-xdg-documents-'))
+    const documents = join(root, 'Documents')
+    try {
+      if (exists) await mkdir(documents)
+      const run: NativeCommandRunner = async () => ({ stdout: `${documents}\n`, stderr: '' })
+      await expect(defaultWorkspaceDirectory(undefined, new AbortController().signal, { platform: process.platform, home: root, run }))
+        .resolves.toBe(join(documents, 'Ocean', 'default-workspace'))
+      expect(await readdir(root)).toEqual(exists ? ['Documents'] : [])
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
   })
 
   it.each(['relative', 'C:relative', '\\rooted'])('rejects a Windows path without a fully qualified root: %s', (path) => {

@@ -1,0 +1,68 @@
+name: Ocean macOS ARM64 RC (test)
+on:
+  push:
+    branches: ['rc/ocean-0.2.2-rc.2.20261115.1']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocean-macos-arm64-rc-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.repository == 'Ryltsevmg/Ocean' && github.ref == 'refs/heads/rc/ocean-0.2.2-rc.2.20261115.1'
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      OCEAN_BUILD_VERSION: '0.2.2-rc.2.20261115.1'
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '26.13.0'
+      - name: Verify checkout and runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          test "$(uname -m)" = arm64
+          test "$(node -p 'process.platform + "-" + process.arch')" = darwin-arm64
+      - name: Install locked dependencies without lifecycle scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.28.5
+          test "$(pnpm --version)" = 11.28.5
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build native test DMG without Developer ID or notarization
+        shell: bash
+        run: pnpm --filter @ocean/ocean-desktop run package:mac:arm64:unsigned --build-version "$OCEAN_BUILD_VERSION"
+      - name: Verify DMG and record evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts
+          artifact="ocean-chat-${OCEAN_BUILD_VERSION}-mac-arm64-unsigned.dmg"
+          test -s "$artifact"
+          hdiutil verify "$artifact"
+          shasum -a 256 "$artifact" > SHA256SUMS
+          shasum -a 256 -c SHA256SUMS
+          node -e 'const fs = require("node:fs"); const env = process.env; fs.writeFileSync("build-evidence.json", JSON.stringify({ repository: env.GITHUB_REPOSITORY, commit: env.GITHUB_SHA, run: env.GITHUB_RUN_ID, version: env.OCEAN_BUILD_VERSION, platform: process.platform, architecture: process.arch, node: process.version, developerIdSigned: false, notarized: false }, null, 2) + "\n")'
+      - name: Retain the test DMG without publishing a release
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ocean-macos-arm64-test-${{ github.sha }}
+          path: |
+            apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/ocean-chat-${{ env.OCEAN_BUILD_VERSION }}-mac-arm64-unsigned.dmg
+            apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/SHA256SUMS
+            apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/build-evidence.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7

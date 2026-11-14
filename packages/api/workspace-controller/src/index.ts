@@ -99,6 +99,7 @@ export class WorkspaceController extends TypertRemoteService {
    * consumers label in the reader's language.
    * @param signal - caller lifetime; cancels native directory lookup.
    * @returns the durable Workspace, or undefined when first-use initialization is ineligible; creates no Session or message.
+   * @throws {RemoteError} `workspace/default-directory-unavailable` when system Documents cannot be resolved; no directory is created.
    */
   @Remote('initializeDefault')
   async initializeDefault(signal: AbortSignal): Promise<WorkspaceValue | undefined> {

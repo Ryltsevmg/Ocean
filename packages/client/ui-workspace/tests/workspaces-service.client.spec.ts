@@ -6,6 +6,7 @@ import type {
   ISessions, SessionListState, SessionReference, SessionSummary,
 } from '@ocean/ocean-api-session-controller/client'
 import { SessionCreateError } from '@ocean/ocean-api-session-controller/client'
+import { WorkspaceCreateError } from '@ocean/ocean-api-workspace-controller/client'
 import type { SubagentAddress } from '@ocean/ocean-subagent/client'
 import type {
   IWorkspaces, WorkspaceId, WorkspaceSnapshot, WorkspaceView,
@@ -368,6 +369,24 @@ describe('UiWorkspaceService', () => {
     expect(b.workspaces.initializeDefault).toHaveBeenCalledOnce()
     expect(b.sessions.create).not.toHaveBeenCalled()
     expect(b.notify).toHaveBeenCalledExactlyOnceWith({ kind: 'defaultWorkspaceFailed' })
+  })
+
+  it.each([
+    ['workspace/default-directory-unavailable', { kind: 'defaultWorkspaceFailed', reason: 'documents-unavailable' }],
+    ['gateway/internal', { kind: 'defaultWorkspaceFailed' }],
+  ] as const)('reports %s without losing the explicit workspace selection path', async (code, notice) => {
+    const failure = new WorkspaceCreateError(new RemoteError(code, 'directory unavailable', {}))
+    const b = bench({ workspaces: workspaceState(), sessions: sessionState(), configureWorkspaces: (workspaces) => {
+      workspaces.initializeDefault.mockRejectedValueOnce(failure)
+    } })
+    await vi.waitFor(() => { expect(b.notify).toHaveBeenCalledExactlyOnceWith(notice) })
+    expect(b.sessions.create).not.toHaveBeenCalled()
+    const chosen = workspace('chosen')
+    b.workspaces.list.set(workspaceState([chosen]))
+    await b.uiWorkspace.openWorkspace(chosen.workspaceId)
+    expect(b.sessions.create).toHaveBeenCalledWith({ workspaceId: chosen.workspaceId })
+    expect(b.workspaces.initializeDefault).toHaveBeenCalledOnce()
+    expect(failure.rpcError.code).toBe(code)
   })
 
   it.each(['session', 'panel', 'disposal'] as const)('cancels startup directory preparation after %s navigation', async (kind) => {
