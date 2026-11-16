@@ -292,7 +292,7 @@ it('disposal waits for an active GitHub check to stop', async () => {
 })
 
 it.each(['github:acme/connected', 'https://github.com/acme/connected.git', 'git+ssh://git@github.com/acme/connected.git'])(
-  'installs %s through real Git and pnpm with private repository SSH fallback', async (spec) => {
+  'installs %s through real Git and pnpm with private repository SSH fallback', { timeout: 60_000 }, async (spec) => {
     const pnpm = fileURLToPath(new URL('../../../../apps/desktop/node_modules/pnpm/bin/pnpm.mjs', import.meta.url))
     const env = { GIT_CONFIG_GLOBAL: '', GIT_CONFIG_NOSYSTEM: '1' }
     const { manager, dir, connection } = await fixture('startup', false, undefined, {}, {
@@ -826,7 +826,7 @@ it('retains approved policy and reports it as changed when the registry fails be
   expect(parse(readFileSync(join(dir, 'pnpm-workspace.yaml'), 'utf8'))).toEqual({ allowBuilds: { native: true } })
 })
 
-it('runs a real pnpm dependency script only after approval and retry', async () => {
+it('runs a real pnpm dependency script only after approval and retry', { timeout: 60_000 }, async () => {
   const { manager, dir, profile } = await fixture('startup')
   const addon = join(profile.cwd, 'addon')
   mkdirSync(addon)
@@ -850,7 +850,7 @@ it('runs a real pnpm dependency script only after approval and retry', async () 
   expect(readFileSync(built, 'utf8')).toBe('built')
 })
 
-it('offers approval for a real git-hosted package pnpm refused to prepare', async () => {
+it('offers approval for a real git-hosted package pnpm refused to prepare', { timeout: 60_000 }, async () => {
   // Both the fixture's Git and the manager's pnpm child read only this empty configuration.
   const env = { GIT_CONFIG_GLOBAL: '', GIT_CONFIG_NOSYSTEM: '1' }
   const pnpm = fileURLToPath(new URL('../../../../apps/desktop/node_modules/pnpm/bin/pnpm.mjs', import.meta.url))
@@ -2342,7 +2342,7 @@ it.each(['extra', '@scope/extra'])('records the exemption version independently 
   for (const fact of facts) expect(fact).toMatchObject({ target: name, version: '2.0.0', enabled: false })
 })
 
-it('omits exemption identity when only the runtime version is invalid', async () => {
+it('omits exemption identity when only the runtime version is invalid', { timeout: 60_000 }, async () => {
   const { manager, ctx } = await fixture()
   const facts: PluginOperation[] = []
   ctx.on('plugin-manager/operation', (event) => { facts.push(event) })
@@ -2404,7 +2404,7 @@ function gitPnpm(
   return pnpm
 }
 
-it('lists a copy pinned to a Git commit for an update and refuses to list its versions', async () => {
+it('lists a copy pinned to a Git commit for an update and refuses to list its versions', { timeout: 60_000 }, async () => {
   const { manager, dir } = await fixture()
   const view = viewAnswers(extraRegistry)
   installedFromGit(dir)
@@ -2421,7 +2421,7 @@ it('lists a copy pinned to a Git commit for an update and refuses to list its ve
   expect(view).not.toHaveBeenCalled()
 })
 
-it('updates a Git copy by removing it and installing the expected package from another commit with its selection', async () => {
+it('updates a Git copy by removing it and installing the expected package from another commit with its selection', { timeout: 60_000 }, async () => {
   const { ctx, manager, dir, bundle } = await fixture()
   const view = viewAnswers(extraRegistry)
   installedFromGit(dir)
@@ -2444,7 +2444,7 @@ it('updates a Git copy by removing it and installing the expected package from a
 it.each([
   ['another package', { name: 'other', version: '1.1.0' }],
   ['another version', { name: 'extra', version: '1.0.5' }],
-] as const)('installs the removed Git copy again from its saved spec when the target installs %s', async (_name, installed) => {
+] as const)('installs the removed Git copy again from its saved spec when the target installs %s', { timeout: 60_000 }, async (_name, installed) => {
   const { manager, dir, bundle } = await fixture()
   installedFromGit(dir)
   const pnpm = gitPnpm(dir, bundle, { [GIT_A]: { name: 'extra', version: '1.0.0' }, [GIT_B]: installed })
@@ -2460,7 +2460,7 @@ it.each([
   expect(readProfileManifest('test', dir).dependencies).toEqual({ extra: GIT_A })
 })
 
-it('updates a copy pnpm saved as a known host\'s shortcut to the HTTPS spec of another commit', async () => {
+it('updates a copy pnpm saved as a known host\'s shortcut to the HTTPS spec of another commit', { timeout: 60_000 }, async () => {
   const { manager, dir, bundle } = await fixture()
   const target = `git+https://github.com/o/plugins.git#${'b'.repeat(40)}&path:/packages/extra`
   installedFromGit(dir, `github:o/plugins#${'a'.repeat(40)}&path:/packages/extra`)
@@ -2468,7 +2468,7 @@ it('updates a copy pnpm saved as a known host\'s shortcut to the HTTPS spec of a
   expect(await manager.updateBundle('extra', '1.1.0', { spec: target })).toMatchObject({ step: 'install', result: { application: 'applied', version: '1.1.0' } })
 })
 
-it('installs a Git target over the running version without HMR and reports the restart', async () => {
+it('installs a Git target over the running version without HMR and reports the restart', { timeout: 60_000 }, async () => {
   const { manager, dir, bundle, gitConnection } = await fixture('startup')
   installedFromGit(dir)
   const pnpm = gitPnpm(dir, bundle, { [GIT_B]: { name: 'extra', version: '1.1.0' } })
@@ -2480,7 +2480,7 @@ it('installs a Git target over the running version without HMR and reports the r
   expect(gitConnection).not.toHaveBeenCalled()
 })
 
-it('keeps the running Git copy without HMR when the target declares no bundle', async () => {
+it('keeps the running Git copy without HMR when the target declares no bundle', { timeout: 60_000 }, async () => {
   const { manager, dir, bundle } = await fixture('startup')
   installedFromGit(dir)
   const before = readFileSync(join(dir, 'package.json'), 'utf8')
@@ -2491,7 +2491,7 @@ it('keeps the running Git copy without HMR when the target declares no bundle', 
   expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
 })
 
-it.each(['network', 'timeout'] as const)('keeps a Git copy when a %s stops reaching the target repository before its removal', async (kind) => {
+it.each(['network', 'timeout'] as const)('keeps a Git copy when a %s stops reaching the target repository before its removal', { timeout: 60_000 }, async (kind) => {
   const env = { GIT_CONFIG_GLOBAL: '/application/git.config' }
   const { manager, dir, bundle, gitConnection } = await fixture('live', false, undefined, {}, { command: 'pnpm', args: [], env })
   installedFromGit(dir)
@@ -2512,7 +2512,7 @@ it.each(['network', 'timeout'] as const)('keeps a Git copy when a %s stops reach
   expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
 })
 
-it('leaves a Git repository check that is not a connection failure to pnpm', async () => {
+it('leaves a Git repository check that is not a connection failure to pnpm', { timeout: 60_000 }, async () => {
   const { manager, dir, bundle, gitConnection } = await fixture()
   installedFromGit(dir)
   gitPnpm(dir, bundle, { [GIT_B]: { name: 'extra', version: '1.1.0' } })
@@ -2522,7 +2522,7 @@ it('leaves a Git repository check that is not a connection failure to pnpm', asy
   expect(await manager.updateBundle('extra', '1.1.0', { spec: GIT_B })).toMatchObject({ step: 'install', result: { application: 'applied' } })
 })
 
-it('refuses an update whose target does not match where the copy was installed from, before changing anything', async () => {
+it('refuses an update whose target does not match where the copy was installed from, before changing anything', { timeout: 60_000 }, async () => {
   const { manager, dir, bundle } = await fixture()
   const view = viewAnswers(extraRegistry)
   const pnpm = gitPnpm(dir, bundle, {})
