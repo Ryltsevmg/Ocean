@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-goal",
   "description": "Event-sourced same-session goal state and lifecycle service for the Ocean",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

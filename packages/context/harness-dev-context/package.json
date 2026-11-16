@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-harness-dev-context",
   "description": "Model context naming the Ocean checkout and Web GUI URL without letting either change the system prompt",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

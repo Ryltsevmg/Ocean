@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-tool-todo",
   "description": "Model-facing todo_write tool over the Ocean event-sourced session log",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

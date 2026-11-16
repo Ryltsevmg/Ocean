@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-session-format-catalog",
   "description": "Build-static first-party Session format codec and migration catalog",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

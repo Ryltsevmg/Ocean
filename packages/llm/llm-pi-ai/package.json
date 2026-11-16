@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-llm-pi-ai",
   "description": "pi-ai-backed DeepSeek adapter for the Ocean LLM seam (design-verification twin of dsh-llm-deepseek)",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
