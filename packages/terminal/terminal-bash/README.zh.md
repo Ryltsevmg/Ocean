@@ -43,7 +43,6 @@ kind: "package-reference"
 - name: '@ocean/ocean-sandbox-local'
 - name: '@ocean/ocean-sandbox-policy'
 - name: '@ocean/ocean-terminal-bash'
-- name: '@ocean/ocean-tool-terminal'
 ```
 
 `danger-full-access` 直接启动 shell。受限模式要求同一执行世界中存在 `ctx.sandbox` 提供方：缺少时，spawn 会在 shell 启动前失败。限制准备过程接收打开操作的取消信号；即使提供方稍后返回，取消仍会阻止终端分配。
@@ -117,11 +116,10 @@ Scrollback 和尚未读取的发送输出保留独立拥有的字符串，并增
 <a id="further-exploration"></a>
 ## 进一步探索
 
-当包级约定不够用时阅读以下页面。它们从共享终端模型进入服务、工具与执行世界基底。
+当包级约定不够用时阅读以下页面。它们从共享终端模型进入服务与执行世界基底。
 
 - [终端子系统参考](../../../docs/subsystems/terminal.zh.md)——此后端实现的服务约定与生成的 `ctx.terminals` 接口面。
 - [terminal 服务](../terminal/README.zh.md)——后端注册、所有者限制与清理语义。
-- [tool-terminal 工具](../../experimental/tool-terminal/README.zh.md)——操作会话的面向模型工具。
 - [子进程 seam](../../../docs/subsystems/subprocess.zh.md)——负责 PTY 分配与进程树清理的终端原语。
 
 -----
@@ -133,7 +131,7 @@ Scrollback 和尚未读取的发送输出保留独立拥有的字符串，并增
 
 #### 模型看到什么
 
-此包不注册提示词或工具。模型通过 `@ocean/ocean-tool-terminal` 或其他 PTY 消费方可能收到有界的启动输出、发送增量、scrollback 页、就绪原因与清理错误。
+此包不注册提示词或工具。模型通过 PTY 消费方可能收到有界的启动输出、发送增量、scrollback 页、就绪原因与清理错误。
 
 #### Token 影响
 

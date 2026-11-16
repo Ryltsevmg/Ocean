@@ -153,14 +153,14 @@ describe('renderToolsSdk', () => {
     expect(text).toContain('lossless JSON')
   })
 
-  it('declares Image results for read_image and image-or-value results for cua', () => {
+  it('declares Image results for read_image and declared values for other tools', () => {
     const tools: ToolSdkSchema[] = ['read_image', 'cua'].map(name => ({
       name, description: 'Image-producing tool.', parameters: {}, output: { type: 'string' },
     }))
     const text = renderToolsSdk(tools)
     const outputs = text.slice(text.indexOf('interface ToolOutputMap'), text.indexOf('type ToolName'))
     expect(outputs).toContain('read_image: Image;')
-    expect(outputs).toContain('cua: Image | string;')
+    expect(outputs).toContain('cua: string;')
   })
 
   it('lists the program before its description', () => {

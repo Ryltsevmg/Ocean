@@ -19,7 +19,6 @@ import pluginManagerRemote from '@ocean/ocean-plugin-manager/remote'
 import mcpManagerRemote from '@ocean/ocean-mcp-manager/remote'
 import toolResultsRemote from '@ocean/ocean-client-ui-trajectory/remote'
 import pluginRegistryProbeRemote from '@ocean/ocean-client-ui-plugin-manager/remote'
-import pluginMarketRemote from '@ocean/ocean-plugin-market/remote'
 import pluginInventoryRemote from '@ocean/ocean-host-plugin-inventory/remote'
 import messageFeedbackRemote from '@ocean/ocean-message-feedback/remote'
 import permissionPresetsRemote from '@ocean/ocean-permission-presets/remote'
@@ -49,11 +48,6 @@ export type {} from '@ocean/ocean-plugin-manager/remote'
 export type {} from '@ocean/ocean-mcp-manager/remote'
 export type {} from '@ocean/ocean-client-ui-plugin-manager/remote'
 export type {} from '@ocean/ocean-client-ui-trajectory/remote'
-export type {} from '@ocean/ocean-plugin-market/remote'
-export type {
-  MarketCompatibility, MarketIndexSummary, MarketInstallation, MarketInstallationStatus, MarketListingEntry, MarketListingVersion,
-  MarketQuery, MarketSearchResult, MarketSort, PluginDetail, PluginDetailDocumentId, PluginDetailOrigin,
-} from '@ocean/ocean-plugin-market/types'
 export type { PluginInventorySnapshot } from '@ocean/ocean-host-plugin-inventory/types'
 export type {} from '@ocean/ocean-agent-preset-registry/remote'
 export type {} from '@ocean/ocean-user-questions/remote'
@@ -199,7 +193,7 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
     for (const contribution of [
       productAnalyticsRemote, agentPresetsRemote, commandsRemote, agentTeamsRemote, settingsControllerRemote, accountRemote,
       goalsRemote, llmRemote, dynamicRemote, scheduleRemote,
-      pluginInventoryRemote, pluginManagerRemote, mcpManagerRemote, pluginMarketRemote, pluginRegistryProbeRemote,
+      pluginInventoryRemote, pluginManagerRemote, mcpManagerRemote, pluginRegistryProbeRemote,
       toolResultsRemote,
       messageFeedbackRemote, sessionFeedbackRemote,
       fileUploadsRemote, sessionReferencesRemote,

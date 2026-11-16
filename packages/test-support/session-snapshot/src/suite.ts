@@ -882,16 +882,6 @@ function preserveFixtureVolatiles(record: Record<string, unknown>, existing: Rec
     return
   }
   if ('time' in record && 'time' in existing) record.time = existing.time
-  if (record.type !== 'hook/result') return
-  const data = record.data
-  const existingData = existing.data
-  if (
-    data !== null && typeof data === 'object'
-    && existingData !== null && typeof existingData === 'object'
-    && 'durationMs' in data && 'durationMs' in existingData
-  ) {
-    (data as Record<string, unknown>).durationMs = (existingData as Record<string, unknown>).durationMs
-  }
 }
 
 /** Carry logical member times into a fresh packed row while leaving its fragment arrays untouched. */
@@ -1116,7 +1106,7 @@ function normalizedStringMappings(
  * Rewrite a fresh replay-produced log so repeated refreshes do not churn
  * volatile fixture fields. Meaningful event payloads come from `fresh`; the
  * existing fixture lends normalized-equivalent values, including non-message ids, paths,
- * creation/event times, spill locators, and hook durations, only when the
+ * creation/event times, and spill locators, only when the
  * complete record layout aligns and volatile strings form a consistent
  * bijection. Complete durable-message ids are excluded because the later
  * fixture-ready structural pass owns them. Ambiguous layouts or mappings

@@ -8,7 +8,7 @@
 
 ## `SessionEventMap`：事件词汇
 
-仅追加的事件类型。可通过声明合并扩展：插件通过 declaration merging 声明额外的事件类型。例如[压缩（compaction） seam](compaction.zh.md) 添加了 `compaction/start` / `compaction/summary` / `compaction/end`，`@ocean/ocean-hook-protocol` 为钩子桥接添加了仅记录日志的 `hook/invoked` / `hook/result` 记录。与 `compaction/*` 一样，这些都不是 `SurfaceEventType`（没有 `surfaceOp`）。生成的[持久化日志事件目录](../persistence-catalog.zh.md)列举了所有成员（核心与合并扩展的），包含其 payload、surface 标记与声明位置。
+仅追加的事件类型。可通过声明合并扩展：插件通过 declaration merging 声明额外的事件类型。例如[压缩（compaction） seam](compaction.zh.md) 添加了仅记录日志的 `compaction/start` / `compaction/summary` / `compaction/end` 记录，它们都不是 `SurfaceEventType`（没有 `surfaceOp`）。生成的[持久化日志事件目录](../persistence-catalog.zh.md)列举了所有成员（核心与合并扩展的），包含其 payload、surface 标记与声明位置。
 
 ```ts type-equiv
 /** A user-role specialization of the shared message representation. */
@@ -785,15 +785,13 @@ interface TurnEndReasonMap {
 
 如果同一个插件事件族中的多条事件要组装成一个 Web Client Conversation Node，该事件族中的每条 start、update、result、resource 或 interruption 事件都必须携带或独立推导出同一个稳定业务 id。此要求只约束需要关联的 Node 事件族，并不要求每条 Session 事件都有业务 id；Client 因此无须根据相邻关系猜测归属，也无须扫描历史。参见 [Conversation 子系统](conversation.zh.md)。
 
-钩子桥接层的 `hook/invoked` / `hook/result` 对（来自 `@ocean/ocean-hook-protocol`）通过 `handlerId` 关联。`UserPromptSubmit`、`PreToolUse`、`PostToolUse` 与 `Stop` 在 loop 已打开的轮次内触发，因此其 `hook/*` 记录天然位于轮次之内。`SessionStart` 不生成 `hook/*` 记录，因为它在轮次 1 之前运行；其上下文会在 inbox 中保持待处理，直到唤醒交付打开一个轮次。
-
 ### 插件记录
 
-实验性包在 `PluginRecordMap` 中声明插件自有的状态：`appendPluginRecord()` 根据每项声明约束名称与 payload 类型，并在 `plugin:` 命名空间中追加一条带 `ignorable: true` 标记的事件。`pluginRecordOf()` 读取已存记录，其 payload 为未知类型，不受当前声明约束。[实验性持久化目录](../experimental-persistence-catalog.zh.md)列出当前声明。调用方限制、保留方式与读取路径见[包 README](../../packages/core/session/README.zh.md#write-experimental-plugin-records)。
+插件在 `PluginRecordMap` 中声明自有的状态：`appendPluginRecord()` 根据每项声明约束名称与 payload 类型，并在 `plugin:` 命名空间中追加一条带 `ignorable: true` 标记的事件。`pluginRecordOf()` 读取已存记录，其 payload 为未知类型，不受当前声明约束。[插件记录目录](../experimental-persistence-catalog.zh.md)列出当前声明。调用方限制、保留方式与读取路径见[包 README](../../packages/core/session/README.zh.md#write-plugin-records)。
 
 ```ts type-equiv
 /**
- * Event type of an experimental plugin record: `plugin:` followed by
+ * Event type of a plugin record: `plugin:` followed by
  * slash-separated segments of lowercase letters, digits, `.`, `_`, and `-`,
  * each starting with a letter or digit. A record type is never a
  * {@link SessionEventMap} member.
@@ -803,8 +801,8 @@ type PluginRecordType = `plugin:${string}`
 
 ```ts type-equiv
 /**
- * Payloads written by experimental packages, keyed by their `plugin:` record
- * names. Packages augment this map to type writes and enter the current plugin
+ * Payloads written by plugins, keyed by their `plugin:` record
+ * names. Plugins augment this map to type writes and enter the current plugin
  * record catalog; these declarations do not enter {@link SessionEventMap} or
  * released persistence schemas. Stored records still require owner validation.
  */
@@ -813,7 +811,7 @@ interface PluginRecordMap {}
 
 ```ts type-equiv
 /**
- * One committed experimental plugin record, read from the log by
+ * One committed plugin record, read from the log by
  * `pluginRecordOf`. The record's owner validates `data` before use, because a
  * restored record carries whatever JSON an earlier build of its owner wrote,
  * or a V3 event that a format migration renamed into the `plugin:` namespace held.

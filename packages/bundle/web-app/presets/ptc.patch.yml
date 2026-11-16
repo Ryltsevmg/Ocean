@@ -133,6 +133,3 @@
           - id: tool-plugin-manager
             name: '@ocean/ocean-plugin-manager/tools'
             disabled: true
-          - id: tool-plugin-market
-            name: '@ocean/ocean-plugin-market/tools'
-            disabled: true

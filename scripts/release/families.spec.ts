@@ -43,76 +43,11 @@ afterEach(() => {
 })
 
 describe('release families', () => {
-  it('publishes all current experimental packages', () => {
+  it('publishes the maintained workspace without the experimental group', () => {
     const members = releaseFamily('dsh').members(resolve(import.meta.dirname, '../..'))
 
-    expect(members
-      .filter(member => member.directory.startsWith('packages/experimental/'))
-      .map(member => member.name)).toEqual([
-      '@ocean/ocean-action-cards',
-      '@ocean/ocean-experimental-api-speech-to-text',
-      '@ocean/ocean-experimental-auto-review',
-      '@ocean/ocean-experimental-badge-skill-bundle',
-      '@ocean/ocean-experimental-browser-use-chrome-devtools-mcp',
-      '@ocean/ocean-experimental-browser-use-playwright-mcp',
-      '@ocean/ocean-experimental-browser-use-runtime',
-      '@ocean/ocean-experimental-browser-use-stagehand-native',
-      '@ocean/ocean-experimental-claude-code-mods',
-      '@ocean/ocean-client-ui-action-cards',
-      '@ocean/ocean-experimental-client-ui-claude-code-mods',
-      '@ocean/ocean-experimental-client-ui-cot-translation',
-      '@ocean/ocean-client-ui-creation-recommendations',
-      '@ocean/ocean-experimental-client-ui-forge',
-      '@ocean/ocean-client-ui-plugin-recommendations',
-      '@ocean/ocean-experimental-client-ui-stats',
-      '@ocean/ocean-experimental-client-ui-voice-input',
-      '@ocean/ocean-experimental-computer-use-cua-driver-mcp',
-      '@ocean/ocean-experimental-computer-use-cua-driver-native',
-      '@ocean/ocean-experimental-cot-translation-bundle',
-      '@ocean/ocean-creation-recommendations',
-      '@ocean/ocean-cua-bundle',
-      '@ocean/ocean-experimental-cua-macos',
-      '@ocean/ocean-cua-windows',
-      '@ocean/ocean-cua',
-      '@ocean/ocean-experimental-forge-bundle',
-      '@ocean/ocean-experimental-forge-github',
-      '@ocean/ocean-experimental-forge-session',
-      '@ocean/ocean-experimental-forge',
-      '@ocean/ocean-hook-protocol',
-      '@ocean/ocean-hooks-claude-code',
-      '@ocean/ocean-hooks-codex',
-      '@ocean/ocean-experimental-inspector-profile',
-      '@ocean/ocean-experimental-inspector',
-      '@ocean/ocean-experimental-liveshare-protocol',
-      '@ocean/ocean-experimental-liveshare',
-      '@ocean/ocean-personalized-recommendations',
-      '@ocean/ocean-experimental-plugin-market-bundle',
-      '@ocean/ocean-plugin-recommendations',
-      '@ocean/ocean-experimental-ptc-runtime-python',
-      '@ocean/ocean-experimental-ralph-bundle',
-      '@ocean/ocean-experimental-session-inspector',
-      '@ocean/ocean-experimental-session-search',
-      '@ocean/ocean-session-title-all-prompts-llm',
-      '@ocean/ocean-experimental-session-titles-bundle',
-      '@ocean/ocean-skill-badge',
-      '@ocean/ocean-experimental-speech-to-text-sensevoice',
-      '@ocean/ocean-experimental-speech-to-text',
-      '@ocean/ocean-experimental-subagent-oar',
-      '@ocean/ocean-experimental-terminal-bundle',
-      '@ocean/ocean-terminal-panel',
-      '@ocean/ocean-tool-ralph',
-      '@ocean/ocean-tool-session-query',
-      '@ocean/ocean-experimental-tool-subagent-oar',
-      '@ocean/ocean-tool-terminal',
-      '@ocean/ocean-experimental-tool-worktree',
-      '@ocean/ocean-experimental-translator',
-      '@ocean/ocean-experimental-voice-input-bundle',
-      '@ocean/ocean-webhook-github',
-      '@ocean/ocean-webhook',
-      '@ocean/ocean-experimental-webworker-packer',
-      '@ocean/ocean-experimental-webworker-runtime',
-      '@ocean/ocean-experimental-worktree',
-    ])
+    expect(members.length).toBeGreaterThan(0)
+    expect(members.some(member => member.directory.startsWith('packages/experimental/'))).toBe(false)
   })
 
   it('excludes private applications from the publish set', () => {
@@ -124,22 +59,22 @@ describe('release families', () => {
     expect(releaseFamily('dsh').members(root).map(entry => entry.name)).toEqual(['@ocean/ocean-public'])
   })
 
-  it('publishes unlisted experimental packages while retaining private exclusions', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-release-experimental-'))
+  it('excludes private packages from the publish set', () => {
+    const root = mkdtempSync(join(tmpdir(), 'dsh-release-private-packages-'))
     roots.push(root)
-    write(join(root, 'packages/experimental/prototype/package.json'), JSON.stringify({
-      name: '@ocean/ocean-experimental-prototype',
+    write(join(root, 'packages/core/prototype/package.json'), JSON.stringify({
+      name: '@ocean/ocean-prototype',
       version: '0.0.1',
       publishConfig: { access: 'public' },
     }))
-    write(join(root, 'packages/experimental/inspector/package.json'), JSON.stringify({
-      name: '@ocean/ocean-experimental-inspector',
+    write(join(root, 'packages/core/internal/package.json'), JSON.stringify({
+      name: '@ocean/ocean-internal',
       version: '0.0.1',
       private: true,
     }))
 
     expect(releaseFamily('dsh').members(root).map(entry => entry.name)).toEqual([
-      '@ocean/ocean-experimental-prototype',
+      '@ocean/ocean-prototype',
     ])
   })
 
@@ -148,7 +83,7 @@ describe('release families', () => {
     roots.push(root)
     write(join(root, 'package.json'), '{"version":"0.0.1"}\n')
     write(join(root, 'apps/desktop/package.json'), '{"version":"0.0.1","private":true}\n')
-    write(join(root, 'packages/experimental/prototype/package.json'), '{"version":"0.0.1","private":true}\n')
+    write(join(root, 'packages/core/prototype/package.json'), '{"version":"0.0.1","private":true}\n')
     write(join(root, 'packages/core/unselected/package.json'), '{"version":"0.0.1"}\n')
 
     const dsh = releaseFamily('dsh')
@@ -159,7 +94,7 @@ describe('release families', () => {
       { path: 'package.json', tag: undefined },
       { path: 'packages/core/published/package.json', tag: 'dsh-v0.0.2' },
       { path: 'apps/desktop/package.json', tag: undefined },
-      { path: 'packages/experimental/prototype/package.json', tag: undefined },
+      { path: 'packages/core/prototype/package.json', tag: undefined },
     ])
   })
 

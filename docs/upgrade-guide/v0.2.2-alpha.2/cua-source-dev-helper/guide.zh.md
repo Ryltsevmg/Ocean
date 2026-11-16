@@ -13,7 +13,7 @@ description: "源码构建的 Computer Use helper 使用独立的开发版 Bundl
 
 ## 迁移
 
-1. 保持默认 `sourceSigning: ad-hoc` 即可使用临时签名。需要减少重新编译和跨 worktree 的授权次数时，按[开发者签名 skill](../../../../.agents/skills/dsh-cua-macos-signing/SKILL.md)生成或复用证书，并将 `sourceSigning: { identity, keychain }` 写入 DSH home 的 `cordis.patch.yml`；`keychain` 必须为绝对路径。
+1. 保持默认 `sourceSigning: ad-hoc` 即可使用临时签名。需要减少重新编译和跨 worktree 的授权次数时，按`开发者签名 skill`生成或复用证书，并将 `sourceSigning: { identity, keychain }` 写入 DSH home 的 `cordis.patch.yml`；`keychain` 必须为绝对路径。
 2. 从源码检出启动 DSH，调用 Computer Use，在系统设置中给 `DSH Computer Use Dev` 授予辅助功能和屏幕录制权限。
 3. 确认 `getCapabilities` 的两项权限均为 `true`。使用固定签名时，在修改 Swift 源码重建和另一个 worktree 中分别复查。只有确认没有安装版 DSH 使用旧条目时，才移除旧 `DSH Computer Use` 条目。
 4. 钥匙串锁定后，按 skill 重新运行 setup 解锁并复用现有身份。停止使用时改回 `ad-hoc` 或移除该配置，再按 skill 删除身份；删除 DSH home 不会删除开发者钥匙串。

@@ -245,16 +245,8 @@ describe('package dependency scope', () => {
       'carrierKeyOf', 'createScope', 'scopeOf', 'scopeTarget',
     ])
     expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-typert-protocol']).toBeUndefined()
-    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-experimental-translator'])
-      .toEqual(['TranslationError'])
-    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-experimental-forge'])
-      .toEqual(['changeRequestKey'])
-    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-experimental-worktree'])
-      .toEqual(['generatedWorktreeName', 'CREATED_RECORD', 'createdWorktreeSchema'])
-    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-fs']).toEqual(['FsError'])
     expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-session'])
-      .toEqual(['SESSION_FORMAT_VERSION', 'appendPluginRecord', 'pluginRecordOf'])
-    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@ocean/ocean-timeout']).toEqual(['deadline'])
+      .toEqual(['SESSION_FORMAT_VERSION'])
   })
 
   it('discovers the Client directory, dsh.client declarations, and configured Host packages', () => {
@@ -365,44 +357,44 @@ function writeWorkspace(files: Readonly<Record<string, string | object>>): strin
 
 const CORDIS_PEER = { peerDependencies: { [CORDIS]: 'workspace:~' }, devDependencies: { [CORDIS]: 'workspace:~' } }
 
-describe('experimental packages and Host build entries', () => {
-  it('applies the published policy to an experimental Client package that declares browser packages as peers', async () => {
+describe('package roles and Host build entries', () => {
+  it('applies the published policy to a Client package that declares browser packages as peers', async () => {
     const root = writeWorkspace({
       'packages/client/ui-probe/package.json': { name: '@ocean/ocean-client-ui-probe', ...CORDIS_PEER },
-      'packages/experimental/client-ui-probe/package.json': {
-        name: '@ocean/ocean-experimental-client-ui-probe',
+      'packages/client/ui-probe-panel/package.json': {
+        name: '@ocean/ocean-client-ui-probe-panel',
         dsh: { client: {} },
         peerDependencies: { [CORDIS]: 'workspace:~', '@ocean/ocean-client-ui-probe': 'workspace:*' },
         devDependencies: { [CORDIS]: 'workspace:~', '@ocean/ocean-client-ui-probe': 'workspace:*' },
       },
-      'packages/experimental/client-ui-probe/src/index.ts': 'export function apply() {}\n',
-      'packages/experimental/client-ui-probe/src/client/index.ts':
+      'packages/client/ui-probe-panel/src/index.ts': 'export function apply() {}\n',
+      'packages/client/ui-probe-panel/src/client/index.ts':
         "import { Button } from '@ocean/ocean-client-ui-probe'\nexport const control = Button\n",
     })
 
     const state = await readPackageDependencyState(root, policy())
 
     expect(state.facts.map(fact => [fact.manifestPath, fact.role])).toContainEqual(
-      ['packages/experimental/client-ui-probe/package.json', 'client-host'],
+      ['packages/client/ui-probe-panel/package.json', 'client-host'],
     )
     expect(collectPackageDependencyViolations(state)).toEqual([
-      'packages/experimental/client-ui-probe/package.json: @ocean/ocean-client-ui-probe (existing non-Cordis peer, '
-      + 'packages/experimental/client-ui-probe/src/client/index.ts) must be devDependencies-only at workspace:*; '
+      'packages/client/ui-probe-panel/package.json: @ocean/ocean-client-ui-probe (existing non-Cordis peer, '
+      + 'packages/client/ui-probe-panel/src/client/index.ts) must be devDependencies-only at workspace:*; '
       + 'found devDependencies + peerDependencies',
     ])
   })
 
-  it('accepts an experimental package in the configured Host roster', async () => {
+  it('accepts a package in the configured Host roster', async () => {
     const root = writeWorkspace({
-      'packages/experimental/host-probe/package.json': { name: '@ocean/ocean-experimental-host-probe', ...CORDIS_PEER },
-      'packages/experimental/host-probe/src/index.ts': 'export function apply() {}\n',
+      'packages/probe/host-probe/package.json': { name: '@ocean/ocean-host-probe', ...CORDIS_PEER },
+      'packages/probe/host-probe/src/index.ts': 'export function apply() {}\n',
     })
 
-    const state = await readPackageDependencyState(root, policy({ hostPackages: ['@ocean/ocean-experimental-host-probe'] }))
+    const state = await readPackageDependencyState(root, policy({ hostPackages: ['@ocean/ocean-host-probe'] }))
 
     expect(state.policyViolations).toEqual([])
     expect(state.facts.map(fact => [fact.manifestPath, fact.role])).toEqual(
-      [['packages/experimental/host-probe/package.json', 'configured-host']],
+      [['packages/probe/host-probe/package.json', 'configured-host']],
     )
   })
 
@@ -1251,7 +1243,7 @@ describe('root-provided type packages', () => {
     const { rootManifest, packages } = workspaceFixture({
       'package.json': { name: 'root', devDependencies: { '@types/react': '~18.3.1' } },
       'apps/app/package.json': { name: '@f/app', devDependencies: { '@types/react': '~18.3.1', react: '^18.2.0' } },
-      'packages/experimental/probe/package.json': {
+      'packages/probe/fixture/package.json': {
         name: '@f/probe',
         dependencies: { '@types/react-dom': '~18.3.0' },
         peerDependencies: { '@types/react': '*' },
@@ -1262,8 +1254,8 @@ describe('root-provided type packages', () => {
     expect(collectRootTypePackageViolations(rootManifest, packages)).toEqual([
       rootTypeRemoval('apps/app/package.json', 'devDependencies.@types/react'),
       'package.json: devDependencies must declare @types/react-dom for every workspace package',
-      rootTypeRemoval('packages/experimental/probe/package.json', 'dependencies.@types/react-dom'),
-      rootTypeRemoval('packages/experimental/probe/package.json', 'peerDependencies.@types/react'),
+      rootTypeRemoval('packages/probe/fixture/package.json', 'dependencies.@types/react-dom'),
+      rootTypeRemoval('packages/probe/fixture/package.json', 'peerDependencies.@types/react'),
       rootTypeRemoval('vendor/lib/package.json', 'optionalDependencies.@types/react'),
     ])
   })

@@ -19,8 +19,8 @@ description: "ChangeRequestSnapshot 新增必填的概览字段，ChangeRequestC
 
 ## 迁移
 
-1. 在提供方构造的每个 `ChangeRequestCheck` 中设置 `rerun: null`，除非提供方实现了 `rerunChecks`；实现了的提供方为每个可重跑的检查给出能再次解析的品牌化 `ForgeCheckId`，GitHub Actions 运行的做法见 [`actionsRun`](../../../../packages/experimental/forge-github/src/graphql.ts)。
+1. 在提供方构造的每个 `ChangeRequestCheck` 中设置 `rerun: null`，除非提供方实现了 `rerunChecks`；实现了的提供方为每个可重跑的检查给出能再次解析的品牌化 `ForgeCheckId`，GitHub Actions 运行的做法见 `actionsRun`。
 2. 在每个 `ChangeRequestSnapshot` 中设置托管平台报告的概览字段。没有平台数据时，使用 `reviewers: []`、`reviewersTruncated: false`、`closingIssues: []`、`closingIssuesTruncated: false`、`branchUpdates: []`、`canRequestReviews: false` 与 `canRerunChecks: false`；卡片随后只显示评审结论，不提供概览操作。
-3. 可选地实现新的提供方方法；[`GitHubProvider`](../../../../packages/experimental/forge-github/src/provider.ts) 展示了每个方法，契约见 [forge 子系统页面](../../../subsystems/forge.zh.md#overview-and-viewed-marks)。
+3. 可选地实现新的提供方方法；`GitHubProvider` 展示了每个方法，契约见 `forge 子系统页面`。
 4. 在所有对 `ForgeActionFailure['code']` 做穷举的地方处理 `unknown`：提示需要到主机上核对结果，核对之前不要再次尝试该改动。
 5. 运行类型检查；提供方构造的每个快照与检查都设置了新字段、且没有未处理的 `ForgeActionFailure` 代码时即通过。

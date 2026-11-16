@@ -99,25 +99,25 @@ describe('desktop package-set selection', () => {
   })
 })
 
-const macProvider = '@ocean/ocean-experimental-cua-macos'
-const cuaBundle = '@ocean/ocean-cua-bundle'
+const macProvider = '@ocean/ocean-platform-native-macos'
+const platformBundle = '@ocean/ocean-platform-native-bundle'
 const targetManifests = () => new Map<string, PackedDesktopPackage>([
-  ['@ocean/ocean', packed('@ocean/ocean', { dependencies: { [cuaBundle]: '1.0.0' } })],
+  ['@ocean/ocean', packed('@ocean/ocean', { dependencies: { [platformBundle]: '1.0.0' } })],
   ['@ocean/ocean-desktop-host', packed('@ocean/ocean-desktop-host')],
-  [cuaBundle, packed(cuaBundle, {
-    optionalDependencies: { [macProvider]: '1.0.0' }, dependencies: { '@ocean/ocean-cua': '1.0.0' },
+  [platformBundle, packed(platformBundle, {
+    optionalDependencies: { [macProvider]: '1.0.0' }, dependencies: { '@ocean/ocean-platform-native': '1.0.0' },
   })],
-  ['@ocean/ocean-cua', packed('@ocean/ocean-cua')],
+  ['@ocean/ocean-platform-native', packed('@ocean/ocean-platform-native')],
   [macProvider, packed(macProvider, { os: ['darwin'] })],
 ])
 
 it.each([
   ['darwin', 'arm64', true], ['darwin', 'x64', true], ['win32', 'x64', false],
-] as const)('selects the CUA native tarball for target %s/%s independently of the host', (platform, arch, included) => {
+] as const)('selects the platform native tarball for target %s/%s independently of the host', (platform, arch, included) => {
   const selected = selectDesktopPackageClosure(targetManifests(), { platform, arch }).map(entry => entry.manifest.name)
   expect(selected.includes(macProvider)).toBe(included)
-  expect(selected).toContain('@ocean/ocean-cua')
-  expect(selected).toContain(cuaBundle)
+  expect(selected).toContain('@ocean/ocean-platform-native')
+  expect(selected).toContain(platformBundle)
 })
 
 it.each([
@@ -157,8 +157,8 @@ it('copies no macOS tarball into the Windows package set', () => {
   }
   const output = join(root, 'output')
   prepareDesktopPackageSet([inputs], output, { platform: 'win32', arch: 'x64' })
-  expect(readdirSync(join(output, DESKTOP_PACKAGES_DIR))).not.toContain('ocean-experimental-cua-macos.tgz')
+  expect(readdirSync(join(output, DESKTOP_PACKAGES_DIR))).not.toContain('ocean-platform-native-macos.tgz')
   prepareDesktopPackageSet([inputs], output, { platform: 'darwin', arch: 'arm64' })
-  expect(readFileSync(join(output, DESKTOP_PACKAGES_DIR, 'ocean-experimental-cua-macos.tgz')))
-    .toEqual(readFileSync(join(inputs, 'ocean-experimental-cua-macos.tgz')))
+  expect(readFileSync(join(output, DESKTOP_PACKAGES_DIR, 'ocean-platform-native-macos.tgz')))
+    .toEqual(readFileSync(join(inputs, 'ocean-platform-native-macos.tgz')))
 })

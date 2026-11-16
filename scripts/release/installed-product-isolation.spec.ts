@@ -1,14 +1,12 @@
-/** Installed-product isolation uses resolved package identities and runtime edges. */
+/** Installed-product verification walks resolved runtime edges of the installed tree. */
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS } from '../experimental-package-policy.ts'
 import { verifyInstalledProductIsolation } from './installed-product-isolation.ts'
 
 const roots: string[] = []
-const experimental = '@ocean/ocean-experimental-example'
 
 function fixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'dsh-installed-isolation-'))
@@ -27,70 +25,28 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-describe.each([experimental, ...Object.values(EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS)])('installed default-product isolation: %s', (experimental) => {
-  it('ignores development dependencies and unrelated installed experimental packages', () => {
+describe('installed default-product graph', () => {
+  it('ignores development dependencies and packages outside the runtime graph', () => {
     const root = fixture()
     const entry = writePackage(root, '@ocean/ocean', {
       dependencies: { core: '1.0.0' },
-      devDependencies: { [experimental]: '1.0.0' },
+      devDependencies: { unrelated: '1.0.0' },
     })
     writePackage(root, 'core', { peerDependencies: { '@ocean/ocean': '1.0.0' } })
-    writePackage(root, experimental, {})
+    writePackage(root, 'unrelated', {})
 
     expect(verifyInstalledProductIsolation(entry)).toBe(2)
   })
 
-  it.each(['dependencies', 'optionalDependencies', 'peerDependencies'])(
-    'rejects a transitive experimental %s',
-    (section) => {
-      const root = fixture()
-      const entry = writePackage(root, '@ocean/ocean', { dependencies: { thirdParty: '1.0.0' } })
-      writePackage(root, 'thirdParty', { [section]: { [experimental]: '1.0.0' } })
-
-      expect(() => verifyInstalledProductIsolation(entry)).toThrow(
-        `@ocean/ocean -> thirdParty -> ${experimental}`,
-      )
-    },
-  )
-
-  it('skips the entry package\'s optional bundles, which must be installed, and still rejects other experimental edges', () => {
+  it('requires the entry package\'s optional bundles to be installed', () => {
     const root = fixture()
-    const entry = writePackage(root, '@ocean/ocean', { dependencies: { core: '1.0.0', [experimental]: '1.0.0' } })
+    const entry = writePackage(root, '@ocean/ocean', { dependencies: { core: '1.0.0', offered: '1.0.0' } })
     writePackage(root, 'core', {})
-    writePackage(root, experimental, { dependencies: { '@ocean/ocean-experimental-inner': '1.0.0' } })
-    expect(verifyInstalledProductIsolation(entry, [experimental])).toBe(2)
-
-    writePackage(root, 'core', { dependencies: { [experimental]: '1.0.0' } })
-    expect(() => verifyInstalledProductIsolation(entry, [experimental])).toThrow(`core -> ${experimental}`)
+    writePackage(root, 'offered', {})
+    expect(verifyInstalledProductIsolation(entry, ['offered'])).toBe(2)
 
     const missing = writePackage(root, '@ocean/ocean-missing', { dependencies: { absent: '1.0.0' } })
     expect(() => verifyInstalledProductIsolation(missing, ['absent'])).toThrow('optional bundle is missing: @ocean/ocean-missing -> absent')
-  })
-
-  it('rejects experimental identities hidden behind an installed alias', () => {
-    const root = fixture()
-    const entry = writePackage(root, '@ocean/ocean', { dependencies: { safeName: 'file:../prototype' } })
-    writePackage(root, 'safeName', { name: experimental })
-
-    expect(() => verifyInstalledProductIsolation(entry)).toThrow(experimental)
-  })
-
-  it('rejects experimental npm aliases even when an optional package is omitted', () => {
-    const root = fixture()
-    const entry = writePackage(root, '@ocean/ocean', {
-      optionalDependencies: { safeName: `npm:${experimental}@1.0.0` },
-    })
-
-    expect(() => verifyInstalledProductIsolation(entry)).toThrow(experimental)
-  })
-
-  it('follows nested installations rather than an unrelated hoisted package', () => {
-    const root = fixture()
-    const entry = writePackage(root, '@ocean/ocean', { dependencies: { core: '1.0.0' } })
-    writePackage(root, 'core', {})
-    writePackage(entry, 'core', { dependencies: { [experimental]: '1.0.0' } })
-
-    expect(() => verifyInstalledProductIsolation(entry)).toThrow(experimental)
   })
 
   it('permits missing optional packages and optional peers but rejects missing dependencies', () => {
@@ -104,5 +60,16 @@ describe.each([experimental, ...Object.values(EXPERIMENTAL_PACKAGE_NAME_EXCEPTIO
     expect(verifyInstalledProductIsolation(entry)).toBe(1)
     writePackage(root, '@ocean/ocean', { dependencies: { missing: '1.0.0' } })
     expect(() => verifyInstalledProductIsolation(entry)).toThrow('dependency is missing')
+  })
+
+  it('follows nested installations rather than an unrelated hoisted package', () => {
+    const root = fixture()
+    const entry = writePackage(root, '@ocean/ocean', { dependencies: { core: '1.0.0' } })
+    const hoisted = writePackage(root, 'core', {})
+    const nested = writePackage(entry, 'core', { dependencies: { deep: '1.0.0' } })
+    writePackage(nested, 'deep', {})
+
+    expect(verifyInstalledProductIsolation(entry)).toBe(3)
+    expect(hoisted).not.toBe(nested)
   })
 })

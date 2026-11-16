@@ -5,13 +5,11 @@ import { chmod, cp, copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rm, s
 import { existsSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
-import { basename, delimiter, dirname, isAbsolute, join, relative, sep } from 'node:path'
+import { basename, delimiter, dirname, isAbsolute, join, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import ts from 'typescript'
 import { deriveEventMessage, foldSurface, SESSION_FORMAT_VERSION } from '@ocean/ocean-session'
-import { releasedV0SessionFormatCodec } from '@ocean/ocean-session-format-v0-to-v1'
-import type { SessionFormatEvent, SessionFormatMigrationContext } from '@ocean/ocean-session-format'
 import { assertWorkspaceOutsideTemp, outsideTempWorkspaceParent } from '../../scripts/snapshot-workspace-parent.ts'
 import {
   assertPersistedSessionVersion,
@@ -52,7 +50,7 @@ import {
   type SnapshotManifest,
   type WorkspaceSnapshotEntry,
 } from '@ocean/ocean-session-snapshot'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, resolveExampleMode, runLoaderSmoke } from '@ocean/ocean-loader-smoke'
+import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@ocean/ocean-loader-smoke'
 import { resolvePwshPath } from '@ocean/ocean-pwsh-local'
 import { parseSessionLog, prepareSessionSnapshotFixtureForComparison } from '@ocean/ocean-llm-replay'
 
@@ -496,26 +494,11 @@ async function seedWorkspace(scenario: HeadlessScenario, cwd: string): Promise<v
   await prepare(cwd)
 }
 
-const WORKTREE_CHECKOUT_FILTER = "printf 'FILTERED CHECKOUT CONTENT\\n'"
-const WORKTREE_CHECKOUT_ATTRIBUTES = 'tracked.txt filter=dsh-snapshot-checkout\n'
-
 const workspaceSetups: Record<string, (cwd: string) => Promise<void>> = {
   async 'readonly-patch-directory'(cwd) {
     const directory = join(cwd, 'locked')
     await mkdir(directory)
     await chmod(directory, 0o555)
-  },
-  async 'cua-script-guidance'(cwd) {
-    // Keep the real prompt's bridge URL under the fixture workspace on every host.
-    const source = join(repoRoot, 'packages/experimental/cua')
-    const target = join(cwd, 'cua-runtime')
-    const face = resolveExampleMode() === 'lib' ? 'lib' : 'src'
-    const extension = face === 'lib' ? 'js' : 'ts'
-    const guidanceDirectory = face === 'lib' ? 'lib/types' : 'src'
-    await cp(join(source, face), join(target, face), { recursive: true })
-    await copyFile(join(source, 'package.json'), join(target, 'package.json'))
-    await symlink(join(source, 'node_modules'), join(target, 'node_modules'), 'dir')
-    await copyFile(join(repoRoot, `packages/experimental/cua-macos/${guidanceDirectory}/guidance.${extension}`), join(target, `guidance.${extension}`))
   },
   async 'dsh-doc-resources'(cwd) {
     await cp(join(repoRoot, 'packages/preset/agent-preset/skills/dsh-doc'), join(cwd, '.dsh/skills/dsh-doc'), { recursive: true })
@@ -535,18 +518,6 @@ const workspaceSetups: Record<string, (cwd: string) => Promise<void>> = {
     await writeFile(join(cwd, 'office-node'), `#!/bin/sh\nexec '${nodePath}' "$@"\n`, { mode: 0o755 })
     // Keep the removed-tool error without process-specific stack locations.
     await writeFile(join(cwd, 'office-ptc-node'), '#!/bin/sh\nexec "$(dirname "$0")/office-node" --stack-trace-limit=0 "$@"\n', { mode: 0o755 })
-  },
-  async 'git-worktree'(cwd) {
-    snapshotGit(cwd, ['init', '--initial-branch=main', '--object-format=sha1'])
-    snapshotGit(cwd, ['config', 'core.autocrlf', 'false'])
-    snapshotGit(cwd, ['add', 'tracked.txt'])
-    snapshotGit(cwd, ['commit', '-m', 'Snapshot seed'])
-    await writeFile(join(cwd, '.git', 'info', 'attributes'), WORKTREE_CHECKOUT_ATTRIBUTES)
-    snapshotGit(cwd, ['config', 'filter.dsh-snapshot-checkout.smudge', WORKTREE_CHECKOUT_FILTER])
-    await copyFile(join(cwd, '.git', 'config'), join(cwd, '.git', 'config.before-worktree'))
-    await writeFile(join(cwd, '.git', 'info', 'exclude'), '/.dsh/\n/.snapshot-patches/\n')
-    await writeFile(join(cwd, 'tracked.txt'), 'DIRTY SOURCE\n')
-    await writeFile(join(cwd, 'local.txt'), 'UNTRACKED SOURCE\n')
   },
   async 'skill-root-isolation'(cwd) {
     const target = join(cwd, '.dsh', 'skills', 'editing-cordis-compositions', 'SKILL.md')
@@ -664,31 +635,6 @@ function sessionReferenceSpillExpected(actual: readonly JsonObject[], expectedLo
   expect(expectedReference.capturedFormatVersion, 'recorded reference-source generation').toBe(recordedVersion)
   expectedReference.capturedFormatVersion = SESSION_FORMAT_VERSION
   return expected
-}
-
-/** Require successful verification and the complete canonical event before refresh can write a fixture. */
-async function verifySessionQuerySpill(log: string, spillRoot: string, locatorRoot: string): Promise<void> {
-  const events = parseSessionLog(log)
-  const results = events.flatMap(event => event.type === 'tool/result' ? [event.data.message] : [])
-  const readResult = results.find(result => result.toolCallId === 'call_session_query_spill')
-  const verification = results.find(result => result.toolCallId === 'call_verify_session_query_spill')
-  expect(readResult?.isError).toBe(false)
-  expect(verification).toMatchObject({
-    isError: false,
-    content: [{ type: 'text', text: 'SPILL_CANONICAL_OK\n' }],
-  })
-  const preview = readResult?.content.flatMap(block => block.type === 'text' ? [block.text] : []).join('')
-  const locator = preview?.match(/Full formatted result stored at: (.+-session_event_read\.txt)\. Use read/)
-  expect(locator).not.toBeNull()
-  expect(locator?.[1]).toBeDefined()
-  expect(locator![1]!.startsWith(locatorRoot + sep)).toBe(true)
-  const full = await readFile(join(spillRoot, relative(locatorRoot, locator![1]!)), 'utf8')
-  const json = full.match(/```json\n([\s\S]+)\n```/)
-  expect(json).not.toBeNull()
-  const header = events.find(event => event.type === 'request/header')
-  expect(header).toBeDefined()
-  expect(JSON.parse(json![1]!)).toEqual(header)
-  expect(full).toContain('session_event_search')
 }
 
 /** Require cross-tree communication and target-only restoration with an offline creator. */
@@ -902,44 +848,6 @@ function verifyWorkingDirectory(log: string, cwd: string): void {
   ])
 }
 
-/** Run fixture Git with deterministic commit identity and no user hooks or configuration. */
-function snapshotGit(cwd: string, args: string[]): string {
-  const result = spawnSync('git', ['-c', 'core.hooksPath=/dev/null', '-c', 'core.autocrlf=false', '-c', 'commit.gpgSign=false', ...args], {
-    cwd,
-    encoding: 'utf8',
-    env: {
-      ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_'))),
-      GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null',
-      GIT_AUTHOR_NAME: 'DSH Snapshot', GIT_COMMITTER_NAME: 'DSH Snapshot',
-      GIT_AUTHOR_EMAIL: 'snapshot@example.invalid', GIT_COMMITTER_EMAIL: 'snapshot@example.invalid',
-      GIT_AUTHOR_DATE: '2000-01-01T00:00:00Z', GIT_COMMITTER_DATE: '2000-01-01T00:00:00Z',
-    },
-  })
-  if (result.status !== 0) throw new Error(`snapshot Git failed: ${result.stderr}`)
-  return result.stdout.trim()
-}
-
-/** Verify Git-owned state independently of the Session and exclude only its volatile administration files from the file oracle. */
-async function verifyWorktree(log: string, cwd: string): Promise<void> {
-  const checkout = join(cwd, '.agents', 'worktrees', 'isolated')
-  expect(await readFile(join(cwd, '.git', 'config'))).toEqual(await readFile(join(cwd, '.git', 'config.before-worktree')))
-  expect(await readFile(join(cwd, '.git', 'info', 'attributes'), 'utf8')).toBe(WORKTREE_CHECKOUT_ATTRIBUTES)
-  expect(snapshotGit(cwd, ['config', 'filter.dsh-snapshot-checkout.smudge'])).toBe(WORKTREE_CHECKOUT_FILTER)
-  expect(await readFile(join(checkout, 'tracked.txt'), 'utf8')).toBe('COMMITTED CONTENT\n')
-  expect(await readFile(join(checkout, 'result.txt'), 'utf8')).toBe('WORKTREE RESULT\n')
-  expect(existsSync(join(checkout, 'local.txt'))).toBe(false)
-  expect(await readFile(join(cwd, '.agents', 'worktrees', '.gitignore'), 'utf8')).toBe('*\n')
-  expect(snapshotGit(cwd, ['branch', '--show-current'])).toBe('main')
-  expect(snapshotGit(checkout, ['branch', '--show-current'])).toBe('isolated')
-  expect(snapshotGit(checkout, ['rev-parse', 'HEAD'])).toBe(snapshotGit(cwd, ['rev-parse', 'HEAD']))
-  expect(snapshotGit(cwd, ['worktree', 'list', '--porcelain'])).toContain(`worktree ${checkout}`)
-  expect(snapshotGit(cwd, ['check-ignore', '.agents/worktrees/isolated/result.txt'])).toBe('.agents/worktrees/isolated/result.txt')
-  const events = records(log)
-  expect(events.filter(event => event.type === 'working-directory/change').map(event => (event.data as JsonObject).cwd))
-    .toEqual([checkout, cwd])
-  expect(events.filter(event => event.type === 'system/message')).toHaveLength(1)
-}
-
 /** Exercise provider-cwd adoption through the shipped launcher without normalizing away the observation. */
 async function verifyProviderCwdResume(
   scenario: HeadlessScenario,
@@ -1117,37 +1025,6 @@ describe('headless recorded-session snapshots', () => {
       expect(existsSync(join(scenario.dir, 'input.json')), `${scenario.name}: task comes from session JSONL`).toBe(false)
       expect(existsSync(join(scenario.dir, 'stdout.expected.jsonl')), `${scenario.name}: no ACP transcript`).toBe(false)
     }
-  })
-
-  it('keeps packed chunk rows logically equal to their unpacked recording', async () => {
-    const packedDir = join(snapshotsRoot, 'packed-chunks')
-    const packed = await readFile(join(packedDir, await primaryFixtureFile(packedDir)), 'utf8')
-    const [header, ...rows] = records(packed)
-    const packedTypes = new Set(['text-chunks', 'reasoning-chunks', 'tool-call-chunks'])
-    expect([...new Set(rows.filter(row => packedTypes.has(String(row.type))).map(row => row.type))].sort())
-      .toStrictEqual(['reasoning-chunks', 'text-chunks', 'tool-call-chunks'])
-    const decoder = releasedV0SessionFormatCodec.createDecoder({ ...header, cwd: '/snapshot' }, 'strict')
-    const expanded: SessionFormatEvent[] = []
-    const output: SessionFormatMigrationContext = {
-      emitEvent: event => { expanded.push(event) },
-      emitRun: run => { expanded.push(...run.expand()) },
-    }
-    let seq = 0
-    for (const row of rows) {
-      if (packedTypes.has(String(row.type))) {
-        const data = row.data as JsonObject
-        const values = (row.type === 'tool-call-chunks' ? data.args : data.texts) as unknown[]
-        decoder.decodeRow({ ...row, seq0: seq, time0: 0 }, output)
-        seq += values.length
-      } else {
-        decoder.decodeRow({ ...row, seq: seq++, time: 0 }, output)
-      }
-    }
-    decoder.finish(output)
-    const unpacked = [header, ...expanded.map(({ seq: _seq, time: _time, ...event }) => event)]
-      .map(row => JSON.stringify(row)).join('\n') + '\n'
-    const context = contextOf([packed])
-    expect(normalizeSessionSnapshots([packed], context)).toEqual(normalizeSessionSnapshots([unpacked], context))
   })
 
   it('replays original inbox mentions before normalized user messages', () => {
@@ -1367,8 +1244,6 @@ describe('headless recorded-session snapshots', () => {
         ?? scenario.manifest.input?.task
       if (task === undefined) throw new Error(`${scenario.name}: no accepted or exceptional task input`)
       const pin = pinOf(scenario)
-      const ignoredWorkspaceEntries = scenario.manifest.workspace?.setup === 'git-worktree'
-        ? [...RUNTIME_WORKSPACE_ENTRIES.filter(entry => entry !== '.agents'), '.git'] : RUNTIME_WORKSPACE_ENTRIES
       let model: { provider: string; model: string } | undefined
       if (primaryFixture !== undefined) {
         try {
@@ -1460,7 +1335,7 @@ describe('headless recorded-session snapshots', () => {
             }
             await seedWorkspace(scenario, cwd)
             initialWorkspace = await captureWorkspaceSnapshot(cwd, {
-              ignoredRootEntries: ignoredWorkspaceEntries,
+              ignoredRootEntries: RUNTIME_WORKSPACE_ENTRIES,
             })
           },
           inspect: async (cwd) => {
@@ -1540,9 +1415,6 @@ describe('headless recorded-session snapshots', () => {
             }
             if (scenario.name === 'team-tree-messages') verifyTeamTreeMessage(actualLogs)
             if (scenario.name === 'team-task-inbox') verifyTeamTaskInbox(actualLogs)
-            if (scenario.name === 'session-query-spill') {
-              await verifySessionQuerySpill(actualLogs[0]!.content, spillRoot, locatorRoot)
-            }
             if (scenario.name === 'mcp-resources' || scenario.name === 'mcp-resources-ptc') {
               verifyMcpResources(actualLogs[0]!.content, scenario.name === 'mcp-resources-ptc')
             }
@@ -1561,16 +1433,9 @@ describe('headless recorded-session snapshots', () => {
             if (scenario.name === 'working-directory') {
               verifyWorkingDirectory(actualLogs[0]!.content, await realpath(cwd))
             }
-            if (scenario.name === 'worktree') {
-              await verifyWorktree(actualLogs[0]!.content, await realpath(cwd))
-            }
             finalWorkspace = await captureWorkspaceSnapshot(cwd, {
-              ignoredRootEntries: ignoredWorkspaceEntries,
+              ignoredRootEntries: RUNTIME_WORKSPACE_ENTRIES,
             })
-            if (scenario.name === 'worktree') {
-              // The linked checkout's .git pointer contains the temporary source path; Git assertions verify it separately.
-              finalWorkspace = finalWorkspace.filter(entry => entry.path !== '.agents/worktrees/isolated/.git')
-            }
           },
         })
       } finally {

@@ -96,7 +96,6 @@ describe('exactEditState', () => {
 
 describe('product identifiers', () => {
   it.each([
-    'apps/cli/tests/optional-bundle-transitions.e2e.ts',
     'apps/web/tests/agent-preset-selection.e2e.ts',
     'apps/web/tests/developer-tools-settings.e2e.ts',
     'docs/subsystems/extensions.md',
@@ -175,7 +174,6 @@ describe('product identifiers', () => {
   })
 
   it.each([
-    ['apps/cli/tests/optional-bundle-transitions.e2e.ts', 1],
     ['packages/client/ui-conversation/src/client/input/submission-analytics.ts', 1],
     ['packages/client/ui-conversation/tests/service-orchestration.client.spec.ts', 1],
     ['packages/client/ui-entry-customization/src/client/index.ts', 1],

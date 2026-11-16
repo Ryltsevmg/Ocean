@@ -22,6 +22,7 @@ import { publicJob, renderModelDelta, statusLine } from '../src/render.ts'
 declare module '@ocean/ocean-jobs' {
   interface JobKindMap {
     'test-task': 'test-task'
+    'other-task': 'other-task'
   }
 }
 
@@ -1026,7 +1027,7 @@ describe('completion notices', () => {
   it('guides collection through job_list when the PTY id exceeds its output limit', async () => {
     const { ctx } = await setup()
     for (let index = 0; index < 99; index += 1) {
-      const prior = producer({ kind: 'pty-send' })
+      const prior = producer({ kind: 'other-task' })
       ctx.jobs.start(prior.spec)
       prior.settle({ status: 'completed' })
       await tick()
@@ -1035,7 +1036,7 @@ describe('completion notices', () => {
     const owner = await fakeAgent(ctx, 'sess-1', { inject })
     const target = producer({
       owner: owner.id,
-      kind: 'pty-send',
+      kind: 'other-task',
       label: 'x'.repeat(1_000),
       outputLimitBytes: 56,
     })
@@ -1071,9 +1072,9 @@ describe('completion notices', () => {
     const { ctx } = await setup()
     const inject = vi.fn()
     const owner = await fakeAgent(ctx, 'sess-1', { inject })
-    const tiny = producer({ owner: owner.id, kind: 'pty-send', label: 'x'.repeat(100), outputLimitBytes: 8 })
-    const short = producer({ owner: owner.id, kind: 'pty-send', label: 'x'.repeat(100), outputLimitBytes: 32 })
-    const minimal = producer({ owner: owner.id, kind: 'pty-send', label: 'x'.repeat(100), outputLimitBytes: 3 })
+    const tiny = producer({ owner: owner.id, kind: 'other-task', label: 'x'.repeat(100), outputLimitBytes: 8 })
+    const short = producer({ owner: owner.id, kind: 'other-task', label: 'x'.repeat(100), outputLimitBytes: 32 })
+    const minimal = producer({ owner: owner.id, kind: 'other-task', label: 'x'.repeat(100), outputLimitBytes: 3 })
     ctx.jobs.start(tiny.spec)
     ctx.jobs.start(short.spec)
     ctx.jobs.start(minimal.spec)

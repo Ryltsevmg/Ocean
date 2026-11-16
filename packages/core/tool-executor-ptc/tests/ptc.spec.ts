@@ -1475,7 +1475,7 @@ describe('the run_code dispatch bridge', () => {
         return Promise.resolve({
           kind: 'deny' as const,
           reason: 'not on my watch',
-          info: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: ' raw\nreason ' },
+          info: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: ' raw\nreason ' },
         })
       }
       return next()
@@ -1510,7 +1510,7 @@ describe('the run_code dispatch bridge', () => {
     expect(settle?.data).toMatchObject({
       name: 'echo',
       isError: true,
-      error: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: ' raw\nreason ' },
+      error: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: ' raw\nreason ' },
     })
     for (const event of [start, settle]) {
       expect(event?.data).not.toHaveProperty('description')
@@ -1527,7 +1527,7 @@ describe('the run_code dispatch bridge', () => {
         return Promise.resolve({
           kind: 'deny' as const,
           reason: 'not on my watch',
-          info: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: 'exact denial' },
+          info: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: 'exact denial' },
         })
       }
       return next()
@@ -1544,13 +1544,13 @@ describe('the run_code dispatch bridge', () => {
     const modelContent = result.content[0]
     expect(modelContent?.type).toBe('text')
     expect(modelContent?.type === 'text' ? modelContent.text : '').toContain('not on my watch')
-    expect(result.isError && result.error.info?.code).not.toBe('AUTO_REVIEW_DENIED')
+    expect(result.isError && result.error.info?.code).not.toBe('POLICY_DENIED')
     expect(calls).toEqual([])
     const settle = events.find(event => event.type === 'tool/ptc-dispatch')
     expect(settle?.data).toMatchObject({
       name: 'echo',
       isError: true,
-      error: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: 'exact denial' },
+      error: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: 'exact denial' },
     })
   })
 
@@ -1688,7 +1688,6 @@ describe('the run_code dispatch bridge', () => {
   it.each([
     { name: 'read_image', count: 0, message: 'Image-producing tools must return exactly one image' },
     { name: 'read_image', count: 2, message: 'Image-producing tools must return exactly one image' },
-    { name: 'cua', count: 2, message: 'Image-producing tools must return exactly one image' },
     { name: 'read_image', count: 1, message: 'Image storage must expose a readable path in the program filesystem' },
   ])('rejects $name with $count images when its program image is unavailable', async ({ name, count, message }) => {
     const { ctx, runtime } = await setup({ mode: 'ptc' })
@@ -1713,21 +1712,22 @@ describe('the run_code dispatch bridge', () => {
     expect(result.content).toEqual([{ type: 'text', text: expect.stringContaining(message) as string }])
   })
 
-  it('returns CUA text observations as program values', async () => {
+  it('returns non-image tool content as program values', async () => {
     const { ctx, runtime } = await setup({ mode: 'ptc' })
     onTestFinished(() => ctx.fiber.dispose())
     ctx.tools.register(defineContentToolFixture({
-      name: 'cua', description: 'Return a text observation.', parameters: {},
+      name: 'probe', description: 'Return a text observation.', parameters: {},
       execute: () => Promise.resolve([{ type: 'text', text: 'Window selected' }]),
     }))
-    runtime.behavior = async request => printed(await request.bindings[0]!.functions.cua!({}))
+    runtime.behavior = async request => printed(await request.bindings[0]!.functions.probe!({}))
 
     const result = await runCode(ctx, 'program')
     expect(result.isError).toBe(false)
     expect(result.content).toEqual([{ type: 'text', text: JSON.stringify([{ type: 'text', text: 'Window selected' }], null, 2) }])
   })
 
-  it.each(['read_image', 'cua'])('reports the policy notice when %s image output is removed', async (name) => {
+  it('reports the policy notice when read_image image output is removed', async () => {
+    const name = 'read_image'
     const { ctx, runtime } = await setup({ mode: 'ptc' })
     ctx.tools.register(defineContentToolFixture({
       name, description: 'Return image content.', parameters: {},

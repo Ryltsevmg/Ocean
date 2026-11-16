@@ -42,7 +42,7 @@ export interface ProductUseResult {
   defaultPackages: string[]
   /** Repository-relative package directories reached only after optional selection. */
   optionalPackages: string[]
-  /** Workspace packages inventoried, including experimental packages and app roots. */
+  /** Workspace packages inventoried, including app roots. */
   packageCount: number
   /** Distinct source modules reached across both selections. */
   sourceCount: number
@@ -230,7 +230,7 @@ export function verifyProductUse(
   } finally { dom.window.close() }
   for (const [path, entry] of Object.entries(policy)) {
     const pkg = directories.get(resolve(root, path))
-    if (!/^packages\/[^/]+\/[^/]+$/.test(path) || path.startsWith('packages/experimental/') || pkg === undefined) {
+    if (!/^packages\/[^/]+\/[^/]+$/.test(path) || pkg === undefined) {
       failures.push(`${path}: stale package policy; remove the missing or ineligible directory`)
       continue
     }
@@ -244,9 +244,9 @@ export function verifyProductUse(
     }
   }
   for (const pkg of packages.values()) {
-    if (!pkg.directory.startsWith('packages/') || pkg.directory.startsWith('packages/experimental/')) continue
+    if (!pkg.directory.startsWith('packages/')) continue
     if (!defaults.packages.has(pkg.directory) && !optional.packages.has(pkg.directory) && policy[pkg.directory] === undefined) {
-      failures.push(`${pkg.directory} (${pkg.name}): no product runtime use; mount it, declare its maintained role, or move it to experimental`)
+      failures.push(`${pkg.directory} (${pkg.name}): no product runtime use; mount it or declare its maintained role`)
     }
   }
   return { failures: [...new Set(failures)].sort(), defaultPackages: [...defaults.packages].sort(),

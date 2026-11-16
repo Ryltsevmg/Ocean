@@ -554,7 +554,7 @@ export function createRunCodeTransport(
         const binding = (schema: ToolSchema): PtcBindingFunction => async (rawArgs: unknown): Promise<JsonValue> => {
           const { name } = schema
           // FIXME: Let image-producing tools declare their program result adaptation.
-          const usesProgramImage = runtime.language === 'typescript' && (name === 'read_image' || name === 'cua')
+          const usesProgramImage = runtime.language === 'typescript' && name === 'read_image'
           if (runOver()) {
             throw new Error(`${toolName} run is over (${String(runController.signal.reason)}); ${name} not dispatched`)
           }
@@ -706,7 +706,7 @@ export function createRunCodeTransport(
               throw new Error('Image output was removed by a tool output policy.\n'
                 + outcome.content.filter(block => block.type === 'text').map(block => block.text).join('\n'))
             }
-            if (name === 'read_image' || images.length > 1) throw new Error('Image-producing tools must return exactly one image')
+            throw new Error('Image-producing tools must return exactly one image')
           }
           return outcome.value
         }

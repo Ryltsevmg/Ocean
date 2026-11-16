@@ -164,7 +164,6 @@
     "@ocean/ocean-persona": "workspace:*",
     "@ocean/ocean-plan-mode": "workspace:*",
     "@ocean/ocean-plugin-manager": "workspace:*",
-    "@ocean/ocean-plugin-market": "workspace:*",
     "@ocean/ocean-schedule": "workspace:*",
     "@ocean/ocean-session-log-export": "workspace:*",
     "@ocean/ocean-session-reference": "workspace:*",

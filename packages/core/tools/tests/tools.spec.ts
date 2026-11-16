@@ -831,7 +831,7 @@ describe('ToolRuntime', () => {
         return {
           kind: 'deny',
           reason: 'denied by policy',
-          info: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: ' raw\nreason ' },
+          info: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: ' raw\nreason ' },
         }
       }
       return next()
@@ -847,7 +847,7 @@ describe('ToolRuntime', () => {
     expect(result.content[0]).toMatchObject({ text: 'Error: denied by policy' })
     expect(result.error).toEqual({
       message: 'denied by policy',
-      info: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: ' raw\nreason ' },
+      info: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: ' raw\nreason ' },
     })
     expect(postSawFrozen).toBe(true)
   })

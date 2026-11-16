@@ -276,7 +276,7 @@ Identify the layer responsible for group separation, then account for the assemb
 
 Shared containers should provide stable heading, description, body, and action arrangements that consumers reuse. Do not spread negative margins through consumers to cancel container defaults. Express a concrete role or variant when a different distance is needed, then recheck other shared-container combinations; a tighter local arrangement does not imply compressing every dialog.
 
-The comparison below shows an actual voice setup dialog. On the left, body and native paragraph margins accumulate and detach guidance from the heading; on the right, the shared description region keeps heading and guidance together while separating actions. This illustrates judging composed relationships, not adopting this dialog's distances everywhere.
+The comparison below shows an actual setup dialog. On the left, body and native paragraph margins accumulate and detach guidance from the heading; on the right, the shared description region keeps heading and guidance together while separating actions. This illustrates judging composed relationships, not adopting this dialog's distances everywhere.
 
 ![Actual dialog comparison: remove accumulated margins and distinguish introductory content from actions](assets/ui-design-review/modal-grouping-comparison.png)
 

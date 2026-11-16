@@ -11,7 +11,6 @@ import { searchCardModel } from '../models/search-card-model.ts'
 import { terminalCardModel, terminalFailed } from '../models/terminal-card-model.ts'
 import { webCardModel } from '../models/web-card-model.ts'
 import { toolRowModel, type ToolRowVariant } from '../models/tool-call-model.ts'
-import { localizeAutoReviewDenial } from '../models/auto-review-denial.ts'
 import { ToolRow } from '../components/ToolRow.tsx'
 
 /** Variant leading icons (figma table); all glyphs render at 14 inside the 16px leading box. */
@@ -44,9 +43,6 @@ export function GenericToolCard({
       || ![width, height, bytes].every(value => typeof value === 'number' && Number.isInteger(value) && value > 0)) return undefined
     return `${name ?? attachmentId} (${t('row.imageSize', { width, height, bytes })})`
   })
-  const autoReview = model.autoReviewDenial === null
-    ? null
-    : localizeAutoReviewDenial(model.autoReviewDenial, t)
   const terminal = terminalCardModel(block, cwd)
   const read = readCardModel(block, cwd, home)
   const diff = diffCardModel(block)
@@ -71,9 +67,9 @@ export function GenericToolCard({
       // Single-file tools never expose an args body — the path link is the only
       // args interaction. A card is not an args body: a read/write/edit row is
       // single-file AND carries a card, so the card expands under the path link.
-      bodyRaw={singleFile || autoReview !== null ? null : model.bodyRaw}
-      output={autoReview?.output ?? model.output}
-      errorSummary={autoReview?.summary ?? model.errorSummary}
+      bodyRaw={singleFile ? null : model.bodyRaw}
+      output={model.output}
+      errorSummary={model.errorSummary}
       terminal={terminal}
       diff={diff}
       read={read}

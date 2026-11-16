@@ -320,7 +320,7 @@ export interface LaunchOptions {
    */
   extraOverlayPath?: string | readonly string[]
   /**
-   * Additional package manifests whose dependency closures supply experimental
+   * Additional package manifests whose dependency closures supply the
    * profile layers named by {@link extraOverlayPath}.
    */
   extraInstallAnchors?: string[]

@@ -143,7 +143,8 @@ describe('PTC trajectory inspector', () => {
     }
   })
 
-  it.each(['run_code', 'cua_run_code'])('shows the %s description, numbered source, original arguments, and verbatim output', (toolName) => {
+  it('shows the run_code description, numbered source, original arguments, and verbatim output', () => {
+    const toolName = 'run_code'
     const view = render(<Harness cell={{ ...CELL, toolName, text: `${toolName} · ${ARGS}` }} />)
     const ui = within(view.container)
     fireEvent.click(ui.getByRole('row', { name: new RegExp(`${toolName} Read the working directory`) }))

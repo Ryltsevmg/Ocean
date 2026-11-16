@@ -20,16 +20,6 @@ The [boot package group](../../packages/boot/README.md) owns launcher-provided p
 
 `ChangeResult.changed` reports a disk edit independently of `application`: `applied`, `restart-required`, `overridden` or `failed`. Optional `error` carries a localizable code and external diagnostic. `packageResult` records the run's exit status, bounded output, truncation flag and complete diagnostic log path, plus `timedOut` when the manager terminated a run that stopped printing or the GitHub connection check hit its deadline; a terminated run records the coerced status 1 because its process returned none. A terminated run is classified `timeout` whatever exit status the signal left behind, so installation and removal report failure instead of success and no further registry is asked. `pendingBuilds` lists undecided packages across the profile; `approvedBuilds` records the names granted permission by this operation; `registries` lists the registries an installation asked, in order; `bundle` and `version` name the package a finished installation added and its manifest version; `failedAt` says whether the last failed run could not reach the registry it asked or the host a git or tarball spec is fetched from.
 
-## Market records
-
-[Plugin Market](../../packages/boot/plugin-market/README.md) reads index format 1, validated by [`dsh-plugin-market-index`](../../packages/util/plugin-market-index/README.md).
-
-`MarketIndexSummary` carries one configured index URL with the `title` and `description` of its last successful read and, when the last read failed, its `error`.
-
-`MarketQuery` selects one page of an index: fuzzy `text`, a `category`, `labels` that must all be present, a `MarketSort`, `offset`, `limit` up to 100, `refresh` to fetch again instead of using a cached document, and `fetchedAt` to continue the pages of one document. `MarketSearchResult` carries the index URL, `title`, optional `description`, market `metadata`, the document's `fetchedAt`, the page's `entries`, the `total` number of matches, and the `nextOffset`. Each `MarketListingEntry` adds `defaultVersion`, the version installed by default, and `installation`, the profile's status for the package name; each of its `versions` adds `install`, the exact spec and optional first registry for `installBundle`, `compatibility`, the evaluation of its `engines.dsh` including a version exemption, and `update`, whether the version can replace an installed Git copy through `updateBundle`: it is newer and pins a commit of the repository directory that copy came from.
-
-`PluginDetail` is a market entry's long description: `{ status: 'found' }` with its `origin` (`locale`, `readme`, or `repository`), its `markdown`, and a `document` id whose images `GET /api/plugin-market/detail-file` serves, or `{ status: 'none' }`. The [plugin market documents the order](../../packages/boot/plugin-market/README.md#plugin-detail-documents) its sources are read in.
-
 ## Profile reconciliation
 
 <a id="profile-reconciliation"></a>
@@ -68,53 +58,6 @@ interface PendingModule {
 ## Cordis API
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
-
-<a id="ctxactioncards--actioncards"></a>
-
-### `ctx.actionCards` — `ActionCards`
-
-Card tool, kind registry, Session projection, user actions and status notices.
-
-```ts cordis-catalog
-/**
- * Register one action kind for the caller's lifetime.
- * @param kind - the kind's skill, details schema, verbs and handler.
- * @returns disposer removing the kind; actions on its cards are then unavailable.
- * @throws when another kind already registered the same action.
- */
-register<Details>(kind: ActionCardKind<Details>): () => void
-
-/**
- * Record a card decision in the Session log; the next model request reports it.
- * @param agent - agent whose Session owns the card.
- * @param decision - the card's new state.
- * @throws when no kind ever registered the decision's action with this service, or its phase is one the projection derives.
- */
-record(agent: Agent, decision: ActionCardDecision): void
-
-/**
- * Read the cards of one Session.
- * @param session - a Session whose projections are prepared.
- * @returns proposals and decisions by call id.
- */
-view(session: Session): ActionCardView
-
-/**
- * Apply a user action to a logged card. Shared checks run first, then the kind reconciles the card; `dismiss` is
- * recorded here and every other verb goes to the card's kind. `dismiss` also works on an unstarted card whose kind
- * is no longer registered. Concurrent actions on one card share one operation.
- * @param agent - live root resolved from the displayed Session.
- * @param callId - the card's `propose_action` call id.
- * @param verb - `dismiss` or one of the kind's verbs.
- * @param payload - kind-defined fields such as a chosen location.
- * @returns acceptance of background work, the decision in effect, or a refusal.
- */
-@Remote act(agent: Agent, callId: ToolCallId, verb: string, payload?: Record<string, JsonValue>): Promise<ActionCardResult>
-```
-
-Types: [Agent](core.md) · [Session](session.md) · [ToolCallId](core.md)
-
-Source: [`packages/experimental/action-cards/src/index.ts`](../../packages/experimental/action-cards/src/index.ts)
 
 <a id="ctxconfigeditor--configeditor"></a>
 
@@ -340,95 +283,6 @@ Manage profile files and apply their declared reload lifecycle.
 
 Source: [`packages/boot/plugin-manager/src/index.ts`](../../packages/boot/plugin-manager/src/index.ts)
 
-<a id="ctxpluginmarket--pluginmarket"></a>
-
-### `ctx.pluginMarket` — `PluginMarket`
-
-Fetches, validates, and caches configured market indexes; annotates entries with the profile's installation facts.
-
-```ts cordis-catalog
-/**
- * List the configured index sources without fetching them.
- * @returns every source in order, with the title of its last successful read and, when the last read failed, its error.
- */
-@Remote listIndexes(): MarketIndexSummary[]
-
-/**
- * Replace the configured index sources through Settings, without remounting this service.
- * `plugin-market/changed` announces the committed list. A URL already configured is kept as written, so a client can
- * add or remove sources beside one that `listIndexes` reports as unusable.
- * @param urls - index URLs in display order.
- * @throws {RemoteError} `plugin-market/invalid-index-url` for an invalid new URL or a repeated URL;
- * `plugin-market/settings-unavailable` without Settings or a profile entry.
- */
-@Remote async setIndexes(urls: string[]): Promise<void>
-
-/**
- * Return one page of the plugins of a configured index that match a query. Concurrent reads of a URL share one
- * fetch; a successful document is reused for `cacheTtlMs` unless `refresh` is set. Matching and ordering read only
- * the document; installation status and compatibility are computed for the returned page on every call.
- * @param url - a configured index URL.
- * @param query - text, filters, order, page, and whether to bypass the cached document.
- * @returns the index header, the page's plugins with each plugin's default version and installation status and each
- *   version's compatibility and install arguments, the number of matches, and the next page's offset.
- * @throws {RemoteError} `plugin-market/invalid-query`, `plugin-market/unknown-index`, `plugin-market/invalid-index-url`,
- *   `plugin-market/fetch-failed`, or `plugin-market/invalid-index`.
- */
-@Remote async search(url: string, query: MarketQuery): Promise<MarketSearchResult>
-
-/**
- * Read one plugin of a configured index, using the cached document as `search` does.
- * @param url - a configured index URL.
- * @param name - the plugin's package name.
- * @returns the plugin with its default version, installation status, and annotated versions; undefined when the
- *   index does not list it.
- * @throws {RemoteError} `plugin-market/unknown-index`, `plugin-market/invalid-index-url`, `plugin-market/fetch-failed`,
- *   or `plugin-market/invalid-index`.
- */
-async entry(url: string, name: string): Promise<MarketListingEntry | undefined>
-
-/**
- * Read the long description of one listed version of a plugin market entry, from the version's source: the npm file
- * CDNs for a public npm version, or its pinned Git commit. The Markdown file the package's locale `meta.detail` names
- * in `language` comes first, then the package's README, then the README of the entry's `repository`, or for an npm
- * version without one, of its `package.json` `repository`, at the default branch. An npm version from another
- * registry has no readable package files, so only the entry's `repository` is read.
- * @param url - a configured index URL.
- * @param name - the plugin's package name.
- * @param version - one listed version.
- * @param language - the display language, such as `zh-CN`; documents fall back through its prefixes to English.
- * @param options - `refresh` reads again instead of reusing a result cached for `cacheTtlMs`; `npmFileSources` names
- *   npm file CDNs to ask first for an npm version, in order; configured CDNs it omits follow, and CDNs that are not
- *   configured are not asked.
- * @returns the document with its origin and image document id, or `none`.
- * @throws {RemoteError} the failures of `search`, `plugin-market/unknown-plugin` for an unlisted plugin or version,
- *   `plugin-market/invalid-query`, or `plugin-market/detail-unavailable`.
- */
-@Remote async readEntryDetail( url: string, name: string, version: string, language: string, options?: { refresh?: boolean; npmFileSources?: NpmFileSource[] }, ): Promise<PluginDetail>
-```
-
-Source: [`packages/boot/plugin-market/src/index.ts`](../../packages/boot/plugin-market/src/index.ts)
-
-<a id="ctxpluginrecommendations--pluginrecommendations"></a>
-
-### `ctx.pluginRecommendations` — `PluginRecommendations`
-
-Catalog lookups for card text and the enabling behind the `enable_official_plugin` card.
-
-```ts cordis-catalog
-/**
- * Read the current catalog text for a logged card.
- * @param agent - Exact live root resolved by the Gateway from the Session id.
- * @param callId - The card's `propose_action` call id, never a package supplied by the browser.
- * @returns the plugin's title, description and selection, or a refusal when the card names no available official plugin.
- */
-@Remote async describe(agent: Agent, callId: ToolCallId): Promise<RecommendationDetails>
-```
-
-Types: [Agent](core.md) · [ToolCallId](core.md)
-
-Source: [`packages/experimental/plugin-recommendations/src/index.ts`](../../packages/experimental/plugin-recommendations/src/index.ts)
-
 <a id="ctxpluginregistryprobe--pluginregistryprobe"></a>
 
 ### `ctx.pluginRegistryProbe` — `PluginRegistryProbe`
@@ -604,24 +458,4 @@ An update moved to its next step: checking the target, removing the installed ve
 ```
 
 Source: [`packages/boot/plugin-manager/src/types.ts`](../../packages/boot/plugin-manager/src/types.ts)
-
-<a id="plugin-market-events"></a>
-
-### `plugin-market/*` events
-
-<a id="plugin-marketchanged--emit"></a>
-
-#### `plugin-market/changed` — emit
-
-The configured index sources changed.
-
-```ts cordis-catalog
-/**
- * The configured index sources changed.
- * @mode emit
- */
-'plugin-market/changed'(): void
-```
-
-Source: [`packages/boot/plugin-market/src/types.ts`](../../packages/boot/plugin-market/src/types.ts)
 <!-- END GENERATED cordis-surface -->

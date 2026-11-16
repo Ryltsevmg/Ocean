@@ -206,25 +206,25 @@ describe('product package use', () => {
 
   it.each(['shipped', 'on-demand'])('keeps %s optional selection and its runtime closure separate from default use', (delivery) => {
     const root = fixture()
-    const bundle = '@ocean/ocean-experimental-feature'
-    pkg(root, 'packages/experimental/feature', bundle, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
+    const bundle = '@ocean/ocean-feature'
+    pkg(root, 'packages/subagent/feature', bundle, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
     pkg(root, candidateDir, candidate)
     pkg(root, 'packages/core/indirect', '@ocean/ocean-indirect')
     write(root, `${candidateDir}/src/index.ts`, "import '@ocean/ocean-indirect'")
-    write(root, 'packages/experimental/feature/cordis.patch.yml', [{ insert: [{ name: candidate }] }])
+    write(root, 'packages/subagent/feature/cordis.patch.yml', [{ insert: [{ name: candidate }] }])
     profiles(root, delivery === 'shipped' ? [bundle] : [], delivery === 'on-demand' ? [bundle] : [])
     const result = verifyProductUse(root, declarations())
     expect(result.failures).toEqual([])
-    expect(result.optionalPackages).toEqual([candidateDir, 'packages/core/indirect', 'packages/experimental/feature'])
+    expect(result.optionalPackages).toEqual([candidateDir, 'packages/core/indirect', 'packages/subagent/feature'])
     expect(result.defaultPackages).not.toContain(candidateDir)
   })
 
   it.each(['shipped', 'on-demand'])('does not count a %s optional patch whose target is absent', (delivery) => {
     const root = fixture()
-    const bundle = '@ocean/ocean-experimental-feature'
-    pkg(root, 'packages/experimental/feature', bundle, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
+    const bundle = '@ocean/ocean-feature'
+    pkg(root, 'packages/subagent/feature', bundle, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
     pkg(root, candidateDir, candidate)
-    write(root, 'packages/experimental/feature/cordis.patch.yml', [{ id: 'absent', insert: [{ name: candidate }] }])
+    write(root, 'packages/subagent/feature/cordis.patch.yml', [{ id: 'absent', insert: [{ name: candidate }] }])
     profiles(root, delivery === 'shipped' ? [bundle] : [], delivery === 'on-demand' ? [bundle] : [])
     expect(failures(root)).toContain('no product runtime use')
   })
@@ -241,7 +241,7 @@ describe('product package use', () => {
     expect(result.defaultPackages).toContain(candidateDir)
     expect(result.defaultPackages).not.toContain('packages/core/host-only')
     expect(result.failures).toEqual([
-      'packages/core/host-only (@ocean/ocean-host-only): no product runtime use; mount it, declare its maintained role, or move it to experimental',
+      'packages/core/host-only (@ocean/ocean-host-only): no product runtime use; mount it or declare its maintained role',
     ])
   })
 

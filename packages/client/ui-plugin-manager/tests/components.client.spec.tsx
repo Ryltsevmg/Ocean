@@ -230,60 +230,60 @@ function renderTab(
 describe('PluginManagerPage', () => {
   it('shows no tabs without contributions, and switches between Installed and a contributed tab', () => {
     const { actions, navigation, setTabs } = renderTab({ packages: [pkg()] }, {}, {
-      'plugins.tab:discover': (_view, owner) => {
+      'plugins.tab:extras': (_view, owner) => {
         const tab = owner as PluginTabProps
         return (
           <>
-            <button type="button" onClick={() => { tab.install({ spec: 'dsh-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' }) }}>Discover install</button>
-            <button type="button" onClick={() => { tab.update({ packageName: 'dsh-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' }) }}>Discover update</button>
-            <button type="button" onClick={() => { tab.openPackage('dsh-better-sidebar') }}>Discover open</button>
+            <button type="button" onClick={() => { tab.install({ spec: 'dsh-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' }) }}>Extras install</button>
+            <button type="button" onClick={() => { tab.update({ packageName: 'dsh-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' }) }}>Extras update</button>
+            <button type="button" onClick={() => { tab.openPackage('dsh-better-sidebar') }}>Extras open</button>
           </>
         )
       },
     })
     expect(screen.queryByRole('tablist')).toBeNull()
-    setTabs([{ id: 'discover', label: 'Discover' }])
+    setTabs([{ id: 'extras', label: 'Extras' }])
     expect(screen.getByRole('tab', { name: en.installedTab }).getAttribute('aria-selected')).toBe('true')
     // The tabs stay in the pinned page head with the title; the tab panel scrolls in the page body.
     expect(screen.getByRole('tablist').closest('header')?.closest('[data-plugin-bar]')).not.toBeNull()
     expect(document.querySelector('[data-plugin-group="bundles"]')).not.toBeNull()
-    fireEvent.click(screen.getByRole('tab', { name: 'Discover' }))
-    expect(navigation.getSnapshot().tab).toBe('discover')
-    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(screen.getByRole('tab', { name: 'Discover' }).id)
+    fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
+    expect(navigation.getSnapshot().tab).toBe('extras')
+    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(screen.getByRole('tab', { name: 'Extras' }).id)
     expect(screen.getByRole('tabpanel').closest('[data-plugin-body]')).not.toBeNull()
     expect(document.querySelector('[data-plugin-group="bundles"]')).toBeNull()
     expect(screen.queryByRole('button', { name: en.refresh })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Discover install' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Extras install' }))
     expect(actions.installFrom).toHaveBeenCalledWith({ spec: 'dsh-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' })
-    fireEvent.click(screen.getByRole('button', { name: 'Discover update' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Extras update' }))
     expect(actions.openGitUpdate).toHaveBeenCalledWith({ packageName: 'dsh-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' })
-    fireEvent.click(screen.getByRole('button', { name: 'Discover open' }))
-    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'package', name: 'dsh-better-sidebar', returnTab: 'discover' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Extras open' }))
+    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'package', name: 'dsh-better-sidebar', returnTab: 'extras' } })
     expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).not.toBeNull()
     // A detail page hides the tabs; its back button returns to the tab that opened it.
     expect(screen.queryByRole('tablist')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
-    expect(navigation.getSnapshot()).toEqual({ tab: 'discover', view: { kind: 'list' } })
-    expect(screen.getByRole('tab', { name: 'Discover' }).getAttribute('aria-selected')).toBe('true')
+    expect(navigation.getSnapshot()).toEqual({ tab: 'extras', view: { kind: 'list' } })
+    expect(screen.getByRole('tab', { name: 'Extras' }).getAttribute('aria-selected')).toBe('true')
     // A contributed tab that leaves the ledger falls back to Installed.
-    act(() => { navigation.actions.setView({ kind: 'list' }); navigation.actions.setTab('discover') })
+    act(() => { navigation.actions.setView({ kind: 'list' }); navigation.actions.setTab('extras') })
     setTabs([])
     expect(document.querySelector('[data-plugin-group="bundles"]')).not.toBeNull()
     expect(navigation.getSnapshot().tab).toBe('installed')
     // A contributed tab that returns can be selected again.
-    setTabs([{ id: 'discover', label: 'Discover' }])
-    fireEvent.click(screen.getByRole('tab', { name: 'Discover' }))
-    expect(screen.getByRole('tabpanel', { name: 'Discover' })).toBeTruthy()
+    setTabs([{ id: 'extras', label: 'Extras' }])
+    fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
+    expect(screen.getByRole('tabpanel', { name: 'Extras' })).toBeTruthy()
   })
 
   it('marks the bundle an install enabled without leaving a contributed tab', () => {
-    const { navigation, set } = renderTab({ packages: [pkg()] }, {}, {}, {}, [{ id: 'discover', label: 'Discover' }])
-    fireEvent.click(screen.getByRole('tab', { name: 'Discover' }))
-    expect(screen.getByRole('tabpanel', { name: 'Discover' })).toBeTruthy()
+    const { navigation, set } = renderTab({ packages: [pkg()] }, {}, {}, {}, [{ id: 'extras', label: 'Extras' }])
+    fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
+    expect(screen.getByRole('tabpanel', { name: 'Extras' })).toBeTruthy()
     // Enable now publishes the new bundle's mark; the mark scrolls to a visible card and selects no page.
     set({ highlight: 'dsh-better-sidebar' })
-    expect(navigation.getSnapshot().tab).toBe('discover')
-    expect(screen.getByRole('tabpanel', { name: 'Discover' })).toBeTruthy()
+    expect(navigation.getSnapshot().tab).toBe('extras')
+    expect(screen.getByRole('tabpanel', { name: 'Extras' })).toBeTruthy()
   })
 
   it('keeps the header controls in the scrolling page without remounting them', () => {
@@ -293,7 +293,7 @@ describe('PluginManagerPage', () => {
     const refresh = screen.getByRole('button', { name: en.refresh })
     expect(bar?.parentElement).toBe(body)
     expect(props.createHeaderRef).toHaveBeenCalledTimes(1)
-    setTabs([{ id: 'discover', label: 'Discover' }])
+    setTabs([{ id: 'extras', label: 'Extras' }])
     expect(screen.getByRole('tablist').closest('header')?.closest('[data-plugin-bar]')).toBe(bar)
     act(() => { body.scrollTop = 160; fireEvent.scroll(body) })
     expect(screen.getByRole('button', { name: en.refresh })).toBe(refresh)
@@ -302,52 +302,52 @@ describe('PluginManagerPage', () => {
     expect(document.querySelector('[data-plugin-bar]')).toBeNull()
   })
 
-  it('keeps the Installed tab panel through loading and the More list out of the tabs, and returns a More plugin opened from Discover to Discover', () => {
-    const inspector = '@ocean/ocean-experimental-inspector-profile'
+  it('keeps the Installed tab panel through loading and the More list out of the tabs, and returns a More plugin opened from a contributed tab to that tab', () => {
+    const officialName = '@acme/new-official'
     const { navigation, set } = renderTab({ status: 'loading', packages: [] }, {}, {
-      'plugins.tab:discover': (_view, owner) => (
-        <button type="button" onClick={() => { (owner as PluginTabProps).openPackage(inspector) }}>Discover open</button>
+      'plugins.tab:extras': (_view, owner) => (
+        <button type="button" onClick={() => { (owner as PluginTabProps).openPackage(officialName) }}>Extras open</button>
       ),
-    }, {}, [{ id: 'discover', label: 'Discover' }])
+    }, {}, [{ id: 'extras', label: 'Extras' }])
     const installed = screen.getByRole('tab', { name: en.installedTab })
     expect(document.getElementById(installed.getAttribute('aria-controls') as string)?.getAttribute('role')).toBe('tabpanel')
     set({ status: 'ready', packages: [] })
     expect(screen.getByRole('tabpanel', { name: en.installedTab }).textContent).toBe(en.empty)
-    set({ packages: [pkg({ name: inspector, official: true, optional: true, installed: false, enabled: false })] })
+    set({ packages: [pkg({ name: officialName, official: true, optional: true, installed: false, enabled: false })] })
     act(() => { navigation.actions.setView({ kind: 'more' }) })
     expect(screen.queryByRole('tablist')).toBeNull()
     expect(screen.queryByRole('tabpanel')).toBeNull()
     act(() => { navigation.actions.setView({ kind: 'list' }) })
-    fireEvent.click(screen.getByRole('tab', { name: 'Discover' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Discover open' }))
-    expect(document.querySelector(`[data-plugin-detail="${inspector}"]`)).not.toBeNull()
-    // An official plugin of the More list opened from Discover returns to Discover, not to the More list.
+    fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Extras open' }))
+    expect(document.querySelector(`[data-plugin-detail="${officialName}"]`)).not.toBeNull()
+    // An official plugin of the More list opened from a contributed tab returns to that tab, not to the More list.
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
-    expect(navigation.getSnapshot()).toEqual({ tab: 'discover', view: { kind: 'list' } })
+    expect(navigation.getSnapshot()).toEqual({ tab: 'extras', view: { kind: 'list' } })
     fireEvent.click(screen.getByRole('tab', { name: en.installedTab }))
     act(() => { navigation.actions.setView({ kind: 'more' }) })
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', inspector) }))
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', officialName) }))
     fireEvent.click(screen.getByRole('button', { name: en.backToPackage.replace('{name}', en.moreTitle) }))
     expect(screen.getByRole('heading', { name: en.moreTitle, level: 1 })).toBeTruthy()
   })
 
   it('keeps the opening tab through a row page opened from a bundle page', () => {
     const { navigation, setTabs } = renderTab({ packages: [pkg({ rows: [row()] })] }, { rows: new Set(['dsh-better-sidebar#sidebar']) }, {
-      'plugins.tab:discover': (_view, owner) => (
-        <button type="button" onClick={() => { (owner as PluginTabProps).openPackage('dsh-better-sidebar') }}>Discover open</button>
+      'plugins.tab:extras': (_view, owner) => (
+        <button type="button" onClick={() => { (owner as PluginTabProps).openPackage('dsh-better-sidebar') }}>Extras open</button>
       ),
       'plugins.row.config:dsh-better-sidebar#sidebar': view => view === 'summary' ? 'Config summary' : <form aria-label="row settings" />,
-    }, {}, [{ id: 'discover', label: 'Discover' }])
-    fireEvent.click(screen.getByRole('tab', { name: 'Discover' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Discover open' }))
+    }, {}, [{ id: 'extras', label: 'Extras' }])
+    fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Extras open' }))
     fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'dsh-better-sidebar') }))
-    expect(navigation.getSnapshot().view).toEqual({ kind: 'row', name: 'dsh-better-sidebar', rowId: 'sidebar', returnTab: 'discover' })
+    expect(navigation.getSnapshot().view).toEqual({ kind: 'row', name: 'dsh-better-sidebar', rowId: 'sidebar', returnTab: 'extras' })
     fireEvent.click(screen.getByRole('button', { name: en.backToPackage.replace('{name}', 'dsh-better-sidebar') }))
-    expect(navigation.getSnapshot().view).toEqual({ kind: 'package', name: 'dsh-better-sidebar', returnTab: 'discover' })
+    expect(navigation.getSnapshot().view).toEqual({ kind: 'package', name: 'dsh-better-sidebar', returnTab: 'extras' })
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
-    expect(navigation.getSnapshot()).toEqual({ tab: 'discover', view: { kind: 'list' } })
+    expect(navigation.getSnapshot()).toEqual({ tab: 'extras', view: { kind: 'list' } })
     // A calling tab that left the ledger while the page was open falls back to Installed.
-    fireEvent.click(screen.getByRole('button', { name: 'Discover open' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Extras open' }))
     setTabs([])
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
     expect(navigation.getSnapshot().tab).toBe('installed')
@@ -738,21 +738,20 @@ describe('PluginManagerPage', () => {
         pkg({ name: '@acme/dsh-tool', enabled: false }),
         // Selected by the profile but not a bundle: its layer is skipped, so it reads as not running.
         pkg({ name: 'dsh-selected', installed: false, error: { code: 'not-bundle' } }),
-        pkg({ name: '@ocean/ocean-experimental-voice-input-bundle', installed: false, optional: true, removable: false, enabled: false }),
+        pkg({ name: '@acme/new-official', installed: false, optional: true, removable: false, enabled: false }),
       ],
       busy: ['dsh-protected'],
     })
     const cards = screen.getAllByRole('listitem')
     // Offered extensions precede installed bundles.
     expect(cards.map(card => card.getAttribute('data-plugin-package'))).toEqual([
-      '@ocean/ocean-experimental-voice-input-bundle', 'dsh-better-sidebar', 'dsh-broken', 'dsh-protected', '@acme/dsh-tool', 'dsh-selected',
+      '@acme/new-official', 'dsh-better-sidebar', 'dsh-broken', 'dsh-protected', '@acme/dsh-tool', 'dsh-selected',
     ])
     expect(cards.map(card => card.getAttribute('data-plugin-status'))).toEqual(['disabled', 'running', 'problem', 'running', 'disabled', 'not-running'])
-    // Group titles have no counts; the official bundle retains its experimental marker.
+    // Group titles have no counts.
     expect(screen.getByRole('heading', { name: en.bundlesTitle })).toBeTruthy()
     expect(screen.getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
     expect(document.querySelector('[data-plugin-count]')).toBeNull()
-    expect(screen.getAllByText(en.statusBeta)).toHaveLength(1)
     expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', '@acme/dsh-tool') })).toHaveProperty('disabled', false)
     expect(screen.getByText('A sidebar.')).toBeTruthy()
     expect(screen.getAllByText(en.statusProblem)).toHaveLength(1)
@@ -766,7 +765,7 @@ describe('PluginManagerPage', () => {
     expect(locked.getAttribute('title')).toBe(en.reasonManagementRequired)
   })
 
-  it('omits profile and persistent-terminal bundles while retaining other optional and third-party bundles', () => {
+  it('omits profile bundles while retaining other optional and third-party bundles', () => {
     renderTab({
       packages: [
         ...[
@@ -776,24 +775,23 @@ describe('PluginManagerPage', () => {
           '@ocean/ocean-sdk-app',
           '@ocean/ocean-acp-app',
           '@ocean/ocean-sdk-minimal',
-          '@ocean/ocean-experimental-terminal-bundle',
         ].map(name => pkg({ name })),
         pkg({ name: '@acme/dsh-base', readOnlyReason: 'management-required' }),
         pkg({ name: 'dsh-better-sidebar' }),
-        pkg({ name: '@ocean/ocean-experimental-voice-input-bundle', installed: false, optional: true, removable: false }),
+        pkg({ name: '@acme/new-official', installed: false, optional: true, removable: false }),
       ],
     })
     expect(screen.getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package'))).toEqual([
-      '@ocean/ocean-experimental-voice-input-bundle', '@acme/dsh-base', 'dsh-better-sidebar',
+      '@acme/new-official', '@acme/dsh-base', 'dsh-better-sidebar',
     ])
     expect(document.querySelector('[data-plugin-count]')).toBeNull()
   })
 
-  it.each([false, true])('hides persistent terminals from both lists and direct navigation without changing enabled=%s', (enabled) => {
-    const name = '@ocean/ocean-experimental-terminal-bundle'
+  it.each([false, true])('hides profile bundles from both lists and direct navigation without changing enabled=%s', (enabled) => {
+    const name = '@ocean/ocean-headless'
     const b = renderTab({ packages: [
       pkg({ name, official: true, enabled, rows: [row()] }),
-      pkg({ name: '@ocean/ocean-experimental-voice-input-bundle', official: true }),
+      pkg({ name: '@acme/new-official', official: true }),
     ] })
     expect(document.querySelector(`[data-plugin-package="${name}"]`)).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
@@ -810,8 +808,8 @@ describe('PluginManagerPage', () => {
   })
 
   it('keeps a shipped bundle out of both lists until one of its declared rows runs', () => {
-    const hidden = '@ocean/ocean-experimental-liveshare'
-    const shown = '@ocean/ocean-experimental-voice-input-bundle'
+    const hidden = '@acme/dsh-lab-pack'
+    const shown = '@acme/new-official'
     const offer = (rows: readonly PackageRow[]): PackageView => pkg({
       name: hidden, official: true, installed: false, optional: true, removable: false, enabled: false, listedByDefault: false, rows,
     })
@@ -826,11 +824,11 @@ describe('PluginManagerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
 
     // A row inserted through cordis.patch.yml runs while the profile selects no such bundle: the card
-    // is listed as experimental exactly like a bundle the profile selected.
+    // is listed exactly like a bundle the profile selected.
     b.set({
       packages: [
-        offer([row({ rowId: 'liveshare-viewer-declarations', moduleName: `${hidden}/viewer-declarations` })]),
         other,
+        offer([row({ rowId: 'lab-viewer-declarations', moduleName: `${hidden}/viewer-declarations` })]),
       ],
     })
     const extensions = document.querySelector('[data-plugin-group="extensions"]') as HTMLElement
@@ -840,18 +838,18 @@ describe('PluginManagerPage', () => {
     // Disabling that row takes the card away again, as removing it would.
     b.set({
       packages: [
+        other,
         offer([row({
-          rowId: 'liveshare-viewer-declarations', moduleName: `${hidden}/viewer-declarations`,
+          rowId: 'lab-viewer-declarations', moduleName: `${hidden}/viewer-declarations`,
           enabled: false, phase: null,
         })]),
-        other,
       ],
     })
     expect(document.querySelector(`[data-plugin-package="${hidden}"]`)).toBeNull()
   })
 
   it('does not open a default-hidden bundle by id while its card is hidden', () => {
-    const hidden = '@ocean/ocean-experimental-liveshare'
+    const hidden = '@acme/dsh-lab-pack'
     const b = renderTab({
       packages: [pkg({
         name: hidden, official: true, installed: false, optional: true, removable: false, enabled: false,
@@ -865,7 +863,7 @@ describe('PluginManagerPage', () => {
 
   it.each([false, true])('shows an empty list for hidden bundles with errors and installed=%s', (installed) => {
     renderTab({
-      packages: ['@ocean/ocean-base', '@ocean/ocean-web-app', '@ocean/ocean-experimental-terminal-bundle'].map(name => pkg({
+      packages: ['@ocean/ocean-base', '@ocean/ocean-web-app', '@ocean/ocean-headless'].map(name => pkg({
         name, installed, error: { code: 'operation-error', diagnostic: 'Unreadable bundle' },
       })),
     })
@@ -884,25 +882,25 @@ describe('PluginManagerPage', () => {
     expect(actions.uninstall).toHaveBeenCalledExactlyOnceWith('dsh-retired')
   })
 
-  it('opens an official bundle\'s page with its beta tag and no uninstall, and switches it on', () => {
-    const title = 'Voice input'
+  it('opens an official bundle\'s page with no uninstall and switches it on', () => {
+    const title = 'Team tools'
     const { actions } = renderTab({
-      packages: [pkg({ name: '@ocean/ocean-experimental-voice-input-bundle', meta: { title }, installed: false, optional: true, removable: false, enabled: false })],
+      packages: [pkg({ name: '@acme/dsh-team-pack', meta: { title }, installed: false, optional: true, removable: false, enabled: false })],
     })
     fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', title) }))
     const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
-    expect(within(detail).getByText(en.statusBeta)).toBeTruthy()
     expect(within(detail).queryByRole('button', { name: en.uninstallLabel.replace('{name}', title) })).toBeNull()
     fireEvent.click(within(detail).getByRole('switch', { name: en.enableToggle.replace('{name}', title) }))
-    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('@ocean/ocean-experimental-voice-input-bundle', true)
+    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('@acme/dsh-team-pack', true)
   })
 
   it('keeps the persisted selection while marking a failed component as a problem', () => {
-    renderTab({ packages: [pkg({ name: 'cua', enabled: true, rows: [row({ phase: 'failed', diagnostic: 'native preparation unavailable' })] })] })
-    expect(document.querySelector('[data-plugin-package="cua"]')?.getAttribute('data-plugin-status')).toBe('problem')
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'cua') }).getAttribute('aria-checked')).toBe('true')
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'cua') }))
-    expect(screen.getByText(`${en.reasonLabel}: native preparation unavailable`)).toBeTruthy()
+    const diagnostic = 'component failed to start'
+    renderTab({ packages: [pkg({ name: 'dsh-native-helper', enabled: true, rows: [row({ phase: 'failed', diagnostic })] })] })
+    expect(document.querySelector('[data-plugin-package="dsh-native-helper"]')?.getAttribute('data-plugin-status')).toBe('problem')
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-native-helper') }).getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-native-helper') }))
+    expect(screen.getByText(`${en.reasonLabel}: ${diagnostic}`)).toBeTruthy()
   })
 
   it.each([en, zh])('marks a selected bundle the Host skipped as not running with its reason, keeping its switch on', (dict) => {
@@ -950,26 +948,11 @@ describe('PluginManagerPage', () => {
     expect(within(detail).getAllByRole('listitem').filter(item => item.hasAttribute('data-plugin-row'))).toHaveLength(1)
   })
 
-  it('shows Computer Use permission guidance on the experimental plugins page', () => {
-    const description = 'Review application access before use.'
-    const { actions } = renderTab({ packages: [pkg({
-      name: '@ocean/ocean-cua-bundle', enabled: false, optional: true, installed: false,
-      meta: { title: 'Computer Use', description },
-    })] })
-    fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
-    expect(screen.getByText(en.statusBeta)).toBeTruthy()
-    expect(screen.getByText(description)).toBeTruthy()
-    fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'Computer Use') }))
-    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('@ocean/ocean-cua-bundle', true)
-  })
-
   it.each([
-    ['@ocean/ocean-experimental-voice-input-bundle', true],
-    ['@ocean/ocean-experimental-auto-review', true],
-    ['@ocean/ocean-experimental-fixture-input', false],
-    ['@ocean/ocean-cua-bundle', true],
-    ['@acme/dsh-local-tools', false],
-  ] as const)('localizes Host metadata for %s across cards, details, switches, and uninstall confirmation', (name, experimental) => {
+    '@acme/dsh-cloud-tools',
+    '@acme/dsh-fixture-input',
+    '@acme/dsh-local-tools',
+  ])('localizes Host metadata for %s across cards, details, switches, and uninstall confirmation', (name) => {
     const meta = {
       title: { en: 'Installed tools', zh: '已安装工具' },
       description: { en: 'Tools on this host.', zh: '本机工具。' },
@@ -984,7 +967,6 @@ describe('PluginManagerPage', () => {
       expect(document.getElementById(card.getAttribute('aria-describedby')!)?.textContent).toBe(description(dict))
       expect(screen.getByRole('switch', { name: dict.enableToggle.replace('{name}', title(dict)) })).toBeTruthy()
       expect(screen.queryByText('Original metadata.')).toBeNull()
-      expect(screen.queryByText(dict.statusBeta) !== null).toBe(experimental)
     }
     assertCard(en)
     setLanguage(zh)
@@ -997,7 +979,6 @@ describe('PluginManagerPage', () => {
       expect(screen.getByRole('heading', { level: 3 }).textContent).toBe(title(dict))
       expect(screen.getByText(description(dict))).toBeTruthy()
       expect(document.querySelector('[data-plugin-name]')?.textContent).toBe(name)
-      expect(screen.queryByText(dict.statusBeta) !== null).toBe(experimental)
       expect(screen.getByRole('switch', { name: dict.enableToggle.replace('{name}', title(dict)) })).toBeTruthy()
       expect(screen.getByRole('button', { name: dict.uninstallLabel.replace('{name}', title(dict)) })).toBeTruthy()
     }
@@ -1247,16 +1228,15 @@ describe('PluginManagerPage', () => {
     }
 
     it('keeps configuration and installed plugins on the main list and shows eligible official plugins on the secondary page', () => {
-      const team = '@ocean/ocean-experimental-voice-input-bundle'
+      const team = '@acme/dsh-team-pack'
       renderTab(
         { packages: [
-          pkg({ name: '@ocean/ocean-experimental-badge-skill-bundle', official: true, enabled: false }),
-          pkg({ name: '@ocean/ocean-experimental-voice-input-bundle', installed: false, optional: true, removable: false, enabled: false }),
+          pkg({ name: '@acme/dsh-team-pack', official: true, enabled: false }),
           pkg({ name: '@ocean/ocean-subagent-claude-code', official: true, availability: 'missing', installed: false, enabled: false }),
           pkg({ name: '@ocean/ocean-subagent-codex', official: true, enabled: false }),
-          pkg({ name: '@ocean/ocean-experimental-tool-worktree', official: true, enabled: false }),
-          pkg({ name: '@ocean/ocean-experimental-session-search', installed: false, optional: true, enabled: false, listedByDefault: false }),
-          pkg({ name: '@ocean/ocean-experimental-ralph-bundle', installed: false, optional: true, enabled: false, listedByDefault: false }),
+          pkg({ name: '@ocean/ocean-headless', official: true, enabled: false }),
+          pkg({ name: '@acme/dsh-lab-a', installed: false, optional: true, enabled: false, listedByDefault: false }),
+          pkg({ name: '@acme/dsh-lab-b', installed: false, optional: true, enabled: false, listedByDefault: false }),
           pkg({ name: '@acme/new-official', official: true }),
           pkg(),
         ] },
@@ -1272,7 +1252,7 @@ describe('PluginManagerPage', () => {
       expect(within(extensions).getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
       expect(within(extensions).getByRole('button', { name: en.moreAction }).textContent).toBe(en.moreAction)
       expect(within(extensions).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
-        .toEqual(['@ocean/ocean-experimental-voice-input-bundle', '@acme/new-official'])
+        .toEqual(['@acme/dsh-team-pack', '@acme/new-official'])
       expect(document.querySelector('[data-plugin-count]')).toBeNull()
       expect(within(basic).getByText('Limits every command.')).toBeTruthy()
       expect(within(basic).queryByRole('switch', { name: en.enableToggle.replace('{name}', 'Shell') })).toBeNull()
@@ -1286,7 +1266,7 @@ describe('PluginManagerPage', () => {
         .toEqual(['more'])
       const more = document.querySelector('[data-plugin-group="more"]') as HTMLElement
       expect(within(more).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
-        .toEqual([team, '@acme/new-official', '@ocean/ocean-experimental-badge-skill-bundle', '@ocean/ocean-subagent-codex', '@ocean/ocean-subagent-claude-code'])
+        .toEqual([team, '@acme/new-official', '@ocean/ocean-subagent-codex', '@ocean/ocean-subagent-claude-code'])
       expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')).toBeNull()
       fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', team) }))
       fireEvent.click(screen.getByRole('button', { name: en.backToPackage.replace('{name}', en.moreTitle) }))
@@ -1304,27 +1284,13 @@ describe('PluginManagerPage', () => {
       expect(screen.getByRole('heading', { name: en.basicTitle })).toBeTruthy()
     })
 
-    it.each([false, true])('shows one forge card and hides the standalone worktree card when enabled is %s', (enabled) => {
-      const forge = '@ocean/ocean-experimental-forge-bundle'
-      const worktree = '@ocean/ocean-experimental-tool-worktree'
-      renderTab({ packages: [
-        pkg({ name: forge, official: true, enabled }),
-        pkg({ name: worktree, official: true, enabled }),
-      ] })
-      expect(document.querySelectorAll(`[data-plugin-package="${forge}"]`)).toHaveLength(1)
-      expect(document.querySelector(`[data-plugin-package="${worktree}"]`)).toBeNull()
-      fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
-      expect(document.querySelectorAll(`[data-plugin-package="${forge}"]`)).toHaveLength(1)
-      expect(document.querySelector(`[data-plugin-package="${worktree}"]`)).toBeNull()
-    })
-
     it.each([
-      '@ocean/ocean-experimental-session-search',
-      '@ocean/ocean-experimental-ralph-bundle',
+      '@acme/dsh-lab-pack',
+      '@acme/dsh-field-notes',
       '@acme/shipped-exploration',
     ])('omits %s from default lists while retaining explicit profile selections and installations', (name) => {
       const entry = pkg({ name, installed: false, optional: true, removable: false, enabled: false, listedByDefault: false })
-      const other = pkg({ name: '@ocean/ocean-experimental-session-titles-bundle', installed: false, optional: true, enabled: false })
+      const other = pkg({ name: '@ocean/ocean-subagent-codex', installed: false, optional: true, enabled: false })
       const { actions, navigation, set, setLanguage } = renderTab({ packages: [other, entry] })
       const card = () => document.querySelector(`[data-plugin-package="${name}"]`)
       for (const dict of [en, zh]) {
@@ -1349,11 +1315,11 @@ describe('PluginManagerPage', () => {
       expect(card()).not.toBeNull()
     })
 
-    it.each([en, zh])('hides unsupported CUA by default and retains installed or selected entries for management', (dict) => {
-      const name = '@ocean/ocean-cua-bundle'
+    it.each([en, zh])('hides an unsupported bundle by default and retains installed or selected entries for management', (dict) => {
+      const name = '@acme/dsh-native-pack'
       const entry = pkg({ name, installed: false, enabled: false, optional: true, listedByDefault: false,
         error: { code: 'unsupported-platform' } })
-      const other = pkg({ name: '@ocean/ocean-experimental-session-titles-bundle', installed: false, optional: true, enabled: false })
+      const other = pkg({ name: '@ocean/ocean-subagent-codex', installed: false, optional: true, enabled: false })
       const { actions, set, setLanguage } = renderTab({ packages: [other, entry] })
       setLanguage(dict)
       const card = () => document.querySelector(`[data-plugin-package="${name}"]`)
@@ -1376,27 +1342,25 @@ describe('PluginManagerPage', () => {
       expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith(name, false)
     })
 
-    it.each([en, zh])('keeps disabled CUA on the secondary page with experimental labels', (dict) => {
-      const name = '@ocean/ocean-cua-bundle'
-      const entry = (enabled: boolean) => pkg({ name, official: true, enabled, meta: { title: 'Computer Use' } })
+    it.each([en, zh])('keeps a disabled held-back bundle on the secondary page', (dict) => {
+      const name = '@ocean/ocean-subagent-codex'
+      const entry = (enabled: boolean) => pkg({ name, official: true, enabled, meta: { title: 'Codex subagent' } })
       const b = renderTab({ packages: [entry(false)] })
       b.setLanguage(dict)
       expect(document.querySelector(`[data-plugin-package="${name}"]`)).toBeNull()
       fireEvent.click(screen.getByRole('button', { name: dict.moreAction }))
       const card = document.querySelector(`[data-plugin-package="${name}"]`) as HTMLElement
-      expect(within(card).getByText(dict.statusBeta)).toBeTruthy()
-      fireEvent.click(within(card).getByRole('button', { name: dict.openDetail.replace('{name}', 'Computer Use') }))
+      fireEvent.click(within(card).getByRole('button', { name: dict.openDetail.replace('{name}', 'Codex subagent') }))
       const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
-      expect(within(detail).getByText(dict.statusBeta)).toBeTruthy()
-      fireEvent.click(within(detail).getByRole('switch', { name: dict.enableToggle.replace('{name}', 'Computer Use') }))
+      expect(within(detail).getByRole('switch', { name: dict.enableToggle.replace('{name}', 'Codex subagent') })).toBeTruthy()
+      fireEvent.click(within(detail).getByRole('switch', { name: dict.enableToggle.replace('{name}', 'Codex subagent') }))
       expect(b.actions.setEnabled).toHaveBeenCalledExactlyOnceWith(name, true)
       b.set({ packages: [entry(true)] })
       fireEvent.click(screen.getByRole('button', { name: dict.backToPackage.replace('{name}', dict.moreTitle) }))
       expect(screen.getByRole('heading', { name: dict.moreTitle, level: 1 })).toBeTruthy()
       fireEvent.click(screen.getByRole('button', { name: dict.backToList }))
       const enabledCard = document.querySelector(`[data-plugin-package="${name}"]`) as HTMLElement
-      expect(within(enabledCard).getByText(dict.statusBeta)).toBeTruthy()
-      fireEvent.click(within(enabledCard).getByRole('switch', { name: dict.enableToggle.replace('{name}', 'Computer Use') }))
+      fireEvent.click(within(enabledCard).getByRole('switch', { name: dict.enableToggle.replace('{name}', 'Codex subagent') }))
       expect(b.actions.setEnabled).toHaveBeenLastCalledWith(name, false)
       b.set({ packages: [entry(false)] })
       expect(document.querySelector(`[data-plugin-package="${name}"]`)).toBeNull()
@@ -1405,8 +1369,8 @@ describe('PluginManagerPage', () => {
     })
 
     it.each([
-      '@ocean/ocean-experimental-session-titles-bundle',
-      '@ocean/ocean-personalized-recommendations',
+      '@ocean/ocean-subagent-codex',
+      '@ocean/ocean-subagent-claude-code',
     ])('returns %s details to the secondary page and retains it across React remounts', (name) => {
       const b = renderTab({ packages: [pkg({ name, official: true, enabled: false })] })
       fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
@@ -1422,37 +1386,34 @@ describe('PluginManagerPage', () => {
       expect(document.querySelector(`[data-plugin-package="${name}"]`)).toBeNull()
     })
 
-    it.each([
-      '@ocean/ocean-experimental-inspector-profile',
-      '@ocean/ocean-personalized-recommendations',
-    ])('pins enabled %s onto the main list and removes it when disabled', (first) => {
-      const team = '@ocean/ocean-experimental-voice-input-bundle'
-      const second = '@ocean/ocean-experimental-cot-translation-bundle'
+    it('pins an enabled held-back bundle onto the main list and removes it when disabled', () => {
+      const first = '@ocean/ocean-subagent-codex'
+      const second = '@ocean/ocean-subagent-claude-code'
       const entry = (name: string, enabled: boolean): PackageView => pkg({ name, official: true, enabled })
-      const b = renderTab({ packages: [entry(second, true), entry(team, true), entry(first, false)] })
+      const b = renderTab({ packages: [entry(second, true), entry(first, false)] })
       const cards = (group: 'extensions' | 'more'): (string | null)[] => {
         const list = document.querySelector(`[data-plugin-group="${group}"]`) as HTMLElement
         return within(list).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package'))
       }
-      expect(cards('extensions')).toEqual([team, second])
+      expect(cards('extensions')).toEqual([second])
       fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
-      expect(cards('more')).toEqual([team, first, second])
+      expect(cards('more')).toEqual([first, second])
       fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', first) }))
       expect(b.actions.setEnabled).toHaveBeenCalledWith(first, true)
-      b.set({ packages: [entry(second, true), entry(team, true), entry(first, true)] })
-      expect(cards('more')).toEqual([team, first, second])
+      b.set({ packages: [entry(second, true), entry(first, true)] })
+      expect(cards('more')).toEqual([first, second])
       fireEvent.click(screen.getByRole('button', { name: en.backToList }))
-      expect(cards('extensions')).toEqual([team, first, second])
+      expect(cards('extensions')).toEqual([first, second])
       fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', first) }))
       expect(b.actions.setEnabled).toHaveBeenCalledWith(first, false)
-      b.set({ packages: [entry(second, true), entry(team, true), entry(first, false)] })
-      expect(cards('extensions')).toEqual([team, second])
+      b.set({ packages: [entry(second, true), entry(first, false)] })
+      expect(cards('extensions')).toEqual([second])
       fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
-      expect(cards('more')).toEqual([team, first, second])
+      expect(cards('more')).toEqual([first, second])
     })
 
     it('returns a held-back bundle opened outside the lists to the list that shows it', () => {
-      const name = '@ocean/ocean-experimental-session-titles-bundle'
+      const name = '@ocean/ocean-subagent-codex'
       const b = renderTab({ packages: [pkg({ name, official: true, enabled: false })] })
       act(() => { b.navigation.actions.setView({ kind: 'package', name }) })
       expect(document.querySelector(`[data-plugin-detail="${name}"]`)).toBeTruthy()
@@ -1581,7 +1542,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('preserves the full package name and description for a third-party scope', () => {
-    const name = '@acme/dsh-experimental-agent-team-profile'
+    const name = '@acme/dsh-agent-team-profile'
     const { setLanguage } = renderTab({ packages: [pkg({ name, meta: { description: { en: 'Third-party description.' } } })] })
     setLanguage(zh)
     fireEvent.click(screen.getByRole('button', { name: zh.openDetail.replace('{name}', name) }))
@@ -2456,7 +2417,7 @@ describe('PluginManagerPage', () => {
     const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView')
     Object.defineProperty(Element.prototype, 'scrollIntoView', { value: scrollIntoView, configurable: true })
     try {
-      const { actions, set } = renderTab({ packages: [pkg(), pkg({ name: '@ocean/ocean-experimental-session-titles-bundle', official: true })] })
+      const { actions, set } = renderTab({ packages: [pkg(), pkg({ name: '@acme/new-official', official: true })] })
       // A package the list does not show has nothing to scroll to; the mark still times out.
       set({ highlight: 'missing' })
       expect(scrollIntoView).not.toHaveBeenCalled()
@@ -2479,7 +2440,7 @@ describe('PluginManagerPage', () => {
 
   it('highlights only the visible list and does not extend the mark when navigating or refreshing', () => {
     vi.useFakeTimers()
-    const name = '@ocean/ocean-experimental-session-titles-bundle'
+    const name = '@ocean/ocean-subagent-claude-code'
     const scrollIntoView = vi.fn()
     const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView')
     Object.defineProperty(Element.prototype, 'scrollIntoView', { value: scrollIntoView, configurable: true })
@@ -2669,8 +2630,8 @@ it.each([false, true])('shows progress only for the changing bundle and clears i
   expect(toggle).toHaveProperty('disabled', false)
 })
 
-it.each([false, true])('opens activation guidance details and returns to the originating list (experimental: %s)', (fromMore) => {
-  const name = fromMore ? '@ocean/ocean-experimental-session-titles-bundle' : 'dsh-better-sidebar'
+it.each([false, true])('opens activation guidance details and returns to the originating list (from More: %s)', (fromMore) => {
+  const name = fromMore ? '@ocean/ocean-subagent-codex' : 'dsh-better-sidebar'
   const bundle = pkg({ name, official: fromMore })
   const { set, actions } = renderTab({ packages: [{ ...bundle, enabled: false }] }, { bundles: new Set([name]) }, {
     [`plugins.bundle.activation:${name}`]: (_view, owner) => <button onClick={(owner as PluginActivationOwnerProps).onOpenDetails}>Go to setup</button>,
@@ -2718,12 +2679,12 @@ it('keeps activation guidance with the Installed list when a contributed tab ena
     install: { ...IDLE_INSTALL, open: true, phase: 'done', subject, installed: name },
   }, { bundles: new Set([name]) }, {
     [`plugins.bundle.activation:${name}`]: () => <div>Enable guidance</div>,
-  }, {}, [{ id: 'discover', label: 'Discover' }])
+  }, {}, [{ id: 'extras', label: 'Extras' }])
   fireEvent.click(screen.getByRole('button', { name: en.installEnableNow }))
   set({ install: IDLE_INSTALL, packages: [pkg()] })
   expect(screen.getByText('Enable guidance')).toBeTruthy()
   // A contributed tab shows its own content, not guidance for the Installed list.
-  fireEvent.click(screen.getByRole('tab', { name: 'Discover' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
   expect(screen.queryByText('Enable guidance')).toBeNull()
   fireEvent.click(screen.getByRole('tab', { name: en.installedTab }))
   expect(screen.getByText('Enable guidance')).toBeTruthy()

@@ -11,7 +11,7 @@ English | [中文](guide.zh.md)
 
 The CLI and Python runtime omit the hook bridges from their installation dependencies, and the CLI omits the webhook pair. Base and the full Web presets omit dormant Ralph rows, and base omits its dormant badge row. A patch that only enables a removed row does not insert its plugin. Default active behavior, plugin registration names, tool names, and recorded Session event names remain unchanged.
 
-Package ownership and naming follow the [experimental package policy](../../../../scripts/experimental-package-policy.ts). Installation and composition are separate: installing a plugin package does not mount it, and a bundle must be selected before its contributed rows can be configured.
+Package ownership and naming follow the `experimental package policy`. Installation and composition are separate: installing a plugin package does not mount it, and a bundle must be selected before its contributed rows can be configured.
 
 ## Migration
 
@@ -24,5 +24,5 @@ Package ownership and naming follow the [experimental package policy](../../../.
          name: '@ocean/ocean-skill-badge'
    ```
 
-3. For GitHub review, use the example distributed with the adapter instead of the removed CLI example. Follow the [installed-profile instructions](../../../user/guide/github-review.md); keep customized rule modules inside the profile so their imports resolve its installed packages.
+3. For GitHub review, use the example distributed with the adapter instead of the removed CLI example. Follow the `installed-profile instructions`; keep customized rule modules inside the profile so their imports resolve its installed packages.
 4. Start the profile and confirm that its configured plugins activate without missing-package, missing-peer, or missing-row errors. Confirm the expected tool or skill is available in the intended Agent preset.

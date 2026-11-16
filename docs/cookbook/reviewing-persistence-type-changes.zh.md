@@ -50,21 +50,21 @@ pnpm --silent run persistence-review --before .artifacts/base.schema.json --afte
 
 先检查[已接受基线](../session-format-status.zh.md#finalization-record)，保留其锁定记录。按[兼容性规则](../persistence-changes/README.zh.md#compatibility-rules)评估两个读取方向。若有安全解释或拒绝的证据，结构差异可以保留同一版本，不会自动要求更高的写入器版本。
 
-编写包含 `en` 和 `zh` 的本地 JSON 文件，两者分别包含 `summary`、`compatibility` 和 `verification` 字符串。以下输入描述一个经过验证的钩子审计字段从必选改为可选的变更。用你所做变更的事实替换说明和测试证据；CLI（命令行界面）不会证明这些声明。
+编写包含 `en` 和 `zh` 的本地 JSON 文件，两者分别包含 `summary`、`compatibility` 和 `verification` 字符串。以下输入描述一个经过验证的审计字段从必选改为可选的变更。用你所做变更的事实替换说明和测试证据；CLI（命令行界面）不会证明这些声明。
 
 将输入保存为 `.artifacts/persistence-change.prose.json`，必要时创建该被忽略的目录：
 
 ```json
 {
   "en": {
-    "summary": "Makes the persisted hook audit decision optional.",
-    "compatibility": "Existing records remain valid. Hook execution consumes HookOutput instead of replaying this audit field. Producers still write decisions, and absence does not imply pass.",
-    "verification": "pnpm exec vitest run packages/experimental/hook-protocol/tests/events.spec.ts: 10 tests passed."
+    "summary": "Makes the persisted audit decision optional.",
+    "compatibility": "Existing records remain valid. Readers consume the current decision type instead of replaying this audit field. Producers still write decisions, and absence does not imply pass.",
+    "verification": "pnpm exec vitest run packages/<group>/<package>/tests/<subject>.spec.ts: 10 tests passed."
   },
   "zh": {
-    "summary": "将持久化的钩子审计决策改为可选。",
-    "compatibility": "已有记录仍然有效。钩子执行消费 HookOutput，不回放此审计字段。写入方仍然记录决策，缺失不代表 pass。",
-    "verification": "pnpm exec vitest run packages/experimental/hook-protocol/tests/events.spec.ts：10 个测试通过。"
+    "summary": "将持久化的审计决策改为可选。",
+    "compatibility": "已有记录仍然有效。读取方消费当前决策类型，不回放此审计字段。写入方仍然记录决策，缺失不代表 pass。",
+    "verification": "pnpm exec vitest run packages/<group>/<package>/tests/<subject>.spec.ts：10 个测试通过。"
   }
 }
 ```

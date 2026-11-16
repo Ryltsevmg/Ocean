@@ -77,7 +77,6 @@ const requireNative = createLazyRequire<NativeModule>('native-package', import.m
 <a id="known-limitations-and-deferred-work"></a>
 
 - **仅限兼容 CommonJS 的依赖**——仅 ESM package 需要由调用方拥有异步 factory。
-- **WebWorker 打包需要显式请求**——静态 packer 无法发现仅在 `createLazyRequire()` 调用中命名的依赖。Preview image 使用的 package 必须通过受支持的字面量请求保持该依赖可达，直到 packer 能够识别此 helper。
 
 <a id="dev-note"></a>
 ### 开发备注

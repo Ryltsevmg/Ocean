@@ -1,5 +1,5 @@
 - listitem:
-  - button "Ver Revisión de autorización automática": Revisión de autorización automática
-  - text: "Experimental Añade el modo de acceso “Auto review”: antes de cada llamada a una herramienta, un modelo comprueba la llamada frente a lo que usted pidió; las llamadas permitidas se ejecutan de inmediato y las denegadas esperan su aprobación."
+  - button "Ver Subagente Codex": Subagente Codex
+  - text: Delegue una tarea a Codex utilizando su autenticación y configuración nativas.
   - status
-  - switch "Habilitar Revisión de autorización automática"
+  - switch "Activar Subagente Codex"

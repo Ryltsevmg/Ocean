@@ -50,21 +50,21 @@ Every inventory uses the [node-table layout](../persistence-changes/README.md#fi
 
 Check the [accepted baseline](../session-format-status.md#finalization-record) first and preserve its locked records. Assess both reader directions under the [compatibility rules](../persistence-changes/README.md#compatibility-rules). A structural difference can remain same-version with evidence of safe interpretation or refusal; it does not automatically require a higher writer version.
 
-Write a local JSON file containing `en` and `zh`, each with `summary`, `compatibility`, and `verification` strings. The following input describes an exercised required-to-optional hook audit field change. Replace the explanation and test evidence with facts about your change; the CLI does not establish these claims.
+Write a local JSON file containing `en` and `zh`, each with `summary`, `compatibility`, and `verification` strings. The following input describes an exercised required-to-optional audit field change. Replace the explanation and test evidence with facts about your change; the CLI does not establish these claims.
 
 Save the input as `.artifacts/persistence-change.prose.json`, creating the ignored directory if needed:
 
 ```json
 {
   "en": {
-    "summary": "Makes the persisted hook audit decision optional.",
-    "compatibility": "Existing records remain valid. Hook execution consumes HookOutput instead of replaying this audit field. Producers still write decisions, and absence does not imply pass.",
-    "verification": "pnpm exec vitest run packages/experimental/hook-protocol/tests/events.spec.ts: 10 tests passed."
+    "summary": "Makes the persisted audit decision optional.",
+    "compatibility": "Existing records remain valid. Readers consume the current decision type instead of replaying this audit field. Producers still write decisions, and absence does not imply pass.",
+    "verification": "pnpm exec vitest run packages/<group>/<package>/tests/<subject>.spec.ts: 10 tests passed."
   },
   "zh": {
-    "summary": "将持久化的钩子审计决策改为可选。",
-    "compatibility": "已有记录仍然有效。钩子执行消费 HookOutput，不回放此审计字段。写入方仍然记录决策，缺失不代表 pass。",
-    "verification": "pnpm exec vitest run packages/experimental/hook-protocol/tests/events.spec.ts：10 个测试通过。"
+    "summary": "将持久化的审计决策改为可选。",
+    "compatibility": "已有记录仍然有效。读取方消费当前决策类型，不回放此审计字段。写入方仍然记录决策，缺失不代表 pass。",
+    "verification": "pnpm exec vitest run packages/<group>/<package>/tests/<subject>.spec.ts：10 个测试通过。"
   }
 }
 ```

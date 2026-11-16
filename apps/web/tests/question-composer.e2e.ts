@@ -1236,7 +1236,7 @@ describe.skipIf(MODE === 'record')('web e2e: late-answered question transcript',
 })
 
 
-it.each(['another-feature', 'cua-app-access'])('answers %s approval without a specialized composer', async (id) => {
+it.each(['another-feature', 'camera-access'])('answers %s approval without a specialized composer', async (id) => {
   const resources: { scaffold?: WebScaffold; browser?: Browser; waiting?: Promise<unknown> } = {}
   const controller = new AbortController()
   onTestFinished(async () => {

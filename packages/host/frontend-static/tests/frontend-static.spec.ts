@@ -37,7 +37,7 @@ async function loadComposition(): Promise<Context> {
   const distIndex = join(dist, 'index.html')
   await writeFile(distIndex, '<head></head><body>shell</body>')
   await writeFile(join(dist, 'app.js'), 'export {}')
-  await writeFile(join(dist, 'preview.html'), '<body>preview</body>')
+  await writeFile(join(dist, 'about.html'), '<body>about</body>')
   await writeFile(join(dist, 'blob.bin'), 'BLOB')
   await writeFile(join(dist, 'manifest.webmanifest'), '{}')
   await writeFile(join(dist, 'icon-192.png'), 'PNG')
@@ -295,10 +295,10 @@ describe('real Loader composition', () => {
     expect(await rebuilt.text()).toBe('export const rebuilt = true')
 
     // Only the rendered index carries no cache headers; another HTML file revalidates.
-    const html = await fetch(`${base}/preview.html`)
+    const html = await fetch(`${base}/about.html`)
     expect([html.status, html.headers.get('cache-control')]).toEqual([200, 'no-cache'])
     expect(html.headers.get('etag')).toMatch(/^W\//)
-    expect(await html.text()).toBe('<body>preview</body>')
+    expect(await html.text()).toBe('<body>about</body>')
     const index = await loaded.webServer.readResource(new Request(`${base}/`), reader)
     expect([index.status, index.headers.get('cache-control'), index.headers.get('etag')]).toEqual([200, null, null])
   })

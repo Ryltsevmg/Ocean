@@ -45,7 +45,7 @@ policy 作者必须把 `session/attachment` 视为整个附件存储的读取权
 
 转发事件按其转发条目的读取函数指明的资源（条目未声明时为 `global`）判定 action `event:<name>`，对非 owner 整条送达或整条不送，从不裁剪 payload。事件携带其声明的每个资源，因此读取函数返回 `undefined` 时该事件的资源非法，Gateway 不询问 `decide()`，不送达任何非 owner。一个事件至多指明一个资源，因此集合类变化走 follow 类流（`session/follow`、`session/control`、`workspace/follow`），由这些方法内联经 `allows()` 逐项判定。
 
-本服务经 `webserver/index-inject` 为 webServer 渲染的每个 index 加入名为 `REMOTE_ACCESS_SNAPSHOT_KEY`（`__DSH_REMOTE_ACCESS__`）的 `global` 行，值为该次渲染所代表 Peer 的 `snapshotFor(peer.principal)`：owner 的浏览器页面以 `{ type: 'baseline', owner: true }` 打开，为非 owner Peer 渲染的页面（例如在 owner Host 上渲染的 liveshare 读者页）以该读者的 grant 打开。Client 入口在挂载时读取该全局。
+本服务经 `webserver/index-inject` 为 webServer 渲染的每个 index 加入名为 `REMOTE_ACCESS_SNAPSHOT_KEY`（`__DSH_REMOTE_ACCESS__`）的 `global` 行，值为该次渲染所代表 Peer 的 `snapshotFor(peer.principal)`：owner 的浏览器页面以 `{ type: 'baseline', owner: true }` 打开，为非 owner Peer 渲染的页面以该读者的 grant 打开。Client 入口在挂载时读取该全局。
 
 | `remote-access/denied` 的 `details.reason` | 原因 |
 |---|---|

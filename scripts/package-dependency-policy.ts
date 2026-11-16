@@ -51,24 +51,11 @@ const DUPLICATE_SAFE_PACKAGES: readonly string[] = [
  * prominent heading in the pull request description.
  */
 const SAFE_HOST_DEPENDENCY_EXPORTS = {
-  '@ocean/ocean-atomic-write': ['withFileLock', 'writeFileAtomic'],
-  '@ocean/ocean-computer-use/brand': ['ComputerUseProviderName'],
   '@ocean/ocean-credentials': ['credentialKey'],
   '@ocean/ocean-deque': ['Deque'],
   // Builds a dispatcher from the resolved proxy policy; the caller owns and closes it.
-  '@ocean/ocean-http-proxy': ['createRouteDispatcher'],
-  // The Liveshare wire codec and identity helpers are stateless functions over caller-owned values.
-  '@ocean/ocean-experimental-liveshare-protocol': [
-    'LIVESHARE_CAPABILITIES', 'LIVESHARE_PROTOCOL_VERSION', 'parseRelayFrame', 'parseShareAccessState',
-    'parseTunnelWorkerCommand', 'parseTunnelWorkerEvent', 'rawText', 'sendFrame', 'unsupportedFrameRefusal',
-    'viewerRequestFields', 'identityFromKey', 'identityKeyOf',
-  ],
-  // The shipped profile templates are plain data; a consumer reads their bundle names only.
-  '@ocean/ocean-official-bundles': ['PROFILE_TEMPLATES'],
   '@ocean/ocean-llm': ['callConfigEquals'],
-  '@ocean/ocean-session': ['SessionId'],
   '@ocean/ocean-session-format': ['sessionFormatLogFilename'],
-  '@ocean/ocean-storage-domain': ['defineDomain'],
   '@ocean/ocean-timeout': ['MAX_TIMER_DELAY_MS'],
   // Both operate only on the caller's subprocess service and handle; the module memoizes only the binary path.
   '@ocean/ocean-util-ripgrep': ['readRipgrepLines', 'spawnRipgrep'],
@@ -77,29 +64,12 @@ const SAFE_HOST_DEPENDENCY_EXPORTS = {
 
 /** Runtime exports that require every consumer to resolve the provider's shared peer instance. */
 const PEER_REQUIRED_HOST_EXPORTS = {
-  // Profile settings must match the installed Node provider's configuration schema.
-  '@ocean/ocean-ptc-runtime-node/configuration': ['resolvePersistentExecution'],
-  // CUA mounts the installed provider and shares executor error classes with PTC.
-  '@ocean/ocean-ptc-runtime-node': ['default'],
-  '@ocean/ocean-tool-executor-ptc/run-code': ['RunCodeConfig', 'createRunCodeTool'],
-  // CUA checks UserQuestionError and preserves AttachmentError from image admission.
-  '@ocean/ocean-attachment': ['admitEncodedImages'],
-  '@ocean/ocean-user-questions': ['UserQuestionError'],
   // The tool registry and every subclass rely on `instanceof` against one HarnessError class.
   '@ocean/ocean-error': ['HarnessError'],
-  // `instanceof` checks need the translator's own class instance.
-  '@ocean/ocean-experimental-translator': ['TranslationError'],
-  // Stateless; a safe classification would turn the forge panel's forge and worktree peers into dependencies.
-  '@ocean/ocean-experimental-forge': ['changeRequestKey'],
-  '@ocean/ocean-experimental-worktree': ['generatedWorktreeName', 'CREATED_RECORD', 'createdWorktreeSchema'],
-  // The forge panel matches ctx.fs failures with `instanceof FsError`.
-  '@ocean/ocean-fs': ['FsError'],
   '@ocean/ocean-scope': ['carrierKeyOf', 'createScope', 'scopeOf', 'scopeTarget'],
   // appendPluginRecord writes through the Session class's private log; pluginRecordOf is stateless.
-  '@ocean/ocean-session': ['SESSION_FORMAT_VERSION', 'appendPluginRecord', 'pluginRecordOf'],
+  '@ocean/ocean-session': ['SESSION_FORMAT_VERSION'],
   '@ocean/ocean-session-persistence': ['SessionPersistenceNotFoundError'],
-  // Readers recognize a deadline's TimeoutReason only by `instanceof` against their own copy.
-  '@ocean/ocean-timeout': ['deadline'],
 } as const satisfies HostDependencyExports
 
 /** Exact import specifier to reviewed runtime exports. */

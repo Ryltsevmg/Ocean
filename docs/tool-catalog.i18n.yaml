@@ -7,22 +7,16 @@
   zh: ce2c69aa86875171
 /tool-schema-catalog:
   en: 6cc2cd9ced70bb09
-  zh: 1c0e6cb4ba2ed637
+  zh: b34897aa4fbdf226
 /tool-schema-catalog/tool-package-map:
-  en: dbba9ccbd5b5a579
-  zh: 25a33bc7096ee805
+  en: d13690939e5bf31a
+  zh: 137c81543fa9bbf4
 /tool-schema-catalog/ocean-ocean-plugin-manager:
   en: a512df99f80ea0d3
   zh: a512df99f80ea0d3
 /tool-schema-catalog/ocean-ocean-plugin-manager/plugin-manager:
-  en: 314fc2bca3211864
-  zh: 8b793c0d6ce92cc2
-/tool-schema-catalog/ocean-ocean-plugin-market:
-  en: a4a3eb71342bbd24
-  zh: a4a3eb71342bbd24
-/tool-schema-catalog/ocean-ocean-plugin-market/plugin-market:
-  en: f8d8b2023d89ea8e
-  zh: 1bec4b3bef21c277
+  en: f656df8ea18295dc
+  zh: 15efbcedef1439d1
 /tool-schema-catalog/ocean-ocean-mcp-resources:
   en: a84b4e8178d47414
   zh: a84b4e8178d47414
@@ -33,35 +27,8 @@
   en: bf4236607199d61e
   zh: 82f4f749dcabc89f
 /tool-schema-catalog/ocean-ocean-mcp-resources/read-mcp-resource:
-  en: e4d3b54d82e6e01f
-  zh: a49290d710fb8e4d
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native:
-  en: 68b091bb23f206ec
-  zh: 68b091bb23f206ec
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native/stagehand-act:
-  en: c4b27bf62c534dcc
-  zh: 70c53824ed57ac23
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native/stagehand-extract:
-  en: ec7462ab99848155
-  zh: 632fe0249040708e
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native/stagehand-navigate:
-  en: ef97f063a037a006
-  zh: 27727ccc908e007f
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native/stagehand-observe:
-  en: 2068f1baa0a59e1b
-  zh: 5743c7b33e2c5ccb
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native/stagehand-screenshot:
-  en: 4910ab327694ee97
-  zh: 17e79e4366cb636d
-/tool-schema-catalog/ocean-ocean-experimental-browser-use-stagehand-native/stagehand-tabs:
-  en: 2a4c6f25c416857a
-  zh: 1d3190a3f0771dc1
-/tool-schema-catalog/ocean-ocean-action-cards:
-  en: a8922d2f2b4fc097
-  zh: a8922d2f2b4fc097
-/tool-schema-catalog/ocean-ocean-action-cards/propose-action:
-  en: 7f83a893fbd4c485
-  zh: 0098ec8ab4185c7e
+  en: 83ca25900ab5f7b6
+  zh: fa0c4e66363a8477
 /tool-schema-catalog/ocean-ocean-tool-ask-user:
   en: a34e2590c8a51e26
   zh: a34e2590c8a51e26
@@ -162,38 +129,8 @@
   en: 3ba734ba7852cdd5
   zh: c6ce31ff2c195520
 /tool-schema-catalog/ocean-ocean-tool-fs-search/grep:
-  en: 9821d0aad7db335b
-  zh: e40223bd7d528ec0
-/tool-schema-catalog/ocean-ocean-tool-terminal:
-  en: 7ff7b336cb84fc3a
-  zh: 7ff7b336cb84fc3a
-/tool-schema-catalog/ocean-ocean-tool-terminal/terminal-close:
-  en: 4da73ab1c95aadc6
-  zh: 998471bc4f5af00a
-/tool-schema-catalog/ocean-ocean-tool-terminal/terminal-list:
-  en: 4cde2b1d38f93e04
-  zh: 2c93f43d54ec9da2
-/tool-schema-catalog/ocean-ocean-tool-terminal/terminal-open:
-  en: 7051c20587ae426d
-  zh: 39a6aad70d643fbc
-/tool-schema-catalog/ocean-ocean-tool-terminal/terminal-read:
-  en: 833b47cca9b00b9d
-  zh: 24b3db5b48f0446a
-/tool-schema-catalog/ocean-ocean-tool-terminal/terminal-send:
-  en: 60a8805611533884
-  zh: 50e4ac6e7f7b9b0a
-/tool-schema-catalog/ocean-ocean-tool-terminal/terminal-signal:
-  en: 725940b764a0502c
-  zh: 5caa7c12e7737fd9
-/tool-schema-catalog/ocean-ocean-terminal-panel:
-  en: a629c08918ca4bf9
-  zh: a629c08918ca4bf9
-/tool-schema-catalog/ocean-ocean-terminal-panel/user-terminal-list:
-  en: cf8134d5a4b5205e
-  zh: 4c435304529c4fcd
-/tool-schema-catalog/ocean-ocean-terminal-panel/user-terminal-read:
-  en: c4cf61d2d4bff3d4
-  zh: 06523956dded38bd
+  en: 99e23cf3f57db80a
+  zh: 678f06febb5c45ad
 /tool-schema-catalog/ocean-ocean-tool-goal:
   en: 7ee6376d0bdd888b
   zh: 7ee6376d0bdd888b
@@ -225,44 +162,14 @@
   en: 43f34dde12a7fc87
   zh: 43f34dde12a7fc87
 /tool-schema-catalog/ocean-ocean-tool-lsp/lsp:
-  en: d527fdfeb890a210
-  zh: 2a0ba30d1382548d
-/tool-schema-catalog/ocean-ocean-tool-ralph:
-  en: 934d3cb0f299562c
-  zh: 934d3cb0f299562c
-/tool-schema-catalog/ocean-ocean-tool-ralph/ralph:
-  en: 529334055b739f6c
-  zh: f74bc38129a2cdc9
+  en: 176a5efc45a8b123
+  zh: 8d4edec75fe67cb1
 /tool-schema-catalog/ocean-ocean-tool-skill:
   en: 2d6063fc725a01bb
   zh: 2d6063fc725a01bb
 /tool-schema-catalog/ocean-ocean-tool-skill/skill:
-  en: 6d8b8a93db10d3e5
-  zh: 0cc34269938aad77
-/tool-schema-catalog/ocean-ocean-tool-session-query:
-  en: 746f40d01a901dba
-  zh: 746f40d01a901dba
-/tool-schema-catalog/ocean-ocean-tool-session-query/session-event-read:
-  en: 285bab0bd6b50949
-  zh: 9c839e05237a7226
-/tool-schema-catalog/ocean-ocean-tool-session-query/session-event-search:
-  en: 5cd9f05b83f5797e
-  zh: dc6880566b0c5138
-/tool-schema-catalog/ocean-ocean-tool-session-query/session-event-trace:
-  en: de64e837459d7313
-  zh: 60bfcb3691ab862c
-/tool-schema-catalog/ocean-ocean-tool-session-query/session-search:
-  en: c7bc2ee2892bf0e9
-  zh: 1cd6a5d6f7494ca1
-/tool-schema-catalog/ocean-ocean-tool-session-query/session-trace:
-  en: 303da4e7669c4990
-  zh: 9d5c77748e13c4c4
-/tool-schema-catalog/ocean-ocean-experimental-tool-subagent-oar:
-  en: 042dd92a39127c9d
-  zh: 042dd92a39127c9d
-/tool-schema-catalog/ocean-ocean-experimental-tool-subagent-oar/subagent-oar:
-  en: a8d2c1ef3f4496f9
-  zh: c28461c74f739dce
+  en: 1cb3a527b1446ea9
+  zh: 098a995f777464ce
 /tool-schema-catalog/ocean-ocean-tool-subagent:
   en: 11931b0599afb373
   zh: 11931b0599afb373
@@ -324,14 +231,8 @@
   en: bce47ded72414e54
   zh: bce47ded72414e54
 /tool-schema-catalog/ocean-ocean-tool-working-directory/working-directory:
-  en: e9c6630540732dca
-  zh: 658811ee0ec1a1a0
-/tool-schema-catalog/ocean-ocean-experimental-tool-worktree:
-  en: b7911ef3da82deb3
-  zh: b7911ef3da82deb3
-/tool-schema-catalog/ocean-ocean-experimental-tool-worktree/create-worktree:
-  en: 2e6bb45aef27be91
-  zh: c6e413e6b5323ab8
+  en: e5344d403b612883
+  zh: 30ae5d0ca0f7be02
 /tool-schema-catalog/ocean-ocean-tool-workflow:
   en: 5add03ea675b5d1b
   zh: 5add03ea675b5d1b

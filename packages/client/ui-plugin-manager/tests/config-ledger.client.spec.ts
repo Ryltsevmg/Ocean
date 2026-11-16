@@ -108,18 +108,18 @@ describe('tabLedgerSource', () => {
     const b = bench()
     const source = tabLedgerSource(b.ctx)
     expect(source.getSnapshot()).toEqual([])
-    let label = 'Discover'
+    let label = 'Extras'
     const listener = vi.fn()
     const off = source.subscribe(listener)
-    b.register('plugins.tab', { id: 'discover', label: () => label })
+    b.register('plugins.tab', { id: 'extras', label: () => label })
     b.register('plugins.tab', { id: 'unlabelled' })
     expect(listener).toHaveBeenCalledTimes(2)
     const first = source.getSnapshot()
-    expect(first).toEqual([{ id: 'discover', label: 'Discover' }, { id: 'unlabelled', label: '' }])
+    expect(first).toEqual([{ id: 'extras', label: 'Extras' }, { id: 'unlabelled', label: '' }])
     expect(source.getSnapshot()).toBe(first)
-    label = '发现'
+    label = '附加'
     b.setLocale()
-    expect(source.getSnapshot()[0]).toEqual({ id: 'discover', label: '发现' })
+    expect(source.getSnapshot()[0]).toEqual({ id: 'extras', label: '附加' })
     off()
     expect(b.listenerCount()).toBe(0)
   })

@@ -1,4 +1,4 @@
-/** Experimental-package isolation over Vite's emitted product graph and recorded file inputs. */
+/** Input and module-record verification over Vite's emitted product graph and recorded file inputs. */
 
 import { basename, resolve } from 'node:path'
 import { BundleInputIsolation, physicalBundleInput } from './bundle-input-isolation.ts'
@@ -113,7 +113,7 @@ export class WebProductBundleIsolation {
     }
   }
 
-  /** Reject experimental ownership in everything the emitted index page can load. */
+  /** Verify recorded inputs and module records for everything the emitted index page can load. */
   verify(bundle: WebOutputBundle, moduleInfo: (id: string) => WebModuleInfo | null): void {
     const html = bundle['index.html']
     if (html?.type !== 'asset' || !html.originalFileNames.some(file =>

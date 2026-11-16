@@ -19,7 +19,7 @@ This affects third-party `ForgeProvider` implementations registered with `ctx.fo
 
 ## Migration
 
-1. In a `ForgeProvider`, add the `headSha: string` parameter to `diff` before `signal`. Return the patch only when the host computed it at `headSha`; otherwise return `{ code: 'stale', message }`. [`GitHubProvider.diff`](../../../../packages/experimental/forge-github/src/provider.ts) reads the current head first and then a diff addressed by commit.
+1. In a `ForgeProvider`, add the `headSha: string` parameter to `diff` before `signal`. Return the patch only when the host computed it at `headSha`; otherwise return `{ code: 'stale', message }`. `GitHubProvider.diff` reads the current head first and then a diff addressed by commit.
 2. Pass the head commit to every `ctx.forge.diff` call, usually `ctx.forge.latest(ref)`'s `snapshot.headSha`. On `stale`, wait for a later status and read again at its head; do not cache the result under the old head.
 3. Set `threadsTruncated` in every `ChangeRequestSnapshot` a provider builds: `false` when `unresolvedThreads` counts every review thread.
 4. Handle `stale` wherever code switches exhaustively over `ForgeFailure['code']`, and `forgePanel/stale-head` wherever a caller of `forgePanel.changeRequestDiff` distinguishes Remote error codes.

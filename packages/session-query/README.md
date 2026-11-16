@@ -37,7 +37,7 @@ Each package README describes what you can do with its part of the family.
 
 Start with the subsystem reference for the shared query vocabulary, then the design records behind tracing and search.
 
-The default Web and Desktop use this shared query, index, and export infrastructure. The [experimental model-facing tools](../experimental/tool-session-query/README.md) are a separate optional consumer.
+The default Web and Desktop use this shared query, index, and export infrastructure.
 
 - [Session Query subsystem reference](../../docs/subsystems/session-query.md) — logical records, filters, search pages, lineage, bounded reads, and event relationships.
 - Session query relationship tracing — trace semantics and the validation boundary.

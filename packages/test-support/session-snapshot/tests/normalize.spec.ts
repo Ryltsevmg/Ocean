@@ -462,17 +462,6 @@ describe('normalizeSessionLog', () => {
     expect(out).toContain('{{sessionId}}')
   })
 
-  it('zeroes a hook/result durationMs (run-to-run noise) but keeps its decision', () => {
-    const ev = JSON.stringify({
-      type: 'hook/result', seq: 2, time: 5,
-      data: { turn: 1, point: 'UserPromptSubmit', handlerId: 'h', decision: 'block', exitCode: 2, durationMs: 37 },
-    })
-    const out = normalizeSessionLog(`${header({})}\n${ev}\n`, ctx)
-    expect(out).toContain('"durationMs":0')
-    expect(out).not.toContain('37')
-    expect(out).toContain('"decision":"block"') // the decision is the behavior — kept
-  })
-
   it('preserves a packed chunk row\'s sequence, zeroes time, and zeroes volatile dt gaps', () => {
     const row = JSON.stringify({
       type: 'text-chunks', seq0: 7, time0: 999,
@@ -531,12 +520,6 @@ describe('normalizeSessionLog', () => {
     expect(out).toContain('"time0":0')
   })
 
-  it('leaves a non-hook event durationMs untouched (only hook/result is scrubbed)', () => {
-    const ev = JSON.stringify({ type: 'tool/result', seq: 2, time: 5, data: { durationMs: 88 } })
-    const out = normalizeSessionLog(`${header({})}\n${ev}\n`, ctx)
-    expect(out).toContain('"durationMs":88')
-  })
-
   it('normalizes goal lifecycle clocks without scrubbing unrelated payload timestamps', () => {
     const goal = JSON.stringify({
       type: 'goal/change',
@@ -590,16 +573,16 @@ describe('normalizeSessionLog', () => {
 
   it('handles complete envelopes when optional normalized fields are absent', () => {
     const bareHeader = JSON.stringify({ type: 'session', id: 's' })
-    const bareHook = JSON.stringify({ type: 'hook/result', seq: 2, time: 5, data: { decision: 'allow' } })
-    const nullDataHook = JSON.stringify({ type: 'hook/result', seq: 3, time: 6, data: null })
+    const bareDecision = JSON.stringify({ type: 'approval/decided', seq: 2, time: 5, data: { id: 'req-1', outcome: 'allowed-once' } })
+    const nullDataDecision = JSON.stringify({ type: 'approval/decided', seq: 3, time: 6, data: null })
     const bareCatalog = JSON.stringify({
       type: 'subagent/catalog',
       seq: 4,
       time: 7,
       data: { version: 0 },
     })
-    const out = normalizeSessionLog(`${bareHeader}\n${bareHook}\n${nullDataHook}\n${bareCatalog}\n`, ctx)
-    expect(out).toContain('"decision":"allow"')
+    const out = normalizeSessionLog(`${bareHeader}\n${bareDecision}\n${nullDataDecision}\n${bareCatalog}\n`, ctx)
+    expect(out).toContain('"outcome":"allowed-once"')
     expect(out).toContain('"version":0')
     expect(out).not.toContain('durationMs')
   })

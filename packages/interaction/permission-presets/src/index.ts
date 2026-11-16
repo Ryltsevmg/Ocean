@@ -3,7 +3,7 @@
  * approval-policy knobs. A switch records the selected preset, then writes
  * changed knobs through their canonical setters. Execution, prompt narration,
  * and replay keep reading their knob folds. The preset event preserves user
- * intent when two presets share a bundle. The Auto review integration may
+ * intent when two presets share a bundle. An integration may
  * publish one fixed, current-session-only preset with a synchronous admission
  * check; settings defaults remain limited to the configured table. The read
  * side exposes a process catalog plus the current-value-only `permissions`
@@ -155,7 +155,7 @@ export interface Config {
    * The preset table: name → knob bundle. Defaults to `workspace-write`
    * (workspace-write + ask) and `danger-full-access` (danger-full-access +
    * never). The names `custom` and `auto` are reserved for derived state and
-   * the Auto review integration respectively.
+   * a live integration respectively.
    */
   presets: Record<string, PresetSpec>
   /**

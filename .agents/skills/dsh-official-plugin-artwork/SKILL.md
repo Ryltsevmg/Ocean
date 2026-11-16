@@ -1,11 +1,11 @@
 ---
 name: dsh-official-plugin-artwork
-description: Draw and review official Ocean plugin icons and optional feature previews, including experimental plugins. Use for package artwork and PluginArtwork glyphs; covers official references and palettes, feature previews, package metadata gates, and designer review, and links the shared drawing rules that the `dsh-doc` skill ships. Not for toolbar or action icons.
+description: Draw and review official Ocean plugin icons and optional feature previews. Use for package artwork and PluginArtwork glyphs; covers official references and palettes, feature previews, package metadata gates, and designer review, and links the shared drawing rules that the `dsh-doc` skill ships. Not for toolbar or action icons.
 ---
 
 # Official plugin artwork
 
-Read and follow [plugin artwork](../../../packages/preset/agent-preset/skills/dsh-doc/references/artwork.md) first; installed DSH ships it in the `dsh-doc` skill, and it owns the subject, drawing, and export rules. Its Review section describes Creator bundles installed through Plugin Manager; for official plugins, follow its comparison step and replace its other steps with [Review and verify](#review-and-verify) below. Official and official experimental plugins share one visual language; the UI label communicates experimental status. This guidance does not replace designer approval.
+Read and follow [plugin artwork](../../../packages/preset/agent-preset/skills/dsh-doc/references/artwork.md) first; installed DSH ships it in the `dsh-doc` skill, and it owns the subject, drawing, and export rules. Its Review section describes Creator bundles installed through Plugin Manager; for official plugins, follow its comparison step and replace its other steps with [Review and verify](#review-and-verify) below. Official plugins share one visual language. This guidance does not replace designer approval.
 
 When reviewing the containing page, use the [UI review baseline](../../../docs/ui-design-review-cases.md#review-baseline) to combine artwork balance with its tile, label, neighboring cards and theme material. Keep package artwork distinct from action icons: coherent optical weight does not require equal drawing bounds, monochrome fills or identical geometry across those roles.
 
@@ -16,7 +16,7 @@ Before drawing a larger image for the top of an official bundle's detail documen
 ## Official references and owners
 
 - Reuse designer-supplied assets. Do not invent a brand mark or change product names, identifiers, or unrelated icons without approval.
-- Read the [existing artwork](../../../packages/client/ui-primitives/src/plugin-artwork.tsx) and the nearest relevant package SVGs. Prefer existing palettes such as [Auto Authorization Review](../../../packages/experimental/auto-review/icon.svg) and [Codex subagent](../../../packages/subagent/subagent-codex/icon.svg). The designer supplies explicit permission for vivid colors; brand requirements need approval. Use these references instead of installed-plugin discovery. Action icons remain with [the UI design entry](../dsh-client-ui-ux/SKILL.md#select-the-rule-owners).
+- Read the [existing artwork](../../../packages/client/ui-primitives/src/plugin-artwork.tsx) and the nearest relevant package SVGs. Prefer existing palettes such as [Codex subagent](../../../packages/subagent/subagent-codex/icon.svg) and [Claude Code subagent](../../../packages/subagent/subagent-claude-code/icon.svg). The designer supplies explicit permission for vivid colors; brand requirements need approval. Use these references instead of installed-plugin discovery. Action icons remain with [the UI design entry](../dsh-client-ui-ux/SKILL.md#select-the-rule-owners).
 - The [page renderer](../../../packages/client/ui-plugin-manager/src/client/PluginManagerPage.tsx) owns display sizes and outer tile framing. SVG artwork may use literal colors; page CSS uses semantic theme tokens.
 - Check every affected entry, list, detail, and component row. Bundle artwork and component metadata have separate owners; update intentional copies together and verify localized display names and descriptions when those are in scope.
 - Inline React artwork needs per-instance IDs; separate image documents do not share IDs.

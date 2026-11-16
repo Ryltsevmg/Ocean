@@ -168,7 +168,7 @@ describe('DeepSeekHarness', () => {
     expect(closed).toBe(true)
   })
 
-  it('preserves Auto review denial details in native and PTC session events', async () => {
+  it('preserves structured tool error details in native and PTC session events', async () => {
     const receipt = {
       type: 'agent/inbox/spliced',
       data: {
@@ -194,8 +194,8 @@ describe('DeepSeekHarness', () => {
           id: 'native-result',
         },
         error: {
-          name: 'AutoReviewDeniedError',
-          code: 'AUTO_REVIEW_DENIED',
+          name: 'PolicyDeniedError',
+          code: 'POLICY_DENIED',
           reason: ' native raw\nreason ',
         },
       },
@@ -222,8 +222,8 @@ describe('DeepSeekHarness', () => {
         content: [{ type: 'text', text: 'Error: blocked by policy' }],
         meta: { cwd: '/selected', path: '/selected/note.txt', view: { line: 3 } },
         error: {
-          name: 'AutoReviewDeniedError',
-          code: 'AUTO_REVIEW_DENIED',
+          name: 'PolicyDeniedError',
+          code: 'POLICY_DENIED',
           reason: ' ptc raw\nreason ',
         },
       },

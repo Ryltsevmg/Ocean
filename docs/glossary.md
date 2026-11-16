@@ -36,11 +36,5 @@ Domain vocabulary for Ocean uses one canonical term per concept. Terms link to t
 
 - **turn** — one drain of admitted input in a session, ending after the model and its tools stop or a terminal policy intervenes. <a id="turn"></a>
 - **step** — one model request plus the tool executions caused by its response; a turn contains zero or more steps. <a id="step"></a>
-- **round** — an outer policy iteration containing a turn, such as a [goal round](#goal-round) or one fresh-agent Ralph attempt. Round counters belong to that policy and do not count every turn in a session. <a id="round"></a>
+- **round** — an outer policy iteration containing a turn, such as a [goal round](#goal-round). Round counters belong to that policy and do not count every turn in a session. <a id="round"></a>
 - **exchange** — consecutive [turns](#turn) from a turn whose first [step](#step) admits human input until the next such turn; turns woken by notices, such as settled subagents, goal rounds, or schedules, stay in the preceding exchange. Chat's next-message folding keeps the latest exchange expanded. <a id="exchange"></a>
-
-## Ralph
-
-- **Ralph loop** — one foreground fresh-agent workflow run toward an immutable objective. It is a model-facing tool policy composed from workflow and subagent primitives, not a same-session goal, agent-loop mode, scheduler, or generic workflow-script feature. <a id="ralph-loop"></a>
-- **Ralph round** — one fresh child session in a [Ralph loop](#ralph-loop). The child receives no parent or prior-child conversation seed; the shared workspace and one bounded [Ralph handoff](#ralph-handoff) carry cross-round state. <a id="ralph-round"></a>
-- **Ralph handoff** — the normalized bounded structured report passed from one continuing Ralph round to the next, containing status, summary, evidence, next steps, and blocker text. It supplements the shared workspace rather than replacing it as authority. <a id="ralph-handoff"></a>

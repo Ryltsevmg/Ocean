@@ -36,11 +36,5 @@ Ocean 的领域词汇为每个概念规定一个规范术语。各术语通过�
 
 - **轮次**：会话中一次对已接纳输入的排空过程，在模型及其工具停止工作或终止策略介入后结束。<a id="turn"></a>
 - **步骤**：一次模型请求，以及由模型响应引发的工具执行；一个轮次包含零个或多个步骤。<a id="step"></a>
-- **Round**：承载一个轮次的外层策略迭代，例如一个 [Goal Round](#goal-round) 或一次使用全新 agent 的 Ralph 尝试。Round 计数器归该策略所有，并不统计会话中的每个轮次。<a id="round"></a>
+- **Round**：承载一个轮次的外层策略迭代，例如一个 [Goal Round](#goal-round)。Round 计数器归该策略所有，并不统计会话中的每个轮次。<a id="round"></a>
 - **交互段**：连续的[轮次](#turn)，从首个[步骤](#step)接纳真人输入的轮次起，到下一个这样的轮次为止；由通知（子 agent 完成、Goal Round、定时任务等）唤醒的轮次归入前面的交互段。Chat 的「下次发送时收起」保持最新交互段展开。<a id="exchange"></a>
-
-## Ralph
-
-- **Ralph 循环**：一次面向不可变目标的前台全新 agent 工作流运行。它是由工作流和 subagent 原语组合而成的面向模型的工具策略，不是同会话目标、agent loop（智能体循环）模式、调度器或通用工作流脚本功能。<a id="ralph-loop"></a>
-- **Ralph Round**：[Ralph 循环](#ralph-loop)中的一个全新子会话。子会话不接收父会话或此前子会话的对话种子；共享工作区和一份有界的 [Ralph 交接](#ralph-handoff)承载跨 Round 的状态。<a id="ralph-round"></a>
-- **Ralph 交接**：从一个仍需继续的 Ralph Round 传给下一个 Ralph Round 的规范化、有界结构化报告，包含状态、摘要、证据、后续步骤和阻塞说明。它补充共享工作区，而不取代工作区的权威地位。<a id="ralph-handoff"></a>

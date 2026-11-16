@@ -80,8 +80,6 @@ Only one title provider may register at a time; without one, the title service k
 - [Session telemetry subsystem](../../docs/subsystems/session-telemetry.md) — capture, redaction, and delivery modes.
 - [Session subsystem](../../docs/subsystems/session.md) — the live event log every package in this group persists or derives from.
 
-See [`session-title-all-prompts-llm`](../experimental/session-title-all-prompts-llm/README.md) for the experimental optional capability.
-
 <a id="dev-note"></a>
 ## Dev Note
 

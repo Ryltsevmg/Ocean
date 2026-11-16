@@ -42,7 +42,7 @@ kind: "package-reference"
 
 共享分派事件与 `ptc-mode` 消息来源声明位于 `@ocean/ocean-tool-executor-ptc/types`；Client 代码通过 `@ocean/ocean-tool-executor-ptc/client` 导入同一组声明。两个入口都不引入 Host 服务声明。Host 策略扩展通过包主入口的 `import type` 获取 `PtcDispatchLog` 与 `tools/ptc-dispatch-log`，无需挂载执行器。
 
-`/run-code` 入口导出 `createRunCodeTool`，供插件在原生工具旁注册具名程序工具。调用方显式传入运行时及完整的私有 `ToolDefinition` 列表，再将返回的定义注册到所属作用域。即使 Agent 能直接调用其他原生工具，程序也只能调用该列表中的工具；私有定义不进入工具注册表。嵌套调用保留正常审批、guard、派发日志、截图、延后上下文和轮次结束行为。`RunCodeConfig` 提供与本执行器相同且经过校验的调用额度与并发设置。
+`/run-code` 入口导出 `createRunCodeTool`，供插件在原生工具旁注册具名程序工具。调用方显式传入运行时及完整的私有 `ToolDefinition` 列表，再将返回的定义注册到所属作用域。即使 Agent 能直接调用其他原生工具，程序也只能调用该列表中的工具；私有定义不进入工具注册表。嵌套调用保留正常审批、guard、派发日志、延后上下文和轮次结束行为。`RunCodeConfig` 提供与本执行器相同且经过校验的调用额度与并发设置。
 
 调用方拥有传入的运行时，必须使其可用至工厂上下文完成销毁。对于保留状态或实施沙箱的运行时，销毁会取消活动的 Agent 程序并等待嵌套调用；Agent 销毁时释放其保留环境。环境初始化由传入[运行时的注册 API](../../ptc-runtime/ptc-runtime/README.zh.md#choose-a-backend)负责；应在提供程序工具前完成注册。工厂将运行时语法和执行说明追加到调用方提供的描述后；私有绑定的说明由调用方提供。
 
@@ -64,7 +64,7 @@ PTC 执行器公开保留的 `run_code` 传输，以及按所加载运行时语�
 
 新子调用使用 `<parent>:ptc:<n>` 标识。消费方将这些标识视为不透明值，并通过精确相等关联事件；恢复的历史标识保留原始字节。
 
-TypeScript 中的 `read_image` 与 CUA 截图操作返回 `Image`，其中包含可读取的 `path`、`width` 和 `height`。将其传给 `inspect` 后，持久附件会按顺序与文本一起进入 `run_code` 结果。数组和对象内嵌的图片会随所在值一起展示。程序失败时，已 inspect 的输出随原始诊断一起呈现；外层替换的结果保持生效。输出策略移除截图或 read_image 图片时，绑定以 ToolCallError 拒绝，并包含保留的文本提示。额外上下文保留生成工具的归属。
+TypeScript 中的 `read_image` 返回 `Image`，其中包含可读取的 `path`、`width` 和 `height`。将其传给 `inspect` 后，持久附件会按顺序与文本一起进入 `run_code` 结果。数组和对象内嵌的图片会随所在值一起展示。程序失败时，已 inspect 的输出随原始诊断一起呈现；外层替换的结果保持生效。输出策略移除 read_image 图片时，绑定以 ToolCallError 拒绝，并包含保留的文本提示。额外上下文保留生成工具的归属。
 
 调用方取消且运行时报告 `abort` 时，`run_code` 等待清理完成，并返回原生工具的取消结果：`AbortError` / `ABORTED`，内容为 `Error: tool call aborted`。保留状态的运行时会附加取消诊断，包括变量被保留还是清空。Agent 在 `turn/end` 中记录具体取消原因，包括 hook 的理由。其他运行时失败保留 `CODE_RUN_FAILED` 及其诊断，即使调用方同时取消。取消可能丢弃保留的运行时状态，也不会撤销已完成的工具操作。
 
@@ -150,7 +150,7 @@ Error: code run failed (abort): run_code exceeded its limit of 2048 tool calls (
 
 以下约束适用于宿主集成及已开始的调用。
 
-- **程序 Image 仅覆盖 read_image 与 CUA 截图**：其他图片工具保留其声明的返回值，并将图片自动附加到模型的额外上下文。
+- **程序 Image 仅覆盖 read_image**：其他图片工具保留其声明的返回值，并将图片自动附加到模型的额外上下文。
 - **程序 Image 要求附件路径映射**：文件系统必须将宿主存储的附件映射为程序可读的路径。`fs-ssh` 没有这项映射，因此该组合中的图片适配会拒绝。
 - **没有内置重置控件**：自带的 Loader 插件不通过服务、GUI 控件或 SDK 端点暴露执行器实例。需要重置的宿主必须在自己的组合中挂载并保留 `PtcExecutor`，该集成负责失败后的重试。
 - **PTC mode 的 SDK 语言由当前加载的运行时决定，且呈现方式按 agent 而非按工具**：PTC 会拒绝组装提示词，除非 `ctx.ptcRuntime.language` 有已注册的 SDK 渲染器；同一个 agent 内不能让一个工具仅使用 Native，而另一个仅使用 PTC。

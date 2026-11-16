@@ -30,7 +30,6 @@ Each package provides one primitive or one data set; open a package page for how
 | [`error/`](error/README.md) | The dependency-free `HarnessError` base class with a stable machine-routable code |
 | [`package-manifest/`](package-manifest/README.md) | Shared TypeScript declarations for package manifests |
 | [`plugin-detail/`](plugin-detail/README.md) | Selects plugin detail documents and reads them from local packages and npm file CDNs |
-| [`plugin-market-index/`](plugin-market-index/README.md) | Validates plugin market index format 1 and builds pinned install arguments |
 | [`official-bundles/`](official-bundles/README.md) | Lists the official bundle and plugin packages the installation ships, offers, installs on demand, retires, and the plugin manager protects or presents |
 | [`crypto/`](crypto/README.md) | Mints RFC 9562 v4 UUIDs from the cross-runtime `crypto.getRandomValues` primitive |
 | [`deque/`](deque/README.md) | Provides amortized constant-time queue operations with bounded vacant storage |

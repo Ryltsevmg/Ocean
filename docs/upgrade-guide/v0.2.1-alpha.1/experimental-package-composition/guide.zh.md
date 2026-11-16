@@ -11,7 +11,7 @@ description: "可选 hooks、webhooks、工具与技能所需的显式安装、p
 
 CLI 与 Python 运行时的安装依赖不再包含 hook 桥接，CLI 也不再包含 webhook 包对。Base 与完整 Web 预设省略休眠的 Ralph 行，base 也省略休眠的徽章行。仅启用已移除行的 patch 不会插入其插件。默认活动行为、插件注册名称、工具名称与已记录的 Session 事件名称保持不变。
 
-包归属和命名遵循[实验包策略](../../../../scripts/experimental-package-policy.ts)。安装与组合相互独立：安装插件包不会挂载它，必须先选择 bundle 才能配置其贡献的行。
+包归属和命名遵循`实验包策略`。安装与组合相互独立：安装插件包不会挂载它，必须先选择 bundle 才能配置其贡献的行。
 
 ## 迁移
 
@@ -24,5 +24,5 @@ CLI 与 Python 运行时的安装依赖不再包含 hook 桥接，CLI 也不再�
          name: '@ocean/ocean-skill-badge'
    ```
 
-3. GitHub review 使用适配器随附的示例，替代已删除的 CLI 示例。遵循[安装版 profile 说明](../../../user/guide/github-review.zh.md)；将定制规则模块保留在 profile 内，使其导入能解析该 profile 安装的包。
+3. GitHub review 使用适配器随附的示例，替代已删除的 CLI 示例。遵循`安装版 profile 说明`；将定制规则模块保留在 profile 内，使其导入能解析该 profile 安装的包。
 4. 启动 profile，确认配置的插件激活时没有缺包、缺 peer 或缺行错误。确认预期工具或技能在目标 Agent 预设中可用。

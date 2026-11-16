@@ -830,7 +830,7 @@ describe('persistence changes current-tree commands', () => {
       paths: { '@ocean/ocean-session/types': ['./packages/core/session/src/types.ts'] },
     } }))
     const source = [
-      '/** Experimental plugin records. */', 'export interface PluginRecordMap {}',
+      '/** Plugin records. */', 'export interface PluginRecordMap {}',
       '/** Stored header. */', 'export interface SessionHeader { version: 3; id: string }',
       '/** Stored event payloads. */', 'export interface SessionEventMap {', '/** Saved value. */',
       "'example/value': { value: string }", '}', '/** Surface event names. */', "export type SurfaceEventType = 'example/value'",

@@ -8,7 +8,6 @@
  */
 export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
   '@ocean/ocean-acp-app': ['ACP_APP_STARTUP_SERVICE'],
-  '@ocean/ocean-action-cards': ['Config', 'isPluginStopping'],
   '@ocean/ocean-agent': [
     'AgentModel', 'agentCarrier', 'agentEvents', 'assembleContextFor', 'emitAgentEvent', 'foldConsumedWork',
     'installModelSelection', 'modelSelectionProjectionDefinition',
@@ -58,20 +57,6 @@ export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
   ],
   '@ocean/ocean-credentials-local': [
     'CREDENTIALS_FILENAME', 'DOCUMENT_VERSION', 'parseCredentialsDocument', 'renderFlatLayoutMigration', 'resolveSpec',
-  ],
-  '@ocean/ocean-cua': ['CuaConfig', 'installCua'],
-  '@ocean/ocean-experimental-claude-code-mods': [
-    'DEFAULT_TOOL_ALIASES', 'KNOWN_EVENTS', 'MODS_API_VERSION', 'SERVED_EVENTS', 'defineMod',
-  ],
-  '@ocean/ocean-experimental-cua-macos': ['GUIDANCE'],
-  '@ocean/ocean-experimental-forge': ['changeRequestKey'],
-  '@ocean/ocean-experimental-inspector': ['resolveInspectorOptions', 'startInspector'],
-  '@ocean/ocean-experimental-ptc-runtime-python': [
-    'checkDoneValue', 'detachResidual', 'encodeJsonPlain', 'hasNonLosslessNumber', 'hasUnsafeIntegerToken',
-    'hostFrameParseCeiling', 'logTruncationMarker', 'readProcessStart', 'resolvePythonBin', 'validateChildFrame',
-  ],
-  '@ocean/ocean-experimental-worktree': [
-    'CREATED_RECORD', 'createdWorktreeSchema', 'generatedWorktreeName', 'worktreeProjection',
   ],
   '@ocean/ocean-goal': [
     'GOAL_CHANGE_VERSION', 'GoalId', 'applyGoalProjection', 'decodeGoalChange', 'foldGoal', 'goalChangeRef',
@@ -199,7 +184,6 @@ export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
   ],
   '@ocean/ocean-terminal': ['TerminalSessionId'],
   '@ocean/ocean-terminal-bash': ['BashTerminalBackend', 'PWSH_PROMPT_SETUP'],
-  '@ocean/ocean-terminal-panel': ['GUIDANCE'],
   '@ocean/ocean-tool-call-timeout-policy': ['TOOL_TIMEOUT'],
   '@ocean/ocean-tool-executor-native': ['NativeToolExecutor'],
   '@ocean/ocean-tool-executor-ptc': [
@@ -217,8 +201,6 @@ export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
     'DEFAULT_LSP_TOOL_TIMEOUT_MS', 'DEFAULT_MAX_LOCATIONS', 'DEFAULT_MAX_RESULT_CHARS', 'LSP_OPERATIONS',
     'LSP_PROMPT_TEXT', 'formatHover', 'formatLocations', 'parseLspArgs', 'presentLspCall', 'renderUri',
   ],
-  '@ocean/ocean-tool-session-query': ['DEFAULT_MAX_SEARCH_RESULTS', 'DEFAULT_SEARCH_TIMEOUT_MS'],
-  '@ocean/ocean-tool-terminal': ['DEFAULT_MAX_RESULT_BYTES', 'MIN_MAX_RESULT_BYTES'],
   '@ocean/ocean-tool-web': [
     'DEFAULT_FETCH_MAX_OUTPUT_CHARS', 'DEFAULT_WEB_TOOL_TIMEOUT_MS', 'WEB_SEARCH_MAX_QUERIES', 'WEB_SEARCH_MAX_RESULTS',
     'applyWebFetchTool', 'applyWebSearchTool', 'fetchMetaFromResult', 'fetchMetaFromValue', 'formatFetchOutput',
@@ -251,7 +233,6 @@ export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
     'DEEPSEEK_DEFAULT_MAX_USES', 'DEEPSEEK_DEFAULT_MODEL', 'DEEPSEEK_PROVIDER_ID', 'DeepSeekSearchProvider',
     'WEB_SEARCH_DEEPSEEK_SETTINGS_NAMESPACE',
   ],
-  '@ocean/ocean-webhook': ['WebhookDeliveryId', 'WebhookRuleId', 'WebhookSourceId'],
   '@ocean/ocean-workflow-ptc': ['materializeFromRealm', 'validateMeta'],
   '@ocean/ocean-workspace': [
     'WorkspaceId', 'realpathNormalize', 'workspaceDomainSpec', 'workspaceDomainState', 'workspaceRecord',

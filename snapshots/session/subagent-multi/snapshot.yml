@@ -5,6 +5,6 @@ composition: default
 recording: live
 sessionFormat:
   version: 0
-  coverage: [multi-hop, shipped-profile]
+  coverage: [multi-hop, packed-row, shipped-profile]
 header:
   class: default

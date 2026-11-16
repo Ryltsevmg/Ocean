@@ -69,17 +69,6 @@
   config:
     cwd: !!js process.cwd()
 
-- insert:
-    - id: hooks-claude-code
-      name: '@ocean/ocean-hooks-claude-code'
-      config:
-        configPath: ./hooks.json
-
-    - id: hooks-codex
-      name: '@ocean/ocean-hooks-codex'
-      config:
-        configPath: ./codex-hooks.json
-
 - id: session-log-deepseek
   config:
     enabled: false

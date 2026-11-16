@@ -132,6 +132,3 @@
           - id: tool-plugin-manager
             name: '@ocean/ocean-plugin-manager/tools'
             disabled: !!js "!ctx.get('profileContext')"
-          - id: tool-plugin-market
-            name: '@ocean/ocean-plugin-market/tools'
-            disabled: true

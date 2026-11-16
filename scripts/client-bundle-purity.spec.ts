@@ -2,7 +2,7 @@
  * Pins shared client-bundle preset rules: build modes, module-edge purity,
  * source-map chaining, and physical watch dependencies hidden behind virtual CSS Modules.
  */
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -362,21 +362,15 @@ describe('client bundle purity gate', () => {
   })
 })
 
-describe('client bundle experimental input isolation', () => {
-  const experimental = '@ocean/ocean-experimental-client-ui-voice-input'
-  const experimentalDir = packageDir('experimental/client-ui-voice-input')
-
+describe('client bundle input isolation', () => {
   function fixture() {
     const root = mkdtempSync(join(tmpdir(), 'dsh-client-inputs-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     const owner = join(root, 'client')
     const entry = join(owner, 'lib/types/client/index.js')
-    const prototype = join(root, 'prototype/src/index.js')
-    for (const file of [entry, prototype]) mkdirSync(dirname(file), { recursive: true })
+    mkdirSync(dirname(entry), { recursive: true })
     writeFileSync(join(owner, 'package.json'), JSON.stringify({ name: REQUESTING_PACKAGE, type: 'module' }))
-    writeFileSync(join(root, 'prototype/package.json'), JSON.stringify({ name: experimental, type: 'module' }))
-    writeFileSync(prototype, 'export const marker = "experimental sentinel"\n')
-    return { root, owner, entry, prototype }
+    return { root, owner, entry }
   }
 
   function config(kind: 'static' | 'dynamic', dir = REQUESTING_PACKAGE_DIR): UserConfig {
@@ -405,12 +399,12 @@ describe('client bundle experimental input isolation', () => {
     return relative(dirname(from), to).replaceAll('\\', '/')
   }
 
-  function checkCompilerModule(module: string, imports?: string[]): void {
+  function checkCompilerModule(module: string): void {
     const plugins = config('dynamic').plugins as InputIsolationPlugin[]
     const plugin = plugins.find(plugin => plugin.name === 'dsh-client-input-isolation')
     if (plugin === undefined) throw new Error('client input isolation plugin missing')
     plugin.generateBundle.call({
-      getModuleInfo: () => imports === undefined ? null : { importedIds: imports, dynamicallyImportedIds: [] },
+      getModuleInfo: () => null,
     }, {}, {
       'client.js': { type: 'chunk', modules: { [module]: {} }, imports: [], dynamicImports: [] },
     })
@@ -426,105 +420,6 @@ describe('client bundle experimental input isolation', () => {
       expect(() => { checkCompilerModule(module) }).toThrow(/has no bundler module record/)
     },
   )
-
-  it('checks runtime helper dependencies when the compiler supplies a module record', () => {
-    expect(() => { checkCompilerModule('\0rolldown/runtime.js', [experimental]) })
-      .toThrow(/client bundle isolation.*experimental/)
-  })
-
-  it.each(['static', 'dynamic'] as const)('rejects experimental files folded into a %s client artifact', async (kind) => {
-    const { owner, entry, prototype } = fixture()
-    writeFileSync(entry, `export { marker } from ${JSON.stringify(importPath(entry, prototype))}\n`)
-
-    await expect(bundle(owner, config(kind))).rejects.toThrow(/client bundle isolation.*experimental/)
-    expect(existsSync(join(owner, 'lib/client.js'))).toBe(false)
-    expect(existsSync(join(owner, 'lib/index.js'))).toBe(false)
-  })
-
-  it.each(['static', 'dynamic'] as const)('keeps retained-name experimental %s inputs outside ordinary artifacts', async (kind) => {
-    const { root, owner, entry, prototype } = fixture()
-    const name = '@ocean/ocean-tool-terminal'
-    writeFileSync(join(root, 'prototype/package.json'), JSON.stringify({ name, type: 'module' }))
-    writeFileSync(entry, `export { marker } from ${JSON.stringify(importPath(entry, prototype))}\n`)
-    await expect(bundle(owner, config(kind))).rejects.toThrow(/client bundle isolation.*experimental/)
-    await expect(bundle(owner, config(kind, packageDir('experimental/tool-terminal')))).resolves.toContain('experimental sentinel')
-  })
-
-  it('proves the static library otherwise hides the experimental input in its emitted JavaScript', async () => {
-    const { owner, entry, prototype } = fixture()
-    writeFileSync(entry, `export { marker } from ${JSON.stringify(importPath(entry, prototype))}\n`)
-    const guarded = config('static')
-    const plugins = guarded.plugins as Array<{ name: string }>
-    const unguarded: UserConfig = {
-      ...guarded,
-      plugins: plugins.filter(plugin => plugin.name !== 'dsh-client-input-isolation'),
-      outputOptions: { sourcemapExcludeSources: false },
-    }
-
-    await expect(bundle(owner, unguarded)).resolves.toContain('experimental sentinel')
-    await expect(bundle(owner, guarded)).rejects.toThrow(/client bundle isolation.*experimental/)
-  })
-
-  it.each(['static', 'dynamic'] as const)('allows an experimental %s artifact to keep its own inputs', async (kind) => {
-    const { owner, entry, prototype } = fixture()
-    writeFileSync(entry, `export { marker } from ${JSON.stringify(importPath(entry, prototype))}\n`)
-
-    await expect(bundle(owner, config(kind, experimentalDir))).resolves.toContain('experimental sentinel')
-  })
-
-  it('rejects experimental ownership preserved only by an emitted compiler source map', async () => {
-    const { owner, entry, prototype } = fixture()
-    writeFileSync(entry, 'export const marker = "experimental sentinel"\n//# sourceMappingURL=index.js.map\n')
-    writeFileSync(`${entry}.map`, JSON.stringify({
-      version: 3, names: [], mappings: 'AAAA', sources: [importPath(entry, prototype)],
-      sourcesContent: ['export const marker = "experimental sentinel"\n'],
-    }))
-
-    await expect(bundle(owner, config('static'))).rejects.toThrow(/client bundle isolation.*experimental/)
-  })
-
-  it('checks the resolved module when an import alias conceals its experimental package', async () => {
-    const { owner, entry, prototype } = fixture()
-    writeFileSync(entry, 'export { marker } from "./ordinary.js"\n')
-
-    await expect(bundle(owner, { ...config('static'), alias: { './ordinary.js': prototype } }))
-      .rejects.toThrow(/client bundle isolation.*experimental/)
-  })
-
-  it('rejects an experimental runtime import left external by a static client library', async () => {
-    const { owner, entry } = fixture()
-    writeFileSync(entry, `export * from ${JSON.stringify(experimental)}\n`)
-
-    await expect(bundle(owner, config('static'))).rejects.toThrow(/client bundle isolation.*experimental/)
-  })
-
-  it.each([false, true])('checks omitted source-map files against their package owner (experimental: %s)', async (experimentalSource) => {
-    const { root, owner, entry } = fixture()
-    const dependency = join(root, 'dependency')
-    mkdirSync(dependency)
-    writeFileSync(join(dependency, 'package.json'), JSON.stringify({ name: experimentalSource ? experimental : 'ordinary-library' }))
-    writeFileSync(entry, 'export const marker = "mapped sentinel"\n//# sourceMappingURL=index.js.map\n')
-    writeFileSync(`${entry}.map`, JSON.stringify({
-      version: 3, names: [], mappings: 'AAAA', sourceRoot: importPath(entry, dependency),
-      sources: ['unshipped.ts'], sourcesContent: ['export const marker = "mapped sentinel"\n'],
-    }))
-
-    const result = bundle(owner, config('static'))
-    if (experimentalSource) await expect(result).rejects.toThrow(/client bundle isolation.*experimental/)
-    else await expect(result).resolves.toContain('mapped sentinel')
-  })
-
-  it.each(['.css', '.module.css', '.css?inline'])('rejects experimental %s inputs behind client CSS virtual loaders', async (extension) => {
-    const { owner, entry, prototype } = fixture()
-    const css = join(dirname(prototype), `style${extension.replace('?inline', '')}`)
-    writeFileSync(css, 'body { color: red; }\n')
-    const specifier = `${importPath(entry, css)}${extension.endsWith('?inline') ? '?inline' : ''}`
-    writeFileSync(entry, extension === '.css'
-      ? `import ${JSON.stringify(specifier)}\nexport const marker = true\n`
-      : `export { default as style } from ${JSON.stringify(specifier)}\n`)
-
-    await expect(bundle(owner, config('dynamic'))).rejects.toThrow(/client bundle isolation.*experimental/)
-  })
 
   it.each(['static', 'dynamic'] as const)('keeps ordinary %s bundles and source maps buildable', async (kind) => {
     const { owner, entry } = fixture()

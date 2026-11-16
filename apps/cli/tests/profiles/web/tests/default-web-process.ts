@@ -20,7 +20,7 @@ const repoRoot = fileURLToPath(new URL('../../../../../../', import.meta.url))
 interface DefaultWeb {
   root: string
   url: string
-  request: (command: 'roster' | 'mount-experimental' | 'mount-experimental-entry') => Promise<RuntimeRoster>
+  request: (command: 'roster') => Promise<RuntimeRoster>
 }
 
 /**
@@ -55,7 +55,6 @@ export async function withDefaultWeb(
     await writeFile(patch, JSON.stringify([{ insert: [{
       id: 'runtime-roster-observer',
       name: pathToFileURL(join(root, 'fixtures/runtime-roster-observer.js')).href,
-      config: { negativeControl: pathToFileURL(join(repoRoot, 'packages/experimental/client-ui-voice-input/lib/index.js')).href },
     }] }]) + '\n')
     const launch = resolveExampleLaunch({
       srcBin: join(repoRoot, 'apps/cli/src/bin.ts'),

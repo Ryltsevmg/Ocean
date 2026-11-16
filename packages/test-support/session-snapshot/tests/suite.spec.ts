@@ -160,7 +160,7 @@ function staleRefreshFixtures(dir: string): void {
 
   writeFileSync(join(dir, 'blocked-log', 'session.jsonl'), [
     '{"type":"session","id":"99999999-8888-4777-8666-555555555555","createdAt":13,"cwd":"/rec/blocked-cwd","delegationDepth":0}',
-    '{"type":"hook/result","seq":0,"time":13,"data":{"decision":"stale","durationMs":99}}',
+    '{"type":"approval/decided","seq":0,"time":13,"data":{"id":"req-1","outcome":"rejected"}}',
     '',
   ].join('\n'))
   writeFileSync(join(dir, 'authored-error', 'session.jsonl'), [
@@ -194,7 +194,7 @@ describe('defineAcpSnapshotSuite: refresh write-back', () => {
     expect(stdout).toContain('\\"permissionMode\\":\\"never\\"')
 
     const blocked = readFileSync(join(refreshDir, 'blocked-log', 'session.v3.jsonl'), 'utf8')
-    expect(blocked).toContain('"decision":"block"')
+    expect(blocked).toContain('"outcome":"rejected"')
     expect(blocked).not.toContain('"decision":"stale"')
 
     const authored = readFileSync(join(refreshDir, 'authored-error', 'session.v3.jsonl'), 'utf8')
@@ -1339,18 +1339,18 @@ describe('stabilizeRefreshLog', () => {
   it('keeps volatile fixture fields while preserving fresh meaningful payloads', () => {
     const fresh = [
       '{"type":"session","id":"new-child","createdAt":200,"cwd":"/new","parentSession":"new-parent","seedLength":1}',
-      '{"type":"hook/result","seq":1,"time":22,"data":{"decision":"block","durationMs":37}}',
+      '{"type":"approval/decided","seq":1,"time":22,"data":{"outcome":"rejected","durationMs":37}}',
       '{"type":"turn/end","seq":2,"time":33,"data":{"error":"fresh error"}}',
       '{"type":"tool/result","seq":3,"time":44,"data":{"text":"new-parent in /new"}}',
-      '{"type":"hook/result","seq":4,"time":55,"data":{"decision":"allow","durationMs":5}}',
+      '{"type":"approval/decided","seq":4,"time":55,"data":{"outcome":"allowed-once","durationMs":5}}',
       '',
     ].join('\n')
     const existing = [
       '{"type":"session","id":"old-child","createdAt":100,"cwd":"/old","parentSession":"old-parent","seedLength":5}',
-      '{"type":"hook/result","seq":1,"time":11,"data":{"decision":"stale","durationMs":99}}',
+      '{"type":"approval/decided","seq":1,"time":11,"data":{"outcome":"cancelled","durationMs":99}}',
       '{"type":"turn/end","seq":2,"time":12,"data":{"error":"stale"}}',
       '{"type":"assistant/message","seq":3,"time":12,"data":{"text":"different type"}}',
-      '{"type":"hook/result","seq":4,"time":13,"data":{"decision":"stale"}}',
+      '{"type":"approval/decided","seq":4,"time":13,"data":{"outcome":"cancelled"}}',
       '',
     ].join('\n')
 
@@ -1360,10 +1360,10 @@ describe('stabilizeRefreshLog', () => {
       { from: '/new', to: '/old' },
     ])).toBe([
       '{"type":"session","id":"old-child","createdAt":100,"cwd":"/old","parentSession":"old-parent","seedLength":1}',
-      '{"type":"hook/result","seq":1,"time":11,"data":{"decision":"block","durationMs":99}}',
+      '{"type":"approval/decided","seq":1,"time":11,"data":{"outcome":"rejected","durationMs":37}}',
       '{"type":"turn/end","seq":2,"time":12,"data":{"error":"fresh error"}}',
       '{"type":"tool/result","seq":3,"time":44,"data":{"text":"old-parent in /old"}}',
-      '{"type":"hook/result","seq":4,"time":13,"data":{"decision":"allow","durationMs":5}}',
+      '{"type":"approval/decided","seq":4,"time":13,"data":{"outcome":"allowed-once","durationMs":5}}',
       '',
     ].join('\n'))
   })

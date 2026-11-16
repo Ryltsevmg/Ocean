@@ -12,7 +12,7 @@ import { makeTranslate } from '@ocean/ocean-client-test-runtime'
 import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
 import { zh as commonZh } from '@ocean/ocean-client-locale/src/locales/zh.ts'
 import {
-  localizeTerminalCardModel, terminalCardModel, terminalFailed, terminalExitLabel,
+  resolvedTerminalCard, terminalCardModel, terminalFailed, terminalExitLabel,
 } from '../src/client/tool/models/terminal-card-model.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
 import { BashRow } from '../src/client/tool/toolviews/bash-sample.tsx'
@@ -79,9 +79,6 @@ describe('terminalCardModel', () => {
     expect(terminalExitLabel(undefined, enT)).toBeNull()
     expect(terminalExitLabel(terminalCardModel(running()), enT)).toBeNull()
     expect(terminalExitLabel(terminalCardModel(settled()), enT)).toBeNull()
-    expect(terminalExitLabel(terminalCardModel(settled({
-      call: { name: 'terminal_send', argsRaw: JSON.stringify({ sessionId: 'term-1', text: 'hello' }) },
-    })), enT)).toBeNull()
     expect(terminalExitLabel(terminalCardModel(settled({ call: { name: 'bash', argsRaw: shellArgs({ run_in_background: true }) } })), enT)).toBeNull()
   })
 
@@ -103,7 +100,7 @@ describe('terminalCardModel', () => {
 
   it('derives a running standard-shell card from raw arguments', () => {
     expect(terminalCardModel(running({ argsRaw: shellArgs({ workdir: '/projects/app' }) }))).toEqual({
-      copy: { kind: 'shell', command: 'ls -la', description: 'List files' },
+      copy: { command: 'ls -la', description: 'List files' },
       card: {
         cwd: '/projects/app', output: undefined,
         exitCode: undefined, signal: undefined, running: true,
@@ -116,7 +113,7 @@ describe('terminalCardModel', () => {
       call: { name: 'bash', argsRaw: shellArgs({ workdir: '/projects/app' }) },
       content: [{ type: 'text', text: 'boom\n[exit code: 2]' }],
     }))).toEqual({
-      copy: { kind: 'shell', command: 'ls -la', description: 'List files' },
+      copy: { command: 'ls -la', description: 'List files' },
       card: {
         cwd: '/projects/app', output: 'boom',
         exitCode: 2, signal: undefined, running: false,
@@ -212,30 +209,13 @@ describe('terminalCardModel', () => {
     expect(terminalCardModel(settled({ call: { name: 'bash', argsRaw: shellArgs({ workdir: '../../..' }) } }), '\\\\server\\share\\app')?.card.cwd).toBe('\\\\server\\share')
   })
 
-  it('supports terminal_send without giving background or failed sends a terminal card', () => {
-    const argsRaw = JSON.stringify({ sessionId: 'pty-3', text: 'make' })
-    const run = running({ name: 'terminal_send', argsRaw })
-    expect(terminalCardModel(run, '/w/app')).toMatchObject({
-      copy: { kind: 'terminal-send', text: 'make', sessionId: 'pty-3' },
-      card: { cwd: undefined, running: true },
-    })
-    const done = settled({ call: { name: 'terminal_send', argsRaw }, content: [{ type: 'text', text: 'ok' }] })
-    expect(localizeTerminalCardModel(terminalCardModel(done)!, enT)).toMatchObject({
-      description: 'Terminal pty-3', card: { command: 'make', output: 'ok', running: false },
-    })
-    expect(terminalCardModel(settled({
-      call: { name: 'terminal_send', argsRaw: JSON.stringify({ sessionId: 'pty-3', text: 'make', run_in_background: true }) },
-    }))).toBeNull()
-    expect(terminalCardModel(settled({ ...done, isError: true }))).toBeNull()
-  })
-
   it('preserves persistent-shell running cards and settled generic output', () => {
     const persistent = JSON.stringify({ command: 'pwd' })
     expect(terminalCardModel(running({ argsRaw: persistent }))).toMatchObject({
-      copy: { kind: 'shell', command: 'pwd', description: undefined }, card: { running: true },
+      copy: { command: 'pwd', description: undefined }, card: { running: true },
     })
     expect(terminalCardModel(running({ name: 'pwsh', argsRaw: persistent }))).toMatchObject({
-      copy: { kind: 'shell', command: 'pwd', description: undefined }, card: { running: true },
+      copy: { command: 'pwd', description: undefined }, card: { running: true },
     })
     expect(terminalCardModel(settled({ call: { name: 'bash', argsRaw: persistent } }))).toBeNull()
     expect(terminalCardModel(settled({ call: { name: 'pwsh', argsRaw: persistent } }))).toBeNull()
@@ -246,22 +226,8 @@ describe('terminalCardModel', () => {
       call: { name: 'pwsh', argsRaw: ARGS },
       content: [{ type: 'text', text: 'failed\n[exit code: 3]' }],
     }))).toMatchObject({
-      copy: { kind: 'shell', command: 'ls -la', description: 'List files' },
+      copy: { command: 'ls -la', description: 'List files' },
       card: { output: 'failed', exitCode: 3, running: false },
-    })
-  })
-
-  it('keeps terminal_send copy semantic until the render locale is known', () => {
-    const model = terminalCardModel(running({
-      name: 'terminal_send',
-      argsRaw: JSON.stringify({ sessionId: 'pty-3', text: '' }),
-    }))!
-    expect(model.copy).toEqual({ kind: 'terminal-send', text: '', sessionId: 'pty-3' })
-    expect(localizeTerminalCardModel(model, t)).toMatchObject({
-      description: '终端 pty-3', card: { command: '（发送输入）' },
-    })
-    expect(localizeTerminalCardModel(model, enT)).toMatchObject({
-      description: 'Terminal pty-3', card: { command: '(send input)' },
     })
   })
 
@@ -303,18 +269,18 @@ describe('terminalCardModel', () => {
     for (const parentCallId of [undefined, 'parent']) {
       const parent = parentCallId === undefined ? {} : { parentCallId }
       expect(terminalCardModel(running({ name, argsRaw, ...parent }))).toEqual({
-        copy: { kind: 'shell', command: 'ls -la', description: 'List files' },
+        copy: { command: 'ls -la', description: 'List files' },
         card: { cwd: '/requested', running: true, background: true, output: undefined, exitCode: undefined, signal: undefined },
       })
       for (const content of [[], [{ type: 'text' as const, text: 'started background job bash-1\n[exit code: 7]' }]]) {
         const block = settled({ call: { name, argsRaw }, ...parent, meta: { cwd: '/recorded' }, content })
         const model = terminalCardModel(block)!
         expect(model).toEqual({
-          copy: { kind: 'shell', command: 'ls -la', description: 'List files' },
+          copy: { command: 'ls -la', description: 'List files' },
           card: { cwd: '/recorded', running: false, background: true },
         })
         expect(terminalFailed(model)).toBe(false)
-        expect(localizeTerminalCardModel(model, t).card).toEqual({
+        expect(resolvedTerminalCard(model).card).toEqual({
           command: 'ls -la', cwd: '/recorded', running: false, background: true,
         })
         expect(terminalCardModel({ ...block, isError: true })).toBeNull()
@@ -323,10 +289,7 @@ describe('terminalCardModel', () => {
     }
   })
 
-  it('returns null for background terminal sends, errors, malformed args, unsupported tools, and non-text results', () => {
-    expect(terminalCardModel(running({ name: 'terminal_send', argsRaw: JSON.stringify({
-      sessionId: 'pty-3', text: 'make', run_in_background: true,
-    }) }))).toBeNull()
+  it('returns null for errors, malformed args, unsupported tools, and non-text results', () => {
     expect(terminalCardModel(settled({ isError: true }))).toBeNull()
     expect(terminalCardModel(running({ argsRaw: '{' }))).toBeNull()
     expect(terminalCardModel(running({ name: 'read' }))).toBeNull()
@@ -359,17 +322,6 @@ describe('terminalCardModel', () => {
       justification: 'Write generated output',
       extension: { version: 1 },
     }) }))).not.toBeNull()
-  })
-
-  it('validates terminal_send optional fields while retaining open-root extensions', () => {
-    const send = (over: Record<string, unknown>) => running({
-      name: 'terminal_send',
-      argsRaw: JSON.stringify({ sessionId: 'pty-1', text: 'make', ...over }),
-    })
-    expect(terminalCardModel(send({ submit: 'yes' }))).toBeNull()
-    expect(terminalCardModel(send({ run_in_background: 'yes' }))).toBeNull()
-    expect(terminalCardModel(send({ submit: false, run_in_background: false }))).not.toBeNull()
-    expect(terminalCardModel(send({ extension: { version: 1 } }))).not.toBeNull()
   })
 
   it('keeps persistent shells with open-root extension fields on the running-card path', () => {
@@ -451,29 +403,6 @@ describe('chat row terminal body', () => {
     // The card states its own run state: a running command reads as running
     // even though it has no output yet to distinguish it from an empty settle.
     expect(runStateOf(view.container)).toBe('ongoing')
-  })
-
-  it.each([
-    { locale: 'zh', translate: t, description: '终端 pty-3', command: '（发送输入）' },
-    { locale: 'en', translate: enT, description: 'Terminal pty-3', command: '(send input)' },
-  ])('renders terminal_send copy through the $locale locale', ({ translate, description, command }) => {
-    const block = running({
-      name: 'terminal_send',
-      argsRaw: JSON.stringify({ sessionId: 'pty-3', text: '' }),
-    })
-    const view = render(<GenericToolCard {...ownerProps(block)} toolName="terminal_send" t={translate} />)
-    expect(view.getByText(description)).toBeTruthy()
-    toggleRow(view)
-    expect(view.getByText(command)).toBeTruthy()
-  })
-
-  it('a background terminal_send keeps the args-JSON text body', () => {
-    const view = render(<GenericToolCard {...ownerProps(settled({
-      call: { name: 'terminal_send', argsRaw: JSON.stringify({ sessionId: 'pty-3', text: 'make', run_in_background: true }) },
-    }))} toolName="terminal_send" />)
-    toggleRow(view)
-    expect(view.getByText(/"sessionId"/)).toBeTruthy()
-    expect(view.container.querySelector('[data-terminal]')).toBeNull()
   })
 
   it('malformed empty args use the generic output body', () => {

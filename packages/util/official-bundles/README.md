@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@ocean/ocean-official-bundles` holds the bundle package names the dsh installation decides on: which bundles each shipped profile starts with, which bundles it ships switched off, which official bundles install on request, which bundles earlier releases shipped and profiles drop, and which packages the plugin manager protects, hides, orders, or marks experimental. [`dsh-app-boot`](../../boot/app-boot/README.md) applies these lists when it loads a profile; the plugin manager, the CLI, Desktop, the image packer, and repository checks read them directly. The package holds data only, so changing a list leaves app-boot and the plugin manager untouched. Use it as a direct library dependency, not through `cordis.yml`.
+`@ocean/ocean-official-bundles` holds the bundle package names the dsh installation decides on: which bundles each shipped profile starts with, which bundles it ships switched off, which official bundles install on request, which bundles earlier releases shipped and profiles drop, and which packages the plugin manager protects, hides, or orders. [`dsh-app-boot`](../../boot/app-boot/README.md) applies these lists when it loads a profile; the plugin manager, the CLI, Desktop, the image packer, and repository checks read them directly. The package holds data only, so changing a list leaves app-boot and the plugin manager untouched. Use it as a direct library dependency, not through `cordis.yml`.
 
 ## Table of Contents
 
@@ -32,12 +32,12 @@ Edit this package when the installation's bundle selection or the plugin manager
 
 ### Optional and retired bundles
 
-`OPTIONAL_BUNDLES` names the bundles the installation ships for a person to switch on. Each must be a runtime dependency of the `dsh` app that declares `dsh.bundle.patch`, an icon, and `./locale/*.json` display metadata, and no template may select it; [`verify-default-product-isolation`](../../../scripts/verify-default-product-isolation.ts) checks these rules. The [plugin manager](../../boot/plugin-manager/README.md#use-this-package) reports these bundles as `optional`. `RETIRED_BUNDLES` names bundles the installation no longer carries; app-boot removes them from a profile's bundle list when it loads the profile.
+`OPTIONAL_BUNDLES` names the bundles the installation ships for a person to switch on. Each must be a runtime dependency of the `dsh` app that declares `dsh.bundle.patch`, an icon, and `./locale/*.json` display metadata, and no template may select it; [`optional-bundles`](../../../scripts/optional-bundles.spec.ts) checks each entry's display metadata and icon. The [plugin manager](../../boot/plugin-manager/README.md#use-this-package) reports these bundles as `optional`. `RETIRED_BUNDLES` names bundles the installation no longer carries; app-boot removes them from a profile's bundle list when it loads the profile.
 
 <a id="plugin-manager-lists"></a>
 ### Plugin manager lists
 
-`PROTECTED_PLUGINS` names the plugin packages the [plugin manager](../../boot/plugin-manager/README.md) keeps read-only because management needs them; a bundle that contains one is a management bundle. Removing a name drops only this `management-required` refusal; the manager's own entry, installation-carried bundles, and unaddressable rows stay protected by their own rules. The [Web plugin page](../../client/ui-plugin-manager/README.md) hides the `HIDDEN_BUNDLES`, ranks the `EXTENSION_BUNDLES` first in their order, keeps the `MORE_BUNDLES` off its main list until the profile enables them, and marks the `EXPERIMENTAL_BUNDLES` with the Experimental badge.
+`PROTECTED_PLUGINS` names the plugin packages the [plugin manager](../../boot/plugin-manager/README.md) keeps read-only because management needs them; a bundle that contains one is a management bundle. Removing a name drops only this `management-required` refusal; the manager's own entry, installation-carried bundles, and unaddressable rows stay protected by their own rules. The [Web plugin page](../../client/ui-plugin-manager/README.md) hides the `HIDDEN_BUNDLES`, ranks the `EXTENSION_BUNDLES` first in their order, and keeps the `MORE_BUNDLES` off its main list until the profile enables them.
 
 ### On-demand bundles
 
@@ -58,7 +58,7 @@ Repository checks read the lists in `src/bundles.ts` as TypeScript literals with
 | File | Role |
 |---|---|
 | [`src/bundles.ts`](src/bundles.ts) | Profile templates and the default, installation-owned, retired, optional, and on-demand bundle lists |
-| [`src/plugin-manager.ts`](src/plugin-manager.ts) | Protected plugin packages and the Web plugin page's hidden, ordered, and experimental bundle lists |
+| [`src/plugin-manager.ts`](src/plugin-manager.ts) | Protected plugin packages and the Web plugin page's hidden and ordered bundle lists |
 | [`src/catalog.generated.ts`](src/catalog.generated.ts) | Generated offline metadata for the on-demand bundles |
 | [`src/index.ts`](src/index.ts) | Public exports and the catalog entry type |
 

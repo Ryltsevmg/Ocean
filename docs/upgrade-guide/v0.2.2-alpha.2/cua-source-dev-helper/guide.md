@@ -13,7 +13,7 @@ Source checkouts previously built `DSH Computer Use.app` with the release bundle
 
 ## Migration
 
-1. Keep the default `sourceSigning: ad-hoc` for temporary signatures. To reduce repeated grants after rebuilds and across worktrees, follow the [developer signing skill](../../../../.agents/skills/dsh-cua-macos-signing/SKILL.md) to generate or reuse a certificate, then write `sourceSigning: { identity, keychain }` into the DSH home’s `cordis.patch.yml`; `keychain` must be an absolute path.
+1. Keep the default `sourceSigning: ad-hoc` for temporary signatures. To reduce repeated grants after rebuilds and across worktrees, follow the `developer signing skill` to generate or reuse a certificate, then write `sourceSigning: { identity, keychain }` into the DSH home’s `cordis.patch.yml`; `keychain` must be an absolute path.
 2. Start DSH from the source checkout, call Computer Use, and grant Accessibility and Screen Recording to `DSH Computer Use Dev` in System Settings.
 3. Confirm that `getCapabilities` reports both permissions as `true`. With a fixed signature, check again after changing and rebuilding Swift code and from another worktree. Remove an old `DSH Computer Use` entry only when no installed DSH uses it.
 4. After the keychain locks, rerun setup as described in the skill to unlock and reuse the identity. To stop using it, select `ad-hoc` or remove the configuration, then remove the identity through the skill; deleting DSH home does not delete the developer keychain.

@@ -1,5 +1,5 @@
 // Shared plumbing for the web smoke tests (dist location, free port, failure shots).
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -72,17 +72,6 @@ export async function collectWindowSurface(page: Page, controlProbe?: WindowCont
     }
     return { regions, controls }
   }, controlProbe)
-}
-
-/**
- * Read the `meta.description` an experimental bundle's plugin page shows for one locale.
- * @param bundle - Package directory under `packages/experimental`.
- * @param locale - Locale resource name, such as `en` or `zh`.
- * @returns The description text from `locale/<locale>.json`.
- */
-export function experimentalBundleDescription(bundle: string, locale: string): string {
-  const resource = JSON.parse(readFileSync(join(REPO_ROOT, 'packages/experimental', bundle, 'locale', `${locale}.json`), 'utf8')) as { meta: { description: string } }
-  return resource.meta.description
 }
 
 const installationRequire = createRequire(join(REPO_ROOT, 'apps/cli/package.json'))

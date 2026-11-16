@@ -9,7 +9,7 @@
  * `import type` and registers through `ctx.slots`; it never imports this
  * package at runtime.
  *
- * A contributed tab, such as Discover, installs and updates through the page's own dialogs.
+ * A contributed tab installs and updates through the page's own dialogs.
  *
  * Entries accept `page` for the form with its own save control and `summary`
  * for an official card's one-liner or a row's missing-description fallback.
@@ -101,7 +101,7 @@ export interface PluginTabUpdate {
   readonly spec: string
 }
 
-/** Owner props of a page tab another plugin contributes, such as Discover. */
+/** Owner props of a page tab another plugin contributes. */
 export interface PluginTabProps {
   /**
    * Install an exact version the person already confirmed: the page's install dialog opens at its check and progress
@@ -134,7 +134,7 @@ declare module '@ocean/ocean-client-ui-slots' {
     /** Additional MenuItemButton rows after installation: 72px high, with a title and a description capped at two lines. */
     'plugins.add.actions': { kind: 'list'; scope: 'root'; owner: PluginAddActionsProps }
     /**
-     * Tabs after the page's own Installed tab, such as Discover: `label` names the tab and `order` places it. The
+     * Tabs after the page's own Installed tab: `label` names the tab and `order` places it. The
      * page renders the selected entry under its header and tabs; the entry draws its own content and installs and
      * updates through the owner's `install` and `update`.
      */
@@ -172,8 +172,8 @@ declare module '@ocean/ocean-client-ui-slots' {
      */
     'plugins.detail.actions': { kind: 'list'; scope: 'root'; owner: PluginDetailProps }
     /**
-     * Tags beside a detail page's title, after the version, beta, and problem
-     * tags the page draws itself, rendered with the page's subject.
+     * Tags beside a detail page's title, after the version and problem tags
+     * the page draws itself, rendered with the page's subject.
      */
     'plugins.detail.badge': { kind: 'list'; scope: 'root'; owner: PluginDetailProps }
     /**

@@ -87,7 +87,7 @@ describe('web e2e: plugin configuration pages', () => {
     return readFile(join(scaffold.harnessHome, 'profiles', 'scaffold', 'cordis.patch.yml'), 'utf8').catch(() => '')
   }
 
-  it('keeps configuration pages first and opens the full experimental plugin list separately', async () => {
+  it('keeps configuration pages first and opens the full optional plugin list separately', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-plugin-config-cards'))
     const panel = await openPlugins()
 
@@ -107,35 +107,34 @@ describe('web e2e: plugin configuration pages', () => {
 
     const extensions = panel.locator('[data-plugin-group="extensions"]')
     const more = panel.getByRole('button', { name: '更多', exact: true })
-    expect(await extensions.getByRole('heading', { name: '实验性插件', exact: true }).count()).toBe(1)
+    expect(await extensions.getByRole('heading', { name: '可选插件', exact: true }).count()).toBe(1)
     expect(await extensions.getByRole('button', { name: '更多', exact: true }).textContent()).toBe('更多')
-    expect(await extensions.getByRole('list').isVisible()).toBe(true)
+    // Both subagent bundles are held back to the More list while the profile
+    // leaves them off, so the group shows no card of its own.
+    expect(await extensions.getByRole('list').count()).toBe(0)
     expect(await panel.locator('[data-plugin-group="more"]').count()).toBe(0)
     await more.focus()
     await page.keyboard.press('Enter')
-    await panel.getByRole('heading', { name: '实验性插件', exact: true, level: 1 }).waitFor()
-    // The More list omits the shipped bundles whose own rows do not run (the visibility rule lives in
-    // ui-plugin-manager), so it holds fewer cards than the installed optional-bundle list.
+    await panel.getByRole('heading', { name: '可选插件', exact: true, level: 1 }).waitFor()
     const bundles = await scaffold.ctx.pluginManager.listBundles()
     expect(await panel.locator('[data-plugin-group="more"] [data-plugin-package]').count())
       .toBe(bundles.filter(bundle => !HIDDEN_BUNDLES.has(bundle.name)
-        && bundle.name !== '@ocean/ocean-experimental-liveshare'
         && bundle.official && (bundle.listedByDefault !== false || bundle.enabled || bundle.installed)).length)
     expect(await basic.count()).toBe(0)
     expect(await extensions.count()).toBe(0)
     expect(await panel.locator('[data-plugin-group="bundles"]').count()).toBe(0)
-    await panel.getByRole('button', { name: '查看 开发者工具', exact: true }).click()
+    await panel.getByRole('button', { name: '查看 Codex 子智能体', exact: true }).click()
     await panel.locator('[data-plugin-detail]').waitFor()
-    await panel.getByRole('button', { name: '返回 实验性插件', exact: true }).click()
-    await panel.getByRole('heading', { name: '实验性插件', exact: true, level: 1 }).waitFor()
+    await panel.getByRole('button', { name: '返回 可选插件', exact: true }).click()
+    await panel.getByRole('heading', { name: '可选插件', exact: true, level: 1 }).waitFor()
     await panel.getByRole('button', { name: '返回插件', exact: true }).focus()
     await page.keyboard.press('Space')
-    expect(await extensions.getByRole('list').isVisible()).toBe(true)
+    expect(await extensions.getByRole('heading', { name: '可选插件', exact: true }).count()).toBe(1)
     expect(await panel.locator('[data-plugin-group="more"]').count()).toBe(0)
     await more.click()
     await page.reload({ waitUntil: 'load' })
     await openPlugins()
-    expect(await extensions.getByRole('list').isVisible()).toBe(true)
+    expect(await extensions.getByRole('heading', { name: '可选插件', exact: true }).count()).toBe(1)
     expect(await panel.locator('[data-plugin-group="more"]').count()).toBe(0)
 
     const snapshot = await captureStableAria(page, '[data-plugin-panel]', scaffold.workspaceCwd)
