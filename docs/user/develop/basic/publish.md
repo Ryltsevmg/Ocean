@@ -108,6 +108,17 @@ Ordinary linked imports follow Node's ancestor order and check each directory's 
 
 Linking a broad checkout does not apply peer interception to the running installation's own package directories. Links whose targets stay inside the profile, including its pnpm store, remain profile-owned installation content rather than external linked roots. Overlapping external links do not change lookup order: each request still starts from its importer's directory.
 
+<a id="install-a-built-tarball"></a>
+### Install a built tarball
+
+`pnpm pack` writes the package into a `.tgz` archive as it stands at pack time. The archive contains that packaged snapshot: installing it runs the copy it holds, while the linked checkout above keeps following the files on disk. Install the archive by absolute path:
+
+```sh
+dsh plugin --profile demo add /path/to/dsh-hello-plugin-0.1.0.tgz
+```
+
+The profile records the archive as a `file:` dependency and adds the bundle to `dsh.profile.bundles` like any other install, so the verification and removal commands below apply unchanged.
+
 Verify the layer without booting, then boot:
 
 ```sh
@@ -183,7 +194,7 @@ Treat that allowance as **permission to execute the package's code on your machi
 If you would rather not ask users for the allowance, distribute built artifacts instead — neither form needs any build permission:
 
 - **Publish to npm** with `lib/` built at `pnpm publish` time; `dsh plugin add your-package` then installs prebuilt code.
-- **Ship a tarball** from `pnpm pack`; users run `dsh plugin add ./hello-plugin-0.1.0.tgz`.
+- **Ship a tarball** from `pnpm pack`; [install the archive by absolute path](#install-a-built-tarball).
 
 ## Next steps
 
