@@ -296,7 +296,7 @@ describe('PermissionPresetService', () => {
 })
 
 describe('new-session default', () => {
-  it('rejects persisted Auto before publication when its integration is absent', async () => {
+  it('confines persisted Auto before publication when its integration is absent', async () => {
     const ctx = await mounted()
     const source = freshSession('auto-source')
     source.append('permission/preset', { preset: AUTO_PRESET })
@@ -304,8 +304,12 @@ describe('new-session default', () => {
     source.append('approval/policy', { policy: 'never' })
 
     const id = SessionId('auto-without-integration')
-    await expect(ctx.agents.create({ sessionId: id, seed: source.snapshotEvents() })).rejects.toThrow(/cannot restore preset "auto"/)
-    expect(ctx.sessions.get(id)).toBeUndefined()
+    const { agent } = await ctx.agents.create({ sessionId: id, seed: source.snapshotEvents() })
+    expect(ctx.sessionProjections.checkpoint(agent.session).permissions?.val).toMatchObject({
+      sandbox: 'read-only',
+      approval: 'ask',
+    })
+    expect(ctx.permissionPresets.current(agent.session)).not.toBe(AUTO_PRESET)
     expect(source.snapshotEvents().at(-1)).toMatchObject({ type: 'approval/policy' })
   })
 
