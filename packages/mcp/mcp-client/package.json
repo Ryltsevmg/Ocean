@@ -68,7 +68,7 @@
     "@deepseek-ai/cordis": "workspace:~",
     "@ocean/ocean-http-proxy": "workspace:*",
     "@modelcontextprotocol/server": "2.2.0",
-    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/node": "2.1.1",
     "zod": "4.6.6",
     "@ocean/ocean-mcp-resources": "workspace:*",
     "@ocean/ocean-system-prompt": "workspace:*",
