@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-workspace-changes",
   "description": "Per-turn workspace file changes recorded from git working-tree snapshots and whole-file captures, with per-file comparisons, for the Ocean",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

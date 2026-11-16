@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-session-title-llm",
   "description": "Shared LLM generation policy for Ocean session-title providers",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

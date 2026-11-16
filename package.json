@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-root",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "license": "MIT",
   "private": true,
   "type": "module",

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-fs-ssh",
   "description": "Filesystem provider over the shared POSIX SSH helper",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },

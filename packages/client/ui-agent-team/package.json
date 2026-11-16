@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-client-ui-agent-team",
   "description": "Web shared task board for a subagent tree",
-  "version": "0.2.2-rc.2",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
