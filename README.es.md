@@ -18,7 +18,7 @@ Ocean está en desarrollo activo. Las API y las funciones pueden cambiar. Lee el
 
 Usa este repositorio: [Ryltsevmg/Ocean](https://github.com/Ryltsevmg/Ocean). El acceso puede estar restringido mientras se prepara la versión pública. No uses un instalador del proyecto original ni un paquete npm sin verificar para instalar Ocean.
 
-Para configurar el código fuente y consultar los comandos locales de Web/Desktop, sigue la [guía de desarrollo](docs/development.md). Los requisitos y las definiciones de los comandos se mantienen en [package.json](package.json). Conserva una copia de seguridad de tus perfiles antes de probar una nueva compilación.
+Para preparar el repositorio y consultar los comandos para ejecutar Web y Desktop en local, sigue la [guía de desarrollo](docs/development.md). Los requisitos y las definiciones de los comandos se mantienen en [package.json](package.json). Conserva una copia de seguridad de tus perfiles antes de probar una nueva compilación.
 
 <a id="documentation"></a>
 
@@ -30,13 +30,13 @@ Para configurar el código fuente y consultar los comandos locales de Web/Deskto
 - [Seguridad](SAFETY.md)
 - [Guía de marca](docs/brand-guidelines.md)
 
-El flujo de verificación de [GitHub Actions](.github/workflows/) se ejecuta en las solicitudes de incorporación de cambios y los envíos a main una vez publicada esta configuración. El empaquetado para Linux sigue siendo manual. El empaquetado produce actualmente artefactos sin firmar; no es un canal de actualización automática.
+El flujo de verificación de [GitHub Actions](.github/workflows/) se ejecuta en las pull requests y los envíos a la rama principal una vez publicada esta configuración. El empaquetado para Linux sigue siendo manual. El proceso genera artefactos sin firmar y carece de un canal de actualización automática.
 
 <a id="feedback"></a>
 
 ## Comentarios
 
-Comunica los errores reproducibles mediante las [incidencias de Ocean](https://github.com/Ryltsevmg/Ocean/issues), según tu acceso al repositorio, o contacta con el [soporte de Ocean](mailto:support@oceanharness.com); el [bot de soporte de Telegram](https://t.me/oceanchatsupportbot) sigue disponible como canal adicional. Nunca publiques tokens, registros de sesiones privadas ni datos personales en una incidencia pública.
+Comunica los errores reproducibles mediante las [incidencias de Ocean](https://github.com/Ryltsevmg/Ocean/issues), según tu acceso al repositorio, o contacta con el [soporte de Ocean](mailto:support@oceanharness.com); el [bot de soporte de Telegram](https://t.me/oceanchatsupportbot) sigue disponible como canal adicional. Nunca publiques tokens, registros privados de sesiones ni datos personales en una incidencia pública.
 
 <a id="license-and-acknowledgements"></a>
 

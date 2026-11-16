@@ -1,6 +1,6 @@
 <a id="uninstall-ocean-desktop"></a>
 
-# Uninstallieren Ocean Desktop
+# Ocean Desktop deinstallieren
 
 <!-- USER_LANGUAGES_START -->
 [English](desktop-uninstall-cleanup.md) | [中文](desktop-uninstall-cleanup.zh.md) | [Русский](desktop-uninstall-cleanup.ru.md) | [日本語](desktop-uninstall-cleanup.ja.md) | [Español](desktop-uninstall-cleanup.es.md) | [Français](desktop-uninstall-cleanup.fr.md) | Deutsch | [Português](desktop-uninstall-cleanup.pt.md) | [한국어](desktop-uninstall-cleanup.ko.md)
@@ -10,25 +10,25 @@ Verwenden Sie dieses Handbuch, um Ocean Desktop unter macOS, Windows oder Linux 
 
 <a id="1-uninstall-the-app"></a>
 
-## 1. Deinstallieren Sie die App
+## 1. Die App deinstallieren
 
-Beenden Sie alle Befehle mit der gebündelten CLI von Desktop. Wenn Sie den `dsh` -Befehl über Desktop installiert haben, wählen Sie zuerst **Manage dsh Command... → Entfernen Sie** im Anwendungsmenü. Dadurch wird die Registrierung des Desktop-Befehls entfernt, ohne unabhängige CLI-Programme zu deinstallieren.
+Lassen Sie laufende Befehle der mit Ocean Desktop ausgelieferten CLI zu Ende laufen. Wenn Sie den Befehl `dsh` über die App installiert haben, wählen Sie zuerst **dsh-Befehl verwalten… → Entfernen** im Anwendungsmenü. Dadurch wird die Registrierung des von Ocean Desktop bereitgestellten Befehls entfernt. Unabhängige CLI-Programme bleiben installiert.
 
 Beenden Sie Ocean und deinstallieren Sie es dann mit der Prozedur Ihrer Plattform:
 
 - **macOS:** Löschen Sie die App aus Anwendungen im Finder.
 - **Windows:** Deinstallieren Sie es über Einstellungen → Apps → Installierte Apps unter Windows 11 oder Systemsteuerung → Programme → Programme und Funktionen.
-- **Linux:** Entfernen Sie die Installation mit der Methode, die sie installiert hat; für ein extrahiertes Verzeichnis entfernen Sie dieses Installationsverzeichnis, nachdem Sie die App beendet haben.
+- **Linux:** Verwenden Sie zum Entfernen dieselbe Methode wie bei der Installation. Wenn Sie die App in ein Verzeichnis entpackt haben, löschen Sie dieses Verzeichnis nach dem Beenden der App.
 
 <a id="2-inspect-local-data-before-cleanup"></a>
 
 ## 2. Lokale Daten vor der Bereinigung prüfen
 
-Durch das Löschen lokaler Daten können Sitzungen, Anmeldeinformationen, Einstellungen, Plugins, Caches und gemeinsam genutzter CLI-Zustand dauerhaft entfernt werden.
+Beim Löschen lokaler Daten können Sitzungen, Anmeldedaten, Einstellungen, Plugins, Caches und gemeinsam genutzte CLI-Daten dauerhaft verloren gehen. Sichern Sie alle Daten, die Sie behalten möchten. Löschen Sie kein Verzeichnis allein deshalb, weil sein Name an Ocean oder DSH erinnert.
 
-Der aktuelle Standard Ocean Home ist `~/.ocean`oder `.ocean` unter dem Windows-Benutzerprofil. `DSH_HOME` kann einen anderen Standort auswählen; Überprüfen Sie die Einstellung, die zum Starten von Desktop verwendet wird, die vom aktuellen Terminal abweichen kann. Die folgenden Befehle drucken nur Kandidatenstandorte aus und löschen nichts. Sie entdecken nicht das tatsächliche `userData` -Verzeichnis von Electron oder alle installationsspezifischen Caches.
+Das aktuelle Standardverzeichnis für Ocean-Daten ist `~/.ocean`, unter Windows `.ocean` im Benutzerprofil. Mit `DSH_HOME` können Sie einen anderen Pfad festlegen. Prüfen Sie den beim Start von Ocean Desktop verwendeten Wert, der von dem im aktuellen Terminal abweichen kann. Die folgenden Befehle geben nur mögliche Pfade aus und löschen nichts. Sie ermitteln weder das tatsächlich von Electron genutzte Verzeichnis `userData` noch alle installationsspezifischen Caches.
 
-::: Codegruppe
+::: code-group
 
 ```sh [macOS]
 : "${HOME:?HOME must be set}"
@@ -60,14 +60,14 @@ printf '%s\n' \
 
 :::
 
-Der Updater-Cache-Name wird vom Desktop-Paketnamen und nicht vom Produkttitel abgeleitet. Diese Kandidaten verwenden das aktuelle `@ocean/ocean-desktop` -Paket; ein anderer Build kann abweichen. Unter Windows überprüft der [-Deinstaller](../../../apps/desktop/installer/uninstall.nsh) die Produkt- und Paketnamen-Anwendungsdatenverzeichnisse und den Updater-Cache, bewahrt jedoch das Ocean-Home; Updates und Retained-Data-Neuinstallationen können auch Anwendungsdaten speichern.
+Der Name des Update-Caches leitet sich vom Desktop-Paketnamen ab. Die hier genannten Pfade gelten für das aktuelle Paket `@ocean/ocean-desktop` und können sich bei einem anderen Build unterscheiden. Unter Windows prüft das [Deinstallationsprogramm](../../../apps/desktop/installer/uninstall.nsh) die nach Produkt und Paket benannten Anwendungsdatenverzeichnisse sowie den Update-Cache, lässt aber das Ocean-Datenverzeichnis bestehen. Auch bei Updates oder bei einer Neuinstallation mit Datenübernahme können Anwendungsdaten erhalten bleiben.
 
-Finden Sie die tatsächlichen Electron-Daten und Protokollverzeichnisse für Ihre Installation, bevor Sie sie entfernen; die [-Diagnosereferenz](../../../apps/desktop/docs/diagnostics/README.md#report-contents) beschreibt die Protokollstandorte. macOS-Präferenz, ShipIt, HTTP-Speicher und System-Cache-Namen hängen von der installierten Bündelkennung ab. Die Verpackung erfordert eine explizite `DSH_DESKTOP_APP_ID`; `com.deepseek.dsh` ist keine universelle Ocean-Kennung. Führen Sie keine Platzhalterbereinigung für diese Kennung aus, es sei denn, Sie haben diese Dateien unabhängig als Reste Ihrer vorherigen Installation identifiziert.
+Ermitteln Sie vor dem Löschen die tatsächlichen Electron-Daten- und Protokollverzeichnisse Ihrer Installation. Die [Diagnosereferenz](../../../apps/desktop/docs/diagnostics/README.md#report-contents) nennt die Protokollpfade. Die Namen für macOS-Einstellungen, ShipIt, HTTP-Speicher und Systemcaches hängen von der Bundle-ID der installierten App ab. Zum Erstellen eines Pakets muss `DSH_DESKTOP_APP_ID` ausdrücklich gesetzt sein. `com.deepseek.dsh` ist keine allgemeingültige Ocean-Kennung. Löschen Sie mit einem Platzhalter für diese Kennung nur dann Dateien, wenn Sie sie unabhängig davon als Reste Ihrer früheren Installation erkannt haben.
 
-`~/.dsh` Es war ein früherer Ausfall, nicht der aktuelle Ausfall. Löschen Sie es, frühere `@deepseek-ai` -Anwendungsdaten oder Spender-Ära-IDCaches nur, wenn Sie diese Reste erkennen und keine andere Installation sie benötigt. Entwicklungs- und Testverzeichnisse erfordern eigene Prüfungen.
+`~/.dsh` war in früheren Versionen das Standardverzeichnis. Löschen Sie dieses Verzeichnis, frühere Anwendungsdaten von `@deepseek-ai` oder Caches mit Kennungen des Ursprungsprojekts nur, wenn Sie diese Daten zuordnen können und keine andere Installation sie benötigt. Prüfen Sie Entwicklungs- und Testverzeichnisse separat.
 
 <a id="3-remove-verified-data-and-check"></a>
 
 ## 3. Verifizierte Daten entfernen und überprüfen
 
-Nachdem Sie jeden genauen Pfad und seinen Besitz bestätigt haben, entfernen Sie nur die Verzeichnisse, die Sie mit Ihrem Dateimanager ausgewählt haben. Lassen Sie unerkannte Pfade unberührt. Bestätigen Sie, dass die ausgewählten Pfade vor der Neuinstallation nicht mehr vorhanden sind. Wenn das Entfernen einen Fehler meldet, prüfen Sie die verbleibenden Dateien und beheben Sie den Fehler, anstatt das Löschziel zu erweitern.
+Prüfen Sie für jedes Verzeichnis den genauen Pfad und die zugehörige Installation. Entfernen Sie anschließend nur die ausgewählten Verzeichnisse mit Ihrem Dateimanager. Lassen Sie unbekannte Pfade unangetastet und prüfen Sie vor der Neuinstallation, dass die ausgewählten Pfade nicht mehr existieren. Falls beim Löschen ein Fehler auftritt, prüfen Sie die übrigen Dateien und beheben Sie die Ursache, ohne weitere Pfade zum Löschen hinzuzunehmen.

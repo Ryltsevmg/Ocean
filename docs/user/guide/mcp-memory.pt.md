@@ -14,7 +14,7 @@ Essas configurações de terceiros são fornecidas apenas como exemplos de inter
 
 ## O que o DSH faz
 
-O DSH analisa a sobreposição Cordis selecionada, inicia um comando stdio configurado ou se conecta a uma URL Streamable HTTP configurada, descobre ferramentas MCP e as expõe como `mcp__<serverName>__<tool>`. O DSH **não** baixa o servidor, inicializa seu banco de dados, escolhe seu provedor de modelos ou embeddings, cria uma conta na nuvem, migra dados do fornecedor ou supervisiona um serviço HTTP separado. Para stdio, o cliente genérico inicia e encerra o processo filho conforme o ciclo de vida do plugin DSH; para HTTP, o serviço externo já deve estar em execução.
+O DSH processa o arquivo de configuração adicional do Cordis selecionado, inicia um comando stdio configurado ou se conecta a uma URL Streamable HTTP configurada, descobre ferramentas MCP e as expõe como `mcp__<serverName>__<tool>`. O DSH **não** baixa o servidor, inicializa seu banco de dados, escolhe seu provedor de modelos ou embeddings, cria uma conta na nuvem, migra dados do fornecedor ou supervisiona um serviço HTTP separado. Para stdio, o cliente genérico inicia e encerra o processo filho conforme o ciclo de vida do plugin DSH; para HTTP, o serviço externo já deve estar em execução.
 
 A ponte stdio remove deliberadamente as variáveis do ambiente cujos nomes costumam identificar credenciais e todas as variáveis `DSH_*` antes de iniciar um processo filho; as demais variáveis continuam sendo herdadas. Cada exemplo adiciona apenas a configuração mínima necessária. Se um recurso opcional do servidor precisar de outro segredo, adicione a variável ao `config.env` da entrada em vez de colocar o segredo diretamente no YAML.
 
@@ -32,7 +32,7 @@ A ponte stdio remove deliberadamente as variáveis do ambiente cujos nomes costu
 
 ## Ativar um sistema
 
-Passe uma sobreposição ao DSH:
+Passe o arquivo de configuração ao DSH.
 
 ```sh
 dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
@@ -95,7 +95,7 @@ Use um valor único e mantenha o mesmo escopo de armazenamento do provedor duran
 2. Crie a sessão B do DSH no mesmo Host em execução. Não copie a conversa da sessão A. Pergunte: `What is my validation drink? Check memory.` Confirme que o modelo chamou a ferramenta de busca ou recuperação do provedor e retornou o valor.
 3. Ainda na sessão B, peça: `Use that preference to suggest one drink for the meeting.` Confirme que a resposta usa o valor recuperado.
 
-É necessária uma nova sessão DSH, mas não reiniciar o Host. Se um processo MCP filho falhar, a reconexão automática é acionada com espera progressiva e ressincronização das ferramentas; elas continuam listadas e as chamadas falham apenas durante a interrupção. Quando o limite de reconexões é atingido, as ferramentas são removidas do registro e a reconexão para até uma recarga ou reinicialização. A descoberta inicial é assíncrona: aguarde as ferramentas `mcp__...` do provedor antes de enviar o primeiro prompt de validação.
+Crie uma nova sessão no DSH. Você pode manter o mesmo Host em execução. Se um processo MCP filho falhar, a reconexão automática é acionada com espera progressiva e ressincronização das ferramentas; elas continuam listadas e as chamadas falham apenas durante a interrupção. Quando o limite de reconexões é atingido, as ferramentas são removidas do registro e as tentativas só voltam após recarregar ou reiniciar. A descoberta inicial é assíncrona: aguarde as ferramentas `mcp__...` do provedor antes de enviar o primeiro prompt de validação.
 
 <a id="bring-another-mcp-server"></a>
 

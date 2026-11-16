@@ -15,7 +15,7 @@ Este tutorial compila el SDK de Python a partir del código fuente de este repos
 - Python 3.10 o posterior
 - Git
 - Linux x64, Linux arm64, macOS 14 o posterior en arm64, o Windows x64
-- Un endpoint API compatible con DeepSeek y su credencial
+- Un endpoint de API compatible con DeepSeek y su credencial
 - Un espacio de trabajo aislado y una carpeta de Ocean aislada
 
 <a id="build-the-sdk-from-source"></a>
@@ -203,7 +203,7 @@ Usa el perfil estándar `sdk` para Agent Teams; `sdk-minimal` no incluye subagen
 
 Pasa su ruta absoluta en la opción `patches` del SDK con `profile="sdk"`. Python usa `patches=("/absolute/path/to/team-mode.yml",)`; TypeScript usa `patches: ["/absolute/path/to/team-mode.yml"]`. El parche sustituye toda la configuración de la entrada `agent-team`, por lo que debes incluir cualquier límite personalizado `maxTasks` en el mismo mapeo.
 
-Crea una Session raíz nueva y pídele que cree y enumere una tarea compartida. Su primera solicitud al modelo incluye las herramientas Team y las instrucciones de colaboración. La raíz guarda su modo y los subagentes lo comparten. Reanudar una Session existente conserva su modo, aunque se hubiera desactivado explícitamente o nunca se hubiera activado; cambiar o eliminar este parche no sustituye las selecciones guardadas. Consulta la [referencia del servicio Team](../../../packages/team/agent-team/README.md#use-this-package) para conocer la semántica del modo y de las tareas.
+Crea una sesión raíz nueva y pídele que cree y enumere una tarea compartida. Su primera solicitud al modelo incluye las herramientas Team y las instrucciones de colaboración. La raíz guarda su modo y los subagentes lo comparten. Reanudar una sesión existente conserva su modo, aunque se hubiera desactivado explícitamente o nunca se hubiera activado; cambiar o eliminar este parche no sustituye las selecciones guardadas. Consulta la [referencia del servicio Team](../../../packages/team/agent-team/README.md#use-this-package) para conocer la semántica del modo y de las tareas.
 
 <a id="understand-the-minimal-profile"></a>
 
@@ -221,7 +221,7 @@ Crea una Session raíz nueva y pídele que cree y enumere una tarea compartida. 
 
 El único paquete del perfil inserta el árbol completo sobre una raíz vacía y no incluye `dsh-base`; por tanto, las herramientas añadidas después al perfil base no pueden aparecer implícitamente. Contiene el protocolo del SDK, un adaptador DeepSeek configurado mediante el entorno, ejecución local y persistencia, pero no herramientas de archivos de texto, ajustes, credenciales gestionadas, telemetría OTel, herramientas web, subagentes ni descubrimiento de instrucciones locales. El [componente de registros de sesión de DeepSeek](../../../packages/session/session-log-deepseek/README.md) envía por defecto los eventos de registro aún no aceptados con las solicitudes DeepSeek, hasta `maxBytes` (8 MiB) por solicitud; configura `session-log-deepseek.enabled: false` en un parche del perfil para desactivarlo. Fija `danger-full-access`, por lo que el shell persistente elegido para la plataforma puede modificar cualquier ruta visible para el entorno; usa una copia desechable del repositorio o un contenedor.
 
-La lectura de imágenes requiere una ruta que admita imágenes. La compactación automática conserva el registro completo de la Session; consulta la [referencia del paquete](../../../packages/bundle/sdk-minimal/README.md) para conocer sus efectos sobre el modelo y el almacenamiento. En esta composición `sdk-minimal`, las entradas con barra no admitidas se mantienen como texto normal del prompt.
+La lectura de imágenes requiere una ruta que admita imágenes. La compactación automática conserva el registro completo de la sesión. Consulta la [referencia del paquete](../../../packages/bundle/sdk-minimal/README.md) para conocer sus efectos sobre el modelo y el almacenamiento. En esta composición `sdk-minimal`, los comandos con barra que el perfil no admite se mantienen como texto normal del prompt.
 
 El wheel instalado sigue incluyendo el perfil completo `web` y los recursos del frontend. Ejecuta `dsh web` con un `DSH_HOME` explícito cuando un despliegue del SDK de Python también necesite la aplicación de navegador; `web` es una aplicación CLI independiente y no puede servir a un cliente del SDK de Python.
 

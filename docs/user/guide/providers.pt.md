@@ -18,47 +18,47 @@ Abra **Configurações → Modelos**. O cartão do DeepSeek mostra um único cam
 
 As chaves são somente para gravação. Após salvar, a página recebe uma descrição com o valor oculto. O segredo nunca é enviado à página. A chave é armazenada em `$DSH_HOME/.credentials.yaml` e as configurações guardam somente a referência à credencial.
 
-Com uma chave salva e o endpoint padrão, os modelos do DeepSeek seguem a lista que a API do DeepSeek publica. A lista carrega quando os modelos são necessários pela primeira vez, atualiza em segundo plano a cada dez minutos enquanto eles estão em uso, e cai de volta para os modelos embutidos quando não pode carregar. Edição **Modelos** em **Configurações personalizadas** mantém sua própria lista em vez disso e pára de seguir a publicada; **Restaurar padrão** segue-lo novamente e recarrega-lo. Enquanto a lista publicada está em uso, o cartão mostra os modelos embutidos, de modo que um modelo recém-publicado aparece apenas no seletor de modelos. A referência [API-chave fornecedor](../../../packages/llm/llm-deepseek-api-key/README.md) possui a listagem, backback, e regras de gating.
+Com uma chave salva e o endpoint padrão, o DeepSeek usa a lista publicada pela API. A lista é carregada quando os modelos são usados pela primeira vez e atualizada em segundo plano aproximadamente a cada dez minutos enquanto estiverem em uso. Se a lista não carregar, os modelos integrados são usados. Editar **Modelos** em **Configurações personalizadas** substitui a lista publicada pela sua. **Restaurar padrões** volta a usar e carregar a lista publicada. Nesse modo, o cartão continua mostrando os modelos integrados e os novos modelos publicados aparecem apenas no seletor. A [referência do provedor com chave de API](../../../packages/llm/llm-deepseek-api-key/README.md) documenta as regras de listagem, alternativas e requisitos de acesso.
 
 <a id="add-a-third-party-provider"></a>
 
-## Adicionar um fornecedor de terceiros
+## Adicionar um provedor de terceiros
 
-Escolha **Adicionar fornecedor de modelo**. O cartão abre no **Fornecedor de modelos de terceiros**: escolha um provedor com o dsh ships — a lista mostra ids de provedores como o `anthropic`, `openai`, `moonshotai` para Kimi, ou o `zai` para GLM — digite sua chave API e salve. O catálogo instalado fornece o endpoint, protocolo e lista de modelos.
+Escolha **Adicionar provedor de modelos**. O cartão abre em **Provedor de modelos de terceiros**. Selecione um provedor incluído no DSH, como `anthropic`, `openai`, `moonshotai` para Kimi ou `zai` para GLM. Digite a chave de API e salve. O catálogo instalado fornece o endpoint, o protocolo e a lista de modelos.
 
-A autenticação **?** explica os fallbacks de prioridade e ambiente salvos. Deixe a chave em branco para usar uma credencial salva ou tente as variáveis de ambiente listadas. Uma dica verde identifica uma variável de ambiente detectada. Uma dica amarela significa que nenhuma variável credencial foi detectada; insira uma chave API ou configure a variável listada. Uma dica não confirmada significa que o estado lido falhou. A detecção não valida a credencial nem testa a conexão. Arquivos credenciais gerenciados pelo provedor, incluindo perfis AWS e credenciais padrão de aplicativos do Google, estão fora desta verificação. Os provedores sem autenticação de chave nativa, como `openai-codex`, não mostram nenhum campo de chave a menos que o perfil nomeie explicitamente uma referência credencial.
+O botão **?** explica a prioridade das credenciais salvas e as variáveis de ambiente usadas como alternativa. Deixe a chave em branco para usar uma credencial salva ou tentar as variáveis listadas. Um aviso verde indica que uma variável foi detectada. Um aviso amarelo indica que nenhuma foi detectada. Nesse caso, insira uma chave de API ou configure a variável indicada. Se a consulta de status falhar, o aviso indica que o status não foi confirmado. A detecção não valida a credencial nem testa a conexão. A verificação não inclui arquivos gerenciados pelo provedor, como perfis da AWS ou credenciais padrão de aplicativos do Google. Provedores sem autenticação nativa por chave, como `openai-codex`, só exibem um campo de chave se o perfil especificar uma referência de credencial.
 
-Uma credencial salva exibe uma visualização mascarada na entrada e uma dica verde de que a chave salva será usada. A pré-visualização retém o identificador antes do primeiro hífen ou sublinhado, depois cinco caracteres principais e quatro caracteres chave seguintes, apenas quando pelo menos oito caracteres do meio permanecem ocultos; caso contrário, a chave e identificador inteiros tornam-se pontos. As contas usam pontos de código Unicode. Chaves salvas não têm botão de olho e não podem ser reveladas, copiadas, cortadas ou parcialmente editadas; digitar ou colar substitui a chave inteira. Backspace ou Excluir etapas de remoção de teclas inteiras. Pressione Backspace ou Delete, em seguida, **Aplicar**, para remover o cancelamento armazenado e usar a autenticação do ambiente. Esvaziando uma substituição também está a eliminação da chave salva. **Cancelar** preserva a chave salva antes de salvar. Uma exclusão recusada deixa as configurações inalteradas. Se a chave for removida, mas as configurações falharem, o aviso informa que a exclusão não pode ser desfeita; tente novamente **Aplicar** para terminar as configurações, ou **Fechar** para deixar o resultado parcial. Limpar uma credencial compartilhada afeta cada recurso usando a mesma referência. Sem uma credencial de ambiente, o provedor não tem autenticação após a limpeza. Retalho do ambiente usa **Deixe em branco para usar env como auth** e uma dica de detecção enquanto a entrada está vazia. Um rascunho de substituição mostra um lembrete para aplicar a nova chave. Na pendência da remoção nomeia-se a variável de ambiente usada após a aplicação, quando a rota declara uma. Outras entradas não vazias não mostram nenhum texto de estado de autenticação. Variáveis de configuração de endereço aparecem sob **URL base** e não contam como credenciais.
+Quando há uma credencial salva, o campo exibe uma prévia mascarada e um aviso verde indica que a chave salva será usada. A prévia mantém o identificador anterior ao primeiro hífen ou sublinhado, os cinco primeiros caracteres e os quatro últimos da chave, desde que pelo menos oito caracteres intermediários fiquem ocultos. Caso contrário, o identificador e a chave viram pontos. A contagem usa pontos de código Unicode. Chaves salvas não têm botão para revelá-las e não podem ser copiadas, recortadas ou editadas em parte. Digitar ou colar substitui a chave inteira. Pressione Backspace ou Delete e depois **Aplicar** para remover a chave salva e usar a autenticação do ambiente. Esvaziar a chave de substituição também deixa pendente a exclusão da chave salva. **Cancelar** preserva a chave antes de salvar. Se a exclusão for recusada, as configurações permanecem como estavam. Se a chave for excluída, mas o salvamento das configurações falhar, um aviso informa que a exclusão é irreversível. Use **Aplicar** para tentar salvar de novo ou **Fechar** para deixar o resultado parcial. Excluir uma credencial compartilhada afeta todos os recursos que usam sua referência. Sem uma credencial no ambiente, o provedor fica sem autenticação. Quando o campo está vazio, o formulário indica que o ambiente será usado e exibe o status de detecção. Ao digitar uma chave nova, aparece um lembrete para aplicá-la. Se houver uma exclusão pendente e a rota declarar uma variável, o formulário informa qual será usada após a aplicação. Os demais campos preenchidos não exibem status de autenticação. Variáveis de endereço aparecem em **URL base** e ficam fora da detecção de credenciais.
 
-Um rascunho de chave editável e não vazio tem um botão de olho. Selecione **Mostrar segredo** para verificar o que você digitou, e **Esconder segredo** para mascara-lo novamente. Mudar a entrada mascara-a novamente. Os campos de senha nativos não oferecem corte; selecione o rascunho e pressione Backspace para apagá-lo ou revelá-lo antes de cortá-lo. As credenciais armazenadas permanecem somente para escrita.
+Se você digitou uma chave de substituição, use **Mostrar segredo** para conferi-la e **Ocultar segredo** para voltar a mascará-la. O campo volta a esconder a chave ao editá-la. Campos nativos de senha não permitem recortar texto oculto. Selecione o rascunho e pressione Backspace para apagá-lo ou revele o segredo antes de recortar. As credenciais salvas continuam disponíveis apenas para gravação.
 
 <a id="add-a-custom-model-api"></a>
 
-## Adicionar uma API de modelo personalizada
+## Adicionar uma API de modelos personalizada
 
-Mude o cartão para **Modelo personalizado API** para um relé, um gateway da empresa, um servidor self-hosted, ou qualquer provedor ausente do catálogo instalado. Forneça um ID de provedor minúscula, URL base, protocolo de API, credencial e pelo menos um modelo. O protocolo **API** deve ser o que o seu gateway fala, e o catador oferece quatro: OpenAI Chat Complementations, OpenAI Responses, Mensagens Antrópicas e API Gemini, armazenados no `cordis.patch.yml` do perfil ativo como `openai-completions`, `openai-responses`, `anthropic-messages`e `google-generative-ai`. Uma URL base da API Gemini inclui a versão da API, como `https://gateway.example/v1beta`. Um provedor fala um protocolo, então um gateway que serve dois provedores precisa de dois provedores.
+Mude o cartão para **API de modelos personalizada** para um retransmissor, um gateway da empresa, um servidor próprio ou qualquer provedor ausente do catálogo instalado. Informe um ID de provedor em minúsculas, a URL base, o protocolo da API, uma credencial e pelo menos um modelo. O **Protocolo de API** deve corresponder ao do gateway. As quatro opções são OpenAI Chat Completions, OpenAI Responses, Anthropic Messages e Gemini API. Elas são salvas no `cordis.patch.yml` do perfil ativo como `openai-completions`, `openai-responses`, `anthropic-messages` e `google-generative-ai`. A URL base da Gemini API inclui a versão da API, como `https://gateway.example/v1beta`. Cada provedor usa um único protocolo. Se o gateway oferecer dois protocolos, configure dois provedores.
 
 ![The custom model API form: Provider ID, display name, base URL, API protocol, and API key](providers-custom-form.png)
 
-O ID do Provedor é permanente porque requisições, sessões salvas, padrões de modelos e referências credenciais o usam. Para renomear um provedor, adicione um novo provedor e apague o antigo. O nome do display, URL base, protocolo, credencial e modelos permanecem editáveis.
+O ID do provedor é permanente porque solicitações, sessões salvas, modelos padrão e referências de credenciais usam esse identificador. Para mudá-lo, adicione outro provedor e exclua o antigo. O nome de exibição, a URL base, o protocolo, a credencial e os modelos podem ser editados.
 
 <a id="discover-models"></a>
 
-### Descubra modelos
+### Buscar modelos
 
-Sob **Model catalog**, escolha **Fetch disponíveis modelos** para perguntar o endpoint que modelos ele serve. A requisição usa o URL base, protocolo e chave atualmente no formulário, ou a chave armazenada de um provedor salvo, e a resposta abre um seletor pesquisável: modelos já na lista começam marcados, então procure, marque os modelos para adicionar, desmarque os que devem ser removidos e escolha **Update list**. Modelos configurados o endpoint não lista fica. Nada é armazenado até que você salve ou crie o provedor.
+No **Catálogo de modelos**, selecione **Buscar modelos disponíveis** para consultar os modelos oferecidos pelo endpoint. A solicitação usa a URL base, o protocolo e a chave do formulário, ou a chave salva do provedor. A resposta abre um seletor com busca. Os modelos já presentes aparecem marcados. Marque os modelos que deseja adicionar, desmarque os que deseja remover e escolha **Atualizar lista**. Os modelos configurados que o endpoint não lista são preservados. As mudanças são gravadas ao salvar ou criar o provedor.
 
-Discovery lê os formatos de listagem que gateways comuns publicam, mas não todas as respostas de endpoint em uma delas, então trate-a como uma conveniência em vez de uma garantia: quando falha ou não lista nada, adicione os IDs do modelo à mão e eles funcionam da mesma forma. Um provedor embutido é sempre respondido a partir do catálogo instalado, mesmo quando sua URL base aponta para um gateway, então busque através de um provedor personalizado para ver o que o gateway realmente serve.
+A busca aceita os formatos de listagem comuns dos gateways. Se o endpoint não devolver modelos ou se a consulta falhar, informe os IDs manualmente. Para provedores integrados, a busca sempre retorna o catálogo instalado, mesmo que a URL base aponte para um gateway. Use um provedor personalizado para consultar os modelos oferecidos pelo gateway.
 
 <a id="select-a-model"></a>
 
-## Selecione um modelo
+## Selecionar um modelo
 
 Os provedores configurados aparecem no selecionador de modelos. Selecionar um modelo também o torna o padrão para novas sessões. Uma sessão que já enviou uma solicitação mantém o modelo gravado em seu próprio registro.
 
-Para alterar a ordem do modelo de um provedor, edite-o em **Configurações → Modelos**, abra **Configurações personalizadas**, e arraste o punho de três linhas de um modelo. Você também pode focar o punho e pressionar a tecla de seta para cima ou para baixo. **Aplicar** mantém a ordem; **Cancelar** descarta-a. O selecionador de modelo segue a ordem salva dentro desse provedor.
+Para reordenar os modelos de um provedor, edite-o em **Configurações → Modelos**, abra **Configurações personalizadas** e arraste o controle de três linhas do modelo. Você também pode focar o controle e pressionar a seta para cima ou para baixo. **Aplicar** salva a ordem, e **Cancelar** descarta a alteração. O seletor segue a ordem salva para cada provedor.
 
-Se um nome padrão salvo um provedor que foi excluído, o compositor exibe **Select model** e bloqueia a entrada até que outro modelo seja selecionado.
+Se o modelo padrão salvo pertencer a um provedor excluído, o campo de mensagem exibe **Selecionar modelo** e impede a entrada de texto até que outro modelo seja escolhido.
 
 <a id="advanced-configuration"></a>
 
@@ -66,19 +66,21 @@ Se um nome padrão salvo um provedor que foi excluído, o compositor exibe **Sel
 
 O catálogo de configuração de plugins [gerado](../../config-catalog.md) lista todos os campos suportados e padrão para cada plugin; [`dsh-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) é a seção provedora que esta página configura. As referências [`dsh-llm-pi-ai`](../../../packages/llm/llm-pi-ai/README.md) e [`dsh-llm-deepseek`](../../../packages/llm/llm-deepseek/README.md) possuem configurações diretas `cordis.patch.yml` , resolução de catálogos, controles de raciocínio, credenciais e erros de adaptador.
 
-::: dica Configurações adicionais A página Modelos expõe a chave de API, o nome de exibição, URL base, protocolo de API, e o id de cada modelo, nome de exibição, janela de contexto, tokens de saída máxima e tipos de entrada, além dos níveis de raciocínio de um modelo em um provedor de API modelo personalizado. Configure os níveis de raciocínio dos modelos de um provedor embutido, switches de compatibilidade de requisição, cabeçalhos, timeouts e política de repetição em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`, o mesmo documento que a página escreve. Edite-o diretamente, ou, quando o navegador é executado na mesma máquina do servidor, abra-o com **Abra o arquivo de configuração** no cabeçalho Configurações; os adaptadores re-ler no próximo pedido, então nada precisa de um reinício. As subseções abaixo cobrem os campos de que a maioria dos gateways precisa.
+::: tip Configurações adicionais
+A página Modelos mostra a chave de API, o nome de exibição, a URL base e o protocolo de API do provedor. Para cada modelo, mostra o ID, o nome de exibição, a janela de contexto, o limite de tokens de saída e os tipos de entrada. Para provedores com API de modelos personalizada, também permite configurar os níveis de raciocínio. Para configurar esses níveis em provedores integrados, as opções de compatibilidade das solicitações, os cabeçalhos, os tempos limite e a política de novas tentativas, edite `$DSH_HOME/profiles/<profile>/cordis.patch.yml`, o mesmo arquivo gravado pela página. Se o navegador estiver no mesmo computador que o servidor, você também pode abri-lo com **Abrir arquivo de configuração** no cabeçalho de Configurações. Os adaptadores leem o arquivo de novo na próxima solicitação, sem reiniciar. As seções abaixo descrevem as opções mais usadas pelos gateways.
 
-Para o lançamento padrão da interface Web com `dsh web`, `<profile>` é `web`, então o caminho é `$DSH_HOME/profiles/web/cordis.patch.yml`. Se você iniciar um perfil personalizado, use o nome selecionado na inicialização. :::
+Ao iniciar a interface web com `dsh web`, `<profile>` é `web` e o caminho é `$DSH_HOME/profiles/web/cordis.patch.yml`. Se iniciar um perfil personalizado, use o nome selecionado na inicialização.
+:::
 
 <a id="image-input"></a>
 
-### Entrada da imagem
+### Entrada de imagens
 
-Em **Configurações → Modelos**, editar o provedor, abrir **Configurações personalizadas**, e expandir **Modelo opções**. **Tipos de entrada** ocupa sua própria linha abaixo dos campos de capacidade. Selecione **Image** para um modelo que aceita imagens e salva. **Text O** começa selecionado para um novo modelo personalizado sem capacidade de imagem herdada. Pelo menos um tipo deve permanecer selecionado; selecione Imagem antes de limpar Texto para um modelo somente de imagem.
+Em **Configurações → Modelos**, edite o provedor, abra **Configurações personalizadas** e expanda **Opções do modelo**. **Tipos de entrada** aparece abaixo dos campos de capacidade. Selecione **Imagem** para um modelo que aceita imagens e salve. **Texto** vem selecionado em um modelo personalizado novo que não herda o suporte a imagens. Pelo menos um tipo deve ficar selecionado. Para um modelo que só aceita imagens, selecione **Imagem** antes de desmarcar **Texto**.
 
 As caixas de seleção salvam `input` para modelos pi-ai e `inputModalities` para o adaptador direto DeepSeek. Você também pode editar o modelo em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`; por exemplo, este provedor personalizado de pi-ai declara um modelo somente de texto e um modelo de visão:
 
-Estes exemplos mostram campos de configuração dentro de um patch de perfil. Um sobreposição de configuração do Cordis substitui a configuração completa do item; preserva outros provedores e campos ao editar um sobreposição existente.
+Os exemplos usam campos de configuração de um patch de perfil. O Cordis substitui toda a configuração da entrada ao aplicar uma sobrescrita. Preserve os demais provedores e campos ao editar uma sobrescrita existente.
 
 ```yaml
 - id: llm-pi-ai
@@ -94,13 +96,13 @@ Estes exemplos mostram campos de configuração dentro de um patch de perfil. Um
             input: [text, image]
 ```
 
-Pi-ai. `input` aceita `text` e `image` e aplica- se apenas a esse modelo. Uma selecção explícita não vazia tem prioridade. Uma opção omitida ou vazia `input` herda os tipos de entrada do catálogo instalado, em seguida, a rota `defaultInput`, que por omissão `[text]`. As caixas de seleção exibem esses valores herdados sem salvar um sobreposição quando você simplesmente abre a linha.
+O campo `input` do pi-ai aceita `text` e `image` e vale apenas para aquele modelo. Uma seleção explícita e não vazia tem prioridade. Se `input` estiver ausente ou vazio, os tipos vêm do catálogo instalado. Na falta deles, vale o `defaultInput` da rota, cujo padrão é `[text]`. As caixas mostram os valores herdados. Abrir a linha não grava um valor novo.
 
-DeepSeek trata um `inputModalities` omitido apenas como texto e rejeita uma lista vazia. Limpar Imagem também remove que o modelo `imagePixelBudget` e `imageMaxBytes`, porque DeepSeek rejeita limites de imagem em um modelo somente de texto. Defina esses limites novamente se você mais tarde habilitar imagens e precisar de limites personalizados.
+Sem `inputModalities`, o DeepSeek aceita somente texto. Uma lista vazia é recusada. Desmarcar **Imagem** também remove `imagePixelBudget` e `imageMaxBytes` do modelo, pois o DeepSeek rejeita limites de imagem para um modelo que só aceita texto. Se habilitar imagens novamente e precisar de limites personalizados, configure-os outra vez.
 
-Para restaurar a herança depois de editar as caixas de seleção, remova o campo `input` ou `inputModalities` do `cordis.patch.yml`. **Restaurar os padrões** remove todo o cancelamento do catálogo do modelo, incluindo outras edições do modelo, então use-o apenas quando quiser restaurar todo o catálogo.
+Para recuperar os valores herdados após alterar as caixas, remova o campo `input` ou `inputModalities` do modelo em `cordis.patch.yml`. **Restaurar padrões** remove toda a personalização do catálogo, incluindo outras alterações nos modelos. Use essa opção para restaurar o catálogo inteiro.
 
-Se cada modelo que você entrou à mão pega imagens, defina o retrocesso uma vez na rota em vez de em cada um deles:
+Se todos os modelos que você adicionou à mão aceitarem imagens, defina os tipos padrão uma única vez na rota.
 
 ```yaml
 - id: llm-pi-ai
@@ -128,15 +130,15 @@ Se cada modelo que você entrou à mão pega imagens, defina o retrocesso uma ve
             input: [text]
 ```
 
-Na configuração pi-ai, cada lista deve nomear pelo menos uma modalidade, exceto `input`de um modelo, onde uma lista vazia significa o mesmo que omiti-la. Uma modalidade desconhecida é recusada onde quer que seja escrita.
+Na configuração do pi-ai, cada lista deve declarar pelo menos uma modalidade, exceto o próprio `input` do modelo, que pode ficar vazio para herdar os valores. Uma modalidade desconhecida é sempre recusada.
 
-Ambos os campos declaram uma reivindicação sobre o seu endpoint em vez de o verificar. Um modelo que declara as imagens que o seu endpoint não serve não é capturado aqui; o provedor rejeita a solicitação em vez disso.
+Esses campos declaram quais entradas o endpoint aceita, sem verificá-las. Se você declarar que um modelo aceita imagens e o endpoint não as aceitar, o provedor recusará a solicitação.
 
 <a id="deepseek-account-models"></a>
 
-### Modelos de conta DeepSeek
+### Modelos da conta do DeepSeek
 
-Uma conta de DeepSeek lista seus modelos a partir do serviço de conta, então a página Modelos não oferece nenhum editor de modelo para ele. Ajuste um único modelo com `modelOverrides` em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`; os campos correspondem a uma entrada DeepSeek `models` , e os campos não definidos mantêm os valores listados:
+Quando você entra em uma conta do DeepSeek, os modelos vêm do serviço de contas e a página Modelos não oferece um editor para eles. Para ajustar um modelo, use `modelOverrides` em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`. Os campos correspondem aos de uma entrada do DeepSeek em `models`. Os campos omitidos conservam os valores da listagem.
 
 ```yaml
 - id: llm-deepseek-account
@@ -147,15 +149,15 @@ Uma conta de DeepSeek lista seus modelos a partir do serviço de conta, então a
         maxTokens: 131072
 ```
 
-Um modelo que precisa de um Oceano mais novo falha com `CLIENT_UPGRADE_REQUIRED`, que nomeia a versão a instalar. O provedor de conta [referência](../../../packages/llm/llm-deepseek-account/README.md) possui as regras de listagem, backback, e gating.
+Se um modelo exigir uma versão mais recente do Ocean, ele retorna `CLIENT_UPGRADE_REQUIRED` com a versão a instalar. A [referência do provedor de contas](../../../packages/llm/llm-deepseek-account/README.md) documenta as regras de listagem, alternativas e requisitos de acesso.
 
 <a id="reasoning-effort"></a>
 
-### Esforço de fundamentação
+### Esforço de raciocínio
 
-O seletor de modelos oferece um menu **Esforço** para um modelo que declara níveis de raciocínio. Os modelos de um provedor embutido herdam seus níveis do catálogo instalado, e os modelos da DeepSeek mantêm os níveis do adaptador. Um modelo que você digita manualmente declara nenhum até que você os adicione, então até então a entrada Esforço não aparece no menu e o próprio padrão do endpoint decide se o modelo pensa.
+O seletor de modelos oferece o menu **Esforço** quando o modelo declara níveis de raciocínio. Os modelos de provedores integrados herdam os níveis do catálogo instalado e os modelos do DeepSeek mantêm os do adaptador. Se adicionar um modelo manualmente, o menu **Esforço** só aparece depois que você declarar os níveis. Até lá, o padrão do endpoint determina se o modelo usa raciocínio.
 
-Em um provedor de API modelo personalizado, declarar os níveis em **Configurações → Modelos**: editar o provedor, abrir **Configurações personalizadas**, expandir **Modelo opções**do modelo, e ligar **Níveis de raciocínio**. As linhas começam com off, baixo, médio e alto. Cada linha combina um nível com o valor **API** enviado para ele, que é padrão para o nome do nível; altere-o apenas onde a documentação API do fornecedor do modelo soletra o nível de forma diferente. Adicionar ou excluir linhas para corresponder ao que o endpoint suporta, manter pelo menos um nível além de desligado, e salvar. Desligar o interruptor remove a declaração.
+Para declarar níveis em uma API de modelos personalizada, edite o provedor em **Configurações → Modelos**, abra **Configurações personalizadas**, expanda **Opções do modelo** e ative **Níveis de raciocínio**. Os níveis iniciais são desativado, baixo, médio e alto. Cada linha associa um nível ao **valor API** que será enviado, cujo padrão é o nome do nível. Altere o valor se a documentação da API do provedor especificar outro. Adicione ou exclua linhas de acordo com o que o endpoint aceita, mantenha pelo menos um nível além de desativado e salve. Desativar a opção remove a declaração.
 
 A página escreve `reasoningEfforts` em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`, onde você também pode declarar os níveis diretamente:
 
@@ -176,9 +178,9 @@ A página escreve `reasoningEfforts` em `$DSH_HOME/profiles/<profile>/cordis.pat
               max: max
 ```
 
-Cada chave é um nível que o menu oferece, e seu valor é a ortografia enviada no fio como `reasoning_effort`, assim `max: xhigh` renomeia um nível para um gateway com seu próprio vocabulário. Apenas `off` pode permanecer vazio, porque para a maioria dos endpoints não pensar é a ausência do parâmetro. O `reasoning` da rota é o nível usado enquanto uma sessão não escolheu nenhum; escolher um esforço no coletor salva-o, com o modelo, como padrão para novas sessões.
+Cada chave identifica um nível no menu e seu valor é enviado como `reasoning_effort`. Por exemplo, `max: xhigh` adapta o valor a um gateway que espera outro nome. Apenas `off` pode ficar vazio, pois a maioria dos endpoints desativa o raciocínio quando o parâmetro está ausente. A rota usa seu valor `reasoning` se a sessão ainda não tiver escolhido um nível. Ao escolher um nível, ele é salvo com o modelo como padrão para novas sessões.
 
-Um `off` deixado em branco não envia nada, o que só para um modelo que pensa sob solicitação; um `off` dado um valor envia esse valor como `reasoning_effort` em vez disso. Um modelo que pensa que a menos que dito para não — DeepSeek V4 atrás de um gateway compatível com OpenAI, por exemplo — precisa de `compat.thinkingFormat: deepseek`, o que faz `off` enviar `thinking: {type: disabled}` e todos os outros níveis enviar `thinking: {type: enabled}` ao lado do esforço:
+Se deixar `off` vazio, o parâmetro é omitido e só deixam de raciocinar os modelos que raciocinam sob solicitação. Um `off` com valor envia esse valor como `reasoning_effort`. Se o modelo raciocinar por padrão, como o DeepSeek V4 atrás de um gateway compatível com OpenAI, use `compat.thinkingFormat: deepseek`. Assim, `off` envia `thinking: {type: disabled}`, e os demais níveis enviam `thinking: {type: enabled}` junto com o nível de esforço.
 
 ```yaml
         models:
@@ -191,7 +193,7 @@ Um `off` deixado em branco não envia nada, o que só para um modelo que pensa s
               max: max
 ```
 
-O modelo de um provedor integrado cujo gateway não raciocina perde seus níveis com `reasoningEfforts: false` sob `modelOverrides`; selecionando um esforço para ele é então recusado como `UNSUPPORTED_REASONING_EFFORT`. A própria rota de DeepSeek não precisa de nada disso: seus modelos já oferecem `off`, `low`, `high`, e `max`, e `llm-deepseek.reasoningEffort` define o padrão do catador começa a partir de:
+Se o gateway de um modelo de provedor integrado não aceitar raciocínio, desative os níveis com `reasoningEfforts: false` em `modelOverrides`. A escolha de um nível para esse modelo retorna `UNSUPPORTED_REASONING_EFFORT`. Os modelos da rota do DeepSeek já oferecem `off`, `low`, `high` e `max`. `llm-deepseek.reasoningEffort` define o valor inicial do seletor.
 
 ```yaml
 - id: llm-deepseek
@@ -201,11 +203,11 @@ O modelo de um provedor integrado cujo gateway não raciocina perde seus níveis
 
 <a id="request-compatibility"></a>
 
-### Pedido de compatibilidade
+### Compatibilidade de solicitações
 
-Um gateway pode segurar uma chave de trabalho em um endereço acessível e ainda recusar cada solicitação. pi-ai decide a forma de uma solicitação — qual papel carrega o prompt do sistema, qual campo tampa a saída, como um nível de pensamento viaja — a partir da URL do endpoint, e um endereço que ele não reconhece é abordado como se fosse o próprio OpenAI. A maioria dos gateways compatíveis com OpenAI recusam pelo menos uma coisa que o OpenAI aceita.
+Um gateway com endereço acessível e chave válida pode recusar todas as solicitações. O pi-ai usa a URL do endpoint para determinar o papel da instrução de sistema, o campo que limita a saída e como enviar o nível de raciocínio. Se não reconhecer a URL, envia a solicitação como se fosse para a OpenAI. A maioria dos gateways compatíveis com OpenAI recusa alguma opção aceita pela OpenAI.
 
-Dois são a maior parte. Um modelo que declara raciocínio tem seu prompt de sistema enviado como `role: "developer"`, que muitos gateways rejeitam outright, e a tampa de saída é enviada como `max_completion_tokens`, que um servidor que só conhece `max_tokens` recusa. O formulário não tem campo para nenhum dos dois; corrija-os na rota em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`:
+Há duas causas frequentes. Para um modelo que declara raciocínio, o pi-ai envia a instrução de sistema com `role: "developer"`, que muitos gateways recusam. Ele também envia o limite de saída em `max_completion_tokens`, que servidores que só conhecem `max_tokens` recusam. O formulário não oferece esses campos. Configure-os na rota em `$DSH_HOME/profiles/<profile>/cordis.patch.yml`.
 
 ```yaml
 - id: llm-pi-ai
@@ -222,7 +224,7 @@ Dois são a maior parte. Um modelo que declara raciocínio tem seu prompt de sis
           - id: my-model
 ```
 
-Uma rota `compat` é o padrão para os seus modelos, e o próprio modelo ganha campo por campo, para que um modelo possa ser corrigido sem reiniciar a rota:
+A configuração `compat` da rota serve de padrão para seus modelos. Os valores do modelo têm prioridade campo a campo. Você pode ajustar um único modelo sem repetir a configuração da rota.
 
 ```yaml
         models:
@@ -232,24 +234,24 @@ Uma rota `compat` é o padrão para os seus modelos, e o próprio modelo ganha c
               thinkingFormat: deepseek
 ```
 
-O que nenhum dos conjuntos mantém o valor do catálogo instalado para esse modelo, e o que o catálogo não descreve cai na detecção do pi-ai. Dê a cada interruptor um valor: uma chave deixada em branco (`supportsDeveloperRole:`) é recusada em vez de ignorada, porque um valor vazio apagaria o que o catálogo sabe enquanto não diz nada em seu lugar. Um nome que nenhum protocolo aceita também é recusado, e a mensagem lista os que estão disponíveis.
+Se o modelo e a rota deixarem um campo sem valor, vale o valor do catálogo instalado. Se ele também não estiver no catálogo, o pi-ai o detecta. Toda opção declarada precisa ter um valor. Uma chave vazia como `supportsDeveloperRole:` é recusada porque apagaria o valor do catálogo sem substituí-lo. Se nenhum protocolo aceitar o nome, ele será recusado e a mensagem indicará as opções disponíveis.
 
-Cada switch pertence aos protocolos que declaram isso, então um switch válido em um `api` pode ser recusado em outro — os nomes de mensagem que esse protocolo oferece. Como o `input` acima, um switch declara uma reivindicação sobre seu endpoint em vez de verificá-lo: definir um seu gateway não precisa, na verdade, simplesmente enviar uma solicitação diferente.
+Cada opção pertence aos protocolos que a definem. Se uma opção válida para um valor de `api` for recusada em outro, a mensagem indica o que o protocolo aceita. Assim como `input`, essas opções descrevem o que o endpoint aceita sem verificá-lo. Configurar uma opção desnecessária altera a solicitação enviada.
 
-Cada switch, seus valores aceitos, e os protocolos que o tomam estão listados sob `PiAiCompatProfile` no [gerado `dsh-llm-pi-ai` referência de configuração](../../config-catalog.md#oceanocean-llm-pi-ai) - que é derivado da fonte, então ele não pode ficar para trás o que o adaptador aceita.
+A [referência de configuração gerada de `dsh-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) lista em `PiAiCompatProfile` todas as opções, os valores aceitos e os protocolos compatíveis. A referência é gerada a partir do código do adaptador.
 
 <a id="troubleshooting"></a>
 
-## Resolução de Problemas
+## Solução de problemas
 
-- **`MISSING_CREDENTIAL`** — Armazenar a chave do fornecedor através da página Modelos ou fornecer a variável de ambiente referenciada.
-- **`UNKNOWN_MODEL`** — Selecione um modelo configurado ou adicione o modelo em falta ao provedor personalizado.
-- **Obter modelos disponíveis retorna 401** — Verifique a chave. A descoberta do modelo chama o endpoint compatível com o OpenAI `GET /models` ; insira modelos manualmente para os endpoints que não o fornecem.
-- **Obtendo relatórios de modelos disponíveis `data` array nem a `models` objeto** — A listagem do endpoint está num formato que não é lido.
-- **O gateway recusa todos os pedidos, embora a chave e URL estejam certas** — Sua forma de solicitação difere da OpenAI. Comece com `compat.supportsDeveloperRole: false` e `compat.maxTokensField: max_tokens` na rota.
-- **Apenas os modelos de raciocínio falham** — pi-ai envia seu prompt de sistema como o papel `developer` , que o gateway rejeita. `compat.supportsDeveloperRole: false`.
-- **O menu Esforço não aparece para um modelo que você inseriu à mão** — Declara que não há níveis. Em um provedor de API modelo personalizado, ligue **Raciocínio níveis** nas opções **Modelo**do modelo; em outro lugar, adicione `reasoningEfforts` ao modelo em `cordis.patch.yml`.
-- **`off` não impede um modelo DeepSeek de pensar** — Um `off` vazio não envia nenhum campo de raciocínio, e um endpoint que pensa por padrão continua pensando. Defina `compat.thinkingFormat: deepseek` no modelo ou na rota.
-- **Um compat switch é recusado como não tendo valor** — Uma chave escrita sem nada após o cólon. Dê-lhe um valor, ou remova a chave para manter o catálogo instalado.
-- **Uma imagem é recusada antes de enviar o** — O modelo declara não haver modalidade de imagem. Dê o modelo de um provedor personalizado `input: [text, image]`; na rota própria de DeepSeek, selecione uma entrada com capacidade de imagem do catálogo configurado (`deepseek-flash` por padrão) e confirme que seu gateway serve esse modelo com entrada de imagem.
-- **O provedor rejeita uma solicitação carregando uma imagem** — O modelo declara imagens que seu endpoint não serve. Remova `image` de qualquer lista concedida – `input`do modelo, ou `defaultInput` da rota – em seguida, inicie uma nova sessão: a imagem anexa permanece no registro de sessão, então a mesma solicitação se repete até que a sessão se mova.
+- **`MISSING_CREDENTIAL`**. Salve a chave do provedor em Modelos ou configure a variável de ambiente indicada.
+- **`UNKNOWN_MODEL`**. Selecione um modelo configurado ou adicione o modelo ausente ao provedor personalizado.
+- **Buscar modelos disponíveis retorna 401**. Confira a chave. A busca chama o endpoint `GET /models` compatível com OpenAI. Adicione os modelos manualmente se o endpoint não oferecer essa operação.
+- **A busca não retorna nem uma lista `data` nem um objeto `models`**. O endpoint usa um formato de listagem incompatível. Adicione os modelos manualmente.
+- **O gateway recusa todas as solicitações com chave e URL válidas**. O formato esperado difere do da OpenAI. Comece com `compat.supportsDeveloperRole: false` e `compat.maxTokensField: max_tokens` na rota.
+- **Apenas os modelos com raciocínio falham**. O pi-ai usa o papel `developer` para a instrução de sistema, e o gateway o rejeita. Defina `compat.supportsDeveloperRole: false`.
+- **O menu Esforço não aparece para um modelo adicionado manualmente**. O modelo não declara níveis. Em uma API de modelos personalizada, ative **Níveis de raciocínio** em **Opções do modelo**. Nos demais casos, adicione `reasoningEfforts` ao modelo em `cordis.patch.yml`.
+- **`off` não desativa o raciocínio em um modelo DeepSeek**. Quando `off` está vazio, nenhum campo de raciocínio é enviado e o endpoint continua usando seu padrão. Defina `compat.thinkingFormat: deepseek` no modelo ou na rota.
+- **Uma opção de compatibilidade sem valor é recusada**. Informe um valor após os dois-pontos ou remova a chave para preservar o valor do catálogo instalado.
+- **Uma imagem é recusada antes do envio**. O modelo não declara a modalidade de imagem. Adicione `input: [text, image]` ao modelo de um provedor personalizado. Na rota do DeepSeek, escolha um modelo com suporte a imagens no catálogo configurado (`deepseek-flash` por padrão) e confira se o gateway aceita imagens para esse modelo.
+- **O provedor recusa uma solicitação com imagem**. O endpoint não aceita as imagens declaradas pelo modelo. Remova `image` da lista que habilitou esse tipo, seja o `input` do modelo ou o `defaultInput` da rota, e inicie uma nova sessão. A imagem anexada permanece no registro da sessão e a solicitação se repete até que a sessão avance além da imagem.

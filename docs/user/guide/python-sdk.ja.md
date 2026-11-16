@@ -1,12 +1,12 @@
 <a id="get-started-with-the-python-sdk"></a>
 
-# Python SDK を始めよう
+# Python SDK を使い始める
 
 <!-- USER_LANGUAGES_START -->
 [English](python-sdk.md) | [中文](python-sdk.zh.md) | [Русский](python-sdk.ru.md) | 日本語 | [Español](python-sdk.es.md) | [Français](python-sdk.fr.md) | [Deutsch](python-sdk.de.md) | [Português](python-sdk.pt.md) | [한국어](python-sdk.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-このチュートリアルでは、このリポジトリのソースからPython SDKをビルドし、出荷されたスタンドアローン最小限のプロファイルを実行し、同じ `dsh` プロファイルを独自のプログラムからカスタマイズする方法を示します。 オーシャンは、まだ有能なパブリックnpmまたはPyPI SDKの配布はありません。
+このチュートリアルでは、リポジトリのソースから Python SDK をビルドし、同梱の最小スタンドアロンプロファイルを実行します。さらに、その `dsh` プロファイルを自分のプログラムからカスタマイズします。Ocean SDK の検証済み公開版は、まだ npm にも PyPI にもありません。
 
 <a id="prerequisites"></a>
 
@@ -15,12 +15,12 @@
 - Python 3.10 または newer の
 - ギット
 - Linux x64、Linux arm64、macOS 14 または arm64 の newer、または Windows x64
-- DeepSeek対応のAPIエンドポイントと認証
-- 孤立したワークスペースと孤立したオーシャンホーム
+- DeepSeek 互換の API エンドポイントと認証情報
+- ほかの環境から分離したワークスペースと Ocean ホーム
 
 <a id="build-the-sdk-from-source"></a>
 
-## SDKをソースからビルドする
+## ソースから SDK をビルドする
 
 <div>
 <a id="linux-and-macos"></a>
@@ -28,9 +28,9 @@
 <a id="windows-powershell"></a>
 </div>
 
-パブリックレジストリは、資格のあるOcean SDKをホストしません。 PyPIから `deepseek-harness-sdk` をインストールすると、ドナープロジェクトのパッケージが、Oceanではなくフェッチされます。 このチェックアウト時にランタイムキャリアと両方のホイールをビルドし、仮想環境にインストールします。
+公開レジストリに検証済みの Ocean SDK はありません。PyPI から `deepseek-harness-sdk` をインストールすると、元のプロジェクトのパッケージが取得されます。このチェックアウトでランタイムの実行ファイルと両方の wheel をビルドし、仮想環境にインストールします。
 
-:::コードグループ
+::: code-group
 
 ```sh [Linux/macOS]
 git clone https://github.com/Ryltsevmg/Ocean.git
@@ -58,13 +58,13 @@ python -m pip install (Get-ChildItem dist-python\*.whl)
 
 :::
 
-選択する `--platform` 値とマッチング `dist-exe/` あなたの機械のために実行可能: `linux-x64`, `linux-arm64`, `macos-arm64`, `macos-x64`, または `win-x64`; ネイティブアーキテクチャで各ターゲットをビルドします。 インストールには、マッチングネイティブランタイムホイールと `dsh` コマンド。 通常 SDK の実行はシステム Node.js を必要としません。 [Pythonコントリビューターワークフロー](../../../python/development.md) これらのビルド手順の正確なファイル名、検証、およびリリースチェックを所有しています。
+マシンに合う `--platform` の値と、それに対応する `dist-exe/` 内の実行ファイルを選びます。指定できる値は `linux-x64`、`linux-arm64`、`macos-arm64`、`macos-x64`、`win-x64` です。各ターゲットは対応するネイティブアーキテクチャでビルドしてください。インストールには対応するネイティブランタイムの wheel と `dsh` コマンドが含まれます。SDK の通常の実行にシステムの Node.js は不要です。ファイル名、検証、リリース前の確認は [Python の開発手順](../../../python/development.md)を参照してください。
 
 <a id="run-the-checked-in-example"></a>
 
-## チェックイン例を実行します
+## リポジトリのサンプルを実行する
 
-必要に応じて、クレデンシャルをエクスポートし、互換性のあるプロキシエンドポイント:
+認証情報と、必要に応じて互換プロキシのエンドポイントを環境変数としてエクスポートします。
 
 <div>
 <a id="linux-and-macos-1"></a>
@@ -72,7 +72,7 @@ python -m pip install (Get-ChildItem dist-python\*.whl)
 <a id="windows-powershell-1"></a>
 </div>
 
-:::コードグループ
+::: code-group
 
 ```sh [Linux/macOS]
 export DEEPSEEK_API_KEY=sk-your-key-here
@@ -86,7 +86,7 @@ $env:DEEPSEEK_API_KEY = "sk-your-key-here"
 
 :::
 
-明示的なワークスペースとホームパスで1つのタスクを実行します。
+ワークスペースとホームのパスを明示して、タスクを 1 件実行します。
 
 <div>
 <a id="linux-and-macos-2"></a>
@@ -94,7 +94,7 @@ $env:DEEPSEEK_API_KEY = "sk-your-key-here"
 <a id="windows-powershell-2"></a>
 </div>
 
-:::コードグループ
+::: code-group
 
 ```sh [Linux/macOS]
 python python/sdk/examples/minimal.py \
@@ -114,11 +114,11 @@ python python/sdk/examples/minimal.py `
 
 :::
 
-スクリプトは、選択したプロファイルによって供給された最終的なアシスタント応答またはコマンド結果を表示します。 選択したホームは、生成された `sdk-minimal` プロファイル、インストールされたプラグイン、および `sessions/`の下で非圧縮JSONLセッションログを受け取ります。 例とSDKは無声に読み込まれません。 `~/.dsh`.
+スクリプトは、選択したプロファイルから受け取った最終アシスタント応答またはコマンドの結果を出力します。指定したホームには、生成された `sdk-minimal` プロファイルとインストール済みのプラグインが置かれ、`sessions/` には非圧縮の JSONL セッションログが保存されます。サンプルと SDK が暗黙に `~/.dsh` を読むことはありません。
 
 <a id="use-the-sdk-in-your-program"></a>
 
-## お使いのプログラムでSDKを使用する
+## 自分のプログラムで SDK を使う
 
 ```python
 from pathlib import Path
@@ -143,13 +143,13 @@ with DeepSeekHarness(
 print(result.final_response)
 ```
 
-SDK は、バンドルされた `dsh --profile sdk-minimal` プロセスを lazily で起動し、コンテキストマネージャーの終了まで再利用します。 プロファイル、その永続的なパッチ、ホームパッチ、および任意の注文 `patches` タプルは、アプリケーション構成を形成します。 Python のランタイム bin やコンフィグオプションは別々にありません。
+SDK は、同梱の `dsh --profile sdk-minimal` プロセスを必要になった時点で起動し、コンテキストマネージャーを抜けるまで再利用します。プロファイル、その永続パッチ、ホームのパッチ、指定した場合は順序付きの `patches` タプルからアプリケーション設定が構成されます。Python 専用のランタイム実行ファイルや、設定全体を指定するオプションはありません。
 
 <a id="install-or-define-plugins"></a>
 
-## プラグインのインストールまたは定義
+## プラグインをインストールまたは定義する
 
-依存関係やバンドル層の `dsh plugin` を使用して、この家庭で永続する:
+このホームに依存関係やバンドルレイヤーを永続的に追加するには、`dsh plugin` を使います。
 
 <div>
 <a id="linux-and-macos-3"></a>
@@ -157,7 +157,7 @@ SDK は、バンドルされた `dsh --profile sdk-minimal` プロセスを lazi
 <a id="windows-powershell-3"></a>
 </div>
 
-:::コードグループ
+::: code-group
 
 ```sh [Linux/macOS]
 export DSH_HOME=/absolute/path/to/example-dsh-home
@@ -173,14 +173,14 @@ dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
 
 :::
 
-最初のコマンドは、出荷されたスタンドアローンプロファイルを初期化します。 2 つは `pnpm`にパッケージ管理を、そして `dsh.bundle` の層を輸出する取付けられたパッケージを記録します。 `pnpm` をこの管理コマンドだけインストールします。インストールされたSDKを起動する必要はありません。 `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` を永続行変更、または、各々の変更のために Python からパッチファイルをパスします。
+最初のコマンドは、同梱のスタンドアロンプロファイルを初期化します。2 番目のコマンドは、パッケージ管理を `pnpm` に委ね、`dsh.bundle` レイヤーをエクスポートするインストール済みパッケージを記録します。`pnpm` が必要なのはこの管理コマンドだけで、インストール済みの SDK の起動には不要です。設定エントリを永続的に変更するには `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` を編集します。起動ごとに変更するには、Python からパッチファイルを渡します。
 
-別の `profile` は、 `@ocean/ocean-sdk-app` または別のJSON-RPCサーバー行を含むときに有効です。サーバー行、未解決プラグイン、および無効なパッチを別の構成に戻す代わりに起動中に欠落させます。
+`@ocean/ocean-sdk-app` または別の JSON-RPC サーバーエントリを含む場合は、別の `profile` も指定できます。サーバーエントリがない、プラグインを解決できない、またはパッチが無効な場合は、別の構成に切り替えず起動に失敗します。
 
 <a id="opt-in-to-str_replace_editor"></a>
-### お問い合わせ `str_replace_editor`
+### `str_replace_editor` を有効にする
 
-バンドルされたランタイムは `str_replace_editor`を含んでいますが、 `sdk-minimal` はデフォルトのコーディッシュツリーからそれを省略します。それを使用するには、この設定を `editor.patch.yml`; `insert` として保存し、既存のファイルシステムプロバイダを使用してエディタを追加します。
+同梱ランタイムに `str_replace_editor` は含まれますが、`sdk-minimal` の既定の Cordis ツリーには登録されていません。利用するには、次の設定を `editor.patch.yml` として保存します。`insert` は既存のファイルシステムプロバイダーを利用するエディターを追加します。
 
 ```yaml
 - insert:
@@ -188,12 +188,12 @@ dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
       name: '@ocean/ocean-tool-str-replace-editor'
 ```
 
-パス `patches=("/absolute/path/to/editor.patch.yml",)` 建設するとき `DeepSeekHarness(profile="sdk-minimal", ...)`パッチを入れるか `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` 持続的な構成のため。次のランタイムの進水で、モデル要求は下記のものを含んでいます `str_replace_editor` デフォルトのツールの横にある。ローカルファイルシステムプロバイダは、相対パスのランタイム作業ディレクトリを使用します。最小限のシェルと同様に、そのディレクトリへのアクセスは混在しません。同じパッチは標準で動作します `sdk` プロフィール。
+`DeepSeekHarness(profile="sdk-minimal", ...)` を作るときに `patches=("/absolute/path/to/editor.patch.yml",)` を渡します。永続設定にするには、パッチを `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` に保存します。次回のランタイム起動から、モデルへのリクエストには既定ツールに加えて `str_replace_editor` が含まれます。ローカルファイルシステムプロバイダーは相対パスをランタイムの作業ディレクトリから解決します。最小構成のシェルと同様に、そのディレクトリの外へのアクセスも可能です。同じパッチは標準の `sdk` プロファイルでも使えます。
 
 <a id="enable-team-mode"></a>
 ### チームモードを有効にする
 
-標準を使用する `sdk` エージェントチームのプロフィール `sdk-minimal` サブエージェントやチームサービスが含まれていません。 [チームパッチ](../../../apps/cli/config/examples/team-mode.yml) として `team-mode.yml`:
+エージェントチームを使うには、標準の `sdk` プロファイルを選びます。`sdk-minimal` にはサブエージェントやチームサービスがありません。[チーム用パッチ](../../../apps/cli/config/examples/team-mode.yml)を `team-mode.yml` として保存します。
 
 ```yaml
 - id: agent-team
@@ -201,30 +201,30 @@ dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
     defaultEnabled: true
 ```
 
-SDK の絶対パスを渡す `patches` オプション `profile="sdk"`. Python は `patches=("/absolute/path/to/team-mode.yml",)`; TypeScript の使用 `patches: ["/absolute/path/to/team-mode.yml"]`. パッチは取り替えます `agent-team` 行の全体構成は、従って習慣を含んで下さい `maxTasks` 同じマッピングで制限します。
+`profile="sdk"` を指定し、パッチの絶対パスを SDK の `patches` オプションで渡します。Python では `patches=("/absolute/path/to/team-mode.yml",)`、TypeScript では `patches: ["/absolute/path/to/team-mode.yml"]` を使います。パッチは `agent-team` エントリの設定全体を置き換えるため、独自の `maxTasks` 制限があれば同じマッピングに含めてください。
 
-新しいルートセッションを作成し、共有タスクを作成およびリストするように依頼してください。 チームツールとコラボレーションガイダンスを初めてモデルに依頼。 ルートはモードを保存し、サブエージェントはそれを共有します。 既存のセッションを再開すると、明示的にオフまたは有効にされていない場合でも、そのモードが保存されます。このパッチの変更または削除は、保存された選択を上書きしません。 [チーム サービス参照](../../../packages/team/agent-team/README.md#use-this-package) モードとタスクのセマンティクスの.
+新しいルートセッションを作り、共有タスクを作成して一覧表示するよう依頼します。最初のモデルリクエストにチームツールと共同作業の指示が含まれます。ルートセッションはモードを保存し、サブエージェントはそのモードを共有します。既存のセッションを再開すると、明示的に無効化した場合や、一度も有効化していない場合を含め、保存済みのモードが維持されます。このパッチを変更または削除しても、保存済みの選択は変わりません。モードとタスクの詳細は[チームサービスのリファレンス](../../../packages/team/agent-team/README.md#use-this-package)を参照してください。
 
 <a id="understand-the-minimal-profile"></a>
 
-## 最小限のプロファイルを理解する
+## 最小プロファイルの仕様
 
-| プロパティ | 値 |
+| 項目 | 値 |
 |---|---|
-| システム プロンプト | `DSH_SYSTEM_PROMPT`、に戻るために落ちる `You are a helpful software engineer assistant.` |
-| モデル: `minimal.py` | `--model`, それから `DSH_MODEL`, それから `deepseek-v4-flash` |
-| モデリング・フェース・ツール | パーシステント `bash` Linux/macOS または `pwsh` Windowsで、 `read_image`, , , `working_directory` |
-| シェルタイムアウト | 300秒 |
-| 任意ランタイムのコンテキスト | の研摩剤 |
-| コンテキスト圧縮 | 自動; 追加のモデルリクエストを介して古い歴史を要約 |
-| セッションの持続性 | 非圧縮JSONL下 `<dsh_home>/sessions` |
+| システムプロンプト | `DSH_SYSTEM_PROMPT`。未設定時は `You are a helpful software engineer assistant.` |
+| `minimal.py` が使うモデル | 優先順に `--model`、`DSH_MODEL`、`deepseek-v4-flash` |
+| モデルが使えるツール | Linux/macOS では永続的な `bash`、Windows では永続的な `pwsh`。いずれも `read_image` と `working_directory` を利用可能 |
+| シェルのタイムアウト | 300 秒 |
+| オプションの実行時コンテキスト | なし |
+| コンテキストの圧縮 | 自動。追加のモデルリクエストで古い履歴を要約 |
+| セッションの永続化 | `<dsh_home>/sessions` に非圧縮の JSONL で保存 |
 
-プロファイルの唯一のバンドルは、空のルートの上に完全なツリーを差し込み、 `dsh-base`が含まれていません。 したがって、ベースプロファイルのツールは暗黙的に表示されません。 テキストファイルツール、設定、管理された資格情報、OTel テレメトリー、Web ツール、サブエージェント、ローカル ガイドの検出が欠如している間、SDK プロトコル、環境構成の DeepSeek アダプター、ローカルの実行、および永続が含まれています。 [DeepSeekセッションログコントリビューター](../../../packages/session/session-log-deepseek/README.md) は、デフォルトでDeepSeekリクエストで、ほとんどの `maxBytes` (8 MiB)リクエストで、 `session-log-deepseek.enabled: false` をプロファイルパッチで設定して無効にします。 それは `danger-full-access`をピンで止めます、従ってプラットホーム選ばれたpersistentの貝はランタイムに目に見えるパスを変えることができます;使い捨て可能なチェックアウトか容器を使用して下さい。
+プロファイル唯一のバンドルが空のルートに構成ツリー全体を挿入します。`dsh-base` を含まないため、ベースプロファイルに追加されるツールは自動で利用可能になりません。SDK プロトコル、環境変数で設定する DeepSeek アダプター 1 つ、ローカル実行、永続化を備えます。テキストファイル用ツール、設定管理、管理対象の認証情報、OTel テレメトリー、Web ツール、サブエージェント、ローカル指示の検出は含まれません。[DeepSeek セッションログ連携](../../../packages/session/session-log-deepseek/README.md)は、既定で未受理のログイベントを DeepSeek リクエストに添付します。1 リクエストあたりの上限は `maxBytes`（8 MiB）です。無効にするにはプロファイルパッチに `session-log-deepseek.enabled: false` を設定します。プロファイルは `danger-full-access` を固定で使うため、プラットフォームに応じた永続シェルはランタイムから見えるあらゆるパスを変更できます。使い捨てのチェックアウトまたはコンテナーで実行してください。
 
-画像読み込みには、画像処理可能なルートが必要です。 自動コンパクト化により、セッションログが完全に保存されます。 [バンドルリファレンス](../../../packages/bundle/sdk-minimal/README.md) を参照して、モデルとストレージ効果を確認します。 この `sdk-minimal` 構成では、サポートされていないスラッシュ入力は通常のプロンプトテキストのままです。
+画像を読み取るには、画像対応のモデル経路が必要です。自動圧縮でも完全なセッションログが保持されます。モデルと保存への影響は[バンドルのリファレンス](../../../packages/bundle/sdk-minimal/README.md)を参照してください。この `sdk-minimal` 構成では、認識しないスラッシュ入力は通常のプロンプトとして扱われます。
 
-インストールされたホイールは、 `web` プロファイルとフロントエンドアセットをフルパッケージ化します。 Python SDK のデプロイメントがブラウザアプリケーションを必要とするときに、 `dsh web` を明示的に `DSH_HOME` から実行します。 `web` は別々の CLI アプリケーションで、Python SDK クライアントには対応できません。
+インストール済みの wheel には、完全な `web` プロファイルとフロントエンドのファイルも含まれます。Python SDK のデプロイでブラウザーアプリも必要な場合は、`DSH_HOME` を明示して `dsh web` を実行します。`web` は独立した CLI アプリケーションで、Python SDK クライアントには対応しません。
 
-プロファイル、プラグイン、資格情報、設定、セッションを分離する必要がある場合は、新鮮な家を使用してください。独立した作業のために新鮮なセッション ID を使用してください。ハーネス、ホーム、id を再利用して、同じ耐久性のある会話とセッション所有リソースを継続します。
+プロファイル、プラグイン、認証情報、設定、セッションを分離するには、新しいホームを使ってください。独立した作業には新しいセッション ID を使います。同じ永続的な会話と、そのセッションに属するリソースを引き継ぐときだけ、ハーネス、ホーム、ID を再利用してください。
 
-ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ザ・ [バンド参照](../../../packages/bundle/sdk-minimal/README.md) 正確な木を所有し、 [サンプル参照](../../../python/sdk/examples/README.md) 実行可能なプログラムを所有しています。 [Python SDKリファレンス](../../../python/sdk/README.md) ライフサイクル、結果、通知、および低レベルの動作をカバーします。 [dsh CLI リファレンス](../../../apps/cli/reference/README.md) プロフィールの層を覆います。
+構成ツリーの詳細は[バンドルのリファレンス](../../../packages/bundle/sdk-minimal/README.md)、実行可能なプログラムは[サンプルのリファレンス](../../../python/sdk/examples/README.md)を参照してください。[Python SDK リファレンス](../../../python/sdk/README.md)にはライフサイクル、結果、通知、低レベルの動作が、[dsh CLI リファレンス](../../../apps/cli/reference/README.md)にはプロファイルのレイヤー構成が記載されています。

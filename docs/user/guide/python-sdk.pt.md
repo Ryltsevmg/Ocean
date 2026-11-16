@@ -15,7 +15,7 @@ Este tutorial compila o SDK Python a partir do código-fonte deste repositório,
 - Python 3.10 ou mais recente
 - Git
 - Linux x64, Linux arm64, macOS 14 ou mais recente em arm64, ou Windows x64
-- Um endpoint API compatível com DeepSeek e sua credencial
+- Um endpoint de API compatível com DeepSeek e sua credencial
 - Um espaço de trabalho isolado e uma pasta do Ocean isolada
 
 <a id="build-the-sdk-from-source"></a>
@@ -143,7 +143,7 @@ with DeepSeekHarness(
 print(result.final_response)
 ```
 
-O SDK inicia o processo incluído `dsh --profile sdk-minimal` apenas quando necessário e o reutiliza até sair do gerenciador de contexto. O perfil, seu patch persistente, o patch da pasta do Ocean e qualquer tupla ordenada `patches` formam a configuração do aplicativo. Não há um executável Python separado de runtime nem uma opção de configuração completa.
+O SDK inicia o processo incluído `dsh --profile sdk-minimal` apenas quando necessário e o reutiliza até sair do gerenciador de contexto. O perfil, seu patch persistente, o patch da pasta do Ocean e qualquer tupla ordenada `patches` formam a configuração do aplicativo. Não há um executável separado para o ambiente de execução do Python nem uma opção de configuração completa.
 
 <a id="install-or-define-plugins"></a>
 
@@ -203,7 +203,7 @@ Use o perfil padrão `sdk` para Agent Teams; `sdk-minimal` não inclui subagente
 
 Passe seu caminho absoluto na opção `patches` do SDK com `profile="sdk"`. Python usa `patches=("/absolute/path/to/team-mode.yml",)`; TypeScript usa `patches: ["/absolute/path/to/team-mode.yml"]`. O patch substitui toda a configuração da entrada `agent-team`, portanto inclua qualquer limite personalizado de `maxTasks` no mesmo mapeamento.
 
-Crie uma nova Session raiz e peça para criar e listar uma tarefa compartilhada. Sua primeira solicitação ao modelo inclui as ferramentas Team e as orientações de colaboração. A raiz salva seu modo, e os subagentes o compartilham. Retomar uma Session existente preserva seu modo, mesmo que tenha sido explicitamente desativado ou nunca ativado; alterar ou remover esse patch não substitui as seleções salvas. Consulte a [referência do serviço Team](../../../packages/team/agent-team/README.md#use-this-package) para a semântica do modo e das tarefas.
+Crie uma nova sessão raiz e peça para criar e listar uma tarefa compartilhada. Sua primeira solicitação ao modelo inclui as ferramentas Team e as orientações de colaboração. A raiz salva seu modo, e os subagentes o compartilham. Retomar uma sessão existente preserva seu modo, mesmo que tenha sido explicitamente desativado ou nunca ativado; alterar ou remover esse patch não substitui as seleções salvas. Consulte a [referência do serviço Team](../../../packages/team/agent-team/README.md#use-this-package) para a semântica do modo e das tarefas.
 
 <a id="understand-the-minimal-profile"></a>
 
@@ -221,7 +221,7 @@ Crie uma nova Session raiz e peça para criar e listar uma tarefa compartilhada.
 
 O único pacote do perfil insere a árvore completa sobre uma raiz vazia e não inclui `dsh-base`; portanto, ferramentas adicionadas depois ao perfil base não podem aparecer implicitamente. Ele contém o protocolo do SDK, um adaptador DeepSeek configurado pelo ambiente, execução local e persistência, mas não ferramentas de arquivos de texto, configurações, credenciais gerenciadas, telemetria OTel, ferramentas web, subagentes ou descoberta de instruções locais. O [componente de registros de sessão DeepSeek](../../../packages/session/session-log-deepseek/README.md) envia por padrão eventos do registro ainda não aceitos com as solicitações DeepSeek, até `maxBytes` (8 MiB) por solicitação; defina `session-log-deepseek.enabled: false` em um patch do perfil para desativá-lo. Ele fixa `danger-full-access`, então o shell persistente selecionado para a plataforma pode modificar qualquer caminho visível ao ambiente; use uma cópia descartável do repositório ou um contêiner.
 
-A leitura de imagens exige uma rota compatível com imagens. A compactação automática preserva o registro completo da Session; consulte a [referência do pacote](../../../packages/bundle/sdk-minimal/README.md) para os efeitos no modelo e no armazenamento. Nesta composição `sdk-minimal`, entradas com barra não compatíveis continuam como texto comum do prompt.
+A leitura de imagens exige uma rota compatível com imagens. A compactação automática preserva o registro completo da sessão. Consulte a [referência do pacote](../../../packages/bundle/sdk-minimal/README.md) para os efeitos no modelo e no armazenamento. Nesta composição `sdk-minimal`, os comandos com barra que o perfil não aceita continuam como texto comum do prompt.
 
 O wheel instalado ainda inclui o perfil completo `web` e os recursos do frontend. Execute `dsh web` com um `DSH_HOME` explícito quando uma implantação do SDK Python também precisar do aplicativo de navegador; `web` é um aplicativo CLI separado e não pode atender a um cliente do SDK Python.
 

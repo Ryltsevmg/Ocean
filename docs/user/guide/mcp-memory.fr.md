@@ -1,28 +1,28 @@
 <a id="connect-a-third-party-memory-mcp-server"></a>
 
-# Connexion d'un serveur MCP de mémoire tiers
+# Connecter un serveur MCP de mémoire tiers
 
 <!-- USER_LANGUAGES_START -->
 [English](mcp-memory.md) | [中文](mcp-memory.zh.md) | [Русский](mcp-memory.ru.md) | [日本語](mcp-memory.ja.md) | [Español](mcp-memory.es.md) | Français | [Deutsch](mcp-memory.de.md) | [Português](mcp-memory.pt.md) | [한국어](mcp-memory.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Ces trois **configurations de référence par défaut** connecter un système de mémoire à DSH à travers [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md). Choisissez un, ou copiez la même ligne générique MCP pour un autre serveur.
+Ces trois **configurations de référence désactivées par défaut** permettent de connecter un système de mémoire à DSH via [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md). Choisissez-en une ou recopiez la même entrée MCP générique pour un autre serveur.
 
-Ces configurations de tiers sont fournies à titre d'exemples d'interopérabilité seulement. Leur inclusion n'implique pas l'approbation, la recommandation, le partenariat ou le soutien continu du projet Ocean.
+Ces configurations de tiers sont fournies à titre d’exemples d’interopérabilité seulement. Leur inclusion n’implique pas l’approbation, la recommandation, le partenariat ou le soutien continu du projet Ocean.
 
 <a id="what-dsh-does"></a>
 
 ## Ce que fait DSH
 
-DSH analyse la superposition de Cordis sélectionnée, démarre une commande stdio configurée ou se connecte à une URL HTTP via Streamable configurée, découvre les outils MCP et les expose comme `mcp__<serverName>__<tool>`- C'est vrai. **pas** télécharger le serveur, initialiser sa base de données, choisir son modèle ou intégrer le fournisseur, créer un compte cloud, migrer les données du fournisseur ou superviser un service HTTP séparé. Pour stdio, le client générique lance et arrête l'enfant avec le cycle de vie du plugin DSH ; pour HTTP, le service en amont doit déjà être exécuté.
+DSH analyse la surcouche Cordis sélectionnée, lance la commande stdio configurée ou se connecte à l’URL Streamable HTTP configurée, découvre les outils MCP et les expose sous la forme `mcp__<serverName>__<tool>`. DSH ne télécharge pas le serveur, n’initialise pas sa base de données, ne choisit pas son modèle ni son fournisseur d’embeddings, ne crée pas de compte cloud, ne migre pas les données du fournisseur et ne supervise pas de service HTTP distinct. En stdio, le client générique démarre et arrête le processus enfant selon le cycle de vie de l’extension DSH. En HTTP, le service distant doit déjà fonctionner.
 
-Le pont stdio supprime délibérément les variables ambiantes dont les noms identifient généralement les identificateurs et toutes les variables `DSH_*` avant de lancer un enfant; d'autres variables ambiantes restent héritées. Chaque exemple ajoute seulement la priorité de base dont il a besoin. Si une fonctionnalité en amont optionnelle a besoin d'un autre secret, ajoutez cette variable au `config.env` de la ligne au lieu de mettre le secret directement dans YAML.
+Avant de lancer le processus enfant, le client stdio retire du milieu d’exécution les variables dont le nom désigne généralement des identifiants, ainsi que toutes les variables `DSH_*`. Le processus enfant hérite des autres variables. Chaque exemple ajoute uniquement le réglage dont il a besoin. Si une fonction facultative du serveur requiert un autre secret, ajoutez la variable correspondante à `config.env` dans l’entrée, sans inscrire le secret dans le YAML.
 
 <a id="choose-one"></a>
 
-## Choisissez-en un
+## Choisir un serveur
 
-| Système | Pin testé | Transport | Préalable en amont |
+| Système | Version testée | Transport | Prérequis du fournisseur |
 |---|---:|---|---|
 | [Memorix](https://github.com/AVIDS2/memorix) | `memorix@1.3.0` (`500792cad3144142293bfbb20acb4841c9f7fcfa`) | stdio | Node 22.18+ et `npm install --global memorix@1.3.0` |
 | [Mémoire de référence MCP](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) | `@modelcontextprotocol/server-memory@2026.7.4` (`6dd0a683e198783e30feabf7abaf42f925bd18b1`) | stdio | `npm install --global @modelcontextprotocol/server-memory@2026.7.4` |
@@ -30,17 +30,17 @@ Le pont stdio supprime délibérément les variables ambiantes dont les noms ide
 
 <a id="enable-one"></a>
 
-## Activer une
+## Activer un serveur
 
-Passez une superposition à DSH :
+Passez une surcouche à DSH.
 
 ```sh
 dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
 ```
 
-Remplacer le nom du fichier par `mcp-reference-memory.cordis.yml` ou `engram.cordis.yml`. Le chemin peut pointer vers un fichier copié n'importe où sur le disque. Aucun serveur de mémoire n'est présent dans la composition expédiée, donc l'omission `--patch` maintient les trois désactivés.
+Remplacez le nom de fichier par `mcp-reference-memory.cordis.yml` ou `engram.cordis.yml`. Vous pouvez indiquer le chemin d’une copie du fichier à n’importe quel emplacement sur le disque. Aucun serveur de mémoire n’est configuré dans la composition fournie. Sans `--patch`, les trois serveurs restent désactivés.
 
-Pour garder la sélection à travers les parcours, fusionnez le patch `insert` unique du fichier sélectionné en un patch utilisateur – `$DSH_HOME/profiles/<name>/cordis.patch.yml` pour un profil, ou `$DSH_HOME/cordis.patch.yml` pour chaque profil de la machine. Ne pas copier sur un fichier existant : il peut déjà contenir des correctifs utilisateurs indépendants.
+Pour conserver le réglage entre deux lancements, fusionnez l’unique patch `insert` du fichier choisi dans la surcouche utilisateur `$DSH_HOME/profiles/<name>/cordis.patch.yml` pour un profil ou `$DSH_HOME/cordis.patch.yml` pour tous les profils de la machine. N’écrasez pas le fichier existant, qui peut déjà contenir d’autres patches utilisateur.
 
 <a id="provider-setup"></a>
 
@@ -48,14 +48,14 @@ Pour garder la sélection à travers les parcours, fusionnez le patch `insert` u
 
 <a id="memorix"></a>
 
-### Mémoire
+### Memorix
 
 ```sh
 npm install --global memorix@1.3.0
 dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
 ```
 
-Memorix travaille en mode heuristique local sans LLM ni service d'intégration. Configurer les fournisseurs optionnels dans le propre `~/.memorix/config.toml` de Memorix ou le projet `memorix.toml`. L'exemple conserve l'identité Git-project de Memorix à partir du répertoire de travail DSH et utilise la propre `~/.memorix/data` de Memorix par défaut. Définissez `MEMORIX_DATA_DIR` avant de démarrer DSH pour le surcharger.
+Memorix fonctionne en mode heuristique local sans LLM ni service d’embeddings. Configurez les fournisseurs facultatifs dans `~/.memorix/config.toml` ou dans le fichier `memorix.toml` du projet. L’exemple laisse Memorix identifier le projet Git à partir du répertoire de travail de DSH et utiliser son emplacement par défaut `~/.memorix/data`. Pour changer cet emplacement, définissez `MEMORIX_DATA_DIR` avant de lancer DSH.
 
 <a id="mcp-reference-memory"></a>
 
@@ -66,46 +66,46 @@ npm install --global @modelcontextprotocol/server-memory@2026.7.4
 dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
 ```
 
-Ce serveur de référence stocke un graphique de connaissances local et expose les entités, les relations, l'observation, la lecture, la recherche et les outils ouverts. Il n'a pas besoin de modèle ni de service d'intégration. L'exemple stocke son JSONL à `$HOME/.dsh-mcp-reference-memory.jsonl` au lieu du répertoire de paquets npm installé. Définissez `MEMORY_FILE_PATH` avant de démarrer DSH pour le surcharger.
+Ce serveur de référence stocke un graphe de connaissances local. Ses outils gèrent les entités, les relations et les observations, et permettent de lire, de rechercher et d’ouvrir des éléments. Aucun modèle ni service d’embeddings n’est requis. L’exemple stocke le JSONL dans `$HOME/.dsh-mcp-reference-memory.jsonl` en dehors du répertoire du paquet npm installé. Pour changer cet emplacement, définissez `MEMORY_FILE_PATH` avant de lancer DSH.
 
-La recherche est une sous-chaîne insensible à la casse qui correspond aux noms, aux types et aux observations des entités, et non à la récupération sémantique. Le serveur n'ajoute pas d'intégrations, de sommation automatique, de résolution de conflits ou d'une politique d'oubli.
+La recherche compare les sous-chaînes sans tenir compte de la casse dans les noms, les types et les observations des entités. Le serveur ne fournit ni recherche sémantique, ni embeddings, ni résumé automatique, ni résolution des conflits, ni politique d’oubli.
 
 <a id="engram"></a>
 
-### Engramme
+### Engram
 
 ```sh
 go install github.com/Gentleman-Programming/engram/cmd/engram@v1.20.0
 dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/engram.cordis.yml"
 ```
 
-Engram possède le stockage et la sélection de projets : il utilise `~/.engram` par défaut, détecte le projet Git à partir du répertoire de travail DSH et accepte `ENGRAM_DATA_DIR` ou `ENGRAM_PROJECT` comme des dépassements ambiants.
+Engram gère le stockage et la sélection du projet. Il utilise `~/.engram` par défaut et détecte le projet Git à partir du répertoire de travail de DSH. Les variables d’environnement `ENGRAM_DATA_DIR` et `ENGRAM_PROJECT` permettent de remplacer ces valeurs.
 
 <a id="optional-shared-model-instruction"></a>
 
-## Enseignement optionnel du modèle partagé
+## Instruction commune facultative pour le modèle
 
-Ajoutez cette courte instruction neutre pour le fournisseur à vos instructions de modèle existantes si les descriptions d'outils du serveur ne déclenchent pas l'utilisation de la mémoire de manière fiable:
+Ajoutez cette courte instruction neutre pour le fournisseur à vos instructions de modèle existantes si les descriptions d’outils du serveur ne déclenchent pas l’utilisation de la mémoire de manière fiable:
 
-> Lorsque l'utilisateur vous demande de vous souvenir de quelque chose, appelez un outil d'écriture de mémoire. Lorsque l'information historique peut être pertinente, recherchez la mémoire et utilisez les résultats pertinents.
+> Lorsque l’utilisateur vous demande de vous souvenir de quelque chose, appelez un outil d’écriture de mémoire. Lorsque l’information historique peut être pertinente, recherchez la mémoire et utilisez les résultats pertinents.
 
-Il ne s'agit que d'indications additives. Les exemples ne remplacent pas la personnalité de la DSH.
+Cette instruction complète les instructions existantes. Les exemples conservent le rôle défini par le message système de DSH.
 
 <a id="verify-write-fresh-session-recall-and-use"></a>
 
-## Vérifier l'écriture, le rappel de session et l'utilisation
+## Vérifier l’écriture, le rappel de session et l’utilisation
 
 Utilisez une valeur unique et maintenez la portée de stockage du fournisseur inchangé tout au long :
 
-1. Dans la session A de DSH, demandez : `Remember that my validation drink is lapsang-<unique suffix>.` Confirmez le modèle appelé outil d'écriture du fournisseur et l'outil retourné succès.
-2. Créez la session DSH B dans le même hôte en cours d'exécution. Ne copiez pas la conversation de la session A. Demandez : `What is my validation drink? Check memory.` Confirmez le modèle appelé outil de recherche ou de rappel du fournisseur et renvoyez la valeur.
+1. Dans la session DSH A, demandez : `Remember that my validation drink is lapsang-<unique suffix>.` Vérifiez que le modèle a appelé l’outil d’écriture du fournisseur et que l’outil a signalé une réussite.
+2. Créez la session DSH B dans le même hôte en cours d’exécution. Ne copiez pas la conversation de la session A. Demandez : `What is my validation drink? Check memory.` Vérifiez que le modèle a appelé l’outil de recherche ou de rappel du fournisseur et a restitué la valeur.
 3. Toujours en session B, demandez : `Use that preference to suggest one drink for the meeting.` Confirmez que la réponse utilise la valeur rappelée.
 
-Une nouvelle session DSH est requise; un redémarrage Host ne l'est pas. Un enfant MCP écrasé déclenche une reconnection automatique avec backoff et un re-sync outil; les outils restent listés et les appels échouent seulement pendant la panne, et après que le budget de reconnect est épuisé, les outils sont non enregistrés et la reconnection s'arrête jusqu'à ce qu'un rechargement ou redémarre. La découverte initiale est asynchrone, alors attendez les outils `mcp__...` du fournisseur avant d'envoyer la première demande de validation.
+Ouvrez une nouvelle session DSH sans redémarrer l’hôte. Si un processus enfant MCP se termine brutalement, DSH tente de se reconnecter automatiquement avec des délais croissants, puis resynchronise les outils. Les outils restent répertoriés et les appels échouent uniquement pendant l’interruption. Une fois les tentatives épuisées, DSH désenregistre les outils et cesse de se reconnecter jusqu’au rechargement ou au redémarrage. La découverte initiale est asynchrone. Attendez que les outils `mcp__...` du fournisseur apparaissent avant d’envoyer la première demande de validation.
 
 <a id="bring-another-mcp-server"></a>
 
-## Apportez un autre serveur MCP
+## Connecter un autre serveur MCP
 
 Copiez les mêmes champs d'entrée et utilisez un `id` unique et `serverName`:
 
@@ -122,4 +122,4 @@ Copiez les mêmes champs d'entrée et utilisez un `id` unique et `serverName`:
         cwd: !!js process.cwd()
 ```
 
-Pour un serveur distant, utilisez `transport: streamable-http`, `url`, et `headers` à la place. L'installation, l'identité, l'authentification, les modèles, l'intégration, la persistance et la licence spécifiques au fournisseur restent la responsabilité du fournisseur.
+Pour un serveur distant, utilisez `transport: streamable-http`, `url` et `headers`. L’installation, l’identité, l’authentification, les modèles, les embeddings, la persistance et les licences restent du ressort du fournisseur.

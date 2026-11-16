@@ -10,13 +10,13 @@ Ocean ist ein Desktop-Arbeitsbereich für KI-Agenten, Unterhaltungen und Werkzeu
 
 ## Entwicklervorschau
 
-Ocean wird aktiv entwickelt. APIs und Funktionen können sich ändern. Lesen Sie vor dem Start die [Sicherheitshinweise](SAFETY.md). Ein erfolgreicher lokaler Build ersetzt weder ein Sicherheitsaudit noch eine signierte öffentliche Veröffentlichung.
+Ocean wird aktiv entwickelt. APIs und Funktionen können sich ändern. Lesen Sie vor dem Start die [Sicherheitshinweise](SAFETY.md). Ein erfolgreicher lokaler Build ersetzt weder ein Sicherheitsaudit noch eine signierte öffentliche Version.
 
 <a id="get-started"></a>
 
 ## Erste Schritte
 
-Verwenden Sie das Repository [Ryltsevmg/Ocean](https://github.com/Ryltsevmg/Ocean). Der Zugriff kann während der Vorbereitung der öffentlichen Veröffentlichung eingeschränkt sein. Installieren Sie Ocean weder mit einem Installationsprogramm des Ursprungsprojekts noch mit einem ungeprüften npm-Paket.
+Verwenden Sie das Repository [Ryltsevmg/Ocean](https://github.com/Ryltsevmg/Ocean). Der Zugriff kann während der Vorbereitung der öffentlichen Freigabe eingeschränkt sein. Installieren Sie Ocean weder mit einem Installationsprogramm des Ursprungsprojekts noch mit einem ungeprüften npm-Paket.
 
 Der [Entwicklungsleitfaden](docs/development.md) erklärt die Einrichtung aus dem Quellcode und die Befehle zum lokalen Start der Web- und Desktopanwendung. In [package.json](package.json) stehen die Voraussetzungen und Befehle. Legen Sie vor dem Test eines neuen Builds eine Sicherung Ihrer vorhandenen Profile an.
 

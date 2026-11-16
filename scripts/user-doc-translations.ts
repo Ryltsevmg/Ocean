@@ -58,14 +58,23 @@ export function withoutUserDocNavigation(content: string): string {
  * @returns Ordered structural tokens; labels and prose remain review-owned.
  */
 export function userDocStructure(content: string): string[] {
-  const tree = fromMarkdown(withoutUserDocNavigation(content), { extensions: [gfm()], mdastExtensions: [gfmFromMarkdown()] })
+  const source = withoutUserDocNavigation(content)
+  const tree = fromMarkdown(source, { extensions: [gfm()], mdastExtensions: [gfmFromMarkdown()] })
   const tokens: string[] = []
   const normalizedTarget = (url: string): string => url.replace(/\.(?:ru|ja|es|fr|de|pt|ko)\.md(?=[?#]|$)/g, '.md')
-  const visit = (node: Nodes): void => {
+  const codeLines = new Set<number>()
+  const visit = (node: Nodes, inline = tokens): void => {
     switch (node.type) {
       case 'heading': tokens.push(`heading:${node.depth}`); break
-      case 'code': tokens.push(`code:${node.lang ?? ''}:${node.meta ?? ''}:${node.value}`); break
-      case 'inlineCode': tokens.push(`inline:${node.value}`); break
+      case 'code': {
+        tokens.push(`code:${node.lang ?? ''}:${node.meta ?? ''}:${node.value}`)
+        const position = node.position
+        if (position) {
+          for (let line = position.start.line; line <= position.end.line; line++) codeLines.add(line)
+        }
+        break
+      }
+      case 'inlineCode': inline.push(`inline:${node.value}`); break
       case 'list': tokens.push(`list:${node.ordered}:${node.start}:${node.children.length}`); break
       case 'table': tokens.push(`table:${node.children.length}:${node.children[0]?.children.length}`); break
       case 'link':
@@ -73,8 +82,17 @@ export function userDocStructure(content: string): string[] {
       case 'definition': tokens.push(`${node.type}:${normalizedTarget(node.url)}`); break
       default: break
     }
-    if ('children' in node) node.children.forEach(visit)
+    if ('children' in node) {
+      const localInline: string[] = node.type === 'paragraph' ? [] : inline
+      for (const child of node.children) visit(child, localInline)
+      if (node.type === 'paragraph') tokens.push(...localInline.sort())
+    }
   }
   visit(tree)
+  for (const [index, line] of source.split('\n').entries()) {
+    if (codeLines.has(index + 1)) continue
+    const directive = /^ {0,3}(:{3,})(?:[ \t]+([^ \t]+))?/.exec(line)
+    if (directive) tokens.push(`container:${directive[1]}:${directive[2] ?? ''}`)
+  }
   return tokens
 }

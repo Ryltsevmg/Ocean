@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { isTranslationScopeFile } from './translation-pairing.ts'
 import { partitionPairedMarkdownDerivatives } from './paired-markdown-derivatives.ts'
-import { USER_DOC_LOCALES, USER_DOC_SOURCES, userDocTranslationSource } from './user-doc-translations.ts'
+import { USER_DOC_LOCALES, USER_DOC_SOURCES, userDocStructure, userDocTranslationSource } from './user-doc-translations.ts'
 import { verifyUserDocTranslations } from './verify-user-doc-translations.ts'
 
 const navigation = '<!-- USER_LANGUAGES_START -->\n[English](README.md)\n<!-- USER_LANGUAGES_END -->\n'
@@ -41,6 +41,12 @@ describe('registered user translations', () => {
     ]
     const partition = partitionPairedMarkdownDerivatives(blocks, b => b.doc, b => b.code)
     expect(partition).toEqual({ primary: [blocks[0], blocks[2]], derivatives: [blocks[1]] })
+  })
+
+  it('keeps VitePress container names while allowing translated titles', () => {
+    const container = (label: string): string => '::: ' + label + '\n\nText.\n\n:::\n'
+    expect(userDocStructure(container('tip Notes'))).toEqual(userDocStructure(container('tip Hinweise')))
+    expect(userDocStructure(container('code-group'))).not.toEqual(userDocStructure(container('Codegruppe')))
   })
 
   it('rejects missing editions, changed examples and stale confirmations', () => {

@@ -1,12 +1,12 @@
 <a id="publish-the-web-ui-behind-a-reverse-proxy"></a>
 
-# Veröffentlichen Sie die Web-Benutzeroberfläche hinter einem Reverse-Proxy
+# Die Weboberfläche über einen Reverse Proxy bereitstellen
 
 <!-- USER_LANGUAGES_START -->
 [English](public-deployments.md) | [中文](public-deployments.zh.md) | [Русский](public-deployments.ru.md) | [日本語](public-deployments.ja.md) | [Español](public-deployments.es.md) | [Français](public-deployments.fr.md) | Deutsch | [Português](public-deployments.pt.md) | [한국어](public-deployments.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-`dsh --profile web` Die GUI wird an einem Loopback-Port bedient, so dass ein Browser auf einem anderen Computer ihn nicht erreichen kann und der Prozess nichts über die von Ihnen verwendete Adresse weiß. Ein Reverse-Proxy vor ihm besitzt dieses externe Bein - den öffentlichen Hostnamen TLS und das Pfadpräfix, das es vor der Weiterleitung an den Zuhörer entfernt - und `--public-url` teilt DSH mit, welche Adresse Browser verwenden:
+`dsh --profile web` stellt die Weboberfläche auf einem Loopback-Port bereit. Ein Browser auf einem anderen Rechner kann den Port daher nicht direkt erreichen, und der Prozess kennt die öffentliche Adresse nicht. Der Reverse Proxy verwaltet den öffentlichen Hostnamen, TLS und das Pfadpräfix. Vor der Weiterleitung an den Webserver entfernt er dieses Präfix. Mit `--public-url` geben Sie DSH die Adresse an, die Browser verwenden.
 
 ```sh
 dsh --profile web --public-url https://app.example/ui/ --trusted-host app.example
@@ -14,36 +14,36 @@ dsh --profile web --public-url https://app.example/ui/ --trusted-host app.exampl
 
 <a id="what---public-url-advertises"></a>
 
-## Was `--public-url` wirbt
+## Von `--public-url` veröffentlichte URL
 
-`--public-url` akzeptiert eine `http://` - oder `https://` -Root mit einem optionalen Mount-Präfix und normalisiert es so, dass es in `/`endet. Es liefert die gedruckte und geöffnete Start-URL, `DSH_WEB_URL`und die Web-GUI-URL im Laufzeitkontext des Agenten. Der Webserver bedient weiterhin Origin-Root-Routen und lernt das Mount nie. Das `publicUrl` -Konfigurationsfeld veröffentlicht die gleiche Werbung.
+`--public-url` akzeptiert eine Basis-URL mit `http://` oder `https://` und einem optionalen Pfadpräfix und ergänzt bei Bedarf ein abschließendes `/`. Der Wert bestimmt die beim Start ausgegebene und geöffnete URL, den Wert von `DSH_WEB_URL` und die Weboberflächen-URL im Laufzeitkontext des Agenten. Der Webserver bedient weiterhin seine Routen relativ zum Wurzelpfad und kennt das Präfix nicht. Das Konfigurationsfeld `publicUrl` veröffentlicht dieselbe URL.
 
 <a id="what-the-proxy-must-do"></a>
 
 ## Was der Proxy tun muss
 
-- **Bewahren Sie den Browser-zugewandten `Host`.** Der Zaun vergleicht den empfangenen `Host` mit den akzeptierten Behörden, so dass der Proxy ihn unverändert weiterleitet, anstatt ihn an die Adresse des Zuhörers umzuschreiben.
-- **Streifen Sie das Mount-Präfix.** Der Zuhörer beantwortet Origin-Root-Routen, also eine Anfrage für `/ui/api/...` muss ankommen als `/api/...`.
-- **Vorwärts-Upgrades.** Jede Anfrage und WebSocket-Upgrade, das die Seite öffnet, muss den Zuhörer mit seinen `Upgrade` - und `Connection` -Headern intakt erreichen; TLS endet auf dem externen Bein des Proxys, wenn es HTTPS bedient.
-- **Rewrite Cookie-Bereich.** Ein Backend, das einfaches HTTP bedient, gibt nur Host-Cookies `Path=/` ohne `Secure`aus; der Proxy schreibt dann `Path` in das Mount (`/ui/`) um und fügt `Secure` auf seinem HTTPS-Bein hinzu. Ein Backend-Hörer, der sein eigenes TLS bedient, markiert bereits das Cookie `Secure`, so dass der Proxy nur umschreibt `Path`.
-- **Redirect das nackte Reittier.** `/ui/` ist der einzige Eintrag: Er tauscht allein das Start-Token für das Sitzungscookie aus, und er oder `/ui/index.html` stellt das Dokument einem Browser zur Verfügung, der dieses Cookie bereits enthält, da das servierte Dokument URLs gegen sein eigenes Verzeichnis auflöst. Eine Anfrage an `/ui` muss als `/ui/`ankommen, und das abgestreifte Backend kann diesen externen Pfad nicht rekonstruieren.
+- **Den vom Browser gesendeten `Host`-Header beibehalten.** Der Filter vergleicht den empfangenen `Host` mit den zulässigen Adressen. Der Proxy gibt den Header unverändert weiter, ohne ihn durch die Adresse des Webservers zu ersetzen.
+- **Das Pfadpräfix entfernen.** Der Webserver bedient seine Routen relativ zum Wurzelpfad. Eine Anfrage an `/ui/api/...` muss daher als `/api/...` ankommen.
+- **Protokollwechsel weiterleiten.** Der Proxy leitet alle Anfragen der Seite einschließlich WebSocket-Upgrades weiter und erhält dabei die Header `Upgrade` und `Connection`. Wenn der Proxy HTTPS anbietet, endet TLS für die Browserverbindung am Proxy.
+- **Den Geltungsbereich der Cookies anpassen.** Ein Backend mit unverschlüsseltem HTTP setzt Cookies, die nur für den Host gelten, mit `Path=/` und ohne `Secure`. Der Proxy setzt `Path` auf das öffentliche Präfix (`/ui/`) und fügt bei HTTPS `Secure` hinzu. Wenn das Backend selbst TLS verwendet, setzt es bereits `Secure`, und der Proxy passt nur `Path` an.
+- **Den Pfad ohne abschließenden Schrägstrich umleiten.** Nur unter `/ui/` wird das Starttoken gegen das Sitzungscookie eingetauscht. Wenn der Browser dieses Cookie bereits hat, kann er das Dokument unter diesem Pfad oder unter `/ui/index.html` laden. Das Dokument löst URLs relativ zu seinem eigenen Verzeichnis auf. Leiten Sie `/ui` auf `/ui/` um. Nachdem der Proxy das Präfix entfernt hat, kann das Backend den öffentlichen Pfad nicht rekonstruieren.
 
 <a id="trust-the-authority-browsers-use"></a>
 
-## Vertrauen Sie der Autorität, die Browser verwenden
+## Den vom Browser verwendeten Host und Port zulassen
 
-Der Zaun akzeptiert Loopback, die eigene Bindeadresse des Zuhörers und alle `--trusted-host` -Namen. Ein Browser, der die Bereitstellung unter einer anderen Behörde erreicht, erhält 403 für jeden API-Aufruf, egal wie korrekt der Proxy ist, also nennen Sie die browsersichtbare Behörde mit `--trusted-host`; Werbung mit `--public-url` ist nur Anzeige und gibt sie nicht zu. Ein Eintrag ohne Port passt zu jedem Port, der zu einem Tunnel passt, der jedes Mal einen anderen bindet. Der Zaun gibt nur die Anfrage zu; das Start-Token in der gedruckten URL und das signierte Sitzungscookie authentifizieren es. TLS, wo auch immer es endet, ändert nichts daran: Das Zertifikat identifiziert den Server für den Browser, nicht den Browser für den Server.
+Der Filter akzeptiert Loopback, die Bindeadresse des Webservers und alle mit `--trusted-host` angegebenen Adressen. Verwendet der Browser eine andere Adresse, erhält er bei jedem API-Aufruf den Status 403, auch wenn der Proxy korrekt eingerichtet ist. Geben Sie die aus Browsersicht sichtbare Adresse mit `--trusted-host` an. `--public-url` veröffentlicht die Adresse lediglich. Ein Eintrag ohne Port gilt für jeden Port, etwa für einen Tunnel, der bei jedem Start einen anderen Port belegt. Der Filter lässt die Anfrage zu. Das Starttoken in der ausgegebenen URL und das signierte Sitzungscookie dienen zur Authentifizierung. Unabhängig vom TLS-Endpunkt bestätigt das Zertifikat dem Browser die Identität des Servers.
 
-Weder die beworbene URL noch der Zaun schützen den Abhörport selbst, beschränken Sie den Port daher auf den vertrauenswürdigen Proxy oder das Netzwerk.
+Die veröffentlichte URL und der Filter schützen den Port selbst nicht. Beschränken Sie den Zugriff auf den Port auf den vertrauenswürdigen Proxy oder das vertrauenswürdige Netzwerk.
 
 <a id="secure-the-external-leg"></a>
 
-## Sicherung des äußeren Beins
+## Die öffentliche Verbindung absichern
 
-Beenden Sie TLS am Proxy, am Zuhörer selbst oder an beiden; `--public-url` bleibt eine Werbung. Eine `http://` -Browser-orientierte Wurzel zeigt das Start-Token im Klartext. Eine `https://` -Proxy-Root schützt das Browser-zu-Proxy-Bein; die Verschlüsselung zwischen Proxy und Listener hängt von der TLS-Konfiguration des Listeners ab.
+Die TLS-Verbindung kann am Proxy, am Webserver oder an beiden enden. `--public-url` dient weiterhin nur der Veröffentlichung der Adresse. Eine öffentliche Basis-URL mit `http://` überträgt das Starttoken im Klartext. Eine Proxy-Basis-URL mit `https://` schützt die Verbindung vom Browser zum Proxy. Die Verschlüsselung zwischen Proxy und Webserver richtet sich nach der TLS-Konfiguration des Servers.
 
-Um auf dem Listener zu beenden, übergeben Sie `--tls-cert` und `--tls-key`, jeweils einen Pfad, der gegen das Prozessarbeitsverzeichnis aufgelöst wird: Die Zertifikatsdatei enthält die vollständige Kette und die Schlüsseldatei einen unverschlüsselten PEM-privaten Schlüssel. DSH erhält, erneuert oder beobachtet niemals Zertifikate, und der Carrier liest die Dateien einmal, also ersetzen Sie sie und laden Sie den Zuhörer neu oder starten Sie den Prozess neu, um sie zu ändern; das Starten schlägt bei einem fehlenden oder ungültigen Paar fehl und fällt nie wieder zu HTTP zurück. Der Browser wendet seinen eigenen Trust-Store und Namensprüfungen an, so dass das Zertifikat den Hostnamen oder die IP-Adresse abdecken muss, die Sie öffnen. Der Standard-Port bleibt 3080. Native TLS benötigt keinen Proxy, aber Proxy-Bereitstellungen und `--public-url` bleiben unabhängig voneinander unterstützt. Ein TLS-Hörer markiert Sitzungscookies `Secure`; Halten Sie das öffentliche Browser-orientierte Bein HTTPS, damit Browser diese Cookies zurückgeben können.
+Um TLS am Webserver zu terminieren, geben Sie `--tls-cert` und `--tls-key` an. Beide Pfade werden relativ zum Arbeitsverzeichnis des Prozesses aufgelöst. Die Zertifikatsdatei enthält die vollständige Zertifikatskette, die Schlüsseldatei einen unverschlüsselten privaten PEM-Schlüssel. DSH beschafft, erneuert und überwacht keine Zertifikate. Die Dateien werden einmalig eingelesen. Wenn Sie sie austauschen, laden Sie den Webserver neu oder starten Sie den Prozess erneut. Bei einem fehlenden oder ungültigen Dateipaar schlägt der Start fehl, ohne auf HTTP zurückzufallen. Der Browser prüft das Zertifikat anhand seines eigenen Zertifikatsspeichers und des aufgerufenen Namens. Das Zertifikat muss den Hostnamen oder die IP-Adresse im Browser abdecken. Der Standardport bleibt 3080. Der Webserver unterstützt TLS direkt ohne Proxy. Die Bereitstellung über einen Proxy und `--public-url` bleiben unabhängig davon möglich. Ein Webserver mit TLS setzt für Sitzungscookies `Secure`. Stellen Sie die öffentliche Verbindung über HTTPS bereit, damit Browser diese Cookies zurücksenden können.
 
-Die gedruckte URL trägt einen Prozessnachweis, also teilen Sie ihn nur mit beabsichtigten Benutzern.
+Die ausgegebene URL enthält Zugangsdaten für den Prozess. Geben Sie die URL nur an die vorgesehenen Benutzer weiter.
 
-Die [Web-App-Referenz](../../../packages/bundle/web-app/README.md#public-deployments) dokumentiert die Befehlszeilenoptionen `--public-url`, `--trusted-host`und `--tls-cert`/`--tls-key` . Im Webprofil konfiguriert `publicUrl` die `web-runtime` -Zeile, `trustedHosts` konfiguriert die [-Verbindungszeile](../../../packages/client/connection/README.md)und `tls` konfiguriert die [-Webserverzeile.](../../../docs/subsystems/web-server.md#config).
+Die [Referenz zur Webanwendung](../../../packages/bundle/web-app/README.md#public-deployments) beschreibt die Befehlszeilenoptionen `--public-url`, `--trusted-host` und `--tls-cert`/`--tls-key`. Im Webprofil konfiguriert `publicUrl` den Eintrag `web-runtime`, `trustedHosts` den [Verbindungseintrag](../../../packages/client/connection/README.md) und `tls` den [Webserver-Eintrag](../../../docs/subsystems/web-server.md#config).

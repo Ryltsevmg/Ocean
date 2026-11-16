@@ -70,4 +70,4 @@ Encontre os diretórios reais de dados e registros do Electron para sua instala�
 
 ## 3. Remover os dados verificados e conferir
 
-Após confirmar cada caminho exato e a qual instalação ele pertence, remova apenas os diretórios escolhidos pelo gerenciador de arquivos. Não altere caminhos desconhecidos. Confirme que os caminhos escolhidos não existem mais antes de reinstalar. Se a remoção apresentar um erro, inspecione os arquivos restantes e resolva o erro em vez de ampliar o alvo da exclusão.
+Após confirmar cada caminho exato e a qual instalação ele pertence, use o gerenciador de arquivos para remover apenas os diretórios que você escolheu. Deixe intactos os caminhos que você não reconhece. Confirme que os caminhos escolhidos não existem mais antes de reinstalar. Se a remoção apresentar um erro, inspecione os arquivos restantes e resolva o erro em vez de ampliar o alvo da exclusão.

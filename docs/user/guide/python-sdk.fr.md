@@ -1,26 +1,26 @@
 <a id="get-started-with-the-python-sdk"></a>
 
-# Commencez avec le SDK Python
+# Prendre en main le SDK Python
 
 <!-- USER_LANGUAGES_START -->
 [English](python-sdk.md) | [中文](python-sdk.zh.md) | [Русский](python-sdk.ru.md) | [日本語](python-sdk.ja.md) | [Español](python-sdk.es.md) | Français | [Deutsch](python-sdk.de.md) | [Português](python-sdk.pt.md) | [한국어](python-sdk.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Ce tutoriel construit le SDK Python à partir de la source de ce dépôt, exécute le profil minimal autonome expédié, et montre comment personnaliser le même profil `dsh` à partir de votre propre programme. Ocean n'a pas encore de npm public qualifié ou de distribution SDK PyPI.
+Ce tutoriel explique comment compiler le SDK Python à partir du code source de ce dépôt, exécuter le profil minimal autonome fourni et personnaliser ce même profil `dsh` dans votre propre programme. Ocean ne propose pas encore de distribution publique validée du SDK sur npm ou PyPI.
 
 <a id="prerequisites"></a>
 
-## Préalables
+## Prérequis
 
 - Python 3.10 ou plus récent
 - Git
 - Linux x64, Linux arm64, macOS 14 ou plus récent sur arm64, ou Windows x64
-- Un paramètre et un justificatif d'API compatibles avec DeepSeek
-- Un espace de travail isolé et une maison isolée de l'océan
+- Un point de terminaison d’API compatible avec DeepSeek et des identifiants
+- Un espace de travail isolé et un répertoire de données Ocean isolé
 
 <a id="build-the-sdk-from-source"></a>
 
-## Construire le SDK à partir de la source
+## Compiler le SDK à partir du code source
 
 <div>
 <a id="linux-and-macos"></a>
@@ -28,9 +28,9 @@ Ce tutoriel construit le SDK Python à partir de la source de ce dépôt, exécu
 <a id="windows-powershell"></a>
 </div>
 
-Aucun registre public n'accueille un SDK Ocean qualifié; installer `deepseek-harness-sdk` de PyPI récupère le paquet du projet donateur, pas Ocean. Construire le support d'exécution et les deux roues dans cette caisse, puis les installer dans un environnement virtuel.
+Aucun registre public ne distribue de SDK Ocean validé. Installer `deepseek-harness-sdk` depuis PyPI récupère le paquet du projet d’origine. Compilez l’exécutable et les deux paquets wheel dans cette copie du dépôt, puis installez-les dans un environnement virtuel.
 
-:: Groupe de codes;
+::: code-group
 
 ```sh [Linux/macOS]
 git clone https://github.com/Ryltsevmg/Ocean.git
@@ -62,9 +62,9 @@ Sélectionnez la valeur `--platform` et l'exécutable `dist-exe/` correspondant 
 
 <a id="run-the-checked-in-example"></a>
 
-## Exécutez l'exemple d'enregistrement
+## Exécuter l’exemple fourni dans le dépôt
 
-Exporter le titre de compétence et, au besoin, un paramètre mandataire compatible :
+Exportez les identifiants et, si nécessaire, indiquez un point de terminaison de proxy compatible.
 
 <div>
 <a id="linux-and-macos-1"></a>
@@ -72,7 +72,7 @@ Exporter le titre de compétence et, au besoin, un paramètre mandataire compati
 <a id="windows-powershell-1"></a>
 </div>
 
-:: Groupe de codes;
+::: code-group
 
 ```sh [Linux/macOS]
 export DEEPSEEK_API_KEY=sk-your-key-here
@@ -86,7 +86,7 @@ $env:DEEPSEEK_API_KEY = "sk-your-key-here"
 
 :::
 
-Exécutez une tâche avec un espace de travail et des chemins d'accès explicites :
+Exécutez une tâche en indiquant explicitement les chemins de l’espace de travail et du répertoire de données.
 
 <div>
 <a id="linux-and-macos-2"></a>
@@ -94,7 +94,7 @@ Exécutez une tâche avec un espace de travail et des chemins d'accès explicite
 <a id="windows-powershell-2"></a>
 </div>
 
-:: Groupe de codes;
+::: code-group
 
 ```sh [Linux/macOS]
 python python/sdk/examples/minimal.py \
@@ -114,7 +114,7 @@ python python/sdk/examples/minimal.py `
 
 :::
 
-Le script imprime la réponse finale de l'assistant ou le résultat de la commande fourni par le profil sélectionné. La maison sélectionnée reçoit le profil `sdk-minimal` généré, les plugins installés et les journaux de session JSONL non compressés sous `sessions/`. L'exemple et le SDK ne lisent jamais silencieusement `~/.dsh`.
+Le script affiche la réponse finale de l’assistant ou le résultat de la commande fourni par le profil sélectionné. Le répertoire de données choisi contient le profil généré `sdk-minimal`, les extensions installées et les journaux de session JSONL non compressés dans `sessions/`. L’exemple et le SDK ne lisent jamais `~/.dsh` de manière implicite.
 
 <a id="use-the-sdk-in-your-program"></a>
 
@@ -143,7 +143,7 @@ with DeepSeekHarness(
 print(result.final_response)
 ```
 
-Le SDK démarre le processus `dsh --profile sdk-minimal` livré paresseusement et le réutilise jusqu'à la sortie de la gestion de contexte. Le profil, son patch persistant, le patch maison et tout tuple `patches` commandé forment la configuration de l'application. Il n'y a pas d'option séparée Python runtime bin ou complet-config.
+Le SDK lance le processus fourni `dsh --profile sdk-minimal` à la première utilisation et le réutilise jusqu’à la sortie du gestionnaire de contexte. Le profil, sa surcouche persistante, la surcouche du répertoire de données et le tuple ordonné `patches` forment la configuration de l’application. Il n’existe ni exécutable d’environnement Python distinct ni option pour fournir une configuration complète.
 
 <a id="install-or-define-plugins"></a>
 
@@ -157,7 +157,7 @@ Utilisez `dsh plugin` pour les dépendances et les couches de paquets qui devrai
 <a id="windows-powershell-3"></a>
 </div>
 
-:: Groupe de codes;
+::: code-group
 
 ```sh [Linux/macOS]
 export DSH_HOME=/absolute/path/to/example-dsh-home
@@ -173,14 +173,14 @@ dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
 
 :::
 
-La première commande initialise le profil autonome expédié. La deuxième gestion des paquets est transmise à `pnpm`, puis enregistre tout paquet installé qui exporte une couche `dsh.bundle` . Installez `pnpm` uniquement pour cette commande de gestion; le lancement du SDK installé n'en a pas besoin. Modifier `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` pour les changements de lignes persistants, ou passer des fichiers patchs de Python pour les changements par lancement.
+La première commande initialise le profil autonome fourni. La deuxième délègue la gestion des paquets à `pnpm`, puis enregistre chaque paquet installé qui exporte une couche `dsh.bundle`. Installez `pnpm` uniquement pour cette commande de gestion. Le SDK installé peut démarrer sans lui. Modifiez `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` pour changer durablement des entrées, ou passez des fichiers de surcouche depuis Python pour les modifier au cas par cas.
 
 Un autre `profile` est valide lorsqu'il inclut `@ocean/ocean-sdk-app` ou une autre ligne de serveur JSON-RPC. Les lignes manquantes du serveur, les plugins non résolus et les correctifs invalides échouent au cours du démarrage au lieu de revenir à une autre composition.
 
 <a id="opt-in-to-str_replace_editor"></a>
 ### Optez pour `str_replace_editor`
 
-L'exécution groupée comprend `str_replace_editor`, mais `sdk-minimal` l'opère à partir de l'arborescence Cordis par défaut. Pour l'utiliser, enregistrer cette configuration en ajoutant `editor.patch.yml`; `insert` à l'éditeur en utilisant le fournisseur de système de fichiers existant:
+L’environnement d’exécution fourni contient `str_replace_editor`, que `sdk-minimal` exclut de son arborescence Cordis par défaut. Pour utiliser cet outil, enregistrez cette configuration dans `editor.patch.yml`. `insert` ajoute l’éditeur en utilisant le fournisseur de système de fichiers existant.
 
 ```yaml
 - insert:
@@ -193,7 +193,7 @@ Passez `patches=("/absolute/path/to/editor.patch.yml",)` lors de la construction
 <a id="enable-team-mode"></a>
 ### Activer le mode Équipe
 
-Utiliser la norme `sdk` profil pour les équipes d'agents; `sdk-minimal` ne comprend pas les sous-agents ou les services d'équipe. [Patch de l'équipe](../../../apps/cli/config/examples/team-mode.yml) comme `team-mode.yml`:
+Utilisez le profil standard `sdk` pour les équipes d’agents. `sdk-minimal` ne comprend ni sous-agents ni services d’équipe. Enregistrez le [patch du mode équipe](../../../apps/cli/config/examples/team-mode.yml) sous `team-mode.yml`.
 
 ```yaml
 - id: agent-team
@@ -214,17 +214,17 @@ Créez une nouvelle session racine et demandez-lui de créer et de lister une t�
 | Demande système | `DSH_SYSTEM_PROMPT`, en revenant à `You are a helpful software engineer assistant.` |
 | Modèle dans `minimal.py` | `--model`, puis `DSH_MODEL`, puis `deepseek-v4-flash` |
 | Outils de présentation de modèles | Résistants `bash` sur Linux/macOS ou `pwsh` sur Windows, `read_image`, et `working_directory` |
-| Heure d'arrêt Shell | 300 secondes |
-| Contexte d'exécution optionnel | Absent |
-| Compaction de contexte | Automatique; résume l'historique antérieur grâce à une demande de modèle supplémentaire |
+| Heure d’arrêt Shell | 300 secondes |
+| Contexte d’exécution optionnel | Absent |
+| Compaction de contexte | Automatique; résume l’historique antérieur grâce à une demande de modèle supplémentaire |
 | La persistance de la session | JSONL non compressée sous `<dsh_home>/sessions` |
 
-Le seul paquet du profile insère l'arborescence complète sur une racine vide et n'inclut pas `dsh-base`; les outils de profil de base plus tard ne peuvent donc pas apparaître implicitement. Il contient le protocole SDK, un adaptateur DeepSeek configuré en environnement, l'exécution locale et la persistance, tandis que les outils de fichiers texte, les paramètres, les identifiants gérés, la télémétrie OTel, les outils Web, les sous-agents et la découverte d'instruction locale sont absents. Le contributeur de session de [DeepSeek](../../../packages/session/session-log-deepseek/README.md) télécharge par défaut des événements de log non acceptés avec des requêtes DeepSeek, au plus `maxBytes` (8 MiB) par requête; définissez `session-log-deepseek.enabled: false` dans un patch de profil pour le désactiver. Il épingle `danger-full-access`, de sorte que la plate-forme sélectionnée shell persistante peut modifier n'importe quel chemin visible à l'exécution; utiliser une caisse ou un conteneur jetables.
+L’unique bundle du profil insère l’arborescence Cordis complète à partir d’une racine vide. Il n’inclut pas `dsh-base`. Les outils du profil de base ne peuvent donc pas apparaître implicitement par la suite. Il fournit le protocole SDK, un adaptateur DeepSeek configuré par l’environnement, l’exécution locale et la persistance. Il omet les outils de fichiers texte, les paramètres, les identifiants gérés, la télémétrie OTel, les outils web, les sous-agents et la détection des instructions locales. Par défaut, l’[extension DeepSeek de journal de session](../../../packages/session/session-log-deepseek/README.md) joint aux requêtes DeepSeek les événements de journal encore non confirmés, à hauteur de `maxBytes` (8 Mio) par requête. Pour désactiver cette fonction, définissez `session-log-deepseek.enabled: false` dans un patch de profil. Le profil fixe `danger-full-access`. Le shell persistant choisi par la plateforme peut donc modifier tous les chemins visibles par le processus. Utilisez une copie de travail ou un conteneur jetable.
 
 La lecture de l'image nécessite un itinéraire compatible avec l'image. Le compactage automatique préserve le journal complet de la session; voir le [référence du paquet](../../../packages/bundle/sdk-minimal/README.md) pour le modèle et les effets de stockage. `sdk-minimal` composition, l'entrée slash non prise en charge reste un texte rapide ordinaire.
 
 La roue installée emballe toujours le profil `web` complet et les actifs frontend. Exécutez `dsh web` contre un `DSH_HOME` explicite lorsqu'un déploiement Python SDK a également besoin de l'application du navigateur; `web` est une application CLI distincte et ne peut pas servir un client Python SDK.
 
-Utilisez une nouvelle maison lorsque les profils, les plugins, les références, les paramètres et les sessions doivent être isolés. Utilisez une nouvelle id de session pour un travail indépendant; réutiliser un harnais, une maison et une id seulement pour continuer la même conversation durable et les ressources de session.
+Utilisez un nouveau répertoire de données pour isoler les profils, extensions, identifiants, paramètres et sessions. Utilisez un nouvel identifiant de session pour un travail indépendant. Réutilisez la même instance du SDK, le même répertoire de données et le même identifiant uniquement pour poursuivre la même conversation persistante et retrouver les ressources de sa session.
 
 Les [référence du paquet](../../../packages/bundle/sdk-minimal/README.md) possède l'arbre exact, et le [exemple de référence](../../../python/sdk/examples/README.md) possède le programme exécutable. [Python référence SDK](../../../python/sdk/README.md) couvre le cycle de vie, les résultats, les notifications et les comportements de faible niveau; [dsh CLI référence](../../../apps/cli/reference/README.md) couvre la superposition du profil.

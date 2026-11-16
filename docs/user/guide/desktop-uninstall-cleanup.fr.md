@@ -10,25 +10,25 @@ Utilisez ce guide pour désinstaller Ocean Desktop sur macOS, Windows ou Linux. 
 
 <a id="1-uninstall-the-app"></a>
 
-## 1. Désinstaller l'application
+## 1. Désinstaller l’application
 
-Terminer toutes les commandes en utilisant le CLI livré par Desktop. Si vous avez installé la commande `dsh` à travers Desktop, sélectionnez d'abord **Gérer la commande dsh... → Supprimer** dans le menu de l'application. Cela supprime l'enregistrement de commande de Desktop sans désinstaller des programmes CLI indépendants.
+Attendez la fin des commandes en cours qui utilisent l’outil en ligne de commande fourni avec Ocean Desktop. Si vous avez installé la commande `dsh` depuis l’application, sélectionnez d’abord **Gérer la commande dsh… → Supprimer** dans son menu. Cette opération supprime l’enregistrement de la commande d’Ocean Desktop sans désinstaller les outils en ligne de commande indépendants.
 
 Quittez Ocean, puis désinstallez-le en utilisant la procédure de votre plateforme:
 
-- **macOS:** Supprimer l'application des Applications dans Finder.
-- **Windows:** Désinstallez-le via Paramètres → Applications → Installez des applications sur Windows 11, ou Panneau de configuration → Programmes → Programmes et fonctionnalités.
-- **Linux :** Supprimez l'installation en utilisant la méthode qui l'a installée ; pour un répertoire extrait, supprimez ce répertoire d'installation après avoir quitté l'application.
+- **macOS :** Supprimez l’application du dossier Applications dans le Finder.
+- **Windows :** Désinstallez-la via Paramètres → Applications → Applications installées sous Windows 11, ou Panneau de configuration → Programmes → Programmes et fonctionnalités.
+- **Linux :** Supprimez l’installation en utilisant la méthode qui l’a installée ; pour un répertoire extrait, supprimez ce répertoire d’installation après avoir quitté l’application.
 
 <a id="2-inspect-local-data-before-cleanup"></a>
 
 ## 2. Inspecter les données locales avant le nettoyage
 
-Supprimer les données locales peut supprimer définitivement les sessions, les identifiants, les paramètres, les plugins, les caches et l'état CLI partagé. Sauvegardez tout ce que vous voulez conserver. Ne supprimez pas un répertoire uniquement parce que son nom ressemble à Ocean ou DSH.
+Supprimer les données locales peut supprimer définitivement les sessions, les identifiants, les paramètres, les plugins, les caches et l’état CLI partagé. Sauvegardez tout ce que vous voulez conserver. Ne supprimez pas un répertoire uniquement parce que son nom ressemble à Ocean ou DSH.
 
-La maison Ocean par défaut actuelle est `~/.ocean`, ou `.ocean` sous le profil utilisateur de Windows. `DSH_HOME` peut sélectionner un autre emplacement; inspecter le réglage utilisé pour lancer Desktop, qui peut différer du terminal actuel. Les commandes ci-dessous n'impriment que les emplacements des candidats et ne suppriment rien. Ils ne découvrent pas le répertoire `userData` d'Electron ni tous les caches spécifiques à l'installation.
+Le répertoire de données par défaut d’Ocean est actuellement `~/.ocean`, ou `.ocean` dans le profil utilisateur Windows. `DSH_HOME` permet de choisir un autre emplacement. Vérifiez la valeur utilisée pour lancer Ocean Desktop, qui peut différer de celle du terminal actuel. Les commandes ci-dessous affichent seulement les emplacements possibles et ne suppriment rien. Elles ne détectent ni le répertoire `userData` réellement utilisé par Electron ni tous les caches propres à l’installation.
 
-:: Groupe de codes;
+::: code-group
 
 ```sh [macOS]
 : "${HOME:?HOME must be set}"
@@ -60,14 +60,14 @@ printf '%s\n' \
 
 :::
 
-Le nom de cache de la mise à jour est dérivé du nom du paquet Desktop, et non du titre du produit. `@ocean/ocean-desktop` paquet; une autre construction peut différer. [désinstaller](../../../apps/desktop/installer/uninstall.nsh) vérifie les répertoires de données d'applications nom de produit et nom de paquet et le cache de mise à jour, mais conserve la maison Ocean; les mises à jour et les données conservées peuvent également préserver les données d'application.
+Le nom du cache de mise à jour est dérivé du nom du paquet Desktop. Les emplacements proposés correspondent au paquet actuel `@ocean/ocean-desktop`. Une autre version compilée peut utiliser des emplacements différents. Sous Windows, le [programme de désinstallation](../../../apps/desktop/installer/uninstall.nsh) vérifie les répertoires de données d’application nommés d’après le produit et le paquet ainsi que le cache de mise à jour, mais conserve le répertoire de données d’Ocean. Les mises à jour et les réinstallations avec conservation des données peuvent également laisser des données d’application en place.
 
-Trouver les données Electron et les répertoires de log pour votre installation avant de les supprimer; le [Référence du diagnostic](../../../apps/desktop/docs/diagnostics/README.md#report-contents) décrit les emplacements de log. préférence macOS, ShipIt, stockage HTTP, et noms de cache système dépendent de l'identificateur de paquet installé. `DSH_DESKTOP_APP_ID`; `com.deepseek.dsh` n'est pas un identificateur universel Ocean. Ne lancez pas un nettoyage de wildcard pour cet identificateur à moins que vous n'ayez identifié ces fichiers de manière indépendante comme des restes de votre installation précédente.
+Repérez les vrais répertoires de données et de journaux Electron de votre installation avant de les supprimer. La [référence de diagnostic](../../../apps/desktop/docs/diagnostics/README.md#report-contents) indique où trouver les journaux. Les noms des fichiers de préférences macOS, de ShipIt, du stockage HTTP et des caches système dépendent de l’identifiant du paquet installé. La création d’un paquet exige de définir explicitement `DSH_DESKTOP_APP_ID`. `com.deepseek.dsh` n’est pas un identifiant Ocean universel. N’employez pas de caractère générique pour supprimer des fichiers portant cet identifiant sans avoir vérifié vous-même qu’ils proviennent de votre ancienne installation.
 
-`~/.dsh` était un défaut précédent, pas le défaut actuel. Supprimez-le, les données précédentes de l'application `@deepseek-ai` , ou les caches d'identificateurs de l'ère donneur seulement si vous reconnaissez ces restes et qu'aucune autre installation n'en a besoin. Les répertoires de développement et de test nécessitent leurs propres vérifications.
+`~/.dsh` était le répertoire par défaut d’une version antérieure. Ne supprimez ce répertoire, les anciennes données d’application `@deepseek-ai` ou les caches associés aux identifiants du projet d’origine que si vous reconnaissez ces fichiers et qu’aucune autre installation n’en a besoin. Vérifiez séparément les répertoires de développement et de test.
 
 <a id="3-remove-verified-data-and-check"></a>
 
 ## 3. Supprimer les données vérifiées et vérifier
 
-Après avoir confirmé chaque chemin exact et sa propriété, supprimez seulement les répertoires que vous avez choisis en utilisant votre gestionnaire de fichiers. Laissez intacts les sentiers non reconnus. Confirmez que les chemins choisis n'existent plus avant de les réinstaller. Si la suppression signale une erreur, inspecter les fichiers restants et résoudre l'erreur plutôt que d'élargir la cible de suppression.
+Après avoir vérifié chaque chemin exact et déterminé à quelle installation il appartient, utilisez votre gestionnaire de fichiers pour supprimer uniquement les répertoires choisis. Laissez en place les chemins que vous ne reconnaissez pas. Vérifiez que les chemins choisis n’existent plus avant de réinstaller l’application. Si la suppression échoue, examinez les fichiers restants et résolvez l’erreur sans élargir le périmètre de suppression.

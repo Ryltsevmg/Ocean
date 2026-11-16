@@ -6,13 +6,13 @@
 [English](index.md) | [中文](index.zh.md) | [Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | [Français](index.fr.md) | [Deutsch](index.de.md) | Português | [한국어](index.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Inicie a interface web seguindo o [README principal](../../development.md); o comando exibe sua URL. Este guia começa quando o servidor já está em execução. O processo `dsh` usa o diretório de onde foi invocado como local padrão do sistema de arquivos, mas uma interface web nova não tem um espaço de trabalho selecionado até que você adicione um.
+Inicie a interface web seguindo o [guia de desenvolvimento](../../development.md); o comando exibe sua URL. Este guia começa quando o servidor já está em execução. O processo `dsh` usa o diretório de onde foi iniciado como local padrão do sistema de arquivos. Ao abrir a interface web pela primeira vez, adicione e selecione um espaço de trabalho.
 
 <a id="configure-a-model"></a>
 
 ## Configurar um modelo
 
-Abra **Configurações → Modelos** e escolha um provedor de modelos; o [guia de configuração de modelos](./providers.pt.md) explica os provedores compatíveis e os endpoints personalizados compatíveis com OpenAI. Para uma rota DeepSeek, insira sua [chave API DeepSeek](https://platform.deepseek.com/) e salve. A rota do modelo fica disponível imediatamente, sem reiniciar o servidor.
+Abra **Configurações → Modelos** e escolha um provedor de modelos; o [guia de configuração de modelos](./providers.pt.md) lista os provedores disponíveis e explica como usar endpoints personalizados compatíveis com OpenAI. Para uma rota DeepSeek, insira sua [chave de API do DeepSeek](https://platform.deepseek.com/) e salve. A rota do modelo fica disponível imediatamente, sem reiniciar o servidor.
 
 <a id="choose-a-workspace"></a>
 

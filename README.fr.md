@@ -4,7 +4,7 @@
 [English](README.md) | [中文](README.zh.md) | [Русский](README.ru.md) | [日本語](README.ja.md) | [Español](README.es.md) | Français | [Deutsch](README.de.md) | [Português](README.pt.md) | [한국어](README.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Ocean est un espace de travail sur ordinateur pour les agents d’IA, les conversations et les outils. Son environnement d’exécution à extensions relie les fournisseurs de modèles, les outils de développement et les commandes facultatives du navigateur ou de l’ordinateur.
+Ocean est un espace de travail de bureau pour les agents d’IA, les conversations et les outils. Son environnement d’exécution s’appuie sur des extensions pour intégrer les fournisseurs de modèles, les outils de développement et, si nécessaire, le pilotage du navigateur ou de l’ordinateur.
 
 <a id="developer-preview"></a>
 

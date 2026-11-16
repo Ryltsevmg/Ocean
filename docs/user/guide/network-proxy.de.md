@@ -17,25 +17,25 @@ export HTTPS_PROXY=http://127.0.0.1:7890
 export HTTP_PROXY=http://127.0.0.1:7890
 ```
 
-Setzen Sie beide Zeilen in Ihr Shell-Profil, so dass jede `dsh` -Aufruf sie erbt, oder standardmäßig in `$DSH_HOME/.env` (`~/.dsh/.env` neben Ihrem API-Schlüssel; eine exportierte Variable gewinnt immer über diese Datei. Ein projekteigenes `.env` kann sie nicht festlegen: Es kommt mit `git clone`an, und DSH weigert sich zu starten, anstatt ein Repository entscheiden zu lassen, wohin Ihr Traffic geht.
+Tragen Sie beide Zeilen in Ihr Shell-Profil ein, damit jeder `dsh`-Aufruf sie erbt. Sie können die Zeilen auch in `$DSH_HOME/.env` (standardmäßig `~/.ocean/.env`) neben Ihren API-Schlüssel setzen. Exportierte Variablen haben Vorrang vor dieser Datei. Die `.env`-Datei eines Projekts darf diese Variablen nicht setzen. Sie wird durch `git clone` übernommen. DSH bricht den Start ab, damit kein Repository den Weg Ihres Datenverkehrs bestimmen kann.
 
 Ein Proxy, der Anmeldeinformationen benötigt, nimmt sie in die URL: `http://user:password@proxy.example:8080`. DSH druckt die URL nie zurück: Eine Diagnose benennt die Variable, die sie abgelehnt hat, so dass weder der Benutzername noch das Passwort irgendwo erscheinen.
 
 <a id="why-your-browser-is-proxied-but-your-terminal-is-not"></a>
 
-## Warum ist Ihr Browser proxied, aber Ihr Terminal ist nicht
+## Warum Ihr Browser den Proxy verwendet und Ihr Terminal eine eigene Konfiguration braucht
 
 Dies ist die häufigste Überraschung, und es ist nicht spezifisch für DSH. Es gibt keinen einzigen "System-Proxy", dem alle Software gehorcht - es gibt drei nicht verwandte Mechanismen:
 
 | Mechanismus | Wer folgt ihm |
 |---|---|
 | Die Proxy-Einstellungen des Betriebssystems | Safari, die meisten nativen macOS-Apps, Chrome und Edge |
-| Die `HTTP_PROXY` / `HTTPS_PROXY` Umgebungsvariablen | `curl`, `git`, `npm`, `pip`und DSH |
+| Die `HTTP_PROXY` / `HTTPS_PROXY` Umgebungsvariablen | `curl`, `git`, `npm`, `pip` und DSH |
 | TUN-Modus (eine virtuelle Netzwerkschnittstelle) | Alles, transparent |
 
-Der "System-Proxy"-Switch in einer Proxy-Anwendung wie Clash schreibt nur den ersten. Browser nehmen es auf; Kommandozeilen-Tools sehen es nie. Aus diesem Grund ist der Export der Variablen ein separater Schritt, und warum das Einschalten des TUN-Modus beide ohne Variablen funktionieren lässt.
+Der Schalter „System-Proxy“ in einer Proxy-Anwendung wie Clash ändert nur die Proxy-Einstellungen des Betriebssystems. Browser lesen diese Einstellungen. Für Kommandozeilenwerkzeuge müssen Sie die Variablen separat exportieren. Im TUN-Modus funktionieren beide ohne diese Variablen.
 
-DSH liest die Proxy-Einstellungen des Betriebssystems nicht, exportiert die Variablen oder verwendet den TUN-Modus.
+DSH liest die Proxy-Einstellungen des Betriebssystems nicht. Exportieren Sie die Variablen oder verwenden Sie den TUN-Modus.
 
 <a id="choose-what-stays-direct"></a>
 
@@ -47,21 +47,21 @@ DSH liest die Proxy-Einstellungen des Betriebssystems nicht, exportiert die Vari
 export NO_PROXY=internal.example.com,.corp.example.com,registry.local
 ```
 
-Ein Eintrag benennt einen Host und ordnet ihn mit jeder Subdomain darunter ab: `NO_PROXY=example.com` sendet auch `api.example.com` direkt. Ein führender `.` oder `*.` wird akzeptiert und bedeutet dasselbe. Ein Eintrag kann einen `:port`tragen und `*` umgeht alles.
+Ein Eintrag gilt für den Host und alle seine Subdomains. Mit `NO_PROXY=example.com` wird auch `api.example.com` direkt erreicht. Ein vorangestelltes `.` oder `*.` hat dieselbe Wirkung. Ein Eintrag kann auf `:port` enden. Mit `*` wird der Proxy für alle Hosts umgangen.
 
-**CIDR-Bereiche funktionieren nicht.** Eine Umgehungsliste für Betriebssysteme enthält häufig Einträge wie `10.0.0.0/8` oder `192.168.0.0/16`; das Kopieren in `NO_PROXY` hat keine Auswirkungen.
+**CIDR-Bereiche werden nicht unterstützt.** Ausnahmelisten von Betriebssystemen enthalten oft Einträge wie `10.0.0.0/8` oder `192.168.0.0/16`. Solche Einträge haben in `NO_PROXY` keine Wirkung. Verwenden Sie Hostnamen oder Domainendungen.
 
-Sie müssen `localhost` oder `127.0.0.1`nicht auflisten. DSH umgeht immer Loopback, da seine eigene Web-Benutzeroberfläche und lokale Server sonst durch den Proxy und die Schleife geleitet würden.
+Sie müssen `localhost` oder `127.0.0.1` nicht auflisten. DSH umgeht immer Loopback, da seine eigene Web-Benutzeroberfläche und lokale Server sonst durch den Proxy und die Schleife geleitet würden.
 
 <a id="limits-worth-knowing"></a>
 
 ## Grenzen wissenswert
 
-**SOCKS Proxies werden nicht unterstützt. Der** A `socks5://` -Wert wird beim Start gemeldet und übersprungen, und DSH verbindet sich direkt mit dem Schema, das ihn benannt hat - `HTTPS_PROXY=socks5://…` neben einem verwendbaren `HTTP_PROXY` lässt `https:` direkt, anstatt den HTTP-Proxy zu leihen. Richten Sie die Variablen stattdessen auf den HTTP-Port Ihrer Proxy-Anwendung - die meisten setzen beide frei, und die HTTP-Nummer ist normalerweise eine benachbarte Portnummer.
+**SOCKS-Proxys werden nicht unterstützt.** DSH meldet einen Wert mit `socks5://` beim Start und ignoriert ihn. Für das betroffene Protokoll stellt DSH eine direkte Verbindung her. Wenn `HTTPS_PROXY=socks5://…` gesetzt ist, verwendet DSH für `https:` auch dann eine direkte Verbindung, wenn `HTTP_PROXY` gültig ist. Konfigurieren Sie die Variablen für den HTTP-Port Ihrer Proxy-Anwendung. Die meisten Anwendungen bieten beide Protokolle an, meist mit benachbarten Portnummern.
 
-**`ALL_PROXY` Allein reicht es.** DSH greift für beide Schemata darauf zurück, obwohl Node und Curl sich darin unterscheiden. `HTTPS_PROXY` Das ist explizit noch klarer.
+**`ALL_PROXY` genügt.** DSH verwendet den Wert als Vorgabe für beide Protokolle. Das Verhalten von Node und curl unterscheidet sich in diesem Punkt. Mit einem ausdrücklich gesetzten `HTTPS_PROXY` ist die Konfiguration eindeutiger.
 
-**Ein TLS-intercepting Corporate Proxy benötigt sein Zertifikat.** Wenn Anfragen mit einem Zertifikatsfehler fehlschlagen, sobald der Proxy erreichbar ist, weisen Sie vor dem Start auf Node im CA-Bundle Ihres Unternehmens hin:
+**Ein Unternehmensproxy, der TLS-Verbindungen überprüft, benötigt sein Zertifikat.** Wenn der Proxy erreichbar ist und Anfragen an einem Zertifikatsfehler scheitern, geben Sie vor dem Start das CA-Bundle Ihres Unternehmens für Node an.
 
 ```sh
 export NODE_EXTRA_CA_CERTS=/path/to/corporate-ca.pem
@@ -69,32 +69,32 @@ export NODE_EXTRA_CA_CERTS=/path/to/corporate-ca.pem
 
 Node liest diese Variable nur beim Prozessstart, also exportieren Sie sie vor dem Ausführen `dsh`.
 
-**Tools dsh läuft für sie dem gleichen proxy folgen.** -Befehle im bash-Tool, `git`, `gh`und MCP-Server, die als Kind-Prozesse gestartet wurden, erben alle diese Variablen. Ein untergeordnetes Node-Programm verwendet seine eigene installierte Laufzeit: Node 22.21+ und Node 24+ ehren diese Variablen; eine ältere Laufzeit verbindet sich direkt. Wenn eine Ihrer Proxy-Variablen einen Wert enthält, der DSH abgelehnt wurde - eine SOCKS-URL, sagen wir -, verbinden sich Node-basierte Tools auch direkt, anstatt nicht zu starten, während `curl` und `git` diesen Wert immer noch lesen.
+**Von DSH gestartete Werkzeuge verwenden denselben Proxy.** Befehle im Bash-Tool, `git`, `gh` und als Kindprozesse gestartete MCP-Server erben diese Variablen. Ein Node-Programm als Kindprozess verwendet die dafür installierte Node-Laufzeit. Node 22.21+ und Node 24+ berücksichtigen diese Variablen. Ältere Versionen verbinden sich direkt. Wenn DSH einen Proxy-Wert ablehnt, etwa eine SOCKS-URL, starten Node-basierte Werkzeuge und verbinden sich direkt. `curl` und `git` lesen den abgelehnten Wert weiterhin.
 
-**Ein Passwort in der Proxy-URL erreicht auch diese Tools.** `HTTPS_PROXY=http://alice:s3cret@proxy.example:8080` ist eine normale Umgebungsvariable, so dass jeder Befehl, den DSH ausführt - einschließlich derjenigen, die das Modell schreibt - ihn lesen kann, und ein Befehl, der seine Umgebung ausdruckt, legt das Passwort in die Ausgabe, die beibehalten wird. So verhält sich die Variable bereits für alles andere in Ihrer Shell. Wenn dies wichtig ist, geben Sie dem Proxy einen anerkennungsfreien Einstiegspunkt oder authentifizieren Sie ihn auf andere Weise als in der URL.
+**Auch ein Passwort in der Proxy-URL ist für diese Werkzeuge sichtbar.** `HTTPS_PROXY=http://alice:s3cret@proxy.example:8080` ist eine gewöhnliche Umgebungsvariable. Jeder von DSH ausgeführte Befehl kann sie lesen, auch wenn das Modell ihn geschrieben hat. Gibt ein Befehl seine Umgebung aus, erscheint das Passwort in der gespeicherten Ausgabe. Die Variable verhält sich damit genauso wie für andere Befehle in Ihrer Shell. Falls nötig, verwenden Sie einen Proxy-Zugang ohne Anmeldedaten oder eine Authentifizierungsmethode, die keine Anmeldedaten in der URL benötigt.
 
 <a id="what-stays-direct"></a>
 
-## Was bleibt direkt
+## Welche Verbindungen direkt bleiben
 
 Nicht jede Anfrage, die DSH macht, geht durch den Proxy:
 
-- **Alles an dieser Maschine.** Loopback ist immer direkt: `localhost`, Gesamt `127.0.0.0/8` Reichweite, `::1`, und `0.0.0.0`Ein Proxy kann einen Dienst, der nur lokal zuhört, nicht sinnvoll erreichen.
-- **Code das Modell schreibt.** Workflow Worker und Node ptc-Runtime-Prozesse erhalten keine Proxy-Einstellungen, so dass modellautorisierte Skripte keine Proxy-URL lesen können, die möglicherweise ein Passwort enthält. Direkte Anfragen müssen den erforderlichen Proxy selbst konfigurieren und der Ausführungssandbox unterliegen.
-- **Nutzungstelemetrie.** Der OTLP-Exporteur verwendet den eigenen HTTP-Client von Node und nicht den, den ein Proxy konfiguriert, so dass sich die Telemetrie direkt verbindet und einfach ausfällt, wenn der direkte Ausgang blockiert ist. Nichts, was Sie in DSH tun, hängt davon ab. Stellen Sie `DSH_TELEMETRY_MODE=DISABLED` ein, um es vollständig auszuschalten.
-- **`web_fetch` an eine buchstäbliche Privatadresse.** Eine URL, die eine Adresse wie `http://10.0.0.5/` wird abgelehnt und nicht an den proxy übergeben, die gleiche ablehnung, die er ohne proxy-konfiguration erhält.
+- **Alles an dieser Maschine.** Loopback ist immer direkt: `localhost`, Gesamt `127.0.0.0/8` Reichweite, `::1`, und `0.0.0.0` Ein Proxy kann einen Dienst, der nur lokal zuhört, nicht sinnvoll erreichen.
+- **Vom Modell geschriebener Code.** Workflow-Worker und Node-Prozesse von ptc-runtime erhalten keine Proxy-Einstellungen. Vom Modell geschriebene Skripte können daher keine Proxy-URL lesen, die ein Passwort enthalten könnte. Benötigen solche Anfragen einen Proxy, muss das Skript ihn selbst konfigurieren. Die Ausführung bleibt durch die Sandbox beschränkt.
+- **Nutzungstelemetrie.** Der OTLP-Exporter verwendet den eigenen HTTP-Client von Node. Die Telemetrie verbindet sich direkt und schlägt fehl, wenn ausgehende Direktverbindungen blockiert sind. Die Arbeit mit DSH hängt davon nicht ab. Mit `DSH_TELEMETRY_MODE=DISABLED` schalten Sie die Telemetrie ganz ab.
+- **`web_fetch` mit direkter privater IP-Adresse.** Eine URL mit einer privaten IP-Adresse wie `http://10.0.0.5/` wird abgelehnt und nicht an den Proxy weitergeleitet. Ohne Proxy lehnt das Werkzeug sie ebenfalls ab.
 
 <a id="check-that-it-worked"></a>
 
 ## Überprüfen Sie, ob es funktioniert hat
 
-Bitten Sie den Agenten, eine Seite abzurufen und das Verbindungsprotokoll Ihrer Proxy-Anwendung zu sehen:
+Bitten Sie den Agenten, eine Seite abzurufen, und prüfen Sie das Verbindungsprotokoll Ihrer Proxy-Anwendung.
 
 ```sh
 dsh --profile headless "fetch https://example.com and tell me the page title"
 ```
 
-Wenn die Anforderung dort nicht erscheint, bestätigen Sie, dass die Variablen in der DSH-eigenen Umgebung überleben:
+Falls die Anfrage dort nicht erscheint, prüfen Sie, ob die Variablen in der Umgebung von DSH gesetzt sind.
 
 ```sh
 env | grep -i proxy

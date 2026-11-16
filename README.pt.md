@@ -18,7 +18,7 @@ O Ocean está em desenvolvimento ativo. As APIs e os recursos podem mudar. Leia 
 
 Use este repositório: [Ryltsevmg/Ocean](https://github.com/Ryltsevmg/Ocean). O acesso pode estar restrito enquanto a versão pública é preparada. Não use um instalador do projeto original nem um pacote npm não verificado como método de instalação do Ocean.
 
-Para configurar o código-fonte e consultar os comandos locais de Web/Desktop, siga o [guia de desenvolvimento](docs/development.md). Os requisitos e as definições dos comandos são mantidos em [package.json](package.json). Guarde um backup dos perfis existentes antes de testar uma nova compilação.
+Para preparar o repositório e consultar os comandos para executar Web e Desktop localmente, siga o [guia de desenvolvimento](docs/development.md). Os requisitos e as definições dos comandos são mantidos em [package.json](package.json). Guarde um backup dos perfis existentes antes de testar uma nova compilação.
 
 <a id="documentation"></a>
 
@@ -30,11 +30,11 @@ Para configurar o código-fonte e consultar os comandos locais de Web/Desktop, s
 - [Segurança](SAFETY.md)
 - [Guia da marca](docs/brand-guidelines.md)
 
-O fluxo de verificação do [GitHub Actions](.github/workflows/) é executado em pull requests e envios para main após a publicação desta configuração. O empacotamento para Linux continua manual. Atualmente, o empacotamento produz artefatos não assinados; este não é um canal de atualização automática.
+O fluxo de verificação do [GitHub Actions](.github/workflows/) é executado em pull requests e envios para o branch principal após a publicação desta configuração. O empacotamento para Linux continua manual. O processo gera artefatos sem assinatura e não fornece um canal de atualização automática.
 
 ## Feedback
 
-Relate erros reproduzíveis nas [issues do Ocean](https://github.com/Ryltsevmg/Ocean/issues), conforme seu acesso ao repositório, ou entre em contato com o [suporte do Ocean](mailto:support@oceanharness.com); o [bot de suporte no Telegram](https://t.me/oceanchatsupportbot) continua disponível como canal adicional. Nunca publique tokens, registros de sessões privadas ou dados pessoais em uma issue pública.
+Relate erros reproduzíveis nas [issues do Ocean](https://github.com/Ryltsevmg/Ocean/issues), conforme seu acesso ao repositório, ou entre em contato com o [suporte do Ocean](mailto:support@oceanharness.com); o [bot de suporte no Telegram](https://t.me/oceanchatsupportbot) continua disponível como canal adicional. Nunca publique tokens, registros privados de sessões ou dados pessoais em uma issue pública.
 
 <a id="license-and-acknowledgements"></a>
 

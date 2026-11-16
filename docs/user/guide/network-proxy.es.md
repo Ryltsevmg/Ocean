@@ -17,7 +17,7 @@ export HTTPS_PROXY=http://127.0.0.1:7890
 export HTTP_PROXY=http://127.0.0.1:7890
 ```
 
-Añade ambas líneas a tu perfil de shell para que cada invocación de `dsh` las herede, o a `$DSH_HOME/.env` (`~/.dsh/.env` por defecto), junto a tu clave API; una variable exportada siempre tiene prioridad sobre ese archivo. El `.env` del propio proyecto no puede definirlas: llega con `git clone`, y DSH se niega a iniciarse antes que permitir que un repositorio decida adónde va tu tráfico.
+Añade ambas líneas a tu perfil de shell para que cada invocación de `dsh` las herede, o a `$DSH_HOME/.env` (`~/.ocean/.env` por defecto), junto a tu clave API; una variable exportada siempre tiene prioridad sobre ese archivo. El `.env` del propio proyecto no puede definirlas: llega con `git clone`, y DSH se niega a iniciarse antes que permitir que un repositorio decida adónde va tu tráfico.
 
 Si el proxy necesita credenciales, se incluyen en la URL: `http://user:password@proxy.example:8080`. DSH nunca vuelve a mostrar la URL: el diagnóstico indica la variable rechazada, de modo que no aparecen ni el nombre de usuario ni la contraseña.
 
@@ -47,7 +47,7 @@ DSH no lee los ajustes de proxy del sistema operativo. Exporta las variables o u
 export NO_PROXY=internal.example.com,.corp.example.com,registry.local
 ```
 
-Una entrada indica un host y coincide tanto con él como con todos sus subdominios: `NO_PROXY=example.com` también envía `api.example.com` directamente. Se admite un prefijo `.` o `*.`, con el mismo significado. Una entrada puede incluir `:port`, y `*` evita el proxy para todo.
+Una entrada indica un host y coincide tanto con él como con todos sus subdominios: `NO_PROXY=example.com` también conecta directamente con `api.example.com`. Se admite un prefijo `.` o `*.`, con el mismo significado. Una entrada puede incluir `:port`, y `*` evita el proxy para todo.
 
 **Los rangos CIDR no funcionan.** La lista de excepciones del sistema operativo suele incluir entradas como `10.0.0.0/8` o `192.168.0.0/16`; copiarlas a `NO_PROXY` no tiene efecto. Usa nombres de host o sufijos de dominio.
 
@@ -57,7 +57,7 @@ No necesitas incluir `localhost` ni `127.0.0.1`. DSH siempre evita el proxy para
 
 ## Limitaciones que debes conocer
 
-**No se admiten proxies SOCKS.** Un valor `socks5://` se notifica al inicio y se omite, y DSH conecta directamente para el esquema que lo definió: configurar `HTTPS_PROXY=socks5://…` junto a un `HTTP_PROXY` válido deja `https:` directo, sin reutilizar el proxy HTTP. Apunta las variables al puerto HTTP de tu aplicación de proxy: la mayoría ofrece ambos y el puerto HTTP suele ser contiguo.
+**No se admiten proxies SOCKS.** Un valor `socks5://` se notifica al inicio y se omite, y DSH se conecta directamente para el esquema que lo definió: configurar `HTTPS_PROXY=socks5://…` junto a un `HTTP_PROXY` válido deja `https:` directo, sin reutilizar el proxy HTTP. Apunta las variables al puerto HTTP de tu aplicación de proxy: la mayoría ofrece ambos y el puerto HTTP suele ser contiguo.
 
 **Basta con `ALL_PROXY`.** DSH lo usa como alternativa para ambos esquemas, aunque Node y curl difieran en este punto. Definir `HTTPS_PROXY` explícitamente sigue siendo más claro.
 
@@ -69,7 +69,7 @@ export NODE_EXTRA_CA_CERTS=/path/to/corporate-ca.pem
 
 Node solo lee esa variable al iniciar el proceso, así que expórtala antes de ejecutar `dsh`.
 
-**Las herramientas que DSH ejecuta para ti usan el mismo proxy.** Los comandos de la herramienta bash, `git`, `gh` y los servidores MCP iniciados como procesos hijos heredan estas variables. Un programa Node hijo usa su propio entorno de ejecución instalado: Node 22.21+ y Node 24+ respetan estas variables; versiones anteriores conectan directamente. Si una variable de proxy contiene un valor rechazado por DSH —por ejemplo, una URL SOCKS—, las herramientas basadas en Node también conectan directamente en lugar de fallar al inicio, mientras que `curl` y `git` siguen leyendo ese valor.
+**Las herramientas que DSH ejecuta para ti usan el mismo proxy.** Los comandos de la herramienta bash, `git`, `gh` y los servidores MCP iniciados como procesos hijos heredan estas variables. Un programa Node hijo usa su propio entorno de ejecución instalado: Node 22.21+ y Node 24+ respetan estas variables; las versiones anteriores se conectan directamente. Si una variable de proxy contiene un valor rechazado por DSH —por ejemplo, una URL SOCKS—, las herramientas basadas en Node también conectan directamente en lugar de fallar al inicio, mientras que `curl` y `git` siguen leyendo ese valor.
 
 **Las contraseñas de la URL del proxy también llegan a esas herramientas.** `HTTPS_PROXY=http://alice:s3cret@proxy.example:8080` es una variable de entorno normal, por lo que cualquier comando que ejecute DSH —incluidos los escritos por el modelo— puede leerla. Un comando que muestre su entorno incluirá la contraseña en una salida que se conserva. Así se comporta esta variable con el resto de programas de tu shell. Si eso te preocupa, ofrece un punto de acceso al proxy sin credenciales o autentícalo de otra forma que no sea la URL.
 
@@ -81,7 +81,7 @@ No todas las solicitudes de DSH pasan por el proxy:
 
 - **Todo lo que está en este equipo.** Loopback siempre es directo: `localhost`, todo el rango `127.0.0.0/8`, `::1` y `0.0.0.0`. Un proxy no puede acceder de forma útil a un servicio que solo escucha localmente.
 - **Código escrito por el modelo.** Los workers de flujos de trabajo y los procesos Node de ptc-runtime no reciben ajustes de proxy, para que los scripts escritos por el modelo no puedan leer una URL de proxy que quizá contenga una contraseña. Las solicitudes directas deben configurar por sí mismas el proxy que necesiten y siguen sujetas al aislamiento de ejecución.
-- **Telemetría de uso.** El exportador OTLP usa el cliente HTTP propio de Node en lugar del configurado por el proxy, por lo que la telemetría conecta directamente y simplemente falla cuando se bloquea la salida directa. Ninguna operación que realices en DSH depende de ella. Define `DSH_TELEMETRY_MODE=DISABLED` para desactivarla por completo.
+- **Telemetría de uso.** El exportador OTLP usa el cliente HTTP propio de Node en lugar del configurado por el proxy, por lo que la telemetría se conecta directamente y simplemente falla cuando se bloquea la salida directa. Ninguna operación que realices en DSH depende de ella. Define `DSH_TELEMETRY_MODE=DISABLED` para desactivarla por completo.
 - **`web_fetch` a una dirección privada literal.** Una URL que indique una dirección como `http://10.0.0.5/` se rechaza en lugar de enviarse al proxy, igual que cuando no hay ningún proxy configurado.
 
 <a id="check-that-it-worked"></a>
