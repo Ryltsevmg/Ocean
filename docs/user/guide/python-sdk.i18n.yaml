@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/guide/python-sdk.md
 /get-started-with-the-python-sdk:
-  en: 9fbd938934c3ebf6
-  zh: 1bdb4809329e271d
+  en: fbf0ffd526bca0de
+  zh: 2a5d17e4766361eb
 /get-started-with-the-python-sdk/prerequisites:
   en: af053f155de3467a
   zh: 817d833ce1ec4ac0

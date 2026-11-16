@@ -2,6 +2,10 @@
 
 English | [中文](providers.zh.md)
 
+<!-- USER_LANGUAGES_START -->
+[Русский](providers.ru.md) | [日本語](providers.ja.md) | [Español](providers.es.md) | [Français](providers.fr.md) | [Deutsch](providers.de.md) | [Português](providers.pt.md) | [한국어](providers.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 This guide assumes you started the Web UI through the [root README](../../development.md). Model changes take effect on the next request without restarting the server.
 
 ## Configure DeepSeek

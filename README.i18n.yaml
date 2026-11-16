@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write README.md
 /ocean:
-  en: f6ec9d7f4244180b
-  zh: d38216c8e7d6c8e1
+  en: 09459c30fc46b3e4
+  zh: bb9a7d8aa72e1e78
 /ocean/developer-preview:
   en: 53cd04585972656b
   zh: 800ae10ff896c652

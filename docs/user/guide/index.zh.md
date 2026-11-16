@@ -2,6 +2,10 @@
 
 [English](index.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | [Français](index.fr.md) | [Deutsch](index.de.md) | [Português](index.pt.md) | [한국어](index.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 请先按照[根目录 README](../../development.zh.md) 中的说明启动 Web UI；命令会打印其访问地址。本指南从服务器已经运行的状态开始。`dsh` 进程会把启动时所在的目录作为默认文件系统位置；全新的 Web UI 则不会选中任何工作区，你需要添加一个工作区。
 
 ## 配置模型
@@ -23,6 +27,9 @@ Agent（智能体）可以读取和编辑工作区文件、运行命令、委派
 ## 继续使用
 
 - [配置模型](./providers.zh.md)
+- [配置网络代理](./network-proxy.zh.md)
+- [使用 MCP 记忆](./mcp-memory.zh.md)
+- [安排提醒](./schedule.zh.md)
 - [使用 Python SDK](./python-sdk.zh.md)
 - [在反向代理之后发布 Web UI](./public-deployments.zh.md)
 - [卸载 Ocean 桌面端](./desktop-uninstall-cleanup.zh.md)

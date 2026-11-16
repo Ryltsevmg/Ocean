@@ -2,6 +2,10 @@
 
 [English](python-sdk.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](python-sdk.ru.md) | [日本語](python-sdk.ja.md) | [Español](python-sdk.es.md) | [Français](python-sdk.fr.md) | [Deutsch](python-sdk.de.md) | [Português](python-sdk.pt.md) | [한국어](python-sdk.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 本教程从本仓库源码构建 Python SDK，运行随附的独立极简 profile，并说明如何从自己的程序自定义同一个 `dsh` profile。Ocean 目前尚无经过认证的公开 npm 或 PyPI SDK 发行版。
 
 ## 前置条件

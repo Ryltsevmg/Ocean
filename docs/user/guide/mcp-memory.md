@@ -2,6 +2,10 @@
 
 English | [中文](mcp-memory.zh.md)
 
+<!-- USER_LANGUAGES_START -->
+[Русский](mcp-memory.ru.md) | [日本語](mcp-memory.ja.md) | [Español](mcp-memory.es.md) | [Français](mcp-memory.fr.md) | [Deutsch](mcp-memory.de.md) | [Português](mcp-memory.pt.md) | [한국어](mcp-memory.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 These three **default-off reference configurations** connect one memory system to DSH through [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md). Pick one, or copy the same generic MCP row for another server.
 
 These third-party configurations are provided as interoperability examples only. Their inclusion does not imply endorsement, recommendation, partnership, or ongoing support by the Ocean project.

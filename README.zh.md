@@ -2,6 +2,10 @@
 
 [English](README.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](README.ru.md) | [日本語](README.ja.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [한국어](README.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 Ocean 是面向 AI 智能体、对话和工具的桌面工作空间。其插件式运行时连接模型服务、开发工具以及可选的浏览器或计算机控制功能。
 
 ## 开发者预览

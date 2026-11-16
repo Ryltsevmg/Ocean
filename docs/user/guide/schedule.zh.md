@@ -2,6 +2,10 @@
 
 [English](schedule.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](schedule.ru.md) | [日本語](schedule.ja.md) | [Español](schedule.es.md) | [Français](schedule.fr.md) | [Deutsch](schedule.de.md) | [Português](schedule.pt.md) | [한국어](schedule.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 ## 概述
 
 在对话中请模型创建、列出、查看、修改、暂停、恢复或删除提醒。每条提醒按其规则重复，并把指令投递到一个现有对话、一个新对话，或在每个发生时点投递到一个新对话。自动化任务页面列出宿主的所有提醒，并可创建、修改、运行、暂停、恢复和删除提醒。已投递的一次性任务会保留到显式删除为止。

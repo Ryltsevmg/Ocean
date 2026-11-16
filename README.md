@@ -2,6 +2,10 @@
 
 English | [中文](README.zh.md)
 
+<!-- USER_LANGUAGES_START -->
+[Русский](README.ru.md) | [日本語](README.ja.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [한국어](README.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 Ocean is a desktop workspace for AI agents, conversations and tools. Its plugin-based runtime connects model providers, development tools and optional browser or computer controls.
 
 ## Developer preview

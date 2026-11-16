@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/guide/desktop-uninstall-cleanup.md
 /uninstall-ocean-desktop:
-  en: 5d639efa89e37d2c
-  zh: 3ebaddd68bd9d310
+  en: fb9f89f80acf9cba
+  zh: e96ed7c9f58fd9c2
 /uninstall-ocean-desktop/1-uninstall-the-app:
   en: 7e2b3f8196801b6c
   zh: 72375cbeb5c24aac

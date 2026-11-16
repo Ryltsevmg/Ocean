@@ -66,6 +66,16 @@
 
 **统一要求**：当前及今后纳入范围的每篇文档，合并时都必须构成完整的双语配对。[scripts/translation-pairing.manifest.json](../../scripts/translation-pairing.manifest.json) 只包含显式排除项；不存在逐文件推进清单、日期分界或 README 专用政策类别。
 
+<a id="additional-user-guide-languages"></a>
+
+## 用户指南的其他语言
+
+根目录 README 和 [user-doc-translations.ts](../../scripts/user-doc-translations.ts) 中登记的产品使用页面还提供俄语、日语、西班牙语、法语、德语、葡萄牙语和韩语版本。每个版本都是同目录下的 `foo.<locale>.md` 文件。这些明确登记的文件由 `verify-user-doc-translations` 检查，不再组成额外的英中配对；其他文档仍遵循上述双语要求。
+
+语言链接保留当前指南。指向已登记指南的链接使用所选语言；指向范围外文档的链接保留原目标。译文标题保留显式英文锚点，使已有章节链接仍可访问。示例、命令、行内代码、标题层级、列表、表格和链接目标必须与源文对应。共享的语言导航块不参与结构比较。
+
+翻译源文变更并评审全部七种译文后，运行 `pnpm run verify-user-doc-translations --write`，记录源文与译文完整内容的 hash。`doc-sync` 中的检查会拒绝缺失、结构不一致或内容已变更的版本，直到它们经过评审并重新记录。检查验证完整性及已记录内容；翻译质量仍由评审负责。英文和中文配对及其原有记录仍须一起更新。
+
 ## 分工
 
 日常更新对侧文件时，负责处理的 agent 会先加载 [terminology.md](terminology.md)，再直接一次性更新；它不会调用翻译 skill（技能）、生成简报、执行单独的翻译评审轮次，也不会委派给 subagent。扩展版 [dsh-translate-docs](../../.agents/skills/dsh-translate-docs/SKILL.md) 工作流保留这些较重的机制，仅供用户显式调用。门禁负责检查配对是否完整、记录的 hash、中文反向链接和普通撰写源的切换行（生成源按本文规则例外），以及本文列出的结构签名；翻译质量、术语和签名未涵盖的结构要求仍由评审把关。提示词约定也有可执行实现：[scripts/translation-prompt.ts](../../scripts/translation-prompt.ts) 会把仓库内置的模板（注入术语表；模板自带经人工校准的规则）渲染为英译中或中译英两个方向的提示词，并解析三段式响应；`doc-sync` 中的 `verify-translation-prompt` 会检查两个渲染方向与仓库内示例。

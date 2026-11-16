@@ -2,6 +2,10 @@
 
 [English](providers.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](providers.ru.md) | [日本語](providers.ja.md) | [Español](providers.es.md) | [Français](providers.fr.md) | [Deutsch](providers.de.md) | [Português](providers.pt.md) | [한국어](providers.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 本指南假定你已按照[根 README](../../development.zh.md)启动 Web UI。模型变更会在下一次请求时生效，不需要重启服务器。
 
 ## 配置 DeepSeek

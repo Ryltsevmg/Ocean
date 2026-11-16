@@ -64,6 +64,14 @@ Generated English sources omit the language switcher that ordinary authored sour
 
 **Universal requirement**: every current or future document in scope must merge as a complete bilingual pair. [scripts/translation-pairing.manifest.json](../../scripts/translation-pairing.manifest.json) contains only explicit exclusions; there is no per-file rollout list, date cutoff, or README-specific policy class.
 
+## Additional user-guide languages
+
+The root README and the product-facing pages registered in [user-doc-translations.ts](../../scripts/user-doc-translations.ts) also have Russian, Japanese, Spanish, French, German, Portuguese and Korean editions. Each edition is a sibling `foo.<locale>.md`. These exact files are checked by `verify-user-doc-translations` instead of forming additional English/Chinese pairs; all other documents keep the bilingual requirements above.
+
+Language links keep readers in the same guide. Registered guide links target the chosen language; links outside that set retain their authored destination. Translated headings retain explicit English anchors so existing section links resolve. Examples, commands, inline code, heading levels, lists, tables and link destinations must match the source. The shared language-navigation block is excluded from structural comparisons.
+
+After translating a source change and reviewing all seven editions, run `pnpm run verify-user-doc-translations --write` to record their exact source and translation hashes. The check in `doc-sync` rejects missing, structurally different or changed editions until they have been reviewed and recorded. It verifies completeness and recorded contents; review remains responsible for translation quality. The English/Chinese pair and its existing record still update together.
+
 ## Division of labor
 
 Routine counterparts are updated directly by the working agent in one pass after it loads [terminology.md](terminology.md); it does not invoke a translation skill, generate a briefing, run a separate translation-review pass, or delegate to a subagent. The extended [dsh-translate-docs](../../.agents/skills/dsh-translate-docs/SKILL.md) workflow retains those heavier mechanisms for explicit user invocation. The gate checks pair completeness, recorded hashes, the Chinese backlink and authored-source switcher (with the documented generated-source exception), and its documented structural signature. Review still owns translation quality, terminology, and structural requirements that the signature does not encode. The prompt contract is executable: [scripts/translation-prompt.ts](../../scripts/translation-prompt.ts) renders the committed template (terminology injected; the template carries its own calibrated rules) into either direction and parses the three-section response, while `verify-translation-prompt` exercises both render directions and the checked-in example in `doc-sync`.

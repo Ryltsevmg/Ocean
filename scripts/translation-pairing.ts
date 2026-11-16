@@ -7,6 +7,7 @@
  */
 
 import { basename } from 'node:path'
+import { userDocTranslationSource } from './user-doc-translations.ts'
 import { fromMarkdown } from 'mdast-util-from-markdown'
 import { gfmFromMarkdown } from 'mdast-util-gfm'
 import { gfm } from 'micromark-extension-gfm'
@@ -160,7 +161,7 @@ function isTranslationSourceExcluded(file: string): boolean {
 
 /** Whether one discovered Markdown or sidecar path belongs to the bilingual source corpus. */
 export function isTranslationScopeFile(file: string): boolean {
-  return !isTranslationSourceExcluded(file) && (README_ARTIFACT.test(file)
+  return userDocTranslationSource(file) === null && !isTranslationSourceExcluded(file) && (README_ARTIFACT.test(file)
     || ROOT_PAIRED_DOCUMENT_ARTIFACT.test(file)
     || file.startsWith('docs/')
     || file.startsWith('python/'))

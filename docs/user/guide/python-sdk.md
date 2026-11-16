@@ -2,6 +2,10 @@
 
 English | [中文](python-sdk.zh.md)
 
+<!-- USER_LANGUAGES_START -->
+[Русский](python-sdk.ru.md) | [日本語](python-sdk.ja.md) | [Español](python-sdk.es.md) | [Français](python-sdk.fr.md) | [Deutsch](python-sdk.de.md) | [Português](python-sdk.pt.md) | [한국어](python-sdk.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 This tutorial builds the Python SDK from this repository's source, runs the shipped standalone minimal profile, and shows how to customize the same `dsh` profile from your own program. Ocean has no qualified public npm or PyPI SDK distribution yet.
 
 ## Prerequisites

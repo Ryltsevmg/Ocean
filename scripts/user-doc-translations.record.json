@@ -1,0 +1,282 @@
+{
+  "README.ru.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "c8c7c2df97a5cf6ec12c10409616f10cca54814df3681a4b0fbcf0f0f323f70d"
+  },
+  "README.ja.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "f4ae3a1e10fa9a7fbc60809a5fea2b99b89261581b831ef914305059bd8da854"
+  },
+  "README.es.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "e495e820c4bccd7af142b583ac6246b301880e59be3e11cdaa3749a0dfc962f1"
+  },
+  "README.fr.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "498ec1d2acdbfae3d1d27ae501c071429f9f81b0582c6d58d71629d7ac0e4361"
+  },
+  "README.de.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "48d971d408872d8f95c23548d150a58f79657c440d9ca76367c5564e171284e7"
+  },
+  "README.pt.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "57bfe8ea93a3c583bf8516dd7d21d5215859e2c0536191c4a9d68dccb062b7d6"
+  },
+  "README.ko.md": {
+    "source": "71c23dc28fb5eed7c4ffc8e16b0536eed75e6070da7803c4dd25976526dbee51",
+    "translation": "745076a1be5a72c441edef89974a0450aaf119b855615efe2e7ac51446fcbccb"
+  },
+  "docs/user/index.ru.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "bbc5b3aacbd30e1b97d64c7f6c0a2ef3b0d6fb6ece480a9aab3f7271181330ed"
+  },
+  "docs/user/index.ja.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "8746c280f39a997735f34e1ae008a783b6b1d084b671c0c9b88d66c645597125"
+  },
+  "docs/user/index.es.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "cc19448eb79f7a5a7704cc54e81771115a4c7e16a706e9290643ac4fcb9ffff9"
+  },
+  "docs/user/index.fr.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "bbaecbf3cb6f7d845b6918693183dfb57e34b9e24b20f3159c7b9e81f36fa8b9"
+  },
+  "docs/user/index.de.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "3f7b43d106da14752d0d80d6a51832a490b10e2d33f9b032f40cba6daef0d68a"
+  },
+  "docs/user/index.pt.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "667ccd4e39c6d9efbc7bf8a582e9fd2f5efa9bf75336c9655ea40ed16fdf9bfa"
+  },
+  "docs/user/index.ko.md": {
+    "source": "9ffebf3ff78aaf1240eecded06d60160596b9ff2fb0ba0ab8c7550b5e419fced",
+    "translation": "a8c6ea791ca7f6a945be10b85df36d1727fc96bac771a27db613512f4a3f70a4"
+  },
+  "docs/user/guide/index.ru.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "b750ed223dd282baadb72bf5875759f4d8f972fc0ccae3086b030394901d144b"
+  },
+  "docs/user/guide/index.ja.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "58012296adc62cd656e209aea7b3511b0b769f1d56f26d880a20fb73d6fd1ead"
+  },
+  "docs/user/guide/index.es.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "87f25787d6cc42d2d2eac21a3bfca83f8e2379236a3a5e19f5c0a514985d36db"
+  },
+  "docs/user/guide/index.fr.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "01fd458bd6e4b9979c18f65cc57b6c5beb4f4d715dfbed668bfd20e0ece8543c"
+  },
+  "docs/user/guide/index.de.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "f37db18f1541e81f73971505c2932ce89933992660a26e9916eb2746fedeb6af"
+  },
+  "docs/user/guide/index.pt.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "3a2e71ad9f527dff4bc950b35bc6be0c5f4bea3bdb5bceb78d783077560b9dda"
+  },
+  "docs/user/guide/index.ko.md": {
+    "source": "dcb00b467044af65819a7ac6dceebef25b9aae2d31471871b147ed7dc704bcf1",
+    "translation": "751ae6c9d7a9586c261e647fe9ef4a85484ed209fc45053f1a541fa012421ad4"
+  },
+  "docs/user/guide/providers.ru.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "10d7858628a342045bc57ad746cb4b5105d6bce6e5f5bcd2701257f63b6ea219"
+  },
+  "docs/user/guide/providers.ja.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "ed9de2bf07a7c668e4efd1535e976844f7cbec6d0c5b592ab17116811783f9dd"
+  },
+  "docs/user/guide/providers.es.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "93e14135b60003f90121a70eed811a16383478569ace7c98f8c593d1f9e112be"
+  },
+  "docs/user/guide/providers.fr.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "b5909c9b743b52d207a7f9cc60c4f17c9eb4a131caddeba4846da8a38bb45bd6"
+  },
+  "docs/user/guide/providers.de.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "50e0e1dde0cd58f42111223a4ba2424336a968a320f5b666f9d4889150557b1e"
+  },
+  "docs/user/guide/providers.pt.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "8e63252cb1275f543613b676c55511215072e4e87603da2b46623e48fe9d36a2"
+  },
+  "docs/user/guide/providers.ko.md": {
+    "source": "82caf28f0513fa18e86c677d6dbf2e56f96f8839868aadb6fcad79cc319584b1",
+    "translation": "cb4a787a7d92be2ea2748d3c18322199431b3df36ce89b213f905d72275c45fa"
+  },
+  "docs/user/guide/network-proxy.ru.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "86d6b2e481ae6535aff85a12b3d184c44630cdc41c376082f42dd80f04d7a008"
+  },
+  "docs/user/guide/network-proxy.ja.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "b01cfa2a8f190a9e9f420f98dfe56d8a187c3fcbb52ebc21193b40fecde0f740"
+  },
+  "docs/user/guide/network-proxy.es.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "42389b66121c90c2b87b70f494260dfa5d5a58179ec13d363042702ef2670e34"
+  },
+  "docs/user/guide/network-proxy.fr.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "f8dfe8688e49160d211b51e49a23572e3332fc286324db7ae378322f0a06c46a"
+  },
+  "docs/user/guide/network-proxy.de.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "249497da1197e5c71ebc5b955f44fc998e6002971109d434413ac519918c05b7"
+  },
+  "docs/user/guide/network-proxy.pt.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "d7b600b8f3dde76061a647469baa28dc511874b78ba0ed2a4ecc0033007a5990"
+  },
+  "docs/user/guide/network-proxy.ko.md": {
+    "source": "38ab45405a04d70768c09afa4893a1379c9f5f0515ded9440414a41da6c5fe98",
+    "translation": "5d1c790f8d01559f35d735952be360e6be7428aefb2bb43ac135362a890305e6"
+  },
+  "docs/user/guide/public-deployments.ru.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "41617e86e61471d767f24b46fcd905e470ad367e661e280f356a0dc485197237"
+  },
+  "docs/user/guide/public-deployments.ja.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "199ccbaff8e4f6d89f30fcf5c0860846a4eab0975ad411cfd0a5c305d8efa53a"
+  },
+  "docs/user/guide/public-deployments.es.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "7bd9abd0359e35efc464c6d01fc386b8cdbc74a9c737fe2f3252667e399b3935"
+  },
+  "docs/user/guide/public-deployments.fr.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "f9c4e20b75605b705f4047ea12a4985a205be00aa712368b12411913b5896e93"
+  },
+  "docs/user/guide/public-deployments.de.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "b3bd3402cf2abc43921a739071880b656f05b13d4212eafd25107442bb894267"
+  },
+  "docs/user/guide/public-deployments.pt.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "a390907fff40bca18096cce3d3d54f9cc8cf9050164bf8a901232d213911d1e4"
+  },
+  "docs/user/guide/public-deployments.ko.md": {
+    "source": "d4e158f4a53b219e5705c69f21f3b4277be9098a733a98d232f5411676ef7454",
+    "translation": "0cc944948252181bec88047095520f1995be6f3883ab15f9eeadb91127d22d85"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.ru.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "1be755709cf339744d9850fb9d08a4c34ea243bf62e832f17c33ec4c25ff0b7e"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.ja.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "74d552777b6801f9309c7eed92c1d5d5156efc9b7b1d16ed9b6d4b6e2c93f85e"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.es.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "f877cf21573f82df6132b46632a48307642bb685c6f1a66658dcbedb29d29798"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.fr.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "98d033e30e506f5553818ea9e3bfd17ae89df716fa868bf88f78d9f224e555ad"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.de.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "9e4d8ed0ad155ff52f4b365c440df85debf55ba80114a3dc4c5920d31694ff52"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.pt.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "9d9a0ec447b12e84ecd8bd0f944c0451a059b790efdef78aaad4f45700327040"
+  },
+  "docs/user/guide/desktop-uninstall-cleanup.ko.md": {
+    "source": "d02ecd0ccbe4b01b8c8001eb80ddc070cb3c707064aa59701b2f8e256d1d9214",
+    "translation": "b8f87fc681293d05f16cef3d5e7aa6e6c960cc9761b62d75a4e24b7dae2c4456"
+  },
+  "docs/user/guide/python-sdk.ru.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "a3eadc0bd1cc383b9f00d15fd03dacf64ac9026c6ebe222f86e2d2cbd6f2fa73"
+  },
+  "docs/user/guide/python-sdk.ja.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "f5c08d1a53cbbd480ec7cddfc5f3f133ebfa5e0802c9a8f3283e0f3ef148d73a"
+  },
+  "docs/user/guide/python-sdk.es.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "d3730a9bbb1890de7b4dca7e0e4408aa1126a441258e13b039688b22490cc0cd"
+  },
+  "docs/user/guide/python-sdk.fr.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "10f7a5e26bbdaaae77465e1ece280f01b6b2fd7638baa8abe1b72739d2f8240d"
+  },
+  "docs/user/guide/python-sdk.de.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "b4ce9ca8e0484e7aeec7afcfa6f1d9ba5704bb6ad09c05899f3ecd8ce10a0854"
+  },
+  "docs/user/guide/python-sdk.pt.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "447a5442d64b917ffc79a483642bdf969f301395a3b3ae24918b8c2a445e6ded"
+  },
+  "docs/user/guide/python-sdk.ko.md": {
+    "source": "ec7280c72a6fd57aacce26f76f79756a3c4ef044786f88d32316a5c156892b3f",
+    "translation": "12315eccbd20eedc5d993e0ece2a38f2c3585a2f670fbc01d9ba9614dc3d86f3"
+  },
+  "docs/user/guide/mcp-memory.ru.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "3b138f31e435c680da9b0bf576e2c1f572ef513ea2deec65b9d67981b92ea252"
+  },
+  "docs/user/guide/mcp-memory.ja.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "d4db0805312acf901adaf0c276d9082b33dff8a4587775f7d5c97f238383c7f3"
+  },
+  "docs/user/guide/mcp-memory.es.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "a7af4c8770a9f51a323cce985bd5b74731dc88a7087f0b350f27d895e4d75e98"
+  },
+  "docs/user/guide/mcp-memory.fr.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "a4ba5111ae3aac4020192a3bab504b131bffe9f1a59f7bbe10a5daf578b3ffa8"
+  },
+  "docs/user/guide/mcp-memory.de.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "7a58f0923d6c568c996e8726bbacb6b59aa10717a55dc3ee09a15155352cfc6a"
+  },
+  "docs/user/guide/mcp-memory.pt.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "ba711e101b623294159b8dbe3067822f42aa6b8fc7ffe8ac02bbf92ee351ba2d"
+  },
+  "docs/user/guide/mcp-memory.ko.md": {
+    "source": "adb71c52dd38a7915497a565b15e13dc78b614a9793bcf08f0ebc93d68a24f14",
+    "translation": "a095bb806c6a09e333e458042ba557b1dd6f961753a2b54f582b7fad0a231eab"
+  },
+  "docs/user/guide/schedule.ru.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "fe2e00fbeb7d3dae69642c59eb12308d480ffbc02671878062f151bf5cc282cd"
+  },
+  "docs/user/guide/schedule.ja.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "4d939f902a6925c84916489c6c13805e6a3c0997ee26149f7efa1de19c300fc8"
+  },
+  "docs/user/guide/schedule.es.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "e9686910547dbfe301a68f93daf5c123c650c1e872161e341358a6aae96d58f4"
+  },
+  "docs/user/guide/schedule.fr.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "143440f16d10acc4fe7e6c06c92510e9542b20b2b8eb50e15801c92b47494ab1"
+  },
+  "docs/user/guide/schedule.de.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "f70b59e13846eb4cdfc7213cc027a9e5a84fb011384d9ff011de4f88b1515a65"
+  },
+  "docs/user/guide/schedule.pt.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "1c4dd885cfda0f8d584ca44209880af02b35513829c656873d692cb20e011471"
+  },
+  "docs/user/guide/schedule.ko.md": {
+    "source": "00b02eafa2a1dd9977e03ad9f2bb6f4b4400f048217d6bd8e0d766a149735b50",
+    "translation": "472fce32c4527c91e5085fccf249e1e2612b4d57983f94539e7f865eaf948ec4"
+  }
+}

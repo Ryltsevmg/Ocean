@@ -2,6 +2,10 @@
 
 [English](desktop-uninstall-cleanup.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](desktop-uninstall-cleanup.ru.md) | [日本語](desktop-uninstall-cleanup.ja.md) | [Español](desktop-uninstall-cleanup.es.md) | [Français](desktop-uninstall-cleanup.fr.md) | [Deutsch](desktop-uninstall-cleanup.de.md) | [Português](desktop-uninstall-cleanup.pt.md) | [한국어](desktop-uninstall-cleanup.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 本指南用于在 macOS、Windows 或 Linux 上卸载 Ocean Desktop。清理本地数据是可选步骤。
 
 ## 1. 卸载应用

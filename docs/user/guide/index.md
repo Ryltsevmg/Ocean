@@ -2,6 +2,10 @@
 
 English | [中文](index.zh.md)
 
+<!-- USER_LANGUAGES_START -->
+[Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | [Français](index.fr.md) | [Deutsch](index.de.md) | [Português](index.pt.md) | [한국어](index.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 Start the Web UI through the [root README](../../development.md); the command prints its URL. This guide begins after that server is running. The `dsh` process uses its invoking directory as the default filesystem location, but a fresh Web UI has no selected workspace until you add one.
 
 ## Configure a model
@@ -23,6 +27,9 @@ The agent can read and edit workspace files, run commands, delegate work, and ma
 ## Continue
 
 - [Configure models](./providers.md)
+- [Configure a network proxy](./network-proxy.md)
+- [Use MCP memory](./mcp-memory.md)
+- [Schedule reminders](./schedule.md)
 - [Use the Python SDK](./python-sdk.md)
 - [Publish the Web UI behind a reverse proxy](./public-deployments.md)
 - [Uninstall Ocean Desktop](./desktop-uninstall-cleanup.md)

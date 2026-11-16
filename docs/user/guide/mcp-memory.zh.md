@@ -2,6 +2,10 @@
 
 [English](mcp-memory.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](mcp-memory.ru.md) | [日本語](mcp-memory.ja.md) | [Español](mcp-memory.es.md) | [Français](mcp-memory.fr.md) | [Deutsch](mcp-memory.de.md) | [Português](mcp-memory.pt.md) | [한국어](mcp-memory.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 这三份**默认关闭的参考配置**通过 [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.zh.md) 将一个记忆系统连接到 DSH。请选择其中一份，或复制相同的通用 MCP 配置项来连接其他服务器。
 
 这些第三方配置仅作为互操作参考；收录不代表 Ocean 项目的认可、推荐、合作关系或持续支持承诺。

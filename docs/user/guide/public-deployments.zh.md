@@ -2,6 +2,10 @@
 
 [English](public-deployments.md) | 中文
 
+<!-- USER_LANGUAGES_START -->
+[Русский](public-deployments.ru.md) | [日本語](public-deployments.ja.md) | [Español](public-deployments.es.md) | [Français](public-deployments.fr.md) | [Deutsch](public-deployments.de.md) | [Português](public-deployments.pt.md) | [한국어](public-deployments.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 `dsh --profile web` 在 loopback 端口上提供 GUI，因此其他机器上的浏览器无法访问它，进程也无从得知你实际使用的地址。它前面的反向代理拥有这条外部链路——公开主机名、TLS，以及转发到监听器之前剥离的路径前缀——`--public-url` 则告诉 DSH 浏览器使用的是哪个地址：
 
 ```sh

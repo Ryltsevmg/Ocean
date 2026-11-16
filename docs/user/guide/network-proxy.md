@@ -2,6 +2,10 @@
 
 English | [中文](network-proxy.zh.md)
 
+<!-- USER_LANGUAGES_START -->
+[Русский](network-proxy.ru.md) | [日本語](network-proxy.ja.md) | [Español](network-proxy.es.md) | [Français](network-proxy.fr.md) | [Deutsch](network-proxy.de.md) | [Português](network-proxy.pt.md) | [한국어](network-proxy.ko.md)
+<!-- USER_LANGUAGES_END -->
+
 DSH routes its outbound requests — model calls, web search, page fetches, and MCP servers over HTTP — through the proxy named by the standard proxy environment variables. It reads them at launch; nothing else needs configuring. A few paths stay direct by design or by runtime limit, listed under "What stays direct" below.
 
 ## Export the variables
