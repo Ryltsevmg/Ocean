@@ -18,6 +18,11 @@ updates:
 
   - package-ecosystem: "uv"
     directory: "/python/sdk"
+    ignore:
+      # First-party package resolved through the tool.uv.sources editable path
+      # (python/sdk-runtime); no registry release can satisfy its pin, so the
+      # update job must skip it and keep updating real external dependencies.
+      - dependency-name: "deepseek-harness-runtime-bin"
     schedule:
       interval: "cron"
       cronjob: "0 4 * * *"
