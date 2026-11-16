@@ -38,6 +38,5 @@ body {
   outline: none;
 }
 
-/* Ocean.pen light/dark mark treatments. */
-body { --ocean-logo-secondary: #1766BC; }
-body[data-ds-dark-theme] { --ocean-logo-secondary: #B8DFF2; }
+/* Fixed Ocean brand palette in every theme. */
+body { --ocean-logo-secondary: #B8DFF2; }

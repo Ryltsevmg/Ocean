@@ -246,12 +246,12 @@ describe('PluginManagerPage', () => {
     expect(screen.getByRole('tab', { name: en.installedTab }).getAttribute('aria-selected')).toBe('true')
     // The tabs stay in the pinned page head with the title; the tab panel scrolls in the page body.
     expect(screen.getByRole('tablist').closest('header')?.closest('[data-plugin-bar]')).not.toBeNull()
-    expect(document.querySelector('[data-plugin-group="bundles"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-group="basic"]')).not.toBeNull()
     fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
     expect(navigation.getSnapshot().tab).toBe('extras')
     expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(screen.getByRole('tab', { name: 'Extras' }).id)
     expect(screen.getByRole('tabpanel').closest('[data-plugin-body]')).not.toBeNull()
-    expect(document.querySelector('[data-plugin-group="bundles"]')).toBeNull()
+    expect(document.querySelector('[data-plugin-group="basic"]')).toBeNull()
     expect(screen.queryByRole('button', { name: en.refresh })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Extras install' }))
     expect(actions.installFrom).toHaveBeenCalledWith({ spec: 'dsh-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' })
@@ -268,7 +268,7 @@ describe('PluginManagerPage', () => {
     // A contributed tab that leaves the ledger falls back to Installed.
     act(() => { navigation.actions.setView({ kind: 'list' }); navigation.actions.setTab('extras') })
     setTabs([])
-    expect(document.querySelector('[data-plugin-group="bundles"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-group="basic"]')).not.toBeNull()
     expect(navigation.getSnapshot().tab).toBe('installed')
     // A contributed tab that returns can be selected again.
     setTabs([{ id: 'extras', label: 'Extras' }])
@@ -351,7 +351,7 @@ describe('PluginManagerPage', () => {
     setTabs([])
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
     expect(navigation.getSnapshot().tab).toBe('installed')
-    expect(document.querySelector('[data-plugin-group="bundles"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-group="basic"]')).not.toBeNull()
   })
 
   it('shows a confirmed version by name above its spec, as a check and a refusal with retry, without the spec form or another registry', () => {
@@ -539,7 +539,11 @@ describe('PluginManagerPage', () => {
     ] })
     const facts = (): string[] => [...document.querySelectorAll('[data-plugin-source] dt, [data-plugin-source] dd')].map(node => node.textContent)
     act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
-    expect(within(document.querySelector('[data-plugin-source]') as HTMLElement).getByRole('heading').textContent).toBe(en.sourceTitle)
+    const disclosure = document.querySelector('[data-plugin-source] details') as HTMLDetailsElement
+    expect(disclosure.open).toBe(false)
+    expect(disclosure.querySelector('summary')?.textContent).toBe(en.sourceTitle)
+    fireEvent.click(disclosure.querySelector('summary')!)
+    expect(disclosure.open).toBe(true)
     expect(facts()).toEqual([en.sourceSpec, 'github:someone/dsh-better-sidebar', en.sourceVersion, '0.16.0'])
     act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-official' }) })
     expect(facts()).toEqual([en.sourceSpec, en.sourceBuiltIn])
@@ -749,8 +753,8 @@ describe('PluginManagerPage', () => {
     ])
     expect(cards.map(card => card.getAttribute('data-plugin-status'))).toEqual(['disabled', 'running', 'problem', 'running', 'disabled', 'not-running'])
     // Group titles have no counts.
-    expect(screen.getByRole('heading', { name: en.bundlesTitle })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: en.title, level: 3 })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: en.extensionsTitle })).toBeNull()
     expect(document.querySelector('[data-plugin-count]')).toBeNull()
     expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', '@acme/dsh-tool') })).toHaveProperty('disabled', false)
     expect(screen.getByText('A sidebar.')).toBeTruthy()
@@ -831,7 +835,7 @@ describe('PluginManagerPage', () => {
         offer([row({ rowId: 'lab-viewer-declarations', moduleName: `${hidden}/viewer-declarations` })]),
       ],
     })
-    const extensions = document.querySelector('[data-plugin-group="extensions"]') as HTMLElement
+    const extensions = document.querySelector('[data-plugin-group="basic"]') as HTMLElement
     expect(within(extensions).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
       .toEqual([shown, hidden])
 
@@ -1244,15 +1248,15 @@ describe('PluginManagerPage', () => {
         bodies,
       )
       const basic = document.querySelector('[data-plugin-group="basic"]') as HTMLElement
-      const extensions = document.querySelector('[data-plugin-group="extensions"]') as HTMLElement
+      const extensions = document.querySelector('[data-plugin-group="basic"]') as HTMLElement
       expect(document.querySelector('[data-plugin-group="more"]')).toBeNull()
       expect([...document.querySelectorAll('[data-plugin-group]')].map(group => group.getAttribute('data-plugin-group')))
-        .toEqual(['basic', 'extensions', 'bundles'])
-      expect(within(basic).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-item'))).toEqual(['bash'])
-      expect(within(extensions).getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
+        .toEqual(['basic'])
+      expect(within(basic).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-item')).filter(Boolean)).toEqual(['bash'])
+      expect(within(extensions).getByRole('heading', { name: en.title, level: 3 })).toBeTruthy()
       expect(within(extensions).getByRole('button', { name: en.moreAction }).textContent).toBe(en.moreAction)
       expect(within(extensions).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
-        .toEqual(['@acme/dsh-team-pack', '@acme/new-official'])
+        .toEqual([null, '@acme/dsh-team-pack', '@acme/new-official', 'dsh-better-sidebar'])
       expect(document.querySelector('[data-plugin-count]')).toBeNull()
       expect(within(basic).getByText('Limits every command.')).toBeTruthy()
       expect(within(basic).queryByRole('switch', { name: en.enableToggle.replace('{name}', 'Shell') })).toBeNull()
@@ -1281,7 +1285,7 @@ describe('PluginManagerPage', () => {
       expect(within(detail).getByRole('form', { name: 'bash form' })).toBeTruthy()
       fireEvent.click(within(detail).getByRole('button', { name: en.backToList }))
       expect(document.querySelector('[data-plugin-item-detail]')).toBeNull()
-      expect(screen.getByRole('heading', { name: en.basicTitle })).toBeTruthy()
+      expect(screen.getByRole('heading', { name: en.title, level: 3 })).toBeTruthy()
     })
 
     it.each([
@@ -1391,11 +1395,11 @@ describe('PluginManagerPage', () => {
       const second = '@ocean/ocean-subagent-claude-code'
       const entry = (name: string, enabled: boolean): PackageView => pkg({ name, official: true, enabled })
       const b = renderTab({ packages: [entry(second, true), entry(first, false)] })
-      const cards = (group: 'extensions' | 'more'): (string | null)[] => {
+      const cards = (group: 'basic' | 'more'): (string | null)[] => {
         const list = document.querySelector(`[data-plugin-group="${group}"]`) as HTMLElement
         return within(list).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package'))
       }
-      expect(cards('extensions')).toEqual([second])
+      expect(cards('basic')).toEqual([second])
       fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
       expect(cards('more')).toEqual([first, second])
       fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', first) }))
@@ -1403,11 +1407,11 @@ describe('PluginManagerPage', () => {
       b.set({ packages: [entry(second, true), entry(first, true)] })
       expect(cards('more')).toEqual([first, second])
       fireEvent.click(screen.getByRole('button', { name: en.backToList }))
-      expect(cards('extensions')).toEqual([first, second])
+      expect(cards('basic')).toEqual([first, second])
       fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', first) }))
       expect(b.actions.setEnabled).toHaveBeenCalledWith(first, false)
       b.set({ packages: [entry(second, true), entry(first, false)] })
-      expect(cards('extensions')).toEqual([second])
+      expect(cards('basic')).toEqual([second])
       fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
       expect(cards('more')).toEqual([first, second])
     })
@@ -2720,7 +2724,7 @@ describe('on-demand Official bundles', () => {
     const assertOfficial = () => {
       expect(document.querySelectorAll(`[data-plugin-package="${name}"]`)).toHaveLength(1)
       expect(document.querySelector('[data-plugin-group="more"]')?.contains(document.querySelector(`[data-plugin-package="${name}"]`))).toBe(true)
-      expect(document.querySelector('[data-plugin-group="bundles"]')).toBeNull()
+      expect(document.querySelector('[data-plugin-group="basic"]')).toBeNull()
     }
     assertOfficial()
     expect(screen.getByText(en.statusNotInstalled)).toBeTruthy()

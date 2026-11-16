@@ -185,6 +185,7 @@ const harness = await vi.hoisted(async () => {
     getAppPath: (): string => 'desktop-test-app',
     setAppLogsPath: vi.fn(),
     getPath: vi.fn<(name: string) => string>(),
+    dock: { setIcon: vi.fn() },
     setAboutPanelOptions: vi.fn<(options: Electron.AboutPanelOptionsOptions) => void>(),
     requestSingleInstanceLock: () => true,
     setDesktopName: vi.fn(),
@@ -335,7 +336,7 @@ vi.mock('electron', () => ({
   protocol: { registerSchemesAsPrivileged: vi.fn(), handle: harness.protocolHandle },
   powerMonitor: harness.powerMonitor,
   Tray: harness.FakeTray,
-  nativeImage: { createFromPath: (path: string) => ({ path }) },
+  nativeImage: { createFromPath: (path: string) => Object.defineProperty({ path }, 'isEmpty', { value: () => false }) },
 }))
 vi.mock('../src/background-notice.ts', () => ({ DesktopBackgroundNotice: class {
   constructor(options: { markerPath: string }) { harness.backgroundNotice.markerPath = options.markerPath }
@@ -1215,6 +1216,23 @@ describe('desktop main startup', () => {
       await vi.waitFor(() => { expect(window.show).toHaveBeenCalledOnce() })
       expect(host.fetch).toHaveBeenCalledOnce()
     })
+  })
+
+  it('keeps the dark brand icon when the Ocean theme changes', async () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
+    await import('../src/main.ts')
+    await harness.preparing.promise
+    for (const [source, systemDark] of [
+      ['light', true], ['dark', false], ['system', true], ['system', false],
+    ] as const) {
+      harness.nativeTheme.themeSource = source
+      harness.nativeTheme.systemDark = systemDark
+      harness.nativeTheme.emit('updated')
+      expect(harness.app.dock.setIcon).toHaveBeenLastCalledWith(expect.objectContaining({
+        path: expect.stringContaining('dock-dark.png'),
+      }))
+    }
+    expect(harness.app.dock.setIcon).toHaveBeenCalledTimes(1)
   })
 
   it('tracks effective appearance changes and removes the listener when closed', async () => {
