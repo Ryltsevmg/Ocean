@@ -79,7 +79,7 @@ Local modifications: Ocean package/import identities and product copy, including
 
 The Ocean browser source graph uses a separate `allowJs: true`, `checkJs: false` compiler project for import and asset inspection, not JavaScript type-safety claims. Two JSX view files are renamed with `-view.jsx` suffixes to avoid declaration-output collisions with the upstream same-basename JavaScript modules. `src/ocean-entry.ts` is a source-launch facade only.
 
-The Ocean-scoped fork must retain the root Ocean package version for exact packed dependency validation; upstream version and commit are independently retained in its `oceanUpstream` metadata. A future shared-version bump must update this vendor manifest too.
+The Ocean-scoped fork must retain the root Ocean package version for exact packed dependency validation; upstream version and commit are independently retained in its `oceanUpstream` metadata. The plugin declares Ocean 1.0.0 in `engines.dsh`; the donor compatibility matrix records historical upstream releases. Update the manifest when verifying the fork against a new Ocean release.
 
 ### Ocean Codex catalog diagnostics (2026-11-12)
 
