@@ -39,8 +39,6 @@ kind: "package-group"
 - [终端子系统参考](../../docs/subsystems/terminal.zh.md)——id、后端与会话约定、发送就绪、有界读取，以及生成的 `ctx.terminals` API。
 - [能力 seam](../../docs/capability-seams.zh.md)——本家族遵循的 Service Definition / Service Provider / Consumer 拆分。
 
-实验性可选能力见 [`tool-terminal`](../experimental/tool-terminal/README.zh.md)。
-
 <a id="dev-note"></a>
 ## 开发备注
 

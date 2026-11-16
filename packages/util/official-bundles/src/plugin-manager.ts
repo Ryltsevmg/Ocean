@@ -18,8 +18,7 @@ export const PROTECTED_PLUGINS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Built-in profile bundles, persistent terminals, and the standalone worktree tool, which have no plugin manager page.
- * Their Host availability and activation stay intact.
+ * Built-in profile bundles, which have no plugin manager page. Their Host availability and activation stay intact.
  */
 export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
   '@ocean/ocean-base',
@@ -28,53 +27,19 @@ export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
   '@ocean/ocean-sdk-app',
   '@ocean/ocean-acp-app',
   '@ocean/ocean-sdk-minimal',
-  '@ocean/ocean-experimental-terminal-bundle',
-  '@ocean/ocean-experimental-tool-worktree',
 ])
 
 /**
  * The optional bundles the plugin manager's main and More lists rank first, in this order. {@link MORE_BUNDLES}, not
  * this list, decides whether a bundle appears on the main list.
  */
-export const EXTENSION_BUNDLES: readonly string[] = [
-  '@ocean/ocean-experimental-voice-input-bundle',
-  '@ocean/ocean-experimental-plugin-market-bundle',
-  '@ocean/ocean-experimental-auto-review',
-]
+export const EXTENSION_BUNDLES: readonly string[] = []
 
 /**
  * The optional bundles the plugin manager's main list leaves out until the profile enables them; its More list,
  * which includes every eligible bundle, ranks them last in this order.
  */
 export const MORE_BUNDLES: readonly string[] = [
-  '@ocean/ocean-browser-use-browse',
-  '@ocean/ocean-personalized-recommendations',
-  '@ocean/ocean-experimental-inspector-profile',
-  '@ocean/ocean-cua-bundle',
-  '@ocean/ocean-experimental-cot-translation-bundle',
-  '@ocean/ocean-experimental-session-search',
-  '@ocean/ocean-experimental-session-titles-bundle',
-  '@ocean/ocean-experimental-badge-skill-bundle',
-  '@ocean/ocean-experimental-ralph-bundle',
   '@ocean/ocean-subagent-codex',
   '@ocean/ocean-subagent-claude-code',
 ]
-
-/** Official bundles the plugin manager marks with the Experimental badge. */
-export const EXPERIMENTAL_BUNDLES: ReadonlySet<string> = new Set([
-  '@ocean/ocean-browser-use-browse',
-  '@ocean/ocean-personalized-recommendations',
-  '@ocean/ocean-cua-bundle',
-  '@ocean/ocean-experimental-voice-input-bundle',
-  '@ocean/ocean-experimental-auto-review',
-  '@ocean/ocean-experimental-inspector-profile',
-  '@ocean/ocean-experimental-forge-bundle',
-  '@ocean/ocean-experimental-tool-worktree',
-  '@ocean/ocean-experimental-cot-translation-bundle',
-  '@ocean/ocean-experimental-session-search',
-  '@ocean/ocean-experimental-session-titles-bundle',
-  '@ocean/ocean-experimental-badge-skill-bundle',
-  '@ocean/ocean-experimental-ralph-bundle',
-  '@ocean/ocean-experimental-plugin-market-bundle',
-  '@ocean/ocean-experimental-liveshare',
-])

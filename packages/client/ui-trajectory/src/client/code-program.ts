@@ -7,7 +7,7 @@ import type { TrajectoryCellProps } from './trajectory-record.ts'
  * @returns Whether this tool executes a program shown by the code inspector.
  */
 export function isProgramTool(name: string | undefined): boolean {
-  return name === 'run_code' || name === 'cua_run_code'
+  return name === 'run_code'
 }
 
 /** Validated source and original arguments for one recorded program call. */

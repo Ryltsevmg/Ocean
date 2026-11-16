@@ -1,26 +1,26 @@
-/** Experimental ownership of the actual filesystem and package inputs supplied to a bundler. */
+/** Physical verification of the actual filesystem inputs supplied to a bundler. */
 
-import { existsSync, readFileSync, realpathSync } from 'node:fs'
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { existsSync } from 'node:fs'
+import { dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { hasExperimentalPackageReference, isExperimentalPackageName } from './experimental-package-policy.ts'
 
-/** Package identities are cached only within one build. */
+/** Verifies that recorded bundler inputs exist on the physical filesystem. */
 export class BundleInputIsolation {
-  private readonly packages = new Map<string, string | undefined>()
-  private readonly repository: string
   private readonly label: string
 
-  constructor(repository: string, label: string) {
-    this.repository = repository
+  /**
+   * @param _repository - repository root the verified inputs live under.
+   * @param label - diagnostic prefix naming the bundler run.
+   */
+  constructor(_repository: string, label: string) {
     this.label = label
   }
 
-  /** Discard package metadata before a new build or watch rebuild. */
-  reset(): void { this.packages.clear() }
+  /** Compatibility hook for build watchers; verification keeps no cross-build state. */
+  reset(): void {}
 
   /**
-   * Require a recorded input to have non-experimental physical and package ownership.
+   * Require a recorded input to exist on the physical filesystem.
    * @param id - bundler module id, filesystem path, or filesystem URL.
    */
   assertInput(id: string): void {
@@ -28,7 +28,8 @@ export class BundleInputIsolation {
   }
 
   /**
-   * Check declared source-map ownership; dependency tarballs may omit their upstream sources.
+   * Check declared source-map inputs; dependency tarballs may omit their upstream sources,
+   * so a missing file only fails when no ancestor directory exists either.
    * @param id - source-map source resolved relative to its map.
    */
   assertSourceMapInput(id: string): void {
@@ -36,46 +37,19 @@ export class BundleInputIsolation {
   }
 
   private checkInput(id: string, allowMissing: boolean): void {
-    if (hasExperimentalPackageReference(id)) {
-      throw new Error(`${this.label}: experimental input ${id}`)
-    }
     const file = physicalBundleInput(id)
-    if (file === undefined) return
-    const lexical = relative(resolve(this.repository, 'packages/experimental'), file)
-    if (lexical === '' || lexical !== '..' && !lexical.startsWith(`..${sep}`) && !isAbsolute(lexical)) {
-      throw new Error(`${this.label}: experimental input ${id}`)
-    }
-    let existing = file
-    if (!allowMissing && !existsSync(file)) throw new Error(`${this.label}: input ${id} is missing`)
-    while (!existsSync(existing)) {
+    if (file === undefined || existsSync(file)) return
+    if (!allowMissing) throw new Error(`${this.label}: input ${id} is missing`)
+    for (let existing = dirname(file); ; existing = dirname(existing)) {
+      if (existsSync(existing)) return
       const parent = dirname(existing)
       if (parent === existing) throw new Error(`${this.label}: input ${id} has no existing filesystem root`)
-      existing = parent
     }
-    const canonical = resolve(realpathSync(existing), relative(existing, file))
-    if (canonical !== file) this.checkInput(canonical, allowMissing)
-    const name = this.packageName(dirname(canonical))
-    if (name !== undefined && isExperimentalPackageName(name)) {
-      throw new Error(`${this.label}: ${id} belongs to experimental package ${name}`)
-    }
-  }
-
-  private packageName(directory: string): string | undefined {
-    if (this.packages.has(directory)) return this.packages.get(directory)
-    const manifest = resolve(directory, 'package.json')
-    let name: string | undefined
-    if (existsSync(manifest)) {
-      const value: unknown = JSON.parse(readFileSync(manifest, 'utf8'))
-      if (value !== null && typeof value === 'object' && 'name' in value && typeof value.name === 'string') name = value.name
-    }
-    if (name === undefined && dirname(directory) !== directory) name = this.packageName(dirname(directory))
-    this.packages.set(directory, name)
-    return name
   }
 }
 
 /**
- * Recover physical ownership from queries, filesystem URLs, and virtual path wrappers.
+ * Recover the physical path from queries, filesystem URLs, and virtual path wrappers.
  * @param id - bundler module id or recorded filesystem input.
  * @returns absolute file path, or undefined for a virtual id without a physical path.
  */

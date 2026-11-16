@@ -597,12 +597,8 @@ describe('web e2e: macOS window drag coverage', () => {
     } finally { await page.close() }
   })
 
-  it.each([
-    ['darwin', false], ['darwin', true], ['win32', false], ['win32', true],
-  ] as const)('%s scopes compact spacing with tabs=%s to the collapsed macOS header at every width', async (platform, hasTabs) => {
-    const host = hasTabs ? await launchWebScaffold({
-      profile: { packages: [], bundles: ['@ocean/ocean-experimental-plugin-market-bundle'] },
-    }) : scaffold
+  it.each(['darwin', 'win32'] as const)('%s scopes compact spacing to the collapsed macOS header at every width', async (platform) => {
+    const host = scaffold
     try {
       const { page, tripwire } = await desktopPage(platform, host)
       try {
@@ -611,7 +607,7 @@ describe('web e2e: macOS window drag coverage', () => {
         await page.locator('[data-plugin-package]').first().waitFor()
         const bar = page.locator('[data-plugin-bar]')
         const body = page.locator('[data-plugin-body]')
-        const control = bar.locator(hasTabs ? '[role="tablist"]' : '[data-plugin-toolbar]')
+        const control = bar.locator('[data-plugin-toolbar]')
         const top = async () => (await control.boundingBox())!.y - (await bar.boundingBox())!.y
         await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).click()
         for (const width of [1280, 801, 520, 1280]) {
@@ -626,7 +622,7 @@ describe('web e2e: macOS window drag coverage', () => {
           const inset = platform === 'darwin' ? 56 : 16
           expect(await top()).toBe(inset)
           expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height)))
-            .toBe(inset + (hasTabs ? 34 : 32) + 16)
+            .toBe(inset + 32 + 16)
         }
         await page.getByRole('button', { name: 'Open sidebar', exact: true }).last().click()
         await settled(page)

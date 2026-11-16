@@ -1,4 +1,4 @@
-/** Entity lists and receipts for agent, job, terminal, and language-server tools. */
+/** Entity lists and receipts for agent, job, and language-server tools. */
 import type { ToolDetailsModel } from '../components/ToolDetails.tsx'
 import {
   detailBadge, detailList, detailRecord, inspectionItems, nonempty,
@@ -65,26 +65,6 @@ function jobList(text: string, t: DetailTranslate): ToolDetailsModel | null {
     items.push({ title, subtitle: id, badge: detailBadge(state, t), fields: [{ label: t('detail.field.type'), value: kind }] })
   }
   return detailList(items, t('detail.jobs.count', { count: items.length }), t)
-}
-
-function terminalList(text: string, t: DetailTranslate): ToolDetailsModel | null {
-  if (text === '(no terminal sessions)') return detailList([], t('detail.terminals.count', { count: 0 }), t)
-  const items: DetailItem[] = []
-  for (const line of text.split('\n')) {
-    const match = /^(\S+)(?: \((.*?)\))? \[([^\]]+)\] (running|exited code=(\S+) signal=(\S+))(?: pid=(\d+))?$/u.exec(line)
-    if (match === null) return null
-    const [, id, name, type, state, exitCode, signal, pid] = match
-    if (id === undefined || type === undefined || state === undefined) return null
-    const fields = [{ label: t('detail.field.type'), value: type }]
-    if (pid !== undefined) fields.push({ label: t('detail.field.pid'), value: pid })
-    if (exitCode !== undefined) fields.push({ label: t('detail.field.exitCode'), value: exitCode })
-    if (signal !== undefined && signal !== 'null') fields.push({ label: t('detail.field.signal'), value: signal })
-    items.push({
-      title: name ?? id, ...(name === undefined ? {} : { subtitle: id }),
-      badge: state === 'running' ? detailBadge('running', t) : { label: t('detail.status.exited'), tone: exitCode === '0' ? 'success' : 'neutral' }, fields,
-    })
-  }
-  return detailList(items, t('detail.terminals.count', { count: items.length }), t)
 }
 
 function lspDetails(args: Record<string, unknown>, text: string, t: DetailTranslate): ToolDetailsModel | null {
@@ -162,11 +142,10 @@ export function controlDetails(
   name: string, args: Record<string, unknown>, text: string, json: unknown, t: DetailTranslate,
 ): ToolDetailsModel | null {
   // Historical `send_message` and `interrupt_agent` records name their target with `agent_id`.
-  const target = arg(args, 'target') || arg(args, 'agent') || arg(args, 'agent_id') || arg(args, 'sessionId') || arg(args, 'job_id')
+  const target = arg(args, 'target') || arg(args, 'agent') || arg(args, 'agent_id') || arg(args, 'job_id')
   switch (name) {
     case 'list_agents': return agentList(text, json, t)
     case 'job_list': return jobList(text, t)
-    case 'terminal_list': return terminalList(text, t)
     case 'lsp': return lspDetails(args, text, t)
     case 'spawn_teammate':
       if (!detailRecord(json) || !detailRecord(json.member)) return null
@@ -228,25 +207,6 @@ export function controlDetails(
     case 'job_kill':
       if (text === `requested cancellation of job ${target}`) return receipt(target, { label: t('detail.receipt.cancel'), tone: 'warning' }, t, [], arg(args, 'reason'))
       if (text.startsWith(`job ${target} had already finished `)) return receipt(target, { label: t('detail.receipt.alreadyFinished'), tone: 'neutral' }, t)
-      return null
-    case 'terminal_open': {
-      const match = /^started terminal session (\S+)(?: \((.*?)\))? \[type: ([^\]]+)\]\n([\s\S]*)$/u.exec(text)
-      if (match === null || match[1] === undefined || match[3] === undefined || match[4] === undefined) return null
-      return detailList([{ title: match[2] ?? match[1], ...(match[2] === undefined ? {} : { subtitle: match[1] }), badge: { label: t('detail.receipt.started'), tone: 'info' }, fields: [{ label: t('detail.field.type'), value: match[3] }], code: { text: match[4] } }], match[2] ?? match[1], t)
-    }
-    case 'terminal_read': {
-      const match = /\n\[lines: (\d+)-(\d+) of (\d+)\](\n\[output truncated\])?$/u.exec(text)
-      if (match === null) return null
-      return detailList([{ title: target, subtitle: t('detail.output.lines', { begin: match[1] ?? '', end: match[2] ?? '', total: match[3] ?? '' }), fields: [], code: { text: text.slice(0, match.index) }, ...(match[4] === undefined ? {} : { description: t('detail.output.truncated') }) }], target, t)
-    }
-    case 'terminal_signal': {
-      const match = /^delivered (\S+) to foreground process group (\d+)$/u.exec(text)
-      if (match === null || match[1] === undefined || match[2] === undefined) return null
-      return receipt(target, { label: t('detail.receipt.signal'), tone: 'success' }, t, [{ label: t('detail.field.signal'), value: match[1] }, { label: t('detail.field.processGroup'), value: match[2] }])
-    }
-    case 'terminal_close':
-      if (text === `closed terminal session ${target}`) return receipt(target, { label: t('detail.receipt.closed'), tone: 'neutral' }, t)
-      if (text === `terminal session ${target} was already closing`) return receipt(target, { label: t('detail.receipt.closing'), tone: 'neutral' }, t)
       return null
     default: return null
   }

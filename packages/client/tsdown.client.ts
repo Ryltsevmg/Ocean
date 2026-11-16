@@ -13,8 +13,8 @@
  * URLs served by the
  * client-modules asset route; such a package exports `./assets/*` as
  * `./lib/assets/*`, and its Node Client face rejects asset imports.
- * Non-experimental client outputs reject experimental module and stylesheet
- * inputs, including origins recorded by chained source maps.
+ * Client outputs reject module and stylesheet inputs outside the declared
+ * package inputs, including origins recorded by chained source maps.
  */
 import { randomBytes } from 'node:crypto'
 import { readFile, readdir, rm, rmdir, stat, utimes } from 'node:fs/promises'
@@ -37,7 +37,6 @@ import {
 import { optionalStringArray } from './modules/src/client/manifest.ts'
 import { PLATFORM_MODULES, PRELOADED_CLIENT_EXTERNALS } from './web/src/platform.ts'
 import { clientBuildEnvironmentDefines, clientBuildValueDefines } from '../../scripts/client-build-environment.ts'
-import { isExperimentalPackageName } from '../../scripts/experimental-package-policy.ts'
 import { BundleInputIsolation, physicalBundleInput } from '../../scripts/bundle-input-isolation.ts'
 
 /**
@@ -954,14 +953,12 @@ function clientInputIsolation(id: string): {
   plugin: TsdownPlugin
   sourcePath: (source: string, mapPath: string) => string
 } {
-  const experimental = isExperimentalPackageName(id)
   const inputs = new BundleInputIsolation(REPOSITORY_ROOT, `client bundle isolation (${id})`)
   return {
     plugin: {
       name: 'dsh-client-input-isolation',
       buildStart() { inputs.reset() },
       generateBundle(_options, bundle) {
-        if (experimental) return
         for (const output of Object.values(bundle)) {
           if (output.type === 'chunk') {
             for (const module of Object.keys(output.modules)) {
@@ -986,11 +983,9 @@ function clientInputIsolation(id: string): {
       },
     },
     sourcePath(source, mapPath) {
-      if (!experimental) {
-        const decoded = clientInputFile(source)
-        const file = physicalBundleInput(decoded) ?? resolvePath(dirname(mapPath), decoded)
-        inputs.assertSourceMapInput(file)
-      }
+      const decoded = clientInputFile(source)
+      const file = physicalBundleInput(decoded) ?? resolvePath(dirname(mapPath), decoded)
+      inputs.assertSourceMapInput(file)
       return source
     },
   }

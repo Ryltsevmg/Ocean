@@ -68,12 +68,14 @@ describe('generated tsconfig package aliases', () => {
     expect(writeRegion(next, renderAliases(aliases, handWrittenSpecifiers(next)))).toBe(next)
   })
 
-  it('preserves committed Browse subpaths through idempotent package generation', () => {
+  it('preserves committed subpath aliases through idempotent package generation', () => {
     const config = readFileSync(resolve(root, 'tsconfig.base.json'), 'utf8')
     const aliases = collectPackageAliases()
     const next = writeRegion(config, renderAliases(aliases, handWrittenSpecifiers(config)))
-    for (const [subpath, source] of Object.entries({ client: 'client/index.ts', setup: 'setup.ts', types: 'remote-types.ts' })) {
-      const mapping = `"@ocean/ocean-browser-use-browse/${subpath}": ["./packages/experimental/browser-use-browse/src/${source}"]`
+    for (const mapping of [
+      '"@ocean/ocean-api-gateway/stream-protocol": ["./packages/api/gateway/src/stream-protocol.ts"]',
+      '"@ocean/ocean-browser-use/brand": ["./packages/browser-use/browser-use/src/brand.ts"]',
+    ]) {
       expect(next.includes(mapping), mapping).toBe(true)
       expect(next.split(mapping)).toHaveLength(2)
     }

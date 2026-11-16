@@ -39,7 +39,7 @@ interface TerminalBackend {
 ```ts type-equiv
 /** Backend-owned live session retained by {@link TerminalSessionService}. */
 interface TerminalBackendSession {
-  /** Initial bounded terminal output returned from `terminal_open`. */
+  /** Initial bounded terminal output returned when the backend starts the session. */
   readonly motd: string
   /** Top-level process id when one exists. */
   readonly pid?: number

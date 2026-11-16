@@ -152,7 +152,7 @@ describe('ui-plugin-manager browser plugin', () => {
 
     b.ctx.pluginNavigation.openBundle('dsh-navigation-test')
     expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'package', name: 'dsh-navigation-test' } })
-    navigation.actions.setTab('fixture-discover')
+    navigation.actions.setTab('fixture-tab')
     b.ctx.pluginNavigation.openList()
     expect(b.panelInfo.getSnapshot().activePanelId).toBe(PANEL_ID)
     expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'list' } })

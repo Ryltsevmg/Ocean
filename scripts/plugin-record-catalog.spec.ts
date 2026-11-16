@@ -4,7 +4,6 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS } from './experimental-package-policy.ts'
 import { collectPluginRecords } from './plugin-record-catalog.ts'
 import { persistenceCatalogArtifacts, render, renderPluginRecordCatalog } from './gen-persistence-catalog.ts'
 import { extractPersistenceSchema } from './persistence-schema.ts'
@@ -12,8 +11,8 @@ import { removeFixtureSafely } from './test-fixture-cleanup.ts'
 
 const roots: string[] = []
 const OWNER = 'packages/core/session/src/types.ts'
-const RECORDS = 'packages/experimental/bridge/src/records.ts'
-const OWNER_SOURCE = '/** Experimental records declared by their owning packages. */\nexport interface PluginRecordMap {}\n'
+const RECORDS = 'packages/core/bridge/src/records.ts'
+const OWNER_SOURCE = '/** Plugin records declared by their owning packages. */\nexport interface PluginRecordMap {}\n'
 
 afterEach(() => {
   for (const root of roots.splice(0)) removeFixtureSafely(root)
@@ -30,7 +29,7 @@ function fixture(files: Record<string, string> = {}): string {
   roots.push(root)
   for (const [file, source] of Object.entries({
     'packages/core/session/package.json': '{"name":"@ocean/ocean-session"}',
-    'packages/experimental/bridge/package.json': '{"name":"@ocean/ocean-experimental-bridge"}',
+    'packages/core/bridge/package.json': '{"name":"@ocean/ocean-bridge"}',
     [OWNER]: OWNER_SOURCE,
     ...files,
   })) put(root, file, source)
@@ -44,18 +43,16 @@ function augmentation(members: string, heritage = ''): string {
 const ENTRY = "    /** Retains a bridge entry. */\n    'plugin:bridge/entry': SavedEntry"
 
 describe('plugin record declarations', () => {
-  it.each(Object.entries(EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS))('retains the persisted namespace for %s', (directory, owner) => {
-    const namespace = directory.split('/').at(-1)!
-    const source = `${directory}/src/records.ts`
+  it('derives the record namespace from the owning package name', () => {
     const root = fixture({
-      [`${directory}/package.json`]: JSON.stringify({ name: owner }),
-      [source]: augmentation(`/** Retains the capability event. */\n'plugin:${namespace}/entry': SavedEntry`),
+      [RECORDS]: augmentation("/** Retains the capability event. */\n'plugin:bridge/entry': SavedEntry"),
     })
     expect(collectPluginRecords(root)).toEqual([{
-      name: `plugin:${namespace}/entry`, owner, payload: 'SavedEntry', doc: 'Retains the capability event.', source,
+      name: 'plugin:bridge/entry', owner: '@ocean/ocean-bridge', payload: 'SavedEntry',
+      doc: 'Retains the capability event.', source: RECORDS,
     }])
-    put(root, source, augmentation("/** Another package event. */\n'plugin:unrelated/entry': SavedEntry"))
-    expect(() => collectPluginRecords(root)).toThrow(`must use 'plugin:${namespace}/<name>'`)
+    put(root, RECORDS, augmentation("/** Another package event. */\n'plugin:unrelated/entry': SavedEntry"))
+    expect(() => collectPluginRecords(root)).toThrow("must use 'plugin:bridge/<name>'")
   })
 
   it('accepts an empty inventory only when the owning empty map exists', () => {
@@ -68,7 +65,7 @@ describe('plugin record declarations', () => {
     const root = fixture({ [RECORDS]: augmentation(ENTRY) })
     const records = collectPluginRecords(root)
     expect(records).toEqual([{
-      name: 'plugin:bridge/entry', owner: '@ocean/ocean-experimental-bridge', payload: 'SavedEntry',
+      name: 'plugin:bridge/entry', owner: '@ocean/ocean-bridge', payload: 'SavedEntry',
       doc: 'Retains a bridge entry.', source: RECORDS,
     }])
     put(root, RECORDS, `\n\n${augmentation(ENTRY)}`)
@@ -109,28 +106,28 @@ describe('plugin record declarations', () => {
     expect(() => collectPluginRecords(fixture({ [RECORDS]: OWNER_SOURCE }))).toThrow('is outside @ocean/ocean-session')
   })
 
-  it('finds and rejects record declarations outside experimental production source', () => {
+  it('rejects record declarations owned by a foreign package name', () => {
     const root = fixture({
-      'packages/core/bridge/package.json': '{"name":"@ocean/ocean-experimental-bridge"}',
-      'packages/core/bridge/src/records.ts': augmentation(ENTRY),
+      'packages/core/bridge/package.json': '{"name":"@external/bridge"}',
+      [RECORDS]: augmentation(ENTRY),
     })
-    expect(() => collectPluginRecords(root)).toThrow('must belong to a package declared experimental')
+    expect(() => collectPluginRecords(root)).toThrow('must belong to an @ocean/ocean-<name> workspace package')
   })
 
   it('requires the types module augmentation and verifiable package ownership', () => {
     expect(() => collectPluginRecords(fixture({
-      [RECORDS]: augmentation(ENTRY).replace("dsh-session/types'", "dsh-session'"),
+      [RECORDS]: augmentation(ENTRY).replace("@ocean/ocean-session/types'", "@ocean/ocean-session'"),
     }))).toThrow("must augment declare module '@ocean/ocean-session/types'")
     for (const manifest of ['{}', 'broken json', '{"name":"@external/bridge"}']) {
       expect(() => collectPluginRecords(fixture({
-        [RECORDS]: augmentation(ENTRY), 'packages/experimental/bridge/package.json': manifest,
+        [RECORDS]: augmentation(ENTRY), 'packages/core/bridge/package.json': manifest,
       }))).toThrow(/ownership|must belong/)
     }
   })
 
   it('omits tests and handles escaped declaration names through syntax discovery', () => {
     const root = fixture({
-      'packages/experimental/bridge/tests/fixture.ts': augmentation(ENTRY),
+      'packages/core/bridge/tests/fixture.ts': augmentation(ENTRY),
       [RECORDS]: augmentation(ENTRY).replace('PluginRecordMap', '\\u0050luginRecordMap'),
     })
     expect(collectPluginRecords(root).map(record => record.name)).toEqual(['plugin:bridge/entry'])
@@ -141,7 +138,7 @@ describe('plugin record catalogue output', () => {
   it('renders honest empty states in both languages', () => {
     const english = renderPluginRecordCatalog([])
     const chinese = renderPluginRecordCatalog([], 'zh')
-    expect(english).toContain('# Experimental Plugin Record Catalog')
+    expect(english).toContain('# Plugin Record Catalog')
     expect(english).toContain('English | [中文](experimental-persistence-catalog.zh.md)')
     expect(english).toContain('No production package currently declares a plugin record.')
     expect(english).toContain('[Session persistence event catalog](persistence-catalog.md)')
@@ -150,11 +147,11 @@ describe('plugin record catalogue output', () => {
     expect(chinese).toContain('[会话持久化事件目录](persistence-catalog.zh.md)')
   })
 
-  it('links the main catalogue to the experimental page without embedding its inventory', () => {
+  it('links the main catalogue to the plugin record page without embedding its inventory', () => {
     const english = render([], [])
     const chinese = render([], [], undefined, 'zh')
-    expect(english).toContain('[experimental plugin record catalog](experimental-persistence-catalog.md)')
-    expect(chinese).toContain('[实验性插件记录目录](experimental-persistence-catalog.zh.md)')
+    expect(english).toContain('[plugin record catalog](experimental-persistence-catalog.md)')
+    expect(chinese).toContain('[插件记录目录](experimental-persistence-catalog.zh.md)')
     expect(english).not.toContain('No production package currently declares')
     expect(english).not.toContain('| Record | Owner |')
     expect(chinese).not.toContain('当前没有生产包声明')
@@ -168,7 +165,7 @@ describe('plugin record catalogue output', () => {
       ${ENTRY}
     `) }))
     const output = renderPluginRecordCatalog([...records].reverse())
-    expect(output).toContain('| `plugin:bridge/entry` | `@ocean/ocean-experimental-bridge` | Retains a bridge entry. | <code>SavedEntry</code>')
+    expect(output).toContain('| `plugin:bridge/entry` | `@ocean/ocean-bridge` | Retains a bridge entry. | <code>SavedEntry</code>')
     expect(output).toContain('Retains state \\| metadata.')
     expect(output).toContain("<code>{ value: string &#124; null; marker: 'a  b'; }</code>")
     expect(output).toContain(`[\`${RECORDS}\`](../${RECORDS})`)
@@ -176,7 +173,7 @@ describe('plugin record catalogue output', () => {
     expect(output).not.toMatch(/records\.ts:\d/u)
   })
 
-  it('limits record declaration changes to the experimental artifact pair and its metadata', () => {
+  it('limits record declaration changes to the record catalog artifact pair and its metadata', () => {
     const root = fixture({
       'tsconfig.host.json': JSON.stringify({ compilerOptions: {
         target: 'es2024', module: 'esnext', moduleResolution: 'bundler', strict: true, types: [],
@@ -196,33 +193,33 @@ export type SurfaceOp = 'append'
 export type SurfaceEventType = 'test/record'
 /** One persisted event envelope. */
 export type SessionEvent<T extends keyof SessionEventMap = keyof SessionEventMap> = {
-  [K in keyof SessionEventMap]: { type: K; seq: number; time: number; data: SessionEventMap[K]; surfaceOp: SurfaceOp }
+  [K in T]: { type: K; seq: number; time: number; data: SessionEventMap[K]; surfaceOp: SurfaceOp }
 }[T]
 `,
       'packages/session/session-persistence-jsonl/src/format.ts': "interface HeaderLine {type: 'session'; version: number; id: string; delegationDepth: number}\nexport {}\n",
     })
     const schema = extractPersistenceSchema(root)
     const empty = persistenceCatalogArtifacts(root, schema)
-    const experimentalPaths = [
+    const catalogPaths = [
       'docs/experimental-persistence-catalog.md',
       'docs/experimental-persistence-catalog.zh.md',
       'docs/experimental-persistence-catalog.i18n.yaml',
     ]
     expect(empty.map(artifact => artifact.path)).toEqual([
       'docs/persistence-catalog.md', 'docs/persistence-catalog.zh.md', 'docs/persistence-catalog.i18n.yaml',
-      ...experimentalPaths,
+      ...catalogPaths,
       'packages/core/session/src/known-event-types.ts', 'docs/persistence-schema.json',
     ])
     put(root, RECORDS, `interface SavedEntry { value: string }\n${augmentation(ENTRY)}`)
     const declared = persistenceCatalogArtifacts(root, schema)
     expect(declared.filter((artifact, index) => artifact.content !== empty[index]?.content).map(artifact => artifact.path))
-      .toEqual(experimentalPaths)
+      .toEqual(catalogPaths)
     expect(extractPersistenceSchema(root)).toEqual(schema)
     const nullable = augmentation(ENTRY.replace(': SavedEntry', ': SavedEntry | null'))
     put(root, RECORDS, `interface SavedEntry { value: string }\n${nullable}`)
     const changedAnnotation = persistenceCatalogArtifacts(root, schema)
     expect(changedAnnotation.filter((artifact, index) => artifact.content !== declared[index]?.content).map(artifact => artifact.path))
-      .toEqual(experimentalPaths)
+      .toEqual(catalogPaths)
     put(root, RECORDS, `interface SavedEntry { nested: { count: number } }\n${nullable}`)
     expect(persistenceCatalogArtifacts(root, schema)).toEqual(changedAnnotation)
     expect(extractPersistenceSchema(root)).toEqual(schema)

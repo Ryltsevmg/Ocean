@@ -41,7 +41,6 @@
     "@ocean/ocean-llm": "workspace:*",
     "@ocean/ocean-sdk-protocol": "workspace:*",
     "@ocean/ocean-session": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@ocean/ocean-experimental-translator": "workspace:*"
+    "@deepseek-ai/cordis": "workspace:~"
   }
 }

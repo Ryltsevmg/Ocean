@@ -131,7 +131,7 @@ describe('JobRegistry seam', () => {
   it('keeps the projection kind an open string, so a program compiling fewer JobKindMap merges accepts every Host kind', () => {
     // A browser bundle or a generated Remote codec sees only the merges its
     // own program compiles; a literal union here would reject `pwsh`,
-    // `pty-send`, and every kind another package registers.
+    // `workflow`, and every kind another package registers.
     type KindIsOpenString = string extends JobView['kind'] ? true : false
     const viewKindOpen: KindIsOpenString = true
     expect(viewKindOpen).toBe(true)

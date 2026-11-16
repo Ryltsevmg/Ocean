@@ -42,8 +42,6 @@ Start with the subsystem reference for the shared vocabulary and design rational
 
 -----
 
-See [`skill-badge`](../experimental/skill-badge/README.md) for the experimental optional capability.
-
 <a id="dev-note"></a>
 ## Dev Note
 

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Offer named permission modes that set sandbox and approval together while each enforcement service keeps its own value. Configured presets supply future-session defaults; an explicitly loaded Auto review integration can add one current-session-only option. Clients read selectable entries from a process catalog and the current choice from the Session projection. Unmatched knob combinations appear as `custom`, which users can leave but cannot select. This package owns selection and defaults; the sandbox, approval, and Auto integration own execution.
+Offer named permission modes that set sandbox and approval together while each enforcement service keeps its own value. Configured presets supply future-session defaults; an explicitly loaded plugin that registers Auto can add one current-session-only option. Clients read selectable entries from a process catalog and the current choice from the Session projection. Unmatched knob combinations appear as `custom`, which users can leave but cannot select. This package owns selection and defaults; the sandbox, approval, and Auto registrant own execution.
 
 ## Table of Contents
 
@@ -49,7 +49,7 @@ The plugin config defines the preset table and the default for fresh sessions. E
 | `presets` | `workspace-write`, `danger-full-access` | Table of preset name → sandbox/approval bundle |
 | `defaultPreset` | inferred | Preset pinned into fresh sessions; required when composition defaults match no preset |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#oceanocean-permission-presets) is the exhaustive source for every accepted field and its JSDoc. `custom` is reserved for the derived not-a-preset state, while `auto` is reserved for the Auto review integration. Mounting requires a confining bash executor (one that reports a `sandboxMode`), the approval service, and the Agent registry.
+The generated [configuration catalog](../../../docs/config-catalog.md#oceanocean-permission-presets) is the exhaustive source for every accepted field and its JSDoc. `custom` is reserved for the derived not-a-preset state, while `auto` is reserved for a plugin that registers Auto. Mounting requires a confining bash executor (one that reports a `sandboxMode`), the approval service, and the Agent registry.
 
 ### Switching presets
 

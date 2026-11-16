@@ -37,7 +37,7 @@ kind: "package-group"
 
 先从子系统参考了解共享的查询词汇，再看追踪与搜索背后的设计记录。
 
-默认 Web 和 Desktop 使用这套共享查询、索引与导出基础设施。[实验性面向模型工具](../experimental/tool-session-query/README.zh.md)是独立的可选消费方。
+默认 Web 和 Desktop 使用这套共享查询、索引与导出基础设施。
 
 - [会话查询子系统参考](../../docs/subsystems/session-query.zh.md)——逻辑记录、过滤器、搜索页、血缘、有界读取与事件关系。
 - 会话查询关系追踪——追踪语义与校验边界。

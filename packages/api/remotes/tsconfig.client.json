@@ -106,10 +106,7 @@
     {
       "path": "../../mcp/mcp-manager"
     },
-    {
-      "path": "../../boot/plugin-market"
-    },
-    {
+        {
       "path": "../../document/office-kit"
     },
     {

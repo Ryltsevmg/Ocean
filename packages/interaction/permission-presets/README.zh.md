@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-提供具名权限模式，同时设置沙箱与审批，但各执行服务仍保留自己的值。配置预设提供未来会话默认值；显式加载的 Auto review integration 可以增加一个仅限当前会话的选项。客户端从进程目录读取可选项，从 Session 投影读取当前选择。不匹配任何预设的旋钮组合显示为 `custom`，用户可以离开该状态，但不能选择它。本包拥有选择与默认值；沙箱、审批和 Auto integration 拥有执行行为。
+提供具名权限模式，同时设置沙箱与审批，但各执行服务仍保留自己的值。配置预设提供未来会话默认值；显式加载并注册 Auto 的插件可以增加一个仅限当前会话的选项。客户端从进程目录读取可选项，从 Session 投影读取当前选择。不匹配任何预设的旋钮组合显示为 `custom`，用户可以离开该状态，但不能选择它。本包拥有选择与默认值；沙箱、审批和 Auto 注册方拥有执行行为。
 
 ## 目录
 
@@ -49,7 +49,7 @@ kind: "package-reference"
 | `presets` | `workspace-write`、`danger-full-access` | 预设名称 → 沙箱／审批捆绑的表 |
 | `defaultPreset` | 推断 | 固定到新会话的预设；组合默认值不匹配任何预设时必填 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#oceanocean-permission-presets)是每个受支持字段及其 JSDoc 的穷尽式真源。`custom` 保留给推导出的非预设状态，`auto` 则保留给 Auto review integration。挂载需要具有约束能力的 bash 执行器（会报告 `sandboxMode` 的执行器）、审批服务和 Agent 注册表。
+生成的[配置目录](../../../docs/config-catalog.zh.md#oceanocean-permission-presets)是每个受支持字段及其 JSDoc 的穷尽式真源。`custom` 保留给推导出的非预设状态，`auto` 则保留给注册 Auto 的插件。挂载需要具有约束能力的 bash 执行器（会报告 `sandboxMode` 的执行器）、审批服务和 Agent 注册表。
 
 ### 切换预设
 

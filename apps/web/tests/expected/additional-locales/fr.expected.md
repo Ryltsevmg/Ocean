@@ -1,5 +1,5 @@
 - listitem:
-  - button "Voir Examen des autorisations automatiques": Examen des autorisations automatiques
-  - text: "Expérimental Ajoute le mode d'accès « Auto review » : avant chaque appel d'outil, un modèle vérifie l'appel par rapport à ce que vous avez demandé ; les appels autorisés s'exécutent immédiatement et les appels refusés attendent votre approbation."
+  - button "Voir Sous-agent Codex": Sous-agent Codex
+  - text: Déléguez une tâche à Codex à l’aide de son authentification et de ses paramètres natifs.
   - status
-  - switch "Activer Examen des autorisations automatiques"
+  - switch "Activer Sous-agent Codex"

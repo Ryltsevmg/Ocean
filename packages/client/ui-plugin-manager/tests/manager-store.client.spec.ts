@@ -592,7 +592,7 @@ describe('PluginManagerController', () => {
     await vi.waitFor(() => { expect(state().notice).toEqual({ kind: 'failed', action: 'rowEnable', code: 'unaddressable', reason: '', packageName: ROW_ENTRY, seq: 1 }) })
   })
 
-  it('installs a Discover spec through the dialog, asking its registry first, and reopens a hidden installation instead', async () => {
+  it('installs a confirmed tab spec through the dialog, asking its registry first, and reopens a hidden installation instead', async () => {
     const gate = deferred<ReturnType<typeof ok<ChangeResult>>>()
     const installBundle = vi.fn((): Promise<ReturnType<typeof ok<ChangeResult>>> => Promise.resolve(ok({ ...APPLIED, bundle: 'dsh-other' })))
       .mockReturnValueOnce(gate.promise)

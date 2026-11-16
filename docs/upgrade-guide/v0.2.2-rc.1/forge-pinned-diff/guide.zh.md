@@ -19,7 +19,7 @@ description: "ForgeProvider.diff 与 ctx.forge.diff 需要传入要读取的 hea
 
 ## 迁移
 
-1. 在 `ForgeProvider` 的 `diff` 中，于 `signal` 之前加入 `headSha: string` 参数。只有托管平台在 `headSha` 处计算出补丁时才返回补丁，否则返回 `{ code: 'stale', message }`。[`GitHubProvider.diff`](../../../../packages/experimental/forge-github/src/provider.ts) 先读取当前 head，再读取按提交寻址的 diff。
+1. 在 `ForgeProvider` 的 `diff` 中，于 `signal` 之前加入 `headSha: string` 参数。只有托管平台在 `headSha` 处计算出补丁时才返回补丁，否则返回 `{ code: 'stale', message }`。`GitHubProvider.diff` 先读取当前 head，再读取按提交寻址的 diff。
 2. 每次调用 `ctx.forge.diff` 都传入 head 提交，通常是 `ctx.forge.latest(ref)` 的 `snapshot.headSha`。收到 `stale` 时，等待更新的状态并按其 head 重新读取；不要把结果缓存在旧 head 下。
 3. 提供方构造的每个 `ChangeRequestSnapshot` 都要设置 `threadsTruncated`：`unresolvedThreads` 统计了全部评审讨论时为 `false`。
 4. 凡对 `ForgeFailure['code']` 做穷尽分支的地方都处理 `stale`；凡区分 `forgePanel.changeRequestDiff` Remote 错误代码的调用方都处理 `forgePanel/stale-head`。

@@ -9,7 +9,7 @@ kind: "package-group"
 
 ## 概述
 
-浏览器操作 提供方 让模型检查与操作网页。本组拥有独占 提供方 注册。实验性 提供方 提供浏览器工具，并管理各 Session 的浏览器资源。
+浏览器操作 提供方 让模型检查与操作网页。本组拥有独占 提供方 注册；提供方 提供浏览器工具，并管理各 Session 的浏览器资源。
 
 ## 目录
 
@@ -31,8 +31,7 @@ kind: "package-group"
 <a id="related-documentation"></a>
 ## 相关文档
 
-- [浏览器操作](../../docs/subsystems/browser-use.zh.md) — 能力所有权与 提供方 选择。
-- [实验包](../experimental/README.zh.md) — Playwright MCP、Chrome DevTools MCP 与 Stagehand 提供方。
+- [浏览器操作](../../docs/subsystems/browser-use.zh.md) — 能力所有权与 提供方 注册。
 
 <a id="dev-note"></a>
 ## 开发备注

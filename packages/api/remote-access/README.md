@@ -45,7 +45,7 @@ When `bindings()`, a condition, or `explain()` throws, the decision is refused w
 
 A forwarded event is decided as the action `event:<name>` on the resources its forwarding entry's readers name, or on `global` when the entry declares none, and reaches a non-owner whole or not at all; its payload is never trimmed. An event carries every resource it declares, so a reader that returns `undefined` makes the event's resources invalid, and the Gateway delivers it to no non-owner without asking `decide()`. An event names at most one resource, so collection changes travel on follow streams (`session/follow`, `session/control`, `workspace/follow`), whose methods decide each item inline through `allows()`.
 
-The service adds a `global` row named `REMOTE_ACCESS_SNAPSHOT_KEY` (`__DSH_REMOTE_ACCESS__`) holding `snapshotFor(peer.principal)` to every index the webServer renders through `webserver/index-inject`, for the Peer that render speaks for: the owner's browser page opens with `{ type: 'baseline', owner: true }`, and a page rendered for a non-owner Peer, such as a liveshare viewer page rendered on the owner Host, opens with that viewer's grants. The Client entry reads the global when it mounts.
+The service adds a `global` row named `REMOTE_ACCESS_SNAPSHOT_KEY` (`__DSH_REMOTE_ACCESS__`) holding `snapshotFor(peer.principal)` to every index the webServer renders through `webserver/index-inject`, for the Peer that render speaks for: the owner's browser page opens with `{ type: 'baseline', owner: true }`, and a page rendered for a non-owner Peer opens with that viewer's grants. The Client entry reads the global when it mounts.
 
 | `details.reason` of `remote-access/denied` | Cause |
 |---|---|

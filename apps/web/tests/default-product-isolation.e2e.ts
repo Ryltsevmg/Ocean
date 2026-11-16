@@ -4,7 +4,6 @@ import { FiberState } from '@deepseek-ai/cordis'
 import type { Context, Plugin, RegistryService } from '@deepseek-ai/cordis'
 import type { ClientModuleLoader, ClientModuleLoaderTarget } from '@ocean/ocean-client-modules/client'
 import { chromium } from 'playwright'
-import { hasExperimentalPackageReference } from '../../../scripts/experimental-package-policy.ts'
 import { expect, it } from 'vitest'
 import { withDefaultWeb } from '../../cli/tests/profiles/web/tests/default-web-process.ts'
 import { newEnglishPage } from './support.ts'
@@ -40,15 +39,7 @@ async function readClientRoster() {
   }
 }
 
-function experimentalClientReferences(roster: Awaited<ReturnType<typeof readClientRoster>>): string[] {
-  return [
-    ...roster.entries.map(entry => entry.name),
-    ...roster.plugins.flatMap(plugin => [plugin.owner ?? '', ...plugin.modules]),
-    ...roster.modules,
-  ].filter(hasExperimentalPackageReference)
-}
-
-it('activates the actual default Client registry without experimental packages', async (test) => {
+it('activates the actual default Client registry', async (test) => {
   await withDefaultWeb(test, async ({ url, request }) => {
     const browser = await chromium.launch({ timeout: test.task.timeout })
     test.onTestFinished(async () => { await browser.close() })
@@ -92,19 +83,6 @@ it('activates the actual default Client registry without experimental packages',
       expect(roster.entries.every(entry => entry.state === FiberState.ACTIVE)).toBe(true)
       expect(roster.plugins.length).toBeGreaterThan(roster.entries.length)
       expect(roster.plugins.some(plugin => plugin.modules.includes('@ocean/ocean-client-ui-layout'))).toBe(true)
-      expect(experimentalClientReferences(roster)).toEqual([])
-      const contaminatedHost = await request('mount-experimental-entry')
-      const experimentalName = '@ocean/ocean-experimental-client-ui-voice-input'
-      expect(contaminatedHost.client.entries.map(entry => entry.id)).toContain(experimentalName)
-      await page.reload()
-      await expect.poll(async () => {
-        const current = await page.evaluate(readClientRoster)
-        return current.entries.some(entry => entry.name === experimentalName && entry.state === FiberState.ACTIVE)
-      }, { timeout: test.task.timeout }).toBe(true)
-      const contaminated = await page.evaluate(readClientRoster)
-      expect(contaminated.plugins.some(plugin => plugin.modules.includes(experimentalName)
-        && plugin.state === FiberState.ACTIVE)).toBe(true)
-      expect(experimentalClientReferences(contaminated)).toContain(experimentalName)
       expect(errors).toEqual([])
     } finally {
       await browser.close()

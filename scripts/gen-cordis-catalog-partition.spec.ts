@@ -46,21 +46,21 @@ function baseline(): { input: WalkPartitionInput; maps: WalkPartitionMaps } {
 }
 
 describe('walkPartitionProblems', () => {
-  it('requires the private Browse latch exemption and rejects it after its declaration disappears', () => {
+  it('requires the client-face webTerminals exemption and rejects it after its declaration disappears', () => {
     const { input, maps } = baseline()
     const declaredKeys = new Map(input.declaredKeys)
-    declaredKeys.set('browseCleanupState', 'packages/experimental/browser-use-browse/src/setup.ts')
+    declaredKeys.set('webTerminals', 'packages/api/terminal-controller/src/client/index.ts')
     const declared = { ...input, declaredKeys }
     expect(walkPartitionProblems(declared, maps)).toEqual([
-      expect.stringContaining('ctx.browseCleanupState'),
+      expect.stringContaining('ctx.webTerminals'),
     ])
-    const documented = SERVICE_WALK_EXEMPTIONS.browseCleanupState
-    expect(documented).toContain('packages/experimental/browser-use-browse/README.md')
-    if (documented === undefined) throw new Error('Browse cleanup state needs a documented exemption')
-    const scoped = { ...maps, serviceWalkExemptions: { ...maps.serviceWalkExemptions, browseCleanupState: documented } }
+    const documented = SERVICE_WALK_EXEMPTIONS.webTerminals
+    expect(documented).toContain('packages/api/terminal-controller/README.md')
+    if (documented === undefined) throw new Error('webTerminals needs a documented exemption')
+    const scoped = { ...maps, serviceWalkExemptions: { ...maps.serviceWalkExemptions, webTerminals: documented } }
     expect(walkPartitionProblems(declared, scoped)).toEqual([])
     expect(walkPartitionProblems(input, scoped)).toEqual([
-      expect.stringContaining("SERVICE_WALK_EXEMPTIONS names 'ctx.browseCleanupState'"),
+      expect.stringContaining("SERVICE_WALK_EXEMPTIONS names 'ctx.webTerminals'"),
     ])
   })
 

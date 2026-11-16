@@ -3,8 +3,8 @@
  * the owning event-envelope types. This is the durable-record vocabulary, not
  * the live Cordis bus. Event declarations must be unique, explicitly typed,
  * documented, inheritance-free, and free of Cordis-only `@mode` tags; every
- * surface-union member must resolve to one. Experimental plugin records have
- * a separate current-source catalog. `--check` verifies every generated artifact.
+ * surface-union member must resolve to one. Plugin records have a separate
+ * current-source catalog. `--check` verifies every generated artifact.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -45,7 +45,6 @@ const LINK_MAP: Record<string, string> = {
   TodoItem: 'subsystems/todo.md',
   WorkspaceChangesSummary: 'subsystems/deliverables.md',
   PresentedFile: 'subsystems/deliverables.md',
-  TurnTrigger: 'subsystems/session.md',
   TurnEndReason: 'subsystems/session.md',
   SessionTitleEventData: 'subsystems/session-title.md',
   SessionTitleLlmRequestEventData: 'subsystems/session-title.md',
@@ -92,7 +91,7 @@ function recordCode(value: string): string {
 
 /**
  * Render the standalone current-source plugin record catalog without expanding payload types.
- * @param records - validated experimental package record declarations.
+ * @param records - validated package record declarations.
  * @param locale - language of the page's headings and explanatory prose.
  * @returns the complete Markdown page, including its language switcher and main catalog link.
  */

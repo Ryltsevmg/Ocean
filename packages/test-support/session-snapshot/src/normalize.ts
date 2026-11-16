@@ -1,6 +1,6 @@
 /**
  * Pure ACP transcript and session-log normalizers. They scrub session ids, run cwd, RPC ids,
- * timestamps, goal lifecycle clocks, and hook duration while preserving semantic payload values.
+ * timestamps and goal lifecycle clocks while preserving semantic payload values.
  * The prompt-text and tool-schema scrubbers stay composable so one scenario per header class can
  * pin prompt and tool-schema sidecars.
  * @module @ocean/ocean-session-snapshot/normalize
@@ -407,10 +407,6 @@ export function normalizeSessionLog(
           if (Array.isArray(timed.dt)) timed.dt = timed.dt.map(() => 0)
         }
       }
-    }
-    if (record.type === 'hook/result' && record.data !== null && typeof record.data === 'object') {
-      const data = record.data as Record<string, unknown>
-      if ('durationMs' in data) data.durationMs = 0
     }
     normalizeFeedbackClocks(record)
     if ((record.type === 'job/registered' || record.type === 'job/settled')

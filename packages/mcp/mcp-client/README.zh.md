@@ -143,7 +143,7 @@ Streamable HTTP 重定向仅限配置端点的同源地址，但 SDK 允许一�
 | [`src/diagnostic.ts`](src/diagnostic.ts) | 原因链诊断与密钥值替换 |
 | [`src/types.ts`](src/types.ts) | 客户端可用的连接状态与探测结果类型（`./types`） |
 
-导出的 `createMcpToolDefinition(ctx, options)` 将上游工具 schema 和原始结果回调适配到相同的规范值、错误和持久化图像投影。每次回调都收到原样的 `ToolExecution`，包括其 Agent 和取消信号；SDK 的规范类型校验会在投影前检查返回结果。调用方负责注册、取消截止时间和提供方卸载。原生 Cua Driver 提供方使用此适配函数，无需打开 MCP 传输。
+导出的 `createMcpToolDefinition(ctx, options)` 将上游工具 schema 和原始结果回调适配到相同的规范值、错误和持久化图像投影。每次回调都收到原样的 `ToolExecution`，包括其 Agent 和取消信号；SDK 的规范类型校验会在投影前检查返回结果。调用方负责注册、取消截止时间和提供方卸载。
 
 ### 生命周期与同步
 

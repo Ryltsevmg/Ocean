@@ -562,7 +562,7 @@ function PackageCard({ pkg, t, resolveText, busy, highlighted, newer, onOpen, on
   readonly onOpen: () => void
   readonly onSetEnabled: (enabled: boolean) => void
 }): ReactNode {
-  const { title, description, beta } = packageText(pkg, resolveText)
+  const { title, description } = packageText(pkg, resolveText)
   const status = packageStatus(pkg)
   return (
     <li
@@ -578,7 +578,6 @@ function PackageCard({ pkg, t, resolveText, busy, highlighted, newer, onOpen, on
         icon={<PackageArtwork key={pkg.meta?.icon} src={pkg.meta?.icon} />}
         tags={(
           <>
-            {beta ? <Tag className={css.statusTag} tone="info">{t('statusBeta')}</Tag> : null}
             <StatusTag status={status} t={t} />
             {pkg.availability === 'missing' ? <Tag className={css.statusTag}>{t(pkg.installed ? 'statusMissingFiles' : 'statusNotInstalled')}</Tag> : null}
             {updateAvailable(pkg) || newer !== undefined ? <Tag className={css.statusTag} tone="info">{t('statusUpdateAvailable')}</Tag> : null}
@@ -718,7 +717,7 @@ function RowDetail({ pkg, row, t, resolveText, onBack, renderSlot, form }: {
 /**
  * One package's page: the crumb back to the list; its icon with its switch
  * and, for a package the profile installed or a selection the Host can remove, uninstall; its title beside its
- * version tag, its beta tag, and its problem or not-running tag; the package name the title
+ * version tag and its problem or not-running tag; the package name the title
  * stands for; its one-liner; the Host's problem when it reports one; the
  * configuration the bundle registered for itself; its rows with their switches
  * and configure controls, unless the Host reports an error and no rows; and where it comes from.
@@ -753,7 +752,7 @@ function PackageDetail({
   /** Ask before installing one listed newer version. */
   readonly onUpdateVersion: (version: string) => void
 }): ReactNode {
-  const { title, description, beta } = packageText(pkg, resolveText)
+  const { title, description } = packageText(pkg, resolveText)
   const newer = versionUpdate(versions)
   const status = packageStatus(pkg)
   const subject: PluginsSubject = { kind: 'bundle', pkg: packageRef(pkg) }
@@ -802,7 +801,6 @@ function PackageDetail({
         <div className={css.titleRow}>
           <h3 className={css.detailTitle}>{title}</h3>
           {pkg.version === undefined ? null : <Tag className={css.versionTag} tone="neutral">{t('versionTag', { version: pkg.version })}</Tag>}
-          {beta ? <Tag className={css.statusTag} tone="info">{t('statusBeta')}</Tag> : null}
           <StatusTag status={status} t={t} />
           {pkg.availability === 'missing' ? <Tag className={css.statusTag}>{t(pkg.installed ? 'statusMissingFiles' : 'statusNotInstalled')}</Tag> : null}
           {updateAvailable(pkg) || newer !== undefined ? <Tag className={css.statusTag} tone="info">{t('statusUpdateAvailable')}</Tag> : null}

@@ -1,6 +1,5 @@
 /** Display labels and toast sentences for global plugin management. */
 
-import { EXPERIMENTAL_BUNDLES } from '@ocean/ocean-official-bundles'
 import type { IncompatiblePlugin, ManagementError, Registry, RestartReason } from '@ocean/ocean-api-remotes/client'
 import type { PropsLocale } from '@ocean/ocean-client-ui-slots'
 import type { PluginManagerLocaleKey } from './locales.ts'
@@ -115,15 +114,14 @@ export function shortName(name: string): string {
  * Resolve installed package metadata without changing its technical identity.
  * @param pkg - package identity and local metadata.
  * @param resolveText - current-locale package text resolver.
- * @returns localized copy with a technical-name fallback and the independent beta status.
+ * @returns localized copy with a technical-name fallback.
  */
 export function packageText(
   pkg: Pick<PackageView, 'name' | 'meta'>, resolveText: PluginManagerFace['resolveText'],
-): { title: string; description: string | undefined; beta: boolean } {
+): { title: string; description: string | undefined } {
   return {
     title: pkg.meta?.title === undefined ? pkg.name : resolveText(pkg.meta.title),
     description: pkg.meta?.description === undefined ? undefined : resolveText(pkg.meta.description) || undefined,
-    beta: EXPERIMENTAL_BUNDLES.has(pkg.name),
   }
 }
 

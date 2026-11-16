@@ -1,6 +1,6 @@
 ---
 name: dsh-client-ui-ux
-description: "Design and review DSH user-visible UI: alignment, spacing, icons, visual foundation, geometry and interaction. Use before UI changes in client, experimental and app packages; verify affected rendered results before handoff."
+description: "Design and review DSH user-visible UI: alignment, spacing, icons, visual foundation, geometry and interaction. Use before UI changes in client and app packages; verify affected rendered results before handoff."
 ---
 
 # Ocean UI development

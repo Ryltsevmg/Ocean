@@ -19,8 +19,8 @@ This affects third-party `ForgeProvider` implementations registered with `ctx.fo
 
 ## Migration
 
-1. In every `ChangeRequestCheck` a provider builds, set `rerun: null` unless the provider implements `rerunChecks`; a provider that does names each rerunnable check with a branded `ForgeCheckId` it can resolve again, as [`actionsRun`](../../../../packages/experimental/forge-github/src/graphql.ts) does for GitHub Actions runs.
+1. In every `ChangeRequestCheck` a provider builds, set `rerun: null` unless the provider implements `rerunChecks`; a provider that does names each rerunnable check with a branded `ForgeCheckId` it can resolve again, as `actionsRun` does for GitHub Actions runs.
 2. In every `ChangeRequestSnapshot`, set the overview fields the host reports. Without host data, use `reviewers: []`, `reviewersTruncated: false`, `closingIssues: []`, `closingIssuesTruncated: false`, `branchUpdates: []`, `canRequestReviews: false`, and `canRerunChecks: false`; the card then shows the review decision alone and offers no overview action.
-3. Optionally implement the new provider methods; [`GitHubProvider`](../../../../packages/experimental/forge-github/src/provider.ts) shows each one, and the [forge subsystem page](../../../subsystems/forge.md#overview-and-viewed-marks) states their contract.
+3. Optionally implement the new provider methods; `GitHubProvider` shows each one, and the `forge subsystem page` states their contract.
 4. Handle `unknown` wherever code switches exhaustively over `ForgeActionFailure['code']`: show that the outcome must be checked on the host, and do not try the change again before it is.
 5. Run your type check; it succeeds when every snapshot and check a provider builds sets the new fields and no `ForgeActionFailure` code is unhandled.

@@ -67,7 +67,7 @@ The DeepSeek adapter calls the prepared contribution's `accept()` after HTTP 2xx
 
 A crash after server acceptance but before the watermark reaches persistence can replay an accepted range after restart. This is the at-least-once failure direction: uncertainty creates duplicates, never a skipped sequence. The ordinary session checkpoint policy persists the watermark at the next semantic checkpoint; this plugin performs no independent I/O.
 
-Direct requests without a live Session omit `dsh_session_log`. Normal agent, compaction, session-title, and Auto review calls carry their live Session id and use the same upload eligibility.
+Direct requests without a live Session omit `dsh_session_log`. Normal agent, compaction, and session-title calls carry their live Session id and use the same upload eligibility.
 
 <a id="model-experience"></a>
 ## Model Experience

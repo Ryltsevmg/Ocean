@@ -31,20 +31,6 @@ function bundle(name: string): { dir: string; patches: ReturnType<typeof loadOve
   return { dir: entry.dir, patches: bundlePatchPaths(entry.dir, entry.manifest.dsh.bundle).flatMap(path => loadOverlayPatches('test', path)) }
 }
 
-const lightweight = [
-  '@ocean/ocean-experimental-session-search',
-  '@ocean/ocean-experimental-ralph-bundle',
-  '@ocean/ocean-experimental-terminal-bundle',
-  '@ocean/ocean-experimental-badge-skill-bundle',
-  '@ocean/ocean-experimental-session-titles-bundle',
-]
-
-function presetRows(entries: EntryOptions[], id: string): EntryOptions[] {
-  const preset = entries.find(entry => entry.id === id)
-  if (preset === undefined) throw new Error(`missing preset ${id}`)
-  return (preset.config as { plugins: EntryOptions[] }).plugins
-}
-
 function flattenRows(entries: EntryOptions[]): EntryOptions[] {
   return entries.flatMap(entry => [entry, ...entry.group && Array.isArray(entry.config) ? flattenRows(entry.config as EntryOptions[]) : []])
 }
@@ -60,49 +46,41 @@ function profileLayers(surface: 'web' | 'desktop'): ReturnType<typeof loadOverla
 }
 
 describe.each(['web', 'desktop'] as const)('%s optional bundle overrides', (surface) => {
-  const selectedNames = ['@ocean/ocean-experimental-badge-skill-bundle', '@ocean/ocean-experimental-ralph-bundle']
+  const selectedNames = ['@ocean/ocean-subagent-codex']
 
   it('keeps established selectors for later configuration and disabled overrides', () => {
     const shipped = profileLayers(surface)
-    const config = { subagentProvider: 'spawn', maxRounds: 3 }
+    const config = { maxDepth: 2 }
     const warnings: string[] = []
     const entries = composeEntries([...shipped, ...selectedNames.map(name => bundle(name).patches), [
-      { id: 'skill-badge', disabled: true },
-      { id: 'tool-ralph', config, disabled: true },
+      { id: 'subagent-codex', disabled: true },
+      { id: 'tool-subagent-codex', config, disabled: true },
     ]], warning => warnings.push(warning))
     expect(warnings).toEqual([])
-    expect(entries.find(row => row.id === 'skill-badge')).toMatchObject({ name: '@ocean/ocean-skill-badge', disabled: true })
-    expect(flattenRows(entries).find(row => row.id === 'tool-ralph'))
-      .toMatchObject({ name: '@ocean/ocean-tool-ralph', config, disabled: true })
-    expect(entries.find(row => row.id === 'optional-ralph')?.isolate).toEqual({ workflowEngine: true })
+    expect(entries.find(row => row.id === 'subagent-codex')).toMatchObject({ name: '@ocean/ocean-subagent-codex', disabled: true })
+    expect(flattenRows(entries).find(row => row.id === 'tool-subagent-codex'))
+      .toMatchObject({ name: '@ocean/ocean-tool-subagent', config, disabled: true })
   })
 
   it('does not select absent bundles through enable-only row overrides', () => {
     const warnings: string[] = []
     const entries = composeEntries([...profileLayers(surface), [
       { id: 'skill-badge', disabled: false },
-      { id: 'tool-ralph', disabled: false },
+      { id: 'optional-ralph', disabled: false },
     ]], warning => warnings.push(warning))
     expect(warnings).toHaveLength(2)
     expect(warnings.some(warning => warning.includes('skill-badge'))).toBe(true)
-    expect(warnings.some(warning => warning.includes('tool-ralph'))).toBe(true)
+    expect(warnings.some(warning => warning.includes('optional-ralph'))).toBe(true)
     expect(entries.some(row => row.id === 'skill-badge')).toBe(false)
-    expect(flattenRows(entries).some(row => row.id === 'tool-ralph')).toBe(false)
+    expect(flattenRows(entries).some(row => row.id === 'optional-ralph')).toBe(false)
   })
 })
 
 describe('optional bundles', () => {
-  it('admits Computer Use on macOS and native Windows Hosts', () => {
-    expect(bundles.get('@ocean/ocean-cua-bundle')?.manifest.dsh?.bundle?.platforms).toEqual(['darwin', 'win32'])
-  })
   const shipped = ['@ocean/ocean-base', '@ocean/ocean-web-app'].map(name => bundle(name).patches)
 
   it('ships at least one bundle switched off', () => {
     expect(OPTIONAL_BUNDLES.length).toBeGreaterThan(0)
-  })
-
-  it('keeps the Inspector out of the default plugin list', () => {
-    expect(OPTIONAL_BUNDLES).not.toContain('@ocean/ocean-experimental-inspector')
   })
 
   it.each(OPTIONAL_BUNDLES)('%s composes over the Web profile without a skipped patch', (name) => {
@@ -131,95 +109,6 @@ describe('optional bundles', () => {
       expect(matches).toHaveLength(1)
       expect(matches[0]?.name).toBe(shippedComposed.find(entry => entry.id === patch.id)?.name)
     }
-  })
-
-  it('retains the standalone worktree bundle for explicit profiles', () => {
-    const name = '@ocean/ocean-experimental-tool-worktree'
-    expect(OPTIONAL_BUNDLES).toContain(name)
-    for (const template of Object.values(PROFILE_TEMPLATES)) expect(template.bundles).not.toContain(name)
-    const rows = composeEntries([...shipped, bundle(name).patches])
-    for (const moduleName of [name, '@ocean/ocean-experimental-worktree']) {
-      expect(composeEntries(shipped).some(row => row.name === moduleName)).toBe(false)
-      expect(rows.filter(row => row.name === moduleName && row.disabled !== true)).toHaveLength(1)
-    }
-  })
-
-  it('offers the forge panel and model worktree tool together over one worktree service', () => {
-    const name = '@ocean/ocean-experimental-forge-bundle'
-    expect(OPTIONAL_BUNDLES).toContain(name)
-    for (const template of Object.values(PROFILE_TEMPLATES)) expect(template.bundles).not.toContain(name)
-    const rows = flattenRows(composeEntries([...shipped, bundle(name).patches]))
-    for (const moduleName of [
-      '@ocean/ocean-experimental-forge',
-      '@ocean/ocean-experimental-forge-github',
-      '@ocean/ocean-experimental-forge-session',
-      '@ocean/ocean-experimental-client-ui-forge',
-      '@ocean/ocean-experimental-tool-worktree',
-    ]) {
-      expect(flattenRows(composeEntries(shipped)).some(row => row.name === moduleName)).toBe(false)
-      expect(rows.filter(row => row.name === moduleName && row.disabled !== true)).toHaveLength(1)
-    }
-    expect(composeEntries([...shipped, bundle(name).patches]).some(row => row.name === 'cordis:group' && row.id === 'optional-forge-panel')).toBe(false)
-    expect(rows.filter(row => row.name === '@ocean/ocean-experimental-worktree')).toHaveLength(1)
-  })
-
-  it('keeps the existing tool and panel row overrides addressable in the unified bundle', () => {
-    const config = { directory: '.agents/custom-worktrees' }
-    const warnings: string[] = []
-    const composed = composeEntries([...shipped, bundle('@ocean/ocean-experimental-forge-bundle').patches, [
-      { id: 'worktree', config },
-      { id: 'tool-worktree', disabled: true },
-      { id: 'forge-panel', disabled: true },
-    ]], message => warnings.push(message))
-    expect(warnings).toEqual([])
-    expect(composed.find(row => row.id === 'worktree')?.config).toEqual(config)
-    expect(composed.find(row => row.id === 'tool-worktree')?.disabled).toBe(true)
-    expect(composed.find(row => row.id === 'forge-panel')?.disabled).toBe(true)
-  })
-
-  it('ships all five lightweight bundles without selecting them in a default template', () => {
-    const defaults = Object.values(PROFILE_TEMPLATES).flatMap(template => template.bundles)
-    for (const name of lightweight) {
-      expect(OPTIONAL_BUNDLES).toContain(name)
-      expect(defaults).not.toContain(name)
-    }
-  })
-
-  it('composes every lightweight selection as Host rows without changing any preset', () => {
-    const baseline = composeEntries(shipped)
-    const layers = lightweight.map(name => bundle(name).patches)
-    for (let mask = 0; mask < 2 ** lightweight.length; mask += 1) {
-      const selected = layers.filter((_layer, index) => (mask & 2 ** index) !== 0)
-      const warnings: string[] = []
-      const composed = composeEntries([...shipped, ...selected], warning => warnings.push(warning))
-      expect(warnings).toEqual([])
-      for (const id of ['preset-standard', 'preset-cordis', 'preset-ptc', 'preset-minimal']) {
-        expect(presetRows(composed, id)).toEqual(presetRows(baseline, id))
-      }
-      const ids = flattenRows(composed).map(row => row.id)
-      expect(new Set(ids).size).toBe(ids.length)
-    }
-  })
-
-  it('contributes global tools from Host rows with independently isolated services', () => {
-    const composed = composeEntries([...shipped, ...lightweight.map(name => bundle(name).patches)])
-    const names = flattenRows(composed).map(row => row.name)
-    for (const name of [
-      '@ocean/ocean-tool-session-query',
-      '@ocean/ocean-tool-ralph', '@ocean/ocean-tool-terminal',
-    ]) expect(names).toContain(name)
-    expect(composed.find(row => row.id === 'optional-ralph')?.isolate).toEqual({ workflowEngine: true })
-    expect(composed.find(row => row.id === 'optional-persistent-terminals')?.isolate).toEqual({ terminals: true })
-    const search = composed.find(row => row.id === 'optional-session-search')
-    expect(search?.isolate).toEqual({ sessionQuery: true })
-    expect(search?.config).toEqual([
-      { id: 'optional-session-query-sqlite', name: '@ocean/ocean-session-query-sqlite', config: { path: ':memory:', openAt: 'first-search' } },
-      { id: 'optional-tool-session-query', name: '@ocean/ocean-tool-session-query' },
-    ])
-    expect(composed.find(row => row.id === 'session-query-sqlite')?.config).toEqual({ path: ':memory:', openAt: 'never' })
-    expect(composed.find(row => row.id === 'session-title-llm')?.disabled).toBe(true)
-    expect(composed.find(row => row.id === 'optional-session-title-all-prompts')?.name)
-      .toBe('@ocean/ocean-session-title-all-prompts-llm')
   })
 
   it('delivers the Schedule service and task page without a Host clock row', () => {

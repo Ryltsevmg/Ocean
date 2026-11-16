@@ -11,7 +11,7 @@ import {
   isBackgroundShellCall,
   isSettledPersistentShellCall,
   isSpilledShellCall,
-  localizeTerminalCardModel,
+  resolvedTerminalCard,
   terminalBlockLabels,
   terminalCardModel,
   terminalFailed,
@@ -49,7 +49,7 @@ export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSe
   // against it before reaching the terminal primitive.
   const cwd = useSessions(list => list.byId[sessionId]?.cwd)
   const terminalModel = useMemo(() => terminalCardModel(block, cwd), [block, cwd])
-  const terminal = useMemo(() => terminalModel === null ? null : localizeTerminalCardModel(terminalModel, t), [terminalModel, t])
+  const terminal = useMemo(() => terminalModel === null ? null : resolvedTerminalCard(terminalModel), [terminalModel])
   const labels = useMemo(() => terminalBlockLabels(t), [t])
   // Exit failures are result data even when the tool call itself succeeds.
   const state = model.state === 'ok' && terminalModel !== null && terminalFailed(terminalModel)

@@ -163,27 +163,11 @@ const homeAndGuide = pairedPages([
     order: 1,
   },
   {
-    source: 'docs/user/guide/github-review.md',
-    route: 'guide/github-review.md',
-    label: { root: 'GitHub 评审会话', en: 'GitHub review sessions' },
-    sidebar: { root: 'zh-guide', en: 'en-guide' },
-    section: { root: '自动化', en: 'Automation' },
-    order: 1,
-  },
-  {
     source: 'docs/user/guide/schedule.md',
     route: 'guide/schedule.md',
     label: { root: '会话内提醒', en: 'Session reminders' },
     sidebar: { root: 'zh-guide', en: 'en-guide' },
     section: { root: '自动化', en: 'Automation' },
-    order: 2,
-  },
-  {
-    source: 'docs/user/guide/plugin-market.md',
-    route: 'guide/plugin-market.md',
-    label: { root: '插件索引', en: 'Plugin indexes' },
-    sidebar: { root: 'zh-guide', en: 'en-guide' },
-    section: { root: '集成', en: 'Integrations' },
     order: 2,
   },
   {

@@ -95,15 +95,11 @@ dsh headless --permission-mode workspace-write --add-dir "$git_dir" --json - < t
 
 监督者中断进程后，必须等待进程退出再恢复其 Session。非零退出后也要保留事件日志。只有进程退出码为零且 `final.reason.kind === 'completed'` 时，才视为 agent 运行完成；随后单独判断 worker 的任务与检查报告。`tool_result` 的 `completed` 状态表示工具已返回，其中的 shell 命令仍可能以非零退出码结束。
 
-### Experimental Auto review
-
-如需由模型审查后以完全访问权限执行，请显式启用[无界面监督流程的 Auto review](../../experimental/auto-review/README.zh.md#headless-supervision)，选择 `--permission-mode auto --approval-policy never` 并使用原生工具。Auto 在支持的调用执行前进行审查，不提供文件沙箱。其 JSON 拒绝结果让监督者检查失败并通过 `--session-id` 发送限定范围的修订指令。Headless 没有实时审批响应通道。
-
 ### 机器可读输出
 
 `--json` 用按行 JSON 事件流取代 stdout 的最终文本行，stderr 仅保留 `dsh:` 诊断信息。事件流以 `session`（携带本次运行使用的标识）开头、以 `final` 结尾，其间为 `status`、`text`、`thinking`、`tool_call` 与 `tool_result` 事件。`text` 与 `thinking` 只从已提交的 assistant 消息投影，因此被重试或丢弃的尝试不会进入事件流；它们在步骤提交时到达，而不是逐 token 到达，默认模式的 stderr 推理仍是唯一的实时文本通道。终止 `final` 事件携带精确的 `sessionId`、持久化轮次的 `reason`（最后一轮没有终止事件时为 `null`），以及与默认模式相同的无损答案；该事件不做限长；其他每个字符串与对象键上限为 8 KiB，超出时标记 `truncated`，单条事件行（含换行）上限为 32 KiB——超长事件保留标量字段、丢弃结构化字段，极端情况下只剩 `type` 与 `truncated`，嵌套达到 64 层及以上的负载会在该深度被截断。空工具参数字符串会投影为 `{}`，与执行器实际运行的值一致；而 JSON 无法往返的参数——例如溢出为 `Infinity` 的数字 `1e400`——会保留原始文本，而不是 `JSON.stringify` 会报告的 `null`。runner 在轮次之外抛出的失败会写出 `error` 事件并在没有 `final` 的情况下结束事件流，同时向 stderr 写入 `dsh:` 行；若 profile 自身的插件加载失败，进程会在 runner 挂载前退出，该情形只保留 loader 的 stderr 诊断。轮次内失败的运行仍会以 `final` 事件（通常为空）结束且没有 `error` 事件，因此格式良好的事件流也可能描述一次失败的运行：请在判断任务报告前检查进程退出状态和 `final.reason`。
 
-`tool_result.error` 存在时，在相同输出限制内保留持久化的 `{ name, code, reason? }` 错误字段。`AUTO_REVIEW_DENIED` 标识最终策略拒绝；`AUTO_REVIEW_FAILED` 标识 reviewer 失败。两者都不会执行调用 body。截断记录可能省略结构化详情；需要完整理由时读取持久 Session。
+`tool_result.error` 存在时，在相同输出限制内保留持久化的 `{ name, code, reason? }` 错误字段。截断记录可能省略结构化详情；需要完整理由时读取持久 Session。
 
 ### 何时使用
 

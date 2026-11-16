@@ -10,7 +10,7 @@ interface ApprovalToolCall {
 }
 
 /**
- * Extract the command line from a correlated Tool call: a shell `command`, or the text `terminal_send` types into a terminal.
+ * Extract the command line from a correlated Tool call: a shell `command` argument.
  * @param call - Tool call name and arguments, when a correlated call exists.
  * @returns command text, or undefined for absent, empty, malformed, or unrelated arguments.
  */
@@ -18,7 +18,7 @@ export function commandOf(call: ApprovalToolCall | undefined): string | undefine
   if (call === undefined) return undefined
   try {
     const args = JSON.parse(call.argsRaw) as Record<string, unknown>
-    const command = call.name === 'terminal_send' ? args.text : args.command
+    const command = args.command
     return typeof command === 'string' && command.length > 0 ? command : undefined
   } catch {
     return undefined

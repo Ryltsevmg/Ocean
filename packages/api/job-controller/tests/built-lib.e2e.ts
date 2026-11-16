@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 /**
  * Built-artifact smoke for the generated job Remote codecs. This package's
  * program compiles only the `JobKindMap` merges it can see (`bash`,
- * `subagent`), while the Host registers `pwsh`, `pty-send`, and every other
+ * `subagent`), while the Host registers `pwsh`, `workflow`, and every other
  * producer kind, so the wire projection's `kind` must reach the codec as an
  * open string rather than the literal union this program observes.
  */
@@ -19,8 +19,8 @@ interface BuiltInvocation {
 }
 
 const row = {
-  id: 'pty-send-1',
-  kind: 'pty-send',
+  id: 'workflow-1',
+  kind: 'workflow',
   label: 'send',
   status: 'running',
   startedAt: 1,

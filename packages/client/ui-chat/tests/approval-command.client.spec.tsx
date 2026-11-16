@@ -26,12 +26,6 @@ describe('commandOf', () => {
     expect(commandOf({ callId: 'c1', name: 'bash', argsRaw: '{"command":""}' })).toBeUndefined()
     expect(commandOf({ callId: 'c1', name: 'bash', argsRaw: '{"command":"pnpm test"}' })).toBe('pnpm test')
   })
-
-  it('reads the text typed into a terminal as its command', () => {
-    expect(commandOf({ callId: 'c1', name: 'terminal_send', argsRaw: '{"sessionId":"pty-1","text":"pnpm run dev"}' })).toBe('pnpm run dev')
-    expect(commandOf({ callId: 'c1', name: 'terminal_send', argsRaw: '{"sessionId":"pty-1","text":"","submit":true}' })).toBeUndefined()
-    expect(commandOf({ callId: 'c1', name: 'write', argsRaw: '{"path":"notes.md","text":"draft"}' })).toBeUndefined()
-  })
 })
 
 describe('ApprovalCommand', () => {

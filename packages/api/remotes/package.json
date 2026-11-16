@@ -97,7 +97,6 @@
     "@ocean/ocean-api-terminal-controller": "workspace:*",
     "@ocean/ocean-plugin-manager": "workspace:*",
     "@ocean/ocean-mcp-manager": "workspace:*",
-    "@ocean/ocean-plugin-market": "workspace:*",
     "@ocean/ocean-client-ui-plugin-manager": "workspace:*",
     "@ocean/ocean-office-kit": "workspace:*",
     "@ocean/ocean-deepseek-account": "workspace:*",

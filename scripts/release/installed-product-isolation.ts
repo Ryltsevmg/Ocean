@@ -1,9 +1,8 @@
-/** Experimental-package isolation for the installed default product's dependency graph. */
+/** Dependency-graph verification for the installed default product. */
 
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
-import { hasExperimentalPackageReference } from '../experimental-package-policy.ts'
 import { OPTIONAL_BUNDLES } from '../../packages/util/official-bundles/src/bundles.ts'
 
 interface InstalledManifest {
@@ -15,9 +14,11 @@ interface InstalledManifest {
 }
 
 /**
- * Reject experimental dependencies reachable from one installed product entry.
+ * Verify the runtime dependency graph reachable from one installed product entry: every required
+ * edge resolves to an installed package, and the bundles the entry ships switched off are present.
  * Other packages installed beside the entry and development dependencies do not join its graph.
  * @param directory - installed entry package directory.
+ * @param optionalBundles - bundles the entry package ships switched off; the launcher's list by default.
  * @returns number of distinct installed packages visited.
  */
 export function verifyInstalledProductIsolation(directory: string, optionalBundles: readonly string[] = OPTIONAL_BUNDLES): number {
@@ -29,18 +30,13 @@ export function verifyInstalledProductIsolation(directory: string, optionalBundl
     visited.add(canonical)
     const manifest = JSON.parse(readFileSync(join(canonical, 'package.json'), 'utf8')) as InstalledManifest
     const chain = [...item.chain, manifest.name]
-    rejectExperimental(manifest.name, chain)
     // The bundles the entry package ships switched off are installed beside the product, not required by it.
     const offered = item.chain.length === 0 ? new Set(optionalBundles) : new Set<string>()
     for (const section of ['dependencies', 'optionalDependencies', 'peerDependencies'] as const) {
-      for (const [name, range] of Object.entries(manifest[section] ?? {})) {
+      for (const name of Object.keys(manifest[section] ?? {})) {
         if (section === 'dependencies' && offered.has(name)) {
           if (installedPackage(canonical, name) === undefined) throw new Error(`optional bundle is missing: ${[...chain, name].join(' -> ')}`)
           continue
-        }
-        rejectExperimental(name, [...chain, name])
-        if (range.startsWith('npm:')) {
-          rejectExperimental(range.slice(4), [...chain, `${name} (${range})`])
         }
         const dependency = installedPackage(canonical, name)
         if (dependency === undefined) {
@@ -54,12 +50,6 @@ export function verifyInstalledProductIsolation(directory: string, optionalBundl
     }
   }
   return visited.size
-}
-
-function rejectExperimental(name: string, chain: readonly string[]): void {
-  if (hasExperimentalPackageReference(name)) {
-    throw new Error(`default product includes an experimental package: ${chain.join(' -> ')}`)
-  }
 }
 
 /** Resolve a dependency directory through the installed package's ancestor node_modules. */

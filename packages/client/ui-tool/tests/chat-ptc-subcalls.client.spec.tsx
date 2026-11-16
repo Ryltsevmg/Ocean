@@ -156,23 +156,6 @@ function mountApp(runtime: SlotTestRuntime) {
 }
 
 describe('program sub-calls through the real chat machinery', () => {
-  it.each([false, true])('renders the CUA program and its nested calls while running=%s', async (running) => {
-    const parent = 'cua-program'
-    const program = "var app = await cua.getApp('Calculator')\nconsole.log(app)"
-    const argsRaw = JSON.stringify({ code: program, description: 'Select Calculator' })
-    const child = subCall(11, parent, 1, 'cua', { method: 'getApp', params: { selector: 'Calculator' } }, 'Calculator')
-    const b = await bench(snapshotWith(
-      running ? [] : [codeResult(10, parent, 'cua_run_code', argsRaw)], [child],
-      running ? [runningCode(parent, 'cua_run_code', argsRaw)] : [],
-    ))
-    const view = mountApp(b.runtime)
-    expect(view.getByText('Code')).toBeTruthy()
-    expect(view.getByText('Select Calculator')).toBeTruthy()
-    expect(view.container.querySelector('[data-subcalls] [data-tool="cua"]')).not.toBeNull()
-    fireEvent.click(view.getByText('Select Calculator'))
-    expect(view.container.querySelector('pre.shiki')?.textContent).toBe(program)
-  })
-
   it('renders the code-variant parent row with the description summary and nested sub-rows', async () => {
     const parent = 'call-64'
     const subCalls = [

@@ -85,7 +85,7 @@ it('refuses recorded parent/child clock conflicts and migrates consistent copies
       }
     }
   }
-  expect(pairs).toBe(25)
+  expect(pairs).toBe(23)
   expect(withoutDescriptor).toBe(1)
   expect(conflicts.sort()).toEqual(EXPECTED_CONFLICTS)
 })
@@ -103,8 +103,6 @@ const EXPECTED_CONFLICTS = [
   'snapshots/session/advanced-toolchain-runtime/session.2.v3.jsonl',
   'snapshots/session/advanced-toolchain/session.1.v3.jsonl',
   'snapshots/session/advanced-toolchain/session.2.v3.jsonl',
-  'snapshots/session/ralph-loop/session.1.v3.jsonl',
-  'snapshots/session/ralph-loop/session.2.v3.jsonl',
   'snapshots/session/subagent-child-question-rejection/session.1.v3.jsonl',
   'snapshots/session/subagent-depth-two-rejection/session.1.v3.jsonl',
   'snapshots/session/subagent-depth-two-rejection/session.2.v3.jsonl',

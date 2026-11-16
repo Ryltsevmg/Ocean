@@ -1,5 +1,5 @@
 - listitem:
-  - button "Siehe Automatische Autorisierungsüberprüfung": Automatische Autorisierungsüberprüfung
-  - text: "Experimentell Fügt den Zugriffsmodus „Auto review“ hinzu: Vor jedem Tool-Aufruf prüft ein Modell den Aufruf anhand Ihrer Anforderung; zugelassene Aufrufe laufen sofort, abgelehnte Aufrufe warten auf Ihre Genehmigung."
+  - button "Codex-Subagent anzeigen": Codex-Subagent
+  - text: Delegieren Sie eine Aufgabe an Codex, indem Sie dessen native Authentifizierung und Einstellungen verwenden.
   - status
-  - switch "Aktivieren Sie Automatische Autorisierungsüberprüfung"
+  - switch "Codex-Subagent aktivieren"

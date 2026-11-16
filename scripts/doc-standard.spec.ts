@@ -56,7 +56,6 @@ const KIND_TEMPLATES: Readonly<Record<string, string>> = {
  */
 const PACKAGE_LIBRARIES: Readonly<Record<string, string>> = {
   'packages/util/file-drag': 'File naming and native transfer declarations without a plugin entry.',
-  'packages/experimental/browser-use-runtime': 'Provider-owned browser resource management and MCP integration helpers; no plugin entry.',
   'packages/boot/app-boot': 'Boot library the app bins import; plain helper exports.',
   'packages/boot/cmdline': 'Command-line library the app bins import; plain module exports.',
   'packages/util/official-bundles': 'Bundle-list data library the launcher and plugin manager import; plain constant exports.',
@@ -65,10 +64,6 @@ const PACKAGE_LIBRARIES: Readonly<Record<string, string>> = {
   'packages/client/ui-slots': 'Browser-side slot-map declarations; plain type exports.',
   'packages/client/web': 'Browser application boot library; exports the app entry and static module table.',
   'packages/core/scope': 'Scoped-context primitives; exports functions and types without a plugin entry.',
-  'packages/experimental/webworker-packer': 'Build-time VFS image packer and command library.',
-  'packages/experimental/webworker-runtime': 'Browser worker runtime library with explicit host entry points.',
-  'packages/experimental/hook-protocol': 'Shared wire-protocol library between the hook bridges.',
-  'packages/experimental/liveshare-protocol': 'Shared wire frames and identity contract; plain module exports with no plugin entry.',
   'packages/identity/anonymous-user-id': 'Harness-home identity helper with no plugin registration.',
   'packages/sandbox/sandbox-windows-acl': 'Windows ACL sandbox library consumed by sandbox-local.',
   'packages/sdk/client': 'Client-process library; the spawned runtime owns plugin behavior.',
@@ -106,7 +101,6 @@ const PACKAGE_LIBRARIES: Readonly<Record<string, string>> = {
   'packages/util/output-retention': 'Zero-dependency retention utility.',
   'packages/util/package-manifest': 'Shared package manifest declarations with type-only exports.',
   'packages/util/plugin-detail': 'Plugin detail document library.',
-  'packages/util/plugin-market-index': 'Plugin market index validation library.',
   'packages/util/ripgrep': 'Packaged executable resolution and caller-owned subprocess streaming without a plugin entry.',
   'packages/util/time': 'Zero-dependency time-zone canonicalization utility.',
   'packages/util/timeout': 'Zero-dependency timeout utility.',

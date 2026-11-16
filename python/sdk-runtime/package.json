@@ -77,7 +77,6 @@
     "@ocean/ocean-persona": "workspace:*",
     "@ocean/ocean-plan-mode": "workspace:*",
     "@ocean/ocean-plugin-manager": "workspace:*",
-    "@ocean/ocean-plugin-market": "workspace:*",
     "@ocean/ocean-plugin-package-inventory-deepseek": "workspace:*",
     "@ocean/ocean-ptc-runtime": "workspace:*",
     "@ocean/ocean-ptc-runtime-node": "workspace:*",

@@ -1,9 +1,0 @@
-- insert:
-    - id: browser-use
-      name: '@ocean/ocean-browser-use'
-    - id: browser-setup
-      name: '@ocean/ocean-browser-use-browse/setup'
-    - id: browser-use-browse
-      name: '@ocean/ocean-browser-use-browse'
-      config:
-        enabled: false

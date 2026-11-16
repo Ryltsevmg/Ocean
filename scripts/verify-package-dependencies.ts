@@ -44,9 +44,8 @@ const CORDIS = '@deepseek-ai/cordis'
 function workspaceRange(name: string): 'workspace:*' | 'workspace:~' {
   return name === '@ocean/ocean' || name.startsWith('@ocean/ocean-') ? 'workspace:*' : 'workspace:~'
 }
-const RELEASE_MANIFEST_GLOB = 'packages/!(experimental)/*/package.json'
-/** Every package group, experimental included, follows the same published dependency policy. */
-const POLICY_MANIFEST_GLOB = 'packages/*/*/package.json'
+/** Package-group manifests; every group publishes and follows the same dependency policy. */
+const PACKAGE_MANIFEST_GLOB = 'packages/*/*/package.json'
 const WORKSPACE_MANIFEST_GLOBS = [
   'apps/*/package.json',
   'packages/*/*/package.json',
@@ -137,11 +136,9 @@ export function readWorkspacePackageManifests(root: string): {
     }
   }
   const all = globSync(WORKSPACE_MANIFEST_GLOBS, { cwd: root }).map(normalizePath).sort().map(read)
-  const subset = (pattern: string): WorkspacePackageManifest[] => {
-    const paths = new Set(globSync(pattern, { cwd: root }).map(normalizePath))
-    return all.filter(pkg => paths.has(pkg.manifestPath))
-  }
-  return { all, release: subset(RELEASE_MANIFEST_GLOB), policy: subset(POLICY_MANIFEST_GLOB) }
+  const paths = new Set(globSync(PACKAGE_MANIFEST_GLOB, { cwd: root }).map(normalizePath))
+  const packageGroups = all.filter(pkg => paths.has(pkg.manifestPath))
+  return { all, release: packageGroups, policy: packageGroups }
 }
 
 function duplicates(values: readonly string[]): string[] {

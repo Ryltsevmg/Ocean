@@ -43,9 +43,10 @@ export function packageNameOf(specifier: string): string | undefined {
 }
 
 /**
- * Read package manifests used for scope discovery and workspace-name checks.
- * @param root - Repository containing the workspace manifests.
- * @returns Every workspace package, the non-experimental release packages, and the packages the policy covers.
+ * Record one source file's use of a package, keeping each path once.
+ * @param target - accumulated using-source paths by package name.
+ * @param name - used package name.
+ * @param path - repository-relative source path with the recorded use.
  */
 export function addUse(target: Map<string, string[]>, name: string, path: string): void {
   const paths = target.get(name) ?? []

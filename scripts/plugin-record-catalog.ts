@@ -1,14 +1,14 @@
-/** Discover package-owned experimental Session records without adding persistence schema roots. */
+/** Discover package-owned plugin Session records without adding persistence schema roots. */
 
 import { globSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import ts from 'typescript'
-import { experimentalPackageRecordNamespace } from './experimental-package-policy.ts'
 import { parseJsDoc, pointer, rawJsDoc, reportViolations } from './jsdoc.ts'
 
 const SESSION_PACKAGE = '@ocean/ocean-session'
 const SESSION_TYPES_MODULE = `${SESSION_PACKAGE}/types`
 const RECORD_NAME = /^plugin:[a-z0-9][a-z0-9._-]*(?:\/[a-z0-9][a-z0-9._-]*)+$/u
+const OWNER_PREFIX = '@ocean/ocean-'
 const printer = ts.createPrinter({ removeComments: true })
 
 /** One current-source plugin record declaration, independent of compatibility history. */
@@ -30,6 +30,15 @@ function packageName(source: string, root: string): string | undefined {
   const manifest: unknown = JSON.parse(readFileSync(resolve(root, source.split('/').slice(0, 3).join('/'), 'package.json'), 'utf8'))
   return typeof manifest === 'object' && manifest !== null && 'name' in manifest && typeof manifest.name === 'string'
     ? manifest.name : undefined
+}
+
+/**
+ * Derive the record namespace an owning package declares under.
+ * @param name - complete npm package name of the augmenting package.
+ * @returns The name suffix after `@ocean/ocean-`, or undefined for a foreign name.
+ */
+function packageRecordNamespace(name: string): string | undefined {
+  return name.startsWith(OWNER_PREFIX) ? name.slice(OWNER_PREFIX.length) : undefined
 }
 
 /** Print compact type syntax while preserving whitespace within literal values. */
@@ -84,7 +93,7 @@ export function collectPluginRecords(scanRoot: string): PluginRecordEntry[] {
         } else {
           owningDeclaration = pointer(file, source, node)
         }
-        if (node.members.length > 0) violations.push(`${where} must remain empty; experimental packages own record declarations.`)
+        if (node.members.length > 0) violations.push(`${where} must remain empty; augmenting packages own record declarations.`)
         return
       }
       const container = node.parent
@@ -94,9 +103,9 @@ export function collectPluginRecords(scanRoot: string): PluginRecordEntry[] {
         violations.push(`${where} must augment declare module '${SESSION_TYPES_MODULE}'.`)
         return
       }
-      const namespace = owner === undefined ? undefined : experimentalPackageRecordNamespace(owner)
-      if (!file.startsWith('packages/experimental/') || owner === undefined || namespace === undefined) {
-        violations.push(`${where} must belong to a package declared experimental by the package naming policy.`)
+      const namespace = owner === undefined ? undefined : packageRecordNamespace(owner)
+      if (owner === undefined || namespace === undefined) {
+        violations.push(`${where} must belong to an ${OWNER_PREFIX}<name> workspace package.`)
         return
       }
       const prefix = `plugin:${namespace}/`

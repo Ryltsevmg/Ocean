@@ -7,24 +7,18 @@ import { runtimeRoster } from '../runtime-roster.ts'
 export const inject = ['loader', 'clientModules']
 
 /**
- * Observe the shipped process and optionally mount the real negative-control plugin dynamically.
+ * Observe the shipped process and report its runtime roster on request.
  * @param ctx - context in the real Loader tree.
- * @param config - absolute module URL used only by the explicit negative-control command.
  */
-export function apply(ctx: Context, config: { negativeControl: string }): void {
+export function apply(ctx: Context): void {
   if (process.send === undefined) throw new Error('Runtime roster observer requires an IPC channel')
   const receive = (message: unknown): void => {
     if (message === 'stop') {
       process.emit('SIGTERM')
       return
     }
-    if (message !== 'roster' && message !== 'mount-experimental' && message !== 'mount-experimental-entry') return
+    if (message !== 'roster') return
     void (async () => {
-      if (message === 'mount-experimental') {
-        const namespace: unknown = await import(config.negativeControl)
-        await ctx.plugin(ctx.loader.unwrapExports(namespace))
-      }
-      if (message === 'mount-experimental-entry') await ctx.loader.create({ name: config.negativeControl })
       await ctx.loader.await()
       process.send!({ command: message, roster: runtimeRoster(ctx) })
     })().catch((error: unknown) => {

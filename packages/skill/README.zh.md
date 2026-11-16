@@ -42,8 +42,6 @@ skill 家族让 agent 和用户仅在需要时发现并加载可复用的任务�
 
 -----
 
-实验性可选能力见 [`skill-badge`](../experimental/skill-badge/README.zh.md)。
-
 <a id="dev-note"></a>
 ## 开发备注
 

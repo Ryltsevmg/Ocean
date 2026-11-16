@@ -14,7 +14,7 @@ import { CHAT_READ_MAX_LINES, type ReadCardModel } from '../models/read-card-mod
 import type { ImageCardModel } from '../models/image-card-model.ts'
 import { CHAT_SEARCH_MAX_LINES, type SearchCardModel } from '../models/search-card-model.ts'
 import {
-  localizeTerminalCardModel, terminalBlockLabels, terminalExitLabel, type TerminalCardModel,
+  resolvedTerminalCard, terminalBlockLabels, terminalExitLabel, type TerminalCardModel,
 } from '../models/terminal-card-model.ts'
 import {
   codeToolbarLabels, diffBlockLabels, readBlockLabels, searchBlockLabels, webBlockLabels,
@@ -201,7 +201,7 @@ export const ToolRow = memo(function ToolRow({
   const webLabels = useMemo(() => webBlockLabels(t), [t])
   const terminalBody = useMemo(() => terminal === undefined || terminal === null
     ? null
-    : localizeTerminalCardModel(terminal, t), [terminal, t])
+    : resolvedTerminalCard(terminal), [terminal])
   const diffBody = diff ?? null
   const readBody = read ?? null
   const imageBody = image !== undefined && image !== null && renderSlot !== undefined && loadImage !== undefined

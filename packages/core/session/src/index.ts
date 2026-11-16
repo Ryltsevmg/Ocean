@@ -470,7 +470,7 @@ function assertPluginRecordEvent(value: unknown): asserts value is SessionEvent 
 let commitPluginRecord: (session: Session, type: PluginRecordType, data: unknown) => SessionSeq
 
 /**
- * Append one experimental plugin record: an event marked `ignorable` whose
+ * Append one plugin record: an event marked `ignorable` whose
  * type is declared in {@link PluginRecordMap}, outside {@link SessionEventMap}.
  * The plugin record catalog lists it separately from released event schemas.
  * A reader that does not recognize the type retains and skips the record, which never
@@ -479,10 +479,10 @@ let commitPluginRecord: (session: Session, type: PluginRecordType, data: unknown
  * basis, so a record holds plugin-owned state that its owner can lose without
  * changing how the rest of the log is interpreted.
  *
- * Only production source under `packages/experimental/` may call this
- * function; the `verify-plugin-record-callers` gate rejects any other
- * production caller in this repository. Read records back with
- * {@link pluginRecordOf}.
+ * No production source in this repository may call this function; the
+ * `verify-plugin-record-callers` gate rejects every in-repo production
+ * caller, leaving the seam to published external plugins. Read records
+ * back with {@link pluginRecordOf}.
  * @param session - the Session whose log receives the record.
  * @param type - declared record name: `plugin:` followed by slash-separated
  *   segments of lowercase letters, digits, `.`, `_`, and `-`, each starting

@@ -33,21 +33,6 @@ export interface AcpConfig {
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-acp -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-action-cards -->
-<a id="oceanocean-action-cards"></a>
-
-## `@ocean/ocean-action-cards`
-
-- `inject`: `tools` · `agents` · `sessionProjections` · `remoteAccess`
-- `refs`: `z` (`zod`)
-- `source`: [`packages/experimental/action-cards/src/index.ts:23`](../packages/experimental/action-cards/src/index.ts)
-
-```ts config-catalog
-/** Validated card limits after schema defaults. */
-export type Config = z.infer<typeof Config>
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-action-cards -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-agent-default-model -->
 <a id="oceanocean-agent-default-model"></a>
 
@@ -492,41 +477,6 @@ export type Config = LocalConfig
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-bash-sandbox -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-browser-use-browse -->
-<a id="oceanocean-browser-use-browse"></a>
-
-## `@ocean/ocean-browser-use-browse`
-
-- `inject`: `browserUse` · `agents` · `tools` · `systemPrompt` · `browserSetup`
-- `source`: [`packages/experimental/browser-use-browse/src/config.ts:5`](../packages/experimental/browser-use-browse/src/config.ts)
-
-```ts config-catalog
-/** Profile-owned opt-in and local connection. No model tool can alter these settings. */
-export interface Config extends ConnectionConfig {
-  /** Allow browser tools after explicit configuration; does not pair or connect a browser. */
-  enabled: boolean
-}
-
-/** Explicit connection to a separately installed, paired local browse relay. */
-export interface ConnectionConfig {
-  /** Explicit HTTP address of the loopback-only local relay. */
-  endpoint: string
-  /** Absolute path to the private relay token file, never the token value. */
-  tokenFile: string
-  /** Identifier of the separately paired browser. */
-  browser: string
-  /** HTTPS origins to which browser operations are restricted. */
-  allowedOrigins: string[]
-  /** Maximum wait in milliseconds for a human browser handoff. */
-  handoffTimeoutMs: number
-  /** Maximum duration in milliseconds of a relay operation. */
-  timeoutMs: number
-  /** Maximum accepted relay response size in bytes. */
-  maxResponseBytes: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-browser-use-browse -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-client-connection -->
 <a id="oceanocean-client-connection"></a>
 
@@ -921,46 +871,6 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-credentials-local -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-cua-linux -->
-<a id="oceanocean-cua-linux"></a>
-
-## `@ocean/ocean-cua-linux`
-
-- `inject`: `computerUse` · `tools` · `systemPrompt` · `subprocess` · `agents`
-- `refs`: [`CuaConfig`](../packages/experimental/cua/src/index.ts)
-- `source`: [`packages/experimental/cua-linux/src/index.ts:15`](../packages/experimental/cua-linux/src/index.ts)
-
-```ts config-catalog
-/** System Python must supply gi.repository.Atspi; no runtime dependency installation. */
-export interface Config extends CuaConfig {
-  /** Absolute path to a system Python interpreter with AT-SPI bindings installed. */
-  pythonPath: string
-  /** Exact logind session identifier used to scope access to the intended desktop. */
-  sessionId?: string
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-cua-linux -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-cua-windows -->
-<a id="oceanocean-cua-windows"></a>
-
-## `@ocean/ocean-cua-windows`
-
-- `inject`: `computerUse` · `tools` · `systemPrompt` · `subprocess` · `agents`
-- `refs`: [`CuaConfig`](../packages/experimental/cua/src/index.ts)
-- `source`: [`packages/experimental/cua-windows/src/index.ts:32`](../packages/experimental/cua-windows/src/index.ts)
-
-```ts config-catalog
-/** Windows native waiting policy, alongside shared CUA resource limits. */
-export interface Config extends CuaConfig {
-  /** Windows PowerShell executable used to query WSL interoperation and the Windows architecture. */
-  windowsPowerShellPath: string
-  /** Milliseconds between application-readiness and clipboard-release observations. */
-  pollIntervalMs: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-cua-windows -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-deepseek-account -->
 <a id="oceanocean-deepseek-account"></a>
 
@@ -1005,675 +915,6 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-deepseek-account -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-api-speech-to-text -->
-<a id="oceanocean-experimental-api-speech-to-text"></a>
-
-## `@ocean/ocean-experimental-api-speech-to-text`
-
-- `inject`: `speechToText` · `typert`
-- `source`: [`packages/experimental/api-speech-to-text/src/index.ts:20`](../packages/experimental/api-speech-to-text/src/index.ts)
-
-```ts config-catalog
-/** Limits applied before decoding or calling a provider. */
-export interface Config {
-  /** Maximum decoded WAV bytes per request. */
-  maxAudioBytes: number
-  /** Maximum PCM recording duration in seconds. */
-  maxDurationSeconds: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-api-speech-to-text -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-browser-use-chrome-devtools-mcp -->
-<a id="oceanocean-experimental-browser-use-chrome-devtools-mcp"></a>
-
-## `@ocean/ocean-experimental-browser-use-chrome-devtools-mcp`
-
-- `inject`: `browserUse` · `agents` · `tools` · `systemPrompt` · `workingDirectory`
-- `refs`: `BrowserMcpConfig` (`@ocean/ocean-experimental-browser-use-runtime/mcp`)
-- `source`: [`packages/experimental/browser-use-chrome-devtools-mcp/src/index.ts:15`](../packages/experimental/browser-use-chrome-devtools-mcp/src/index.ts)
-
-```ts config-catalog
-/** Fixed Chromium launch or existing-browser attachment settings. */
-export type Config = BrowserMcpConfig
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-browser-use-chrome-devtools-mcp -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-browser-use-playwright-mcp -->
-<a id="oceanocean-experimental-browser-use-playwright-mcp"></a>
-
-## `@ocean/ocean-experimental-browser-use-playwright-mcp`
-
-- `inject`: `browserUse` · `agents` · `tools` · `systemPrompt` · `workingDirectory`
-- `refs`: `BrowserMcpConfig` (`@ocean/ocean-experimental-browser-use-runtime/mcp`)
-- `source`: [`packages/experimental/browser-use-playwright-mcp/src/index.ts:16`](../packages/experimental/browser-use-playwright-mcp/src/index.ts)
-
-```ts config-catalog
-/** Fixed Chromium launch or existing-browser attachment settings. */
-export type Config = BrowserMcpConfig
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-browser-use-playwright-mcp -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-browser-use-stagehand-native -->
-<a id="oceanocean-experimental-browser-use-stagehand-native"></a>
-
-## `@ocean/ocean-experimental-browser-use-stagehand-native`
-
-- `inject`: `browserUse` · `agents` · `tools` · `systemPrompt`
-- `refs`: `ModelConfig` (`@browserbasehq/stagehand`)
-- `source`: [`packages/experimental/browser-use-stagehand-native/src/index.ts:28`](../packages/experimental/browser-use-stagehand-native/src/index.ts)
-
-```ts config-catalog
-/** Profile-owned browser connection and independent Stagehand model credentials. */
-export interface Config {
-  /** Native Stagehand model and credentials; independent of the Session model. */
-  model: StagehandModelConfig
-  /** Launch a fresh browser or attach to the configured existing endpoint. */
-  mode: 'launch' | 'attach'
-  /** CDP HTTP or WebSocket endpoint, required only for attach mode. */
-  cdpEndpoint?: string
-  /** Installed Chrome/Chromium executable used in launch mode. */
-  executablePath?: string
-  /** Hide an owned browser's window. */
-  headless?: boolean
-  /** Deadline for Chromium startup and Stagehand navigation/action operations. */
-  operationTimeoutMs?: number
-  /** Grace for native SDK cleanup before its connection Worker is terminated. */
-  shutdownGraceMs?: number
-}
-
-/** Profile-owned model settings accepted by the pinned Stagehand SDK. */
-export interface StagehandModelConfig {
-  /** Provider-prefixed model name from Stagehand's supported model catalog. */
-  modelName: ModelConfig['modelName']
-  /** Explicit API key sent to Stagehand's browser extension. */
-  apiKey: string
-  /** Additional headers sent with the extension's model requests. */
-  headers?: Record<string, string>
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-browser-use-stagehand-native -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-claude-code-mods -->
-<a id="oceanocean-experimental-claude-code-mods"></a>
-
-## `@ocean/ocean-experimental-claude-code-mods`
-
-- `inject`: `workingDirectory` · `agents`
-- `source`: [`packages/experimental/claude-code-mods/src/index.ts:53`](../packages/experimental/claude-code-mods/src/index.ts)
-
-```ts config-catalog
-/** Plugin config: the limits mod hooks run under. */
-export interface Config {
-  /** A hook's own running-time limit in milliseconds (Claude Code: 10 seconds). */
-  hookTimeoutMs?: number
-  /** A `.catch` handler's running-time limit in milliseconds (Claude Code: 1 second). */
-  catchTimeoutMs?: number
-  /** Default `$.process.run` and `$.http.fetch` timeout in milliseconds (Claude Code: 30 seconds). */
-  processTimeoutMs?: number
-  /** Claude Code tool name → harness tool name entries added to the built-in alias table. */
-  toolAliases?: Record<string, string>
-  /** Columns the band above the prompt reports to `ui.render` as `bodyColumns` and `viewport.columns`. */
-  bandColumns?: number
-  /** Rows the band reports as `maxRows`. */
-  bandRows?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-claude-code-mods -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-client-ui-cot-translation -->
-<a id="oceanocean-experimental-client-ui-cot-translation"></a>
-
-## `@ocean/ocean-experimental-client-ui-cot-translation`
-
-- `inject`: `translator` · `typert` · `sessionController`
-- `refs`: [`TranslationProvider`](subsystems/translation.md) · `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/experimental/client-ui-cot-translation/src/index.ts:14`](../packages/experimental/client-ui-cot-translation/src/index.ts)
-
-```ts config-catalog
-/** Live preferences presented on the bundle's Plugins page. */
-export interface Config {
-  /** Explicit translation provider, defaulting to Bing. */
-  provider: Volatile<CotTranslationPreferences['provider']>
-  /** Target language code; auto follows the browser UI locale. */
-  targetLanguage: Volatile<string>
-}
-
-/** Translation choices; auto targets the active browser UI language. */
-export interface CotTranslationPreferences {
-  /** Explicit provider selection; requests never fall back to another provider. */
-  provider: TranslationProvider
-  /** BCP 47 language code, or auto to follow the UI language. */
-  targetLanguage: string
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-client-ui-cot-translation -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-client-ui-forge -->
-<a id="oceanocean-experimental-client-ui-forge"></a>
-
-## `@ocean/ocean-experimental-client-ui-forge`
-
-- `inject`: `forge` · `forgeSession` · `sessionProjections` · `workingDirectory` · `fs` · `subprocess` · `sandbox` · `sandboxPolicy` · `agents`
-- `source`: [`packages/experimental/client-ui-forge/src/types.ts:381`](../packages/experimental/client-ui-forge/src/types.ts)
-
-```ts config-catalog
-/** Host settings of the forge panel Remote. */
-export interface Config {
-  /** Git executable name or absolute path in the Session's execution world. */
-  gitCommand?: string
-  /** Deadline in milliseconds for one Git command, including confinement. */
-  gitTimeoutMs?: number
-  /** Termination grace period in milliseconds for each Git process. */
-  graceMs?: number
-  /** Maximum captured bytes per Git output stream. */
-  maxOutputBytes?: number
-  /** Deadline in milliseconds for one provider sign-in probe. */
-  readinessTimeoutMs?: number
-  /** Most local branches listed as worktree bases, and most branches in each group of base branches listed for the `branch` scope. */
-  maxBranches?: number
-  /**
-   * Prefix of the branch and checkout directory created for a Session worktree; the first eight
-   * hexadecimal digits of the Session id's UUID, a hyphen, and four random hexadecimal digits follow it.
-   */
-  worktreePrefix?: string
-  /** Largest diff, file read to show unchanged lines, or list of base branch refs, in bytes. */
-  maxDiffBytes?: number
-  /** Most untracked files a local diff or the local changes card includes. */
-  maxUntrackedFiles?: number
-  /** Most UTF-8 bytes of change request diffs kept in memory for later reads at the same head commit and base branch. */
-  maxCachedDiffBytes?: number
-  /** Most commits of the `branch` scope listed; a longer branch lists its newest ones. */
-  maxCommits?: number
-  /**
-   * Globs of files in the `test` layer, which the changes view can hide, beside the built-in rules and checked before
-   * them; matched against repository-relative paths with dot files included. A repository's `.gitattributes` overrides both.
-   */
-  testPaths?: string[]
-  /**
-   * Globs of files in the `interface` layer beside the built-in rules, matched like `testPaths`; checked after
-   * `testPaths` and before the built-in rules.
-   */
-  interfacePaths?: string[]
-  /** Most UTF-8 bytes, as JSON, of change request review threads kept in memory for later reads at the same head commit and update time. */
-  maxCachedReviewBytes?: number
-  /**
-   * Age in milliseconds at which review threads kept in memory are read from the code host again; a GitHub pull
-   * request's update time does not change when a thread is resolved.
-   */
-  reviewRefreshMs?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-client-ui-forge -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-computer-use-cua-driver-mcp -->
-<a id="oceanocean-experimental-computer-use-cua-driver-mcp"></a>
-
-## `@ocean/ocean-experimental-computer-use-cua-driver-mcp`
-
-- `inject`: `computerUse` · `tools`
-- `refs`: [`McpClient`](../packages/mcp/mcp-client/src/index.ts)
-- `source`: [`packages/experimental/computer-use-cua-driver-mcp/src/index.ts:20`](../packages/experimental/computer-use-cua-driver-mcp/src/index.ts)
-
-```ts config-catalog
-/** Installed executable and MCP connection overrides. */
-export interface Config {
-  /** Executable path or PATH command; defaults to `cua-driver`. */
-  command: string
-  /** Arguments passed without a shell; defaults to `['mcp']`. */
-  args: string[]
-  /** Per-call timeout in milliseconds; omission uses the MCP client's default. */
-  toolCallTimeoutMs?: number
-  /** Reconnection overrides; defaults to the MCP client's policy. */
-  reconnect: McpClient.ReconnectConfig
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-computer-use-cua-driver-mcp -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-cua-macos -->
-<a id="oceanocean-experimental-cua-macos"></a>
-
-## `@ocean/ocean-experimental-cua-macos`
-
-- `inject`: `computerUse` · `tools` · `systemPrompt` · `subprocess` · `agents`
-- `refs`: [`CuaConfig`](../packages/experimental/cua/src/index.ts)
-- `source`: [`packages/experimental/cua-macos/src/index.ts:34`](../packages/experimental/cua-macos/src/index.ts)
-
-```ts config-catalog
-/** Native preparation, source-build signing, operation bounds, and profile-local application grants. */
-export interface Config extends CuaConfig {
-  /** Interval in milliseconds between permission and position checks while the native guide is open. */
-  permissionPollIntervalMs: number
-  /**
-   * Source-build signing: `ad-hoc` (default) binds grants to the code hash;
-   * an object selects an existing certificate in an explicitly configured keychain.
-   * Installed packages and `helperPath` keep their own signature.
-   */
-  sourceSigning: SourceSigning
-}
-
-/** Signature selected for source builds; certificates are created and unlocked by the developer. */
-export type SourceSigning = 'ad-hoc' | {
-  /** Existing codesign certificate name or SHA-1 fingerprint, without a leading dash or whitespace. */
-  identity: string
-  /** Absolute keychain path. */
-  keychain: string
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-cua-macos -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-forge -->
-<a id="oceanocean-experimental-forge"></a>
-
-## `@ocean/ocean-experimental-forge`
-
-- `source`: [`packages/experimental/forge/src/types.ts:588`](../packages/experimental/forge/src/types.ts)
-
-```ts config-catalog
-/** Poll cadence and fetch deadline for watched change requests. */
-export interface Config {
-  /** Poll interval in milliseconds while checks run or mergeability is unknown. */
-  activeIntervalMs?: number
-  /** Poll interval in milliseconds for a closed request or an open request whose checks have settled. */
-  idleIntervalMs?: number
-  /** Largest delay in milliseconds between polls after consecutive failures. */
-  maxBackoffMs?: number
-  /** Deadline in milliseconds for one provider fetch. */
-  fetchTimeoutMs?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-forge -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-forge-github -->
-<a id="oceanocean-experimental-forge-github"></a>
-
-## `@ocean/ocean-experimental-forge-github`
-
-- `inject`: `forge`
-- `source`: [`packages/experimental/forge-github/src/index.ts:14`](../packages/experimental/forge-github/src/index.ts)
-
-```ts config-catalog
-/** GitHub CLI executable, served hosts, and invocation limits. */
-export interface Config {
-  /** GitHub CLI executable name or absolute host path. */
-  ghCommand?: string
-  /** Host names this provider serves; list GitHub Enterprise hosts explicitly. */
-  hosts?: string[]
-  /** Deadline in milliseconds for one `gh` invocation. */
-  timeoutMs?: number
-  /** Maximum captured bytes per `gh` output stream and combined JSON bytes of one complete check read or review read. */
-  maxOutputBytes?: number
-  /**
-   * Most review threads counted per pull request in one status read, which reports a lower bound past it, and read in
-   * one review read, which reports itself truncated past it.
-   */
-  maxReviewThreads?: number
-  /** Most commits one pull request commit listing returns; GitHub lists at most 250 commits of a pull request. */
-  maxCommits?: number
-  /** Most files whose viewed marks one read lists; GitHub lists at most 3,000 files of a pull request. */
-  maxViewedFiles?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-forge-github -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-forge-session -->
-<a id="oceanocean-experimental-forge-session"></a>
-
-## `@ocean/ocean-experimental-forge-session`
-
-- `inject`: `forge` · `sessions` · `sessionProjections`
-- `source`: [`packages/experimental/forge-session/src/types.ts:91`](../packages/experimental/forge-session/src/types.ts)
-
-```ts config-catalog
-/** Deployment settings of `forgeSession`. */
-export interface Config {
-  /** Deadline in milliseconds for one change request lookup after a push. */
-  discoveryTimeoutMs?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-forge-session -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-inspector -->
-<a id="oceanocean-experimental-inspector"></a>
-
-## `@ocean/ocean-experimental-inspector`
-
-- `inject`: `webServer` · `connection`
-- `source`: [`packages/experimental/inspector/src/index.ts:66`](../packages/experimental/inspector/src/index.ts)
-
-```ts config-catalog
-/** Host plugin configuration. Fetch capture is enabled by default. */
-export interface Config extends Omit<InspectorOptions, 'clientOrigins'> {
-  /** Browser origins allowed to open the Client ingest WebSocket. */
-  clientOrigins?: string[]
-}
-
-/** User-facing Host options; every memory and lifecycle bound is configurable. */
-export interface InspectorOptions {
-  /** Loopback address used by the Worker HTTP and WebSocket endpoint. */
-  readonly host?: '127.0.0.1'
-  /** First port to bind; occupied ports advance until one is available. */
-  readonly port?: number
-  /** Additional exact browser origins admitted to the Client ingest socket. */
-  readonly clientOrigins?: readonly string[]
-  /** Whether to observe calls made through the current global fetch function. */
-  readonly captureFetch?: boolean
-  /** Maximum request-body prefix retained for one fetch. */
-  readonly maxRequestBodyBytes?: number
-  /** Maximum response-body prefix retained for one fetch. */
-  readonly maxResponseBodyBytes?: number
-  /** Maximum raw bytes encoded into one body observation. */
-  readonly maxBodyChunkBytes?: number
-  /** Maximum total request and response body bytes retained by the Worker. */
-  readonly maxJournalBytes?: number
-  /** Maximum active and completed fetch requests retained by the Worker. */
-  readonly maxRetainedRequests?: number
-  /** Maximum encoded bytes accepted in one source transport frame; values below 5121 leave no Cordis snapshot budget and fail. */
-  readonly maxSourceFrameBytes?: number
-  /** Maximum observation records accepted in one source batch. */
-  readonly maxSourceRecordsPerFrame?: number
-  /** Maximum records waiting in one producer queue. */
-  readonly maxQueuedRecords?: number
-  /** Maximum encoded bytes waiting in one producer queue. */
-  readonly maxQueuedBytes?: number
-  /** Maximum time allowed for the Worker to become ready. */
-  readonly startupTimeoutMs?: number
-  /** Grace period before a stopping Worker is terminated. */
-  readonly stopTimeoutMs?: number
-  /** Initial upper bound for randomized Client reconnect delay. */
-  readonly clientReconnectBaseMs?: number
-  /** Maximum upper bound for randomized Client reconnect delay. */
-  readonly clientReconnectMaxMs?: number
-  /** Deadline for one Worker-to-Client Runtime or Sources request. */
-  readonly clientRuntimeTimeoutMs?: number
-  /** Deadline for one non-CDP semantic query. */
-  readonly queryTimeoutMs?: number
-  /** Maximum live object handles retained per Client Runtime session. */
-  readonly maxClientRuntimeObjects?: number
-  /** Maximum descriptors returned by one Client property request. */
-  readonly maxClientRuntimeProperties?: number
-  /** Maximum encoded bytes read for one Client script or source map. */
-  readonly maxClientSourceBytes?: number
-  /** Maximum Context and Fiber nodes retained in one realm snapshot. */
-  readonly maxCordisNodes?: number
-  /** Disconnected Cordis snapshots retained after their live realm closes. */
-  readonly maxDisconnectedCordisTrees?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-inspector -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-ptc-runtime-python -->
-<a id="oceanocean-experimental-ptc-runtime-python"></a>
-
-## `@ocean/ocean-experimental-ptc-runtime-python`
-
-- `inject`: `sandbox` · `sandboxPolicy`
-- `source`: [`packages/experimental/ptc-runtime-python/src/index.ts:45`](../packages/experimental/ptc-runtime-python/src/index.ts)
-
-```ts config-catalog
-/** Plugin config: every cap, changeable from `cordis.yml` (no hardcoded tunables). */
-export interface Config {
-  /**
-   * RLIMIT_CPU in whole seconds (a positive integer — `setrlimit` in the child
-   * rejects a float). The child sets the soft limit to `cpuSeconds` and the
-   * hard limit to `cpuSeconds + 1`: the kernel delivers SIGXCPU at the soft
-   * limit, which the host classifies as a `timeout`; the +1s hard limit is a
-   * SIGKILL backstop for a program that traps SIGXCPU. Granularity is whole seconds.
-   */
-  cpuSeconds?: number
-  /** Wall-clock ceiling in milliseconds; backstops CPU time for programs awaiting a promise nobody resolves. */
-  maxWallMs?: number
-  /**
-   * RLIMIT_AS in mebibytes; caps address space so a runaway allocation fails
-   * cleanly. Not applied on Darwin, where the dyld shared cache mapped into
-   * every process at exec exceeds any practical cap and the kernel rejects
-   * the call; `cpuSeconds` and `maxWallMs` still bound the run there. Bounds
-   * `maxLogBytes`/`maxValueBytes` at load on EVERY platform (this static check
-   * runs on Darwin too, where only the runtime `setrlimit` is skipped): each
-   * budget times a worst-case Unicode expansion must fit this byte count minus a
-   * fixed interpreter baseline, so a near-budget output cannot breach the address
-   * space during the child's build-and-encode.
-   */
-  addressSpaceMb?: number
-  /**
-   * Shared byte budget for captured log text (host-side ledger). Bounded at load
-   * against `addressSpaceMb`: the child builds and encodes a near-budget entry
-   * under RLIMIT_AS with several copies live at once, so this cap times the
-   * worst-case Unicode expansion must fit the address space left after the
-   * interpreter baseline (see `addressSpaceMb`) — a load-time rejection, not a
-   * runtime clamp. Also bounded at load by the host's configured heap like
-   * `maxValueBytes` (see its JSDoc): the effective frame cap minus the frame
-   * envelope.
-   */
-  maxLogBytes?: number
-  /**
-   * Byte cap for the completion value. Bounded at load against `addressSpaceMb`
-   * the same way `maxLogBytes` is: the child builds and encodes a near-budget
-   * value under RLIMIT_AS with several copies live at once, so this cap times the
-   * worst-case Unicode expansion must fit the address space left after the
-   * interpreter baseline. Both budgets are ALSO bounded at load by the host's
-   * configured heap: the effective frame cap (the protocol cap, or a lower
-   * heap-derived ceiling when the host heap cannot safely parse a near-cap
-   * frame — see `hostFrameParseCeiling`) minus the frame envelope, so a budget
-   * whose honest frame could OOM the host's own JSON.parse is rejected up
-   * front.
-   */
-  maxValueBytes?: number
-  /** SIGTERM→SIGKILL grace period on kill, matching bash-local's default. */
-  graceMs?: number
-  /**
-   * Absolute path, relative path, or basename of a CPython 3.10+ interpreter.
-   * Resolved and validated once at plugin load under a five-second force-kill
-   * deadline; a basename searches `PATH`.
-   */
-  pythonBin?: string
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-ptc-runtime-python -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-speech-to-text -->
-<a id="oceanocean-experimental-speech-to-text"></a>
-
-## `@ocean/ocean-experimental-speech-to-text`
-
-- `refs`: `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/experimental/speech-to-text/src/index.ts:20`](../packages/experimental/speech-to-text/src/index.ts)
-
-```ts config-catalog
-/** Live selection read before a transcription starts; `configure()` writes it through the profile. */
-export interface Config {
-  /** Registered provider selected when the caller omits an id. */
-  defaultProvider: Volatile<string>
-  /** Provider language hint selected when the caller omits one. */
-  language: Volatile<string>
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-speech-to-text -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-speech-to-text-sensevoice -->
-<a id="oceanocean-experimental-speech-to-text-sensevoice"></a>
-
-## `@ocean/ocean-experimental-speech-to-text-sensevoice`
-
-- `inject`: `speechToText` · `subprocess`
-- `source`: [`packages/experimental/speech-to-text-sensevoice/src/config.ts:6`](../packages/experimental/speech-to-text-sensevoice/src/config.ts)
-
-```ts config-catalog
-/** Local runtime, inference, and retention settings. */
-export interface Config {
-  /** Unique registration id; consumers select this exact id. */
-  providerId: string
-  /** Absolute directory for verified ONNX models. */
-  dataRoot: string
-  /** Existing directory containing the selected ONNX model and tokens.txt; omission downloads verified files. */
-  modelDirectory?: string | undefined
-  /** Existing Silero VAD ONNX file; omission downloads the verified model. */
-  vadModelPath?: string | undefined
-  /** Weight precision; INT8 minimizes first-use download and model storage. */
-  precision: 'int8' | 'fp32'
-  /** Explicit Hugging Face-compatible origin; bypasses automatic selection and public fallback. */
-  modelOrigin?: string | undefined
-  /** Hugging Face-compatible origins compared before downloading each missing asset. */
-  modelOrigins: string[]
-  /** Deadline for concurrent HEAD probes, including redirects to the actual asset. */
-  modelProbeTimeoutMs: number
-  /** CPU intra-operation thread count. */
-  threads: number
-  /** Maximum speech segment length passed to the recognizer. */
-  segmentSeconds: number
-  /** Silero speech probability threshold. */
-  vadThreshold: number
-  /** Minimum speech duration retained by VAD. */
-  minSpeechSeconds: number
-  /** Silence separating two speech segments. */
-  minSilenceSeconds: number
-  /** Recording audio restored ahead of the first VAD segment, which cold start reports late; zero disables it. */
-  vadOnsetPaddingSeconds: number
-  /** Maximum decoded WAV bytes accepted by the private worker. */
-  maxAudioBytes: number
-  /** Deadline for runtime preparation and cold model loading. */
-  prepareTimeoutMs: number
-  /** Deadline for one inference after the worker is ready. */
-  inferenceTimeoutMs: number
-  /** Idle period before stopping the worker; zero keeps it warm. */
-  idleTimeoutMs: number
-  /** Maximum accepted running and waiting transcriptions. */
-  maxPending: number
-  /** Managed process termination grace period. */
-  graceMs: number
-  /** Maximum retained worker diagnostic bytes. */
-  maxLogBytes: number
-  /** Maximum transcript response bytes. */
-  maxResponseBytes: number
-  /** Minimum interval between intermediate download progress notifications. */
-  progressIntervalMs: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-speech-to-text-sensevoice -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-subagent-oar -->
-<a id="oceanocean-experimental-subagent-oar"></a>
-
-## `@ocean/ocean-experimental-subagent-oar`
-
-- `inject`: `subagents`
-- `source`: [`packages/experimental/subagent-oar/src/index.ts:25`](../packages/experimental/subagent-oar/src/index.ts)
-
-```ts config-catalog
-/** Native runtime selection and deployment settings for one provider instance. */
-export interface Config {
-  /** OAR default-runtime id; unknown ids fail during plugin activation. */
-  runtime: string
-  /** Name registered on ctx.subagents (default oar). */
-  providerName?: string
-  /** Native model id; omission preserves the runtime's model selection. */
-  model?: string
-  /** Native reasoning effort; unsupported choices fail during startup. */
-  effort?: string
-  /** Explicit entries applied after ambient credential scrubbing; null removes a value. */
-  env?: Record<string, string | null>
-  /** Native launch arguments, including permission settings; omission uses OAR defaults. */
-  launchArgs?: string[]
-  /** Optional turn deadline in milliseconds after startup; omission uses parent cancellation only. */
-  timeoutMs?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-subagent-oar -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-tool-subagent-oar -->
-<a id="oceanocean-experimental-tool-subagent-oar"></a>
-
-## `@ocean/ocean-experimental-tool-subagent-oar`
-
-- `inject`: `tools` · `subagents`
-- `source`: [`packages/experimental/tool-subagent-oar/src/index.ts:12`](../packages/experimental/tool-subagent-oar/src/index.ts)
-
-```ts config-catalog
-/** Deployment-owned runtime choices exposed by the external delegation tool. */
-export interface Config {
-  /** Model-visible runtime aliases mapped to registered subagent provider names. */
-  providers: Record<string, string>
-  /** Model-facing tool name (default subagent_oar). */
-  toolName?: string
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-tool-subagent-oar -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-translator -->
-<a id="oceanocean-experimental-translator"></a>
-
-## `@ocean/ocean-experimental-translator`
-
-- `source`: [`packages/experimental/translator/src/index.ts:25`](../packages/experimental/translator/src/index.ts)
-
-```ts config-catalog
-/** Routing and bounds for anonymous requests and independent native model translation. */
-export interface Config {
-  /** Provider selected when a consumer omits it. */
-  provider: TranslationProvider
-  /** Google-compatible anonymous translation endpoint. */
-  googleEndpoint: string
-  /** Bing-compatible Microsoft Edge browser translation endpoint. */
-  bingEndpoint: string
-  /** Deadline covering the request and complete response body, in milliseconds. */
-  timeoutMs: number
-  /** Maximum UTF-16 code units per request; at least two to admit one supplementary-plane character. */
-  maxTextChars: number
-  /** Maximum anonymous JSON-body bytes or paid assembled UTF-8 translation bytes. */
-  maxResponseBytes: number
-  /** Deadline for native admission and complete translation output, in milliseconds. */
-  deepseekTimeoutMs: number
-  /** Requested output-token cap for independent native Flash translation. */
-  deepseekMaxOutputTokens: number
-}
-
-/** Explicit anonymous endpoint or native paid model route. */
-export type TranslationProvider = AnonymousTranslationProvider | PaidTranslationProvider
-
-/** Anonymous browser endpoint selected for one translation. */
-export type AnonymousTranslationProvider = 'google' | 'bing'
-
-/** Explicit native DeepSeek credential route selected for paid translation. */
-export type PaidTranslationProvider = 'deepseek-account' | 'deepseek-official'
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-translator -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-experimental-worktree -->
-<a id="oceanocean-experimental-worktree"></a>
-
-## `@ocean/ocean-experimental-worktree`
-
-- `inject`: `workingDirectory` · `fs` · `subprocess` · `sandbox` · `sandboxPolicy` · `sessionProjections`
-- `refs`: `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/experimental/worktree/src/index.ts:36`](../packages/experimental/worktree/src/index.ts)
-
-```ts config-catalog
-/** Worktree location, generated names, executables, subprocess resource limits, and the archive cleanup switch. */
-export interface Config {
-  /** Keep every checkout when its Session is archived; editable live from the Plugins page. */
-  retainOnArchive: Volatile<boolean>
-  /** Relative checkout pool inside the source repository. */
-  directory?: string
-  /** Prefix for automatically generated branch and checkout names. */
-  namePrefix?: string
-  /** Executable name or absolute execution-world path of a Git release that honors `GIT_NO_LAZY_FETCH`. */
-  gitCommand?: string
-  /** Node executable used for sandboxed directory allocation. */
-  nodeCommand?: string
-  /** Deadline in milliseconds for one command. */
-  timeoutMs?: number
-  /** Subprocess termination grace in milliseconds. */
-  graceMs?: number
-  /**
-   * Maximum captured bytes per subprocess output stream; archive inspection
-   * streams `git status`, and inspection and restoration stream the worktree
-   * listing, so it bounds only their stderr.
-   */
-  maxOutputBytes?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-experimental-worktree -->
 
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-file-reference-local -->
 <a id="oceanocean-file-reference-local"></a>
@@ -1802,73 +1043,6 @@ export interface HmrConfig extends ChokidarOptions {
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-hmr -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-hooks-claude-code -->
-<a id="oceanocean-hooks-claude-code"></a>
-
-## `@ocean/ocean-hooks-claude-code`
-
-- `inject`: `shell` · `agents` · `workingDirectory`
-- `source`: [`packages/experimental/hooks-claude-code/src/index.ts:50`](../packages/experimental/hooks-claude-code/src/index.ts)
-
-```ts config-catalog
-/** Plugin config: where the CC hook config lives + substitution roots. */
-export interface Config {
-  /**
-   * Path to a `hooks.json` or a settings file whose `hooks` key holds the config.
-   * Process-level: read once at load, a relative path resolves against the process
-   * launch cwd, so one config applies to the whole process.
-   * TODO(per-session-hook-config): per-session discovery of a project-local
-   * `hooks.json` from each `session/new.cwd`.
-   */
-  configPath: string
-  /**
-   * Replaces `${CLAUDE_PLUGIN_ROOT}` in command strings (the plugin's root dir).
-   */
-  pluginRoot?: string
-  /**
-   * Replaces `${CLAUDE_PROJECT_DIR}` in command strings AND is exported as the
-   * `CLAUDE_PROJECT_DIR` env var for hook processes. When omitted, the env var
-   * defaults per-run to the agent's current directory (the
-   * same dir the hook runs in) — Claude Code always exports this var, and common
-   * unmodified hooks reference `$CLAUDE_PROJECT_DIR` for project-relative paths.
-   */
-  projectDir?: string
-  /** Default per-hook timeout in ms when a hook sets none (CC default: 600000). */
-  defaultTimeoutMs?: number
-  /** Character cap for the `hook/result` event's persisted stderr summary. */
-  stderrSummaryMaxChars?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-hooks-claude-code -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-hooks-codex -->
-<a id="oceanocean-hooks-codex"></a>
-
-## `@ocean/ocean-hooks-codex`
-
-- `inject`: `shell` · `agents` · `workingDirectory`
-- `source`: [`packages/experimental/hooks-codex/src/index.ts:49`](../packages/experimental/hooks-codex/src/index.ts)
-
-```ts config-catalog
-/** Plugin config: where the Codex hooks.json lives + the model name for payloads. */
-export interface Config {
-  /**
-   * Path to a Codex `hooks.json`. Process-level: read once at load, a relative
-   * path resolves against the process launch cwd.
-   * TODO(per-session-hook-config): per-session project-local discovery from each
-   * `session/new.cwd`.
-   */
-  configPath: string
-  /** The model name stamped on every payload (Codex includes `model` on each event). */
-  model?: string
-  /** Default per-hook timeout in ms when a hook sets none (Codex default: 600000). */
-  defaultTimeoutMs?: number
-  /** Character cap for the `hook/result` event's persisted stderr summary. */
-  stderrSummaryMaxChars?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-hooks-codex -->
 
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-host-directory-picker-browse -->
 <a id="oceanocean-host-directory-picker-browse"></a>
@@ -2749,7 +1923,7 @@ export interface Config {
    * The preset table: name → knob bundle. Defaults to `workspace-write`
    * (workspace-write + ask) and `danger-full-access` (danger-full-access +
    * never). The names `custom` and `auto` are reserved for derived state and
-   * the Auto review integration respectively.
+   * a live integration respectively.
    */
   presets: Record<string, PresetSpec>
   /**
@@ -2869,46 +2043,6 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-plugin-manager -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-plugin-market -->
-<a id="oceanocean-plugin-market"></a>
-
-## `@ocean/ocean-plugin-market`
-
-- `inject`: `pluginManager`
-- `refs`: [`NpmFileSource`](subsystems/boot.md) · `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/boot/plugin-market/src/index.ts:43`](../packages/boot/plugin-market/src/index.ts)
-
-```ts config-catalog
-/** Index sources and fetch limits. */
-export interface Config {
-  /** Index URLs in display order; Settings and `setIndexes` write this field without remounting the service. */
-  indexes: Volatile<string[]>
-  /** Deadline for one index fetch, including the body. */
-  fetchTimeoutMs: number
-  /** Largest accepted index body in bytes. */
-  maxBytes: number
-  /** Lifetime of a successfully read index document, a detail read result, and a repository's default-branch commit. */
-  cacheTtlMs: number
-  /** Largest detail document in bytes. */
-  detailMaxBytes: number
-  /** Largest image beside a detail document in bytes. */
-  detailImageMaxBytes: number
-  /** Largest amount in bytes one Git command adds to a partial clone; a repository whose fetch adds more is not read. */
-  detailRepositoryMaxBytes: number
-  /** Largest total size of the partial clones; least recently used ones are deleted beyond it. */
-  detailCacheMaxBytes: number
-  /** Directory of the partial clones, relative to the profile directory; absent means `.plugin-market/repositories`. */
-  detailCacheDir?: string
-  /** Deadline of one Git command of the clone fallback. */
-  detailGitTimeoutMs: number
-  /** npm file CDNs read in order; a read's `npmFileSources` moves the CDNs it names first. */
-  detailNpmFileSources: NpmFileSource[]
-  /** Hosts serving the GitLab repository files API. */
-  detailGitlabHosts: string[]
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-plugin-market -->
 
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-plugin-package-inventory-deepseek -->
 <a id="oceanocean-plugin-package-inventory-deepseek"></a>
@@ -3460,26 +2594,6 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-session-title -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-session-title-all-prompts-llm -->
-<a id="oceanocean-session-title-all-prompts-llm"></a>
-
-## `@ocean/ocean-session-title-all-prompts-llm`
-
-- `inject`: `sessionTitle` · `llm` · `sessions`
-- `refs`: [`SessionTitleLlmConfig`](../packages/session/session-title-llm/src/index.ts)
-- `source`: [`packages/experimental/session-title-all-prompts-llm/src/index.ts:28`](../packages/experimental/session-title-all-prompts-llm/src/index.ts)
-
-```ts config-catalog
-/** Required execution controls plus this provider's title-length targets; no defaults. */
-export interface Config extends SessionTitleLlmConfig {
-  /** Target word count for non-CJK titles. */
-  readonly targetWords: number
-  /** Target character count for Chinese, Japanese, or Korean titles. */
-  readonly targetCjkCharacters: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-session-title-all-prompts-llm -->
 
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-session-title-first-prompt-llm -->
 <a id="oceanocean-session-title-first-prompt-llm"></a>
@@ -4097,47 +3211,6 @@ export type ShellDialect = 'bash' | 'pwsh'
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-terminal-bash -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-terminal-panel -->
-<a id="oceanocean-terminal-panel"></a>
-
-## `@ocean/ocean-terminal-panel`
-
-- `inject`: `terminals` · `terminalController` · `sandboxPolicy` · `tools` · `systemPrompt`
-- `source`: [`packages/experimental/terminal-panel/src/config.ts:6`](../packages/experimental/terminal-panel/src/config.ts)
-
-```ts config-catalog
-/** Public plugin configuration. */
-export interface Config {
-  /** Terminal registry type served by sidebar terminals. */
-  backendType: string
-  /** Initial terminal width; an attached sidebar view resizes it to its panel. */
-  cols: number
-  /** Initial terminal height; an attached sidebar view resizes it to its panel. */
-  rows: number
-  /** Executable names tried among the discovered shells before the execution environment's default shell. */
-  preferredShells: string[]
-  /** Variables added to Agent terminal environments, such as pagers that would otherwise wait for input. */
-  environment: Record<string, string>
-  /** Output silence that ends shell startup once the shell owns the foreground. */
-  startupSilenceMs: number
-  /** Bound on shell startup, including the person's startup files. */
-  startupTimeoutMs: number
-  /** Output silence after which a send checks whether the shell or a reading program waits for input. */
-  promptSilenceMs: number
-  /** Minimum interval between foreground process inspections, each of which may start `ps` twice. */
-  probeIntervalMs: number
-  /** Output silence that ends a send as `inferred_idle`. */
-  idleSilenceMs: number
-  /** Bound on one send. */
-  timeoutMs: number
-  /** Maximum UTF-8 bytes in one screen read, send output or startup screen. */
-  maxReadBytes: number
-  /** Register `user_terminal_list` and `user_terminal_read`, whose screen text enters the Session log and model requests. */
-  readUserTerminals: boolean
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-terminal-panel -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-time-context -->
 <a id="oceanocean-time-context"></a>
 
@@ -4539,48 +3612,6 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-tool-pwsh-persistent -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-ralph -->
-<a id="oceanocean-tool-ralph"></a>
-
-## `@ocean/ocean-tool-ralph`
-
-- `inject`: `tools` · `workflowEngine` · `subagents` · `systemPrompt`
-- `source`: [`packages/experimental/tool-ralph/src/index.ts:21`](../packages/experimental/tool-ralph/src/index.ts)
-
-```ts config-catalog
-/** Deployment policy for the fixed Ralph workflow. */
-export interface Config {
-  /** Fresh structured-output provider used for every round (default `spawn`). */
-  subagentProvider?: string
-  /** Default and deployment ceiling for one call's round count (default 256). */
-  maxRounds?: number
-  /** Maximum serialized characters in one structured handoff (default 16384). */
-  maxHandoffChars?: number
-  /** Maximum characters in a successful parent-facing terminal text (default 16384). */
-  maxResultChars?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-tool-ralph -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-session-query -->
-<a id="oceanocean-tool-session-query"></a>
-
-## `@ocean/ocean-tool-session-query`
-
-- `inject`: `tools` · `systemPrompt` · `sessionQuery` · `agents`
-- `source`: [`packages/experimental/tool-session-query/src/index.ts:28`](../packages/experimental/tool-session-query/src/index.ts)
-
-```ts config-catalog
-/** Deployment-owned search count and timeout bounds. */
-export interface Config {
-  /** Maximum authorized hits returned by one search call. Defaults to 100. */
-  maxSearchResults?: number
-  /** Cooperative full-text search deadline in milliseconds. Defaults to 30000. */
-  searchTimeoutMs?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-tool-session-query -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-skill -->
 <a id="oceanocean-tool-skill"></a>
 
@@ -4691,25 +3722,6 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-tool-subagent-control -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-terminal -->
-<a id="oceanocean-tool-terminal"></a>
-
-## `@ocean/ocean-tool-terminal`
-
-- `inject`: `terminals` · `tools` · `systemPrompt` · `workingDirectory`
-- `source`: [`packages/experimental/tool-terminal/src/index.ts:38`](../packages/experimental/tool-terminal/src/index.ts)
-
-```ts config-catalog
-/** Model-facing terminal tool configuration. */
-export interface Config {
-  /** Expose `run_in_background` and accept background sends (default true). */
-  enableRunInBackground?: boolean
-  /** Maximum UTF-8 bytes in one complete terminal or task-output result. */
-  maxResultBytes?: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-tool-terminal -->
 
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-todo -->
 <a id="oceanocean-tool-todo"></a>
@@ -5032,29 +4044,6 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-web-search-deepseek -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-webhook-github -->
-<a id="oceanocean-webhook-github"></a>
-
-## `@ocean/ocean-webhook-github`
-
-- `inject`: `webServer` · `webhookRuntime` · `credentials`
-- `source`: [`packages/experimental/webhook-github/src/index.ts:17`](../packages/experimental/webhook-github/src/index.ts)
-
-```ts config-catalog
-/** Required GitHub ingress configuration. */
-export interface Config {
-  /** Adapter instance name carried to rules. */
-  readonly source: string
-  /** Exact absolute route path. */
-  readonly path: string
-  /** Credential reference containing the shared webhook secret. */
-  readonly secretEnv: string
-  /** Positive raw body ceiling in bytes. */
-  readonly maxBodyBytes: number
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-webhook-github -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-workflow-ptc -->
 <a id="oceanocean-workflow-ptc"></a>
 
@@ -5142,7 +4131,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-client-locale` | — | [`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts) |
 | `@ocean/ocean-client-modules` | `loader` | [`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts) |
 | `@ocean/ocean-client-resources` | — | [`packages/client/resources/src/index.ts`](../packages/client/resources/src/index.ts) |
-| `@ocean/ocean-client-ui-action-cards` | — | [`packages/experimental/client-ui-action-cards/src/index.ts`](../packages/experimental/client-ui-action-cards/src/index.ts) |
 | `@ocean/ocean-client-ui-agent-preset` | — | [`packages/client/ui-agent-preset/src/index.ts`](../packages/client/ui-agent-preset/src/index.ts) |
 | `@ocean/ocean-client-ui-agent-team` | — | [`packages/client/ui-agent-team/src/index.ts`](../packages/client/ui-agent-team/src/index.ts) |
 | `@ocean/ocean-client-ui-approval` | — | [`packages/client/ui-approval/src/index.ts`](../packages/client/ui-approval/src/index.ts) |
@@ -5153,7 +4141,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-client-ui-context-menu` | — | [`packages/client/ui-context-menu/src/index.ts`](../packages/client/ui-context-menu/src/index.ts) |
 | `@ocean/ocean-client-ui-conversation` | — | [`packages/client/ui-conversation/src/index.ts`](../packages/client/ui-conversation/src/index.ts) |
 | `@ocean/ocean-client-ui-cordis` | — | [`packages/extensions/ui-cordis/src/index.ts`](../packages/extensions/ui-cordis/src/index.ts) |
-| `@ocean/ocean-client-ui-creation-recommendations` | — | [`packages/experimental/client-ui-creation-recommendations/src/index.ts`](../packages/experimental/client-ui-creation-recommendations/src/index.ts) |
 | `@ocean/ocean-client-ui-deliverables` | `connection` · `sessionQuery` · `sessionController` · `workspaceFiles` · `fs` · `sandboxPolicy` · `workspaceChanges` | [`packages/client/ui-deliverables/src/index.ts`](../packages/client/ui-deliverables/src/index.ts) |
 | `@ocean/ocean-client-ui-directory-picker-browse` | — | [`packages/client/ui-directory-picker-browse/src/index.ts`](../packages/client/ui-directory-picker-browse/src/index.ts) |
 | `@ocean/ocean-client-ui-directory-picker-native` | — | [`packages/client/ui-directory-picker-native/src/index.ts`](../packages/client/ui-directory-picker-native/src/index.ts) |
@@ -5169,8 +4156,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-client-ui-open-in-app` | — | [`packages/client/ui-open-in-app/src/index.ts`](../packages/client/ui-open-in-app/src/index.ts) |
 | `@ocean/ocean-client-ui-permission-presets` | — | [`packages/client/ui-permission-presets/src/index.ts`](../packages/client/ui-permission-presets/src/index.ts) |
 | `@ocean/ocean-client-ui-plan` | — | [`packages/client/ui-plan/src/index.ts`](../packages/client/ui-plan/src/index.ts) |
-| `@ocean/ocean-client-ui-plugin-market` | — | [`packages/client/ui-plugin-market/src/index.ts`](../packages/client/ui-plugin-market/src/index.ts) |
-| `@ocean/ocean-client-ui-plugin-recommendations` | — | [`packages/experimental/client-ui-plugin-recommendations/src/index.ts`](../packages/experimental/client-ui-plugin-recommendations/src/index.ts) |
 | `@ocean/ocean-client-ui-reference` | — | [`packages/client/ui-reference/src/index.ts`](../packages/client/ui-reference/src/index.ts) |
 | `@ocean/ocean-client-ui-renderer` | — | [`packages/client/ui-renderer/src/index.ts`](../packages/client/ui-renderer/src/index.ts) |
 | `@ocean/ocean-client-ui-schedule` | — | [`packages/client/ui-schedule/src/index.ts`](../packages/client/ui-schedule/src/index.ts) |
@@ -5205,17 +4190,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-computer-use` | — | [`packages/computer-use/computer-use/src/index.ts`](../packages/computer-use/computer-use/src/index.ts) |
 | `@ocean/ocean-config-editor` | `loader` · `profileContext` | [`packages/boot/config-editor/src/index.ts`](../packages/boot/config-editor/src/index.ts) |
 | `@ocean/ocean-cordis-client-runner` | — | [`packages/extensions/cordis-client-runner/src/index.ts`](../packages/extensions/cordis-client-runner/src/index.ts) |
-| `@ocean/ocean-creation-recommendations` | `tools` · `pluginManager` · `agents` · `subagents` · `profileContext` · `skills` · `actionCards` | [`packages/experimental/creation-recommendations/src/index.ts`](../packages/experimental/creation-recommendations/src/index.ts) |
-| `@ocean/ocean-cua` | — | [`packages/experimental/cua/src/index.ts`](../packages/experimental/cua/src/index.ts) |
 | `@ocean/ocean-deepseek-llm-api-extensions` | — | [`packages/llm/deepseek-llm-api-extensions/src/index.ts`](../packages/llm/deepseek-llm-api-extensions/src/index.ts) |
 | `@ocean/ocean-deliverable-file-references` | `systemPrompt` | [`packages/deliverables/deliverable-file-references/src/index.ts`](../packages/deliverables/deliverable-file-references/src/index.ts) |
-| `@ocean/ocean-experimental-auto-review` | `approval` · `llm` · `permissionPresets` · `sessions` · `tools` · `workingDirectory` | [`packages/experimental/auto-review/src/index.ts`](../packages/experimental/auto-review/src/index.ts) |
-| `@ocean/ocean-experimental-client-ui-claude-code-mods` | — | [`packages/experimental/client-ui-claude-code-mods/src/index.ts`](../packages/experimental/client-ui-claude-code-mods/src/index.ts) |
-| `@ocean/ocean-experimental-client-ui-stats` | — | [`packages/experimental/client-ui-stats/src/index.ts`](../packages/experimental/client-ui-stats/src/index.ts) |
-| `@ocean/ocean-experimental-client-ui-voice-input` | — | [`packages/experimental/client-ui-voice-input/src/index.ts`](../packages/experimental/client-ui-voice-input/src/index.ts) |
-| `@ocean/ocean-experimental-computer-use-cua-driver-native` | `computerUse` · `tools` · `systemPrompt` | [`packages/experimental/computer-use-cua-driver-native/src/index.ts`](../packages/experimental/computer-use-cua-driver-native/src/index.ts) |
-| `@ocean/ocean-experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
-| `@ocean/ocean-experimental-tool-worktree` | `tools` · `worktrees` | [`packages/experimental/tool-worktree/src/index.ts`](../packages/experimental/tool-worktree/src/index.ts) |
 | `@ocean/ocean-fs-observation-policy` | — | [`packages/fs/fs-observation-policy/src/index.ts`](../packages/fs/fs-observation-policy/src/index.ts) |
 | `@ocean/ocean-fs-ssh` | `ssh` · `sandboxPolicy` | [`packages/ssh/fs-ssh/src/index.ts`](../packages/ssh/fs-ssh/src/index.ts) |
 | `@ocean/ocean-goal-round-driver` | `agents` · `goals` · `sessions` | [`packages/goal/goal-round-driver/src/index.ts`](../packages/goal/goal-round-driver/src/index.ts) |
@@ -5228,7 +4204,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-mcp-resources` | `tools` | [`packages/mcp/mcp-resources/src/index.ts`](../packages/mcp/mcp-resources/src/index.ts) |
 | `@ocean/ocean-message-quotes` | — | [`packages/session/message-quotes/src/index.ts`](../packages/session/message-quotes/src/index.ts) |
 | `@ocean/ocean-otel` | — | [`packages/telemetry/otel/src/index.ts`](../packages/telemetry/otel/src/index.ts) |
-| `@ocean/ocean-plugin-recommendations` | `pluginManager` · `agents` · `skills` · `actionCards` | [`packages/experimental/plugin-recommendations/src/index.ts`](../packages/experimental/plugin-recommendations/src/index.ts) |
 | `@ocean/ocean-sandbox-ssh` | `ssh` | [`packages/ssh/sandbox-ssh/src/index.ts`](../packages/ssh/sandbox-ssh/src/index.ts) |
 | `@ocean/ocean-session` | — | [`packages/core/session/src/index.ts`](../packages/core/session/src/index.ts) |
 | `@ocean/ocean-session-checkpoint-policy` | `llm` · `sessionPersistence` · `sessions` · `tools` | [`packages/session/session-checkpoint-policy/src/index.ts`](../packages/session/session-checkpoint-policy/src/index.ts) |
@@ -5236,7 +4211,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-session-stats` | `sessionProjections` | [`packages/session/session-stats/src/index.ts`](../packages/session/session-stats/src/index.ts) |
 | `@ocean/ocean-session-turn-outline` | `sessionProjections` | [`packages/session/session-turn-outline/src/index.ts`](../packages/session/session-turn-outline/src/index.ts) |
 | `@ocean/ocean-settings` | `configEditor` · `profileContext` | [`packages/settings/settings/src/index.ts`](../packages/settings/settings/src/index.ts) |
-| `@ocean/ocean-skill-badge` | `skills` | [`packages/experimental/skill-badge/src/index.ts`](../packages/experimental/skill-badge/src/index.ts) |
 | `@ocean/ocean-storage` | — | [`packages/storage/storage/src/index.ts`](../packages/storage/storage/src/index.ts) |
 | `@ocean/ocean-subprocess-local` | — | [`packages/subprocess/subprocess-local/src/index.ts`](../packages/subprocess/subprocess-local/src/index.ts) |
 | `@ocean/ocean-subprocess-ssh` | `ssh` | [`packages/ssh/subprocess-ssh/src/index.ts`](../packages/ssh/subprocess-ssh/src/index.ts) |
@@ -5248,7 +4222,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-tool-working-directory` | `tools` · `workingDirectory` | [`packages/session/tool-working-directory/src/index.ts`](../packages/session/tool-working-directory/src/index.ts) |
 | `@ocean/ocean-tools` | `systemPrompt` | [`packages/core/tools/src/index.ts`](../packages/core/tools/src/index.ts) |
 | `@ocean/ocean-user-questions` | — | [`packages/interaction/user-questions/src/index.ts`](../packages/interaction/user-questions/src/index.ts) |
-| `@ocean/ocean-webhook` | `agents` · `agentDefaultModel` · `agentPresets` · `permissionPresets` · `sessionTitle` · `workspaceRegistry` | [`packages/experimental/webhook/src/index.ts`](../packages/experimental/webhook/src/index.ts) |
 | `@ocean/ocean-workspace` | `storageDomain` · `sessionPersistence` | [`packages/workspace/workspace/src/index.ts`](../packages/workspace/workspace/src/index.ts) |
 <!-- END GENERATED config-catalog:no-config -->
 
@@ -5297,27 +4270,10 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@ocean/ocean-client-ui-slots` | — | [`packages/client/ui-slots/src/index.ts`](../packages/client/ui-slots/src/index.ts) |
 | `@ocean/ocean-client-web` | — | [`packages/client/web/src/index.ts`](../packages/client/web/src/index.ts) |
 | `@ocean/ocean-cmdline` | — | [`packages/boot/cmdline/src/index.ts`](../packages/boot/cmdline/src/index.ts) |
-| `@ocean/ocean-cua-bundle` | — | [`packages/experimental/cua-bundle/src/index.ts`](../packages/experimental/cua-bundle/src/index.ts) |
 | `@ocean/ocean-deque` | — | [`packages/util/deque/src/index.ts`](../packages/util/deque/src/index.ts) |
 | `@ocean/ocean-error` | — | [`packages/util/error/src/index.ts`](../packages/util/error/src/index.ts) |
-| `@ocean/ocean-experimental-badge-skill-bundle` | — | [`packages/experimental/badge-skill-bundle/src/index.ts`](../packages/experimental/badge-skill-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-browser-use-runtime` | — | [`packages/experimental/browser-use-runtime/src/index.ts`](../packages/experimental/browser-use-runtime/src/index.ts) |
-| `@ocean/ocean-experimental-cot-translation-bundle` | — | [`packages/experimental/cot-translation-bundle/src/index.ts`](../packages/experimental/cot-translation-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-forge-bundle` | — | [`packages/experimental/forge-bundle/src/index.ts`](../packages/experimental/forge-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-inspector-profile` | — | [`packages/experimental/inspector-profile/src/index.ts`](../packages/experimental/inspector-profile/src/index.ts) |
-| `@ocean/ocean-experimental-liveshare` | — | [`packages/experimental/liveshare/src/index.ts`](../packages/experimental/liveshare/src/index.ts) |
-| `@ocean/ocean-experimental-liveshare-protocol` | — | [`packages/experimental/liveshare-protocol/src/index.ts`](../packages/experimental/liveshare-protocol/src/index.ts) |
-| `@ocean/ocean-experimental-plugin-market-bundle` | — | [`packages/experimental/plugin-market-bundle/src/index.ts`](../packages/experimental/plugin-market-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-ralph-bundle` | — | [`packages/experimental/ralph-bundle/src/index.ts`](../packages/experimental/ralph-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |
-| `@ocean/ocean-experimental-session-titles-bundle` | — | [`packages/experimental/session-titles-bundle/src/index.ts`](../packages/experimental/session-titles-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-terminal-bundle` | — | [`packages/experimental/terminal-bundle/src/index.ts`](../packages/experimental/terminal-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-voice-input-bundle` | — | [`packages/experimental/voice-input-bundle/src/index.ts`](../packages/experimental/voice-input-bundle/src/index.ts) |
-| `@ocean/ocean-experimental-webworker-packer` | — | [`packages/experimental/webworker-packer/src/index.ts`](../packages/experimental/webworker-packer/src/index.ts) |
-| `@ocean/ocean-experimental-webworker-runtime` | — | [`packages/experimental/webworker-runtime/src/index.ts`](../packages/experimental/webworker-runtime/src/index.ts) |
 | `@ocean/ocean-fs-patch` | — | [`packages/fs/fs-patch/src/index.ts`](../packages/fs/fs-patch/src/index.ts) |
 | `@ocean/ocean-home-paths` | — | [`packages/util/home-paths/src/index.ts`](../packages/util/home-paths/src/index.ts) |
-| `@ocean/ocean-hook-protocol` | — | [`packages/experimental/hook-protocol/src/index.ts`](../packages/experimental/hook-protocol/src/index.ts) |
 | `@ocean/ocean-http-proxy` | — | [`packages/util/http-proxy/src/index.ts`](../packages/util/http-proxy/src/index.ts) |
 | `@ocean/ocean-launch-environment` | — | [`packages/util/launch-environment/src/index.ts`](../packages/util/launch-environment/src/index.ts) |
 | `@ocean/ocean-lazy-require` | — | [`packages/util/lazy-require/src/index.ts`](../packages/util/lazy-require/src/index.ts) |
@@ -5328,9 +4284,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@ocean/ocean-official-bundles` | — | [`packages/util/official-bundles/src/index.ts`](../packages/util/official-bundles/src/index.ts) |
 | `@ocean/ocean-output-retention` | — | [`packages/util/output-retention/src/index.ts`](../packages/util/output-retention/src/index.ts) |
 | `@ocean/ocean-package-manifest` | — | [`packages/util/package-manifest/src/index.ts`](../packages/util/package-manifest/src/index.ts) |
-| `@ocean/ocean-personalized-recommendations` | — | [`packages/experimental/personalized-recommendations/src/index.ts`](../packages/experimental/personalized-recommendations/src/index.ts) |
 | `@ocean/ocean-plugin-detail` | — | [`packages/util/plugin-detail/src/index.ts`](../packages/util/plugin-detail/src/index.ts) |
-| `@ocean/ocean-plugin-market-index` | — | [`packages/util/plugin-market-index/src/index.ts`](../packages/util/plugin-market-index/src/index.ts) |
 | `@ocean/ocean-remote-mock` | — | [`packages/test-support/remote-mock/src/index.ts`](../packages/test-support/remote-mock/src/index.ts) |
 | `@ocean/ocean-sandbox-windows-acl` | — | [`packages/sandbox/sandbox-windows-acl/src/index.ts`](../packages/sandbox/sandbox-windows-acl/src/index.ts) |
 | `@ocean/ocean-scope` | — | [`packages/core/scope/src/index.ts`](../packages/core/scope/src/index.ts) |

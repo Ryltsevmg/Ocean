@@ -17,7 +17,6 @@ import { createScope } from '@ocean/ocean-scope'
 import SessionStore, { SessionId } from '@ocean/ocean-session'
 import SessionPersistence from '@ocean/ocean-session-persistence'
 import SessionProjectionRegistry from '@ocean/ocean-session-projection'
-import SqliteSessionQueryEngine from '@ocean/ocean-session-query-sqlite'
 import GoalService from '@ocean/ocean-goal'
 import SystemPrompt from '@ocean/ocean-system-prompt'
 import ToolRuntime from '@ocean/ocean-tools'
@@ -32,7 +31,6 @@ import LocalSubprocessRuntime from '@ocean/ocean-subprocess-local'
 import LocalFileSystem from '@ocean/ocean-fs-local'
 import WorkingDirectory from '@ocean/ocean-working-directory'
 import * as ToolWorkingDirectory from '@ocean/ocean-tool-working-directory'
-import * as ToolWorktree from '@ocean/ocean-experimental-tool-worktree'
 import { AttachmentStore } from '@ocean/ocean-attachment'
 import type { ImageAttachmentLimits, ImageAttachmentRef, SaveImageAttachment, StoredImageAttachment } from '@ocean/ocean-attachment'
 import UserQuestionService from '@ocean/ocean-user-questions'
@@ -44,8 +42,6 @@ import SubagentRuntime from '@ocean/ocean-subagent'
 import type { SubagentProvider } from '@ocean/ocean-subagent'
 import * as ToolSubagentControl from '@ocean/ocean-tool-subagent-control'
 import SkillRegistry from '@ocean/ocean-skill'
-import ActionCards from '@ocean/ocean-action-cards'
-import RemoteAccess from '@ocean/ocean-api-remote-access'
 import * as SkillFileSystem from '@ocean/ocean-skill-filesystem'
 import LocalJobRegistry from '@ocean/ocean-jobs-local'
 import * as ToolAskUser from '@ocean/ocean-tool-ask-user'
@@ -61,33 +57,24 @@ import * as ToolFs from '@ocean/ocean-tool-fs'
 import * as ToolFsSearch from '@ocean/ocean-tool-fs-search'
 import * as ToolStrReplaceEditor from '@ocean/ocean-tool-str-replace-editor'
 import TerminalSessionService from '@ocean/ocean-terminal'
-import * as ToolPty from '@ocean/ocean-tool-terminal'
-import * as TerminalPanel from '@ocean/ocean-terminal-panel'
 import * as ToolGoal from '@ocean/ocean-tool-goal'
 import * as ToolSchedule from '@ocean/ocean-tool-schedule'
 import ScheduleService from '@ocean/ocean-schedule'
 import Lsp from '@ocean/ocean-lsp'
 import * as ToolLsp from '@ocean/ocean-tool-lsp'
 import * as ToolSkill from '@ocean/ocean-tool-skill'
-import * as ToolSessionQuery from '@ocean/ocean-tool-session-query'
 import * as ToolJobs from '@ocean/ocean-tool-jobs'
-import BrowserUseRegistry from '@ocean/ocean-browser-use'
-import * as StagehandBrowserTools from '@ocean/ocean-experimental-browser-use-stagehand-native'
 import TeamService from '@ocean/ocean-agent-team'
 import * as ToolTeam from '@ocean/ocean-tool-agent-team'
 import * as ToolTodo from '@ocean/ocean-tool-todo'
 import type PluginManager from '@ocean/ocean-plugin-manager'
 import * as PluginManagerTools from '@ocean/ocean-plugin-manager/tools'
-import type PluginMarket from '@ocean/ocean-plugin-market'
-import * as PluginMarketTools from '@ocean/ocean-plugin-market/tools'
 import SandboxPolicy from '@ocean/ocean-sandbox-policy'
 import McpResources from '@ocean/ocean-mcp-resources'
 import * as ToolSubagent from '@ocean/ocean-tool-subagent'
-import * as ToolSubagentOar from '@ocean/ocean-experimental-tool-subagent-oar'
 import * as ToolWeb from '@ocean/ocean-tool-web'
 import WorkflowEngine from '@ocean/ocean-workflow'
 import type { WorkflowRun, WorkflowStartRequest } from '@ocean/ocean-workflow'
-import * as ToolRalph from '@ocean/ocean-tool-ralph'
 import * as ToolWorkflow from '@ocean/ocean-tool-workflow'
 import * as ToolWorkspaceDependencies from '@ocean/ocean-tool-workspace-dependencies'
 import { githubSlug } from './verify-md-links.ts'
@@ -220,18 +207,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
   },
   {
-    pkg: '@ocean/ocean-plugin-market',
-    dir: 'plugin-market',
-    source: 'packages/boot/plugin-market/src/tools.ts',
-    requires: ['ctx.tools', 'ctx.pluginMarket'],
-    writes: ['tool/call', 'tool/result'],
-    async mount(ctx) {
-      // Schema harvest never fetches an index.
-      ctx.provide('pluginMarket', {} as PluginMarket)
-      await ctx.plugin(PluginMarketTools)
-    },
-  },
-  {
     pkg: '@ocean/ocean-mcp-resources',
     dir: 'mcp-resources',
     source: 'packages/mcp/mcp-resources/src/tools.ts',
@@ -243,33 +218,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
         request: () => Promise.reject(new Error('gen-tool-catalog: MCP requests are unreachable during schema harvest')),
       })
     },
-  },
-  {
-    pkg: '@ocean/ocean-experimental-browser-use-stagehand-native',
-    dir: 'browser-use-stagehand-native',
-    source: 'packages/experimental/browser-use-stagehand-native/src/index.ts',
-    requires: ['ctx.browserUse', 'ctx.agents', 'ctx.tools', 'ctx.systemPrompt'],
-    writes: ['tool/call', 'tool/result'],
-    async mount(ctx) {
-      await ctx.plugin(BrowserUseRegistry)
-      await ctx.plugin(AgentRegistry)
-      await ctx.plugin(StagehandBrowserTools, {
-        mode: 'launch', model: { modelName: 'openai/gpt-5.4-mini', apiKey: 'catalog-placeholder' },
-      })
-    },
-  },
-  {
-    pkg: '@ocean/ocean-action-cards',
-    dir: 'action-cards',
-    source: 'packages/experimental/action-cards/src/index.ts',
-    requires: ['ctx.tools', 'ctx.agents', 'ctx.sessionProjections', 'ctx.remoteAccess'],
-    writes: ['tool/call', 'tool/result', 'plugin:action-cards/decision', 'user/message'],
-    async mount(ctx) {
-      await ctx.plugin(AgentRegistry)
-      await ctx.plugin(RemoteAccess)
-      await ctx.plugin(ActionCards)
-    },
-    note: 'Declared only to an Agent that loaded the skill of a registered card kind; the kind packages register their actions, and the Personalized recommendations bundle supplies the shipped kinds.',
   },
   {
     pkg: '@ocean/ocean-tool-ask-user',
@@ -462,35 +410,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
       'glob and grep are unconditional discovery tools that spawn the packaged ripgrep binary (`@vscode/ripgrep`) through ctx.subprocess as ordinary foreground calls (never background jobs) — no host `rg` install and no shell layer. The catalog uses `sampleOverCapGlobResults: true`; deployments must choose that behavior explicitly. Capped results save the complete formatted list through the optional ctx.spillStore backend; returned locators are follow-up-readable/searchable when the backend exposes local paths in co-located deployments.',
   },
   {
-    pkg: '@ocean/ocean-tool-terminal',
-    dir: 'tool-terminal',
-    source: 'packages/experimental/tool-terminal/src/index.ts',
-    requires: ['ctx.workingDirectory', 'ctx.tools', 'ctx.terminals', 'ctx.systemPrompt', 'ctx.jobs at call time for run_in_background'],
-    writes: ['tool/call', 'tool/result'],
-    async mount(ctx) {
-      await ctx.plugin(TerminalSessionService)
-      await ctx.plugin(ToolPty)
-    },
-    note:
-      'The six terminal tools are opt-in and complement one-shot shell/filesystem tools. `terminal_send(run_in_background: true)` registers with `ctx.jobs`; TUI, named key sequences, BEL, resize, auto-start, and cross-agent sharing are absent from the schema.',
-  },
-  {
-    pkg: '@ocean/ocean-terminal-panel',
-    dir: 'terminal-panel',
-    source: 'packages/experimental/terminal-panel/src/tools.ts',
-    requires: ['ctx.tools', 'ctx.systemPrompt', 'ctx.terminals', 'ctx.terminalController', 'ctx.sandboxPolicy', 'a calling Agent'],
-    writes: ['tool/call', 'tool/result'],
-    async mount(ctx) {
-      // Schema harvest never opens or reads a terminal.
-      ctx.provide('terminalController', {} as Context['terminalController'])
-      await ctx.plugin(SandboxPolicy)
-      await ctx.plugin(TerminalSessionService)
-      await ctx.plugin(TerminalPanel, TerminalPanel.Config({}))
-    },
-    note:
-      'The package also serves the six `terminal_*` tools from Web sidebar terminals. `user_terminal_list` and `user_terminal_read` only read terminals the user controls; `readUserTerminals: false` removes both.',
-  },
-  {
     pkg: '@ocean/ocean-tool-goal',
     dir: 'tool-goal',
     source: 'packages/goal/tool-goal/src/index.ts',
@@ -539,21 +458,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
       'The lsp tool keeps provider selection and language-server subprocesses behind ctx.lsp, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@ocean/ocean-lsp-stdio`) at runtime; without one, a query returns the structured `LSP_UNAVAILABLE` error rather than changing the schema.',
   },
   {
-    pkg: '@ocean/ocean-tool-ralph',
-    dir: 'tool-ralph',
-    source: 'packages/experimental/tool-ralph/src/index.ts',
-    requires: ['ctx.tools', 'ctx.workflowEngine', 'ctx.subagents', 'ctx.systemPrompt', 'a calling Agent (exec.agent parents every fresh round)'],
-    writes: ['tool/call', 'tool/result', 'workflow and child session events during execution'],
-    async mount(ctx) {
-      await ctx.plugin(SubagentRuntime)
-      registerCatalogSubagentProvider(ctx, 'mock')
-      await ctx.plugin(CatalogWorkflowEngine)
-      await ctx.plugin(ToolRalph, { subagentProvider: 'mock' })
-    },
-    note:
-      'A fixed foreground workflow starts one fresh structured child per round; the model selects only the immutable objective and an optional round cap.',
-  },
-  {
     pkg: '@ocean/ocean-tool-skill',
     dir: 'tool-skill',
     source: 'packages/skill/tool-skill/src/index.ts',
@@ -568,35 +472,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
       })
       await ctx.plugin(ToolSkill)
     },
-  },
-  {
-    pkg: '@ocean/ocean-tool-session-query',
-    dir: 'tool-session-query',
-    source: 'packages/experimental/tool-session-query/src/index.ts',
-    requires: ['ctx.tools', 'ctx.systemPrompt', 'ctx.sessionQuery', 'ctx.agents', 'a calling Agent for workspace authority'],
-    writes: ['tool/call', 'tool/result'],
-    async mount(ctx) {
-      await ctx.plugin(SessionStore)
-      await ctx.plugin(AgentRegistry)
-      await ctx.plugin(SqliteSessionQueryEngine, { path: ':memory:' })
-      await ctx.plugin(ToolSessionQuery)
-    },
-    note:
-      'The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.',
-  },
-  {
-    pkg: '@ocean/ocean-experimental-tool-subagent-oar',
-    dir: 'tool-subagent-oar',
-    source: 'packages/experimental/tool-subagent-oar/src/index.ts',
-    requires: ['ctx.tools', 'ctx.subagents'],
-    writes: ['tool/call', 'tool/result', 'parent subagent catalog and completion notices'],
-    async mount(ctx) {
-      await ctx.plugin(SubagentRuntime)
-      await ctx.plugin(ToolSubagentOar, {
-        providers: { codex: 'oar-codex', claude: 'oar-claude' },
-      })
-    },
-    note: 'The subagent_oar tool selects among configured aliases for external providers. This catalog shows Codex and Claude Code aliases; each deployment chooses its providers. Native model and permission settings belong to the selected provider configuration.',
   },
   {
     pkg: '@ocean/ocean-tool-subagent',
@@ -705,20 +580,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
       await ctx.plugin(ToolWorkingDirectory)
     },
     note: 'Reads or changes the calling Session directory. Existing shells and processes retain their own directories; origin metadata and permission roots stay fixed.',
-  },
-  {
-    pkg: '@ocean/ocean-experimental-tool-worktree',
-    dir: 'tool-worktree',
-    source: 'packages/experimental/tool-worktree/src/index.ts',
-    requires: ['ctx.tools', 'ctx.worktrees', 'a calling Agent'],
-    writes: ['tool/call', 'Git branch and checkout', 'working-directory/change', 'tool/result'],
-    async mount(ctx) {
-      ctx.provide('worktrees', {
-        create: () => Promise.reject(new Error('gen-tool-catalog: worktree creation is unavailable during schema harvest')),
-      })
-      await ctx.plugin(ToolWorktree)
-    },
-    note: 'Enabled through the Change requests & worktrees bundle on Web and Desktop; other profiles can select the standalone bundle. Creates a new branch and checkout from a pinned local commit under existing write permissions, then changes the Session directory. Leaving retains the branch and checkout.',
   },
   {
     pkg: '@ocean/ocean-tool-workflow',

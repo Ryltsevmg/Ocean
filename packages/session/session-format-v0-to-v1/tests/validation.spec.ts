@@ -217,6 +217,8 @@ describe('released event and payload inventory', () => {
     expect(RELEASED_V0_EVENT_TYPES).toHaveLength(51)
     expect(RELEASED_V0_EVENT_TYPES.filter(type => !KNOWN_SESSION_EVENT_TYPES.has(type))).toEqual([
       'assistant/chunk',
+      'hook/invoked',
+      'hook/result',
       'tool/code-dispatch',
       'tool/code-dispatch-start',
     ])

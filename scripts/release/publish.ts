@@ -11,8 +11,6 @@
  * the same artifact safe.
  */
 
-import { cuaHelperSourceDigest } from '../cua-helper/build-inputs.ts'
-import { verifyCuaHelperTarball } from '../cua-helper/verify-tarball.ts'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -185,10 +183,6 @@ export async function publishRelease(familyId: string, directory: string, distTa
     const tarball = join(directory, filename)
     return { tarball, ...packedIdentity(tarball) }
   })
-  for (const member of order) {
-    if (member.name !== '@ocean/ocean-experimental-cua-macos') continue
-    await verifyCuaHelperTarball(member.tarball, { sourceDigest: cuaHelperSourceDigest(resolve(import.meta.dirname, '../..')) })
-  }
   if (distTag !== undefined) {
     for (const member of order) verifyDistTag(member, distTag)
   }

@@ -69,98 +69,74 @@ it('preserves both header layouts and follows the scroll position without changi
   const browser = await chromium.launch()
   const facts: string[] = []
   try {
-    for (const hasTabs of [false, true]) {
-      const scaffold = await launchWebScaffold(hasTabs ? {
-        profile: { packages: [], bundles: ['@ocean/ocean-experimental-plugin-market-bundle'] },
-      } : {})
+    const scaffold = await launchWebScaffold()
+    try {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 480 }, locale: 'en-US' })
+      const consoleWatch = watchConsole(page)
       try {
-        const page = await browser.newPage({ viewport: { width: 1280, height: 480 }, locale: 'en-US' })
-        const consoleWatch = watchConsole(page)
-        try {
-          await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-          await page.getByRole('button', { name: 'Plugins', exact: true }).click()
-          await page.locator('[data-plugin-package]').first().waitFor()
-          await page.locator('[data-plugin-bar][data-natural]').waitFor()
-          await page.evaluate(() => document.fonts.ready)
-          // Without tabs, whether the actions fit beside the title at 470px depends on the platform font,
-          // so that width is pinned only with tabs. At 320px the tabs and actions wrap onto separate rows.
-          for (const width of hasTabs ? [1280, 600, 470, 390, 320] : [1280, 600, 390]) {
-            await page.setViewportSize({ width, height: 480 })
-            await scrollTo(page, 0)
-            const resting = await reference(page, false)
-            const compact = await reference(page, true)
-            const initial = await geometry(page)
-            expect(initial.title).toEqual(resting.title)
-            expect(initial.toolbar).toEqual(resting.toolbar)
-            expect(initial.tabs).toEqual(resting.tabs)
-            if (hasTabs && width <= 600) {
-              const tabs = initial.tabs!
-              if (width === 320) {
-                expect(initial.toolbar.y).toBeGreaterThanOrEqual(tabs.y + tabs.height)
-              } else {
-                expect(initial.toolbar.x).toBeGreaterThanOrEqual(tabs.x + tabs.width)
-                expect(initial.toolbar.y + initial.toolbar.height / 2).toBeCloseTo(tabs.y + tabs.height / 2, 5)
-              }
+        await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
+        await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+        await page.locator('[data-plugin-package]').first().waitFor()
+        await page.locator('[data-plugin-bar][data-natural]').waitFor()
+        await page.evaluate(() => document.fonts.ready)
+        // Whether the actions fit beside the title at 470px depends on the
+        // platform font, so that width stays out of the pinned list.
+        for (const width of [1280, 600, 390]) {
+          await page.setViewportSize({ width, height: 480 })
+          await scrollTo(page, 0)
+          const resting = await reference(page, false)
+          const compact = await reference(page, true)
+          const initial = await geometry(page)
+          expect(initial.title).toEqual(resting.title)
+          expect(initial.toolbar).toEqual(resting.toolbar)
+          const refresh = await page.getByRole('button', { name: 'Refresh', exact: true }).elementHandle()
+          if (refresh === null) throw new Error('The refresh control is missing')
+          const samples: Awaited<ReturnType<typeof geometry>>[] = []
+          const offsets = [...new Set([
+            0, 1, 4, 8, 9, ...Array.from({ length: Math.ceil(initial.travel / 4) + 1 }, (_, i) => i * 4),
+            initial.travel, initial.travel + 16,
+          ])].sort((a, b) => a - b)
+          for (const offset of offsets) {
+            await scrollTo(page, offset)
+            const current = await geometry(page)
+            expect(current.range).toBe(initial.range)
+            expect(current.barHeight).toBe(resting.height)
+            expect(current.first).toBeCloseTo(initial.first - current.offset, 5)
+            const previous = samples.at(-1)
+            if (previous !== undefined) {
+              expect(current.toolbar.y).toBeLessThanOrEqual(previous.toolbar.y + 0.02)
             }
-            const refresh = await page.getByRole('button', { name: 'Refresh', exact: true }).elementHandle()
-            if (refresh === null) throw new Error('The refresh control is missing')
-            const samples: Awaited<ReturnType<typeof geometry>>[] = []
-            const offsets = [...new Set([
-              0, 1, 4, 8, 9, ...Array.from({ length: Math.ceil(initial.travel / 4) + 1 }, (_, i) => i * 4),
-              initial.travel, initial.travel + 16,
-            ])].sort((a, b) => a - b)
-            for (const offset of offsets) {
-              await scrollTo(page, offset)
-              const current = await geometry(page)
-              expect(current.range).toBe(initial.range)
-              expect(current.barHeight).toBe(resting.height)
-              if (hasTabs && width <= 600) {
-                expect(current.toolbar.y - current.tabs!.y).toBeCloseTo(initial.toolbar.y - initial.tabs!.y, 5)
-                expect(current.toolbar.x).toBe(initial.toolbar.x)
-                expect(current.tabs!.x).toBe(initial.tabs!.x)
-              }
-              expect(current.first).toBeCloseTo(initial.first - current.offset, 5)
-              const previous = samples.at(-1)
-              if (previous !== undefined) {
-                expect(current.toolbar.y).toBeLessThanOrEqual(previous.toolbar.y + 0.02)
-                if (current.tabs !== null && previous.tabs !== null) expect(current.tabs.y).toBeLessThanOrEqual(previous.tabs.y + 0.02)
-              }
-              if (offset === 8) {
-                expect(current.paintHeight).toBeGreaterThan(compact.height)
-                if (hasTabs) expect(current.tabs!.y).toBeCloseTo(resting.tabs!.y - 8, 5)
-              }
-              samples.push(current)
+            if (offset === 8) {
+              expect(current.paintHeight).toBeGreaterThan(compact.height)
             }
-            const terminal = await geometry(page)
-            expect(terminal.toolbar).toEqual(compact.toolbar)
-            expect(terminal.tabs).toEqual(compact.tabs)
-            expect(terminal.paintHeight).toBe(compact.height)
-            if (!hasTabs) expect(terminal.title).toEqual(compact.title)
-            expect(await refresh.evaluate(element => element.isConnected)).toBe(true)
-            await refresh.focus()
-            expect(await refresh.evaluate(element => element === document.activeElement)).toBe(true)
-            await scrollTo(page, terminal.offset)
-            expect(await geometry(page)).toEqual(terminal)
-            for (const sample of samples.toReversed()) {
-              await scrollTo(page, sample.offset)
-              expect(await geometry(page)).toEqual(sample)
-            }
-            expect(await page.locator('[data-measuring]').count()).toBe(0)
-            facts.push(`- ${hasTabs ? 'Tabs' : 'Title'} / ${width}px: resting title ${resting.title.y}, actions ${resting.toolbar.y}, tabs ${resting.tabs?.y ?? 'none'}; pinned actions ${compact.toolbar.y}, tabs ${compact.tabs?.y ?? 'none'}, bar ${compact.height}; stable range, reversible coordinates, same controls.`)
+            samples.push(current)
           }
-          expect(consoleWatch.pageErrors).toEqual([])
-          expect(consoleWatch.warnings).toEqual([])
-        } finally { await page.close() }
-      } finally { await scaffold.close() }
-    }
+          const terminal = await geometry(page)
+          expect(terminal.toolbar).toEqual(compact.toolbar)
+          expect(terminal.paintHeight).toBe(compact.height)
+          expect(terminal.title).toEqual(compact.title)
+          expect(await refresh.evaluate(element => element.isConnected)).toBe(true)
+          await refresh.focus()
+          expect(await refresh.evaluate(element => element === document.activeElement)).toBe(true)
+          await scrollTo(page, terminal.offset)
+          expect(await geometry(page)).toEqual(terminal)
+          for (const sample of samples.toReversed()) {
+            await scrollTo(page, sample.offset)
+            expect(await geometry(page)).toEqual(sample)
+          }
+          expect(await page.locator('[data-measuring]').count()).toBe(0)
+          facts.push(`- Title / ${width}px: resting title ${resting.title.y}, actions ${resting.toolbar.y}, tabs ${resting.tabs?.y ?? 'none'}; pinned actions ${compact.toolbar.y}, tabs ${compact.tabs?.y ?? 'none'}, bar ${compact.height}; stable range, reversible coordinates, same controls.`)
+        }
+        expect(consoleWatch.pageErrors).toEqual([])
+        expect(consoleWatch.warnings).toEqual([])
+      } finally { await page.close() }
+    } finally { await scaffold.close() }
   } finally { await browser.close() }
   await compareOrRefreshGolden(EXPECTED, `# Plugin header natural scrolling\n\n${facts.join('\n')}`, webSnapshotMode())
 })
 
 it('preserves the full header width when the list reserves a scrollbar gutter', async () => {
-  const scaffold = await launchWebScaffold({
-    profile: { packages: [], bundles: ['@ocean/ocean-experimental-plugin-market-bundle'] },
-  })
+  const scaffold = await launchWebScaffold()
   try {
     const browser = await chromium.launch()
     try {

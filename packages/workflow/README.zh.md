@@ -35,9 +35,7 @@ workflow 组让 agent（智能体）可以运行编排脚本，将工作委派�
 
 - [工作流子系统](../../docs/subsystems/workflow.zh.md)——seam 的类型、启动请求与 `workflow/*` 事件。
 - [生成的工具目录](../../docs/tool-catalog.zh.md#oceanocean-tool-workflow)——模型接收的 `workflow` 工具 schema。
-- [生成的工具目录](../../docs/tool-catalog.zh.md#oceanocean-tool-ralph)——模型接收的 `ralph` 工具 schema。
 - [生成的配置目录](../../docs/config-catalog.zh.md#oceanocean-workflow-ptc)——每个受支持的引擎配置字段。
-- [Harness 层目标式执行 参考](../experimental/tool-ralph/README.zh.md)——固定全新 agent 循环的设计与暂缓事项。
 
 -----
 

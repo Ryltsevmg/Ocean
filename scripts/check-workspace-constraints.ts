@@ -9,20 +9,10 @@ import { existsSync, globSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { load as loadYaml } from 'js-yaml'
-import {
-  isPublicExperimentalPackageDirectory,
-  isExperimentalPackageName,
-  hasExperimentalPackageReference,
-  EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS,
-  EXPERIMENTAL_PACKAGE_NAME_PREFIX,
-  LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES,
-  PRIVATE_EXPERIMENTAL_PACKAGE_DIRECTORIES,
-} from './experimental-package-policy.ts'
 import { hasTypertRemoteNavigation } from './publication-payload.ts'
 import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { detailPath } from '../packages/util/plugin-detail/src/document.ts'
 import { bundlePatchFiles } from '../packages/boot/app-boot/src/profile.ts'
-import { OPTIONAL_BUNDLES } from '../packages/util/official-bundles/src/bundles.ts'
 import {
   PACKAGE_ASSET_EXPORT,
   PACKAGE_ASSET_EXPORT_TARGET,
@@ -59,18 +49,8 @@ const publicNativePackages = new Set([
 ])
 /** Public source home recorded in maintained package manifests. */
 const publishedRepositoryUrl = 'git+https://github.com/Ryltsevmg/Ocean.git'
-/** Packages that participate in the experimental policy. */
-const experimentalPackageDirectory = /^packages\/experimental\/[^/]+$/
-/** Private reference tool run from the repository; it publishes no files. */
-const pluginMarketGeneratorDirectory = 'apps/plugin-market-generator'
-/**
- * Ordinary directories whose packages this repository publishes: one release member each. The reference plugin
- * market generator is a private repository tool, not a published application.
- */
-const standardReleaseMemberDirectory = new RegExp(
-  `^(?:packages/(?!experimental/)[^/]+/[^/]+|apps/(?!desktop(?:-host)?$|${pluginMarketGeneratorDirectory.slice('apps/'.length)}$)[^/]+|vendor/[^/]+)$`,
-  'u',
-)
+/** Ordinary directories whose packages this repository publishes: one release member each. */
+const standardReleaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/(?!desktop(?:-host)?$)[^/]+|vendor\/[^/]+)$/u
 /** Installable application assembled by electron-builder rather than published to npm. */
 const desktopApplicationDirectory = 'apps/desktop'
 const localArtifactDirs = new Set(['node_modules'])
@@ -81,9 +61,7 @@ const appPackageFiles: Readonly<Record<string, readonly string[]>> = {
   '@ocean/ocean-desktop-host': [
     'lib/index.js', 'lib/cli.js',
   ],
-  // The worker-preview surface (dist/preview.html and dist/preview/) backs
-  // opt-in experimental packages and is not published.
-  '@ocean/ocean-web-frontend': ['dist', '!dist/preview.html', '!dist/preview', 'src'],
+  '@ocean/ocean-web-frontend': ['dist', 'src'],
 }
 
 /** The subset of package.json fields this constraint check cares about. */
@@ -186,23 +164,6 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   // Tools entry points share error classes and invocation stages through runtime chunks.
   '@ocean/ocean-tools': ['lib/pipeline.js', 'lib/shared-*.js'],
   '@ocean/ocean-tool-executor-ptc': ['lib/run-code.js', 'lib/_chunks/*.js'],
-  // The embedded OAR implementation retains its upstream license.
-  '@ocean/ocean-experimental-subagent-oar': ['LICENSE-OAR'],
-  // CUA publishes its client API and attributed native source for local macOS builds.
-  '@ocean/ocean-cua': ['lib/remote-types.js', 'lib/api.js', 'lib/bridge.js', 'lib/native-client.js', 'lib/protocol.js', 'lib/config.js', 'lib/native-schema.js', 'lib/native-build.js', 'lib/guidance.js'],
-  '@ocean/ocean-experimental-cua-macos': ['native/bin', 'cua-helper.json', 'native/Package.swift', 'native/Info.plist', 'native/DSHComputerUse.icns', 'native/build_app.py', 'native/Sources', 'native/tests/swift', 'native/tests/test_swift.py', 'native/LICENSE.cua-driver', 'native/LICENSE.computer-use-icon', 'native/upstream.json', 'native/README.md', 'native/README.zh.md', 'native/protocol.schema.json'],
-  '@ocean/ocean-cua-windows': ['native/bin'],
-  '@ocean/ocean-cua-linux': ['native/*.py'],
-  '@ocean/ocean-browser-use-browse': ['THIRD_PARTY_NOTICES'],
-  '@ocean/ocean-webhook-github': ['examples/github-review/cordis.yml', 'examples/github-review/github-ready-review-rule.mjs'],
-  // Liveshare publishes its built Relay gateway entry and the shared runtime
-  // chunk that entry imports. Its `./types` export is a type-only module, so
-  // the emitted tree contributes that one runtime file; the declarations still
-  // ship as the whole tree.
-  '@ocean/ocean-experimental-liveshare': [
-    'lib/owner-gateway/cli.js',
-    'lib/retry-backoff-*.js',
-  ],
   // Owned Worker bundles import this public bootstrap before their business entry.
   '@ocean/ocean-app-boot': ['lib/worker/profile-resolution-bootstrap.js'],
   // Statically linked client libraries keep their stylesheets next to the emitted
@@ -218,33 +179,20 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   '@ocean/ocean-client-ui-theme': ['lib/styles'],
   // The physical-key protocol is a public entry usable without the browser service.
   '@ocean/ocean-client-shortcuts': ['lib/protocol.js'],
-  // The CPython side ships as source .py files, published as-is rather than built.
-  '@ocean/ocean-experimental-ptc-runtime-python': ['py/**/*.py'],
-  '@ocean/ocean-experimental-speech-to-text-sensevoice': ['runtime/assets.json'],
   // Node profile configuration and process bootstraps have separate bundles.
   '@ocean/ocean-ptc-runtime-node': ['lib/configuration.js', 'lib/process.js', 'lib/persistent-process.js'],
-  // The Inspector owns a Worker and a mirrored frontend outside package export paths.
-  '@ocean/ocean-experimental-inspector': ['lib/client.*.js', 'lib/worker.js', 'lib/devtools/**'],
   // Creator's composition guidance travels with the declaration package.
   '@ocean/ocean-agent-preset': ['skills'],
-  // Personalized pages ship the location guidance used by their Creator.
-  '@ocean/ocean-creation-recommendations': ['references/*.md', 'skills/*.md'],
-  // Official-plugin recommendations ship the skill text their provider loads.
-  '@ocean/ocean-plugin-recommendations': ['skills/*.md'],
   // The Web Host mounts the default-off settings owner independently of the
   // delegation-tool instances.
   '@ocean/ocean-tool-subagent': ['lib/model-selection-settings.js'],
   // The JSONL backend resolves its private verification Worker relative to
   // import.meta.url; it is shipped without a public package subpath.
   '@ocean/ocean-session-persistence-jsonl': ['lib/worker.cjs'],
-  // The plugin market parses fetched indexes in a private Worker resolved
-  // relative to import.meta.url; it is shipped without a public package subpath.
-  '@ocean/ocean-plugin-market': ['lib/worker.cjs'],
   // The argv-prefix runner entry ships beside the lib as its own bundle;
   // sandbox-local resolves it through the package's ./runner export. tsdown
   // also shares its generated FFI code through a hashed runtime chunk.
   '@ocean/ocean-sandbox-windows-acl': ['lib/runner.js', 'lib/types-*.js', 'assets'],
-  '@ocean/ocean-skill-badge': ['assets'],
   '@ocean/ocean-skill-office': ['assets'],
   '@ocean/ocean-subprocess': ['lib/control.js'],
   // SSH launches a private helper and shares wire definitions and TLS setup
@@ -261,10 +209,6 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
     'lib/output.js',
     'scripts/ensure-spawn-helper.mjs',
   ],
-  // tsdown shares the repository/pack code between the lib entry and the bin
-  // through a hashed chunk. The committed bin.js is the link target pnpm can
-  // resolve at install time, before the build produces lib/bin.js.
-  '@ocean/ocean-experimental-webworker-packer': ['bin.js', 'lib/repository-*.js'],
   // Startup and runtime share the advertised URL parser.
   '@ocean/ocean-web-app': ['lib/public-url-*.js'],
   // The headless entry and its startup row share the JSON projection code
@@ -427,60 +371,10 @@ function usesEmittedTreeDefaults(manifest: PackageManifest): boolean {
     exportDefault(manifest, subpath)?.startsWith('./lib/types/') === true)
 }
 
-/** Experimental manifest requirements, including explicit private exceptions. */
-export function checkExperimentalManifest(
-  { dir, manifest }: WorkspaceManifest,
-  privateDirectories: readonly string[] = PRIVATE_EXPERIMENTAL_PACKAGE_DIRECTORIES,
-): string[] {
-  if (!experimentalPackageDirectory.test(dir)) return []
-  const label = manifest.name ?? dir
-  const errors: string[] = []
-  if (manifest.name === undefined) {
-    errors.push(`${label}: experimental package must declare a name`)
-  } else if (manifest.name.startsWith(EXPERIMENTAL_PACKAGE_NAME_PREFIX)) {
-    if (!LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES.includes(dir)) {
-      errors.push(`${label}: new experimental packages must not use the ${JSON.stringify(EXPERIMENTAL_PACKAGE_NAME_PREFIX)} prefix; name it @ocean/ocean-<name> and declare it in EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS (scripts/experimental-package-policy.ts)`)
-    }
-  } else if (manifest.name !== EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS[dir]) {
-    errors.push(`${label}: experimental package name must be declared for this directory in EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS (scripts/experimental-package-policy.ts)`)
-  }
-  if (isPublicExperimentalPackageDirectory(dir, privateDirectories)) {
-    if (manifest.private === true) errors.push(`${label}: public experimental package must not set "private": true`)
-    if (manifest.publishConfig?.access !== 'public') {
-      errors.push(`${label}: public experimental package must set publishConfig.access to "public"`)
-    }
-  } else {
-    if (manifest.private !== true) errors.push(`${label}: experimental package must set "private": true`)
-    if (manifest.publishConfig !== undefined) errors.push(`${label}: experimental package must omit publishConfig`)
-  }
-  return errors
-}
-
-/**
- * Reject missing, renamed, moved, or duplicated unprefixed-name declarations and stale legacy prefixed directories.
- * @param manifests - every workspace manifest, with repository-relative directories.
- * @returns Violations of the exact directory/name ownership declarations.
- */
-export function checkExperimentalNameExceptions(manifests: readonly WorkspaceManifest[]): string[] {
-  const errors: string[] = []
-  for (const [dir, name] of Object.entries(EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS)) {
-    const owners = manifests.filter(entry => entry.manifest.name === name)
-    if (owners.length !== 1 || owners[0]?.dir !== dir) {
-      errors.push(`${dir}: unprefixed experimental name ${name} must have exactly one workspace owner at this directory`)
-    }
-  }
-  for (const dir of LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES) {
-    if (!manifests.some(entry => entry.dir === dir && entry.manifest.name?.startsWith(EXPERIMENTAL_PACKAGE_NAME_PREFIX) === true)) {
-      errors.push(`${dir}: remove this directory from LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES; no package with the legacy prefix lives here`)
-    }
-  }
-  return errors
-}
-
 function isReleaseMemberDirectory(dir: string): boolean {
   // The SSH carrier is distributed as executable archives, never as an npm application.
   if (dir === 'packages/ssh/ssh-helper-runtime') return false
-  return standardReleaseMemberDirectory.test(dir) || isPublicExperimentalPackageDirectory(dir)
+  return standardReleaseMemberDirectory.test(dir)
 }
 
 /**
@@ -511,7 +405,7 @@ export function checkDshFamilyVersion(manifest: PackageManifest, expected: strin
  * @returns path-qualified policy violations.
  */
 export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): string[] {
-  const errors = checkExperimentalManifest({ dir, manifest })
+  const errors: string[] = []
   const label = manifest.name ?? dir
   const familyVersionError = checkDshFamilyVersion(manifest, repositoryVersion)
   if (familyVersionError !== undefined) errors.push(familyVersionError)
@@ -554,7 +448,7 @@ export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): st
       || manifest.repository.directory !== dir) {
       errors.push(`${label}: release member repository must use ${publishedRepositoryUrl} with directory ${dir}`)
     }
-  } else if (!experimentalPackageDirectory.test(dir) && manifest.private !== true) {
+  } else if (manifest.private !== true) {
     errors.push(`${label}: package.json must set "private": true`)
   }
 
@@ -562,7 +456,7 @@ export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): st
     return errors
   }
 
-  if (dir.startsWith('apps/') && dir !== desktopApplicationDirectory && dir !== pluginMarketGeneratorDirectory && manifest.name?.startsWith('@ocean/')) {
+  if (dir.startsWith('apps/') && dir !== desktopApplicationDirectory && manifest.name?.startsWith('@ocean/')) {
     const expectedFiles = appPackageFiles[manifest.name]
     if (expectedFiles === undefined) {
       errors.push(`${label}: app package has no publication files policy`)
@@ -657,39 +551,6 @@ function checkRepositoryVersion(): string[] {
 
 /** Dependency sections whose ranges reach a published tarball or a local install. */
 const dependencySections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const
-/** Dependency sections present in an installed runtime. */
-const runtimeDependencySections = ['dependencies', 'optionalDependencies', 'peerDependencies'] as const
-
-/**
- * Prevent an official runtime from requiring an experimental package. The dsh installation's `dependencies`
- * may hold the bundles the launcher's `OPTIONAL_BUNDLES` names: shipped switched off, they are not a requirement.
- * @param manifests - release, private experimental, and deployment-root manifests.
- * @param optionalBundles - the bundles the installation ships switched off; the launcher's list by default.
- * @returns One error for each forbidden runtime dependency.
- */
-export function checkExperimentalDependencyIsolation(
-  manifests: readonly WorkspaceManifest[], optionalBundles: readonly string[] = OPTIONAL_BUNDLES,
-): string[] {
-  const experimentalNames = new Set(manifests
-    .filter(entry => experimentalPackageDirectory.test(entry.dir))
-    .map(entry => entry.manifest.name)
-    .filter(name => name !== undefined))
-  const errors: string[] = []
-  for (const { dir, manifest } of manifests) {
-    if (!standardReleaseMemberDirectory.test(dir) && dir !== 'python/sdk-runtime') continue
-    const offered = manifest.name === '@ocean/ocean' ? new Set(optionalBundles) : new Set<string>()
-    for (const section of runtimeDependencySections) {
-      for (const [name, range] of Object.entries(manifest[section] ?? {})) {
-        const experimental = experimentalNames.has(name) || isExperimentalPackageName(name)
-          || /^(?:npm:|workspace:)/.test(range) && hasExperimentalPackageReference(range)
-        if (!experimental) continue
-        if (section === 'dependencies' && offered.has(name)) continue
-        errors.push(`${manifest.name ?? dir}: ${section}.${name} must not reference an experimental package`)
-      }
-    }
-  }
-  return errors
-}
 
 /**
  * Require exact DSH ranges, tilde vendor/native ranges, and the workspace protocol elsewhere.
@@ -729,8 +590,6 @@ export function main(): void {
     ...checkRepositoryVersion(),
     ...workspaceManifests().flatMap(checkWorkspaceManifest),
     ...checkWorkspaceProtocol(manifests),
-    ...checkExperimentalNameExceptions(manifests),
-    ...checkExperimentalDependencyIsolation(manifests),
     ...checkHierarchyShape(),
     ...collectProjectReferenceFaceViolations(root),
   ]

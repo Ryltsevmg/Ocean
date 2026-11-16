@@ -17,16 +17,12 @@
   },
   "files": [
     "dist",
-    "!dist/preview.html",
-    "!dist/preview",
     "src"
   ],
   "scripts": {
     "build": "vite build",
     "dev": "vite",
     "watch": "vite build --watch --no-emptyOutDir",
-    "build:preview": "pnpm --filter @ocean/ocean-experimental-webworker-runtime exec tsdown && pnpm --filter @ocean/ocean-experimental-webworker-packer exec tsdown && vite build && dsh-pack-vfs-image --out dist/preview/vfs-image.tar.gz",
-    "serve:preview": "http-server dist -a 0.0.0.0 -p 4173 -c-1",
     "render:app-icons": "tsx scripts/render-app-icons.ts"
   },
   "license": "MIT",
@@ -44,8 +40,6 @@
     "@ocean/ocean-cmdline": "workspace:*",
     "@ocean/ocean-pwsh-local": "workspace:*",
     "@ocean/ocean-agent-team": "workspace:*",
-    "@ocean/ocean-experimental-webworker-packer": "workspace:*",
-    "@ocean/ocean-experimental-webworker-runtime": "workspace:*",
     "@ocean/ocean-remote-mock": "workspace:*",
     "@ocean/ocean-session-projection-cache": "workspace:*",
     "@ocean/ocean-tool-testkit": "workspace:*",
@@ -53,7 +47,6 @@
     "@types/node": "^22.20.1",
     "@types/ws": "8.18.1",
     "@vitejs/plugin-react": "^4.7.0",
-    "http-server": "^14.1.1",
     "fflate": "^0.8.2",
     "playwright": "^1.49.0",
     "react": "^18.2.0",
@@ -66,14 +59,7 @@
     "@ocean/ocean-client-ui-theme": "workspace:*",
     "@ocean/ocean-launch-environment": "workspace:*",
     "@ocean/ocean-workspace-changes": "workspace:*",
-    "@ocean/ocean-subprocess-local": "workspace:*",
-    "@ocean/ocean-experimental-auto-review": "workspace:*",
-    "@ocean/ocean-experimental-speech-to-text": "workspace:*",
-    "@ocean/ocean-experimental-voice-input-bundle": "workspace:*",
-    "@ocean/ocean-experimental-cot-translation-bundle": "workspace:*",
-    "@ocean/ocean-experimental-worktree": "workspace:*",
-    "@ocean/ocean-experimental-plugin-market-bundle": "workspace:*",
-    "@ocean/ocean-experimental-forge-bundle": "workspace:*"
+    "@ocean/ocean-subprocess-local": "workspace:*"
   },
   "dependencies": {
     "@ocean/ocean-message-quotes": "workspace:*"

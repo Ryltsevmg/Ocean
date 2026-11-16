@@ -380,7 +380,7 @@ describe('gate graph validation', () => {
     const ids = withPnpmEntrypoint(() => gatesForMode('hygiene').map(subject => subject.id))
 
     expect(ids).toEqual([
-      'rescope-vendor', 'publint', 'constraints', 'default-product-isolation', 'product-use', 'official-bundle-catalog', 'provider-data', 'package-dependencies', 'application-entrypoints',
+      'rescope-vendor', 'publint', 'constraints', 'product-use', 'official-bundle-catalog', 'provider-data', 'package-dependencies', 'application-entrypoints',
       'dsh-package-licenses', 'node-next-types',
       'optional-dependency-imports', 'client-packages', 'installer-locales', 'locale-metadata', 'client-ui-i18n', 'client-route-resolution', 'no-bare-dispatcher',
       'plugin-record-callers', 'no-unknown-casts', 'no-top-level-await', 'plugin-entry-exports',
@@ -459,12 +459,12 @@ describe('gate graph validation', () => {
   )
 
   it.each(['ci-primary', 'ci-static', 'check-all', 'hygiene'] as const)(
-    'executes default-product experimental isolation in %s',
+    'keeps product package classification in %s',
     (mode) => {
       const gate = withPnpmEntrypoint(() => gatesForMode(mode)
-        .find(subject => subject.id === 'default-product-isolation'))
+        .find(subject => subject.id === 'product-use'))
 
-      expect(gate?.args).toContain('verify-default-product-isolation')
+      expect(gate?.args).toContain('verify-product-use')
       expect(gate?.allowFailure).not.toBe(true)
     },
   )
@@ -517,7 +517,7 @@ describe('gate graph validation', () => {
     expect(byId.get('coverage')?.needs).toContain('build')
     expect(byId.get('coverage-exempt-heavy')?.needs).toContain('build')
     expect(byId.get('coverage-exempt-heavy')?.args).toContain(
-      'packages/experimental/webworker-packer/tests/image-loadable.spec.ts',
+      'scripts/change-scope.spec.ts',
     )
     expect(observational).not.toHaveLength(0)
     for (const gate of observational) {

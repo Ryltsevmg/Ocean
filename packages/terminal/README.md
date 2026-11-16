@@ -39,8 +39,6 @@ Start with the subsystem reference for the shared types, the service surface, an
 - [Terminal subsystem reference](../../docs/subsystems/terminal.md) — ids, backend and session contracts, send readiness, bounded reads, and the generated `ctx.terminals` API.
 - [Capability seams](../../docs/capability-seams.md) — the Service Definition / Service Provider / Consumer split this family follows.
 
-See [`tool-terminal`](../experimental/tool-terminal/README.md) for the experimental optional capability.
-
 <a id="dev-note"></a>
 ## Dev Note
 

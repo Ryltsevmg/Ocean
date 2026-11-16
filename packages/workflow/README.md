@@ -35,9 +35,7 @@ The workflow group lets an agent run orchestration scripts that delegate work to
 
 - [Workflow subsystem](../../docs/subsystems/workflow.md) — the seam's types, start request, and `workflow/*` events.
 - [Generated tool catalog](../../docs/tool-catalog.md#oceanocean-tool-workflow) — the `workflow` tool schema the model receives.
-- [Generated tool catalog](../../docs/tool-catalog.md#oceanocean-tool-ralph) — the `ralph` tool schema the model receives.
 - [Generated configuration catalog](../../docs/config-catalog.md#oceanocean-workflow-ptc) — every accepted engine config field.
-- [Harness-level goal-based execution reference](../experimental/tool-ralph/README.md) — the fixed fresh-agent loop design and deferred work.
 
 -----
 

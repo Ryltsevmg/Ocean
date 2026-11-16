@@ -2,7 +2,7 @@
 
 This file is GENERATED from workspace manifests (`scripts/gen-plugin-packages.ts`) and verified fresh by `pnpm run verify-plugin-packages` (part of `doc-sync`); do not edit it by hand.
 
-Every package below exports a Cordis plugin that a bundle patch can name in a Loader row. `Config` marks packages whose row accepts a `config` mapping; read the mounted schema from `Config.listConfigs` through `cordis_inspect_query` (filter by `name`, then query the `entry` id) when available, otherwise from the package README. Packages under `experimental` are pre-stable.
+Every package below exports a Cordis plugin that a bundle patch can name in a Loader row. `Config` marks packages whose row accepts a `config` mapping; read the mounted schema from `Config.listConfigs` through `cordis_inspect_query` (filter by `name`, then query the `entry` id) when available, otherwise from the package README.
 
 ## acp
 
@@ -37,7 +37,6 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@ocean/ocean-config-editor` | no | Persist plugin configuration through profile patches and Loader reconciliation |
 | `@ocean/ocean-hmr` | yes | Coordinated module and profile configuration hot reload |
 | `@ocean/ocean-plugin-manager` | yes | Current-profile plugin and bundle management shared by dsh CLI, Web and agent tools |
-| `@ocean/ocean-plugin-market` | yes | Configured plugin market indexes for the Web Discover page and the plugin_market agent tool |
 
 ## browser-use
 
@@ -92,7 +91,6 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@ocean/ocean-client-ui-permission-presets` | no | Permission surfaces: a new-session default in General settings and a current-session /permission popup over the permissions projection |
 | `@ocean/ocean-client-ui-plan` | no | Plan mode controls, persistent transcript plan cards, and sidebar Markdown previews |
 | `@ocean/ocean-client-ui-plugin-manager` | yes | Plugin management for the dsh web client: the sidebar Plugins panel installs, enables, disables, retries, and composes installed plugin packages |
-| `@ocean/ocean-client-ui-plugin-market` | no | Discover tab of the dsh web Plugins page: browse configured plugin market indexes and install their bundles |
 | `@ocean/ocean-client-ui-reference` | no | Unified Web @file and @session reference source |
 | `@ocean/ocean-client-ui-renderer` | no | Browser UI renderer: React slot bindings, ctx.uiRenderer, and the assembled application root |
 | `@ocean/ocean-client-ui-schedule` | no | Host task management page and Session reminder catalog |
@@ -187,58 +185,6 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 |---|---|---|
 | `@ocean/ocean-office-kit` | yes | Shared Office rendering, conversion, and recalculation with bounded queues and caching |
 | `@ocean/ocean-tool-office` | yes | Model-facing Office tools for rendering, converting, and recalculating documents |
-
-## experimental
-
-| Package | Config | Description |
-|---|---|---|
-| `@ocean/ocean-action-cards` | yes | Optional action cards below answers: one shared proposal tool, card state, user actions and status notices |
-| `@ocean/ocean-browser-use-browse` | yes | Optional session-owned control of an explicitly paired browse browser |
-| `@ocean/ocean-client-ui-action-cards` | no | Action cards below completed answers: the shared card frame, kind bodies and the compact tool row |
-| `@ocean/ocean-client-ui-creation-recommendations` | no | Body of the personalized page card: location choice, creation progress, Undo and Restore |
-| `@ocean/ocean-client-ui-plugin-recommendations` | no | Official plugin card body with catalog text and enabling |
-| `@ocean/ocean-creation-recommendations` | no | Create persistent removable interface plugins from explicit conversation needs |
-| `@ocean/ocean-cua` | no | Shared Computer Use application objects, authorization, and logged tool execution |
-| `@ocean/ocean-cua-linux` | yes | Experimental Linux AT-SPI semantic Computer Use without global input |
-| `@ocean/ocean-cua-windows` | yes | Windows C# computer use through shared application and window objects |
-| `@ocean/ocean-experimental-api-speech-to-text` | yes | Authenticated experimental speech transcription for browser clients |
-| `@ocean/ocean-experimental-auto-review` | no | Per-tool LLM authorization review for the Ocean Auto permission preset |
-| `@ocean/ocean-experimental-browser-use-chrome-devtools-mcp` | yes | Experimental per-Session Chromium browser tools through chrome-devtools-mcp |
-| `@ocean/ocean-experimental-browser-use-playwright-mcp` | yes | Experimental per-Session Chromium browser tools through @playwright/mcp |
-| `@ocean/ocean-experimental-browser-use-stagehand-native` | yes | Experimental Stagehand browser tools with separately configured native models |
-| `@ocean/ocean-experimental-claude-code-mods` | yes | Experimental bridge: load Claude Code mods (hooks modules) and run their hook chains on Ocean extension points |
-| `@ocean/ocean-experimental-client-ui-claude-code-mods` | no | Web band above the prompt for Claude Code mods: draws each session's mod tree and sends button presses back to the bridge |
-| `@ocean/ocean-experimental-client-ui-cot-translation` | yes | Optional machine translation of expanded reasoning, preserving original Session text |
-| `@ocean/ocean-experimental-client-ui-forge` | yes | Sidebar panel for a Session's change requests, with a worktree option for new Sessions and its Host Remote |
-| `@ocean/ocean-experimental-client-ui-stats` | no | Per-turn and per-step context, timing, cache, and tool-cost table contributed as an experimental conversation View |
-| `@ocean/ocean-experimental-client-ui-voice-input` | no | Record speech and insert editable text into the conversation draft |
-| `@ocean/ocean-experimental-computer-use-cua-driver-mcp` | yes | Experimental computer use through an installed Cua Driver MCP executable |
-| `@ocean/ocean-experimental-computer-use-cua-driver-native` | no | Experimental computer-use provider embedding the Cua Driver native npm SDK |
-| `@ocean/ocean-experimental-cua-macos` | yes | macOS native provider for shared Computer Use application and window objects |
-| `@ocean/ocean-experimental-forge` | yes | Provider-neutral change request registry with shared status polling |
-| `@ocean/ocean-experimental-forge-github` | yes | GitHub provider for the experimental forge registry, read through the GitHub CLI on the host |
-| `@ocean/ocean-experimental-forge-session` | yes | Binds change requests to the Session that created, pushed, or tracked them |
-| `@ocean/ocean-experimental-inspector` | yes | Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection |
-| `@ocean/ocean-experimental-ptc-runtime-python` | yes | CPython subprocess implementation of the Ocean PTC execution seam |
-| `@ocean/ocean-experimental-session-inspector` | no | Experimental virtualized Session log and live Chat group/node inspectors |
-| `@ocean/ocean-experimental-speech-to-text` | yes | Experimental speech recognition with independently selectable providers |
-| `@ocean/ocean-experimental-speech-to-text-sensevoice` | yes | Local SenseVoice ONNX transcription with a managed sherpa-onnx process |
-| `@ocean/ocean-experimental-subagent-oar` | yes | Experimental one-shot subagents through OAR runtimes |
-| `@ocean/ocean-experimental-tool-subagent-oar` | yes | Delegate standalone tasks to configured external subagent providers |
-| `@ocean/ocean-experimental-tool-worktree` | no | Model tool that creates and enters a new Git worktree |
-| `@ocean/ocean-experimental-translator` | yes | Machine translation with reusable Session results |
-| `@ocean/ocean-experimental-worktree` | yes | Creates a named Git worktree and changes the calling Session working directory |
-| `@ocean/ocean-hooks-claude-code` | yes | Bridge plugin: run a Claude Code hooks.json / settings hook config on the Ocean interception seams |
-| `@ocean/ocean-hooks-codex` | yes | Bridge plugin: run a Codex hooks.json hook config on the Ocean interception seams |
-| `@ocean/ocean-plugin-recommendations` | no | Official plugin suggestions with explicit user activation and persistent conversation decisions |
-| `@ocean/ocean-session-title-all-prompts-llm` | yes | All-user-messages LLM provider plugin for Ocean session titles |
-| `@ocean/ocean-skill-badge` | no | Bundled dsh badge skill provider for Ocean |
-| `@ocean/ocean-terminal-panel` | yes | Persistent Agent terminals shown in the Web sidebar, plus read-only access to the user's terminals |
-| `@ocean/ocean-tool-ralph` | yes | Model-facing fresh-agent Ralph loop over the workflow and subagent seams |
-| `@ocean/ocean-tool-session-query` | yes | Workspace-authorized model-facing session history search, trace, and event read tools |
-| `@ocean/ocean-tool-terminal` | yes | Six model-facing persistent PTY tools with owner isolation and generic background-job integration |
-| `@ocean/ocean-webhook` | no | Fire-and-forget webhook rule runtime that creates Workspace-backed Ocean Sessions |
-| `@ocean/ocean-webhook-github` | yes | Signed GitHub HTTP webhook adapter for the Ocean webhook runtime |
 
 ## extensions
 

@@ -80,8 +80,6 @@ session 组让对话持久保存，恢复已发布的日志格式，并使已提
 - [会话遥测子系统](../../docs/subsystems/session-telemetry.zh.md)——捕获、脱敏与投递模式。
 - [会话子系统](../../docs/subsystems/session.zh.md)——本组每个包持久化或派生的实时事件日志。
 
-实验性可选能力见 [`session-title-all-prompts-llm`](../experimental/session-title-all-prompts-llm/README.zh.md)。
-
 <a id="dev-note"></a>
 ## 开发备注
 

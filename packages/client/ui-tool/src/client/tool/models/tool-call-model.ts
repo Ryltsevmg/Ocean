@@ -19,12 +19,6 @@ export type ToolRowVariant = 'search' | 'read' | 'bash' | 'write' | 'edit' | 'co
 /** Row lifecycle state used by summary styling and accessible status text. */
 export type ToolRowState = 'preparing' | 'running' | 'ok' | 'error' | 'stopped'
 
-/** Locale-neutral structured fact consumed only by the user-facing Tool row. */
-export interface AutoReviewDenial {
-  /** Raw persisted reviewer reason; display normalization happens at render time. */
-  reason: string | null
-}
-
 type ToolTitleKey = Extract<LocaleKeysOf<'conversation'>, `tool.title.${string}` | 'ask.rowTitle' | 'todo.rowTitle'>
 
 /** Locale key per generic row variant. */
@@ -62,7 +56,6 @@ const TOOL_VARIANTS: Record<string, ToolRowVariant> = {
   edit: 'edit',
   apply_patch: 'edit',
   run_code: 'code',
-  cua_run_code: 'code',
   cordis_package_inspect: 'read',
   cordis_runtime_inspect: 'read',
   // The three run-control verbs take one package id and produce a receipt, so
@@ -99,12 +92,6 @@ const TOOL_TITLE_KEYS: Record<string, ToolTitleKey> = {
   cordis_inspect_query: 'tool.title.queryRuntime',
   cordis_inspect_self: 'tool.title.inspectPlugins',
   workflow: 'tool.title.workflow',
-  ralph: 'tool.title.ralph',
-  session_event_read: 'tool.title.readEvent',
-  session_event_search: 'tool.title.searchEvents',
-  session_event_trace: 'tool.title.traceEvent',
-  session_search: 'tool.title.searchSessions',
-  session_trace: 'tool.title.traceSession',
   list_subagent_models: 'tool.title.listModels',
   subagent: 'tool.title.subagent',
   subagent_fork: 'tool.title.subagentFork',
@@ -114,11 +101,6 @@ const TOOL_TITLE_KEYS: Record<string, ToolTitleKey> = {
   job_list: 'tool.title.listJobs',
   job_output: 'tool.title.readJob',
   job_kill: 'tool.title.killJob',
-  terminal_open: 'tool.title.openTerminal',
-  terminal_read: 'tool.title.readTerminal',
-  terminal_list: 'tool.title.listTerminals',
-  terminal_signal: 'tool.title.signalTerminal',
-  terminal_close: 'tool.title.closeTerminal',
   lsp: 'tool.title.lsp',
   spawn_teammate: 'tool.title.spawnTeammate',
   team_task_create: 'tool.title.createTeamTask',
@@ -187,18 +169,7 @@ export interface ToolRowModel {
   output: string | null
   /** First line of the result text on an error row; null for every other state. */
   errorSummary: string | null
-  /** Structured Auto-review denial identity; null for every ordinary result. */
-  autoReviewDenial: AutoReviewDenial | null
   state: ToolRowState
-}
-
-function deriveAutoReviewDenial(block: ToolCallBlock): AutoReviewDenial | null {
-  if (!('kind' in block) || !block.isError) return null
-  const error = block.error
-  if (error?.name !== 'AutoReviewDeniedError' || error.code !== 'AUTO_REVIEW_DENIED') return null
-  // A durable record reaches this renderer without a type check on `reason`, so
-  // a non-string value degrades to the no-reason copy exactly as a missing one.
-  return { reason: typeof error.reason === 'string' ? error.reason : null }
 }
 
 /**
@@ -425,7 +396,6 @@ export function toolRowModel(
     bodyRaw,
     output,
     errorSummary,
-    autoReviewDenial: deriveAutoReviewDenial(block),
     state,
   }
 }

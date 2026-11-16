@@ -8,7 +8,7 @@ Source: [`packages/core/session/src/types.ts`](../../packages/core/session/src/t
 
 ## `SessionEventMap` — the event vocabulary
 
-The append-only event types. Merge-extensible: a plugin declares extra event types via declaration merging — e.g. the [compaction seam](compaction.md) adds `compaction/start` / `compaction/summary` / `compaction/end`, and `@ocean/ocean-hook-protocol` adds log-only `hook/invoked` / `hook/result` records for a hook bridge. Like `compaction/*`, these are NOT `SurfaceEventType`s (no `surfaceOp`). The generated [persistence log event catalog](../persistence-catalog.md) enumerates every member — core and merged — with its payload, surface badge, and declaration site.
+The append-only event types. Merge-extensible: a plugin declares extra event types via declaration merging — e.g. the [compaction seam](compaction.md) adds the log-only `compaction/start` / `compaction/summary` / `compaction/end` records, which are NOT `SurfaceEventType`s (no `surfaceOp`). The generated [persistence log event catalog](../persistence-catalog.md) enumerates every member — core and merged — with its payload, surface badge, and declaration site.
 
 ```ts type-equiv
 /** A user-role specialization of the shared message representation. */
@@ -781,15 +781,13 @@ A plugin may declaration-merge extra `SessionEventMap` types. These are **log-on
 
 When several events in one plugin-owned family assemble into one Web Client Conversation Node, every start, update, result, resource, or interruption event in that family carries or independently derives the same stable business id. This requirement applies to correlated Node families, not to every Session event; it lets the client group each event without guessing from adjacency or scanning history. See the [Conversation subsystem](conversation.md).
 
-The hook bridges' `hook/invoked` / `hook/result` pairs (from `@ocean/ocean-hook-protocol`) correlate by `handlerId`. `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, and `Stop` fire inside the loop's open turn, so their `hook/*` records are turn-enclosed by construction. `SessionStart` gets no `hook/*` record because it runs before turn 1; its context remains pending in the inbox until a waking delivery opens a turn.
-
 ### Plugin records
 
-Experimental packages declare plugin-owned state in `PluginRecordMap`: `appendPluginRecord()` uses each declaration to type its name and payload, and appends an event marked `ignorable: true` in the `plugin:` namespace. `pluginRecordOf()` reads stored records with unknown payloads regardless of current declarations. The [experimental persistence catalog](../experimental-persistence-catalog.md) lists current declarations. The [package README](../../packages/core/session/README.md#write-experimental-plugin-records) owns the caller restriction, retention, and read path.
+A plugin declares its own state in `PluginRecordMap`: `appendPluginRecord()` uses each declaration to type its name and payload, and appends an event marked `ignorable: true` in the `plugin:` namespace. `pluginRecordOf()` reads stored records with unknown payloads regardless of current declarations. The [plugin-record catalog](../experimental-persistence-catalog.md) lists current declarations. The [package README](../../packages/core/session/README.md#write-plugin-records) owns the caller restriction, retention, and read path.
 
 ```ts type-equiv
 /**
- * Event type of an experimental plugin record: `plugin:` followed by
+ * Event type of a plugin record: `plugin:` followed by
  * slash-separated segments of lowercase letters, digits, `.`, `_`, and `-`,
  * each starting with a letter or digit. A record type is never a
  * {@link SessionEventMap} member.
@@ -799,8 +797,8 @@ type PluginRecordType = `plugin:${string}`
 
 ```ts type-equiv
 /**
- * Payloads written by experimental packages, keyed by their `plugin:` record
- * names. Packages augment this map to type writes and enter the current plugin
+ * Payloads written by plugins, keyed by their `plugin:` record
+ * names. Plugins augment this map to type writes and enter the current plugin
  * record catalog; these declarations do not enter {@link SessionEventMap} or
  * released persistence schemas. Stored records still require owner validation.
  */
@@ -809,7 +807,7 @@ interface PluginRecordMap {}
 
 ```ts type-equiv
 /**
- * One committed experimental plugin record, read from the log by
+ * One committed plugin record, read from the log by
  * `pluginRecordOf`. The record's owner validates `data` before use, because a
  * restored record carries whatever JSON an earlier build of its owner wrote,
  * or a V3 event that a format migration renamed into the `plugin:` namespace held.

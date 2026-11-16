@@ -205,21 +205,4 @@ describe('ToolCallTree', () => {
     expect(view.getByText('~/docs/a.ts')).toBeTruthy()
   })
 
-  it('renders an Auto denial generically before keyed slot dispatch', () => {
-    const block = {
-      ...root('denied', { name: 'skill', argsRaw: '{"name":"deploy"}' }),
-      isError: true,
-      error: {
-        name: 'AutoReviewDeniedError',
-        code: 'AUTO_REVIEW_DENIED',
-        reason: 'not authorized',
-      },
-    }
-    const renderSlot = vi.fn(() => <div data-testid="keyed-skill" />)
-    const view = render(<ToolCallTree {...props(block)} renderSlot={renderSlot as ToolTreeProps['renderSlot']} />)
-
-    expect(renderSlot).not.toHaveBeenCalled()
-    expect(view.queryByTestId('keyed-skill')).toBeNull()
-    expect(view.getByText('Auto review 已拒绝')).toBeTruthy()
-  })
 })

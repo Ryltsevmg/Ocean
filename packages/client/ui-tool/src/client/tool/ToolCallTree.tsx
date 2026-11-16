@@ -2,7 +2,6 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
 import type { ToolCallBlock } from '@ocean/ocean-client-ui-chat/client'
 import type { ToolCallOwnerProps, ToolCallPhaseProps, ToolTreeProps } from '../contract/slots.ts'
-import { toolRowModel } from './models/tool-call-model.ts'
 import { GenericToolCard } from './toolviews/GenericToolCard.tsx'
 import css from './ToolCallTree.module.css'
 
@@ -38,22 +37,16 @@ const ToolCall = memo(function ToolCall({
     useDisclosure,
     inspect: inspectCall === undefined ? undefined : () => { inspectCall(callId) },
   }), [callId, toolName, call, openFile, cwd, home, loadImage, inspectCall, useDisclosure])
-  const autoReviewDenied = useMemo(
-    () => call.phase === 'result' && toolRowModel(toolName, call.block).autoReviewDenial !== null,
-    [toolName, call],
-  )
   return (
     <div
       className={css.callRow}
       data-chat-anchor-key={`call:${callId}`}
       data-chat-call-id={callId}
     >
-      {autoReviewDenied
-        ? renderFallback(owner)
-        : renderSlot('tool.call.toolview', owner, {
-          entryKey: toolName,
-          fallback: renderFallback(owner),
-        })}
+      {renderSlot('tool.call.toolview', owner, {
+        entryKey: toolName,
+        fallback: renderFallback(owner),
+      })}
       {children}
     </div>
   )

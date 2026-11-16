@@ -58,8 +58,6 @@
     "@ocean/ocean-tool-executor-native": "workspace:*",
     "@ocean/ocean-tool-executor-ptc": "workspace:*",
     "@ocean/ocean-tool-jobs": "workspace:*",
-    "@ocean/ocean-tool-session-query": "workspace:*",
-    "@ocean/ocean-tool-terminal": "workspace:*",
     "@ocean/ocean-spill": "workspace:*",
     "@deepseek-ai/cordis": "workspace:~",
     "@ocean/ocean-api-remotes": "workspace:*",

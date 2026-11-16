@@ -118,7 +118,7 @@ function main(): void {
 
     const installedEntry = join(consumerRoot, 'node_modules', entry.packageName)
     const packageCount = verifyInstalledProductIsolation(installedEntry)
-    console.log(`release verify-packed-install: ${String(packageCount)} default-product packages exclude experimental packages`)
+    console.log(`release verify-packed-install: installed default-product graph of ${String(packageCount)} packages is complete`)
     const bin = join(consumerRoot, 'node_modules', ...entry.packageName.split('/'), entry.binPath)
     const version = capture(process.execPath, [bin, '--version'], { cwd: consumerRoot, env: environment })
     if (version !== expected.version) {

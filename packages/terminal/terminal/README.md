@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-terminal` provides persistent, owner-scoped terminal sessions to the harness: a session keeps shell or REPL state across tool calls, and every operation is fenced to the exact agent that created it. It provides the `ctx.terminals` service, which mints opaque session ids, routes session creation through registered backends, and waits for quiescent cleanup when an owner or the service disposes. It defines no terminal mechanics itself: backends such as the shipped `dsh-terminal-bash` own spawning and readiness, and the model-facing tools in `dsh-tool-terminal` own presentation. Sessions are process-local: they do not survive a harness restart.
+`dsh-terminal` provides persistent, owner-scoped terminal sessions to the harness: a session keeps shell or REPL state across tool calls, and every operation is fenced to the exact agent that created it. It provides the `ctx.terminals` service, which mints opaque session ids, routes session creation through registered backends, and waits for quiescent cleanup when an owner or the service disposes. It defines no terminal mechanics itself: backends such as the shipped `dsh-terminal-bash` own spawning and readiness, and a consumer tool package owns model-facing presentation. Sessions are process-local: they do not survive a harness restart.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount `@ocean/ocean-terminal` whenever a composition needs terminal sessions whose state survives across tool calls. The service alone does nothing useful: pair it with a backend such as `@ocean/ocean-terminal-bash` and a tool package such as `@ocean/ocean-tool-terminal`, and load all three in one composition.
+Mount `@ocean/ocean-terminal` whenever a composition needs terminal sessions whose state survives across tool calls. The service alone does nothing useful: pair it with a backend such as `@ocean/ocean-terminal-bash` and a tool package that presents sessions to the model, and load them in one composition.
 
 ### When to choose it
 
@@ -38,10 +38,9 @@ Load the session service together with a backend and a tool package:
 ```yaml
 - name: '@ocean/ocean-terminal'
 - name: '@ocean/ocean-terminal-bash'
-- name: '@ocean/ocean-tool-terminal'
 ```
 
-A backend provides one stable type — the shipped shell backend provides `shell` — and the tools open sessions by that type. The shell backend additionally requires the sandbox, sandbox-policy, and subprocess providers; see its [README](../terminal-bash/README.md) for the full composition.
+A backend provides one stable type — the shipped shell backend provides `shell` — and consumers open sessions by that type. The shell backend additionally requires the sandbox, sandbox-policy, and subprocess providers; see its [README](../terminal-bash/README.md) for the full composition.
 
 ### What sessions give you
 
@@ -98,12 +97,11 @@ The service reserves a session synchronously for one active send before returnin
 <a id="further-exploration"></a>
 ## Further Exploration
 
-Read these pages when the package-level contract is not enough. They move from the shared terminal model to the shipped backend, the tools, and the design evidence.
+Read these pages when the package-level contract is not enough. They move from the shared terminal model to the shipped backend and the design evidence.
 
 - [Terminal subsystem reference](../../../docs/subsystems/terminal.md) — shared types, backend and session contracts, and the generated `ctx.terminals` surface.
-- [terminal/ package map](../README.md) — the three-package family and how it composes.
+- [terminal/ package map](../README.md) — the family and how it composes.
 - [terminal-bash backend](../terminal-bash/README.md) — the shipped shell backend that provides the `shell` type.
-- [tool-terminal tools](../../experimental/tool-terminal/README.md) — the six model-facing tools that operate sessions.
 
 -----
 
@@ -114,7 +112,7 @@ Read these pages when the package-level contract is not enough. They move from t
 
 #### What the model sees
 
-Nothing directly. This package registers no prompt or tool; `@ocean/ocean-tool-terminal` owns visible schemas and result text.
+Nothing directly. This package registers no prompt or tool; the tool package that consumes these sessions owns visible schemas and result text, for example [`tool-bash-persistent`](../../../docs/tool-catalog.md#oceanocean-tool-bash-persistent).
 
 #### Token effect
 
@@ -122,7 +120,7 @@ None directly. Live session state stays process-local until a consumer returns a
 
 #### KV Cache effect
 
-No direct invalidation; `@ocean/ocean-tool-terminal` owns request-prefix changes.
+No direct invalidation; the consuming tool package owns request-prefix changes.
 
 ## Known Limitations and Deferred Work
 

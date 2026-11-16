@@ -475,7 +475,7 @@ describe('tool-call scheduler: ordered middleware and additional contexts', () =
         return {
           kind: 'deny',
           reason: 'blocked by policy',
-          info: { name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: 'exact scope was not authorized' },
+          info: { name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: 'exact scope was not authorized' },
         }
       }
       if (exec.callId === ToolCallId('c3')) throw new Error('pre exploded')
@@ -498,7 +498,7 @@ describe('tool-call scheduler: ordered middleware and additional contexts', () =
     expect(results.map(e => e.data.message.source.callId)).toEqual([ToolCallId('c1'), ToolCallId('c2'), ToolCallId('c3')])
     expect((results[1]!.data.message.content[0] as { text: string }).text).toContain('blocked by policy')
     expect(results[1]!.data.error).toEqual({
-      name: 'AutoReviewDeniedError', code: 'AUTO_REVIEW_DENIED', reason: 'exact scope was not authorized',
+      name: 'PolicyDeniedError', code: 'POLICY_DENIED', reason: 'exact scope was not authorized',
     })
     expect((results[2]!.data.message.content[0] as { text: string }).text).toContain('pre exploded')
   })
