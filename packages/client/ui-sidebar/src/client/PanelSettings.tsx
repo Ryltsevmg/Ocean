@@ -43,7 +43,7 @@ type PanelSettingsProps = PropsRuntime<'settings.navigation'>
   & InjectFace<SidebarRootInjected> & PropsLocale<'sidebar'>
   & PropsRenderFactories & PropsRenderSlots<'sidebar.panellist.actions'>
 
-/** Render all registered panels without leaving plugin launchers stranded in the sidebar.
+/** Render additional panel launchers in Settings.
  * @param props - Settings close action and the sidebar-owned panel registry.
  * @returns The panel navigation, or nothing while no panels are registered.
  */
@@ -51,7 +51,7 @@ export function PanelSettings({ close, selectPanel: openPanel, setPinned, trackE
   usePanels, useEntryPins, useEntryActions, usePanelInfo, t, renderSlot, renderFactorySlot,
 }: PanelSettingsProps) {
   const registeredPanels = usePanels(snapshot => snapshot)
-  const panels = registeredPanels.filter(panel => panel.id !== 'schedules')
+  const panels = registeredPanels.filter(panel => panel.id !== 'schedules' && panel.id !== FIXED_PANEL_ID)
   const unpinned = useEntryPins(ids => ids)
   const activePanelId = usePanelInfo(info => info.activePanelId)
   const hasEntryActions = useEntryActions(registered => registered)
@@ -61,7 +61,7 @@ export function PanelSettings({ close, selectPanel: openPanel, setPinned, trackE
     openPanel(id)
   }
   return <div className={css.settingsPanels}>
-    {panels.length > 0 && (
+    {(panels.length > 0 || hasEntryActions) && (
       <nav className={css.panelList} aria-label={t('panels.label')}>
         {panels.filter(({ id }) => id === FIXED_PANEL_ID || !hasEntryActions || !unpinned.includes(id)).map(({ id, label }) => (
           <PanelRow

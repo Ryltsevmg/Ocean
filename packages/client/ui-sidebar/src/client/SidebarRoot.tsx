@@ -75,7 +75,9 @@ export function SidebarRoot({
   t,
   renderSlot,
 }: SidebarRootComponentProps) {
-  const panels = usePanels(snapshot => snapshot).filter(panel => panel.id === 'schedules')
+  const panels = usePanels(snapshot => snapshot)
+    .filter(panel => panel.id === 'schedules' || panel.id === 'plugins')
+    .sort((left, right) => Number(right.id === 'schedules') - Number(left.id === 'schedules'))
   const shortcut = useShortcuts(rows => rows.find(row => row.id === 'sidebar.left.toggle'))
   const newShortcut = useShortcuts(rows => rows.find(row => row.id === 'session.new'))
   // A page whose access snapshot excludes starting a Session offers no New Session affordance.

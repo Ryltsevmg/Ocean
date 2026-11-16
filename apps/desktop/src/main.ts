@@ -1142,6 +1142,14 @@ async function main(): Promise<void> {
     updates.dispose()
   })
 
+  if (process.platform === 'darwin' && app.dock !== undefined) {
+    const dock = app.dock
+    const resources = development ? join(app.getAppPath(), 'resources') : process.resourcesPath
+    const icon = nativeImage.createFromPath(join(resources, 'dock-dark.png'))
+    if (icon.isEmpty()) throw new Error('Desktop Dock icon asset is missing')
+    dock.setIcon(icon)
+  }
+
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({

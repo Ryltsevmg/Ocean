@@ -1,6 +1,6 @@
 /**
- * Global plugin management: grouped cards for official configuration and
- * optional bundles, the Installed group's cards for the profile's bundles,
+ * Global plugin management: one list of official configuration cards,
+ * optional bundles and the profile's installed bundles,
  * their row switches, the install dialog with its guide and folded pnpm
  * output, the uninstall confirmation, and the toasts an action's outcome
  * becomes. A bundle's page lists the rows it contributes as the Host runs
@@ -358,34 +358,36 @@ function SourceSection({ pkg, t }: { readonly pkg: PackageView; readonly t: Tran
   if (pkg.source === undefined && !pkg.installed && pkg.availability === 'installation' && !pkg.optional) return null
   return (
     <section className={css.detailSection} data-plugin-source>
-      <h4 className={css.sectionTitle}>{t('sourceTitle')}</h4>
-      <dl className={css.facts}>
-        <div>
-          <dt>{t('sourceSpec')}</dt>
-          <dd>{pkg.source !== undefined ? <code>{pkg.source}</code> : pkg.availability === 'missing'
-            ? t(pkg.installed ? 'statusMissingFiles' : 'sourceNotInstalled') : t('sourceBuiltIn')}</dd>
-        </div>
-        {pkg.version === undefined
-          ? null
-          : (
-            <div>
-              <dt>{t('sourceVersion')}</dt>
-              <dd>{pkg.version}</dd>
-            </div>
+      <details>
+        <summary className={css.sectionTitle}>{t('sourceTitle')}</summary>
+        <dl className={css.facts}>
+          <div>
+            <dt>{t('sourceSpec')}</dt>
+            <dd>{pkg.source !== undefined ? <code>{pkg.source}</code> : pkg.availability === 'missing'
+              ? t(pkg.installed ? 'statusMissingFiles' : 'sourceNotInstalled') : t('sourceBuiltIn')}</dd>
+          </div>
+          {pkg.version === undefined
+            ? null
+            : (
+              <div>
+                <dt>{t('sourceVersion')}</dt>
+                <dd>{pkg.version}</dd>
+              </div>
+            )}
+          {pkg.installTarget === undefined ? null : (
+            <>
+              <div>
+                <dt>{t('sourceTargetSpec')}</dt>
+                <dd><code>{pkg.installTarget.spec}</code></dd>
+              </div>
+              <div>
+                <dt>{t('sourceTargetVersion')}</dt>
+                <dd>{pkg.installTarget.version}</dd>
+              </div>
+            </>
           )}
-        {pkg.installTarget === undefined ? null : (
-          <>
-            <div>
-              <dt>{t('sourceTargetSpec')}</dt>
-              <dd><code>{pkg.installTarget.spec}</code></dd>
-            </div>
-            <div>
-              <dt>{t('sourceTargetVersion')}</dt>
-              <dd>{pkg.installTarget.version}</dd>
-            </div>
-          </>
-        )}
-      </dl>
+        </dl>
+      </details>
     </section>
   )
 }
@@ -1660,7 +1662,7 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
     <ItemCard key={`item:${item.id}`} item={item} t={t} renderSlot={renderSlot} onOpen={() => { setView({ kind: 'item', id: item.id }) }} />
   ))
   const renderGroup = (id: 'basic' | 'extensions' | 'bundles', heading: string, cards: readonly ReactNode[]): ReactNode => {
-    const offersMore = id === 'extensions' && more.length > 0
+    const offersMore = id === 'basic' && more.length > 0
     if (cards.length === 0 && !offersMore) return null
     return (
       <section className={css.group} data-plugin-scope="global" data-plugin-group={id}>
@@ -1850,9 +1852,7 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
                   </section>
                 ) : (
                   <>
-                    {renderGroup('basic', t('basicTitle'), basicCards)}
-                    {renderGroup('extensions', t('extensionsTitle'), extensions.map(packageCard))}
-                    {renderGroup('bundles', t('bundlesTitle'), mine.map(packageCard))}
+                    {renderGroup('basic', t('title'), [...basicCards, ...extensions.map(packageCard), ...mine.map(packageCard)])}
                   </>
                 )}
                 {/* A failed package read trails the groups it left incomplete: right under the groups on a

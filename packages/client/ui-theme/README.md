@@ -83,6 +83,8 @@ System toasts use `--dsw-alias-toast-bg`, `--dsw-alias-toast-label`, and `--dsw-
 
 The `--dsw-alias-turn-trigger-*` tokens provide separate resting and hover backgrounds for Turn-trigger notices in each palette. Dark notices use brighter interactive layers so the resting card remains distinct from the transcript background.
 
+The Ocean mark uses blue (`#257AD8`) and pale cyan (`--ocean-logo-secondary: #B8DFF2`) in every theme.
+
 `brand-font.css` exports the local Montserrat Light, Regular and Medium faces (normal style, weights 300, 400 and 500), with `montserrat-light.woff2`, `montserrat-regular.woff2`, `montserrat-medium.woff2` and its SIL Open Font License in `lib/styles/`. Desktop bundles the same stylesheet, font and license for offline welcome brand text; ordinary UI keeps its system font stack.
 
 `corner-shape.css` smooths every rounded corner: inside `@supports (corner-shape: superellipse(1.5))` it defines `--dsw-corner-shape` and applies it to all elements and their `::before`/`::after` through the universal selector, so engines without `corner-shape` keep circular corners. Full-round shapes — `border-radius: 50%` circles and pill radii — pair `corner-shape: round` with their radius in the owning component sheet because a superellipse deforms them; the corner-shape stylesheet spec enforces that pairing across every package stylesheet.

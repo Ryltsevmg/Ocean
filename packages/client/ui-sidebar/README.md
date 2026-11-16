@@ -35,7 +35,7 @@ Below 768px, without a native Windows caption, the sidebar keeps its expanded co
 
 Ocean uses 36px expanded navigation rows, 16px side insets, and the shared Ocean selection surface; collapsed rail controls retain their existing sizes and keyboard paths.
 
-Global panel launchers, including Plugins and the dynamic More menu, live in **Settings** navigation. Opening a panel closes Settings and selects its existing main view. The conversation sidebar retains Automation tasks, New session, workspaces, conversations, and Settings; plugin contributions and launcher pinning remain available in Settings.
+The conversation sidebar shows Plugins directly below Automation tasks. Additional panel launchers and the dynamic More menu live in **Settings** navigation; opening one closes Settings and selects its existing main view. Plugin contributions and launcher pinning remain available in Settings.
 
 ### Brand and New Session
 
