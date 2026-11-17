@@ -2082,7 +2082,7 @@ it('lists newer registry versions with tags, times, deprecation, bundle declarat
   expect(view.mock.calls.map(call => call[1])).toEqual(expect.arrayContaining(['extra', 'extra@2.0.0', 'extra@1.2.0', 'extra@1.2.0-beta.1']))
   expect(view).toHaveBeenCalledTimes(4)
   expect(view).toHaveBeenCalledWith(dir, 'extra', expect.objectContaining({ fields: ['versions', 'time', 'dist-tags'], timeoutMs: 1000 }))
-  expect(view).toHaveBeenCalledWith(dir, 'extra@1.2.0', expect.objectContaining({ fields: ['name', 'version', 'engines', 'peerDependencies', 'deprecated', 'ocean'], registry: null }))
+  expect(view).toHaveBeenCalledWith(dir, 'extra@1.2.0', expect.objectContaining({ fields: ['name', 'version', 'engines', 'peerDependencies', 'deprecated', 'ocean', 'dsh'], registry: null }))
 })
 
 it('lists versions from the next registry while one is unreachable, and refuses what no registry answered', async () => {
