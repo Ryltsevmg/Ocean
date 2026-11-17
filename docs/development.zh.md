@@ -166,7 +166,7 @@ pi-ai 检查会在内存中重新生成预期元数据。数据过期时，检�
 
 自动 CI 就是 keyless 的 [Ocean 验证工作流](../.github/workflows/ocean-verify.yml)：离线发布策略测试、带类型检查的串行产物构建、本地化检查、聚焦的 plugin、UI 与 Codex 测试套件，以及隔离的 Codex 提供方测试，全部运行在同一个固定的托管运行器上。未签名的 Linux 打包只能通过 [ocean-package-linux.yml](../.github/workflows/ocean-package-linux.yml) 手动触发运行。资格限制与发布前提由 [.github 贡献者说明](../.github/AGENTS.md#ocean-qualification)负责。本地门禁清单见 [scripts/run-gates.ts](../scripts/run-gates.ts)。
 
-不带凭据的 dsh 依赖布局检查与 dsh/vendor 打包演练仅在 `DSH_CI_FAILOVER_LINUX=selfhosted`，且事件为受信任的 master 推送或同仓库、非 fork、非 Dependabot 拉取请求时使用现有 Linux 自托管池。其余情况（包括手动触发）均使用 `ubuntu-24.94`；手动发布仍使用托管运行器。
+不带凭据的 dsh 依赖布局检查与 dsh/vendor 打包演练仅在 `DSH_CI_FAILOVER_LINUX=selfhosted`，且事件为受信任的 master 推送或同仓库、非 fork、非 Dependabot 拉取请求时使用现有 Linux 自托管池。其余情况（包括手动触发）均使用 `ubuntu-24.04`；手动发布仍使用托管运行器。
 
 ### 日常命令
 

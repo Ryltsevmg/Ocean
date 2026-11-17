@@ -161,7 +161,7 @@ Outside CI (`CI` other than `true`), default worker counts follow the [local wor
 
 Automatic CI is the keyless [Ocean verification workflow](../.github/workflows/ocean-verify.yml): offline release-policy tests, a serial artifact build with type checks, localization checks, focused plugin, UI and Codex suites, and the isolated Codex provider test, all on one pinned hosted runner. Unsigned Linux packaging runs only by manual dispatch from [ocean-package-linux.yml](../.github/workflows/ocean-package-linux.yml). The [.github contributor instructions](../.github/AGENTS.md#ocean-qualification) own the qualification limits and release prerequisites. See [scripts/run-gates.ts](../scripts/run-gates.ts) for the local gate inventory.
 
-The credential-free dsh dependency-layout and dsh/vendor pack rehearsals use the existing Linux self-hosted pool only when `DSH_CI_FAILOVER_LINUX=selfhosted` and the event is a trusted master push or same-repository, non-fork, non-Dependabot pull request. All other cases, including manual dispatch, use `ubuntu-24.94`; manual publication stays hosted.
+The credential-free dsh dependency-layout and dsh/vendor pack rehearsals use the existing Linux self-hosted pool only when `DSH_CI_FAILOVER_LINUX=selfhosted` and the event is a trusted master push or same-repository, non-fork, non-Dependabot pull request. All other cases, including manual dispatch, use `ubuntu-24.04`; manual publication stays hosted.
 
 ### Daily commands
 
