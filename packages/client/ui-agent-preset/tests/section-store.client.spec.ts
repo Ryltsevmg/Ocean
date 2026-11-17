@@ -40,6 +40,16 @@ describe('the preset roster', () => {
     expect(state().error).toBe('gone')
   })
 
+  it('lists only presets the owner may select', async () => {
+    const { controller, remote, state } = fixture()
+    remote.agentPresets.list.mockResolvedValueOnce({ ok: true, value: { presets: [
+      { id: 'standard', isDefault: true },
+      { id: 'worker', isDefault: false, hidden: true },
+    ] } })
+    await controller.load()
+    expect(state().rows.map(row => row.id)).toEqual(['standard'])
+  })
+
   it('opens one declared composition for reading and keeps a failed read out of the viewer', async () => {
     const { controller, remote, state } = fixture()
     await controller.view('standard')

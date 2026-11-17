@@ -44,6 +44,9 @@ Define an Agent’s child plugins in ordinary Cordis YAML. Declare several prese
 | `name` | unset | Display name |
 | `description` | unset | Display description |
 | `order` | unset | Roster order |
+| `hidden` | unset | Internal preset: declared for sessions that name it, never offered for selection |
+
+`hidden: true` declares a preset an operator supplies for its own sessions, such as an executor's worker composition. It changes no composition and no stored session: the preset stays on the roster so a session already running it keeps its display name, while the new-session picker and the Settings roster omit it. Omission keeps a preset selectable.
 
 The declaration row’s `id` addresses Loader edits; `config.id` is the preset identity saved by sessions. Child entry IDs may be omitted and assigned by Loader.
 

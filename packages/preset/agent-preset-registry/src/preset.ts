@@ -6,6 +6,8 @@ export interface AgentPreset {
   readonly name?: string
   readonly description?: string
   readonly order?: number
+  /** Internal preset: declared and composable, but not offered for selection. */
+  readonly hidden?: boolean
   readonly broken?: string
 }
 

@@ -124,6 +124,16 @@ describe('declarative preset revisions', () => {
     ]))
   })
 
+  it('marks an internal preset on the roster while it still composes a session', async () => {
+    const ctx = await setup()
+    await declare(ctx, { ...contribution('standard'), name: 'Standard' })
+    await declare(ctx, { ...contribution('worker'), name: 'Super agent worker', hidden: true })
+    expect((await ctx.agentPresets.remoteExportList()).presets.map(row => ({ id: row.id, hidden: row.hidden })))
+      .toEqual([{ id: 'standard', hidden: undefined }, { id: 'worker', hidden: true }])
+    // The flag is display policy only: a session naming the preset still mounts it.
+    expect(await ctx.agentPresets.resolve('worker')).toEqual({ id: 'worker' })
+  })
+
   it('renders a declaration as entry-list YAML for reading, conditions included', async () => {
     const ctx = await setup()
     await declare(ctx, {
