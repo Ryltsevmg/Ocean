@@ -1,7 +1,7 @@
 /** Sidebar account launcher and locally authoritative sign-out action. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Toast, Menu, IconEllipsisOutlineMedium, IconPaperPlaneOutlineMedium, IconSettingsOutlineMedium,
+  Toast, Menu, Tooltip, IconPaperPlaneOutlineMedium, IconSettingsOutlineMedium,
 } from '@ocean/ocean-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime, PropsRenderSlots } from '@ocean/ocean-client-ui-slots'
 import type { AccountSectionInjected } from './AccountSection.tsx'
@@ -58,27 +58,33 @@ export function AccountMenu({
     <div className={css.notifications} hidden={!wide}>{renderSlot('settings.launcher.notifications', {
       active: signedIn && !account.desktopOnboardingVisible && !account.onboarding, openAccount,
     })}</div>
-    <Menu open={open} side="top" portal autoFocus className={css.anchor} listClassName={signedIn ? undefined : css.signedOutMenu}
-      anchor={<button ref={trigger} type="button" className={css.trigger} data-collapsed={!wide} data-signed-out={!signedIn} aria-label={t('menu')}
-        aria-haspopup="menu" aria-expanded={open} onClick={() => { setOpen(value => !value) }}>
-        {signedIn
-          ? <span className={css.avatar} data-avatar-status={account.avatar?.status}>
+    {signedIn
+      ? <Menu open={open} side="top" portal autoFocus className={css.anchor}
+        anchor={<button ref={trigger} type="button" className={css.trigger} data-collapsed={!wide} data-signed-out={false}
+          aria-label={t('menu')} aria-haspopup="menu" aria-expanded={open} onClick={() => { setOpen(value => !value) }}>
+          <span className={css.avatar} data-avatar-status={account.avatar?.status}>
             <AccountAvatar avatar={account.avatar} avatarFailed={avatarFailed} />
           </span>
-          : <IconEllipsisOutlineMedium size={14} />}
-        {wide && <span className={css.label}>{signedIn ? label : t('more')}</span>}
-      </button>}
-      items={[
-        { id: 'settings', label: t('settings'), icon: <IconSettingsOutlineMedium size={16} />,
-          ...(settingsShortcut === undefined ? {} : { shortcut: settingsShortcut }) },
-        ...(signedIn ? [{ id: 'signout', label: t('signOut'), icon: <LogoutIcon />, disabled: busy }]
-          : []),
-      ]}
-      onClose={() => { setOpen(false) }}
-      onSelect={(id) => {
-        if (id === 'settings') { setOpen(false); trigger.current?.focus(); openSettings() }
-        else void requestSignOut()
-      }} />
+          {wide && <span className={css.label}>{label}</span>}
+        </button>}
+        items={[
+          { id: 'settings', label: t('settings'), icon: <IconSettingsOutlineMedium size={16} />,
+            ...(settingsShortcut === undefined ? {} : { shortcut: settingsShortcut }) },
+          { id: 'signout', label: t('signOut'), icon: <LogoutIcon />, disabled: busy },
+        ]}
+        onClose={() => { setOpen(false) }}
+        onSelect={(id) => {
+          if (id === 'settings') { setOpen(false); trigger.current?.focus(); openSettings() }
+          else void requestSignOut()
+        }} />
+      : <Tooltip disabled={settingsOpen} label={t('settings')} shortcutKeys={settingsShortcut?.keys}>
+        <button type="button" className={css.trigger} data-collapsed={!wide} data-signed-out
+          aria-label={t('settings')} aria-keyshortcuts={settingsShortcut?.aria} aria-haspopup="dialog"
+          aria-expanded={settingsOpen} onClick={() => { openSettings() }}>
+          <IconSettingsOutlineMedium size={16} />
+          {wide && <span className={css.label}>{t('settings')}</span>}
+        </button>
+      </Tooltip>}
     {account.loginVisible && !account.onboarding && <SignInDialog account={account} colorScheme={colorScheme}
       start={start} cancel={cancel} t={t}
       close={() => { showLogin(false) }} useApiKey={() => { showLogin(false); openOnboarding('deepseek-official') }} />}
