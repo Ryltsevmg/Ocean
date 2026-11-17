@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { zipSync } from 'fflate'
 import { expect, it } from 'vitest'
+import { zipFixture } from '../zip-test-fixture.ts'
 import { downloadPrimaryRuntimeAsset, primaryRuntimePayloadDigest, prunePnpmForeignNativePackages, smokePrimaryRuntime, unpackPrimaryRuntimeWheel } from './prepare.ts'
 import lock from './lock.json' with { type: 'json' }
 
@@ -130,6 +131,43 @@ it('rejects library files requiring an unsupported installation scheme', async (
   } finally {
     await rm(root, { recursive: true, force: true })
   }
+})
+
+it.each(['sample-1.0.data/purelib/module.py', './sample-1.0.data/purelib/module.py', 'sample-1.0.data//purelib/module.py'])(
+  'rejects unsupported wheel entry %s before extracting earlier entries', async (name) => {
+    const root = await mkdtemp(join(tmpdir(), 'ocean-wheel-preflight-'))
+    try {
+      const archive = join(root, 'library.whl')
+      await writeFile(archive, zipFixture([{ name: 'sample.py', content: 'valid' }, { name, content: 'unsupported' }]))
+      await expect(unpackPrimaryRuntimeWheel(archive, join(root, 'site-packages'))).rejects.toThrow('unsupported installation paths')
+      await expect(stat(join(root, 'site-packages'))).rejects.toMatchObject({ code: 'ENOENT' })
+    } finally { await rm(root, { recursive: true, force: true }) }
+  },
+)
+
+it.each(['victim', './victim'])('rejects duplicate wheel entry %s without following its earlier symlink', async (name) => {
+  const root = await mkdtemp(join(tmpdir(), 'ocean-wheel-duplicate-'))
+  try {
+    const archive = join(root, 'library.whl')
+    await writeFile(join(root, 'outside'), 'original')
+    await writeFile(archive, zipFixture([
+      { name: 'victim', content: '../outside', mode: 0o120777 },
+      { name, content: 'replacement' },
+    ]))
+    await expect(unpackPrimaryRuntimeWheel(archive, join(root, 'site-packages'))).rejects.toThrow('duplicate entry')
+    expect(await readFile(join(root, 'outside'), 'utf8')).toBe('original')
+    await expect(stat(join(root, 'site-packages'))).rejects.toMatchObject({ code: 'ENOENT' })
+  } finally { await rm(root, { recursive: true, force: true }) }
+})
+
+it('rejects a backslash wheel path rather than normalizing it into another installation scheme', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'ocean-wheel-separator-'))
+  try {
+    const archive = join(root, 'library.whl')
+    await writeFile(archive, zipFixture([{ name: 'sample-1.0.data\\purelib\\module.py', content: 'unsupported' }]))
+    await expect(unpackPrimaryRuntimeWheel(archive, join(root, 'site-packages'))).rejects.toThrow('invalid characters in fileName')
+    await expect(stat(join(root, 'site-packages'))).rejects.toMatchObject({ code: 'ENOENT' })
+  } finally { await rm(root, { recursive: true, force: true }) }
 })
 
 it('gives Python-only payloads a distinct identity', () => {

@@ -193,6 +193,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@ocean/ocean-client-ui-cordis` | no | Cordis dynamic-plugin definition card: the keyed cordis_define tool row with its run/stop switch |
 | `@ocean/ocean-cordis-client-runner` | no | Browser half of dynamic dual-half plugin packages: event subscription, closure evaluation, guard facade, and loader entries |
 | `@ocean/ocean-cordis-host-runner` | yes | Dynamic package definition registry, host-half sandbox lifecycle, and invoke handler table for model-mounted dual-half packages |
+| `@ocean/ocean-plugin-market` | no | Curated plugin catalog for Ocean |
 | `@ocean/ocean-tool-cordis` | no | Read-only runtime API inspection for Harness plugin development |
 
 ## feedback

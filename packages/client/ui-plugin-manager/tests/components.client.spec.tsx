@@ -228,6 +228,24 @@ function renderTab(
 }
 
 describe('PluginManagerPage', () => {
+  it('opens the first tab before Installed and preserves an explicit selection when the catalog changes', () => {
+    const { navigation, setTabs } = renderTab({ packages: [pkg()] }, {}, {
+      'plugins.tab:catalog': () => <p>Catalog content</p>,
+    }, {}, [{ id: 'catalog', label: 'Catalog', order: -10 }])
+    expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Catalog', en.installedTab])
+    expect(screen.getByRole('tabpanel', { name: 'Catalog' }).textContent).toBe('Catalog content')
+    expect(screen.getByRole('tab', { name: 'Catalog' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.click(screen.getByRole('tab', { name: en.installedTab }))
+    setTabs([{ id: 'catalog', label: 'Catalog', order: -10 }, { id: 'extras', label: 'Extras', order: -5 }])
+    expect(navigation.getSnapshot().tab).toBe('installed')
+    expect(screen.getByRole('tab', { name: en.installedTab }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }))
+    setTabs([])
+    expect(navigation.getSnapshot().tab).toBe('installed')
+    setTabs([{ id: 'catalog', label: 'Catalog', order: -10 }])
+    expect(screen.getByRole('tab', { name: en.installedTab }).getAttribute('aria-selected')).toBe('true')
+  })
+
   it('shows no tabs without contributions, and switches between Installed and a contributed tab', () => {
     const { actions, navigation, setTabs } = renderTab({ packages: [pkg()] }, {}, {
       'plugins.tab:extras': (_view, owner) => {
@@ -1250,7 +1268,7 @@ describe('PluginManagerPage', () => {
         .toEqual(['basic', 'extensions', 'bundles'])
       expect(within(basic).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-item'))).toEqual(['bash'])
       expect(within(extensions).getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
-      expect(within(extensions).getByRole('button', { name: en.moreAction }).textContent).toBe(en.moreAction)
+      expect(screen.getByRole('button', { name: en.moreAction }).textContent).toBe(en.moreAction)
       expect(within(extensions).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
         .toEqual(['@acme/ocean-team-pack', '@acme/new-official'])
       expect(document.querySelector('[data-plugin-count]')).toBeNull()
@@ -1428,7 +1446,7 @@ describe('PluginManagerPage', () => {
     it('starts on the main list when the navigation store is recreated', () => {
       const first = createNavigationStore().create()
       first.actions.setView({ kind: 'more' })
-      expect(createNavigationStore().create().getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'list' } })
+      expect(createNavigationStore().create().getSnapshot()).toEqual({ tab: null, view: { kind: 'list' } })
     })
 
     it('counts an official plugin as content: the empty line waits for a page with nothing at all', () => {

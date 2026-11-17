@@ -3,15 +3,16 @@
 import { execFileSync } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
 import { cpSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, writeFileSync } from 'node:fs'
-import { cp } from 'node:fs/promises'
+import { cp, open } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, posix, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import extractZip from 'extract-zip'
+import { fromFd, type Entry } from 'yauzl'
 import { x as extractTar } from 'tar'
 import { copyPrimaryRuntime, parsePrimaryRuntime, workspaceDependencyPaths, type PrimaryRuntimeManifest } from '@ocean/ocean-tool-workspace-dependencies'
 import { acceptsNpmPlatform } from '../npm-platform.ts'
+import { extractRuntimeZip } from '../extract-runtime-zip.ts'
 import lock from './lock.json' with { type: 'json' }
 import { prunePrimaryRuntimePythonTests } from './prune-python-tests.ts'
 
@@ -94,7 +95,7 @@ export async function downloadNodeRuntime(target: PrimaryRuntimeTarget, destinat
   const archive = await downloadPrimaryRuntimeAsset(`https://nodejs.org/dist/v${lock.nodeVersion}/${filename}`, artifact.nodeSha256, cache)
   const staging = mkdtempSync(join(tmpdir(), 'ocean-node-'))
   try {
-    if (target === 'win-x64') await extractZip(archive, { dir: staging })
+    if (target === 'win-x64') await extractRuntimeZip(archive, staging)
     else await extractTar({ file: archive, cwd: staging })
     const source = join(staging, filename.replace(/\.(?:zip|tar\.gz)$/u, ''))
     mkdirSync(join(destination, 'bin'), { recursive: true })
@@ -135,18 +136,41 @@ export function primaryRuntimePayloadDigest(
  * Unpack a locked library wheel, retaining auxiliary scripts in its distribution data directory.
  * @param archive - Hash-verified wheel archive.
  * @param destination - Absolute site-packages directory.
- * @returns Resolves after extraction without command wrappers; rejects other wheel installation schemes.
+ * @returns Resolves after extraction without command wrappers; rejects unsupported schemes and duplicate paths before writing.
  */
 export async function unpackPrimaryRuntimeWheel(archive: string, destination: string): Promise<void> {
-  await extractZip(archive, {
-    dir: destination,
-    onEntry: (entry) => {
-      const [directory, scheme] = entry.fileName.split('/')
-      if (directory?.endsWith('.data') && scheme !== '' && scheme !== 'scripts') {
-        throw new Error(`primary runtime: wheel requires unsupported installation paths: ${entry.fileName}`)
-      }
-    },
-  })
+  await validateWheelEntries(archive)
+  await extractRuntimeZip(archive, destination)
+}
+
+/** Validate all wheel metadata before writing files; close the reader before native extraction. */
+async function validateWheelEntries(archive: string): Promise<void> {
+  const file = await open(archive, 'r')
+  try {
+    await new Promise<void>((resolve, reject) => {
+      fromFd(file.fd, { lazyEntries: true, autoClose: false, strictFileNames: true }, (error, zip) => {
+        if (error) { reject(error); return }
+        const seen = new Set<string>()
+        zip.once('error', reject)
+        zip.once('end', resolve)
+        zip.on('entry', (entry: Entry) => {
+          const name = posix.normalize(entry.fileName)
+          const [directory, scheme] = name.split('/')
+          if (directory?.endsWith('.data') && scheme !== '' && scheme !== 'scripts') {
+            reject(new Error(`primary runtime: wheel requires unsupported installation paths: ${entry.fileName}`))
+            return
+          }
+          if (seen.has(name)) {
+            reject(new Error(`primary runtime: wheel contains duplicate entry: ${entry.fileName}`))
+            return
+          }
+          seen.add(name)
+          zip.readEntry()
+        })
+        zip.readEntry()
+      })
+    })
+  } finally { await file.close() }
 }
 
 /**

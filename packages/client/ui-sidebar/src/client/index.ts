@@ -11,17 +11,14 @@ import type {} from '@ocean/ocean-client-ui-renderer/client'
 // Type-only: pulls the Session root standard-props merge.
 import type {} from '@ocean/ocean-client-ui-session/client'
 import type { SidebarPanelMetadata, SidebarRootInjected, SidebarSectionInjected } from './contract/slots.ts'
-import { createPanelPins } from './panel-pins.ts'
 import { HeaderLeadingControls } from './HeaderLeadingControls.tsx'
-import type {} from '@ocean/ocean-client-ui-settings/client'
-import { PanelSettings } from './PanelSettings.tsx'
 import { SidebarRoot } from './SidebarRoot.tsx'
 import { PanelIcon } from './PanelIcon.tsx'
 import { en, ja, es, fr, de, ru, pt, zh, type SidebarKey } from './locales.ts'
 
 export type {
   SidebarBrandMarkOwnerProps, SidebarBrandNameOwnerProps, SidebarFooterActionOwnerProps,
-  SidebarPanelActionEntry, SidebarPanelActionsOwnerProps, SidebarPanelIconOwnerProps, SidebarPanelMetadata,
+  SidebarPanelIconOwnerProps, SidebarPanelMetadata,
   SidebarRootComponentProps, SidebarRootInjected, SidebarSectionOwnerProps, SidebarSettingsOwnerProps,
   SectionScroller, SidebarSectionHookContext, SidebarSectionInjected, UseSectionScroller,
 } from './contract/slots.ts'
@@ -71,21 +68,14 @@ export function apply(ctx: ClientContext): void {
   }
   ctx.effect(() => ctx.slots.subscribe('sidebar.panellist', syncPanels), 'ui-sidebar: panel entries')
   ctx.effect(() => ctx.locale.subscribe(syncPanels), 'ui-sidebar: panel labels')
-  const panelPins = createPanelPins()
-  const entryActions = {
-    getSnapshot: () => ctx.slots.entriesOfSlot('sidebar.panellist.actions').length > 0,
-    subscribe: (listener: () => void) => ctx.slots.subscribe('sidebar.panellist.actions', listener),
-  }
-
   const injectProps = (): SidebarRootInjected => ({
     // The shell's New Session button rides the Workspace UI's shared action
     // (current Session Workspace, then recent Workspace).
     startSession: (workspaceId) => { workspaceNavigation.startSession(workspaceId) },
     toggleSidebar: () => { ctx.layout.toggleSidebar() },
     selectPanel: (id) => { ctx.layout.selectPanel(id) },
-    setPinned: panelPins.setPinned,
     trackEntryClick: (attributes) => { ctx.get('productAnalytics')?.track('sidebar_menu_click', attributes) },
-    hooks: { panels, shortcuts: ctx.shortcuts.catalog, entryPins: panelPins.unpinned, entryActions },
+    hooks: { panels, shortcuts: ctx.shortcuts.catalog },
   })
   ctx.slots.inject('sidebar', function* () {
     yield ctx.slots.registerFactory({
@@ -99,6 +89,7 @@ export function apply(ctx: ClientContext): void {
         'sidebar.brand.mark': { kind: 'single', scope: 'root' },
         'sidebar.brand.name': { kind: 'single', scope: 'root' },
         'sidebar.toggle.badge': { kind: 'single', scope: 'root' },
+        'sidebar.hosts': { kind: 'single', scope: 'root' },
         'sidebar.workspaces': { kind: 'single', scope: 'root', inject: SIDEBAR_SECTION_INJECT },
         'sidebar.settings': { kind: 'single', scope: 'root' },
         'sidebar.footer.action': { kind: 'list', scope: 'root' },
@@ -115,10 +106,5 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: injectProps,
   }, HeaderLeadingControls))
-  ctx.slots.inject('settings.navigation', () => ctx.slots.register({
-    name: 'settings.navigation', id: 'ocean-panels', order: 14,
-    locale: NS, inject: injectProps,
-    children: { 'sidebar.panellist.actions': { kind: 'list', scope: 'root' } },
-  }, PanelSettings))
   syncPanels()
 }

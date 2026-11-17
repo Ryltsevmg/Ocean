@@ -57,6 +57,8 @@ import { SessionRenameDialog } from './session-actions/RenameSession.tsx'
 import { RowActionToast } from './session-actions/RowActionToast.tsx'
 import { registerToasts } from './toast/register.ts'
 import { WorkspacePicker } from './WorkspacePicker.tsx'
+import { HostNavigation } from './HostNavigation.tsx'
+import { createHostNavigation, publishHostSessions, type DesktopHostsBridge } from './hosts.ts'
 import { en, ja, es, fr, de, ru, pt, zh, type WorkspaceKey } from './locales.ts'
 
 export type { StartSessionOptions, UiWorkspace } from './navigation.ts'
@@ -132,7 +134,7 @@ const NS = 'workspace'
  * declaration through `slots.inject()` instead of assuming order.
  */
 export const inject = ['contextMenus',
-  'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts', 'remoteAccess',
+  'slots', 'sessions', 'uiSession', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts', 'remoteAccess',
 ]
 
 /**
@@ -188,6 +190,33 @@ export function apply(ctx: Context): void {
   const openSession: WorkspaceBrowserInjected['open'] = (sessionId) => {
     uiWorkspace.openSession(sessionId)
   }
+  const environment = globalThis as { oceanDesktopHosts?: DesktopHostsBridge; document?: Document }
+  const bridge = environment.oceanDesktopHosts
+  const address = environment.document?.querySelector<HTMLBaseElement>('base[data-ocean-device]')?.href
+  let retryPublication = (): void => {}
+  const hostNavigation = createHostNavigation(bridge, address, () => { retryPublication() })
+  ctx.effect(hostNavigation.start, 'workspace: Host navigation')
+  ctx.slots.inject('sidebar.hosts', () => ctx.slots.register({
+    name: 'sidebar.hosts', locale: NS, inject: () => hostNavigation.injected,
+  }, HostNavigation))
+  if (bridge !== undefined) {
+    ctx.effect(() => {
+      const publication = publishHostSessions({
+        bridge, sessions: sessions.list,
+        archived: derive(workspaces.list, snapshot => snapshot.archivedSessionIds),
+        pending: ctx.uiSession.pendingInteractions,
+        failed: hostNavigation.publicationFailed,
+        succeeded: hostNavigation.publicationSucceeded,
+      })
+      retryPublication = publication.retry
+      return publication.dispose
+    }, 'workspace: Desktop Host metadata')
+    ctx.effect(() => bridge.onOpenOwnedSession((id) => {
+      const row = sessions.list.getSnapshot().ids.find(sessionId => sessionId === id)
+      if (row !== undefined && !workspaces.list.getSnapshot().archivedSessionIds.includes(row)) openSession(row)
+    }), 'workspace: Desktop Host session navigation')
+  }
+
   // Registry-global sets as Sets, rebuilt only when the Workspace snapshot changes.
   const pinnedSet = derive(workspaces.list, snapshot => new Set<SessionId>(snapshot.pinnedSessionIds))
   const archivedSet = derive(workspaces.list, snapshot => new Set<SessionId>(snapshot.archivedSessionIds))

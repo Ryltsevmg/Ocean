@@ -6,6 +6,13 @@
 
 来源：[`packages/credentials/credentials/src/index.ts`](../../packages/credentials/credentials/src/index.ts)
 
+<a id="remote-device-credentials"></a>
+## 远程设备凭据
+
+[Connection 提供方](../../packages/client/connection/README.zh.md#browser-authentication-and-request-trust)通过凭据提供方串行化的 `modifyRecord` 操作拥有远程设备记录。`DeviceId` 是经过验证并带有 `DeviceId` 品牌的 UUID，标识一条已签发的设备记录，不同于账号设备标识或 Host 的持久标识。`DeviceMetadata` 只包含 `id: DeviceId`、`label: string` 和 `revoked: boolean`；管理清单不包含令牌散列或会话凭据。两个类型均由 `@ocean/ocean-client-connection` 导出。
+
+`ctx.deviceBootstrap.issue(label)` 返回已提交的设备标识及只展示一次的新持有者令牌。`ctx.deviceBootstrap.list()` 从凭据提供方的当前快照返回 `DeviceMetadata[]`。该本地服务不启动网络监听器，也不撤销或轮换活动会话。[部署指南](../cookbook/deploying-remote-host.zh.md)说明活动管理与凭据目录恢复。
+
 ## 标识
 
 引用以 POSIX 风格环境变量名命名一条凭据。brand 防止调用方将凭据引用与在包或进程之间传递的其他字符串混用；构造时校验 shell 标识符语法。
@@ -395,6 +402,29 @@ watch(signal: AbortSignal, includeIdentityChanges: boolean = false): AsyncIterab
 ```
 
 Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
+
+<a id="ctxdevicebootstrap--devicebootstrap"></a>
+
+### `ctx.deviceBootstrap` — `DeviceBootstrap`
+
+Uses the selected credential provider's serialization and file-access policy.
+
+```ts cordis-catalog
+/**
+ * Create a device in the local credential home without exposing a listener.
+ * @param label - User-visible name for the device.
+ * @returns The device identifier and its token, shown once after the write commits.
+ */
+issue(label: string): Promise<{ id: DeviceId; token: string }>
+
+/**
+ * Read local device metadata without credential material.
+ * @returns The credential provider's current device inventory.
+ */
+list(): Promise<DeviceMetadata[]>
+```
+
+Source: [`packages/client/connection/src/device-bootstrap.ts`](../../packages/client/connection/src/device-bootstrap.ts)
 
 <a id="authorization-events"></a>
 

@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for deploying-remote-host.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/cookbook/deploying-remote-host.md
+/:
+  en: bd951ed3746acf34
+  zh: 9a54cdcb0cabb85c
+/cookbook-deploying-a-remote-host:
+  en: 6b8d7d3aa4342a8e
+  zh: 9c52da75d5423682
+/cookbook-deploying-a-remote-host/summary:
+  en: a8144a425dc362d4
+  zh: 6da5701952476dca
+/cookbook-deploying-a-remote-host/table-of-contents:
+  en: 506f41b045a2e08f
+  zh: fbb729fe1e35a008
+/cookbook-deploying-a-remote-host/start-the-host:
+  en: 0c0947ae495185ff
+  zh: 7f20fa5833ab4eb9
+/cookbook-deploying-a-remote-host/run-as-a-service-or-in-a-container:
+  en: c42def2986ba09ad
+  zh: db75daf2eee160f2
+/cookbook-deploying-a-remote-host/manage-devices:
+  en: 6f1da0af1d1747cf
+  zh: 63e83e36c6cdc0c9
+/cookbook-deploying-a-remote-host/back-up-restore-and-update:
+  en: fcd1880d87e3719e
+  zh: 3d1674aacdc3aa80
+/cookbook-deploying-a-remote-host/dev-note:
+  en: d9827226abcbef64
+  zh: 8c96adfc260add3a

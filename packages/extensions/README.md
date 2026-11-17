@@ -28,6 +28,7 @@ The extensions group provides read-only runtime API discovery for agents, proces
 | [`cordis-host-runner`](cordis-host-runner/README.md) | Host half: definition registry, sandboxed host-half lifecycle, and the inspect registry that answers browser queries | provides `ctx.dynamicCordisRunner` and `ctx.cordisInspect` |
 | [`cordis-client-runner`](cordis-client-runner/README.md) | Browser half: evaluates a browser-half source into a live plugin and answers run requests | client face; provides browser `ctx.dynamicCordisRunner` |
 | [`ui-cordis`](ui-cordis/README.md) | Browser panel and historical lifecycle tool cards | client face; registers slots |
+| [`plugin-market`](plugin-market/README.md) | Bundled catalog and plugin management controls | client face; registers a Plugins tab |
 
 -----
 

@@ -7,12 +7,14 @@ import { DesktopUpdateSettings } from './update-settings.ts'
 import { isDesktopUpdateChannel } from './settings-file.ts'
 import type { ProductEventMap, ProductEvent } from '@ocean/ocean-client-product-analytics/types'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
+import { randomUUID } from 'node:crypto'
 import { access, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   app,
   BrowserWindow,
+  WebContentsView,
   dialog,
   ipcMain,
   Menu,
@@ -20,11 +22,16 @@ import {
   nativeImage,
   nativeTheme,
   protocol,
+  safeStorage,
   session,
   shell,
   type IpcMainInvokeEvent,
   type MenuItemConstructorOptions,
+  type Session,
+  type WebContents,
 } from 'electron'
+import { DeviceClient } from '@ocean/ocean-client-connection/device'
+import { HarnessError } from '@ocean/ocean-error'
 import { resolveDesktopPaths } from './paths.ts'
 import { DesktopProjectManager } from './project-manager.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
@@ -32,6 +39,11 @@ import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-vi
 import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
+import { RemoteConnectionStore } from './remote-connection-store.ts'
+import { RemoteDesktopHost } from './remote-host.ts'
+import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
+import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
+import { remoteErrorResult, remoteFailure, type DesktopRemoteResult } from './remote-result.ts'
 import { DesktopBackendController } from './backend-controller.ts'
 import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } from './ipc.ts'
 import { readDeviceInfo } from './device-info.ts'
@@ -420,7 +432,7 @@ async function main(): Promise<void> {
   const installFileDrag = (): (() => Promise<void>) => installDesktopFileDrag(
     event => assertProductSender(event),
     (address, signal) => {
-      const host = backend.host
+      const host = remoteConnection === undefined ? backend.host : undefined
       if (host === undefined) return Promise.reject(new Error('File drag Host unavailable'))
       return host.resolveDragResource(address, signal)
     },
@@ -498,7 +510,33 @@ async function main(): Promise<void> {
   const applicationUrl = `${SCHEME}://app/`
   let hostUrl: string | undefined
   let hostCookie: string | undefined
-  const browserGuests = new DesktopBrowserGuests(() => hostUrl)
+  type RemoteConnection = {
+    host: RemoteDesktopHost
+    browserSession: Session
+    contents?: WebContents
+    removeView?: () => void
+    setVisible?: (visible: boolean) => void
+    publication?: DesktopHostPublication
+    bootFailed?: boolean
+    dispose(): Promise<void>
+  }
+  const remoteConnections = new Map<string, RemoteConnection>()
+  let localHostPublication: DesktopHostPublication | undefined
+  let hostSelectionRevision = 0
+  let remoteConnection: RemoteConnection | undefined
+  const remoteByContents = new WeakMap<WebContents, RemoteConnection>()
+  const applicationOwners = new WeakMap<WebContents, BrowserWindow>()
+  const activeContents = (): WebContents | undefined => remoteConnection?.contents ?? mainWindow?.webContents
+  let switchingHost = false
+  let remoteConnectionsClosing = false
+  let remoteConnectAbort: AbortController | undefined
+  let remoteDialog: BrowserWindow | undefined
+  let disconnectedRemoteAddress: string | undefined
+  const remoteDialogUrl = `${SCHEME}://shell/remote-connection.html`
+  const remoteStore = new RemoteConnectionStore(app.getPath('userData'), safeStorage)
+  const remoteConfig = resolveDesktopRemoteConfig(process.env)
+  const activeHostAddress = (): string | undefined => remoteConnection?.host.address ?? hostUrl
+  const browserGuests = new DesktopBrowserGuests(activeHostAddress)
   let injections: readonly unknown[] = []
   let welcomeBackend: DesktopWelcomeBackend | undefined
   let reportedLaunch = false
@@ -512,13 +550,19 @@ async function main(): Promise<void> {
   let stopAccount: (() => void) | undefined
   let openedAttempt: string | undefined
   let returnedAttempt: string | undefined
-  const assertProductSender = (event: IpcMainInvokeEvent): BrowserWindow => {
+  const assertOwnedApplication = (event: IpcMainInvokeEvent): BrowserWindow => {
     assertDesktopSender(event, ['app'])
-    if (mainWindow === undefined || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents
-      || event.senderFrame === null || event.senderFrame !== mainWindow.webContents.mainFrame) {
+    const owner = applicationOwners.get(event.sender)
+    if (owner === undefined || owner.isDestroyed() || event.senderFrame === null
+      || event.senderFrame !== event.sender.mainFrame) {
       throw new Error('ocean desktop: rejected IPC from an unowned renderer')
     }
-    return mainWindow
+    return owner
+  }
+  const assertProductSender = (event: IpcMainInvokeEvent): BrowserWindow => {
+    const owner = assertOwnedApplication(event)
+    if (owner !== mainWindow || event.sender !== activeContents()) throw new Error('ocean desktop: rejected IPC from an inactive window')
+    return owner
   }
   let navigation: { window: BrowserWindow; url: string; promise: Promise<void> } | undefined
   const navigateMain = (url: string): Promise<void> => {
@@ -617,9 +661,7 @@ async function main(): Promise<void> {
     updateJournal?.state(state)
     updateState = state
     mandatoryUI?.sync()
-    for (const window of BrowserWindow.getAllWindows()) {
-      window.webContents.send(DESKTOP_IPC.updatesPresentation, updatePresentation(state))
-    }
+    publishApplicationEvent(DESKTOP_IPC.updatesPresentation, updatePresentation(state))
     if (state.phase === 'error' && state.failedOperation !== 'check' && state.failedOperation !== 'configuration') {
       if (state.failedOperation === 'install' && fileDragStopped && !quitting) {
         fileDragCleanups.add(installFileDrag())
@@ -631,6 +673,7 @@ async function main(): Promise<void> {
         operationReportStop = undefined
       }
       shellInstallerOwnsQuit = false
+      remoteConnectionsClosing = shuttingDown
       updateStoppedHost = false
       if (restoreHost) {
         // Only confirmed process exit permits replacement before another installation confirmation.
@@ -732,6 +775,7 @@ async function main(): Promise<void> {
         const stopFailure = updateStopFailure as DesktopHostUncleanExitError | undefined
         if (stopFailure !== undefined) throw new DesktopUpdatePreparationError('stop-failed', locale.messages.updateStopFailed, stopFailure.message)
         await operationJournal?.drain(500)
+        await closeRemoteConnections()
         updateJournal?.action('install-confirmed')
         shellInstallerOwnsQuit = true
       } catch (error) {
@@ -752,10 +796,8 @@ async function main(): Promise<void> {
   if (initialChannel.kind === 'error') updates.suspendConfiguration(initialChannel.error.path)
   const publishChannel = (state: DesktopChannelState): DesktopChannelState => {
     channelState = state
-    for (const window of BrowserWindow.getAllWindows()) {
-      window.webContents.send(DESKTOP_IPC.updatesChannelChanged, state)
-      window.webContents.send(DESKTOP_IPC.updatesPresentation, updatePresentation(updates.state))
-    }
+    publishApplicationEvent(DESKTOP_IPC.updatesChannelChanged, state)
+    publishApplicationEvent(DESKTOP_IPC.updatesPresentation, updatePresentation(updates.state))
     return state
   }
 
@@ -781,40 +823,62 @@ async function main(): Promise<void> {
     window.once('closed', () => { resolve() })
   })
 
-  protocol.handle(SCHEME, (request) => {
+  const serveApplication = (request: Request, connection?: RemoteConnection): Response | Promise<Response> => {
     const url = new URL(request.url)
     // Shell-owned documents live in the application bundle and never pass through the Host.
-    if (url.hostname === 'shell') return serveWebDocument(request, join(app.getAppPath(),
+    if (connection === undefined && url.hostname === 'shell') return serveWebDocument(request, join(app.getAppPath(),
       url.pathname === '/design-platform.css' ? 'lib/welcome' : 'renderer'))
     if (url.hostname === 'app') {
       if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/assets/')
         || ['/favicon.svg', '/manifest.webmanifest'].includes(url.pathname)) {
         return serveWebDocument(request, join(resources.ocean, 'node_modules', '@ocean', 'ocean-web-frontend', 'dist'))
       }
+      if (shuttingDown) return new Response(null, { status: 503 })
+      if (connection !== undefined) {
+        return connection.contents === undefined ? new Response(null, { status: 503 }) : connection.host.forward(request)
+      }
       if (backend.host === undefined || hostUrl === undefined || hostCookie === undefined) {
         return Promise.resolve(new Response(null, { status: 503 }))
       }
       return forwardWebRequest(request, hostUrl, hostCookie)
     }
-    return Promise.resolve(new Response(null, { status: 404 }))
-  })
+    return new Response(null, { status: 404 })
+  }
+  protocol.handle(SCHEME, request => serveApplication(request))
 
-  installDesktopDirectoryPicker(() => mainWindow)
-  installMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents)
+  installDesktopDirectoryPicker(() => remoteConnection === undefined ? mainWindow : undefined)
+  installMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents, 'local')
   const shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath('userData'),
-    process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux', () => { refreshApplicationMenu() }, window => updateOverlays.input(window))
+    process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux', () => { refreshApplicationMenu() }, window => updateOverlays.input(window), activeContents)
   app.on('will-quit', () => { shortcuts.dispose() })
 
   ipcMain.handle(DESKTOP_IPC.boot, async (event) => {
-    assertDesktopSender(event, ['app'])
+    const owner = assertOwnedApplication(event)
+    if (shuttingDown) throw new Error('Desktop Host is shutting down')
+    const selected = remoteByContents.get(event.sender)
+    if (selected !== undefined) {
+      delete selected.publication
+      publishHostSelection()
+      return { injections: selected.host.injections, streamBaseUrl: selected.host.address, ownsHost: false }
+    }
     await startup
+    if (assertOwnedApplication(event) !== owner) throw new Error('Desktop application owner changed during startup')
     if (backend.host === undefined || hostUrl === undefined) throw new Error('Desktop Host is unavailable')
-    return { injections, streamBaseUrl: new URL(hostUrl).origin }
+    localHostPublication = undefined
+    publishHostSelection()
+    return { injections, streamBaseUrl: new URL(hostUrl).origin, ownsHost: true }
   })
 
   ipcMain.handle(DESKTOP_IPC.bootFailed, (event, message: unknown) => {
     assertDesktopSender(event, ['app'])
-    if (event.sender !== mainWindow?.webContents || event.senderFrame !== event.sender.mainFrame) {
+    const remote = remoteByContents.get(event.sender)
+    if (remote !== undefined) {
+      assertOwnedApplication(event)
+      if (typeof message !== 'string') throw new Error('ocean desktop: startup failure must be text')
+      failRemoteView(remote)
+      return
+    }
+    if (event.sender !== activeContents() || event.senderFrame !== event.sender.mainFrame) {
       throw new Error('ocean desktop: rejected startup failure from a non-primary frame')
     }
     if (typeof message !== 'string') throw new Error('ocean desktop: startup failure must be text')
@@ -830,32 +894,49 @@ async function main(): Promise<void> {
     return browserGuests.release(event.sender, lease)
   })
 
-  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://127.0.0.1/*'] }, (details, callback) => {
-    if (hostUrl === undefined || hostCookie === undefined || details.webContentsId !== mainWindow?.webContents.id) {
-      callback({})
-      return
-    }
-    const target = new URL(hostUrl)
-    const requested = new URL(details.url)
-    if (requested.host !== target.host || requested.protocol !== (target.protocol === 'https:' ? 'wss:' : 'ws:')) { callback({}); return }
-    const headers = Object.fromEntries(Object.entries(details.requestHeaders).map(([name, value]) => [name.toLowerCase(), value]))
-    if (headers.origin !== 'dsh-app://app') { callback({ cancel: true }); return }
-    callback({ requestHeaders: { ...headers, origin: target.origin, cookie: hostCookie, 'sec-fetch-site': 'same-origin' } })
-  })
+  const installHostSockets = (browserSession: Session, connection?: RemoteConnection): void => {
+    browserSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://*/*'] }, (details, callback) => {
+      const owner = connection === undefined ? mainWindow?.webContents : connection.contents
+      if (shuttingDown || owner === undefined || details.webContentsId !== owner.id || details.resourceType !== 'webSocket') {
+        callback({})
+        return
+      }
+      if (remoteByContents.get(owner) !== connection) { callback({ cancel: true }); return }
+      const remote = connection?.host.transport
+      const address = remote?.address ?? hostUrl
+      const cookie = remote?.cookie ?? hostCookie
+      if (address === undefined || cookie === undefined) { callback({}); return }
+      const target = new URL(address)
+      const requested = new URL(details.url)
+      if (requested.host !== target.host || requested.protocol !== (target.protocol === 'https:' ? 'wss:' : 'ws:')) {
+        callback({})
+        return
+      }
+      const headers = Object.fromEntries(Object.entries(details.requestHeaders).map(([name, value]) => [name.toLowerCase(), value]))
+      if (headers.origin !== 'dsh-app://app') { callback({ cancel: true }); return }
+      if (remote !== undefined) {
+        const mux = new URL('api/remote.mux', target)
+        if (requested.pathname !== mux.pathname || requested.search !== '') { callback({ cancel: true }); return }
+      }
+      callback({ requestHeaders: { ...headers, origin: target.origin, cookie, 'sec-fetch-site': 'same-origin' } })
+    })
+  }
+  installHostSockets(session.defaultSession)
 
   const assertMainApplication = (event: IpcMainInvokeEvent): BrowserWindow => {
-    const owner = mainWindow
-    if (owner === undefined || event.sender !== owner.webContents || event.senderFrame !== owner.webContents.mainFrame
-      || !event.senderFrame.url.startsWith('dsh-app://app/')) throw new Error('Rejected Platform command')
-    return owner
+    if (!event.senderFrame?.url.startsWith('dsh-app://app/')) throw new Error('Rejected Platform command')
+    return assertProductSender(event)
   }
-  installFileActions(assertMainApplication, () => hostUrl)
+  const releaseDownloads = installFileActions(assertMainApplication,
+    contents => remoteByContents.get(contents)?.host.address ?? hostUrl,
+    contents => !remoteByContents.has(contents))
   ipcMain.on(PLATFORM_IPC.bootstrap, (event) => {
     try { event.returnValue = platformView.bootstrap(event) }
     catch { event.returnValue = null }
   })
   ipcMain.handle(PLATFORM_IPC.open, (event, page: unknown, bounds: unknown) => {
     const owner = assertMainApplication(event)
+    if (remoteConnection !== undefined) throw new Error('Platform view requires the local Host')
     if (page !== 'usage' && page !== 'top-up') throw new Error('Invalid Platform page')
     return platformView.open(owner, page, platformBounds(bounds))
   })
@@ -864,25 +945,23 @@ async function main(): Promise<void> {
     platformView.setBounds(platformBounds(bounds))
   })
   ipcMain.handle(PLATFORM_IPC.close, (event) => { assertMainApplication(event); platformView.close() })
-  // Only the main window may synchronize its palette with the native material.
+  // The selected application frame owns the native palette.
   ipcMain.on(DESKTOP_IPC.nativeThemeSet, (event, source: unknown) => {
-    if (mainWindow === undefined || event.sender !== mainWindow.webContents
-      || event.senderFrame !== mainWindow.webContents.mainFrame
+    if (event.sender !== activeContents()
+      || event.senderFrame !== event.sender.mainFrame
       || !event.senderFrame.url.startsWith(`${SCHEME}://app/`)) return
     if (source !== 'light' && source !== 'dark' && source !== 'system') return
     nativeTheme.themeSource = source
   })
   ipcMain.handle(DESKTOP_IPC.localeBootstrap, async (event) => {
-    if (event.sender !== mainWindow?.webContents || event.senderFrame !== mainWindow.webContents.mainFrame
-      || new URL(event.senderFrame.url).origin !== new URL(applicationUrl).origin) {
-      throw new Error('desktop welcome: rejected locale request from an unowned frame')
-    }
+    assertOwnedApplication(event)
+    if (remoteByContents.has(event.sender)) return { languages: systemLanguages, preference: null }
     if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
     return { languages: systemLanguages, preference: await welcomeBackend.readLocalePreference() }
   })
   ipcMain.on(DESKTOP_IPC.localeChanged, (event, next: unknown) => {
     const window = mainWindow
-    if (window === undefined || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame
+    if (window === undefined || event.sender !== activeContents() || event.senderFrame !== event.sender.mainFrame
       || typeof next !== 'string') return
     const current = resolveDesktopStartupLocale(next, systemLanguages)
     writeDesktopLocaleCache(app.getPath('userData'), current.id)
@@ -1195,6 +1274,26 @@ async function main(): Promise<void> {
         click: () => { void showAbout().catch((error: unknown) => { console.error(error) }) } }
       : { label: currentDesktopLocale().messages.aboutMenu, role: 'about' },
     { type: 'separator' },
+    { label: currentDesktopLocale().messages.remoteConnectMenu, enabled: !switchingHost,
+      click: () => { void openRemoteDialog() } },
+    { label: currentDesktopLocale().messages.remoteLocalMenu, enabled: remoteConnection !== undefined && !switchingHost,
+      click: () => { selectRemoteConnection() } },
+    ...remoteConnections.size === 0 ? [] : [{
+      label: currentDesktopLocale().messages.remoteHostsMenu, enabled: !switchingHost,
+      submenu: [...remoteConnections.values()].map(connection => ({
+        label: connection.host.address,
+        type: 'radio' as const,
+        checked: connection === remoteConnection,
+        click: () => { selectRemoteConnection(connection) },
+      })),
+    }],
+    ...remoteConnection === undefined ? [] : [{
+      label: currentDesktopLocale().messages.remoteDisconnectMenu, enabled: !switchingHost,
+      click: () => {
+        const connection = remoteConnection
+        if (connection !== undefined) void disconnectRemoteConnection(connection).catch(reportRemoteCleanupFailure)
+      },
+    }],
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
     ...process.platform === 'darwin' || process.platform === 'win32'
       ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
@@ -1255,8 +1354,8 @@ async function main(): Promise<void> {
   if (process.platform === 'win32') {
     ipcMain.handle(DESKTOP_IPC.windowsMenu, (event, name: unknown, x: unknown, y: unknown) => {
       assertDesktopSender(event, ['app'])
-      if (mainWindow === undefined || event.sender !== mainWindow.webContents
-        || event.senderFrame !== mainWindow.webContents.mainFrame) throw new Error('desktop menu: rejected sender')
+      if (mainWindow === undefined || event.sender !== activeContents()
+        || event.senderFrame !== event.sender.mainFrame) throw new Error('desktop menu: rejected sender')
       if ((name !== 'application' && name !== 'edit')
         || typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)
         || x < 0 || y < 0 || x > 100_000 || y > 100_000) throw new Error('desktop menu: invalid popup request')
@@ -1280,7 +1379,7 @@ async function main(): Promise<void> {
         { type: 'separator' },
         editItem(currentDesktopLocale().messages.selectAll, 'A', ['control'], 'Ctrl+A'),
       ]
-      const zoom = mainWindow.webContents.getZoomFactor()
+      const zoom = event.sender.getZoomFactor()
       return new Promise<void>((resolve) => {
         Menu.buildFromTemplate(items).popup({ window, x: Math.round(x * zoom), y: Math.round(y * zoom), callback: resolve })
       })
@@ -1308,6 +1407,8 @@ async function main(): Promise<void> {
   }
   const createMainWindow = (): BrowserWindow => {
     const window = createWindow(appPreload, false, true)
+    const contents = window.webContents
+    applicationOwners.set(contents, window)
     mainWindow = window
     browserGuests.bind(window, (guest, name) => shortcuts.attachGuest(window, guest, name))
     shortcuts.attach(window)
@@ -1333,7 +1434,10 @@ async function main(): Promise<void> {
       window.on('focus', () => { sessionEnding = false })
       window.on('show', () => { sessionEnding = false })
     }
-    window.on('closed', () => { if (mainWindow === window) mainWindow = undefined })
+    window.on('closed', () => {
+      applicationOwners.delete(contents)
+      if (mainWindow === window) mainWindow = undefined
+    })
     window.webContents.on('console-message', (details) => {
       if (details.level !== 'error') return
       rendererConsole.push(`${details.sourceId}:${String(details.lineNumber)} ${details.message}`)
@@ -1372,6 +1476,409 @@ async function main(): Promise<void> {
       window.webContents.openDevTools({ mode: 'detach' })
     }
   }
+  async function openRemoteDialog(disconnectedAddress?: string): Promise<void> {
+    const parent = mainWindow
+    if (parent === undefined || parent.isDestroyed() || isQuitting() || isMandatory()) return
+    if (remoteDialog !== undefined) { remoteDialog.focus(); return }
+    const window = new BrowserWindow({
+      parent, modal: true, show: false, width: 500, height: 500, minWidth: 360, minHeight: 420,
+      title: locale.messages.remoteConnectMenu, autoHideMenuBar: true,
+      webPreferences: { preload: appPreload, sandbox: true, contextIsolation: true, nodeIntegration: false },
+    })
+    remoteDialog = window
+    disconnectedRemoteAddress = disconnectedAddress
+    window.setMenu(null)
+    window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    window.webContents.on('will-navigate', (event) => { event.preventDefault() })
+    window.once('closed', () => {
+      if (remoteDialog !== window) return
+      remoteConnectAbort?.abort()
+      remoteDialog = undefined
+      disconnectedRemoteAddress = undefined
+    })
+    try {
+      await window.loadURL(remoteDialogUrl)
+      if (!window.isDestroyed()) window.show()
+    } catch (_error) {
+      if (!window.isDestroyed()) window.destroy()
+      await ordinaryMessageBox({ type: 'error', message: locale.messages.remoteSwitchFailed })
+    }
+  }
+
+  const assertRemoteDialog = (event: IpcMainInvokeEvent): BrowserWindow => {
+    const window = remoteDialog
+    if (window === undefined || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame
+      || event.senderFrame.url !== remoteDialogUrl) throw new Error('Rejected remote connection command')
+    return window
+  }
+  ipcMain.handle(DESKTOP_IPC.remoteForm, async (event) => {
+    assertRemoteDialog(event)
+    const disconnectedAddress = disconnectedRemoteAddress
+    const saved = await remoteStore.addresses().then(
+      addresses => ({ addresses, unreadable: false }),
+      () => ({ addresses: [], unreadable: true }),
+    )
+    return {
+      ...saved, address: disconnectedAddress ?? saved.addresses.at(-1), canSave: remoteStore.canSave,
+      notice: disconnectedAddress !== undefined ? locale.messages.remoteSessionEnded
+        : saved.unreadable ? locale.messages.remoteSavedUnreadable : undefined,
+      messages: {
+        address: locale.messages.remoteAddress, token: locale.messages.remoteToken, remember: locale.messages.remoteRemember,
+        connect: locale.messages.remoteConnect, forget: locale.messages.remoteForget, failure: locale.messages.remoteSwitchFailed,
+        incompatible: locale.messages.remoteProtocolIncompatible,
+        logoutUnconfirmed: locale.messages.remoteLogoutUnconfirmed,
+        done: locale.messages.remoteDone, connecting: locale.messages.remoteConnecting,
+      },
+    }
+  })
+  ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => { assertRemoteDialog(event).destroy() })
+  ipcMain.handle(DESKTOP_IPC.remoteForget, async (event, address: unknown) => {
+    assertRemoteDialog(event)
+    const messages = currentDesktopLocale().messages
+    if (switchingHost) return remoteFailure('busy', messages)
+    if (address !== undefined && (typeof address !== 'string' || address.length > 2048)) return remoteFailure('invalid-input', messages)
+    let mount: string | undefined
+    try {
+      mount = address === undefined ? undefined : DeviceClient.parseAddress(address).href
+      await remoteStore.remove(mount)
+    } catch (error) { return remoteErrorResult(error, messages) }
+    const connection = [...remoteConnections.values()].find(entry => entry.host.address === mount)
+    if (connection !== undefined) {
+      try { await disconnectRemoteConnection(connection) }
+      catch (_error) { return { kind: 'forgotten', logout: 'unconfirmed', message: messages.remoteLogoutUnconfirmed } }
+    }
+    return { kind: 'forgotten', logout: 'confirmed' }
+  })
+  ipcMain.handle(DESKTOP_IPC.remoteConnect, async (event, address: unknown, token: unknown, remember: unknown) => {
+    const window = assertRemoteDialog(event)
+    if (typeof address !== 'string' || address.length > 2048 || typeof token !== 'string' || token.length > 512
+      || typeof remember !== 'boolean') return remoteFailure('invalid-input', currentDesktopLocale().messages)
+    return connectRemoteHost({ address, token, remember, window })
+  })
+
+  function attachRemoteView(owner: BrowserWindow, connection: RemoteConnection): WebContents {
+    const view = new WebContentsView({ webPreferences: {
+      session: connection.browserSession,
+      preload: appPreload,
+      additionalArguments: ['--ocean-remote-host'],
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+    } })
+    const contents = view.webContents
+    connection.contents = contents
+    applicationOwners.set(contents, owner)
+    remoteByContents.set(contents, connection)
+    const detachShortcuts = shortcuts.attachView(owner, contents)
+    const resize = (): void => {
+      const { width, height } = owner.getContentBounds()
+      view.setBounds({ x: 0, y: 0, width, height })
+    }
+    const release = (): void => {
+      if (connection.contents !== contents) return
+      owner.removeListener('resize', resize)
+      owner.removeListener('closed', release)
+      detachShortcuts()
+      delete connection.contents
+      applicationOwners.delete(contents)
+      remoteByContents.delete(contents)
+      if (!owner.isDestroyed()) owner.contentView.removeChildView(view)
+      if (!contents.isDestroyed()) contents.close({ waitForBeforeUnload: false })
+    }
+    connection.removeView = release
+    connection.setVisible = (visible) => { view.setVisible(visible) }
+    owner.on('resize', resize)
+    owner.once('closed', release)
+    contents.setWindowOpenHandler(({ url }) => {
+      if (['http:', 'https:'].includes(new URL(url).protocol)) void shell.openExternal(url)
+      return { action: 'deny' }
+    })
+    contents.on('will-navigate', (event) => { event.preventDefault() })
+    contents.on('will-redirect', (event) => { event.preventDefault() })
+    contents.on('preload-error', () => { failRemoteView(connection) })
+    contents.on('render-process-gone', (_event, details) => {
+      if (details.reason !== 'clean-exit') failRemoteView(connection)
+    })
+    view.setVisible(false)
+    owner.contentView.addChildView(view)
+    resize()
+    return contents
+  }
+
+  function configureRemoteBrowserSession(connection: RemoteConnection): void {
+    const { host, browserSession } = connection
+    browserSession.protocol.handle(SCHEME, request => serveApplication(request, connection))
+    installHostSockets(browserSession, connection)
+    const mux = new URL('api/remote.mux', host.address)
+    mux.protocol = 'wss:'
+    browserSession.webRequest.onHeadersReceived({ urls: [mux.href] }, (details, reply) => {
+      reply({})
+      const owner = connection.contents
+      if (details.statusCode !== 401 || details.resourceType !== 'webSocket' || details.url !== mux.href
+        || owner === undefined || details.webContentsId !== owner.id || remoteConnections.get(host.hostId) !== connection) return
+      const wasSelected = remoteConnection === connection
+      void disconnectRemoteConnection(connection).then(async () => {
+        if (wasSelected && remoteConnection === undefined) await openRemoteDialog(host.address)
+      }).catch(reportRemoteError)
+    })
+    installMicrophonePermissions(browserSession, () => connection.contents, 'remote')
+  }
+
+  async function releaseRemoteBrowserSession(browserSession: Session): Promise<void> {
+    releaseDownloads(browserSession)
+    browserSession.protocol.unhandle(SCHEME)
+    browserSession.webRequest.onBeforeSendHeaders(null)
+    browserSession.webRequest.onHeadersReceived(null)
+    browserSession.setPermissionCheckHandler(() => false)
+    browserSession.setPermissionRequestHandler((_contents, _permission, reply) => { reply(false) })
+    await browserSession.closeAllConnections()
+    await browserSession.clearStorageData()
+  }
+
+  async function disposeRemoteConnection(host: RemoteDesktopHost, browserSession: Session): Promise<void> {
+    const results = await Promise.allSettled([
+      host.close(AbortSignal.timeout(5_000)),
+      releaseRemoteBrowserSession(browserSession),
+    ])
+    const failures: unknown[] = []
+    for (const result of results) { if (result.status === 'rejected') failures.push(result.reason) }
+    if (failures.length > 0) throw new AggregateError(failures, 'Remote Host cleanup failed')
+  }
+
+  ipcMain.handle(DESKTOP_IPC.hostSelection, (event) => {
+    assertOwnedApplication(event)
+    const { remoteHostsMenu, remoteLocalMenu } = currentDesktopLocale().messages
+    const local = event.sender === mainWindow?.webContents
+    return {
+      label: remoteHostsMenu,
+      revision: hostSelectionRevision,
+      publicationRevision: (local ? localHostPublication : remoteByContents.get(event.sender)?.publication)?.revision ?? -1,
+      selected: remoteConnection?.host.hostId ?? '',
+      entries: [
+        { id: '', label: remoteLocalMenu, ...pendingHostWork(localHostPublication) },
+        ...[...remoteConnections.values()].map(({ host, publication }) => ({
+          id: host.hostId, label: host.address, ...pendingHostWork(publication),
+          ...(local && publication !== undefined ? { sessions: publication.sessions } : {}),
+        })),
+      ],
+    }
+  })
+  ipcMain.handle(DESKTOP_IPC.selectHost, (event, id: unknown) => {
+    assertProductSender(event)
+    selectRemoteConnection(resolveHostNavigation(id))
+  })
+
+  ipcMain.handle(DESKTOP_IPC.publishHostSessions, (event, values: unknown) => {
+    assertOwnedApplication(event)
+    const publication = readDesktopHostPublication(values)
+    if (publication === undefined) return
+    const connection = remoteByContents.get(event.sender)
+    const previous = connection === undefined ? localHostPublication : connection.publication
+    if (previous !== undefined && publication.revision <= previous.revision) return
+    if (connection === undefined) localHostPublication = publication
+    else connection.publication = publication
+    publishHostSelection()
+  })
+  ipcMain.handle(DESKTOP_IPC.openHostSession, (event, hostId: unknown, sessionId: unknown) => {
+    const owner = assertProductSender(event)
+    if (event.sender !== owner.webContents || typeof sessionId !== 'string') throw hostNavigationUnavailable()
+    const connection = resolveHostNavigation(hostId)
+    if (connection?.contents === undefined || !connection.publication?.sessions.some(row => row.id === sessionId)) {
+      throw hostNavigationUnavailable()
+    }
+    selectRemoteConnection(connection)
+    connection.contents.send(DESKTOP_IPC.openOwnedSession, sessionId)
+  })
+
+  function hostNavigationUnavailable(): HarnessError {
+    return new HarnessError(currentDesktopLocale().messages.remoteSwitchFailed, 'DESKTOP_HOST_NAVIGATION_UNAVAILABLE')
+  }
+
+  /** Reject unavailable destinations before changing selection or sending a Session command. */
+  function resolveHostNavigation(id: unknown): RemoteConnection | undefined {
+    if (typeof id !== 'string' || switchingHost || remoteConnectionsClosing || isQuitting() || isMandatory()) {
+      throw hostNavigationUnavailable()
+    }
+    if (id === '') return undefined
+    const connection = remoteConnections.get(id)
+    if (connection?.contents === undefined || connection.contents.isDestroyed() || connection.bootFailed) {
+      throw hostNavigationUnavailable()
+    }
+    return connection
+  }
+
+  function publishApplicationEvent(channel: string, ...values: readonly unknown[]): void {
+    const contents = new Set([
+      ...BrowserWindow.getAllWindows().map(window => window.webContents),
+      ...[...remoteConnections.values()].map(connection => connection.contents),
+    ])
+    for (const view of contents) {
+      if (view !== undefined && !view.isDestroyed()) view.send(channel, ...values)
+    }
+  }
+
+  function publishHostSelection(): void {
+    hostSelectionRevision++
+    const local = mainWindow?.isDestroyed() === false ? mainWindow.webContents : undefined
+    const contents = [local, ...[...remoteConnections.values()].map(connection => connection.contents)]
+    for (const view of contents) {
+      if (view !== undefined && !view.isDestroyed()) view.send(DESKTOP_IPC.hostSelectionChanged)
+    }
+  }
+
+  function pendingHostWork(publication: DesktopHostPublication | undefined): {
+    pendingApprovals?: number
+    pendingQuestions?: number
+  } {
+    return publication === undefined ? {} : {
+      pendingApprovals: publication.pendingApprovals, pendingQuestions: publication.pendingQuestions,
+    }
+  }
+
+  function selectRemoteConnection(connection?: RemoteConnection): void {
+    const owner = mainWindow
+    if (owner === undefined || owner.isDestroyed() || isQuitting() || connection === remoteConnection) return
+    if (connection !== undefined && isMandatory()) return
+    if (connection !== undefined && remoteConnections.get(connection.host.hostId) !== connection) return
+    platformView.close()
+    remoteConnection?.setVisible?.(false)
+    remoteConnection = connection
+    connection?.setVisible?.(true)
+    owner.setTitle(connection === undefined ? app.name : formatDesktopMessage(currentDesktopLocale().messages.remoteWindowTitle,
+      { host: new URL(connection.host.address).host }))
+    const contents = activeContents()
+    if (contents !== undefined && !contents.isDestroyed()) {
+      contents.send(DESKTOP_IPC.updatesChannelChanged, channelState)
+      contents.send(DESKTOP_IPC.updatesPresentation, updatePresentation(updates.state))
+    }
+    activeContents()?.focus()
+    refreshApplicationMenu()
+    publishHostSelection()
+  }
+
+  function reportRemoteError(error: unknown): void {
+    console.error('Desktop remote operation failed', {
+      name: error instanceof Error ? error.name : 'Error',
+      code: error instanceof Error && 'code' in error && typeof error.code === 'string' ? error.code : undefined,
+    })
+  }
+
+  async function reportRemoteCleanupFailure(error: unknown): Promise<void> {
+    reportRemoteError(error)
+    if (isQuitting()) return
+    try { await ordinaryMessageBox({ type: 'error', message: currentDesktopLocale().messages.remoteDisconnectUnconfirmed }) }
+    catch (reportError) { reportRemoteError(reportError) }
+  }
+
+  function failRemoteView(connection: RemoteConnection): void {
+    if (connection.contents === undefined || connection.bootFailed || isQuitting()) return
+    connection.bootFailed = true
+    const selected = remoteConnection === connection
+    if (remoteConnections.get(connection.host.hostId) !== connection) return
+    void disconnectRemoteConnection(connection).catch(reportRemoteError)
+    if (selected) {
+      void ordinaryMessageBox({ type: 'error', message: currentDesktopLocale().messages.remoteSwitchFailed })
+        .catch(reportRemoteError)
+    }
+  }
+
+  async function disconnectRemoteConnection(connection: RemoteConnection): Promise<void> {
+    if (remoteConnections.get(connection.host.hostId) !== connection) return
+    remoteConnections.delete(connection.host.hostId)
+    if (remoteConnection === connection) selectRemoteConnection()
+    connection.removeView?.()
+    refreshApplicationMenu()
+    publishHostSelection()
+    await connection.dispose()
+  }
+
+  async function closeRemoteConnections(): Promise<void> {
+    remoteConnectionsClosing = true
+    remoteConnectAbort?.abort()
+    const openRemotes = [...remoteConnections.values()]
+    remoteConnections.clear()
+    remoteConnection = undefined
+    for (const connection of openRemotes) connection.removeView?.()
+    await Promise.all(openRemotes.map(connection => connection.dispose().catch(reportRemoteError)))
+  }
+
+  async function connectRemoteHost(input: {
+    address: string
+    token: string
+    remember: boolean
+    window: BrowserWindow
+  }): Promise<DesktopRemoteResult> {
+    const messages = currentDesktopLocale().messages
+    if (switchingHost || remoteConnectionsClosing || isQuitting() || isMandatory()) return remoteFailure('busy', messages)
+    switchingHost = true
+    const cancellation = new AbortController()
+    remoteConnectAbort = cancellation
+    refreshApplicationMenu()
+    let next: RemoteDesktopHost | undefined
+    let prepared: RemoteConnection | undefined
+    try {
+      const token = input.token.trim()
+      const enteredAddress = input.address.trim()
+      const saved = token ? undefined : await remoteStore.read(enteredAddress || undefined)
+      const address = enteredAddress || saved?.address
+      if (!address) return remoteFailure('invalid-input', messages)
+      const signal = AbortSignal.any([cancellation.signal, AbortSignal.timeout(15_000)])
+      if (token) next = await RemoteDesktopHost.connect(address, token, signal)
+      else if (saved !== undefined) next = await RemoteDesktopHost.connect(address, saved.token, signal, saved.hostId)
+      else return remoteFailure('token-required', messages)
+      signal.throwIfAborted()
+      if (isQuitting() || isMandatory() || input.window.isDestroyed()) return remoteFailure('cancelled', messages)
+      const authenticated = next
+      const existing = remoteConnections.get(next.hostId)
+      if (existing !== undefined) {
+        selectRemoteConnection(existing)
+      } else {
+        if (remoteConnections.size >= remoteConfig.maxConnections) return remoteFailure('host-limit', messages)
+        const owner = mainWindow
+        if (owner === undefined || owner.isDestroyed()) return remoteFailure('cancelled', messages)
+        const host = next
+        const browserSession = session.fromPartition(`ocean-remote-${randomUUID()}`, { cache: false })
+        let disposing: Promise<void> | undefined
+        prepared = {
+          host,
+          browserSession,
+          dispose: () => disposing ??= disposeRemoteConnection(host, browserSession),
+        }
+        next = undefined
+        configureRemoteBrowserSession(prepared)
+        await attachRemoteView(owner, prepared).loadURL(applicationUrl)
+        signal.throwIfAborted()
+        if (prepared.bootFailed || isQuitting() || isMandatory() || owner.isDestroyed() || input.window.isDestroyed()) {
+          return remoteFailure('cancelled', messages)
+        }
+        remoteConnections.set(host.hostId, prepared)
+        selectRemoteConnection(prepared)
+        prepared = undefined
+      }
+      let persistence: 'saved' | 'skipped' | 'failed' = 'skipped'
+      if (input.remember && token) {
+        try {
+          await remoteStore.save({ address: authenticated.address, hostId: authenticated.hostId, token })
+          persistence = 'saved'
+        } catch (error) {
+          reportRemoteError(error)
+          persistence = 'failed'
+        }
+      }
+      if (persistence !== 'failed' && !input.window.isDestroyed()) input.window.destroy()
+      return { kind: 'connected', persistence, ...(persistence === 'failed' ? { message: messages.remoteSaveFailed } : {}) }
+    } catch (error) {
+      return remoteErrorResult(error, messages)
+    } finally {
+      prepared?.removeView?.()
+      await Promise.all([next?.close(AbortSignal.timeout(5_000)), prepared?.dispose()]).catch(reportRemoteCleanupFailure)
+      remoteConnectAbort = undefined
+      switchingHost = false
+      if (!isQuitting()) { refreshApplicationMenu(); publishHostSelection() }
+    }
+  }
+
   const openInitialWindow = async (): Promise<void> => {
     if (quitting || recovery.active) return
     const state = await readWelcomeState()
@@ -1431,6 +1938,7 @@ async function main(): Promise<void> {
         throw error
       }),
       platformView.dispose(),
+      closeRemoteConnections(),
       disposeFileDrag(),
     ].map(cleanup => cleanup.catch((error: unknown) => { console.error(error) })))
       .then(() => { app.quit() })

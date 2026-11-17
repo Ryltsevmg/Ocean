@@ -57,24 +57,27 @@ export async function bridge(
     Object.entries(req.headers).filter(([, value]) => typeof value === 'string') as [string, string][],
   )
   const bodyMode = apiHandler.requestBodyMode({ method, url })
+  const capBody = bodyMode === 'buffered' || peer.principal.kind === 'remote-device'
+  const declaredLength = req.headers['content-length']
+  const rejectSize = (): void => {
+    res.writeHead(413, { connection: 'close' })
+    res.end()
+    req.destroy()
+  }
+  if (capBody && declaredLength !== undefined && Number(declaredLength) > maxRequestBodyBytes) {
+    rejectSize()
+    return
+  }
+  const upload = { tooLarge: false }
   let request: Request
   if (bodyMode === 'buffered') {
-    const declaredLength = req.headers['content-length']
-    if (declaredLength !== undefined && Number(declaredLength) > maxRequestBodyBytes) {
-      res.writeHead(413, { connection: 'close' })
-      res.end()
-      req.destroy()
-      return
-    }
     const chunks: Buffer[] = []
     let received = 0
     for await (const chunk of req) {
       const buffer = chunk as Buffer
       received += buffer.byteLength
       if (received > maxRequestBodyBytes) {
-        res.writeHead(413, { connection: 'close' })
-        res.end()
-        req.destroy()
+        rejectSize()
         return
       }
       chunks.push(buffer)
@@ -86,15 +89,43 @@ export async function bridge(
       signal: abort.signal,
     })
   } else {
+    let body = Readable.toWeb(req, {
+      strategy: { highWaterMark: req.readableHighWaterMark, size: (chunk: Uint8Array) => chunk.byteLength },
+    }) as ReadableStream<Uint8Array>
+    if (capBody) {
+      let received = 0
+      body = body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, pump) {
+          received += chunk.byteLength
+          if (received <= maxRequestBodyBytes) pump.enqueue(chunk)
+          else {
+            upload.tooLarge = true
+            pump.error(new Error('Device upload exceeds the configured body limit'))
+          }
+        },
+      }), { preventCancel: true })
+    }
     request = new Request(url, {
       method,
       headers,
-      body: Readable.toWeb(req) as ReadableStream<Uint8Array>,
+      body,
       signal: abort.signal,
       duplex: 'half',
     } as RequestInit & { duplex: 'half' })
   }
-  const response = await apiHandler.fetch(request, peer)
+  let response: Response
+  try {
+    response = await apiHandler.fetch(request, peer)
+  } catch (error) {
+    if (!upload.tooLarge) throw error
+    rejectSize()
+    return
+  }
+  if (upload.tooLarge) {
+    await response.body?.cancel()
+    rejectSize()
+    return
+  }
   const requestUnread = bodyMode === 'streaming' && !req.readableEnded
   const responseHeaders = Object.fromEntries(response.headers.entries())
   res.writeHead(response.status, requestUnread ? { ...responseHeaders, connection: 'close' } : responseHeaders)

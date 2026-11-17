@@ -13,7 +13,7 @@ Server-expired account credentials clear the displayed account details and emit 
 
 ## Summary
 
-The Account settings section displays DeepSeek login state and offers browser sign-in and cancellation; the sidebar account menu provides Platform sign-out. Desktop users also receive a resumable introduction to account credit and presentation preferences.
+The Account settings section displays DeepSeek login state and offers browser sign-in and cancellation; the sidebar account menu provides Platform sign-out. Desktop users also receive a resumable introduction to account credit and presentation preferences in windows that own the local Host.
 
 The sign-in dialog offers network troubleshooting only for `no-response` failures. HTTP, business, response-validation, storage, and account-stream failures retain the generic retry message.
 
@@ -42,17 +42,19 @@ Desktop usage, top-up, and onboarding recharge actions open one isolated native 
 
 Chat offers each live quota failure from a bound Session to the frame-wide `shell.quota-notice` chain from its host in `shell.overlay`, so the notice outlives the Chat panel that reported it. The account entry claims `ACCOUNT_QUOTA`: while an account credential is stored and the shared host entry exists, the Modal offers Cancel and Top up. While a page requested through the shared request channel is showing, the native view covers this document, so the entry paints neither the Modal nor the Toast. A quota failure that arrives while a Settings-opened page is already showing is not retained: it stays subject to newest-notice replacement, and the Modal appears after the viewer returns while that notice is still current. That Modal reports the failure of the original request, not the account's current balance: the top-up re-read is a separate read, and returning neither proves a successful payment nor dismisses the notice on its own. The notice's own Top up is the retained case: it calls `keepOpen()` and requests the `top-up` page through the shared request channel, keeping that notice and its page mounted through later quota failures. With the shared host entry the entry waits for the first account snapshot instead of rendering a Toast that its own timer could discard; a snapshot that reports no stored credential, or a failed account stream with no snapshot, then renders the same neutral warning Toast itself, and without that host entry the entry renders that Toast immediately, instead of relying on the chat host fallback. The entry owns the hold and its page request and releases both when it unmounts, so a later quota failure publishes again without replaying the dropped ones; dismissal or sign-out clears the hold and the page request. Close, Cancel, a sign-out, or leaving the notice's own embedded page takes the notice down without retrying the request.
 
-The account menu's Feedback entry opens https://t.me/oceanchatsupportbot in the system browser. It does not read device information or send account identifiers, logs, build details or a prefilled message. The support URL omits all query parameters, fragments and embedded credentials. The existing contactFormUrl setting selects another HTTPS support destination; contactSource is retained for configuration compatibility but ignored.
+The Settings navigation's Feedback entry opens https://t.me/oceanchatsupportbot in the system browser. It does not read device information or send account identifiers, logs, build details or a prefilled message. The support URL omits all query parameters, fragments and embedded credentials. The existing contactFormUrl setting selects another HTTPS support destination; contactSource is retained for configuration compatibility but ignored.
 
 Account profile and balance cards share the [settings card material and radius](../../../docs/web-styling.md#corner-radii-and-settings-cards). Usage and top-up links match standard Button geometry; authorization actions use the shared Button.
 
 The signed-out sidebar menu omits the generic account Sign in entry. Provider authentication, including Codex, is unchanged.
 
-The sidebar account menu uses the shared Menu surface and backdrop blur. The signed-in menu keeps the shared row typography; the signed-out menu carries its own wider rows. Both menus label the support entry Feedback. Its Settings row shows the effective key combination supplied by the shell. Closing Settings returns focus to the sidebar account launcher.
+The sidebar account menu uses the shared Menu surface and backdrop blur. The signed-in menu keeps the shared row typography; the signed-out menu carries its own wider rows. Feedback is a separate Settings navigation action; the bottom menu retains Settings and, while signed in, Sign out. Its Settings row shows the effective key combination supplied by the shell. Closing Settings returns focus to the sidebar account launcher.
 
 The account card’s More account information link has no underline and opens the root of the Host-provided Platform usage URL in the system browser, following `platformOrigin`.
 
 Sign out first queries running account-token tasks and opens a confirmation dialog. The warning describes interruption when such tasks exist; otherwise it explains that data is retained and the account can be signed in again. Cancel, close, and Escape dismiss without signing out. Failed impact queries still open confirmation with an explicit unknown-task warning; failed sign-out keeps the dialog available for retry.
+
+A browser signed in with a device token offers **Disconnect from Host** in the sidebar footer. Confirmation ends the shared browser login and returns its tabs to the Host sign-in page. Running tasks continue on the Host.
 
 Account notification polling and presentation belong to [ui-account-notifications](../ui-account-notifications/README.md). The account menu positions the notification slot above its launcher inside the sidebar, keeps its DOM mounted while the rail hides it, and publishes account lifecycle and refresh events.
 
@@ -108,6 +110,8 @@ No model request prefix changes.
 
 <a id="dev-note"></a>
 ### Dev Note
+
+Shared onboarding translations live in the owner-level `src/client/onboarding-locales.ts`; the account locale table imports that dictionary.
 
 
 

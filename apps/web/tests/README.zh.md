@@ -18,6 +18,8 @@ pnpm --filter @ocean/ocean-web-frontend exec playwright install --with-deps chro
 
 每个场景都要求整个客户端组合全部激活。产品启动只对必需名单外的未激活 entry 告警，但 `watchConsole` 绊线、[真实 Host 冒烟](smoke-real.e2e.ts)与[组装 jsdom 启动](assembled-boot.ts)把 `web boot: warning` 视为失败。没有任何场景选项放宽这一点：产品组合中出现未激活插件就是需要修复的缺陷。
 
+录制输入可以保留旧的运行时措辞，而当前 writer 输出更新后的上下文和技能目录。这类 owner 将完整的持久化输出与 `writer.expected.jsonl` 和 `writer.<ordinal>.expected.jsonl` 比较，与规范回放输入分开。`launchWebScaffold` 通过 `replayExpectedSession` 选择根 Session 的输出；refresh 更新该已有输出，不改写录制输入。fork 场景对两个 Session 角色采用相同的分离方式。这些比较保留事件字段及顺序，不通过规范化消除产品文本差异。
+
 ## 完成状态观察
 
 依赖状态的用例使用 Workspace、接纳、附件和模型流屏障，区分可见中间状态与已完成操作。模型选择器的持久化断言等待默认设置保存完成，不以菜单关闭作为完成信号。详情关闭等待框架过渡结束；归档验证为 seed Session 设置显式标题，并跨重载跟踪该身份。[CI 测试可靠性工作流](../../../.agents/skills/ocean-ci-test-reliability/SKILL.md#synchronize-on-state)负责这些同步规则。

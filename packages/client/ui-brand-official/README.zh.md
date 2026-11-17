@@ -11,6 +11,8 @@ kind: "package-reference"
 
 本包注册 Ocean 侧栏标志与文字标志。注册不依赖构建 profile。它只贡献浏览器呈现，不提供首页背景动画，也不发起模型请求。
 
+字标从 common 词典接收由语言包提供的 `brand.localBuild` 名称；其 SVG 仍为装饰性内容。
+
 ## 目录
 
 - [使用本包](#use-this-package)

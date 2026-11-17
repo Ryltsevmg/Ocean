@@ -1,5 +1,5 @@
 /** Account settings copy, owned by the account feature. */
-import { onboardingZh, onboardingEn, onboardingJa, onboardingEs, onboardingFr, onboardingDe, onboardingRu, onboardingPt } from './locales/onboarding.ts'
+import { onboardingZh, onboardingEn, onboardingJa, onboardingEs, onboardingFr, onboardingDe, onboardingRu, onboardingPt } from './onboarding-locales.ts'
 
 /** English account dictionary. */
 export const en = {
@@ -17,6 +17,8 @@ export const en = {
   settings: 'Settings', contactUs: 'Feedback', menu: 'Account menu',
   nav: 'Account', signedIn: 'Signed in to DeepSeek', signedOut: 'Not signed in',
   signIn: 'Sign in', signOut: 'Sign out',
+  deviceSignOut: 'Disconnect from Host',
+  deviceSignOutDescription: 'This signs out all tabs using this login. Running tasks continue on the Host.',
   signOutUnknownDescription: 'Could not check running tasks. Signing out may interrupt tasks using this account. Sign out now?',
   signOutDescription: 'Signing out will not delete any data. You can sign in to this account again.',
   signOutRunningDescription: 'Tasks are currently running. Signing out will interrupt them. Sign out now?', cancel: 'Cancel', open: 'Open browser',
@@ -52,6 +54,8 @@ export const zh: Record<AccountKey, string> = {
   settings: '设置', contactUs: '意见反馈', menu: '账号菜单',
   nav: '账号与余额', signedIn: '已登录 DeepSeek', signedOut: '尚未登录',
   signIn: '登录', signOut: '退出登录',
+  deviceSignOut: '断开与 Host 的连接',
+  deviceSignOutDescription: '使用此登录的所有标签页都将退出。运行中的任务会在 Host 上继续',
   signOutUnknownDescription: '暂时无法确认任务状态。退出登录可能会中断使用此账号的任务，是否继续？',
   signOutDescription: '退出登录不会丢失任何数据，你仍可以登录此账号。',
   signOutRunningDescription: '当前有进程正在执行中，点击“退出登录”，将会打断进程，是否即刻退出登录？', cancel: '取消', open: '打开浏览器',
@@ -101,6 +105,8 @@ export const ja = {
   'signedOut': '未ログイン',
   'signIn': 'ログイン',
   'signOut': 'ログアウト',
+  deviceSignOut: 'Host から切断',
+  deviceSignOutDescription: 'このログインを使用するすべてのタブからログアウトします。実行中のタスクは Host で継続します。',
   'signOutUnknownDescription': '実行中のタスクを確認できませんでした。ログアウトすると、このアカウントを使用しているタスクが中断される可能性があります。今すぐログアウトしますか？',
   'signOutDescription': 'ログアウトしてもデータは削除されません。このアカウントに再度ログインできます。',
   'signOutRunningDescription': '現在実行中のタスクがあります。ログアウトすると中断されます。今すぐログアウトしますか？',
@@ -145,6 +151,8 @@ export const es = {
   settings: 'Configuración', contactUs: 'Comentarios', menu: 'Menú de cuenta',
   nav: 'Cuenta', signedIn: 'Iniciado sesión en DeepSeek', signedOut: 'No iniciado sesión',
   signIn: 'Iniciar sesión', signOut: 'Cerrar sesión',
+  deviceSignOut: 'Desconectar del Host',
+  deviceSignOutDescription: 'Se cerrará la sesión en todas las pestañas que la usan. Las tareas seguirán ejecutándose en el Host.',
   signOutUnknownDescription: 'No se pudieron verificar las tareas en ejecución. Cerrar sesión puede interrumpir las tareas que utilizan esta cuenta. ¿Cerrar sesión ahora?',
   signOutDescription: 'Cerrar sesión no eliminará ningún dato. Puede iniciar sesión en esta cuenta nuevamente.',
   signOutRunningDescription: 'Las tareas se están ejecutando actualmente. Cerrar sesión los interrumpirá. ¿Cerrar sesión ahora?', cancel: 'Cancelar', open: 'Abrir navegador',
@@ -179,6 +187,8 @@ export const fr = {
   settings: 'Paramètres', contactUs: 'Commentaires', menu: 'Menu du compte',
   nav: 'Compte', signedIn: 'Connecté à DeepSeek', signedOut: 'Non connecté',
   signIn: 'Connectez-vous', signOut: 'Se déconnecter',
+  deviceSignOut: 'Se déconnecter du Host',
+  deviceSignOutDescription: 'Toutes les pages utilisant cette session seront déconnectées. Les tâches en cours continueront sur le Host.',
   signOutUnknownDescription: "Impossible de vérifier les tâches en cours d'exécution. La déconnexion peut interrompre les tâches utilisant ce compte. Se déconnecter maintenant ?",
   signOutDescription: 'La déconnexion ne supprimera aucune donnée. Vous pouvez vous reconnecter à ce compte.',
   signOutRunningDescription: "Les tâches sont actuellement en cours d'exécution. La déconnexion les interrompra. Se déconnecter maintenant ?", cancel: 'Annuler', open: 'Ouvrir le navigateur',
@@ -213,6 +223,8 @@ export const de = {
   settings: 'Einstellungen', contactUs: 'Rückmeldung', menu: 'Kontomenü',
   nav: 'Konto', signedIn: 'Angemeldet bei DeepSeek', signedOut: 'Nicht angemeldet',
   signIn: 'Melden Sie sich an', signOut: 'Abmelden',
+  deviceSignOut: 'Vom Host trennen',
+  deviceSignOutDescription: 'Alle Tabs mit dieser Anmeldung werden abgemeldet. Laufende Aufgaben werden auf dem Host fortgesetzt.',
   signOutUnknownDescription: 'Laufende Aufgaben konnten nicht überprüft werden. Durch das Abmelden werden möglicherweise Aufgaben mit diesem Konto unterbrochen. Jetzt abmelden?',
   signOutDescription: 'Durch das Abmelden werden keine Daten gelöscht. Sie können sich erneut bei diesem Konto anmelden.',
   signOutRunningDescription: 'Derzeit werden Aufgaben ausgeführt. Durch das Abmelden werden sie unterbrochen. Jetzt abmelden?', cancel: 'Abbrechen', open: 'Browser öffnen',
@@ -247,6 +259,8 @@ export const ru = {
   settings: 'Настройки', contactUs: 'Обратная связь', menu: 'Меню аккаунта',
   nav: 'Аккаунт', signedIn: 'Вошёл в DeepSeek', signedOut: 'Не авторизован',
   signIn: 'Войти', signOut: 'Выйти',
+  deviceSignOut: 'Отключиться от сервера',
+  deviceSignOutDescription: 'Вход завершится во всех вкладках этой сессии. Запущенные задачи продолжатся на сервере.',
   signOutUnknownDescription: 'Не удалось проверить запущенные задачи. Выход из системы может прервать выполнение задач с использованием этой учетной записи. Выйти сейчас?',
   signOutDescription: 'Выход из системы не приведет к удалению данных. Вы можете снова войти в эту учетную запись.',
   signOutRunningDescription: 'Задачи в настоящее время выполняются. Выход из системы прервет их. Выйти сейчас?', cancel: 'Отмена', open: 'Открыть браузер',
@@ -281,6 +295,8 @@ export const pt = {
   settings: 'Configurações', contactUs: 'Comentários', menu: 'Menu da conta',
   nav: 'Conta', signedIn: 'Conectado em DeepSeek', signedOut: 'Não conectado',
   signIn: 'Faça login', signOut: 'Sair',
+  deviceSignOut: 'Desconectar do Host',
+  deviceSignOutDescription: 'Todas as abas que usam esta sessão serão desconectadas. As tarefas em execução continuarão no Host.',
   signOutUnknownDescription: 'Não foi possível verificar as tarefas em execução. Sair pode interromper tarefas usando esta conta. Sair agora?',
   signOutDescription: 'Sair não excluirá nenhum dado. Você pode fazer login nesta conta novamente.',
   signOutRunningDescription: 'As tarefas estão em execução no momento. Sair irá interrompê-los. Sair agora?', cancel: 'Cancelar', open: 'Abra o navegador',

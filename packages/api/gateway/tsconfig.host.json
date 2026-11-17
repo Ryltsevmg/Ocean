@@ -7,8 +7,10 @@
   },
   "files": [
     "src/access.ts",
+    "src/device.ts",
     "src/index.ts",
     "src/remote-error-codes.ts",
+    "src/stream-client.ts",
     "src/stream-protocol.ts",
     "src/stream-server.ts",
     "src/types.ts"
@@ -43,6 +45,9 @@
     },
     {
       "path": "../../util/timeout"
+    },
+    {
+      "path": "../../util/crypto"
     }
   ]
 }

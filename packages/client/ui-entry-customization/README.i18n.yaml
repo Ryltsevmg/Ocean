@@ -3,23 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-entry-customization/README.md
 /:
-  en: 57416280d387ea2b
-  zh: f9b97e610116bf59
+  en: 67de636d8774f5cf
+  zh: df79fab6cbcae550
 /ocean-ocean-client-ui-entry-customization:
   en: 06269b7ebd1d6b4d
   zh: 1214b1e1e4caf342
 /ocean-ocean-client-ui-entry-customization/summary:
-  en: 5a96043e86ea441a
-  zh: 90d33f636f5f142e
+  en: 60358d6395372bf6
+  zh: e3b08b87bf136938
 /ocean-ocean-client-ui-entry-customization/table-of-contents:
   en: 76368b6b1da79c80
   zh: 52384aee991ac542
 /ocean-ocean-client-ui-entry-customization/use-this-package:
-  en: 5d069e37d3e5c06d
-  zh: 2da077c52f3f8b10
+  en: 4cf88044da4d0eff
+  zh: a4147830c3f8d804
 /ocean-ocean-client-ui-entry-customization/understand-the-implementation:
-  en: e5bbb901757eca4e
-  zh: ba6c4667471ffab3
+  en: 106c3e1642f3615b
+  zh: 074e38539d98f8f6
 /ocean-ocean-client-ui-entry-customization/model-experience:
   en: b891f311c09d536f
   zh: 68c0f41fbfed0d73
@@ -27,8 +27,8 @@
   en: dc50ebf94183efa2
   zh: 617803c558367430
 /ocean-ocean-client-ui-entry-customization/known-limitations-and-deferred-work:
-  en: fe0eadab5528a411
-  zh: e5c1192378b4d26d
+  en: a11406df9944236a
+  zh: 41c914285cf07979
 /ocean-ocean-client-ui-entry-customization/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

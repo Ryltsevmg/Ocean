@@ -5,7 +5,7 @@ import { configLedgerSource, rowConfigKey } from '../src/client/config-ledger.ts
 import { tabLedgerSource } from '../src/client/tab-ledger.ts'
 
 interface Registration {
-  options: { id?: string; key?: string; label?: string | (() => string) }
+  options: { id?: string; key?: string; label?: string | (() => string); order?: number }
 }
 
 /** A slot registry and locale stand-in: ledgers by slot, versions that move on registration, and a locale revision. */
@@ -111,15 +111,15 @@ describe('tabLedgerSource', () => {
     let label = 'Extras'
     const listener = vi.fn()
     const off = source.subscribe(listener)
-    b.register('plugins.tab', { id: 'extras', label: () => label })
+    b.register('plugins.tab', { id: 'extras', label: () => label, order: -10 })
     b.register('plugins.tab', { id: 'unlabelled' })
     expect(listener).toHaveBeenCalledTimes(2)
     const first = source.getSnapshot()
-    expect(first).toEqual([{ id: 'extras', label: 'Extras' }, { id: 'unlabelled', label: '' }])
+    expect(first).toEqual([{ id: 'extras', label: 'Extras', order: -10 }, { id: 'unlabelled', label: '' }])
     expect(source.getSnapshot()).toBe(first)
     label = '附加'
     b.setLocale()
-    expect(source.getSnapshot()[0]).toEqual({ id: 'extras', label: '附加' })
+    expect(source.getSnapshot()[0]).toEqual({ id: 'extras', label: '附加', order: -10 })
     off()
     expect(b.listenerCount()).toBe(0)
   })

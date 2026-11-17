@@ -11,6 +11,8 @@ import { Command } from 'commander'
 import type { Context } from '@deepseek-ai/cordis'
 import { parseCmdline } from '@ocean/ocean-cmdline'
 import { isWildcardHost, type TlsConfig } from '@ocean/ocean-host-webserver'
+import { runDeviceConnect } from './device-connect-client.ts'
+import { runDeviceAdmin } from './device-admin-client.ts'
 import { parsePublicUrl } from './public-url.ts'
 
 /** Stable Cordis plugin name. */
@@ -39,36 +41,55 @@ export interface WebStartupValues {
   trustedHosts: string[]
   /** Server certificate chain and unencrypted private key supplied together. */
   tls?: TlsConfig
+  /** Owner-only administrator socket for the server profile. */
+  deviceAdminSocket?: string
 }
 
 /** The web flag family, as commander parsed it. */
 interface WebOptions {
   host?: string
-  open: boolean
+  open?: boolean
   port?: string
   publicUrl?: string
   trustedHost?: string[]
   tlsCert?: string
   tlsKey?: string
+  deviceAdminSocket?: string
 }
 
 /**
  * This app's command: its flags, its description, and its help text.
+ * @param serverMode - Whether this is the device-authenticated server profile.
  * @returns a fresh program, so one process can parse more than once (tests).
  */
-function webCommand(): Command {
-  return new Command()
-    .name('ocean --profile web')
-    .description('Serve the Ocean browser UI.')
+function webCommand(serverMode: boolean): Command {
+  const program = new Command()
+    .name(serverMode ? 'ocean serve' : 'ocean --profile web')
+    .description(serverMode ? 'Serve an Ocean Host with device authentication.' : 'Serve the Ocean browser UI.')
     .helpOption('-h, --help', 'show this help')
     .option('--host <host>', 'bind address: one concrete IPv4 or IPv6 literal of a local interface; wildcard addresses are rejected')
-    .option('--no-open', 'do not open the Web UI in the default browser')
     .option('--port <port>', 'listen port; pass 0 to let the OS pick a free one')
     .option('--public-url <url>', 'advertise this HTTP(S) root in the printed, opened, runtime-context, and OCEAN_WEB_URL forms; grants no trust')
     .option('--trusted-host <authority...>', 'extra authority the /api browser-trust fence accepts (host or host:port; repeatable)')
     .option('--tls-cert <file>', 'PEM server certificate chain; requires --tls-key')
     .option('--tls-key <file>', 'unencrypted PEM private key; requires --tls-cert')
-    .addHelpText('after', `
+  if (serverMode) {
+    program.option('--device-admin-socket <path>', 'owner-only local administrator socket')
+      .addHelpText('after', `
+Examples:
+  ocean serve --host 127.0.0.1 --port 3080
+                                             serve on loopback without opening a browser
+  ocean serve --host 10.0.0.7 --tls-cert ./server-chain.pem --tls-key ./server-key.pem
+                                             serve HTTPS on one local interface
+  ocean remote-device --socket /absolute/path/admin.sock create laptop
+                                             create a device token through the local administrator socket
+
+Non-loopback listeners require --tls-cert and --tls-key. Use the local administrator
+socket to create device tokens; the server URL contains no launch token.
+`)
+  } else {
+    program.option('--no-open', 'do not open the Web UI in the default browser')
+      .addHelpText('after', `
 Examples:
   ocean --profile web                          serve on the composed host and port
   ocean --profile web --no-open                serve without opening a browser
@@ -79,6 +100,8 @@ Examples:
   ocean --profile web --tls-cert ./server-chain.pem --tls-key ./server-key.pem
                                              serve HTTPS with an existing certificate and key
 `)
+  }
+  return program
 }
 
 /**
@@ -89,7 +112,16 @@ Examples:
  * @param ctx - plugin context carrying the command line.
  */
 export function apply(ctx: Context): void {
-  const program = webCommand()
+  const profile = ctx.get('profileContext')?.name
+  if (profile === 'connect') {
+    runDeviceConnect(ctx)
+    return
+  }
+  if (profile === 'remote-device') {
+    runDeviceAdmin(ctx)
+    return
+  }
+  const program = webCommand(profile === 'serve')
   program.action(() => {
     const options = program.opts<WebOptions>()
     if (options.host !== undefined && isWildcardHost(options.host)) {
@@ -112,12 +144,13 @@ export function apply(ctx: Context): void {
       }
     }
     ctx.provide(WEB_STARTUP_SERVICE, {
-      openBrowser: options.open,
+      openBrowser: profile !== 'serve' && options.open === true,
       ...options.host !== undefined && { host: options.host },
       ...options.port !== undefined && { port: Number(options.port) },
       ...options.publicUrl !== undefined && { publicUrl: options.publicUrl },
       ...tls !== undefined && { tls },
       trustedHosts: options.trustedHost ?? [],
+      ...options.deviceAdminSocket !== undefined && { deviceAdminSocket: options.deviceAdminSocket },
     } satisfies WebStartupValues)
   })
   parseCmdline(ctx, program)

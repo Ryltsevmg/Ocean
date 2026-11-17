@@ -1,11 +1,11 @@
 /** Recorded npm evidence stays intact while authored files and exact edits remain checked. */
 
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { exactEditState, isRescopeExcluded, listRescopeFiles, rescopeText } from './rescope-vendor.ts'
+import { exactEditState, isRescopeExcluded, listRescopeFiles, readRescopeSource, rescopeText } from './rescope-vendor.ts'
 
 const ANCHOR = '\n## Sync procedure'
 const INSERTED = `\n15. **rescope**: one log entry.\n${ANCHOR}`
@@ -38,6 +38,20 @@ it('lists the complete eligible corpus when tracked paths exceed one MiB', () =>
 })
 
 describe('rescope file selection', () => {
+  it('skips removed working-tree files while preserving other filesystem failures', () => {
+    const root = mkdtempSync(join(tmpdir(), 'ocean-rescope-deleted-'))
+    const file = join(root, 'moved.ts')
+    try {
+      writeFileSync(file, 'export {}\n')
+      expect(readRescopeSource(file)).toBe('export {}\n')
+      rmSync(file)
+      expect(readRescopeSource(file)).toBeUndefined()
+      expect(() => readRescopeSource(root)).toThrow()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it('preserves the recorded npm resolution', () => {
     expect(isRescopeExcluded('scripts/dependency-catalog/package-lock.json')).toBe(true)
   })

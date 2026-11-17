@@ -311,6 +311,8 @@ export interface LaunchOptions {
   openInAppEnvironment?: LaunchEnvironmentSnapshot
   /** Compare the replayed root Session; `read-only` also forbids refresh writes to a borrowed fixture. */
   compareReplaySession?: boolean | 'read-only'
+  /** Owned current-writer oracle, separate from the immutable recorded replay input; refresh writes only this output. */
+  replayExpectedSession?: string
   /** Fixed JSON-quoted workspace path length for compaction estimates; omitted values use the ordinary prefix. */
   workspacePathLength?: number
   /**
@@ -1002,6 +1004,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
             compareReplaySession === 'read-only' ? 'replay' : mode,
             `http://${browserHost}:${port}`,
             harnessHome,
+            options.replayExpectedSession,
           )
         } catch (error) {
           failures.push(error)
@@ -1215,13 +1218,15 @@ async function assertReplaySession(
   mode: WebSnapshotMode,
   webUrl: string,
   harnessHome: string,
+  expectedFixturePath?: string,
 ): Promise<void> {
-  let expected = await readFile(fixturePath, 'utf8')
+  const recorded = await readFile(fixturePath, 'utf8')
+  let expected = expectedFixturePath === undefined ? recorded : await readFile(expectedFixturePath, 'utf8')
   const fixtureDir = dirname(fixturePath)
   const manifestPath = join(fixtureDir, 'snapshot.yml')
   const manifest = parseSnapshotManifest(await readFile(manifestPath, 'utf8'), manifestPath)
-  let expectedPath = fixturePath
-  const userPrompts = fixtureUserPrompts(expected)
+  let expectedPath = expectedFixturePath ?? fixturePath
+  const userPrompts = fixtureUserPrompts(recorded)
   const candidates = sessions.filter((session) => {
     if (session.header.origin === 'subagent' || session.header.isSeeded) return false
     const actual = session.snapshotEvents().flatMap((event) => {
@@ -1236,9 +1241,9 @@ async function assertReplaySession(
   const sessionCwd = session.header.cwd
   if (sessionCwd === undefined) throw new Error(`${fixturePath}: replayed session has no cwd`)
   const actual = rawSessionLog(session)
-  if (mode === 'refresh' && writesCurrentSessionFixtures(manifest, mode)) {
+  if (mode === 'refresh' && (expectedFixturePath !== undefined || writesCurrentSessionFixtures(manifest, mode))) {
     expected = stableSessionFixture(session, expected, sessionCwd, harnessHome)
-    expectedPath = recordedSessionFixturePath(fixturePath, session.header.version)
+    expectedPath = expectedFixturePath ?? recordedSessionFixturePath(fixturePath, session.header.version)
     await writeFile(expectedPath, expected)
   }
   const expectedHeader = JSON.parse(expected.split('\n').find(line => line.trim() !== '') ?? '{}') as {
@@ -1336,7 +1341,7 @@ export function fixtureIdentity(
  * @param id - the session id the seed is realized for.
  * @returns the realized fixture text.
  */
-export function realizeSeedFixture(scaffold: WebScaffold, fixtureText: string, id: string): string {
+export function realizeSeedFixture(scaffold: Pick<WebScaffold, 'workspaceCwd' | 'harnessHome'>, fixtureText: string, id: string): string {
   const firstLine = fixtureText.split(/\r?\n/).find(line => line.trim().length > 0)
   const fixtureCwd = firstLine === undefined
     ? undefined
@@ -1466,7 +1471,7 @@ function seedStreamEnd(
  * @returns the seeded id.
  */
 export async function seedSession(
-  scaffold: WebScaffold,
+  scaffold: Pick<WebScaffold, 'workspaceCwd' | 'harnessHome' | 'persistenceRoot'>,
   fixtureText: string,
   id: string,
   agentPreset?: string,
@@ -1526,7 +1531,7 @@ export async function seedSession(
 
 /** Materialize one detached Session fixture through the shipped JSONL provider. */
 async function persistSeedSession(
-  scaffold: WebScaffold,
+  scaffold: Pick<WebScaffold, 'persistenceRoot'>,
   meta: SessionHeader,
   events: readonly SessionEvent[],
 ): Promise<void> {

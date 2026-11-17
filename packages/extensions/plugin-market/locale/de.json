@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Plugin-Marktplatz",
+    "description": "Eine Registerkarte „Katalog“ auf der Seite Plugins mit ausgewählten Paketen, die über den Plugin-Manager des Profils installiert, entfernt und aktualisiert werden können.",
+    "detail": "docs/DETAIL.md"
+  }
+}

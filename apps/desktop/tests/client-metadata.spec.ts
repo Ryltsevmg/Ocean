@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { desktopClientMetadata, desktopClientVersion } from '../src/client-metadata.ts'
+import { desktopClientMetadata, desktopClientRelease, desktopClientVersion } from '../src/client-metadata.ts'
 
 afterEach(() => { vi.unstubAllEnvs() })
 
@@ -15,4 +15,12 @@ it('refuses a build that carries no client version instead of guessing one', () 
   expect(() => desktopClientVersion()).toThrow(/OCEAN_CLIENT_VERSION/)
   vi.stubEnv('OCEAN_CLIENT_VERSION', '')
   expect(() => desktopClientMetadata('en')).toThrow(/OCEAN_CLIENT_VERSION/)
+})
+
+it('reports the exact source commit only when the build recorded it', () => {
+  vi.stubEnv('OCEAN_CLIENT_VERSION', '1.2.3')
+  vi.stubEnv('OCEAN_CLIENT_COMMIT_HASH', 'abc')
+  expect(desktopClientRelease()).toEqual({ version: '1.2.3', commit: 'abc' })
+  vi.stubEnv('OCEAN_CLIENT_COMMIT_HASH', undefined)
+  expect(desktopClientRelease()).toEqual({ version: '1.2.3' })
 })

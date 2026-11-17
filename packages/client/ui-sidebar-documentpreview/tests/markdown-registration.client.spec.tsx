@@ -7,8 +7,8 @@ import { SlotTestRuntime } from '@ocean/ocean-client-test-runtime'
 import { LocaleRuntime } from '@ocean/ocean-client-locale/client'
 import type { UseSidebarRightTabInfo } from '@ocean/ocean-client-ui-sidebar-right/client'
 import { SessionId } from '@ocean/ocean-session/types'
-import { DocumentPreviewRegistry } from '../src/client/document/registry.ts'
-import { documentTabInfoFactory } from '../src/client/document/contract.ts'
+import { DocumentPreviewRegistry } from '../src/client/document-registry.ts'
+import { documentTabInfoFactory } from '../src/client/contract/document.ts'
 import { apply, MARKDOWN_BODY_ID, markdownDefinition } from '../src/client/markdown/index.ts'
 
 const runtimes: SlotTestRuntime[] = []

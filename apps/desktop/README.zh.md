@@ -39,6 +39,20 @@ Electron 在 `userData/desktop/locale-cache` 缓存最近确认的界面语言�
 
 桌面应用是完整 ocean Web 应用外的一层 Electron 壳。子进程在 Linux 上使用 primary-runtime 的 Node，在 macOS 和 Windows 上使用 Electron RunAsNode，启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 校验应用请求的来源，将其转换为所属 Host 的来源后，再把应用 HTTP 请求转发给已认证的 Web Host；转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。原生 Host 请求会显式发送当前 Host 的认证 Cookie，任何 Electron session 都不保存该 Cookie；每次启动 Host 时都会移除早期版本遗留在默认 session 中的 `dsh-auth-*` Cookie，因为 Cookie 不区分端口，否则这些 Cookie 会随每个发往 `127.0.0.1` 的请求一并发送。
 
+[远程连接存储](src/remote-connection-store.ts)在 Electron userData 下保留已保存的连接记录，使用 Electron safeStorage 将 HTTPS 地址、Host 标识和设备令牌一同加密后原子替换文件。Linux 保存需要受支持的系统密钥环。记录缺失时可新建连接；记录不可读或无效时显示本地化存储错误，即使密钥环不可用也能删除记录。连接与令牌保存分别报告结果：连接后保存失败不会关闭 Host，表单会提示令牌未保存。关闭连接对话框会取消尚未完成的登录。
+
+在应用菜单选择**连接远程 Host**，输入 HTTPS 地址和设备令牌。选择**在此设备上保存令牌**可在下次连接时复用地址和令牌。输入 HTTPS 挂载地址时可省略末尾斜杠，仍会匹配已保存的地址。可通过**连接远程 Host**打开其他服务器，并从侧栏或应用菜单的 **Host 列表**切换。**使用本地 Host**会返回同一窗口中的本地工作区。其侧栏按已连接的远程 Host 分组，每组最多显示 50 条近期会话。选择会话会在对应 Host 的工作区打开。每次远程登录使用独立的 Chromium 嵌入视图和内存会话。**断开当前 Host**会关闭视图、清除浏览器存储并请求 Host 退出登录。若无法确认退出，另行显示提示；必要时请在 Host 上撤销该会话。要重新连接已保存的 Host，请从地址栏的建议中选择或输入其地址，并将令牌留空。**忘记已保存的连接**会删除地址栏所填地址对应的令牌，并断开该地址的活动连接。远程窗口标题显示服务器地址，路径和终端操作由该 Host 处理。
+
+Desktop 默认最多同时连接四个远程 Host。启动前可将 `OCEAN_DESKTOP_MAX_REMOTE_HOSTS` 设为正安全整数；无效值会阻止启动。超出限制时显示错误，不会移除已有 Host。隐藏视图仍发布其全部会话的待批准事项和待回答问题总数，以及最多 50 条近期会话标题。所有所属视图接收待处理总数，只有本地视图接收其他 Host 的会话标题。每个文档按递增 revision 发布；重载后清空该文档的元数据，等待下一次发布。新发布方先读取当前发布 revision；Host 选择状态的 revision 防止较旧的异步读取覆盖新状态。
+
+其他连接正在建立、强制更新阻止导航或目标 Host、会话已不可用时，Host 导航会拒绝请求。当前视图保持选中，renderer 显示本地化错误。主进程返回 `DESKTOP_HOST_NAVIGATION_UNAVAILABLE`，不包含会话标题或标识符。
+
+Host 在 WebSocket 重连时拒绝登录，Desktop 仅关闭该 Host。若它正被选中，则返回本地工作区并打开已填入其地址的连接表单。远程表单与 Host 发布仅接受所属主框架，子框架及其他外壳文档无权执行这些命令。连接失败使用结构化代码和本地化提示，不显示令牌或服务器原始错误。本地与远程视图均接收 updater 状态及通道变化；原生主题由当前选中视图控制。
+
+在远程引导注入交给视图前，Desktop 要求唯一的 Host 引导图携带与打包客户端完全一致的发布版本和源提交；双方都缺少提交信息时才允许省略。发布信息缺失、格式错误或不同时拒绝启动，并退出刚创建的登录。该发布检查不验证每个静态模块的 ABI 指纹，也不比较部署的插件组合。
+
+远程 GET 与 HEAD 的重定向若仍在选定的 HTTPS 源和挂载目录内，会映射回所属应用 URL，包括带版本的媒体读取。其他源、挂载目录之外的路径、带凭据的目标及修改请求的重定向均被拒绝；Host Cookie 不会交给 renderer。
+
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
 应用菜单第一项“**关于 Ocean-Chat**”打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 Ocean-Chat 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Windows 使用随包分发的 PNG。
@@ -53,7 +67,7 @@ Desktop Host 的 Platform API 请求与更新策略请求用相同的 Platform �
 
 提供方凭据被服务端判定失效后，仍在设置中显示，不会替换工作区。主动退出登录也保持工作区打开，无论是否另行配置了 API key。
 
-桌面麦克风访问仅允许主 `dsh-app://app` 页面发起的音频请求。macOS 使用系统麦克风授权、随包用途说明，以及主应用与 Helper 签名中的 `com.apple.security.device.audio-input` 权限。
+桌面麦克风访问仅允许各本地或远程 session 所属的 `dsh-app://app` 主框架发起的音频请求；拒绝视频、子框架及其他来源。macOS 使用系统麦克风授权、随包用途说明，以及主应用与 Helper 签名中的 `com.apple.security.device.audio-input` 权限。
 
 按 F12（多媒体功能键键盘上为 Fn+F12）、macOS 的 Command+Option+I 或 Windows 的 Ctrl+Shift+I，可切换当前获得焦点的应用页面的 DevTools，打包版本同样支持。应用菜单在隐藏和退出命令之前的独立分组中显示本地化的“开发者工具”命令。Windows 在标题栏的应用弹出菜单中显示开关，通过隐藏的原生应用菜单注册快捷键；macOS 和 Linux 的应用菜单保留隐藏的 F12 快捷键别名。更新遮罩和打包版本的内嵌浏览器禁用 DevTools。
 
@@ -89,7 +103,7 @@ Windows 在整个运行期间常驻托盘图标。悬停提示为产品名，单
 
 设计师原稿位于 `resources/icon.png` 和 `resources/icon.svg`；平台适配保留鲸鱼与渐变，分别位于 `resources/icon-windows.*` 和 `resources/icon-macos.*`。将各平台 SVG 导出为透明的 1024×1024 PNG。electron-builder 为 Windows 应用、安装程序和卸载程序生成多尺寸 ICO（[Windows 图标要求](https://learn.microsoft.com/en-us/windows/apps/design/iconography/app-icon-construction)）。安装页面在两种主题下使用匹配的图案；卸载程序的欢迎和完成页共用 `installer/assets/uninstaller-sidebar.png`，准备阶段将其转换为 164×314 BMP。
 
-快捷键覆盖保存在 `app.getPath('userData')/keybindings.json`，与 `OCEAN_HOME` 分离。主进程校验并串行保存修改后才发布已接受键位。读取失败保留上次接受的键位并阻止编辑，包括全部恢复；不可读和未来版本的文件保持不变。开发时可通过 `OCEAN_DESKTOP_USER_DATA_DIR` 隔离这些偏好，启动器会输出解析后的路径。格式和冲突语义见[快捷键服务](../../packages/client/shortcuts/README.zh.md)。
+快捷键覆盖保存在 `app.getPath('userData')/keybindings.json`，与 `OCEAN_HOME` 分离。主进程校验并串行保存修改后，向本地和远程 Host 视图发布已接受的键位。原生快捷键发给当前选中的视图。读取失败保留上次接受的键位并阻止编辑，包括全部恢复；不可读和未来版本的文件保持不变。开发时可通过 `OCEAN_DESKTOP_USER_DATA_DIR` 隔离这些偏好，启动器会输出解析后的路径。格式和冲突语义见[快捷键服务](../../packages/client/shortcuts/README.zh.md)。
 
 macOS“文件”菜单显示已接受的单键绑定（包括方向键），并通过 Client 页面 owner 路由“关闭页面或窗口”。Windows 和 macOS 在主文档、内嵌 frame 和浏览器 guest 输入之前拦截所有已接受的完整绑定，包括编辑和终端输入。录制和输入法组合状态仍受保护。更新蒙层从创建到最后一个蒙层关闭期间阻挡父窗口及其浏览器 guest 的产品快捷键和编辑按键递送。每次打开或关闭蒙层都会作废待完成的组合键状态。主进程通过显式的创建能力和输入状态读取能力，让更新对话框与快捷键输入共享同一个蒙层管理实例。双键组合会将首键的初次按下事件交给页面，且不拦截其松开事件；完整组合及其重复事件会被消费。渲染进程将可配置绑定的分发交给原生适配器。双键组合不注册原生菜单快捷键。已接受的命令通过可信 preload 转发一次。Linux 通过 DOM 分发主文档快捷键，并将已接受的内嵌 frame 绑定转发给 Client 解析器。关闭最后一个窗口后 macOS 保留应用生命周期；Windows 退出桌面实例并停止其任务。
 
@@ -110,6 +124,8 @@ Desktop 从 ASAR 内技能包的 assets 读取 [Office 技能](../../packages/sk
 该产物随 Desktop 版本发布。`runtime.json` 记录 Desktop 版本、目标平台、顶层解释器和包管理器版本及 Python 分发包版本表，以及所选目标的锁定产物输入与组装格式的摘要。分发包名称按 PEP 503 归一化；名称归一化后重复时，清单会被拒绝。旧 `components` 清单通过归一化继续可读，并保留其原有库版本一致性校验。匹配的安装会被复用；依赖或压缩包变化后，即使 Desktop 版本不变，也会在完整暂存副本完成后替换目录。不含摘要的旧清单会在下次安装时被替换。用户自行添加的 Python 包仅在产物身份一致时保留。目录替换失败时保留之前的安装；解释器仍在运行时，Windows 可能拒绝替换。
 
 Desktop 私有的 `runtime/bin` 目录仅添加到包安装进程，不进入 PTC 和 agent shell 从 Host 继承的 PATH。该工具不修改 PATH、环境变量或用户包管理器配置。pnpm 的全局包、命令入口和 store 保留自身默认值及用户设置，包括环境不支持全局安装时的原生错误。不提供独立依赖更新器。
+
+构建时的 ZIP 解压固定使用 `@electron-internal/extract-zip` 1.0.5，仅处理已验证校验和的 Electron、Node 和 wheel 发布文件，目标目录由构建独占。它保留目标仍在目录内的相对 framework 链接，并拒绝逃逸的符号链接；解压失败可能留下部分暂存文件。上游包仅供 Electron 内部使用，不向其他调用者承诺 API 或支持，因此升级必须通过运行时归档和 wheel 回归检查。解压 wheel 前，`yauzl` 检查全部条目，拒绝规范化后的重复路径及反斜杠名称，并保留仅允许 `.data/scripts` 的安装规则。
 
 Node 准备内置解释器和 Python 库，无需系统 Python 或 pip。[下载锁](../../scripts/primary-runtime/lock.json)固定解释器压缩包、Python 分发包版本及目标平台 wheel 的 URL 和哈希；共享构建器从根开发依赖中解析 pnpm 固定版本。测试检查根 package-manager 版本和 Desktop 固定版本保持一致。每个目标的 wheel 文件名必须与分发包版本一致。所选目标、wheel 记录及分发包映射内部的键顺序，以及 wheel 条目顺序都会影响产物身份，编辑时须保留；锁文件顶层键的顺序不影响该身份。库 wheel 解压到 site-packages，各 wheel 的 `.data/scripts` 目录保留辅助文件，不生成命令行包装器。其他安装方案会被拒绝。macOS 只对版本化 Python 可执行文件签名一次，在外部资源及安装副本中保留[两个解释器别名](../../packages/skill/tool-workspace-dependencies/README.zh.md)。POSIX 本机目标检查要求解释器别名为相对链接。所有本机目标检查验证命令名、子进程执行及包含 pip 的 venv，并在清理暂存目录后以及 macOS 签名后验证锁定 wheel 的集合与版本，允许解释器自带的 pip，并检查 Python 版本、Office 文档读写和依赖完整性，不写入字节码。独立 Node 可执行文件获得 V8 所需的 JIT 权限；x64 目标还获得 `com.apple.security.cs.allow-unsigned-executable-memory`，允许可执行代码页，包括在 Rosetta 下运行时。ARM64 Node 和 Office 辅助程序保留仅 JIT 权限。跨目标执行和签名安装需要对应的发布主机。`dev:desktop` 和 `start:desktop` 都会在启动 Electron 前准备 `.desktop-build/targets/<target>/runtime/primary-runtime`；首次准备可能需要下载锁定的依赖。准备未完成时，启动命令不能报告成功退出。
 

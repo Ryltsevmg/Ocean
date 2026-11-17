@@ -27,6 +27,8 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
+在插件页选择**浏览其他插件**可打开可选组合包列表。选择**添加插件 → 让 Agent 创建插件**会打开创造模式草稿，不发送消息。设置中不再重复显示这些菜单操作。
+
 宽度小于 768px 时，页面使用 20px 的左右内边距，与会话页头对齐。
 
 组合包可以在其 manifest 中声明默认隐藏意图（`ocean.bundle.listedByDefault: false`），在自身声明的行开始运行或被启用前，它不会出现在两个列表（含**更多**页）中。已有的启用状态仍可管理；关闭随安装提供的版本后，它会再次隐藏。页面的 manifest 规则是通用的：未声明 `listedByDefault: false` 的组合包会列出；声明了的，只有在 profile 启用、安装随附版本被选中，或它声明的某一行开始运行时才列出；隐藏的组合包也不能通过 ID 打开详情。
@@ -204,3 +206,5 @@ Host 入口通过生成的 Remote 接口暴露 `pluginRegistryProbe.fastest()`�
 无。
 
 </details>
+
+`plugins.tab` 条目的 `order` 相对顺序为零的已安装标签排列。初次打开及调用 `pluginNavigation.openList()` 时默认显示第一个负数顺序标签；用户切换标签后，条目变化会保留该选择。所选标签卸载时返回已安装标签。内置市场通过此顺序默认打开目录。

@@ -116,7 +116,7 @@ describe('ui-plugin-manager browser plugin', () => {
     const entry = b.slots.entries('main')[0]!
     assert(entry.store && 'create' in entry.store)
     const navigation = entry.store.create()
-    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'list' } })
+    expect(navigation.getSnapshot()).toEqual({ tab: null, view: { kind: 'list' } })
     b.ctx.pluginNavigation.openBundle('ocean-navigation-test')
     expect(b.panelInfo.getSnapshot().activePanelId).toBe(PANEL_ID)
     expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'package', name: 'ocean-navigation-test' } })
@@ -147,7 +147,7 @@ describe('ui-plugin-manager browser plugin', () => {
 
     b.ctx.pluginNavigation.openList()
     expect(b.panelInfo.getSnapshot().activePanelId).toBe(PANEL_ID)
-    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'list' } })
+    expect(navigation.getSnapshot()).toEqual({ tab: null, view: { kind: 'list' } })
     expect(face.hooks.pluginManager.getSnapshot().install.open).toBe(false)
 
     b.ctx.pluginNavigation.openBundle('ocean-navigation-test')
@@ -155,7 +155,7 @@ describe('ui-plugin-manager browser plugin', () => {
     navigation.actions.setTab('fixture-tab')
     b.ctx.pluginNavigation.openList()
     expect(b.panelInfo.getSnapshot().activePanelId).toBe(PANEL_ID)
-    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'list' } })
+    expect(navigation.getSnapshot()).toEqual({ tab: null, view: { kind: 'list' } })
     expect(face.hooks.pluginManager.getSnapshot().install.open).toBe(false)
     expect(b.list).not.toHaveBeenCalled()
   })

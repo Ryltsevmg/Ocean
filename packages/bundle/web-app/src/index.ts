@@ -55,6 +55,8 @@ export const inject = ['webServer']
 export interface Config {
   /** Permit default-browser handoff after the Loader tree settles; an SSH launch suppresses it. */
   openBrowser: boolean
+  /** Announce the server profile and require TLS on non-loopback listeners. */
+  serverMode?: boolean
   /** Print the URL line on activation; a non-interactive layer can turn it off. */
   printUrl: boolean
   /**
@@ -74,6 +76,7 @@ export interface Config {
 
 export const Config: z<Config> = z.object({
   openBrowser: z.boolean().default(true),
+  serverMode: z.boolean().default(false),
   printUrl: z.boolean().default(true),
   surfaceContext: z.boolean().default(true),
   publicUrl: z.transform(z.string(), value => parsePublicUrl(value).href),
@@ -195,11 +198,12 @@ export function apply(ctx: Context, config: Config): void {
     )
   }
   if (ctx.webServer.protocol === 'http:' && !isLoopbackHost(boundHost)) {
+    if (config.serverMode) throw new Error('ocean serve: use TLS for a non-loopback listener or bind to loopback behind an HTTPS proxy')
     console.warn(`ocean web: listening on ${boundHost} over plain HTTP; restrict this port to a trusted proxy or network`)
   }
   // The bind URL belongs to this host. Under SSH, the operator reaches it
   // through a local forwarding address that this process cannot derive.
-  const handoffBrowser = config.openBrowser && !launchedThroughSsh(launchEnvironmentOf(ctx))
+  const handoffBrowser = !config.serverMode && config.openBrowser && !launchedThroughSsh(launchEnvironmentOf(ctx))
   /** The advertised root: the canonical `publicUrl`, or the listener's own origin. */
   const appRootUrl = (): string => publicUrl ?? ctx.webServer.getOrigin()
   ctx.provide('webApp', { getAdvertisedUrl: appRootUrl } satisfies WebApp)
@@ -225,10 +229,10 @@ export function apply(ctx: Context, config: Config): void {
       const announceReady = (): void => {
         if (ANNOUNCED_ROOTS.has(connectionCtx.root)) return
         const webUrl = appRootUrl()
-        const authenticatedUrl = connectionCtx.connection.authenticatedUrl(webUrl)
+        const authenticatedUrl = config.serverMode ? webUrl : connectionCtx.connection.authenticatedUrl(webUrl)
         ANNOUNCED_ROOTS.add(connectionCtx.root)
         if (config.printUrl) {
-          console.log(`ocean web: ${authenticatedUrl}`)
+          console.log(`ocean ${config.serverMode ? 'serve' : 'web'}: ${authenticatedUrl}`)
         }
         if (handoffBrowser) {
           console.log('ocean web: opening the default browser; pass --no-open to disable')

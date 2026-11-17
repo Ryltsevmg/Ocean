@@ -153,7 +153,7 @@ export function apply(ctx: ClientContext): void {
       const disposeNavigation = ctx.reflect.provide('pluginNavigation', {
         openList: () => {
           ctx.layout.selectPanel(PANEL_ID)
-          instance.actions.setTab('installed')
+          instance.actions.setTab(null)
           instance.actions.setView({ kind: 'list' })
         },
         openBundle: (packageName: string) => {

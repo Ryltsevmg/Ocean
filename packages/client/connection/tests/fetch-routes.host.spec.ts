@@ -63,6 +63,29 @@ describe('Connection exact Fetch routes', () => {
     await disposeFiber()
   })
 
+  it('admits a device only to a route that opted in', async () => {
+    const { connection, dispose } = await mounted()
+    const device = connection.createPeer({ principal: {
+      kind: 'remote-device',
+      deviceId: 'c881a516-9a1a-451c-b0b2-86ba98762ba7' as Extract<Principal, { kind: 'remote-device' }>['deviceId'],
+    } })
+    const guest = connection.createPeer({ principal: GUEST })
+    const fetch = async (): Promise<Response> => new Response()
+    connection.fetch.register({ path: '/api/session/private', methods: ['POST'], requestBody: 'streaming', fetch })
+    connection.fetch.register({ path: '/api/session/upload', methods: ['POST'], requestBody: 'streaming', allowRemoteDevice: true, fetch })
+    const handler = connection.createSharedFetchHandler('/api')
+    const request = (path: string) => new Request(`http://host/api/session/${path}`, { method: 'POST' })
+    try {
+      expect((await handler.fetch(request('private'), device)).status).toBe(403)
+      expect((await handler.fetch(request('upload'), guest)).status).toBe(403)
+      expect((await handler.fetch(request('upload'), device)).status).toBe(200)
+    } finally {
+      await device.dispose()
+      await guest.dispose()
+      await dispose()
+    }
+  })
+
   it('rejects invalid and duplicate registrations', async () => {
     const { connection, dispose: disposeFiber } = await mounted()
     const fetch = async (): Promise<Response> => new Response()

@@ -7,8 +7,10 @@ import { describe, expect, it, vi } from 'vitest'
 import type { AddressInfo } from 'node:net'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { AttachmentStore } from '@ocean/ocean-attachment'
+import { HostConnectionService } from '../src/rpc-host.ts'
+import { DeviceTokens, deviceRegistryKey } from '../src/device-tokens.ts'
 import type { CredentialProvider } from '@ocean/ocean-credentials'
-import type { IndexInjection, WebServer, WebRoute, WebUpgradeRoute } from '@ocean/ocean-host-webserver'
+import type { IndexInjection, WebServer, WebRoute, WebResourceRoute, WebUpgradeRoute } from '@ocean/ocean-host-webserver'
 import {
   API_PATH,
   RpcId,
@@ -31,11 +33,17 @@ function fakeHttpServer(
   upgrades: WebUpgradeRoute[],
   host = '127.0.0.1',
   protocol: WebServer['protocol'] = 'http:',
-): Pick<WebServer, 'register' | 'registerUpgrade' | 'tapIndex' | 'port' | 'host' | 'protocol'> {
+  resources: WebResourceRoute[] = [],
+): Pick<WebServer, 'register' | 'registerUpgrade' | 'tapIndex' | 'port' | 'host' | 'protocol' | 'collectIndexInjections'> {
   return {
     host,
     protocol,
-    register(route: WebRoute) {
+    collectIndexInjections: peer => [{ kind: 'global', name: 'principal', value: peer.principal.kind }],
+    register(route) {
+      if ('resource' in route) {
+        resources.push(route)
+        return () => { resources.splice(resources.indexOf(route), 1) }
+      }
       if (routes.some(candidate => candidate.kind === route.kind && candidate.path === route.path)) {
         throw new Error(`duplicate route ${route.path}`)
       }
@@ -105,6 +113,7 @@ async function mounted(
 ): Promise<{
   ctx: Context
   routes: WebRoute[]
+  resources: WebResourceRoute[]
   upgrades: WebUpgradeRoute[]
   connection: HostConnectionHandle
   dispose: () => Promise<void>
@@ -114,12 +123,14 @@ async function mounted(
   const upgrades: WebUpgradeRoute[] = []
   if (credentials === undefined) provideBrowserCredentials(ctx)
   else ctx.provide('credentials', credentials)
-  ctx.provide('webServer', fakeHttpServer(routes, upgrades, '127.0.0.1', protocol) as WebServer)
+  const resources: WebResourceRoute[] = []
+  ctx.provide('webServer', fakeHttpServer(routes, upgrades, '127.0.0.1', protocol, resources) as WebServer)
   const fiber = ctx.plugin({ inject: [...inject], apply }, config)
   await fiber.await()
   return {
     ctx,
     routes,
+    resources,
     upgrades,
     connection: ctx.get('connection') as HostConnectionHandle,
     dispose: () => fiber.dispose(),
@@ -140,6 +151,375 @@ function browserCookie(connection: HostConnectionHandle, authority: string): str
 }
 
 describe('connection node half', () => {
+  it('bootstraps device issuance through the credential provider without publishing transports', async () => {
+    const ctx = new Context()
+    provideBrowserCredentials(ctx)
+    const fiber = ctx.plugin({ inject: [...inject], apply }, { deviceBootstrapOnly: true })
+    try {
+      await fiber.await()
+      expect(ctx.get('connection')).toBeUndefined()
+      const bootstrap = ctx.get('deviceBootstrap')
+      if (bootstrap === undefined) throw new Error('bootstrap service was not published')
+      const device = await bootstrap.issue('Windows laptop')
+      expect(await bootstrap.list()).toEqual([{ id: device.id, label: 'Windows laptop', revoked: false }])
+      expect(await new DeviceTokens(ctx.credentials).verify(device.token)).toBe(device.id)
+    } finally {
+      await fiber.dispose()
+      expect(ctx.get('deviceBootstrap')).toBeUndefined()
+    }
+  })
+
+  it('keeps failed and independent device exchanges out of another device login budget', async () => {
+    const host = await mounted({ allowOwnerLogin: false, maxDeviceExchangesPerWindow: 1 }, 'https:')
+    try {
+      const tokens = new DeviceTokens(host.ctx.credentials)
+      const first = await tokens.issue('Laptop')
+      const second = await tokens.issue('Phone')
+      const route = host.routes.find(route => route.path === '/connect')
+      if (route === undefined) throw new Error('missing connect route')
+      const exchange = async (token: string): Promise<number | undefined> => {
+        const reply = fakeResponse()
+        await route.handler(fakePost({
+          host: 'localhost', 'ocean-device-protocol': '1', authorization: `Bearer ${token}`,
+        }, '/connect', null), reply.response)
+        return reply.state.status
+      }
+      expect(await exchange(first.id + second.token.slice(36))).toBe(401)
+      expect(await exchange(first.token)).toBe(204)
+      expect(await exchange(first.token)).toBe(429)
+      expect(await exchange(second.token)).toBe(204)
+    } finally {
+      await host.dispose()
+    }
+  })
+
+  it.each(['revoke', 'rotate'] as const)('rejects device event replies while %s commits before live cleanup', async (action) => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const committed = Promise.withResolvers<undefined>()
+    const finish = Promise.withResolvers<undefined>()
+    const tokens = new DeviceTokens(host.ctx.credentials)
+    const device = await tokens.issue('Laptop')
+    const login = await tokens.exchange(device.token, 'https://localhost', { lifetimeMs: 60_000, maxSessionsPerDevice: 1 })
+    const req = fakeRequest({ host: 'localhost', cookie: `__Host-ocean-device=${login ?? ''}` })
+    const first = await host.connection.admitTransport(req, true)
+    const second = await host.connection.admitTransport(req, false)
+    if ('rejection' in first || 'rejection' in second || !(host.connection instanceof HostConnectionService)) {
+      throw new Error('device admission failed')
+    }
+    const original = host.ctx.credentials.modifyRecord.bind(host.ctx.credentials)
+    const mutation = vi.spyOn(host.ctx.credentials, 'modifyRecord').mockImplementation(async (key, update) => {
+      const result = await original(key, update)
+      committed.resolve(undefined)
+      await finish.promise
+      return result
+    })
+    const pending = action === 'revoke' ? host.connection.revokeDevice(device.id) : host.connection.rotateDevice(device.id)
+    try {
+      await committed.promise
+      expect(host.connection.sharesDeviceSession?.(first.peer, second.peer)).toBe(false)
+      expect(await host.connection.admitTransport(req, true)).toEqual({ rejection: 401 })
+    } finally {
+      finish.resolve(undefined)
+      await pending
+      mutation.mockRestore()
+      await host.dispose()
+    }
+  })
+
+  it('distinguishes a committed revocation from failed live cleanup', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const tokens = new DeviceTokens(host.ctx.credentials)
+    const device = await tokens.issue('Laptop')
+    const login = await tokens.exchange(device.token, 'https://localhost', { lifetimeMs: 60_000, maxSessionsPerDevice: 1 })
+    const lease = await host.connection.admitTransport(fakeRequest({ host: 'localhost', cookie: `__Host-ocean-device=${login ?? ''}` }), true)
+    if ('rejection' in lease || !(host.connection instanceof HostConnectionService)) throw new Error('device admission failed')
+    const failure = vi.spyOn(lease.peer, 'dispose').mockRejectedValue(new Error('private cleanup detail'))
+    try {
+      await expect(host.connection.revokeDevice(device.id)).rejects.toMatchObject({
+        code: 'DEVICE_ADMIN_FAILED', durableOutcome: 'committed', liveCleanup: 'failed',
+      })
+      expect(host.connection.sharesDeviceSession?.(lease.peer, lease.peer)).toBe(false)
+      expect(await tokens.verify(device.token)).toBeUndefined()
+    } finally {
+      failure.mockRestore()
+      await lease.peer.dispose()
+      await host.dispose()
+    }
+  })
+
+  it('revalidates live device leases when the credential provider publishes an external revocation', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    try {
+      const tokens = new DeviceTokens(host.ctx.credentials)
+      const device = await tokens.issue('Laptop')
+      const login = await tokens.exchange(device.token, 'https://localhost', { lifetimeMs: 60_000, maxSessionsPerDevice: 1 })
+      const lease = await host.connection.admitTransport(fakeRequest({ host: 'localhost', cookie: `__Host-ocean-device=${login ?? ''}` }), true)
+      if ('rejection' in lease) throw new Error('device admission failed')
+      await tokens.revoke(device.id)
+      host.ctx.emit('credentials/record-updated', deviceRegistryKey)
+      await vi.waitFor(() => { expect(lease.peer.signal.aborted).toBe(true) })
+      expect(host.connection.sharesDeviceSession?.(lease.peer, lease.peer)).toBe(false)
+    } finally {
+      await host.dispose()
+    }
+  })
+
+  it.each(['native', 'proxy', 'plaintext'] as const)('exchanges device tokens over %s transport only when protected', async (mode) => {
+    const origin = 'https://ocean.example'
+    const host = await mounted({
+      allowOwnerLogin: false,
+      trustedHosts: ['ocean.example'],
+      maxDeviceExchangesPerWindow: 1,
+      maxDeviceTransports: mode === 'native' ? 2 : 3,
+      maxDeviceTransportsPerDevice: 2,
+      ...(mode === 'proxy' ? { deviceProxyUrl: origin } : {}),
+    }, mode === 'native' ? 'https:' : 'http:')
+    try {
+      const tokens = new DeviceTokens(host.ctx.credentials)
+      const { id, token } = await tokens.issue('Laptop')
+      const route = host.routes.find(route => route.path === '/connect')
+      if (route === undefined) throw new Error('missing connect route')
+      const headers = { host: 'ocean.example', authorization: `Bearer ${token}`, 'x-forwarded-proto': 'https' }
+      const crossSite = fakeResponse()
+      await route.handler(fakePost({ ...headers, origin: 'https://elsewhere.example' }, '/connect', null), crossSite.response)
+      expect(crossSite.state.status).toBe(403)
+      if (mode !== 'plaintext') {
+        const incompatible = fakeResponse()
+        await route.handler(fakePost({ ...headers, origin, 'ocean-device-protocol': '0' }, '/connect', null), incompatible.response)
+        expect(incompatible.state).toMatchObject({ status: 409, headers: { 'ocean-device-protocol': '1' } })
+        expect(incompatible.state.headers?.['set-cookie']).toBeUndefined()
+      }
+      const discoveryHeaders = { host: 'ocean.example', origin, 'ocean-device-protocol': '1' }
+      const discovery = fakeResponse()
+      await route.handler(Object.assign(fakeRequest(discoveryHeaders, '/connect'), { method: 'HEAD' }), discovery.response)
+      expect(discovery.state.status).toBe(mode === 'plaintext' ? 403 : 204)
+      expect(discovery.state.headers?.['set-cookie']).toBeUndefined()
+      const foreignDiscovery = fakeResponse()
+      await route.handler(Object.assign(fakeRequest({ ...discoveryHeaders, origin: 'https://elsewhere.example' }, '/connect'),
+        { method: 'HEAD' }), foreignDiscovery.response)
+      expect(foreignDiscovery.state.status).toBe(403)
+      expect(foreignDiscovery.state.headers?.['ocean-device-host']).toBeUndefined()
+      const compatible = { ...headers, origin, 'ocean-device-protocol': '1' }
+      if (mode !== 'plaintext') {
+        const stale = fakeResponse()
+        await route.handler(fakePost({ ...compatible, 'ocean-device-host': 'different-host' }, '/connect', null), stale.response)
+        expect(stale.state.status).toBe(412)
+        expect(stale.state.headers?.['set-cookie']).toBeUndefined()
+      }
+      const reply = fakeResponse()
+      await route.handler(fakePost(compatible, '/connect', null), reply.response)
+      if (mode === 'plaintext') {
+        expect(reply.state.status).toBe(403)
+        return
+      }
+      expect(reply.state.status).toBe(204)
+      expect(discovery.state.headers?.['ocean-device-host']).toEqual(expect.any(String))
+      expect(discovery.state.headers?.['ocean-device-host']).toBe(reply.state.headers?.['ocean-device-host'])
+      const throttled = fakeResponse()
+      await route.handler(fakePost(compatible, '/connect', null), throttled.response)
+      expect(throttled.state.status).toBe(429)
+      expect(throttled.state.headers?.['retry-after']).toMatch(/^\d+$/u)
+      const cookie = reply.state.headers?.['set-cookie'] ?? ''
+      expect(cookie).toMatch(/^__Host-ocean-device=[^;]+; Path=\/; Secure; HttpOnly; SameSite=Strict;/u)
+      expect(cookie).not.toContain(token)
+      const bootstrap = host.resources.find(candidate => candidate.path === '/connect/bootstrap')
+      if (bootstrap === undefined) throw new Error('missing device bootstrap route')
+      const destination = `${origin}/connect/bootstrap`
+      const denied = await bootstrap.resource(new Request(destination, { headers: { host: 'ocean.example' } }))
+      expect(denied.status).toBe(401)
+      const boot = await bootstrap.resource(new Request(destination, {
+        headers: { host: 'ocean.example', cookie: cookie.split(';', 1)[0] ?? '' },
+      }))
+      expect(boot.headers.get('cache-control')).toBe('no-store')
+      expect(await boot.json()).toEqual([{ kind: 'global', name: 'principal', value: 'remote-device' }])
+
+      const login = cookie.split(';', 1)[0]?.slice('__Host-ocean-device='.length) ?? ''
+      expect(await tokens.verifySession(login, origin)).toBe(id)
+      const loginHeaders = { host: 'ocean.example', origin, cookie: `__Host-ocean-device=${login}` }
+      const request = fakeRequest(loginHeaders)
+      const read = vi.spyOn(host.ctx.credentials, 'readRecord')
+        .mockRejectedValueOnce(new Error('credential store unavailable'))
+        .mockRejectedValueOnce(new Error('credential store unavailable'))
+      try {
+        const unavailable = fakeResponse()
+        await route.handler(Object.assign(fakeRequest(loginHeaders, '/connect'), { method: 'HEAD' }), unavailable.response)
+        expect(unavailable.state).toEqual({ status: 503, headers: { 'cache-control': 'no-store' } })
+        expect(await host.connection.admitTransport(request, true)).toEqual({ rejection: 503 })
+      } finally {
+        read.mockRestore()
+      }
+      const first = await host.connection.admitTransport(request, true)
+      const second = await host.connection.admitTransport(request, true)
+      if ('rejection' in first || 'rejection' in second) throw new Error('valid device session was refused')
+      expect(first.peer.principal).toEqual({ kind: 'remote-device', deviceId: id })
+      expect(second.peer.id).not.toBe(first.peer.id)
+      expect(await host.connection.admitTransport(request, true)).toEqual({ rejection: 503 })
+      await first.release()
+      const replacement = await host.connection.admitTransport(request, false)
+      if ('rejection' in replacement) throw new Error('released device capacity was not recovered')
+      expect(host.connection.sharesDeviceSession?.(second.peer, replacement.peer)).toBe(true)
+      await replacement.release()
+      const otherLogin = await tokens.exchange(token, origin, { lifetimeMs: 10_000, maxSessionsPerDevice: 2 })
+      const other = await host.connection.admitTransport(fakeRequest({
+        host: 'ocean.example', origin, cookie: `__Host-ocean-device=${otherLogin ?? ''}`,
+      }), false)
+      if ('rejection' in other) throw new Error('other login was refused')
+      expect(host.connection.sharesDeviceSession?.(second.peer, other.peer)).toBe(false)
+      expect(first.peer.signal.aborted).toBe(true)
+      expect(second.peer.signal.aborted).toBe(false)
+      const logout = fakeResponse()
+      await route.handler(Object.assign(request, { method: 'DELETE' }), logout.response)
+      expect(logout.state.status).toBe(403)
+      expect(await tokens.verifySession(login, origin)).toBe(id)
+      const validLogout = fakeResponse()
+      const cleanupStarted = Promise.withResolvers<undefined>()
+      const releaseCleanup = Promise.withResolvers<undefined>()
+      second.peer.ctx.effect(() => () => {
+        cleanupStarted.resolve(undefined)
+        return releaseCleanup.promise
+      })
+      const ending = route.handler(Object.assign(fakeRequest({
+        ...loginHeaders, 'ocean-device-protocol': '1',
+      }, '/connect'), { method: 'DELETE' }), validLogout.response)
+      try {
+        await Promise.race([cleanupStarted.promise, ending])
+        expect(validLogout.state.status).toBeUndefined()
+        expect(await tokens.verifySession(login, origin)).toBeUndefined()
+      } finally {
+        releaseCleanup.resolve(undefined)
+        await ending
+      }
+      expect(validLogout.state.status).toBe(204)
+      expect(validLogout.state.headers?.['set-cookie']).toContain('Max-Age=0')
+      expect(second.peer.signal.aborted).toBe(true)
+      expect(other.peer.signal.aborted).toBe(false)
+      expect(await tokens.verifySession(login, origin)).toBeUndefined()
+      expect(await tokens.verify(token)).toBe(id)
+      const connection = host.connection
+      if (!(connection instanceof HostConnectionService)) throw new Error('missing Host Connection service')
+      const independent = await tokens.issue('Phone')
+      const independentLogin = await tokens.exchange(independent.token, origin, {
+        lifetimeMs: 10_000, maxSessionsPerDevice: 1,
+      })
+      if (independentLogin === undefined) throw new Error('independent device exchange failed')
+      const independentPeer = await connection.admitTransport(fakeRequest({
+        host: 'ocean.example', origin, cookie: `__Host-ocean-device=${independentLogin}`,
+      }), true)
+      if ('rejection' in independentPeer) throw new Error('independent device admission failed')
+      expect(await connection.revokeDevice(id)).toBe(true)
+      expect(other.peer.signal.aborted).toBe(true)
+      if (otherLogin === undefined) throw new Error('other login exchange failed')
+      expect(await tokens.verifySession(otherLogin, origin)).toBeUndefined()
+      expect(independentPeer.peer.signal.aborted).toBe(false)
+      expect(await tokens.verifySession(independentLogin, origin)).toBe(independent.id)
+      await independentPeer.release()
+      await other.release()
+      await second.release()
+      expect(await host.connection.admitTransport(request, false)).toEqual({ rejection: 401 })
+    } finally {
+      await host.dispose()
+    }
+  })
+
+  it('releases all attachments at login expiry and rejects the expired cookie', async () => {
+    const origin = 'https://ocean.example'
+    const host = await mounted({ allowOwnerLogin: false, trustedHosts: ['ocean.example'] }, 'https:')
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+    try {
+      const tokens = new DeviceTokens(host.ctx.credentials)
+      const { id, token } = await tokens.issue('Laptop')
+      const login = await tokens.exchange(token, origin, { lifetimeMs: 1_000, maxSessionsPerDevice: 2 })
+      const otherLogin = await tokens.exchange(token, origin, { lifetimeMs: 2_000, maxSessionsPerDevice: 2 })
+      const request = (secret: string | undefined): IncomingMessage => {
+        if (secret === undefined) throw new Error('device exchange failed')
+        return fakeRequest({ host: 'ocean.example', origin, cookie: `__Host-ocean-device=${secret}` })
+      }
+      const first = await host.connection.admitTransport(request(login), true)
+      const second = await host.connection.admitTransport(request(login), false)
+      const other = await host.connection.admitTransport(request(otherLogin), true)
+      if ('rejection' in first || 'rejection' in second || 'rejection' in other) {
+        throw new Error('valid device session was refused')
+      }
+      await vi.advanceTimersByTimeAsync(999)
+      expect(first.peer.signal.aborted).toBe(false)
+      expect(second.peer.signal.aborted).toBe(false)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(first.peer.signal.aborted).toBe(true)
+      expect(second.peer.signal.aborted).toBe(true)
+      expect(other.peer.signal.aborted).toBe(false)
+      expect(await host.connection.admitTransport(request(login), true)).toEqual({ rejection: 401 })
+      expect(await host.connection.admitTransport(request(login), false)).toEqual({ rejection: 401 })
+      expect(await tokens.verify(token)).toBe(id)
+      await Promise.all([first.release(), second.release(), other.release()])
+    } finally {
+      vi.useRealTimers()
+      await host.dispose()
+    }
+  })
+
+  it('identifies the same Host with a new epoch after restart using the saved login', async () => {
+    const config = { allowOwnerLogin: false }
+    const first = await mounted(config, 'https:')
+    const tokens = new DeviceTokens(first.ctx.credentials)
+    let previous: Readonly<Record<string, string>> | undefined
+    let cookie = ''
+    try {
+      const { token } = await tokens.issue('Laptop')
+      const route = first.routes.find(route => route.path === '/connect')
+      if (route === undefined) throw new Error('missing connect route')
+      const reply = fakeResponse()
+      await route.handler(fakePost({
+        host: 'localhost', authorization: `Bearer ${token}`, 'ocean-device-protocol': '1',
+      }, '/connect', null), reply.response)
+      expect(reply.state.status).toBe(204)
+      previous = reply.state.headers
+      cookie = previous?.['set-cookie']?.split(';', 1)[0] ?? ''
+    } finally {
+      await first.dispose()
+    }
+
+    const second = await mounted(config, 'https:', first.ctx.credentials)
+    try {
+      const route = second.routes.find(route => route.path === '/connect')
+      if (route === undefined) throw new Error('missing connect route')
+      const head = (headers: Record<string, string>) => Object.assign(fakeRequest(headers, '/connect'), { method: 'HEAD' })
+      const anonymous = fakeResponse()
+      await route.handler(head({ host: 'localhost' }), anonymous.response)
+      expect(anonymous.state.status).toBe(401)
+      expect(anonymous.state.headers?.['ocean-device-host']).toBeUndefined()
+      const reply = fakeResponse()
+      await route.handler(head({ host: 'localhost', cookie }), reply.response)
+      expect(reply.state.status).toBe(204)
+      expect(reply.state.headers?.['ocean-device-host']).toBe(previous?.['ocean-device-host'])
+      expect(reply.state.headers?.['ocean-device-epoch']).toEqual(expect.any(String))
+      expect(reply.state.headers?.['ocean-device-epoch']).not.toBe(previous?.['ocean-device-epoch'])
+      expect(reply.state.headers?.['set-cookie']).toBeUndefined()
+    } finally {
+      await second.dispose()
+    }
+  })
+
+  it('rejects legacy owner tokens and cookies when owner login is disabled', async () => {
+    const owner = await mounted()
+    const locked = await mounted({ allowOwnerLogin: false }, 'http:', owner.ctx.credentials)
+    try {
+      const url = new URL(owner.connection.authenticatedUrl('http://localhost/'))
+      const cookie = browserCookie(owner.connection, 'localhost')
+      expect(locked.connection.authenticatedUrl('http://localhost/')).toBe('http://localhost/')
+      const headers = { host: 'localhost', cookie }
+      const index = fakeResponse()
+      expect(locked.connection.authorizeIndex(fakeRequest(headers, `/${url.search}`), index.response)).toBe(false)
+      expect(index.state.status).toBe(401)
+      const route = locked.routes.find(route => route.path === '/connect')
+      const exchange = fakeResponse()
+      await route?.handler(fakeRequest(headers, `/connect${url.search}`), exchange.response)
+      expect(exchange.state.status).toBe(401)
+      expect(locked.connection.admit(fakeRequest(headers, '/api'))).toEqual({ rejection: 401 })
+    } finally {
+      await Promise.all([locked.dispose(), owner.dispose()])
+    }
+  })
+
   it('runs request admission after authentication and removes it with its owning fiber', async () => {
     const { ctx, routes, connection, dispose } = await mounted()
     let admitted = 0

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SessionId } from '@ocean/ocean-session/types'
 import type { TabId } from '@ocean/ocean-client-ui-dockkit'
 import { makeTranslate } from '@ocean/ocean-client-test-runtime'
-import { DocumentPreviewRegistry } from '../src/client/document/registry.ts'
+import { DocumentPreviewRegistry } from '../src/client/document-registry.ts'
 import { createPdfStore } from '../src/client/pdf/store.ts'
 import type { PdfBodyInjected } from '../src/client/pdf/pdf.tsx'
 

@@ -62,6 +62,7 @@
     "@ocean/ocean-agent-preset": "workspace:*",
     "@ocean/ocean-agent-preset-registry": "workspace:*",
     "@ocean/ocean-agent-tool-presentation": "workspace:*",
+    "@ocean/ocean-api-gateway": "workspace:*",
     "@ocean/ocean-api-job-controller": "workspace:*",
     "@ocean/ocean-api-remotes": "workspace:*",
     "@ocean/ocean-api-session-controller": "workspace:*",
@@ -137,7 +138,6 @@
     "@ocean/ocean-client-ui-workflow-run": "workspace:*",
     "@ocean/ocean-client-ui-workspace": "workspace:*",
     "@ocean/ocean-cmdline": "workspace:*",
-    "@ocean/ocean-codex-subscription": "workspace:*",
     "@ocean/ocean-command-compact": "workspace:*",
     "@ocean/ocean-command-goal": "workspace:*",
     "@ocean/ocean-compaction-basic": "workspace:*",
@@ -202,7 +202,8 @@
     "@ocean/ocean-workspace-changes": "workspace:*",
     "@deepseek-ai/schemastery": "workspace:~",
     "commander": "^15.0.0",
-    "open": "^11.0.2"
+    "open": "^11.0.2",
+    "@ocean/ocean-plugin-market": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:~",

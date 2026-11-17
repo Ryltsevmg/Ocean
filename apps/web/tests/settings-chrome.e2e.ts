@@ -87,8 +87,8 @@ describe('web e2e: settings modal and General preferences', () => {
     const panelBox = await dialog.boundingBox()
     const optionsBox = await dialog.locator('[class*="_options"]').boundingBox()
     const firstSectionBox = await dialog.getByRole('navigation').getByRole('button').first().boundingBox()
-    expect(optionsBox!.y - panelBox!.y).toBe(54)
-    expect(firstSectionBox!.y - panelBox!.y).toBe(64)
+    expect(optionsBox!.y - panelBox!.y).toBe(80)
+    expect(firstSectionBox!.y - panelBox!.y).toBe(80)
     const lastSection = dialog.getByRole('navigation').getByRole('button').last()
     await lastSection.focus()
     await page.keyboard.press('Tab')
@@ -240,7 +240,7 @@ describe('web e2e: settings modal and General preferences', () => {
     const list = navigation.locator('[class*="_navList"]')
     const title = dialog.getByText('设置', { exact: true })
     const options = dialog.locator('[class*="_options"]')
-    const last = navigation.getByRole('button').last()
+    const last = navigation.getByRole('button', { name: 'Agent 预设', exact: true })
     await last.waitFor()
     expect(await list.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(false)
 
@@ -289,7 +289,7 @@ describe('web e2e: settings modal and General preferences', () => {
     // The rail reads left to right on one line instead of stacking.
     const navigation = dialog.getByRole('navigation')
     const list = navigation.locator('[class*="_navList"]')
-    const cells = navigation.getByRole('button')
+    const cells = navigation.getByRole('button').filter({ hasNotText: '意见反馈' })
     const first = await cells.first().boundingBox()
     const second = await cells.nth(1).boundingBox()
     expect(first).not.toBeNull()
@@ -962,7 +962,7 @@ describe('web e2e: settings modal and General preferences', () => {
       // and the unavailable notice a scaffold without a profile runtime shows.
       await enPage.keyboard.press('Escape')
       await expect.poll(() => enPage.getByRole('dialog', { name: 'Settings' }).count(), { timeout: 5_000 }).toBe(0)
-      await enPage.getByRole('navigation', { name: 'Global panels' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+      await enPage.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
       await enPage.getByRole('button', { name: 'Add plugin', exact: true })
         .waitFor({ timeout: 10_000 })
       // This page has no closing inventory spec to sweep its console, so the
@@ -976,9 +976,7 @@ describe('web e2e: settings modal and General preferences', () => {
   }, 90_000)
 
   it('opens a browser asking for no shipped language in English', async () => {
-    // The product default for "no usable signal": a French browser ships
-    // names no shipped language, so resolution falls to FALLBACK_LOCALE (en) rather
-    // than to Chinese.
+    // An Italian browser names no shipped language and uses the English fallback.
     const fresh = await launchWebScaffold({ developerTools: false })
     const unsupportedPage = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: 'it-IT' })
     const unsupportedTripwire = watchConsole(unsupportedPage)

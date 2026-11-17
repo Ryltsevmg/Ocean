@@ -18,7 +18,7 @@ import {
   IconWarningOutlineRegular, Input, Menu, MenuItemButton, Modal, pointerModality,
   PluginArtworkDefault, PluginArtworkLoop, PluginArtworkSearch, PluginArtworkSubagent, PluginArtworkTerminal,
   SegmentedTabs, StateDot, Switch, Tag, TerminalBlock, Toast, Tooltip, useDismissOnOutsidePointer,
-  type IconProps, type StateDotState, type TerminalBlockLabels,
+  type IconProps, type SegmentedTab, type StateDotState, type TerminalBlockLabels,
 } from '@ocean/ocean-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore } from '@ocean/ocean-client-ui-slots'
 import { EXTENSION_BUNDLES, HIDDEN_BUNDLES, MORE_BUNDLES } from '@ocean/ocean-official-bundles'
@@ -1574,9 +1574,18 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
   const language = props.useLocale(snapshot => snapshot.active)
   const selectedTab = props.useStore(state => state.tab)
   // A contributed tab that left the ledger falls back to Installed, and stays there when it returns.
-  const tab = tabs.some(item => item.id === selectedTab) ? selectedTab : INSTALLED_TAB
-  useEffect(() => { if (tab !== selectedTab) setTab(tab) }, [tab, selectedTab, setTab])
+  const tab = selectedTab === null
+    ? tabs.find(item => (item.order ?? 0) < 0)?.id ?? INSTALLED_TAB
+    : tabs.some(item => item.id === selectedTab) ? selectedTab : INSTALLED_TAB
+  useEffect(() => { if (selectedTab !== null && tab !== selectedTab) setTab(tab) }, [tab, selectedTab, setTab])
   const tabsId = useId()
+  type OrderedTab = SegmentedTab & { order: number }
+  const tabItems: [OrderedTab, ...OrderedTab[]] = [
+    { value: INSTALLED_TAB, label: t('installedTab'), order: 0, id: `${tabsId}-${INSTALLED_TAB}`, panelId: `${tabsId}-${INSTALLED_TAB}-panel` },
+    ...tabs.map(item => ({ value: item.id, label: item.label, order: item.order ?? 0,
+      id: `${tabsId}-${item.id}`, panelId: `${tabsId}-${item.id}-panel` })),
+  ]
+  tabItems.sort((a, b) => a.order - b.order || Number(b.value === INSTALLED_TAB) - Number(a.value === INSTALLED_TAB))
   const [activation, setActivation] = useState<string | null>(null)
   const [headerRef] = useState(props.createHeaderRef)
   useEffect(() => { ensure() }, [ensure])
@@ -1660,17 +1669,12 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
     <ItemCard key={`item:${item.id}`} item={item} t={t} renderSlot={renderSlot} onOpen={() => { setView({ kind: 'item', id: item.id }) }} />
   ))
   const renderGroup = (id: 'basic' | 'extensions' | 'bundles', heading: string, cards: readonly ReactNode[]): ReactNode => {
-    const offersMore = id === 'extensions' && more.length > 0
-    if (cards.length === 0 && !offersMore) return null
+    if (cards.length === 0) return null
     return (
       <section className={css.group} data-plugin-scope="global" data-plugin-group={id}>
         <div className={css.groupHead}>
           <h3 className={css.groupTitle}>{heading}</h3>
-          {offersMore ? (
-            <Button size="sm" className={css.groupMore} onClick={() => { setView({ kind: 'more' }) }}>
-              {t('moreAction')}<IconChevronRightOutlineRegular size={14} aria-hidden="true" />
-            </Button>
-          ) : null}
+
         </div>
         {cards.length > 0 ? <ul className={css.cards}>{cards}</ul> : null}
       </section>
@@ -1707,15 +1711,22 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
                     </Tooltip>
                   </div>
                 </div>
-                <div className={css.toolbar} data-plugin-toolbar data-plugin-header-part="toolbar" hidden={!onInstalled}>
-                  {updates === undefined ? null : <span className={css.updatesNote} data-tone={updates.tone}>{updates.text}</span>}
-                  <Tooltip label={t('refresh')} delayMs={500} focusDelayMs={500} side="bottom" portal disabled={!loaded || refreshing}>
-                    <Button variant="outline" size="sm" className={css.addButton} aria-label={t('refresh')} aria-busy={refreshing}
-                      disabled={!loaded || refreshing} onClick={props.refresh}
-                      icon={refreshing ? <StateDot state="ongoing" size={13} /> : <IconRefreshOutlineRegular size={13} />}>
-                      <span className={css.toolbarLabel}>{t('refresh')}</span>
+                <div className={css.toolbar} data-plugin-toolbar data-plugin-header-part="toolbar">
+                  {onInstalled ? <>
+                    {updates === undefined ? null : <span className={css.updatesNote} data-tone={updates.tone}>{updates.text}</span>}
+                    <Tooltip label={t('refresh')} delayMs={500} focusDelayMs={500} side="bottom" portal disabled={!loaded || refreshing}>
+                      <Button variant="outline" size="sm" className={css.addButton} aria-label={t('refresh')} aria-busy={refreshing}
+                        disabled={!loaded || refreshing} onClick={props.refresh}
+                        icon={refreshing ? <StateDot state="ongoing" size={13} /> : <IconRefreshOutlineRegular size={13} />}>
+                        <span className={css.toolbarLabel}>{t('refresh')}</span>
+                      </Button>
+                    </Tooltip>
+                  </> : null}
+                  {more.length > 0 ? (
+                    <Button size="sm" className={css.groupMore} onClick={() => { setTab(INSTALLED_TAB); setView({ kind: 'more' }) }}>
+                      {t('moreAction')}<IconChevronRightOutlineRegular size={14} aria-hidden="true" />
                     </Button>
-                  </Tooltip>
+                  ) : null}
                   {state.install.requestId === undefined
                     ? <AddPluginMenu t={t} disabled={!loaded} openInstall={props.openInstall} renderSlot={renderSlot} />
                     : (
@@ -1736,10 +1747,7 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
                         label={t('tabsLabel')}
                         value={tab}
                         onChange={(next) => { setTab(next) }}
-                        items={[
-                          { value: INSTALLED_TAB, label: t('installedTab'), id: `${tabsId}-${INSTALLED_TAB}`, panelId: `${tabsId}-${INSTALLED_TAB}-panel` },
-                          ...tabs.map(item => ({ value: item.id, label: item.label, id: `${tabsId}-${item.id}`, panelId: `${tabsId}-${item.id}-panel` })),
-                        ]}
+                        items={tabItems}
                       />
                     </div>
                   )

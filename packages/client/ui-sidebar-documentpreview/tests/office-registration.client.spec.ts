@@ -6,7 +6,7 @@ import type { SessionId } from '@ocean/ocean-session/types'
 import type { ClientRemote } from '@ocean/ocean-api-remotes/client'
 import type {} from '@ocean/ocean-office-kit/remote'
 import { makeTranslate, RemoteError } from '@ocean/ocean-client-test-runtime'
-import { DocumentPreviewRegistry } from '../src/client/document/registry.ts'
+import { DocumentPreviewRegistry } from '../src/client/document-registry.ts'
 import { apply } from '../src/client/office/index.ts'
 import { officeFace } from '../src/client/office/face.ts'
 import { Config } from '../src/config.ts'
@@ -107,7 +107,7 @@ it.each(['remote', 'render', 'files'] as const)('keeps Word and PowerPoint regis
   expect(h.register).toHaveBeenCalledWith(expect.objectContaining({
     name: 'sidebar.right.tab.document', key: '@ocean/ocean-client-ui-sidebar-documentpreview/office', locale: 'sidebarOffice',
   }), OfficeBody)
-  expect(h.removeNotice).toHaveBeenCalledTimes(3)
+  expect(h.removeNotice).toHaveBeenCalledTimes(2)
 })
 
 it('requests a Host PDF with source identity and borrows the same binary cache result', async () => {

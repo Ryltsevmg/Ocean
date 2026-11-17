@@ -10,6 +10,8 @@ import type {} from '@ocean/ocean-client-ui-chat/client'
 import type {} from '@ocean/ocean-client-ui-layout/client'
 import type {} from '@ocean/ocean-api-remote-access/client'
 import type {} from '@ocean/ocean-api-remotes/client'
+import type {} from '@ocean/ocean-client-ui-sidebar/client'
+import type { ConnectionHandle } from '@ocean/ocean-client-connection/client'
 import type { AccountUpdate, AccountDetails } from '@ocean/ocean-deepseek-account/types'
 import type { OnboardingChange } from './onboarding-contract.ts'
 import type { PlatformBridge } from './PlatformOverlay.tsx'
@@ -19,7 +21,7 @@ import { authorizeUrlWithTheme } from './authorize-url.ts'
 import { BrowserLogin } from './browser-login.ts'
 import { AccountOnboarding } from './AccountOnboarding.tsx'
 import { AccountPlatformHost, type AccountPlatformHostInjected } from './AccountPlatformHost.tsx'
-import { AccountMenu } from './AccountMenu.tsx'
+import { AccountMenu, DeviceDisconnectButton, FeedbackSettingsAction } from './AccountMenu.tsx'
 import { createPlatformPages, type PlatformPages } from './platform-pages.ts'
 import { AccountSection, type AccountSnapshot, type AccountSectionInjected } from './AccountSection.tsx'
 import { accountClientMetadata } from './client-metadata.ts'
@@ -42,16 +44,20 @@ declare module '@ocean/ocean-client-ui-slots' {
 }
 
 /** Services required by account settings. */
-export const inject = ['slots', 'locale', 'remote', 'remote.account', 'remote.session', 'theme', 'configForms', 'remoteAccess']
+export const inject = ['slots', 'locale', 'remote', 'remote.account', 'remote.session', 'theme', 'configForms', 'remoteAccess', 'connection']
 /** Register account UI in Desktop and plain Web clients. @param ctx - client plugin context. */
 export function apply(ctx: Context): void {
   const desktop = 'oceanDesktop' in globalThis
+  const transport = (globalThis as typeof globalThis & {
+    __OCEAN_TRANSPORT__?: { streamBaseUrl?: string; ownsHost?: boolean }
+  }).__OCEAN_TRANSPORT__
+  const localDesktop = desktop && transport?.ownsHost !== false
   ctx.effect(() => ctx.locale.register('settings.account', { en, zh, ja, es, fr, de, ru, pt }), 'account: dictionaries')
   const t = ctx.locale.bind('settings.account')
   const page = globalThis as Partial<Record<typeof CONTACT_CONFIG_GLOBAL, unknown>>
   const config = ContactConfig(page[CONTACT_CONFIG_GLOBAL] ?? {})
   let snapshot: AccountSnapshot = {
-    view: undefined, details: undefined, avatar: undefined, failed: false, loginVisible: false, desktopOnboardingVisible: desktop,
+    view: undefined, details: undefined, avatar: undefined, failed: false, loginVisible: false, desktopOnboardingVisible: localDesktop,
   }
   // Desktop main opens the authorization page natively; a plain browser opens it in a tab it owns.
   const browser = new BrowserLogin(url => authorizeUrlWithTheme(url, ctx.theme.getTheme().active.colorScheme))
@@ -177,6 +183,7 @@ export function apply(ctx: Context): void {
       onClose(reason)
       if (reason === 'returned' && page === 'top-up') void refreshAfterReturn(refreshing, reRead)
     })
+  const endDeviceSession = (ctx.get('connection') as ConnectionHandle | undefined)?.endDeviceSession
   const operations: AccountSectionInjected = {
     avatarFailed: (value) => { avatar.failed(value) },
     subscribeSessionExpired: listener => ctx.remote.$on('deepseek-account/session-expired', listener),
@@ -200,9 +207,6 @@ export function apply(ctx: Context): void {
     },
     async start() {
       publish({ ...snapshot, loginVisible: true, loginFailed: false })
-      const transport = (globalThis as typeof globalThis & {
-        __OCEAN_TRANSPORT__?: { streamBaseUrl?: string }
-      }).__OCEAN_TRANSPORT__
       const request = async () => {
         const result = await ctx.remote.account.startSignIn(client(ctx.locale.getSnapshot().active),
           desktop && transport?.streamBaseUrl !== undefined ? new URL(transport.streamBaseUrl).origin : window.location.origin,
@@ -230,7 +234,7 @@ export function apply(ctx: Context): void {
       throw result.error
     },
   }
-  if (desktop) {
+  if (localDesktop) {
     const controller = new DesktopOnboardingController(
       ctx.configForms.get<OnboardingSettings>(DESKTOP_ONBOARDING_NAMESPACE),
       ctx.configForms.get<{ transcriptView?: TranscriptViewMode | null; performanceUsage: 'compact' | 'detailed' }>('ui-chat'),
@@ -289,6 +293,16 @@ export function apply(ctx: Context): void {
     name: 'settings.launcher', locale: 'settings.account', inject: () => operations,
     children: { 'settings.launcher.notifications': { kind: 'single', scope: 'root' } },
   }, AccountMenu)))
+  ctx.slots.inject('settings.navigation', () => ctx.slots.register({
+    name: 'settings.navigation', id: 'feedback', locale: 'settings.account',
+    inject: () => ({ contactUs: operations.contactUs }),
+  }, FeedbackSettingsAction))
+  if (endDeviceSession !== undefined) {
+    ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
+      name: 'sidebar.footer.action', id: 'connection.disconnect', locale: 'settings.account',
+      inject: () => ({ endDeviceSession }),
+    }, DeviceDisconnectButton))
+  }
   ctx.remoteAccess.whenAccess('account/watch', () => ctx.slots.inject('settings.section', () => {
     let unregister: (() => void) | undefined
     const update = () => {

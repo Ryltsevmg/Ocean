@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { LocalFileSystem } from '@ocean/ocean-fs-local'
 import { WorkspaceFiles } from '@ocean/ocean-api-workspace-files'
 import { Context } from '@deepseek-ai/cordis'
+import type { PrincipalMap } from '@ocean/ocean-typert-protocol'
 import { HostConnectionService } from '@ocean/ocean-client-connection'
 import type { BrowserAuth } from '@ocean/ocean-client-connection/src/browser-auth.ts'
 import { SessionId } from '@ocean/ocean-session'
@@ -82,6 +83,30 @@ async function fixture() {
     opener, outside, summary,
   }
 }
+
+it('lets devices read changes but denies native file actions and mutation methods', async () => {
+  const { ctx, handler, opener, applications, comparison, data } = await fixture()
+  const peer = ctx.connection.createPeer({ principal: {
+    kind: 'remote-device', deviceId: '00000000-0000-4000-8000-000000000001' as PrincipalMap['remote-device']['deviceId'],
+  } })
+  const suffix = '?sessionId=owner&seq=9&index=0'
+  const read = await handler.fetch(new Request(`http://host${CHANGED_FILES_PATH}${suffix}`), peer)
+  expect(read.status).toBe(200)
+  expect(await read.json()).toMatchObject({ files: data.files })
+  const diff = await handler.fetch(new Request(`http://host${CHANGES_DIFF_PATH}${suffix}`), peer)
+  expect(diff.status).toBe(200)
+  expect(await diff.json()).toEqual(comparison)
+  for (const path of [CHANGED_FILES_PATH, CHANGES_DIFF_PATH]) {
+    expect((await handler.fetch(new Request(`http://host${path}${suffix}`, { method: 'POST' }), peer)).status).toBe(404)
+  }
+  for (const path of [CHANGES_OPEN_PATH, '/api/present.open']) {
+    for (const method of ['GET', 'POST']) {
+      expect((await handler.fetch(new Request(`http://host${path}${suffix}`, { method }), peer)).status).toBe(403)
+    }
+  }
+  expect(opener).not.toHaveBeenCalled()
+  expect(applications).not.toHaveBeenCalled()
+})
 
 describe('change summary route', () => {
   it('serves the Host-held summary without its working directory, and 404 once it is gone', async () => {

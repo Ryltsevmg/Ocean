@@ -16,7 +16,7 @@ import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
 import { runOperationReportJob } from '../src/operation-report-job.ts'
 
-type InvokeEvent = { sender?: unknown; senderFrame: { url: string } }
+type InvokeEvent = { sender?: unknown; senderFrame: { url: string } | null }
 type InvokeHandler = (event: InvokeEvent, ...args: unknown[]) => unknown
 
 const fileDrag = vi.hoisted(() => ({ dispose: vi.fn<() => Promise<void>>(), install: vi.fn() }))
@@ -111,7 +111,7 @@ const harness = await vi.hoisted(async () => {
     readonly setTitleBarOverlay = vi.fn()
     readonly setVibrancy = vi.fn()
     readonly setBackgroundColor = vi.fn()
-    constructor(readonly options: { show: boolean; modal?: boolean }) {
+    constructor(readonly options: { show: boolean; modal?: boolean; webPreferences?: { session?: object } }) {
       super(); if (windowFailure !== undefined) throw windowFailure; windows.push(this)
     }
     isDestroyed() { return this.destroyed }
@@ -142,9 +142,11 @@ const harness = await vi.hoisted(async () => {
   }
   const views: FakeView[] = []
   class FakeView extends FakeWindow {
-    constructor() {
-      super({ show: false })
+    setVisible(visible: boolean) { this.visible = visible }
+    constructor(options?: { webPreferences?: { session?: object } }) {
+      super({ show: false, ...options })
       windows.pop()
+      this.webContents.id = 43 + views.length
       views.push(this)
       Object.assign(this.webContents, {
         loadURL: (url: string) => this.loadURL(url),
@@ -312,6 +314,16 @@ vi.mock('../src/policy-test-auth.ts', () => ({ DesktopPolicyTestAuth: class {
   readonly request: typeof fetch = (input, init) => fetch(input, init)
 } }))
 
+const { remoteCarrier, makeRemoteCarrier, fromPartition } = vi.hoisted(() => {
+  const makeRemoteCarrier = () => ({
+    protocol: { handle: vi.fn<(scheme: string, serve: (request: Request) => Response | Promise<Response>) => void>(), unhandle: vi.fn() },
+    webRequest: { onBeforeSendHeaders: vi.fn(), onHeadersReceived: vi.fn() },
+    setPermissionCheckHandler: vi.fn(), setPermissionRequestHandler: vi.fn(),
+    closeAllConnections: vi.fn(async () => {}), clearStorageData: vi.fn(async () => {}),
+  })
+  const remoteCarrier = makeRemoteCarrier()
+  return { remoteCarrier, makeRemoteCarrier, fromPartition: vi.fn(() => remoteCarrier) }
+})
 vi.mock('electron', () => ({
   app: harness.app,
   BrowserWindow: harness.FakeWindow,
@@ -319,6 +331,7 @@ vi.mock('electron', () => ({
   dialog: harness.dialog,
   shell: { openExternal: harness.openExternal, showItemInFolder: harness.showItemInFolder },
   nativeTheme: harness.nativeTheme,
+  safeStorage: { isEncryptionAvailable: () => false },
   ipcMain: {
     on: harness.ipcOn,
     handle: (channel: string, handler: InvokeHandler) => {
@@ -328,7 +341,7 @@ vi.mock('electron', () => ({
     removeHandler: (channel: string) => { harness.handlers.delete(channel) },
   },
   Menu: { setApplicationMenu: harness.menu.setApplicationMenu, buildFromTemplate: harness.menu },
-  session: { defaultSession: {
+  session: { fromPartition, defaultSession: {
     on: vi.fn(), cookies: harness.hostCookies,
     setPermissionCheckHandler: vi.fn(), setPermissionRequestHandler: vi.fn(), webRequest: { onBeforeSendHeaders: harness.socketHeaders },
   } },
@@ -448,10 +461,10 @@ function invoke(channel: string, origin = channel === DESKTOP_IPC.boot ? 'app' :
   return handler({ senderFrame: { url: `dsh-app://${origin}/index.html` } }, ...args)
 }
 
-function applicationMenuItems(): MenuItemConstructorOptions[] {
+function applicationMenuItems(activeView?: (typeof harness.views)[number]): MenuItemConstructorOptions[] {
   const native = harness.menu.mock.calls.findLast(([items]) => Array.isArray(items[0]?.submenu))?.[0][0]?.submenu
   if (Array.isArray(native)) return native
-  const sender = harness.windows[0]!.webContents
+  const sender = (activeView ?? harness.windows.findLast(window => !window.isDestroyed() && window.urls.includes('dsh-app://app/'))!).webContents
   void harness.handlers.get(DESKTOP_IPC.windowsMenu)!({ sender, senderFrame: sender.mainFrame }, 'application', 0, 0)
   return harness.menu.mock.lastCall![0]
 }
@@ -486,6 +499,7 @@ beforeEach(() => {
   vi.stubEnv('OCEAN_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
   vi.stubEnv('OCEAN_DESKTOP_UPDATE_JOURNAL_DIR', undefined)
   vi.stubEnv('OCEAN_CLIENT_VERSION', '1.2.3')
+  vi.stubEnv('OCEAN_CLIENT_COMMIT_HASH', undefined)
   harness.analyticsEnabled = true
 })
 
@@ -833,7 +847,7 @@ describe('desktop main startup', () => {
     const menu = applicationMenuItems()
     const visible = menu.filter(item => item.visible !== false)
     expect(visible.map(item => item.role === 'quit' ? 'quit' : item.label ?? item.type)).toEqual([
-      messages.aboutMenu, 'separator', messages.checkUpdatesMenu,
+      messages.aboutMenu, 'separator', messages.remoteConnectMenu, messages.remoteLocalMenu, messages.checkUpdatesMenu,
       ...platform === 'linux' ? [] : [messages.cliCommandMenu],
       'separator', ...packaged ? [] : [messages.reloadPageMenu, messages.restartAppHostMenu],
       messages.toggleDevToolsMenu, 'separator',
@@ -1402,7 +1416,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 Ocean-Chat', 'separator', '检查更新…', '管理 ocean 命令…', 'separator', zh.toggleDevToolsMenu, 'separator', '退出',
+      '关于 Ocean-Chat', 'separator', zh.remoteConnectMenu, zh.remoteLocalMenu, '检查更新…', '管理 ocean 命令…', 'separator', zh.toggleDevToolsMenu, 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -1450,8 +1464,8 @@ describe('desktop main startup', () => {
       : undefined)
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
-      ? ['about', 'separator', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'toggleDevTools', 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
-      : ['about', 'separator', en.checkUpdatesMenu, 'separator', 'toggleDevTools', 'separator', 'quit'])
+      ? ['about', 'separator', en.remoteConnectMenu, en.remoteLocalMenu, en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'toggleDevTools', 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
+      : ['about', 'separator', en.remoteConnectMenu, en.remoteLocalMenu, en.checkUpdatesMenu, 'separator', 'toggleDevTools', 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
 
@@ -1482,12 +1496,12 @@ describe('desktop main startup', () => {
     expect(harness.connectWelcome).toHaveBeenCalledWith(`${protocol}//127.0.0.1:3080/?token=test`, 'test-cookie')
     expect(harness.removeLegacyHostCookies).toHaveBeenCalledWith(harness.hostCookies, `${protocol}//127.0.0.1:3080/?token=test`)
     const handler = harness.socketHeaders.mock.calls[0]![1] as (
-      details: { url: string; webContentsId: number; requestHeaders: Record<string, string> },
+      details: { url: string; resourceType: string; webContentsId: number; requestHeaders: Record<string, string> },
       callback: (result: unknown) => void,
     ) => void
     const callback = vi.fn()
     const socketProtocol = protocol === 'https:' ? 'wss:' : 'ws:'
-    const details = { url: `${socketProtocol}//127.0.0.1:3080/api/remote.mux`, webContentsId: 42, requestHeaders: { Origin: 'dsh-app://app' } }
+    const details = { url: `${socketProtocol}//127.0.0.1:3080/api/remote.mux`, webContentsId: 42, resourceType: 'webSocket', requestHeaders: { Origin: 'dsh-app://app' } }
     handler(details, callback)
     expect(callback).toHaveBeenLastCalledWith({ requestHeaders: {
       origin: `${protocol}//127.0.0.1:3080`, cookie: 'test-cookie', 'sec-fetch-site': 'same-origin',
@@ -1500,6 +1514,403 @@ describe('desktop main startup', () => {
     expect(callback).toHaveBeenLastCalledWith({})
     handler({ ...details, url: `${socketProtocol === 'wss:' ? 'ws:' : 'wss:'}//127.0.0.1:3080/api/remote.mux` }, callback)
     expect(callback).toHaveBeenLastCalledWith({})
+  })
+
+  it.each([204, 503, 'crashed', 'install'] as const)('releases the remote partition after %s', async (outcome) => {
+    await import('../src/main.ts')
+    await harness.preparing.promise
+    harness.prepared.resolve()
+    await harness.hostStarted.promise
+    harness.hosts[0]!.ready.resolve()
+    await harness.windows[0]!.shown.promise
+
+    const send = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 204, headers: {
+        'ocean-device-protocol': '1', 'ocean-device-host': 'fixture-host', 'ocean-device-epoch': 'fixture-epoch',
+        'set-cookie': '__Host-ocean-device=fixture-login; Secure; HttpOnly',
+      } }))
+      .mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+      .mockResolvedValueOnce(new Response(null, { status: typeof outcome === 'number' ? outcome : 204 }))
+    vi.stubGlobal('fetch', send)
+    const connectMenu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(connectMenu as { click: () => void }).click()
+    const dialog = harness.windows.find(window => window.urls.includes('dsh-app://shell/remote-connection.html'))!
+    const owner = { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }
+    const handler = harness.handlers.get(DESKTOP_IPC.remoteConnect)!
+    await expect(handler({ sender: harness.windows[0]!.webContents, senderFrame: owner.senderFrame },
+      'https://ocean.example/mount/', 'fixture-token', false)).rejects.toThrow('Rejected remote connection command')
+    await expect(handler(owner, 'https://ocean.example/mount/', 'fixture-token', false)).resolves.toEqual({ kind: 'connected', persistence: 'skipped' })
+    const remoteWindow = harness.views.at(-1)!
+    expect(harness.windows[0]!.isDestroyed()).toBe(false)
+    expect(harness.windows[0]!.setTitle).toHaveBeenCalledWith('Ocean — ocean.example')
+    expect(remoteWindow.options.webPreferences?.session).toBe(remoteCarrier)
+    const localProtocol = harness.protocolHandle.mock.calls[0]![1]
+    const appRequest = new Request('dsh-app://app/api/session/list')
+    await localProtocol(appRequest)
+    const { forwardWebRequest } = await import('../src/web-document.ts')
+    expect(forwardWebRequest).toHaveBeenCalledWith(appRequest, expect.stringMatching(/^http:\/\/127\.0\.0\.1/), 'test-cookie')
+    await expect(harness.handlers.get(DESKTOP_IPC.boot)!({
+      sender: remoteWindow.webContents, senderFrame: remoteWindow.webContents.mainFrame,
+    })).resolves.toMatchObject({ ownsHost: false, streamBaseUrl: 'https://ocean.example/mount/' })
+    const destinations = send.mock.calls.map(([target]) =>
+      target instanceof URL ? target.href : target instanceof Request ? target.url : target)
+    expect(destinations).toEqual([
+      'https://ocean.example/mount/connect', 'https://ocean.example/mount/connect/bootstrap',
+    ])
+    const socketHandler = remoteCarrier.webRequest.onBeforeSendHeaders.mock.calls[0]![1] as (
+      details: object, callback: (result: unknown) => void,
+    ) => void
+    const result = vi.fn()
+    const details = {
+      webContentsId: remoteWindow.webContents.id, resourceType: 'webSocket', requestHeaders: { Origin: 'dsh-app://app' },
+    }
+    socketHandler({ ...details, url: 'wss://ocean.example/mount/api/remote.mux' }, result)
+    expect(result).toHaveBeenLastCalledWith({ requestHeaders: {
+      origin: 'https://ocean.example', cookie: '__Host-ocean-device=fixture-login', 'sec-fetch-site': 'same-origin',
+    } })
+    socketHandler({ ...details, url: 'wss://ocean.example/api/remote.mux' }, result)
+    expect(result).toHaveBeenLastCalledWith({ cancel: true })
+    socketHandler({ ...details, webContentsId: remoteWindow.webContents.id + 1,
+      url: 'wss://ocean.example/mount/api/remote.mux' }, result)
+    expect(result).toHaveBeenLastCalledWith({})
+
+    if (outcome === 204) {
+      const remoteSender = remoteWindow.webContents
+      const remoteEvent = { sender: remoteSender, senderFrame: remoteSender.mainFrame }
+      const localSender = harness.windows[0]!.webContents
+      const localEvent = { sender: localSender, senderFrame: localSender.mainFrame }
+      expect(remoteSender.send).toHaveBeenCalledWith(DESKTOP_IPC.updatesPresentation, expect.any(Object))
+      localSender.send.mockClear()
+      remoteSender.send.mockClear()
+      harness.publishUpdate({ phase: 'checking' })
+      expect(localSender.send).toHaveBeenCalledWith(DESKTOP_IPC.updatesPresentation, expect.any(Object))
+      expect(remoteSender.send).toHaveBeenCalledWith(DESKTOP_IPC.updatesPresentation,
+        localSender.send.mock.calls.find(([channel]) => channel === DESKTOP_IPC.updatesPresentation)![1])
+      await harness.handlers.get(DESKTOP_IPC.updatesChannelSet)!(remoteEvent, 'stable')
+      expect(remoteSender.send).toHaveBeenCalledWith(DESKTOP_IPC.updatesChannelChanged,
+        expect.objectContaining({ channel: 'stable', changing: false }))
+      const theme = harness.ipcOn.mock.calls.find(([channel]) => channel === DESKTOP_IPC.nativeThemeSet)![1]
+      theme(remoteEvent, 'dark')
+      expect(harness.nativeTheme.themeSource).toBe('dark')
+      theme(localEvent, 'light')
+      expect(harness.nativeTheme.themeSource).toBe('dark')
+      const publish = harness.handlers.get(DESKTOP_IPC.publishHostSessions)!
+      const read = harness.handlers.get(DESKTOP_IPC.hostSelection)!
+      const open = harness.handlers.get(DESKTOP_IPC.openHostSession)!
+      const session = { id: 'shared-id', title: 'Remote project' }
+      await publish(remoteEvent, { revision: 1, sessions: [session], pendingApprovals: 2, pendingQuestions: 1 })
+      expect(await read(localEvent)).toMatchObject({ entries: [
+        { id: '' }, { id: 'fixture-host', sessions: [session], pendingApprovals: 2, pendingQuestions: 1 },
+      ] })
+      const initial = await read(localEvent) as { revision: number }
+      await publish(remoteEvent, { revision: 1, sessions: [], pendingApprovals: 0, pendingQuestions: 0 })
+      await publish(remoteEvent, { revision: 0, sessions: [], pendingApprovals: 0, pendingQuestions: 0 })
+      expect(await read(localEvent)).toMatchObject({ revision: initial.revision, entries: [
+        { id: '' }, { id: 'fixture-host', sessions: [session], pendingApprovals: 2 },
+      ] })
+      expect(JSON.stringify(await read(remoteEvent))).not.toContain(session.title)
+      const useLocal = applicationMenuItems(remoteWindow).find(item => item.label === en.remoteLocalMenu)!
+      ;(useLocal as { click: () => void }).click()
+      await publish(remoteEvent, { revision: 2, sessions: [session], pendingApprovals: 3, pendingQuestions: 2 })
+      await publish(localEvent, { revision: 1, sessions: [], pendingApprovals: 1, pendingQuestions: 0 })
+      expect(await read(remoteEvent)).toMatchObject({ entries: [
+        { id: '', pendingApprovals: 1 }, { id: 'fixture-host', pendingApprovals: 3, pendingQuestions: 2 },
+      ] })
+      const unavailable = { name: 'HarnessError', code: 'DESKTOP_HOST_NAVIGATION_UNAVAILABLE', message: en.remoteSwitchFailed }
+      for (const args of [['unknown-host', session.id], ['fixture-host', 'stale-session'], ['fixture-host', null]]) {
+        await expect(Promise.resolve().then(() => open(localEvent, ...args))).rejects.toMatchObject(unavailable)
+      }
+      const select = harness.handlers.get(DESKTOP_IPC.selectHost)!
+      for (const id of ['unknown-host', null]) {
+        await expect(Promise.resolve().then(() => select(localEvent, id))).rejects.toMatchObject(unavailable)
+      }
+      expect(remoteSender.send).not.toHaveBeenCalledWith(DESKTOP_IPC.openOwnedSession, session.id)
+      expect(await read(localEvent)).toMatchObject({ selected: '' })
+      await open(localEvent, 'fixture-host', session.id)
+      expect(remoteSender.send).toHaveBeenCalledWith(DESKTOP_IPC.openOwnedSession, session.id)
+      expect(await read(remoteEvent)).toMatchObject({ publicationRevision: 2 })
+      await harness.handlers.get(DESKTOP_IPC.boot)!(remoteEvent)
+      const reloading = await read(remoteEvent) as { publicationRevision: number; entries: object[] }
+      expect(reloading.publicationRevision).toBe(-1)
+      expect(reloading.entries[1]).not.toHaveProperty('pendingApprovals')
+      expect(reloading.entries[0]).toMatchObject({ pendingApprovals: 1 })
+      await publish(remoteEvent, { revision: 0, sessions: [session], pendingApprovals: 4, pendingQuestions: 0 })
+      expect(await read(localEvent)).toMatchObject({ publicationRevision: 1, entries: [
+        { id: '' }, { id: 'fixture-host', pendingApprovals: 4 },
+      ] })
+    }
+
+    if (outcome === 'install') {
+      const host = harness.hosts[0]!
+      harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 0 })
+      const preparing = harness.prepareUpdate()
+      await host.stopping.promise
+      expect(remoteWindow.isDestroyed()).toBe(false)
+      host.exited.resolve()
+      await expect(preparing).resolves.toBe(true)
+    } else {
+      const command = outcome === 'crashed' ? en.remoteLocalMenu : en.remoteDisconnectMenu
+      const localMenu = applicationMenuItems(remoteWindow).find(item => item.label === command)!
+      ;(localMenu as { click: () => void }).click()
+    }
+    if (outcome === 'crashed') {
+      expect(remoteWindow.isDestroyed()).toBe(false)
+      remoteWindow.webContents.emit('render-process-gone', {}, { reason: 'crashed' })
+    }
+    await vi.waitFor(() => { expect(remoteWindow.isDestroyed()).toBe(true) })
+    expect(harness.windows[0]!.isDestroyed()).toBe(false)
+    const remoteProtocol = remoteCarrier.protocol.handle.mock.calls[0]![1]
+    expect((await remoteProtocol(appRequest)).status).toBe(503)
+    expect(send.mock.calls.at(-1)?.[1]).toMatchObject({ method: 'DELETE' })
+    expect(remoteCarrier.protocol.unhandle).toHaveBeenCalledWith('dsh-app')
+    expect(remoteCarrier.closeAllConnections).toHaveBeenCalledOnce()
+    await vi.waitFor(() => { expect(remoteCarrier.clearStorageData).toHaveBeenCalledOnce() })
+    if (outcome === 503) await vi.waitFor(() => {
+      expect(harness.dialog.showMessageBox).toHaveBeenCalledWith(expect.objectContaining({
+        message: en.remoteDisconnectUnconfirmed,
+      }))
+    })
+  })
+
+  it('opens the same Session ID on two Hosts and revokes only the affected background view', async () => {
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const carriers = [makeRemoteCarrier(), makeRemoteCarrier()]
+    for (const carrier of carriers) fromPartition.mockReturnValueOnce(carrier)
+    const event = (view: typeof local) => ({ sender: view.webContents, senderFrame: view.webContents.mainFrame })
+    const hosts = ['first-host', 'second-host']
+    const sessionId = 'same-session-id'
+    const send = vi.fn<typeof fetch>()
+    for (const id of hosts) {
+      send.mockResolvedValueOnce(new Response(null, { status: 204, headers: {
+        'ocean-device-protocol': '1', 'ocean-device-host': id, 'ocean-device-epoch': 'launch',
+        'set-cookie': `__Host-ocean-device=${id}-login; Secure; HttpOnly`,
+      } })).mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+    }
+    send.mockResolvedValueOnce(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', send)
+    const runMenu = (label: string, active?: (typeof harness.views)[number]): void => {
+      const item = applicationMenuItems(active).find(candidate => candidate.label === label)!
+      ;(item as { click: () => void }).click()
+    }
+    const views: (typeof harness.views)[number][] = []
+    for (const id of hosts) {
+      runMenu(en.remoteConnectMenu, views.at(-1))
+      const dialog = harness.windows.at(-1)!
+      expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(event(dialog),
+        `https://${id}.example/`, 'fixture-token', false)).toEqual({ kind: 'connected', persistence: 'skipped' })
+      const view = harness.views.at(-1)!
+      views.push(view)
+      await harness.handlers.get(DESKTOP_IPC.publishHostSessions)!(event(view), {
+        revision: 1, sessions: [{ id: sessionId, title: id }], pendingApprovals: 0, pendingQuestions: 0,
+      })
+    }
+    const [first, second] = [views[0]!, views[1]!]
+    expect(first.isDestroyed()).toBe(false)
+    expect(second.isVisible()).toBe(true)
+    runMenu(en.remoteLocalMenu, second)
+    await harness.handlers.get(DESKTOP_IPC.openHostSession)!(event(local), hosts[0], sessionId)
+    expect(first.webContents.send).toHaveBeenCalledWith(DESKTOP_IPC.openOwnedSession, sessionId)
+    expect(second.webContents.send).not.toHaveBeenCalledWith(DESKTOP_IPC.openOwnedSession, sessionId)
+    const rejected = carriers[1]!.webRequest.onHeadersReceived.mock.calls[0]![1] as (
+      details: object, callback: (result: unknown) => void,
+    ) => void
+    rejected({ statusCode: 401, webContentsId: second.webContents.id, resourceType: 'webSocket',
+      url: 'wss://second-host.example/api/remote.mux' }, vi.fn())
+    await vi.waitFor(() => { expect(carriers[1]!.clearStorageData).toHaveBeenCalledOnce() })
+    expect(second.isDestroyed()).toBe(true)
+    expect(first.isVisible()).toBe(true)
+    expect(first.isDestroyed()).toBe(false)
+    expect(carriers[0]!.clearStorageData).not.toHaveBeenCalled()
+    expect(send.mock.lastCall?.[0]).toEqual(new URL('https://second-host.example/connect'))
+    expect(send.mock.lastCall?.[1]).toMatchObject({ method: 'DELETE' })
+    const firstEvent = event(first)
+    await expect(Promise.resolve().then(() => harness.handlers.get(DESKTOP_IPC.selectHost)!(firstEvent, hosts[1])))
+      .rejects.toMatchObject({ name: 'HarnessError', code: 'DESKTOP_HOST_NAVIGATION_UNAVAILABLE' })
+    expect(first.isVisible()).toBe(true)
+  })
+
+  it.each(['connecting', 'mandatory'] as const)('rejects Host navigation while %s without switching or opening a Session', async (blocker) => {
+    const pending = Promise.withResolvers<Response>()
+    const policy = Promise.withResolvers<Response>()
+    if (blocker === 'mandatory') {
+      harness.embeddedPolicy = { origin: 'https://policy.example.com', allowedPageOrigins: ['https://downloads.example.com'] }
+    }
+    const send = vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      if (url.hostname === 'policy.example.com') return policy.promise
+      if (url.hostname === 'pending.example') return pending.promise
+      if (init?.method === 'DELETE') return new Response(null, { status: 204 })
+      if (url.pathname === '/connect') return new Response(null, { status: 204, headers: {
+        'ocean-device-protocol': '1', 'ocean-device-host': 'fixture-host', 'ocean-device-epoch': 'fixture-epoch',
+        'set-cookie': '__Host-ocean-device=fixture-login; Secure; HttpOnly',
+      } })
+      return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+    })
+    vi.stubGlobal('fetch', send)
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const localEvent = { sender: local.webContents, senderFrame: local.webContents.mainFrame }
+    const connect = harness.handlers.get(DESKTOP_IPC.remoteConnect)!
+    const openDialog = (): (typeof harness.windows)[number] => {
+      const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+      ;(menu as { click: () => void }).click()
+      return harness.windows.at(-1)!
+    }
+    const dialog = openDialog()
+    expect(await connect({ sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame },
+      'https://fixture.example/', 'fixture-token', false)).toMatchObject({ kind: 'connected' })
+    const remote = harness.views.at(-1)!
+    const remoteEvent = { sender: remote.webContents, senderFrame: remote.webContents.mainFrame }
+    await harness.handlers.get(DESKTOP_IPC.publishHostSessions)!(remoteEvent,
+      { revision: 1, sessions: [{ id: 'session-id', title: 'Private title' }], pendingApprovals: 0, pendingQuestions: 0 })
+    await harness.handlers.get(DESKTOP_IPC.selectHost)!(remoteEvent, '')
+    let connection: unknown
+    if (blocker === 'connecting') {
+      const next = openDialog()
+      connection = connect({ sender: next.webContents, senderFrame: next.webContents.mainFrame },
+        'https://pending.example/', 'fixture-token', false)
+    } else {
+      policy.resolve(Response.json({ code: 40005, data: { show_content: { title: 'Update', detail: 'Required' },
+        desktop_app_link: 'https://downloads.example.com/' } }))
+      await harness.policyBlocked.promise
+    }
+    try {
+      for (const [channel, args] of [
+        [DESKTOP_IPC.selectHost, ['fixture-host']], [DESKTOP_IPC.selectHost, ['']],
+        [DESKTOP_IPC.openHostSession, ['fixture-host', 'session-id']],
+      ] as const) {
+        await expect(Promise.resolve().then(() => harness.handlers.get(channel)!(localEvent, ...args)))
+          .rejects.toMatchObject({ name: 'HarnessError', code: 'DESKTOP_HOST_NAVIGATION_UNAVAILABLE', message: en.remoteSwitchFailed })
+      }
+      expect(remote.isVisible()).toBe(false)
+      expect(remote.webContents.send).not.toHaveBeenCalledWith(DESKTOP_IPC.openOwnedSession, 'session-id')
+      expect(await harness.handlers.get(DESKTOP_IPC.hostSelection)!(localEvent)).toMatchObject({ selected: '' })
+    } finally {
+      pending.resolve(new Response(null, { status: 401 }))
+      await connection
+    }
+  })
+
+  it('aborts an in-flight remote login when its connection dialog closes and permits another attempt', async () => {
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const started = Promise.withResolvers<AbortSignal>()
+    const send = vi.fn<typeof fetch>().mockImplementationOnce((_input, options) => new Promise((_resolve, reject) => {
+      const signal = options?.signal
+      if (signal === undefined || signal === null) throw new Error('The login must carry its cancellation signal')
+      signal.addEventListener('abort', () => { reject(new DOMException('Login cancelled', 'AbortError')) }, { once: true })
+      started.resolve(signal)
+    })).mockResolvedValueOnce(new Response(null, { status: 401 }))
+    vi.stubGlobal('fetch', send)
+    const connect = harness.handlers.get(DESKTOP_IPC.remoteConnect)!
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    const pending = connect({ sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame },
+      'https://ocean.example/', 'fixture-token', false)
+    const signal = await started.promise
+    expect(signal.aborted).toBe(false)
+    dialog.destroy()
+    expect(signal.aborted).toBe(true)
+    await expect(pending).resolves.toEqual({ kind: 'failed', code: 'DESKTOP_REMOTE_CANCELLED', message: en.remoteSwitchFailed })
+    expect(harness.views).toHaveLength(0)
+    expect(local.isDestroyed()).toBe(false)
+    const retryMenu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(retryMenu as { click: () => void }).click()
+    const next = harness.windows.at(-1)!
+    expect(next).not.toBe(dialog)
+    await expect(connect({ sender: next.webContents, senderFrame: next.webContents.mainFrame },
+      'https://ocean.example/', 'fixture-retry-token', false)).resolves.toMatchObject({ kind: 'failed', code: 'DEVICE_AUTH_REJECTED' })
+    expect(send).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps a connection live when encrypted token saving fails', async () => {
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const send = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 204, headers: {
+        'ocean-device-protocol': '1', 'ocean-device-host': 'saved-host', 'ocean-device-epoch': 'launch',
+        'set-cookie': '__Host-ocean-device=fixture-login; Secure; HttpOnly',
+      } })).mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+    vi.stubGlobal('fetch', send)
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const window = harness.windows.at(-1)!
+    const event = { sender: window.webContents, senderFrame: window.webContents.mainFrame }
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(event, 'https://ocean.example/', 'fixture-token', true))
+      .toEqual({ kind: 'connected', persistence: 'failed', message: en.remoteSaveFailed })
+    expect(window.isDestroyed()).toBe(false)
+    expect(harness.views.at(-1)!.isVisible()).toBe(true)
+    expect(send).toHaveBeenCalledTimes(2)
+    await harness.handlers.get(DESKTOP_IPC.remoteClose)!(event)
+    expect(window.isDestroyed()).toBe(true)
+    expect(harness.views.at(-1)!.isVisible()).toBe(true)
+  })
+
+  it('rejects foreign frames and malformed arguments before remote operations', async () => {
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const window = harness.windows.at(-1)!
+    const event = { sender: window.webContents, senderFrame: window.webContents.mainFrame }
+    const send = vi.fn<typeof fetch>()
+    vi.stubGlobal('fetch', send)
+    for (const channel of [DESKTOP_IPC.remoteForm, DESKTOP_IPC.remoteConnect, DESKTOP_IPC.remoteForget, DESKTOP_IPC.remoteClose]) {
+      const handle = harness.handlers.get(channel)!
+      for (const invalid of [
+        { sender: local.webContents, senderFrame: event.senderFrame },
+        { sender: event.sender, senderFrame: { url: event.senderFrame.url } },
+        { sender: event.sender, senderFrame: null },
+      ]) {
+        await expect(Promise.resolve().then(() => handle(invalid, 'https://ocean.example/', 'fixture-token', false)))
+          .rejects.toThrow('Rejected remote connection command')
+      }
+    }
+    for (const args of [[1, '', false], ['', null, false], ['', '', 'yes'], ['x'.repeat(2049), '', false], ['', 'x'.repeat(513), false]]) {
+      expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(event, ...args)).toMatchObject({ kind: 'failed', code: 'DESKTOP_REMOTE_INVALID_INPUT' })
+    }
+    expect(send).not.toHaveBeenCalled()
+    expect(harness.views).toHaveLength(0)
+    for (const channel of [
+      DESKTOP_IPC.hostSelection, DESKTOP_IPC.publishHostSessions, DESKTOP_IPC.selectHost, DESKTOP_IPC.openHostSession,
+    ]) {
+      await expect(Promise.resolve().then(() => harness.handlers.get(channel)!(event, {}))).rejects.toThrow('rejected IPC')
+    }
+  })
+
+  it('refuses a new Host at the configured limit without disconnecting the existing Host', async () => {
+    vi.stubEnv('OCEAN_DESKTOP_MAX_REMOTE_HOSTS', '1')
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const send = vi.fn<typeof fetch>()
+    for (const host of ['first', 'second']) {
+      send.mockResolvedValueOnce(new Response(null, { status: 204, headers: {
+        'ocean-device-protocol': '1', 'ocean-device-host': host, 'ocean-device-epoch': 'launch',
+        'set-cookie': `__Host-ocean-device=${host}-login; Secure; HttpOnly`,
+      } })).mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+    }
+    send.mockResolvedValueOnce(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', send)
+    for (const host of ['first', 'second']) {
+      const menu = applicationMenuItems(harness.views.at(-1)).find(item => item.label === en.remoteConnectMenu)!
+      ;(menu as { click: () => void }).click()
+      const dialog = harness.windows.at(-1)!
+      const event = { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }
+      const result = await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(event, `https://${host}.example/`, 'fixture-token', false)
+      expect(result).toMatchObject(host === 'first' ? { kind: 'connected' } : { kind: 'failed', code: 'DESKTOP_REMOTE_HOST_LIMIT' })
+    }
+    expect(harness.views).toHaveLength(1)
+    expect(harness.views[0]!.isVisible()).toBe(true)
+    expect(send.mock.lastCall?.[0]).toEqual(new URL('https://second.example/connect'))
+    expect(send.mock.lastCall?.[1]).toMatchObject({ method: 'DELETE' })
   })
 
   it('logs a legacy Host cookie cleanup failure without blocking boot', async () => {
@@ -1568,7 +1979,7 @@ describe('desktop main startup', () => {
     const handler = harness.handlers.get(DESKTOP_IPC.boot)!
     await expect(handler({ senderFrame: { url: 'https://other.example/' } })).rejects.toThrow('unowned renderer')
     let settled = false
-    const boot = Promise.resolve(handler({ senderFrame: { url: 'dsh-app://app/' } })).then((value) => { settled = true; return value })
+    const boot = Promise.resolve(invoke(DESKTOP_IPC.boot)).then((value) => { settled = true; return value })
     await Promise.resolve()
     expect(settled).toBe(false)
     expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/'])
@@ -1576,7 +1987,7 @@ describe('desktop main startup', () => {
     await harness.hostStarted.promise
     expect(settled).toBe(false)
     harness.hosts[0]!.ready.resolve()
-    await expect(boot).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3080' })
+    await expect(boot).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3080', ownsHost: true })
     expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/'])
   })
 
@@ -2590,7 +3001,7 @@ describe('desktop main startup', () => {
     expect(replacement.updateTasks).not.toHaveBeenCalled()
     replacement.ready.resolve()
     await vi.waitFor(() => { expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/', 'dsh-app://app/']) })
-    await expect(Promise.resolve(invoke(DESKTOP_IPC.boot))).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3099' })
+    await expect(Promise.resolve(invoke(DESKTOP_IPC.boot))).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3099', ownsHost: true })
     if (mandatory) await answerMandatory('later')
     await expect(retry).resolves.toBe(false)
     expect(replacement.updateTasks.mock.calls).toEqual([['inspect']])

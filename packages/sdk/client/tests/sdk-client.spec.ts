@@ -677,6 +677,17 @@ describe('HarnessClient', () => {
     await expect(dead.subscribe().next()).rejects.toThrow(TransportClosedError)
   })
 
+  it('closes subscriptions before the runtime has started', async () => {
+    const client = processClient(fakeLaunch())
+    const subscription = client.subscribe()
+    const parked = expect(subscription.next()).rejects.toThrow(TransportClosedError)
+    await client.close()
+    await parked
+    await expect(subscription.next()).rejects.toThrow(TransportClosedError)
+    await expect(client.subscribe().next()).rejects.toThrow(TransportClosedError)
+    expect(() => { client.start() }).toThrow(TransportClosedError)
+  })
+
   it('closes subscriptions with the runtime and rejects parked waiters', async () => {
     const client = processClient(fakeLaunch())
     await client.initialize({ cwd: process.cwd(), provider: 'p', model: 'm' })

@@ -9,7 +9,7 @@
 import type { ReactNode } from 'react'
 import { IconBrowseOutlineRegular } from '@ocean/ocean-client-ui-primitives'
 import type { ContextMenuBindings } from '@ocean/ocean-client-ui-context-menu/client'
-import type { ToolFileInjected } from '../file-menu.ts'
+import type { ToolFileInjected } from '../../contract/file-menu.ts'
 import type { PropsRenderSlots } from '@ocean/ocean-client-ui-slots'
 import type { ToolCallViewProps } from '../../contract/slots.ts'
 import { toolRowModel } from '../models/tool-call-model.ts'

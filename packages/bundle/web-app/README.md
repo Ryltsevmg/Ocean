@@ -44,7 +44,11 @@ After startup you see a `ocean web:` line whose root URL carries a fresh process
 
 **Settings → Models** displays **DeepSeek**, using `DEEPSEEK_API_KEY`. The default is `deepseek-official` / `deepseek-flash` (DeepSeek-V4.1-Flash). The [DeepSeek plugin](../../llm/llm-deepseek/README.md#endpoint-and-wire-format) uses the Messages API.
 
-Saved model selections override the composition default. The settings card accepts a Messages-compatible API address and a credential reference.
+Saved model selections override the composition default. The settings card accepts a Messages-compatible API address and a credential reference. The built-in roster contains no ChatGPT subscription sign-in provider; choose an available configured model in Settings → Models.
+
+### Remote Host and device commands
+
+This bundle also supplies `serve`, `connect`, and `remote-device`. These profiles disable configuration and Client-module watching. `serve` requires device authentication, prints a credential-free URL, and never opens a browser; non-loopback listeners require TLS. `connect` and `remote-device` run without the local Web listener or its dependent HTTP and Session UI plugins. Local bootstrap can create and list devices on Windows, macOS, and Linux; rotation and revocation use a running Host’s Unix administrator socket. The [CLI guide](../../../apps/cli/README.md) owns arguments, credential-home selection, and token handling.
 
 ### Configuration
 
@@ -238,3 +242,5 @@ None.
 </details>
 
 The Web composition includes the account Remote controller and Account settings section.
+
+The shared Plugins page includes the [bundled plugin catalog](../../extensions/plugin-market/README.md) in every Web and Desktop assembly. Its source and browser artifact ship with Ocean; no external checkout or local overlay is required.

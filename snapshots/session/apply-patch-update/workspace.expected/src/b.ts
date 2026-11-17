@@ -1,1 +1,1 @@
-export const BETA = 2;
+﻿export const BETA = 2;

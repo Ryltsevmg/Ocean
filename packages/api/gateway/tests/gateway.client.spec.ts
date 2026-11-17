@@ -32,7 +32,7 @@ import {
   ClientUplinkQueue,
   RemoteStreamCarrierError,
   RemoteStreamMuxClient,
-} from '../src/client/stream-client.ts'
+} from '../src/stream-client.ts'
 import { parseRemoteStreamClientMessage } from '../src/stream-protocol.ts'
 
 type FixtureApprovalOutcome = 'allowed' | 'unavailable'
@@ -3357,7 +3357,7 @@ async function withFakeWebSocket(
   const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document')
   const locationDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'location')
   ;(globalThis as WebSocketGlobal).WebSocket = FakeWebSocket as unknown as typeof WebSocket
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { baseURI } })
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { baseURI, querySelector: () => null } })
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: { origin: new URL(baseURI).origin },

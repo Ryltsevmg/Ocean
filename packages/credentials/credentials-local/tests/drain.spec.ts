@@ -10,21 +10,17 @@ import { LocalCredentialProvider } from '../src/index.ts'
 // write; gating it makes the dispose-versus-queued-write race fully
 // deterministic. The lock helper passes through so the gated operation still
 // runs inside its real acquire/release cycle.
+const writeGate = vi.hoisted(() => ({ current: Promise.resolve() }))
 vi.mock('@ocean/ocean-atomic-write', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@ocean/ocean-atomic-write')>()
-  let gate: Promise<void> = Promise.resolve()
   return {
     ...actual,
-    writeFileAtomic: vi.fn(() => gate),
-    __setGate: (next: Promise<void>) => {
-      gate = next
-    },
+    writeFileAtomic: vi.fn(() => writeGate.current),
   }
 })
 
 async function setGate(next: Promise<void>): Promise<void> {
-  const mocked = await import('@ocean/ocean-atomic-write') as unknown as { __setGate: (next: Promise<void>) => void }
-  mocked.__setGate(next)
+  writeGate.current = next
 }
 
 const KEY = credentialRef('OCEAN_CRED_DRAIN_A')

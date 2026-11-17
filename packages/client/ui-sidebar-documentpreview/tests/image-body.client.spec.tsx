@@ -8,7 +8,7 @@ import type { SessionId } from '@ocean/ocean-session/types'
 import type { TabId } from '@ocean/ocean-client-ui-dockkit'
 import { ImageBody, imageMediaType, type ImageBodyProps } from '../src/client/image/ImageBody.tsx'
 import { en } from '../src/client/image/locales.ts'
-import { createZoomStore, type ZoomState } from '../src/client/zoom/store.ts'
+import { createZoomStore, type ZoomState } from '../src/client/zoom-store.ts'
 
 const translations: ReadonlyMap<string, string> = new Map(Object.entries(en))
 let createDescriptor: PropertyDescriptor | undefined

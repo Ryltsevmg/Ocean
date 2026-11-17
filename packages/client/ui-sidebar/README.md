@@ -35,7 +35,7 @@ Below 768px, without a native Windows caption, the sidebar keeps its expanded co
 
 Ocean uses 36px expanded navigation rows, 16px side insets, and the shared Ocean selection surface; collapsed rail controls retain their existing sizes and keyboard paths.
 
-Global panel launchers, including Plugins and the dynamic More menu, live in **Settings** navigation. Opening a panel closes Settings and selects its existing main view. The conversation sidebar retains Automation tasks, New session, workspaces, conversations, and Settings; plugin contributions and launcher pinning remain available in Settings.
+Global panels appear in the main sidebar: Automation tasks first, Plugins second, then registered panels in order. Settings contains preferences and Feedback; plugin pages have no duplicate Settings launchers.
 
 ### Brand and New Session
 
@@ -47,9 +47,6 @@ The expanded brand row renders `sidebar.brand.mark` and `sidebar.brand.name` as 
 
 Plugins add an icon component to the root-scoped `sidebar.panellist` list with an `id`, optional `order`, and a string or locale-aware `label`. The same id addresses the component registered in the layout's root-scoped `main` keyed slot; selecting a missing main entry throws without changing the current selection. The label supplies plain visible text, the accessible name, and the collapsed tooltip. Expanded navigation rows are 32px high with a 2px gap; collapsed rail controls remain 36px high with a 12px gap. Each row reads its own selected state through `usePanelInfo`; moving DOM focus to search or a directory picker does not change the displayed panel or its selected row. With no panel registrations, neither the list nor spacing for it is rendered. The shipped composition registers no example panel.
 
-The global panel launchers follow the section rows directly in the **Settings** navigation; there is no intermediate Tools page. It includes Plugins and all dynamically registered panels except Automation tasks, which remains a fixed sidebar entry. Selecting a tool closes Settings before opening the existing main panel. With no tools registered, the list is empty.
-
-The root-scoped `sidebar.panellist.actions` list belongs to the Settings navigation contribution. While it has registrations, **More** follows the tool rows and receives `entries`, `onOpen(id)`, `onPinnedChange(id, pinned)`, `onDismiss()`, and optional `onNavigate()` for closing the containing settings surface before menu-owned navigation. Plugins always shows. Other tools can be unpinned into More; pinning returns them to the Tools list without closing Settings. Without More contributions all tools show. Pin state is in memory, resets on plugin reload, and does not change the main panel or its registration.
 
 ### Collapse behavior
 
@@ -75,8 +72,6 @@ On Desktop, the official navigation controls report `sidebar_menu_click` with `m
 
 - The expanded brand and the New Session button report `menu_name=new_session` with `position=sidebar`. While the Windows caption hosts the collapsed New Session button, that button reports `position=titlebar`; the macOS New Session control beside the traffic lights also reports `position=titlebar`.
 - The **Plugins** and **Automation tasks** rows report `menu_name=plugin` and `menu_name=cron` with `position=sidebar`. Other panel rows report nothing.
-- Each **More** button click reports `menu_name=more` with `position=sidebar`, whether it opens or closes the menu.
-- A More menu row that calls `onOpen(id)` for Plugins or Automation tasks reports `menu_name=plugin` or `menu_name=cron` with `position=sidebar_more`. The shipped More menu calls `onOpen` for unpinned panels, including Automation tasks; pin and unpin actions report no navigation click. The report precedes the registration check, so a request for a panel that has unregistered still counts although nothing is selected.
 
 -----
 
@@ -128,7 +123,6 @@ None; this package neither assembles nor sends a provider request.
 ## Known Limitations and Deferred Work
 
 <a id="known-limitations-and-deferred-work"></a>
-
 
 These limits define what the shell owns versus what its occupants own; they are current package constraints.
 

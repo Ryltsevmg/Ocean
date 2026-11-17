@@ -242,6 +242,7 @@ async function installControllers(
 ): Promise<SessionController> {
   const found = installed.get(ctx)
   if (found !== undefined) return found
+  installSessionReadTestServices(ctx)
   await ctx.sessionProjections.register(modelSelectionProjectionDefinition)
 
   if (ctx.get('typert') === undefined) {
@@ -295,7 +296,6 @@ async function installControllers(
       retirePrompt: () => {},
     } as never)
   }
-  installSessionReadTestServices(ctx)
   if (ctx.get('remoteAccess') === undefined) new RemoteAccessService(ctx)
   const cwd = vi.spyOn(process, 'cwd').mockReturnValue(defaults.cwd)
   class TestController extends SessionController {

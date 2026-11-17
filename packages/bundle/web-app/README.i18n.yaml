@@ -18,8 +18,11 @@
   en: 65f11e8a6cb7fc3f
   zh: b959376cd4ba4537
 /ocean-ocean-web-app/use-this-package/starting-the-web-gui:
-  en: 675cad3798dcee5d
-  zh: 21deda76c47ae58c
+  en: ccfae3a250e1b06e
+  zh: 0c7c71ff53867231
+/ocean-ocean-web-app/use-this-package/remote-host-and-device-commands:
+  en: 4b161e8ace3967e4
+  zh: 02b7def0039353f9
 /ocean-ocean-web-app/use-this-package/configuration:
   en: 3bed76d7b1ef543a
   zh: bec1b3caee30b944
@@ -105,5 +108,5 @@
   en: 03bcc405bae08eae
   zh: bcedfbe19873d671
 /ocean-ocean-web-app/known-limitations-and-deferred-work/dev-note:
-  en: 3f81b4f3beb74a0d
-  zh: 2e377ca40822d093
+  en: e1aa7262a90315b1
+  zh: 7f3e1c01889cfb84

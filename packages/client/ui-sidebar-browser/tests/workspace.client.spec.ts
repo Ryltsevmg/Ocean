@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { createSnapshotStore } from '@ocean/ocean-client-store'
 import type { WorkspaceId, WorkspaceSnapshot, WorkspaceView } from '@ocean/ocean-api-workspace-controller/client'
 import type { SessionId } from '@ocean/ocean-session/types'
-import { browserWorkspace } from '../src/client/electron/workspace.ts'
+import { browserWorkspace } from '../src/client/browser/electron/workspace.ts'
 
 const SESSION = 'session' as SessionId
 const workspace = (id: string, path: string, sessionIds: readonly SessionId[]): WorkspaceView => ({

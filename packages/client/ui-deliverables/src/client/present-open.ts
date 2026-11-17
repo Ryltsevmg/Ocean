@@ -112,7 +112,9 @@ export class PresentedOpenController {
     let host: PresentedHost | 'error' = 'error'
     try {
       const response = await fetch(PRESENT_HOST_ROUTE, { signal })
-      if (response.ok) {
+      if (response.status === 403) {
+        host = { name: 'desktop', available: false, fileManager: null }
+      } else if (response.ok) {
         const value: unknown = await response.json()
         if (isPresentedHost(value)) host = value
       }

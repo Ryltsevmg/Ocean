@@ -92,6 +92,7 @@ declare class SshConnection extends Service {
   async request<T>(method: string, params: unknown, result: z.ZodType<T>, signal?: AbortSignal, wait: boolean = false): Promise<T>;
   /**
      * Forward one authenticated stream through an independent SSH channel.
+     * Cancellation before socket creation releases its forwarding reservation.
      * @param endpoint - private coordinates issued by this connection's helper.
      * @param signal - cancellation of allocation and the resulting socket.
      * @returns a paused socket; attach a consumer before resuming it.
@@ -130,6 +131,7 @@ async request<T>(method: string, params: unknown, result: z.ZodType<T>, signal?:
 
 /**
  * Forward one authenticated stream through an independent SSH channel.
+ * Cancellation before socket creation releases its forwarding reservation.
  * @param endpoint - private coordinates issued by this connection's helper.
  * @param signal - cancellation of allocation and the resulting socket.
  * @returns a paused socket; attach a consumer before resuming it.

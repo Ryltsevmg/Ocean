@@ -210,6 +210,9 @@ interface PrincipalMap {
 }
 ```
 
+Connection extends `PrincipalMap` with `remote-device: { readonly kind: 'remote-device'; readonly deviceId: DeviceId }`. The [device identifier](credentials.md#remote-device-credentials) names the issued credential record; no bearer, verifier, or session cookie enters the principal. The Host derives it from an authenticated login, and the Gateway applies the registered remote-device resource policy before resolving the target service.
+
+
 ```ts type-equiv
 /** One caller identity; the authorization layer reads only this. */
 type Principal = PrincipalMap[keyof PrincipalMap]

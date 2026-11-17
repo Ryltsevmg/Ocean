@@ -25,6 +25,8 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
+`./protocol` 入口向原生客户端公开上传路由和帧格式定义，不加载上传服务。
+
 在注入 `fileUpload` 的消费方之前挂载本包，再调用 `ctx.fileUpload.upload(sessionId, body, name, signal, onProgress)`；prompt 图片则调用 `ctx.fileUpload.uploadImage(sessionId, blob, mediaType, name, signal, onProgress)`。Session 标识同时用于寻址原始路由和生成的 Remote 兜底；调用方不组装这两种请求。
 
 ```yaml
@@ -55,7 +57,7 @@ Host 插件提供 `ctx.fileUploads`。它拥有经过认证的流式路由、编
 
 </details>
 
-每个上传凭证只属于一个准确的 Session，每个请求只使用一个已选定载体。载体不支持的 stream 会在发送请求体前失败。
+每个上传凭证只属于一个准确的 Session，每个请求只使用一个已选定载体。载体不支持的 stream 会在发送请求体前失败。已认证的远程设备可通过同一上传路由暂存文件和图片。Connection 的 HTTP 请求体上限适用于设备流。
 
 -----
 

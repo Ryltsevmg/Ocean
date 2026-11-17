@@ -1,6 +1,8 @@
 /** Host registry and HTTP adapter for generic Connection RPC channels. */
 
 import { Context, Service } from '@deepseek-ai/cordis'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { HarnessError } from '@ocean/ocean-error'
 import type { WebRoute } from '@ocean/ocean-host-webserver'
 import type { PeerId, PeerScope, Principal } from '@ocean/ocean-typert-protocol'
 import type { ConnectionInteractions } from './connect-protocol.ts'
@@ -14,7 +16,10 @@ import { bridge } from './http-bridge.ts'
 import { isRemoteAuthority, isTrustedApiRequest } from './api-request-trust.ts'
 import { API_PATH } from './api-path.ts'
 import type { BrowserAuth } from './browser-auth.ts'
+import { deviceRegistryKey, type DeviceId, type DeviceSession, type DeviceSessionKey } from './device-tokens.ts'
+import type { DeviceLogin } from './device-login.ts'
 import { Peer } from './peer.ts'
+import { resolveDeviceTransportLimits } from './host-config.ts'
 import type {
   PeerAdmission,
   ConnectionAdmission,
@@ -42,6 +47,17 @@ interface PeerRecord {
   ownsSocket: boolean
 }
 
+/** Administrative failure that distinguishes durable mutation from transport cleanup. */
+export class DeviceAdministrationError extends HarnessError {
+  constructor(
+    readonly durableOutcome: 'committed' | 'unchanged' | 'unknown',
+    readonly liveCleanup: 'complete' | 'failed',
+    options: ErrorOptions,
+  ) {
+    super('Device administration failed. Inspect the device state before retrying.', 'DEVICE_ADMIN_FAILED', options)
+  }
+}
+
 interface ConnectionRpcInterceptor {
   readonly matches: ConnectionRpcEndpointMatcher
   readonly fetchHandler: ConnectionFetchHandler
@@ -51,12 +67,19 @@ interface RegisteredFetchRoute {
   readonly methods: ReadonlySet<string>
   readonly requestBody: ConnectionFetchRoute['requestBody']
   readonly fetch: ConnectionFetchRoute['fetch']
+  readonly allowRemoteDevice: boolean
 }
 
 interface ConnectionServerResponse {
   readonly type: 'server-response'
   readonly rpcId: RpcIdType
   readonly result: ConnectionRpcResult<unknown>
+}
+
+declare module '@ocean/ocean-typert-protocol' {
+  interface PrincipalMap {
+    'remote-device': { readonly kind: 'remote-device'; readonly deviceId: NonNullable<Awaited<ReturnType<DeviceLogin['authenticate']>>>['deviceId'] }
+  }
 }
 
 declare module '@deepseek-ai/cordis' {
@@ -73,6 +96,10 @@ export class HostConnectionService extends Service implements HostConnectionHand
   private readonly peers = new Map<PeerId, PeerRecord>()
   private readonly owner: Context
   private disposed = false
+  private deviceRegistryVersion = 0
+  private pendingDeviceAdmissions = 0
+  private readonly invalidatingDevices = new Map<DeviceId, { count: number }>()
+  private readonly deviceLeases = new Map<PeerScope, { session: DeviceSession; active: boolean; release: () => Promise<void> }>()
   private readonly interceptors = new Map<string, ConnectionRpcInterceptor>()
   private readonly fetchRoutes = new Map<string, RegisteredFetchRoute>()
 
@@ -83,21 +110,38 @@ export class HostConnectionService extends Service implements HostConnectionHand
    * @param ctx - owning Connection plugin context.
    * @param trustedHosts - deployment authorities accepted by the Host/Origin fence.
    * @param browserAuth - process token and persistent browser-session owner.
+   * @param allowOwnerLogin - permit legacy browser and API owner credentials.
+   * @param deviceLogin - verifier for device sessions when owner login is disabled.
+   * @param deviceLimits - bounds on device authentication and active transport work.
+   * @param drainAdmin - Stop and settle accepted administrative commands before releasing Peers.
    */
   constructor(
     ctx: Context,
     private readonly trustedHosts: readonly string[],
     private readonly browserAuth: BrowserAuth,
+    private readonly allowOwnerLogin = true,
+    private readonly deviceLogin?: DeviceLogin,
+    private readonly deviceLimits = resolveDeviceTransportLimits(),
+    drainAdmin: () => Promise<void> = () => Promise.resolve(),
   ) {
     super(ctx, 'connection')
     this.owner = ctx
     this.browserPeer = new Peer(ctx, { principal: { kind: 'owner' } })
     ctx.effect(() => async () => {
-      this.disposed = true
-      const peers = [this.browserPeer, ...Array.from(this.peers.values(), record => record.peer)]
-      this.peers.clear()
-      await Promise.all(peers.map(peer => peer.dispose()))
+      try {
+        await drainAdmin()
+      } finally {
+        this.disposed = true
+        const peers = [this.browserPeer, ...Array.from(this.peers.values(), record => record.peer)]
+        this.peers.clear()
+        await Promise.all([...peers.map(peer => peer.dispose()), ...Array.from(this.deviceLeases.values(), lease => lease.release())])
+      }
     }, 'client-connection: Peer scopes')
+    if (deviceLogin !== undefined) {
+      ctx.on('credentials/record-updated', (key) => {
+        if (key === deviceRegistryKey) this.deviceRegistryVersion += 1
+      })
+    }
     this.allowsRemoteAuthorities = trustedHosts.some(isRemoteAuthority)
   }
 
@@ -128,7 +172,7 @@ export class HostConnectionService extends Service implements HostConnectionHand
   /** Browser requests share an owner Peer; API HTTP does not depend on an attached socket. */
   admit(request: ConnectionTrustRequest): PeerAdmission {
     if (!this.isTrusted(request)) return { rejection: 403 }
-    if (this.disposed) return { rejection: 401 }
+    if (this.disposed || !this.allowOwnerLogin) return { rejection: 401 }
     const secure = this.owner.get('webServer')?.protocol === 'https:'
     if (this.browserAuth.isAuthenticated(request, secure)) return { peer: this.browserPeer }
     const id = this.browserAuth.authenticateApi(request, secure)
@@ -139,6 +183,36 @@ export class HostConnectionService extends Service implements HostConnectionHand
   /** Create one in-process Peer owned by the Context that read this service. */
   createPeer(options: { readonly principal: Principal; readonly interactions?: ConnectionInteractions }): PeerScope {
     return new Peer(this.ctx, options)
+  }
+
+  /**
+   * Own admission, cancellation, and release for one HTTP transport.
+   * @param request - Incoming HTTP request carrying authentication.
+   * @param response - Response destroyed if its admitted device session is invalidated.
+   * @param handle - Admitted handler; the lease is retained until it settles.
+   * @returns Completion after the handler and its lease cleanup settle.
+   */
+  async handleHttpTransport(
+    request: IncomingMessage,
+    response: ServerResponse,
+    handle: (peer: PeerScope) => Promise<void>,
+  ): Promise<void> {
+    const admission = await this.admitTransport(request, false)
+    if ('rejection' in admission) {
+      response.writeHead(admission.rejection)
+      response.end(admission.rejection === 503 ? 'device transport unavailable' : admission.rejection === 401 ? 'unauthorized' : 'forbidden')
+      return
+    }
+    const abort = (): void => {
+      if (admission.peer.principal.kind === 'remote-device') response.destroy()
+    }
+    admission.peer.signal.addEventListener('abort', abort, { once: true })
+    try {
+      await handle(admission.peer)
+    } finally {
+      admission.peer.signal.removeEventListener('abort', abort)
+      await admission.release()
+    }
   }
 
   /** Claim API socket ownership synchronously; callers release on termination or failed upgrade. */
@@ -161,6 +235,179 @@ export class HostConnectionService extends Service implements HostConnectionHand
     }
   }
 
+  /**
+   * Admit a transport request and allocate a request-owned Peer for device sessions.
+   * @param request - Incoming request with its login cookie.
+   * @param socket - Claim exclusive socket ownership for legacy API Peers.
+   * @returns A rejection or a lease the caller releases when its transport ends.
+   */
+  async admitTransport(request: ConnectionTrustRequest & { readonly destroyed: boolean }, socket: boolean): Promise<ConnectionAdmission> {
+    if (this.deviceLogin === undefined) {
+      if (socket) return this.admitConnection(request)
+      const admission = this.admit(request)
+      return 'rejection' in admission ? admission : { ...admission, release: () => Promise.resolve() }
+    }
+    return this.admitDevice(this.deviceLogin, request, () => request.destroyed)
+  }
+
+  /**
+   * Authenticate an index document in device mode, with a lease for rendering.
+   * @param request - The browser document request.
+   * @returns An admission lease or undefined when legacy index login applies.
+   */
+  async admitDeviceDocument(request: Request): Promise<ConnectionAdmission | undefined> {
+    if (this.deviceLogin === undefined) return undefined
+    return this.admitDevice(this.deviceLogin, request, () => request.signal.aborted)
+  }
+
+  private async admitDevice(
+    login: DeviceLogin, request: ConnectionTrustRequest, disconnected: () => boolean,
+  ): Promise<ConnectionAdmission> {
+    const listener = this.owner.get('webServer')
+    if (listener === undefined || this.disposed) return { rejection: 401 }
+    const version = this.deviceRegistryVersion
+    if (this.deviceLeases.size + this.pendingDeviceAdmissions >= this.deviceLimits.total) return { rejection: 503 }
+    this.pendingDeviceAdmissions += 1
+    let session: Awaited<ReturnType<DeviceLogin['authenticate']>>
+    try {
+      session = await login.authenticate(request, listener)
+    } catch (_error) {
+      // Never admit on a failed credential read.
+      return { rejection: 503 }
+    } finally {
+      this.pendingDeviceAdmissions -= 1
+    }
+    // The owner may close while authentication reads storage.
+    // oxlint-disable-next-line typescript/no-unnecessary-condition
+    if (session === undefined || this.disposed || disconnected() || session.expiresAt <= Date.now()
+      || this.invalidatingDevices.has(session.deviceId)) return { rejection: 401 }
+    // An unrelated device may have changed the registry during this read.
+    if (version !== this.deviceRegistryVersion) return { rejection: 503 }
+    let deviceCount = 0
+    for (const lease of this.deviceLeases.values()) {
+      if (lease.session.deviceId === session.deviceId) deviceCount += 1
+    }
+    if (deviceCount >= this.deviceLimits.perDevice) return { rejection: 503 }
+    const peer = new Peer(this.owner, {
+      principal: { kind: 'remote-device', deviceId: session.deviceId }, interactions: 'none',
+    })
+    let released: Promise<void> | undefined
+    const release = (): Promise<void> => {
+      lease.active = false
+      released ??= peer.dispose().finally(() => { this.deviceLeases.delete(peer) })
+      return released
+    }
+    const lease = { session, release, active: true }
+    this.deviceLeases.set(peer, lease)
+    const expire = (): void => {
+      void release().catch((error: unknown) => { this.owner.logger.warn('Device Peer cleanup failed: %s', error) })
+    }
+    peer.ctx.effect(() => {
+      let timer: ReturnType<typeof setTimeout>
+      const schedule = (): void => {
+        const remaining = session.expiresAt - Date.now()
+        if (remaining <= 0) expire()
+        else timer = setTimeout(schedule, Math.min(remaining, 2_147_483_647)).unref()
+      }
+      schedule()
+      return () => { clearTimeout(timer) }
+    }, 'client-connection: device login expiry')
+    peer.ctx.on('credentials/record-updated', (key) => {
+      if (key !== deviceRegistryKey) return
+      void login.authenticate(request, listener).then((current) => {
+        if (current === undefined) expire()
+      }, expire)
+    })
+    return { peer, release }
+  }
+
+  /**
+   * Durably revoke a device and finish the cleanup of its live transport Peers.
+   * @param id - Device selected by the local administrator.
+   * @returns Whether the device was found and is now revoked.
+   */
+  async revokeDevice(id: DeviceId): Promise<boolean> {
+    if (this.deviceLogin === undefined || this.disposed) throw new Error('client-connection: device login is unavailable')
+    const tokens = this.deviceLogin.tokens
+    return this.invalidateDevice(id, () => tokens.revoke(id))
+  }
+
+  /**
+   * Rotate a device token and finish cleanup of its existing transport Peers.
+   * @param id - Active device selected by the local administrator.
+   * @returns The replacement token, or undefined if the device is not active.
+   */
+  async rotateDevice(id: DeviceId): Promise<string | undefined> {
+    if (this.deviceLogin === undefined || this.disposed) throw new Error('client-connection: device login is unavailable')
+    const tokens = this.deviceLogin.tokens
+    return this.invalidateDevice(id, () => tokens.rotate(id))
+  }
+
+  /**
+   * Release transports for a login after its durable invalidation.
+   * @param login - Device, origin, and verifier of the ended login.
+   */
+  async closeDeviceSession(login: DeviceSessionKey): Promise<void> {
+    this.deviceRegistryVersion += 1
+    await Promise.all(Array.from(this.deviceLeases.values())
+      .filter(({ session }) => session.deviceId === login.deviceId && session.origin === login.origin
+        && session.verifier === login.verifier)
+      .map(lease => lease.release()))
+  }
+
+  /**
+   * Compare live Peers without exposing the device session verifier.
+   * @param first - Request Peer.
+   * @param second - Event stream Peer.
+   * @returns Whether both Peers belong to the same live device login.
+   */
+  sharesDeviceSession(first: PeerScope, second: PeerScope): boolean {
+    const firstLease = this.deviceLeases.get(first)
+    const secondLease = this.deviceLeases.get(second)
+    const session = firstLease?.session
+    const other = secondLease?.session
+    return !first.signal.aborted && !second.signal.aborted
+      && firstLease?.active === true && secondLease?.active === true
+      && session !== undefined && other !== undefined && !this.invalidatingDevices.has(session.deviceId)
+      && session.expiresAt > Date.now() && other.expiresAt > Date.now()
+      && session.deviceId === other.deviceId && session.origin === other.origin && session.verifier === other.verifier
+  }
+
+  private async invalidateDevice<T>(id: DeviceId, mutate: () => Promise<T>): Promise<T> {
+    this.deviceRegistryVersion += 1
+    const invalidations = this.invalidatingDevices.get(id) ?? { count: 0 }
+    invalidations.count += 1
+    this.invalidatingDevices.set(id, invalidations)
+    let outcome: DeviceAdministrationError['durableOutcome'] = 'unknown'
+    let cleanup: DeviceAdministrationError['liveCleanup'] = 'complete'
+    let result: T | undefined
+    const failures: unknown[] = []
+    try {
+      result = await mutate()
+      outcome = result === undefined || result === false ? 'unchanged' : 'committed'
+    } catch (error) {
+      failures.push(error)
+    }
+    try {
+      await this.closeDeviceLeases(id)
+    } catch (error) {
+      cleanup = 'failed'
+      failures.push(error)
+    } finally {
+      invalidations.count -= 1
+      if (invalidations.count === 0) this.invalidatingDevices.delete(id)
+    }
+    if (failures.length > 0) throw new DeviceAdministrationError(outcome, cleanup, { cause: new AggregateError(failures) })
+    return result as T
+  }
+
+  private async closeDeviceLeases(id: DeviceId): Promise<void> {
+    this.deviceRegistryVersion += 1
+    await Promise.all(Array.from(this.deviceLeases.values())
+      .filter(lease => lease.session.deviceId === id)
+      .map(lease => lease.release()))
+  }
+
   private isTrusted(request: ConnectionTrustRequest): boolean {
     const carrier = this.owner.get('webServer')
     return isTrustedApiRequest(request, this.trustedHosts, carrier?.host, carrier?.protocol ?? 'http:')
@@ -178,9 +425,10 @@ export class HostConnectionService extends Service implements HostConnectionHand
    * @param response - response owned to completion.
    */
   authorizeConnect(request: ConnectionIndexRequest, response: ConnectionIndexResponse): void {
-    if (!this.isTrusted(request) || this.disposed) {
-      response.writeHead(this.disposed ? 401 : 403)
-      response.end(this.disposed ? 'unauthorized' : 'forbidden')
+    if (!this.isTrusted(request) || this.disposed || !this.allowOwnerLogin) {
+      const unauthorized = this.disposed || !this.allowOwnerLogin
+      response.writeHead(unauthorized ? 401 : 403)
+      response.end(unauthorized ? 'unauthorized' : 'forbidden')
       return
     }
     this.browserAuth.authorizeConnect(request, response,
@@ -191,12 +439,17 @@ export class HostConnectionService extends Service implements HostConnectionHand
    * Authenticate an index request; native TLS listeners mint Secure cookies.
    */
   authorizeIndex(request: ConnectionIndexRequest, response: ConnectionIndexResponse): boolean {
+    if (this.disposed || !this.allowOwnerLogin) {
+      response.writeHead(401, { 'cache-control': 'no-store' })
+      response.end()
+      return false
+    }
     return this.browserAuth.authorizeIndex(request, response, this.ctx.get('webServer')?.protocol === 'https:')
   }
 
   /** Add this process's launch token to the clean application URL. */
   authenticatedUrl(baseUrl: string): string {
-    return this.browserAuth.authenticatedUrl(baseUrl)
+    return this.allowOwnerLogin ? this.browserAuth.authenticatedUrl(baseUrl) : baseUrl
   }
 
   /**
@@ -216,9 +469,11 @@ export class HostConnectionService extends Service implements HostConnectionHand
         const pathname = new URL(request.url).pathname
         const route = this.fetchRoutes.get(pathname)
         if (route?.methods.has(request.method) === true) {
-          // Exact routes bypass Gateway access checks, so only the owner reaches them.
-          // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
-          if (peer.principal.kind !== 'owner') return Promise.resolve(new Response('forbidden', { status: 403 }))
+          // Exact routes bypass Gateway, so the feature must explicitly allow device access.
+          const deviceAllowed = route.allowRemoteDevice && peer.principal.kind === 'remote-device'
+          if (peer.principal.kind !== 'owner' && !deviceAllowed) {
+            return Promise.resolve(new Response('forbidden', { status: 403 }))
+          }
           return route.fetch(request)
         }
         const endpoint = endpointFromPath(channel, pathname)
@@ -239,6 +494,7 @@ export class HostConnectionService extends Service implements HostConnectionHand
     const registered: RegisteredFetchRoute = {
       methods: new Set(route.methods),
       requestBody: route.requestBody,
+      allowRemoteDevice: route.allowRemoteDevice === true,
       fetch: route.fetch,
     }
     return owner.effect(() => {
@@ -260,15 +516,7 @@ export class HostConnectionService extends Service implements HostConnectionHand
     const route: WebRoute = {
       kind: 'prefix',
       path: channel,
-      handler: async (req, res) => {
-        const admission = this.admit(req)
-        if ('rejection' in admission) {
-          res.writeHead(admission.rejection)
-          res.end(admission.rejection === 401 ? 'unauthorized' : 'forbidden')
-          return
-        }
-        await bridge(req, res, fetchHandler, admission.peer)
-      },
+      handler: (req, res) => this.handleHttpTransport(req, res, peer => bridge(req, res, fetchHandler, peer)),
     }
     return owner.effect(
       () => owner.webServer.register(route),

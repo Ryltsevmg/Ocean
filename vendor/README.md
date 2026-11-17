@@ -6,13 +6,10 @@ The Cordis foundation packages use the **`@deepseek-ai` scope** (`cordis` → `@
 
 This file covers the manifest, the local-modification log, and the procedure for **updating** an existing vendored package. To **add a new** one, see the cookbook guide: [docs/cookbook/adding-a-vendored-package.md](../docs/cookbook/adding-a-vendored-package.md).
 
-The Codex subscription integration uses the Ocean scope. Its original MIT license is retained in `codex-subscription/LICENSE`; its README records local modifications.
-
 ## Manifest
 
 | Directory | npm name | Upstream name | Version | Upstream repo | Commit |
 |---|---|---|---|---|---|
-| `codex-subscription/` | `@ocean/ocean-codex-subscription` | `dsh-codex-subscription` | 3.2.13 | https://github.com/WSL043/dsh-codex-subscription | `fb37c50a128aed84b230c520bf934cded97d851b` |
 | `cosmokit/` | `@deepseek-ai/cosmokit` | `cosmokit` | 1.8.1 | https://github.com/shigma/cosmokit | `02e691c5aa7f37f6e0b1cee7ee8f4a21c2e34507` |
 | `schemastery/` | `@deepseek-ai/schemastery` | `schemastery` | 3.18.0 | https://github.com/shigma/schemastery (`packages/core`) | `cf0b7e5481d0e31d10cdc30bc45c09366c332f27` |
 | `cordis/` | `@deepseek-ai/cordis` | `cordis` | 4.0.0-rc.11 | https://github.com/cordiverse/cordis (`packages/core`) | `0b96d9fd517b998e44e2209560c9e5f0671ce933` |
@@ -28,8 +25,6 @@ Third-party dependencies of the vendored packages stay on npm: `@standard-schema
 Intentionally **not** vendored (verified unused by this set): `reggol`, `@cordisjs/utils`, `@cordisjs/element`, `@cordisjs/unyaml` (dev-time YAML import hook only).
 
 ## Local modifications
-
-- **V28 · Codex provider label**: `codex-subscription/src/index.js` identifies the independent `openai-codex` catalog as `ChatGPT subscription (legacy)`, distinguishing its diagnostics from the new ChatGPT plan. Provider IDs, routes and credentials are unchanged.
 
 Keep this log exhaustive — every divergence from upstream must be listed. Each entry has a stable ID: remove an entry when its divergence no longer exists, and never renumber or reuse IDs. The next new entry is V29.
 
@@ -70,27 +65,3 @@ To update a vendored package from upstream:
 3. Re-apply the local modifications listed above (or drop them if upstream made them unnecessary — update the log either way).
 4. Update the version and commit hash in the manifest table.
 5. Run `pnpm install && pnpm run test && pnpm run build` at the repo root.
-
-## Ocean Codex subscription fork
-
-`codex-subscription/` contains `@ocean/ocean-codex-subscription` on the shared Ocean release version, adapted from upstream 3.2.13, [WSL043/dsh-codex-subscription](https://github.com/WSL043/dsh-codex-subscription) commit `fb37c50a128aed84b230c520bf934cded97d851b`. The original MIT license, third-party notices, and upstream README are retained. This JavaScript/JSX vendor package builds directly from source with a package-local tsdown configuration; the Ocean TypeScript aggregates do not type-check its JavaScript implementation. Its behavior and packed artifacts require separate tests.
-
-Local modifications: Ocean package/import identities and product copy, including Ocean labels across all eight Codex UI dictionaries while retaining stored selector identifiers; workspace dependency ranges and fixed pi-ai 1.3.0; separate Host and Client build faces without destructive cleanup; built-in Web/Desktop bundle registration; Ocean policy gating for optional capabilities and local-only unauthenticated defaults. Upstream release automation and installation scripts are not imported. The primary ChatGPT sign-in UI groups connection status and actions, permits an optional account label, and keeps the independent legacy Codex connection and settings in explicit disclosures without merging credentials. No OAuth account is connected by the build. The companion package README records supported capabilities and verification limits.
-
-The Ocean browser source graph uses a separate `allowJs: true`, `checkJs: false` compiler project for import and asset inspection, not JavaScript type-safety claims. Two JSX view files are renamed with `-view.jsx` suffixes to avoid declaration-output collisions with the upstream same-basename JavaScript modules. `src/ocean-entry.ts` is a source-launch facade only.
-
-The Ocean-scoped fork must retain the root Ocean package version for exact packed dependency validation; upstream version and commit are independently retained in its `oceanUpstream` metadata. The plugin declares Ocean 1.0.0 in `engines.dsh`; the donor compatibility matrix records historical upstream releases. Update the manifest when verifying the fork against a new Ocean release.
-
-### Ocean Codex catalog diagnostics (2026-11-12)
-
-Local modifications: catalog refresh status includes a fixed failure category and
-numeric HTTP status, displayed by the Models card. No raw exception, response
-body, URL, account identity, or credential is exposed. Offline regression tests
-cover omitted nativeVersion, HTTP/network/parse/incompatible-catalog failures,
-and redaction. OAuth client identity and upstream request headers are unchanged.
-The empty-catalog, no-visible-models, and missing-base-models categories distinguish an empty response from filtering and local adapter availability without exposing model names or account data.
-
-The experimental ChatGPT plan flow uses the documented OAuth registration and account catalog endpoints, a separate credential record, and local-only RPC. The Responses adapter is separate from the existing Codex route and exposes account-advertised models only when the installed pi-ai catalog also describes them. The selected account catalog is restored at Host startup without initiating sign-in. Existing Codex credentials remain independent; live account sign-in and a Responses request were verified, while sign-out remains unverified.
-
-Local build fix: the portable-source-path renderChunk hook returns the documented
-`{ code, map }` shape, rather than a raw RolldownMagicString instance.

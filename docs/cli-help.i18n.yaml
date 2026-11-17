@@ -9,8 +9,8 @@
   en: ac5f1d8b3cfb914a
   zh: 7f4fd7bcad864182
 /ocean-cli-help/contents:
-  en: 17ad29d76d7adbee
-  zh: c627ae91220960be
+  en: 96ec7af2d46a5010
+  zh: 858b5b2d8fc634f5
 /ocean-cli-help/ocean:
   en: 481a54b3fc8a0683
   zh: 33bf81c33d58bffb
@@ -18,17 +18,98 @@
   en: ea941961fd3b7096
   zh: b307c7d2657fab0b
 /ocean-cli-help/ocean-acp:
-  en: d0701a62e3a72601
-  zh: 6f54ec8c5d9e8f26
+  en: e8be490a122fd426
+  zh: a6c4e0ec3c6655d3
+/ocean-cli-help/ocean-connect:
+  en: 99834e5a92811b8b
+  zh: 6d8dee1299c04a52
+/ocean-cli-help/ocean-connect-list:
+  en: 80f79dc9083468f7
+  zh: 19923f106f14f1bd
+/ocean-cli-help/ocean-connect-create:
+  en: 9e69f1d20bfed3a3
+  zh: 8697cfe2d13b1ea1
+/ocean-cli-help/ocean-connect-history:
+  en: 295410a0f9713773
+  zh: 1581d135cc5f1544
+/ocean-cli-help/ocean-connect-follow:
+  en: 17fbb9d981798b18
+  zh: f4ab51e814302622
+/ocean-cli-help/ocean-connect-state:
+  en: d8567c9a0ef87420
+  zh: 419bdd703091e276
+/ocean-cli-help/ocean-connect-wait:
+  en: 249f774543251458
+  zh: 3f198f273932abfc
+/ocean-cli-help/ocean-connect-files:
+  en: 78761379c82c538b
+  zh: ca3741daa47a5667
+/ocean-cli-help/ocean-connect-read:
+  en: 10d6b4cb6a73ccec
+  zh: 41ac49a2d2d087b7
+/ocean-cli-help/ocean-connect-upload:
+  en: e00d6c8a68752653
+  zh: 32226a7cb5229de5
+/ocean-cli-help/ocean-connect-terminals:
+  en: 07fe40b9135e0fdb
+  zh: 38f5de43e4ce7a02
+/ocean-cli-help/ocean-connect-terminal-create:
+  en: 75654131983305e9
+  zh: 9b0668ad920cebc7
+/ocean-cli-help/ocean-connect-terminal-watch:
+  en: ba23b7434265accd
+  zh: a196f667ba24ae64
+/ocean-cli-help/ocean-connect-terminal-write:
+  en: f8494e5fee9b2329
+  zh: 03e3a3eb45343e91
+/ocean-cli-help/ocean-connect-terminal-close:
+  en: 0b5da1f765278db0
+  zh: 4956e23415f7d2b2
+/ocean-cli-help/ocean-connect-approvals:
+  en: 3250b0d38ce428b9
+  zh: 1541c3e40111842a
+/ocean-cli-help/ocean-connect-questions:
+  en: ee5ebf0b6aa92eaa
+  zh: c9ec4ae8b23abd86
+/ocean-cli-help/ocean-connect-answer-question:
+  en: a9d3a690bea51e97
+  zh: 2eedcb5d581b635d
+/ocean-cli-help/ocean-connect-approve:
+  en: 835276cffd74dbee
+  zh: 19b0a95a2ef492b3
+/ocean-cli-help/ocean-connect-cancel:
+  en: d19ac68f6b38ffb4
+  zh: 6b20472bfd5e3fa0
+/ocean-cli-help/ocean-connect-prompt:
+  en: a5b69ed3c38ffaa5
+  zh: 3a5eac90960e3887
 /ocean-cli-help/ocean-headless:
-  en: d086f811ff6aceea
-  zh: f0ce5be893560be6
+  en: 83a0dfedcd10f4eb
+  zh: 7d5fc58a3107d403
+/ocean-cli-help/ocean-remote-device:
+  en: e88b1fe9418f1cfd
+  zh: 633845a6fed46b14
+/ocean-cli-help/ocean-remote-device-list:
+  en: 6aeb9a3052d0339e
+  zh: 5acc169b74b13bf9
+/ocean-cli-help/ocean-remote-device-create:
+  en: 0a234da30f55ef38
+  zh: e0f85939b6136589
+/ocean-cli-help/ocean-remote-device-rotate:
+  en: 7c970fc74954c2cf
+  zh: 668a68ace17b66ed
+/ocean-cli-help/ocean-remote-device-revoke:
+  en: 9a01f49db884da3c
+  zh: 6b6adf2ec9b6295f
 /ocean-cli-help/ocean-sdk:
   en: 9ba411bbfc78b349
   zh: 48ae7d3b6810ff5f
 /ocean-cli-help/ocean-sdk-minimal:
-  en: 23cf04ab6b7443a0
-  zh: 325518ef9b54051c
+  en: 08e623a4c655bfbc
+  zh: ad863d27677ac0b2
+/ocean-cli-help/ocean-serve:
+  en: 6b39c15ff3a70c05
+  zh: f5cbb29e9294ff0d
 /ocean-cli-help/ocean-web:
   en: 7160fcb038cf9ee6
   zh: b87964bbaa27f36c

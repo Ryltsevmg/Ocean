@@ -13,6 +13,16 @@ import {
 } from './stream-protocol.ts'
 
 /**
+ * Create an authenticated Node socket using standard TLS verification.
+ * @param url - Secure socket URL resolved by the device client.
+ * @param cookie - Host-specific login cookie.
+ * @returns A connecting socket with redirects disabled.
+ */
+export function openDeviceStreamSocket(url: URL, cookie: string): WebSocket {
+  return new WebSocket(url, { headers: { cookie }, followRedirects: false, handshakeTimeout: 10_000 })
+}
+
+/**
  * Open one validated Remote stream for a decoded wire request on behalf of one
  * Peer. `uplink` carries the Client's items; `control` cancels the logical
  * stream, and aborting it with a Remote failure as the reason delivers that
@@ -47,6 +57,8 @@ export interface RemoteStreamMuxServerOptions {
   readonly heartbeatIntervalMs: number
   /** Buffered uplink frame bytes one logical stream may hold before it fails. */
   readonly streamInboxBytes: number
+  /** Maximum concurrent logical streams per socket, including streams awaiting dispatch. */
+  readonly maxStreamsPerSocket: number
   /** Whether accepted connections negotiate the `permessage-deflate` extension. */
   readonly compression: boolean
 }
@@ -56,6 +68,7 @@ export class RemoteStreamMuxServer {
   private readonly server: WebSocketServer
   private readonly heartbeatIntervalMs: number
   private readonly streamInboxBytes: number
+  private readonly maxStreamsPerSocket: number
   private readonly compression: boolean
   private readonly connections = new Set<Promise<void>>()
   private readonly missedHeartbeats = new WeakMap<WebSocket, number>()
@@ -73,6 +86,7 @@ export class RemoteStreamMuxServer {
   ) {
     this.heartbeatIntervalMs = options.heartbeatIntervalMs
     this.streamInboxBytes = options.streamInboxBytes
+    this.maxStreamsPerSocket = options.maxStreamsPerSocket
     this.compression = options.compression
     this.server = new WebSocketServer({
       noServer: true,
@@ -101,7 +115,7 @@ export class RemoteStreamMuxServer {
       const bound: BoundStreamOpener = (endpoint, payload, uplink, control, window) =>
         this.open(endpoint, payload, uplink, peer, control, window)
       const connection = new RemoteStreamMuxConnection(
-        websocket, bound, this.failure, this.streamInboxBytes, this.compression, alive,
+        websocket, bound, this.failure, this.streamInboxBytes, this.maxStreamsPerSocket, this.compression, alive,
       )
       const done = connection.run().catch((error: unknown) => {
         console.error('[api-gateway] Remote stream connection failed:', error)
@@ -167,6 +181,7 @@ class RemoteStreamMuxConnection {
     private readonly open: BoundStreamOpener,
     private readonly failure: RemoteStreamFailureMapper,
     private readonly streamInboxBytes: number,
+    private readonly maxStreamsPerSocket: number,
     private readonly compression: boolean,
     private readonly alive: () => void,
   ) {}
@@ -210,6 +225,7 @@ class RemoteStreamMuxConnection {
    * protocol violation that closes the socket.
    */
   private receive(text: string): void {
+    if (this.socket.readyState !== WebSocket.OPEN) return
     const message = parseRemoteStreamClientMessage(text)
     switch (message.type) {
       case 'open': {
@@ -239,6 +255,10 @@ class RemoteStreamMuxConnection {
   private openStream(message: Extract<RemoteStreamClientMessage, { readonly type: 'open' }>): void {
     if (this.streams.has(message.streamId)) {
       throw new Error(`api gateway: duplicate Remote stream id ${JSON.stringify(message.streamId)}`)
+    }
+    if (this.streams.size >= this.maxStreamsPerSocket) {
+      this.socket.close(1013, 'Remote stream capacity exceeded')
+      return
     }
     const abort = new AbortController()
     // Created before the opener resolves so items the Client sends right
@@ -481,10 +501,10 @@ function rawText(data: RawData): string {
 /**
  * Reject an upgrade without transferring socket ownership to ws.
  * @param socket - carrier socket that receives the HTTP rejection.
- * @param status - authentication or browser-trust rejection status.
+ * @param status - authentication, trust, or capacity rejection status.
  */
-export function rejectRemoteStreamUpgrade(socket: Duplex, status: 401 | 403 | 409): void {
-  const reason = status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : 'Conflict'
+export function rejectRemoteStreamUpgrade(socket: Duplex, status: 401 | 403 | 409 | 503): void {
+  const reason = status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : status === 409 ? 'Conflict' : 'Service Unavailable'
   const body = reason.toLowerCase()
   socket.end([
     `HTTP/1.1 ${String(status)} ${reason}`,

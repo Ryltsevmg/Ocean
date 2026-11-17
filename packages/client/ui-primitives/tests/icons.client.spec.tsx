@@ -292,13 +292,13 @@ describe('FishLogo', () => {
 
 describe('BrandWordmark', () => {
   it('can render the name artwork with or without its leading mark', () => {
-    const view = render(<primitives.BrandWordmark />)
+    const view = render(<primitives.BrandWordmark name="Ocean" />)
     const svg = view.container.querySelector('svg')!
     expect(svg.querySelector('text')?.textContent).toBe('Ocean')
     expect(svg.getAttribute('width')).toBe('98')
     expect(svg.getAttribute('viewBox')).toBe('0 0 98 24')
 
-    view.rerender(<primitives.BrandWordmark includeMark={false} />)
+    view.rerender(<primitives.BrandWordmark name="Ocean" includeMark={false} />)
     expect(svg.getAttribute('width')).toBe('72')
     expect(svg.getAttribute('viewBox')).toBe('26 0 72 24')
   })

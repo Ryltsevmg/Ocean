@@ -80,6 +80,7 @@ import { isSurfaceEligibleType } from '../../core/session/src/surface.ts'
 - 集合之外的键（`./brand` 5 个包、`./worker` 4 个、`./startup`、`./runner`、`./protocol` 各 2 个，另有大量一次性键）没有文档含义，属待核项，不是可照抄的先例。
 - `ocean-tools` 另行提供 `./pipeline`，用于复用调用阶段与批量调度。主入口与 pipeline bundle 共享运行时 chunk，以保持错误类的身份一致；工作区检查验证导出目标与发布文件。
 - `ocean-tool-executor-ptc` 提供 `./run-code`，用于共享程序工具工厂、显式指定运行时及调用上限，并传入私有可调用工具定义。工作区检查验证其导出目标与发布文件。
+- `ocean-client-connection` 和 `ocean-api-gateway` 通过 `./device` 提供 Node 远程设备认证和流传输，无需加载 Host 插件。`ocean-client-connection/protocol` 仅提供载体无关的线路字段、品牌标识和 socket 接口，供 Host 与 Client 共同使用，不导入任一插件实现。`ocean-client-file-upload` 通过 `./protocol` 提供共享上传路由和帧格式。这些 Node 入口独立打包，不依赖发布文件之外的共享运行时 chunk。工作区约束要求其精确的声明与 bundle 目标及发布文件。
 - 判定条件：改动是否新增了标准集合以外的 export 键？
 - 例外：无默认例外；新增键须先改正家文档与检查，并取得对应领域专家确认。
 - 复算分布：

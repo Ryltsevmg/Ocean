@@ -34,7 +34,11 @@
       "types": "./lib/types/stream-protocol.d.ts",
       "default": "./lib/types/stream-protocol.js"
     },
-    "./locale/*.json": "./locale/*.json"
+    "./locale/*.json": "./locale/*.json",
+    "./device": {
+      "types": "./lib/types/device.d.ts",
+      "default": "./lib/device.js"
+    }
   },
   "ocean": {
     "client": {
@@ -55,6 +59,7 @@
     "lib/index.js",
     "lib/client.browser.js",
     "lib/client.node.js",
+    "lib/device.js",
     "lib/types/**/*.js",
     "lib/types/**/*.d.ts",
     "lib/types/**/*.d.ts.map",
@@ -63,11 +68,12 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
     "@ocean/ocean-deque": "workspace:*",
     "@ocean/ocean-timeout": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
-    "ws": "^8.21.3",
-    "@ocean/ocean-typert-protocol": "workspace:*"
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-util-crypto": "workspace:*",
+    "ws": "^8.21.3"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:~"
@@ -80,7 +86,6 @@
     "@ocean/ocean-host-webserver": "workspace:*",
     "@ocean/ocean-remote-mock": "workspace:*",
     "@ocean/ocean-typert-registry": "workspace:*",
-    "@ocean/ocean-util-crypto": "workspace:*",
     "@types/ws": "^8.18.1",
     "@deepseek-ai/cordis": "workspace:~",
     "zod": "4.6.6"

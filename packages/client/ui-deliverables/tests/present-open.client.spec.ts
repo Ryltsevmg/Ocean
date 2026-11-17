@@ -132,6 +132,14 @@ it.each([null, {}, { name: 'host', available: 'yes', fileManager: 'finder' },
   expect(fetcher).toHaveBeenCalledTimes(2)
 })
 
+it('omits native controls when the authenticated principal cannot use the Host desktop', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 403 })))
+  const controller = new PresentedOpenController()
+  await controller.loadHost()
+  expect(controller.host.getSnapshot()).toEqual({ name: 'desktop', available: false, fileManager: null })
+  await controller.dispose()
+})
+
 it('coalesces metadata reads and suppresses their publication after disposal', async () => {
   const reply = Promise.withResolvers<Response>()
   const fetcher = vi.fn().mockReturnValue(reply.promise)

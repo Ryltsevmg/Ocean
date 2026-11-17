@@ -12,6 +12,13 @@
 # directly from `webStartup`.
 # `ocean --profile web --help` provides no `webStartup`, so no server binds.
 
+- id: hmr
+  disabled: !!js "!ctx.get('profileContext') || ['serve', 'remote-device', 'connect'].includes(ctx.get('profileContext').name)"
+
+- id: typert-gateway
+  config:
+    approvalTimeoutMs: !!js "ctx.get('profileContext')?.name === 'serve' ? 120000 : 0"
+
 # ── surface-specific values the base deliberately omits ─────────────────────
 
 - id: system-prompt
@@ -34,10 +41,6 @@
 # `ocean.client` rows are the browser roster the modules node half scans into
 # window.__OCEAN_BOOT__; the modules row is simultaneously a host row.
 - insert:
-    # Bundled account UI; optional capabilities remain disabled by Ocean policy.
-    - id: ocean-codex-subscription
-      name: '@ocean/ocean-codex-subscription'
-
     - id: desktop-product-telemetry
       name: '@ocean/ocean-host-product-telemetry-otel'
       disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.OCEAN_PRODUCT_ANALYTICS_OTLP_URL?.trim()"
@@ -69,12 +72,14 @@
 
     # Browser Session export: `/export` command plus the shared download dialog.
     - id: session-log-download
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-session-log-export'
 
     # Session-menu application choices over Host resolution on macOS, Windows,
     # and Linux. An empty catalog hides the action. The Host routes and browser
     # controls also serve the file-tree directory opener.
     - id: open-in-app
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-host-open-in-app'
       config:
         probeTimeoutMs: 10000
@@ -111,6 +116,7 @@
     # matching dual-face directory picker. Mount -native or -browse directly in
     # an overlay to pin the interaction.
     - id: directory-picker
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-host-directory-picker-auto'
 
     # Read-only projection of current Loader entries for trusted client RPCs.
@@ -119,6 +125,7 @@
 
     # Session commands, cold reads, and live control over Typert Remote.
     - id: session-controller
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-api-session-controller'
 
     # One background job's observation record streamed over Typert Remote;
@@ -185,6 +192,7 @@
     # web-runtime row owns; Connection reads trust authorities from webStartup.
     # This row rejects wildcard binds.
     - id: webserver
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-host-webserver'
       inject: [webStartup]
       config:
@@ -203,10 +211,12 @@
     # come from the webStartup provider; the advertised application URL is
     # this row's `publicUrl`, otherwise the bind-address URL.
     - id: web-runtime
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-web-app'
       inject: [webStartup]
       config:
-        openBrowser: !!js ctx.webStartup.openBrowser
+        openBrowser: !!js "ctx.get('profileContext')?.name !== 'serve' && ctx.webStartup.openBrowser"
+        serverMode: !!js "ctx.get('profileContext')?.name === 'serve'"
         printUrl: true
         publicUrl: !!js ctx.webStartup.publicUrl
         surfaceContext: true
@@ -217,6 +227,7 @@
     # the sections, and a persona that suppresses optional runtime context
     # also drops the two value lines.
     - id: harness-dev-context
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-harness-dev-context'
 
     # The client-plugin reload chain, always mounted: it is idle until a
@@ -225,6 +236,7 @@
     # client-side package, which a host-side bundle cannot import.
     - id: client-hmr
       name: '@ocean/ocean-client-hmr'
+      disabled: !!js "['serve', 'remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
 
     # ── browser plugin roster (ocean.client rows; node halves are layer-2 hosts) ──
 
@@ -240,6 +252,7 @@
     # request and upgrade passes the loopback, listener-bind, or trustedHosts
     # policy; an advertised public URL contributes nothing to it.
     - id: connection
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-client-connection'
       inject: [webStartup]
       config:
@@ -247,10 +260,20 @@
         # deployment values, for example: ['app.internal', ...ctx.webStartup.trustedHosts].
         # The listener's bind IP is accepted separately from this list.
         trustedHosts: !!js ctx.webStartup.trustedHosts
+        deviceAdminSocket: !!js ctx.webStartup.deviceAdminSocket
+        deviceProxyUrl: !!js "ctx.get('profileContext')?.name === 'serve' && ctx.webStartup.publicUrl?.startsWith('https://') ? ctx.webStartup.publicUrl : undefined"
+        allowOwnerLogin: !!js "ctx.get('profileContext')?.name !== 'serve'"
+
+    - id: device-bootstrap
+      disabled: !!js "ctx.get('profileContext')?.name !== 'remote-device'"
+      name: '@ocean/ocean-client-connection'
+      config:
+        deviceBootstrapOnly: true
 
     # Raw Blob and ReadableStream uploads run independently of Connection's
     # RPC and generation service.
     - id: file-upload
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-client-file-upload'
 
     - id: api-remotes
@@ -345,6 +368,9 @@
     - id: ui-plugin-manager
       name: '@ocean/ocean-client-ui-plugin-manager'
 
+    - id: ocean-plugin-market
+      name: '@ocean/ocean-plugin-market'
+
     # Read-only Plugin list tab in the Settings Plugins section; the built-in
     # bundles the sidebar page leaves out are inspected here.
     - id: ui-settings-plugin-inventory
@@ -386,6 +412,7 @@
     # assistant message. Remove this entry to turn the surface off; the tail
     # hole renders empty.
     - id: ui-deliverables
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
       name: '@ocean/ocean-client-ui-deliverables'
 
     # Records each top-level turn's changed files from git working-tree

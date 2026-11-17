@@ -87,6 +87,8 @@ export interface RemoteAccessRequest<P extends Principal> {
  * synchronously from state the business package holds in memory.
  */
 export interface RemoteAccessPolicy<P extends Principal> {
+  /** Explicit actions allowed on every valid resource for this principal kind. */
+  readonly globalActions?: ReadonlySet<RemoteAccessAction>
   /**
    * List the principal's bindings. Called once per `decide()`, once per
    * `allows()`, and once per snapshot computation; never cached.
@@ -129,6 +131,8 @@ export interface RemoteAccessGrant {
    * plain strings because Typert generates no codec for template literal types.
    */
   readonly actions: readonly string[]
+  /** Global-grant actions also allowed on every scoped resource. */
+  readonly allResources?: readonly string[]
 }
 
 /**

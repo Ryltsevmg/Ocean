@@ -62,6 +62,7 @@ interface SessionLogConnection {
       readonly path: string
       readonly methods: readonly ('GET' | 'HEAD')[]
       readonly requestBody: 'buffered'
+      readonly allowRemoteDevice?: true
       readonly fetch: (request: Request) => Promise<Response>
     }): () => Promise<void>
   }
@@ -73,7 +74,7 @@ const REQUESTED: CommandResult = {
 }
 
 /**
- * Register the `/export` command and authenticated ZIP download and Markdown copy routes.
+ * Register the `/export` command and owner/device ZIP download and Markdown copy routes.
  * @param ctx - Host context carrying the human-command registry.
  * @param config - resolved compression policy.
  */
@@ -90,6 +91,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     path: SESSION_LOG_EXPORT_PATH,
     methods: ['GET', 'HEAD'],
     requestBody: 'buffered',
+    allowRemoteDevice: true,
     fetch: async (request) => {
       const response = await sessionLogExportResponse(
         ctx,
@@ -105,6 +107,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     path: SESSION_MARKDOWN_EXPORT_PATH,
     methods: ['GET', 'HEAD'],
     requestBody: 'buffered',
+    allowRemoteDevice: true,
     fetch: async (request) => {
       const response = await sessionMarkdownResponse(ctx, request)
       if (request.method === 'GET') return response

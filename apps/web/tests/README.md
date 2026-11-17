@@ -18,6 +18,8 @@ Same-day message goldens use the shared `WEB_FIXTURE_TIME`: seeded transcripts p
 
 Every scenario requires the whole client composition to activate. The product boot only warns about inactive entries outside its required list, but the `watchConsole` tripwire, the [real-host smoke](smoke-real.e2e.ts), and the [assembled jsdom boot](assembled-boot.ts) treat a `web boot: warning` as a failure. No scenario option relaxes this: an inactive plugin in a product composition is a defect to fix.
 
+Recorded inputs can retain earlier runtime wording while the current writer emits updated context and skill catalogs. Such owners compare complete persisted output against `writer.expected.jsonl` and `writer.<ordinal>.expected.jsonl`, independently of their canonical replay inputs. `launchWebScaffold` selects the root output with `replayExpectedSession`; refresh updates that existing output without rewriting the recorded input. The fork scenario applies the same separation to both Session roles. These comparisons preserve event fields and order; they do not normalize away product text.
+
 ## Completion observations
 
 State-sensitive cases use Workspace, admission, attachment, and model-stream barriers to separate visible intermediate states from completed operations. Model-picker persistence assertions wait for the saved default, independently of menu closure. Details close waits for frame transitions; archive verification assigns an explicit title to the seeded Session and follows that identity across reload. The [CI test reliability workflow](../../../.agents/skills/ocean-ci-test-reliability/SKILL.md#synchronize-on-state) owns these synchronization rules.

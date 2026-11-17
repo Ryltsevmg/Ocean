@@ -29,8 +29,11 @@ const clientEnvironment = resolveClientBuildEnvironment(process.env.OCEAN_CLIENT
 const clientVersion = clientEnvironment.OCEAN_CLIENT_VERSION
 if (clientVersion === undefined) throw new Error('desktop build: the client environment carries no OCEAN_CLIENT_VERSION')
 
-/** Inline the one public build value the Node entry reads; every other variable stays a runtime lookup. */
-const clientVersionDefine = { 'process.env.OCEAN_CLIENT_VERSION': JSON.stringify(clientVersion) }
+/** Fix the local release identity independently of runtime environment overrides. */
+const clientVersionDefine = {
+  'process.env.OCEAN_CLIENT_VERSION': JSON.stringify(clientVersion),
+  'process.env.OCEAN_CLIENT_COMMIT_HASH': JSON.stringify(clientEnvironment.OCEAN_CLIENT_COMMIT_HASH) ?? 'undefined',
+}
 
 export default defineConfig([
   {

@@ -58,7 +58,11 @@ describe('Connection binary RPC', () => {
         req.once('error', reject)
         req.end(init.body as string)
       }))
-      expect(await rpc.call('/api', 'fixture/read', {})).toEqual({ ok: true, value: { data, bytes: data.length } })
+      const result = await rpc.call('/api', 'fixture/read', {})
+      expect(result).toMatchObject({ ok: true, value: { bytes: data.length } })
+      if (!result.ok || typeof result.value !== 'object' || result.value === null
+        || !('data' in result.value) || !(result.value.data instanceof Uint8Array)) throw new Error('Missing binary response')
+      expect(Buffer.from(result.value.data).equals(Buffer.from(data))).toBe(true)
       if (compression === 'gzip') {
         expect(encoding).toBe('gzip')
         expect(transferred).toBeLessThan(data.length / 10)

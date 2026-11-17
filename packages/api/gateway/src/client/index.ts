@@ -27,14 +27,14 @@ import {
   ClientUplinkQueue,
   RemoteStreamCarrierError,
   RemoteStreamMuxClient,
-} from './stream-client.ts'
+} from '../stream-client.ts'
 import { ClientRemoteEvents } from './remote-events.ts'
 import {
   RemoteStream,
   type RemoteStreamOptions,
 } from './remote-stream.ts'
 
-export { RemoteStreamCarrierError } from './stream-client.ts'
+export { ClientUplinkQueue, RemoteStreamCarrierError, RemoteStreamMuxClient } from '../stream-client.ts'
 export { RemoteJournalStream } from './journal-stream.ts'
 export type {
   RemoteJournalChange,

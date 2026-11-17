@@ -122,4 +122,6 @@ These limits define when the package is a poor fit. They are current package con
 
 Reaching Node's built-in `fetch` from a userland undici relies on both writing the legacy `Symbol.for('undici.globalDispatcher.1')` slot. That is an implicit cross-version coupling, not a contract — see [corepack#834](https://github.com/nodejs/corepack/issues/834) for it breaking. `tests/install.spec.ts` asserts a real request reaches a loopback proxy, so a version bump that breaks the coupling fails there rather than in the field.
 
+Proxy-dispatch tests keep real HTTP transport and replace DNS only for each case's exact fixture hostname. A direct request must fail with that host's `ENOTFOUND`, while a proxied request must reach the local recorder and return its response. Dispatcher teardown finishes before the DNS fixture restores Node's lookup; unrelated names keep the original resolver.
+
 </details>

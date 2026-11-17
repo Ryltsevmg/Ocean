@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { makeTranslate } from '@ocean/ocean-client-test-runtime'
 import { en as commonEn, zh as commonZh } from '@ocean/ocean-client-locale/src/locales/index.ts'
-import { ContextMeter, type ContextMeterProps } from '../src/client/skeleton/ContextMeter.tsx'
+import { ContextMeter, type ContextMeterProps } from '../src/client/input/view/ContextMeter.tsx'
 import { contextOccupancy } from '../src/client/context-occupancy.ts'
-import css from '../src/client/skeleton/ContextMeter.module.css'
+import css from '../src/client/input/view/ContextMeter.module.css'
 import { en, zh } from '../src/client/locales.ts'
 
 afterEach(cleanup)

@@ -5,7 +5,11 @@
 - group "添加插件":
   - button "添加插件" [disabled]
   - button "选择添加插件方式" [disabled]
-- status "正在读取插件…"
+- tablist "插件视图":
+  - tab "Catalogue"
+  - tab "已安装" [selected]
+- tabpanel "已安装":
+  - status "正在读取插件…"
 
 1680px: 4 rows; page/group headers, rows, icons and text line origins align within 0.1px
 1000px: 4 rows; page/group headers, rows, icons and text line origins align within 0.1px

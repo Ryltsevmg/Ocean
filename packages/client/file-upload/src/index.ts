@@ -81,6 +81,7 @@ export class FileUploads extends TypertRemoteService {
         path: FILE_UPLOAD_PATH,
         methods: ['POST'],
         requestBody: 'streaming',
+        allowRemoteDevice: true,
         fetch: request => handleFileUploadHttp(this, request),
       }),
       'file-upload: streaming route',

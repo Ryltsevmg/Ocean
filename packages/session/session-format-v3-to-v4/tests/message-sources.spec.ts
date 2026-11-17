@@ -34,6 +34,18 @@ describe('V4 source admission', () => {
     expect(restore(source)).toEqual(migrated)
   })
 
+  it.each(['user', 'retry'])('preserves the %s request principal in native V4', (kind) => {
+    const owner = { kind, rpcId: 'fixture-request', principal: { kind: 'owner' } }
+    const remote = { kind, rpcId: 'fixture-request', principal: {
+      kind: 'remote-device', deviceId: '055a327e-a2d4-4e21-9ec0-008747cdb749',
+    } }
+    for (const source of [owner, remote]) {
+      const reader = createSessionFormatCatalogWithChildren([]).createRestore(header, { recovery: 'strict', validation: 'current' })
+      reader.decodeRow(sessionFormatCatalog.encodeCurrentEvent(event(source)))
+      expect(reader.finish().events[0]?.data).toMatchObject({ source })
+    }
+  })
+
   it('rejects missing, malformed, empty, and retired source kinds', () => {
     for (const source of [null, [], {}, { kind: '' }, { kind: 1 }, { kind: 'plugin', plugin: 'compact' }]) {
       expect(() => restore(source)).toThrow(/producer-owned source kind/)

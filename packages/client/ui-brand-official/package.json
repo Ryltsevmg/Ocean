@@ -54,7 +54,9 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "@ocean/ocean-client-ui-conversation": "workspace:*",
-    "@ocean/ocean-client-ui-slots": "workspace:*"
+    "@ocean/ocean-client-ui-slots": "workspace:*",
+    "@ocean/ocean-client-locale": "workspace:*",
+    "@ocean/ocean-client-test-runtime": "workspace:*"
   },
   "files": [
     "locale/*.json",

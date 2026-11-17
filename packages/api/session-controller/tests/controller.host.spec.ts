@@ -36,10 +36,8 @@ describe('SessionController facade', () => {
     const entered = Promise.withResolvers<undefined>()
     const gate = Promise.withResolvers<undefined>()
     const original = ctx.sessionProjections.register.bind(ctx.sessionProjections)
-    let first = true
     vi.spyOn(ctx.sessionProjections, 'register').mockImplementation(async (...args: Parameters<typeof original>) => {
-      if (first) {
-        first = false
+      if (args[0].key === 'sessionListMetadata') {
         entered.resolve(undefined)
         await gate.promise
       }

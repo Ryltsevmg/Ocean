@@ -8,6 +8,8 @@ import type {} from './slot-contract.ts'
 export interface PluginTab {
   readonly id: string
   readonly label: string
+  /** Negative order places the tab before Installed; the first is the initial page. */
+  readonly order?: number
 }
 
 /**
@@ -30,6 +32,7 @@ export function tabLedgerSource(ctx: ClientContext): HostObservable<readonly Plu
           /* v8 ignore next -- list-slot registration requires id */
           id: entry.options.id ?? '',
           label: resolveSlotLabel(entry.options.label) ?? '',
+          ...entry.options.order === undefined ? {} : { order: entry.options.order },
         }))
       }
       return tabs

@@ -262,6 +262,35 @@ function registerStrict(ctx: Context, methods: Readonly<Record<string, readonly 
   })
 }
 
+it('grants device session actions across resources and denies unlisted actions', async () => {
+  const { ctx } = await setup()
+  const principal: PrincipalMap['remote-device'] = {
+    kind: 'remote-device',
+    deviceId: '6ace72c7-0fd3-4337-99af-761f403dceda' as PrincipalMap['remote-device']['deviceId'],
+  }
+  const resources = [GLOBAL, shelf('scope')]
+  const snapshot = ctx.remoteAccess.snapshotFor(principal)
+  if (snapshot.owner) throw new Error('device should have an explicit access snapshot')
+  const grant = snapshot.grants.find(row => row.resource.kind === 'global')
+  expect(grant?.actions).toContain('workspace/follow')
+  expect(grant?.allResources).toContain('session/create')
+  expect(grant?.allResources).toContain('session/rename')
+  expect(ctx.remoteAccess.decide({ principal, action: 'session/list', resources })).toEqual({ kind: 'allow' })
+  for (const action of ['settings/describe', 'settings/update', 'settings/replace', 'settings/mutate',
+    'event:settings/document-updated', 'credentials/describe', 'credentials/set', 'credentials/unset',
+    'event:credentials/reference-updated', 'llm/listProviders', 'llm/listConfigurableProviders',
+    'session/attachment', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
+    'workspaceFiles/search', 'workspaceFiles/changes'] as const) {
+    expect(ctx.remoteAccess.decide({ principal, action, resources: [GLOBAL] })).toEqual({ kind: 'allow' })
+  }
+  expect(ctx.remoteAccess.decide({ principal, action: 'settings/openSettingsDocument', resources: [GLOBAL] })).toEqual({
+    kind: 'deny', reason: 'no-allow',
+  })
+  expect(ctx.remoteAccess.decide({ principal, action: 'accessFixture/open', resources })).toEqual({
+    kind: 'deny', reason: 'no-allow',
+  })
+})
+
 describe('Gateway access checks', () => {
   it('dispatches the owner without resolving resources or reading the policy', async () => {
     const { ctx, bindings } = await setup()

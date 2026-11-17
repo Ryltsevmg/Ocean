@@ -14,9 +14,36 @@
 - [`ocean`](#ocean)
 - [`ocean plugin`](#ocean-plugin)
 - [`ocean acp`](#ocean-acp)
+- [`ocean connect`](#ocean-connect)
+- [`ocean connect list`](#ocean-connect-list)
+- [`ocean connect create`](#ocean-connect-create)
+- [`ocean connect history`](#ocean-connect-history)
+- [`ocean connect follow`](#ocean-connect-follow)
+- [`ocean connect state`](#ocean-connect-state)
+- [`ocean connect wait`](#ocean-connect-wait)
+- [`ocean connect files`](#ocean-connect-files)
+- [`ocean connect read`](#ocean-connect-read)
+- [`ocean connect upload`](#ocean-connect-upload)
+- [`ocean connect terminals`](#ocean-connect-terminals)
+- [`ocean connect terminal-create`](#ocean-connect-terminal-create)
+- [`ocean connect terminal-watch`](#ocean-connect-terminal-watch)
+- [`ocean connect terminal-write`](#ocean-connect-terminal-write)
+- [`ocean connect terminal-close`](#ocean-connect-terminal-close)
+- [`ocean connect approvals`](#ocean-connect-approvals)
+- [`ocean connect questions`](#ocean-connect-questions)
+- [`ocean connect answer-question`](#ocean-connect-answer-question)
+- [`ocean connect approve`](#ocean-connect-approve)
+- [`ocean connect cancel`](#ocean-connect-cancel)
+- [`ocean connect prompt`](#ocean-connect-prompt)
 - [`ocean headless`](#ocean-headless)
+- [`ocean remote-device`](#ocean-remote-device)
+- [`ocean remote-device list`](#ocean-remote-device-list)
+- [`ocean remote-device create`](#ocean-remote-device-create)
+- [`ocean remote-device rotate`](#ocean-remote-device-rotate)
+- [`ocean remote-device revoke`](#ocean-remote-device-revoke)
 - [`ocean sdk`](#ocean-sdk)
 - [`ocean sdk-minimal`](#ocean-sdk-minimal)
+- [`ocean serve`](#ocean-serve)
 - [`ocean web`](#ocean-web)
 
 <a id="ocean"></a>
@@ -99,6 +126,340 @@ Example:
 
 ```
 
+<a id="ocean-connect"></a>
+## `ocean connect`
+
+调用方式: `ocean connect --help`, `ocean connect help --help`, `ocean --profile connect --help`, `ocean --profile connect help --help`
+
+```text
+Usage: ocean connect [options] [command]
+
+Run a command against an authenticated remote Ocean Host.
+
+Options:
+  --url <https-url>                                                           Ocean server address
+  --token-env <name>                                                          environment variable containing the device token
+  --token-stdin                                                               read the device token from redirected standard input
+  -h, --help                                                                  display help for command
+
+Commands:
+  list                                                                        List remote sessions as JSON
+  create [options]                                                            Create a remote session
+  history [options] <session-id>                                              Read a remote history page
+  follow <session-id>                                                         Stream snapshots and live remote session history
+  state <session-id>                                                          Read remote session and pending input state
+  wait <session-id>                                                           Wait briefly for idle state or pending input
+  files <session-id> [path]                                                   List files in a remote session workspace
+  read [options] <session-id> <path>                                          Read a page of a text file on the Host
+  upload <session-id> <local-path>                                            Stream a local file to the Host and return its prompt attachment receipt
+  terminals <session-id>                                                      List terminals retained on the Host
+  terminal-create [options] <session-id>                                      Create a terminal on the Host
+  terminal-watch <session-id> <terminal-id>                                   Stream the current terminal screen and subsequent output as JSON lines
+  terminal-write <session-id> <terminal-id> <text>                            Send one text input to a Host terminal and wait for acceptance
+  terminal-close <session-id> <terminal-id>                                   Close a terminal on the Host
+  approvals <session-id>                                                      List pending approvals for a remote session
+  questions [options] <session-id>                                            List pending questions for a remote session
+  answer-question [options] <session-id> <question-request-id> <answer-json>  Submit a structured answer to a pending remote question request
+  approve <session-id> <approval-id> <allow-or-deny>                          Answer one approval in the specified remote session
+  cancel <session-id>                                                         Cancel active work in the remote session
+  prompt [options] <session-id> <text>                                        Submit or steer a prompt in a remote session
+  help [command]                                                              display help for command
+```
+
+<a id="ocean-connect-list"></a>
+## `ocean connect list`
+
+调用方式: `ocean connect list --help`, `ocean --profile connect list --help`
+
+```text
+Usage: ocean connect list [options]
+
+List remote sessions as JSON
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-create"></a>
+## `ocean connect create`
+
+调用方式: `ocean connect create --help`, `ocean --profile connect create --help`
+
+```text
+Usage: ocean connect create [options]
+
+Create a remote session
+
+Options:
+  --cwd <path>  working directory on the Host
+  -h, --help    display help for command
+```
+
+<a id="ocean-connect-history"></a>
+## `ocean connect history`
+
+调用方式: `ocean connect history --help`, `ocean --profile connect history --help`
+
+```text
+Usage: ocean connect history [options] <session-id>
+
+Read a remote history page
+
+Options:
+  --before-seq <seq>  exclusive event sequence at the end of the page
+  -h, --help          display help for command
+```
+
+<a id="ocean-connect-follow"></a>
+## `ocean connect follow`
+
+调用方式: `ocean connect follow --help`, `ocean --profile connect follow --help`
+
+```text
+Usage: ocean connect follow [options] <session-id>
+
+Stream snapshots and live remote session history
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-state"></a>
+## `ocean connect state`
+
+调用方式: `ocean connect state --help`, `ocean --profile connect state --help`
+
+```text
+Usage: ocean connect state [options] <session-id>
+
+Read remote session and pending input state
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-wait"></a>
+## `ocean connect wait`
+
+调用方式: `ocean connect wait --help`, `ocean --profile connect wait --help`
+
+```text
+Usage: ocean connect wait [options] <session-id>
+
+Wait briefly for idle state or pending input
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-files"></a>
+## `ocean connect files`
+
+调用方式: `ocean connect files --help`, `ocean --profile connect files --help`
+
+```text
+Usage: ocean connect files [options] <session-id> [path]
+
+List files in a remote session workspace
+
+Arguments:
+  session-id
+  path        Host workspace directory (default: ".")
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-read"></a>
+## `ocean connect read`
+
+调用方式: `ocean connect read --help`, `ocean --profile connect read --help`
+
+```text
+Usage: ocean connect read [options] <session-id> <path>
+
+Read a page of a text file on the Host
+
+Options:
+  --offset <line>  first line to read, starting at 1
+  --limit <lines>  maximum number of lines
+  -h, --help       display help for command
+```
+
+<a id="ocean-connect-upload"></a>
+## `ocean connect upload`
+
+调用方式: `ocean connect upload --help`, `ocean --profile connect upload --help`
+
+```text
+Usage: ocean connect upload [options] <session-id> <local-path>
+
+Stream a local file to the Host and return its prompt attachment receipt
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-terminals"></a>
+## `ocean connect terminals`
+
+调用方式: `ocean connect terminals --help`, `ocean --profile connect terminals --help`
+
+```text
+Usage: ocean connect terminals [options] <session-id>
+
+List terminals retained on the Host
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-terminal-create"></a>
+## `ocean connect terminal-create`
+
+调用方式: `ocean connect terminal-create --help`, `ocean --profile connect terminal-create --help`
+
+```text
+Usage: ocean connect terminal-create [options] <session-id>
+
+Create a terminal on the Host
+
+Options:
+  --id <id>   reuse the same terminal identity if the reply was lost
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-terminal-watch"></a>
+## `ocean connect terminal-watch`
+
+调用方式: `ocean connect terminal-watch --help`, `ocean --profile connect terminal-watch --help`
+
+```text
+Usage: ocean connect terminal-watch [options] <session-id> <terminal-id>
+
+Stream the current terminal screen and subsequent output as JSON lines
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-terminal-write"></a>
+## `ocean connect terminal-write`
+
+调用方式: `ocean connect terminal-write --help`, `ocean --profile connect terminal-write --help`
+
+```text
+Usage: ocean connect terminal-write [options] <session-id> <terminal-id> <text>
+
+Send one text input to a Host terminal and wait for acceptance
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-terminal-close"></a>
+## `ocean connect terminal-close`
+
+调用方式: `ocean connect terminal-close --help`, `ocean --profile connect terminal-close --help`
+
+```text
+Usage: ocean connect terminal-close [options] <session-id> <terminal-id>
+
+Close a terminal on the Host
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-approvals"></a>
+## `ocean connect approvals`
+
+调用方式: `ocean connect approvals --help`, `ocean --profile connect approvals --help`
+
+```text
+Usage: ocean connect approvals [options] <session-id>
+
+List pending approvals for a remote session
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-questions"></a>
+## `ocean connect questions`
+
+调用方式: `ocean connect questions --help`, `ocean --profile connect questions --help`
+
+```text
+Usage: ocean connect questions [options] <session-id>
+
+List pending questions for a remote session
+
+Options:
+  --continued  list questions retained after the task continued
+  -h, --help   display help for command
+```
+
+<a id="ocean-connect-answer-question"></a>
+## `ocean connect answer-question`
+
+调用方式: `ocean connect answer-question --help`, `ocean --profile connect answer-question --help`
+
+```text
+Usage: ocean connect answer-question [options] <session-id> <question-request-id> <answer-json>
+
+Submit a structured answer to a pending remote question request
+
+Options:
+  --continued  answer a retained question using its tool call ID
+  -h, --help   display help for command
+```
+
+<a id="ocean-connect-approve"></a>
+## `ocean connect approve`
+
+调用方式: `ocean connect approve --help`, `ocean --profile connect approve --help`
+
+```text
+Usage: ocean connect approve [options] <session-id> <approval-id> <allow-or-deny>
+
+Answer one approval in the specified remote session
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-cancel"></a>
+## `ocean connect cancel`
+
+调用方式: `ocean connect cancel --help`, `ocean --profile connect cancel --help`
+
+```text
+Usage: ocean connect cancel [options] <session-id>
+
+Cancel active work in the remote session
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-connect-prompt"></a>
+## `ocean connect prompt`
+
+调用方式: `ocean connect prompt --help`, `ocean --profile connect prompt --help`
+
+```text
+Usage: ocean connect prompt [options] <session-id> <text>
+
+Submit or steer a prompt in a remote session
+
+Options:
+  --request-id <uuid>     reuse the same ID only when retrying the same prompt
+  --steer                 send input to the active turn
+  --file <receipt-id...>  attach one or more uploaded files to this prompt
+  -h, --help              display help for command
+```
+
 <a id="ocean-headless"></a>
 ## `ocean headless`
 
@@ -134,6 +495,91 @@ Examples:
   ocean --profile headless --permission-mode workspace-write --add-dir /repo/.git "commit the fix"
                                                         grant shared Git metadata for this task
 
+```
+
+<a id="ocean-remote-device"></a>
+## `ocean remote-device`
+
+调用方式: `ocean remote-device --help`, `ocean remote-device help --help`, `ocean --profile remote-device --help`, `ocean --profile remote-device help --help`
+
+```text
+Usage: ocean remote-device [options] [command]
+
+Manage device access through a Host’s local socket, or bootstrap its local
+credential store.
+
+Options:
+  --socket <path>           absolute path to the running Host administrator
+                            socket
+  --bootstrap               create or list devices using the local credential
+                            store; supports Windows
+  --timeout <milliseconds>  maximum time to wait for a socket operation and live
+                            connection cleanup (default: 30000)
+  -h, --help                display help for command
+
+Commands:
+  list                      List devices and their access state
+  create <label>            Create a device and return its token once
+  rotate <id>               Replace a device token and invalidate its existing
+                            logins
+  revoke <id>               Revoke a device and close its live connections
+  help [command]            display help for command
+```
+
+<a id="ocean-remote-device-list"></a>
+## `ocean remote-device list`
+
+调用方式: `ocean remote-device list --help`, `ocean --profile remote-device list --help`
+
+```text
+Usage: ocean remote-device list [options]
+
+List devices and their access state
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-remote-device-create"></a>
+## `ocean remote-device create`
+
+调用方式: `ocean remote-device create --help`, `ocean --profile remote-device create --help`
+
+```text
+Usage: ocean remote-device create [options] <label>
+
+Create a device and return its token once
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-remote-device-rotate"></a>
+## `ocean remote-device rotate`
+
+调用方式: `ocean remote-device rotate --help`, `ocean --profile remote-device rotate --help`
+
+```text
+Usage: ocean remote-device rotate [options] <id>
+
+Replace a device token and invalidate its existing logins
+
+Options:
+  -h, --help  display help for command
+```
+
+<a id="ocean-remote-device-revoke"></a>
+## `ocean remote-device revoke`
+
+调用方式: `ocean remote-device revoke --help`, `ocean --profile remote-device revoke --help`
+
+```text
+Usage: ocean remote-device revoke [options] <id>
+
+Revoke a device and close its live connections
+
+Options:
+  -h, --help  display help for command
 ```
 
 <a id="ocean-sdk"></a>
@@ -172,6 +618,47 @@ Example:
 
 ```
 
+<a id="ocean-serve"></a>
+## `ocean serve`
+
+调用方式: `ocean serve --help`, `ocean --profile serve --help`
+
+```text
+Usage: ocean serve [options]
+
+Serve an Ocean Host with device authentication.
+
+Options:
+  --host <host>                  bind address: one concrete IPv4 or IPv6 literal
+                                 of a local interface; wildcard addresses are
+                                 rejected
+  --port <port>                  listen port; pass 0 to let the OS pick a free
+                                 one
+  --public-url <url>             advertise this HTTP(S) root in the printed,
+                                 opened, runtime-context, and OCEAN_WEB_URL
+                                 forms; grants no trust
+  --trusted-host <authority...>  extra authority the /api browser-trust fence
+                                 accepts (host or host:port; repeatable)
+  --tls-cert <file>              PEM server certificate chain; requires
+                                 --tls-key
+  --tls-key <file>               unencrypted PEM private key; requires
+                                 --tls-cert
+  --device-admin-socket <path>   owner-only local administrator socket
+  -h, --help                     show this help
+
+Examples:
+  ocean serve --host 127.0.0.1 --port 3080
+                                             serve on loopback without opening a browser
+  ocean serve --host 10.0.0.7 --tls-cert ./server-chain.pem --tls-key ./server-key.pem
+                                             serve HTTPS on one local interface
+  ocean remote-device --socket /absolute/path/admin.sock create laptop
+                                             create a device token through the local administrator socket
+
+Non-loopback listeners require --tls-cert and --tls-key. Use the local administrator
+socket to create device tokens; the server URL contains no launch token.
+
+```
+
 <a id="ocean-web"></a>
 ## `ocean web`
 
@@ -186,7 +673,6 @@ Options:
   --host <host>                  bind address: one concrete IPv4 or IPv6 literal
                                  of a local interface; wildcard addresses are
                                  rejected
-  --no-open                      do not open the Web UI in the default browser
   --port <port>                  listen port; pass 0 to let the OS pick a free
                                  one
   --public-url <url>             advertise this HTTP(S) root in the printed,
@@ -198,6 +684,7 @@ Options:
                                  --tls-key
   --tls-key <file>               unencrypted PEM private key; requires
                                  --tls-cert
+  --no-open                      do not open the Web UI in the default browser
   -h, --help                     show this help
 
 Examples:

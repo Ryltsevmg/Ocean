@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v1.0.0/codex-subscription-removal/guide.md
+/:
+  en: d9bc3ce79c3a551f
+  zh: 9b346110672963ee
+/remove-the-bundled-chatgpt-subscription-configuration:
+  en: 69055ac955a80e6d
+  zh: 7323fb0f31c506e5
+/remove-the-bundled-chatgpt-subscription-configuration/change:
+  en: 42bd0b60bc42504e
+  zh: 52eac7890834a3c6
+/remove-the-bundled-chatgpt-subscription-configuration/migration:
+  en: 279ee308e69694b1
+  zh: 99d4306c6f5f9413

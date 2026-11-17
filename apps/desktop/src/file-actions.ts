@@ -27,11 +27,15 @@ function saveRequest(value: unknown): { url: URL; name?: string; mediaType?: str
 /**
  * Install trusted-window original-file operations.
  * @param assertOwner - rejects shell pages, subframes, and unowned windows.
- * @param hostUrl - current application Host excluded from image reads.
+ * @param hostUrl - application Host owned by the caller, excluded from image reads.
+ * @param canReadImage - whether the caller owns a local Host and may use the native image fetcher.
+ * @returns Remove download handling from a retired browser session.
  */
 export function installFileActions(
-  assertOwner: (event: IpcMainInvokeEvent) => BrowserWindow, hostUrl: () => string | undefined = () => undefined,
-): void {
+  assertOwner: (event: IpcMainInvokeEvent) => BrowserWindow,
+  hostUrl: (contents: Electron.WebContents) => string | undefined = () => undefined,
+  canReadImage: (contents: Electron.WebContents) => boolean = () => true,
+): (browserSession: Electron.Session) => void {
   const timeoutMs = resolveDurationMs(process.env, 'OCEAN_DESKTOP_IMAGE_READ_TIMEOUT_MS', 30_000)
   const maxBytes = Number(process.env.OCEAN_DESKTOP_IMAGE_READ_MAX_BYTES ?? 64 * 1024 * 1024)
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) throw new Error('OCEAN_DESKTOP_IMAGE_READ_MAX_BYTES must be a positive integer')
@@ -43,11 +47,12 @@ export function installFileActions(
     started: () => void
     item?: Electron.DownloadItem
   }>()
-  session.defaultSession.on('will-download', (_event, item, contents) => {
+  const handledSessions = new WeakSet<Electron.Session>()
+  const willDownload = (_event: Electron.Event, item: Electron.DownloadItem, contents: Electron.WebContents): void => {
     const url = item.getURLChain()[0]
     if (url === undefined || !new URL(url).hash.startsWith('#ocean-download=')) return
     const entry = pending.get(url)
-    if (entry === undefined || entry.owner.webContents !== contents) { item.cancel(); return }
+    if (entry === undefined || entry.event.sender !== contents) { item.cancel(); return }
     entry.started()
     entry.item = item
     let reserved: string | undefined
@@ -95,16 +100,23 @@ export function installFileActions(
       }
       entry.finish(error instanceof Error ? error : new Error('File download unavailable'))
     }
-  })
+  }
+  const bindDownloads = (browserSession: Electron.Session): void => {
+    if (handledSessions.has(browserSession)) return
+    browserSession.on('will-download', willDownload)
+    handledSessions.add(browserSession)
+  }
+  bindDownloads(session.defaultSession)
   const downloadTimeoutMs = resolveDurationMs(process.env, 'OCEAN_DESKTOP_FILE_DOWNLOAD_TIMEOUT_MS', 300_000)
   ipcMain.handle(DESKTOP_IPC.fileSave, (event, value: unknown): Promise<FileSaveResult> => {
     const owner = assertOwner(event)
     const request = saveRequest(value)
+    bindDownloads(event.sender.session)
     // Fragments do not change the fetched resource; each native request has its own completion identity.
     request.url.hash = `ocean-download=${randomUUID()}`
     const url = request.url.href
     return new Promise((resolve, reject) => {
-      const contents = owner.webContents
+      const contents = event.sender
       const finish = (result: FileSaveResult | Error): void => {
         if (!pending.delete(url)) return
         clearTimeout(timer)
@@ -135,20 +147,25 @@ export function installFileActions(
   })
   ipcMain.handle(DESKTOP_IPC.clipboardImageRead, async (event, value: unknown) => {
     const owner = assertOwner(event)
+    const contents = event.sender
+    if (!canReadImage(contents)) throw new Error('Native image fetch requires the local Host')
     if (typeof value !== 'string') throw new Error('Invalid image URL')
+    const initialHost = hostUrl(contents)
     const checkedUrl = (value: string): URL => {
       const url = new URL(value)
-      const host = hostUrl()
-      const application = host === undefined ? undefined : new URL(host)
+      const isApplicationHost = (host: string | undefined): boolean => {
+        if (host === undefined) return false
+        const application = new URL(host)
+        return url.port === application.port
+          && (url.hostname === application.hostname || ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
+      }
       if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password
-        || application !== undefined && url.port === application.port
-        && (url.hostname === application.hostname || ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))) {
+        || isApplicationHost(initialHost) || isApplicationHost(hostUrl(contents))) {
         throw new Error('Invalid image URL')
       }
       return url
     }
     let url = checkedUrl(value)
-    const contents = owner.webContents
     const lifetime = new AbortController()
     const abort = (): void => { lifetime.abort() }
     owner.once('closed', abort)
@@ -189,4 +206,7 @@ export function installFileActions(
       contents.removeListener('did-start-navigation', navigate)
     }
   })
+  return (browserSession) => {
+    if (handledSessions.delete(browserSession)) browserSession.removeListener('will-download', willDownload)
+  }
 }

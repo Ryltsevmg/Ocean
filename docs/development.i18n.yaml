@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/development.md
 /development-guide:
-  en: 81f474fdaea41813
-  zh: e04180c6b36afaa5
+  en: 885979e3238b0810
+  zh: b9675163cf875baa
 /development-guide/setup-tutorial:
   en: 5207d17725c07a27
   zh: 258884c4300ac63a
@@ -21,17 +21,17 @@
   en: 3221d1076554001f
   zh: 29f166be6a5c04d9
 /development-guide/contributor-reference/typescript-project-layout:
-  en: 90c49cb3c5b9691e
-  zh: 7a17e8f3e2a544d9
+  en: 588563bfcb5d5548
+  zh: 27dd9a41eddfab6c
 /development-guide/contributor-reference/environment-variables:
   en: 30260299470caa4e
   zh: 4c605200028b18be
 /development-guide/contributor-reference/git-integrations:
-  en: 9a0cece68fe52c17
-  zh: 0c91ad0c55978f02
+  en: 9c557f3ce4497dd5
+  zh: ce49eee856f191aa
 /development-guide/contributor-reference/ci-gates:
-  en: 0f986e67316be543
-  zh: 65ac66773583350f
+  en: 8a4743d1a331aa20
+  zh: 5611016ff28dc766
 /development-guide/contributor-reference/daily-commands:
   en: 08aa6ec1cdabfeb7
   zh: dcce5ae9d3c829d0

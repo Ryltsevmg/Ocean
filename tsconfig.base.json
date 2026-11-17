@@ -28,8 +28,7 @@
     // not declaration path aliases, keep each package/vendor source compiled
     // under its own tsconfig boundary.
     "paths": {
-      "@ocean/ocean-codex-subscription": ["./vendor/codex-subscription/src/ocean-entry.ts"],
-      "@ocean/ocean-codex-subscription/client": ["./vendor/codex-subscription/src/client.jsx"],
+      "@ocean/ocean-plugin-market/client": ["./packages/extensions/plugin-market/src/client/index.ts"],
       "@ocean/ocean-client-ui-file-actions": ["./packages/client/ui-file-actions/src/index.ts"],
       "@ocean/ocean-client-ui-file-actions/client": ["./packages/client/ui-file-actions/src/client/index.ts"],
       "@ocean/ocean-client-ui-file-actions/types": ["./packages/client/ui-file-actions/src/types.ts"],
@@ -225,6 +224,10 @@
       "@ocean/ocean-client-ui-session": ["./packages/client/ui-session/src"],
       "@ocean/ocean-client-ui-session/client": ["./packages/client/ui-session/src/client"],
       "@ocean/ocean-client-connection": ["./packages/client/connection/src"],
+      "@ocean/ocean-client-connection/protocol": ["./packages/client/connection/src/protocol.ts"],
+      "@ocean/ocean-client-connection/device": ["./packages/client/connection/src/device.ts"],
+      "@ocean/ocean-api-gateway/device": ["./packages/api/gateway/src/device.ts"],
+      "@ocean/ocean-client-file-upload/protocol": ["./packages/client/file-upload/src/protocol.ts"],
       "@ocean/ocean-client-file-upload": ["./packages/client/file-upload/src"],
       "@ocean/ocean-client-file-upload/client": ["./packages/client/file-upload/src/client/index.ts"],
       "@ocean/ocean-client-file-upload/types": ["./packages/client/file-upload/src/types.ts"],
@@ -409,6 +412,7 @@
       "@ocean/ocean-plan-mode": ["./packages/plan/plan-mode/src"],
       "@ocean/ocean-plugin-detail": ["./packages/util/plugin-detail/src"],
       "@ocean/ocean-plugin-manager": ["./packages/boot/plugin-manager/src"],
+      "@ocean/ocean-plugin-market": ["./packages/extensions/plugin-market/src"],
       "@ocean/ocean-plugin-package-inventory-deepseek": ["./packages/llm/plugin-package-inventory-deepseek/src"],
       "@ocean/ocean-ptc-runtime": ["./packages/ptc-runtime/ptc-runtime/src"],
       "@ocean/ocean-ptc-runtime-node": ["./packages/ptc-runtime/ptc-runtime-node/src"],

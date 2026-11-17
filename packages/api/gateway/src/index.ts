@@ -130,7 +130,7 @@ interface RemoteEventClient {
   readonly deliveries: Map<RemoteEventId, PendingRemoteEvent>
   /** The stream's Peer principal: only the owner answers scoped waterfalls and receives every broadcast. */
   readonly principal: Principal
-  /** Only owner streams receive scoped waterfalls they could answer; other Peers receive admitted broadcasts only. */
+  /** Owner streams may answer all forwarded waterfalls. Device deliveries have explicit event rules. */
   readonly answers: boolean
 }
 
@@ -139,6 +139,7 @@ interface PendingRemoteEvent {
   readonly source: TypertRemoteEventInvocation
   readonly frame: RemoteEventInvocationFrame
   readonly deliveries: Set<RemoteEventClient>
+  readonly expiresAt?: number
   releaseContext: () => void
   releaseSignal: () => void
 }
@@ -148,6 +149,7 @@ type ConnectionRpcError = Extract<ConnectionRpcResult, { readonly ok: false }>['
 const NEVER_ABORTED_SIGNAL = new AbortController().signal
 const DEFAULT_WEBSOCKET_HEARTBEAT_INTERVAL_MS = 2_000
 const DEFAULT_STREAM_INBOX_BYTES = 262_144
+const DEFAULT_MAX_STREAMS_PER_SOCKET = 256
 const EMPTY_ASYNC_ITERABLE: AsyncIterable<never> = {
   [Symbol.asyncIterator]: () => ({ next: () => Promise.resolve({ value: undefined, done: true }) }),
 }
@@ -160,15 +162,15 @@ export interface Config {
   readonly websocketHeartbeatIntervalMs?: number
   /** Buffered uplink frame bytes one logical stream may hold before it fails with `gateway/uplink-overflow`. @default 262144 */
   readonly streamInboxBytes?: number
+  /** Maximum concurrent streams opened by one WebSocket. @default 256 */
+  readonly maxStreamsPerSocket?: number
+  /** Maximum wait for a forwarded tool approval. Zero leaves timing to the producer. */
+  readonly approvalTimeoutMs?: number
   /** Per-message compression for the Remote stream WebSocket; `'none'` disables the extension. @default 'deflate' */
   readonly websocketCompression?: 'none' | 'deflate'
 }
 
-interface ResolvedConfig extends Config {
-  readonly websocketHeartbeatIntervalMs: number
-  readonly streamInboxBytes: number
-  readonly websocketCompression: 'none' | 'deflate'
-}
+type ResolvedConfig = Required<Config>
 
 /**
  * Dispatch failure produced outside the invoked business method. Rides the
@@ -213,10 +215,12 @@ export class TypertGatewayError extends RemoteError<TypertGatewayErrorCode> {
  */
 export class TypertGatewayService extends Service implements TypertGateway {
   static inject = ['typert', 'remoteAccess']
-  static Config: z<Config> = z.object({
+  static Config: z<Config, ResolvedConfig> = z.object({
     websocketHeartbeatIntervalMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS)
       .default(DEFAULT_WEBSOCKET_HEARTBEAT_INTERVAL_MS),
     streamInboxBytes: z.number().step(1).min(1).default(DEFAULT_STREAM_INBOX_BYTES),
+    maxStreamsPerSocket: z.number().step(1).min(1).default(DEFAULT_MAX_STREAMS_PER_SOCKET),
+    approvalTimeoutMs: z.number().step(1).min(0).max(MAX_TIMER_DELAY_MS).default(0),
     websocketCompression: z.union([z.const('none'), z.const('deflate')]).default('deflate'),
   })
 
@@ -227,6 +231,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
     failure: error => rpcError(error),
   }
 
+  private readonly approvalTimeoutMs: number
   private srcClaims: ReadonlySet<string> | undefined
   private remoteEvents: RegisteredRemoteEventSource | undefined
   private readonly remoteEventClients = new Map<RemoteEventClientId, RemoteEventClient>()
@@ -237,11 +242,31 @@ export class TypertGatewayService extends Service implements TypertGateway {
    * WebSocket admission waits for launcher-owned application readiness when supplied;
    * direct invocation and in-process streams remain available independently.
    * @param ctx - owning Host Context with Typert registry access.
-   * @param config - validated Gateway transport configuration.
+   * @param config - Gateway transport configuration before defaults are resolved.
    */
   constructor(ctx: Context, config: Config) {
     super(ctx, 'typertGateway')
-    const resolved = config as ResolvedConfig
+    const resolved = TypertGatewayService.Config(config)
+    this.approvalTimeoutMs = resolved.approvalTimeoutMs
+    ctx.remoteAccess.registerPolicy('remote-device', {
+      globalActions: new Set([
+        'session/list', 'session/search', 'session/create', 'session/rename', 'session/prompt', 'session/cancel',
+        'session/page', 'session/events', 'session/follow', 'session/state', 'session/wait', 'session/attachment',
+        'session/observeEvent', 'session/observeState', 'session/observeProjections', 'session/projections',
+        'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
+        'workspaceFiles/search', 'workspaceFiles/changes', 'fileUploads/upload',
+        'terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach',
+        'workspace/follow', 'workspace/create', 'workspace/initializeDefault', 'directoryPicker/list',
+        'session/control', 'session/modelCatalog', 'session/selectModel', 'session/initializeDefaultModel',
+        'settings/describe', 'settings/update', 'settings/replace', 'settings/mutate', 'event:settings/document-updated',
+        'credentials/describe', 'credentials/set', 'credentials/unset', 'event:credentials/reference-updated',
+        'llm/listProviders', 'llm/listConfigurableProviders',
+        'userQuestions/attachWait', 'userQuestions/answer',
+        'event:api-session/activity', 'event:api-session/added', 'event:api-session/error',
+        'event:api-session/removed', 'event:api-session/status',
+      ]),
+      bindings: () => [],
+    })
     ctx.on('internal/service', () => {
       this.srcClaims = undefined
     })
@@ -261,6 +286,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
           {
             heartbeatIntervalMs: resolved.websocketHeartbeatIntervalMs,
             streamInboxBytes: resolved.streamInboxBytes,
+            maxStreamsPerSocket: resolved.maxStreamsPerSocket,
             compression: resolved.websocketCompression === 'deflate',
           },
         )
@@ -272,8 +298,8 @@ export class TypertGatewayService extends Service implements TypertGateway {
           }
           const route: WebUpgradeRoute = {
             path: REMOTE_STREAM_MUX_PATH,
-            handler: (req, socket, head) => {
-              const admission = webCtx.connection.admitConnection(req)
+            handler: async (req, socket, head) => {
+              const admission = await webCtx.connection.admitTransport(req, true)
               if ('rejection' in admission) {
                 rejectRemoteStreamUpgrade(socket, admission.rejection)
                 return
@@ -287,12 +313,16 @@ export class TypertGatewayService extends Service implements TypertGateway {
                 releases.add(done)
                 void done.then(() => { releases.delete(done) })
               }
+              const abort = (): void => { socket.destroy() }
               const closed = (): void => {
+                admission.peer.signal.removeEventListener('abort', abort)
                 socket.removeListener('error', release)
                 release()
               }
               socket.on('error', release)
               socket.once('close', closed)
+              admission.peer.signal.addEventListener('abort', abort, { once: true })
+              if (admission.peer.signal.aborted) socket.destroy()
               if (socket.destroyed) {
                 closed()
                 return
@@ -377,8 +407,44 @@ export class TypertGatewayService extends Service implements TypertGateway {
     }
   }
 
+  private dispatchDeviceInteraction(endpoint: string, payload: unknown, peer: PeerScope): ConnectionRpcResult {
+    try {
+      assertPeerLive(peer, endpoint)
+      if (peer.principal.kind !== 'remote-device') {
+        throw new TypertGatewayError('gateway/interactions-forbidden', endpoint, 'device interaction requires a device session')
+      }
+      const input = isObject(payload) && 'args' in payload ? payload.args : undefined
+      if (!isObject(input) || !isPlainObject(input) || typeof input.sessionId !== 'string' || input.sessionId.length === 0) {
+        throw new TypertGatewayError('gateway/arguments-invalid', endpoint, 'device interaction requires a session ID')
+      }
+      const approval = endpoint.startsWith('deviceApproval/')
+      const now = Date.now()
+      const pending = [...this.pendingRemoteEvents.values()].filter(({ frame }) =>
+        frame.event === (approval ? 'approval/request' : 'user-questions/request') && frame.agentId === input.sessionId)
+        .filter(({ expiresAt }) => expiresAt === undefined || expiresAt > now)
+      if (endpoint.endsWith('/list')) {
+        return { ok: true, value: pending.map(({ frame, expiresAt }) => ({
+          id: frame.eventId, request: frame.request, ...(expiresAt === undefined ? {} : { expiresAt }),
+        })) }
+      }
+      const { id, allow, answer } = input
+      if (typeof id !== 'string' || (approval && typeof allow !== 'boolean')) {
+        throw new TypertGatewayError('gateway/arguments-invalid', endpoint, 'invalid device interaction response')
+      }
+      const selected = pending.find(event => event.id === id)
+      if (selected === undefined) return { ok: true, value: { accepted: false } }
+      if (!approval && !validDeviceQuestionAnswer(selected.frame.request, answer)) {
+        throw new TypertGatewayError('gateway/arguments-invalid', endpoint, 'answer must match the pending questions')
+      }
+      this.settleRemoteEvent(selected, { kind: 'result', value: approval ? allow ? 'allowed-once' : 'rejected' : answer })
+      return { ok: true, value: { accepted: true } }
+    } catch (error) {
+      return rpcFailure(error)
+    }
+  }
+
   private claimsEndpoint(endpoint: string): boolean {
-    if (endpoint === REMOTE_EVENT_RESULT_ENDPOINT) return true
+    if (endpoint === REMOTE_EVENT_RESULT_ENDPOINT || isDeviceInteractionEndpoint(endpoint)) return true
     const segments = endpoint.split('/')
     if (segments.length !== 2 || segments[0] === '' || segments[1] === '') return false
     if (this.ctx.typert.local.get(endpoint) !== undefined || this.ctx.typert.local.hasSeen(endpoint)) return true
@@ -494,24 +560,56 @@ export class TypertGatewayService extends Service implements TypertGateway {
     signal: AbortSignal,
     peer: PeerScope,
   ): Promise<ConnectionRpcResult> {
+    if (isDeviceInteractionEndpoint(endpoint)) {
+      return this.dispatchDeviceInteraction(endpoint, payload, peer)
+    }
     if (endpoint === REMOTE_EVENT_RESULT_ENDPOINT) {
       try {
         assertPeerLive(peer, endpoint)
-        requireInteractions(peer, endpoint)
-        // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
-        if (peer.principal.kind !== 'owner') {
-          throw new TypertGatewayError('gateway/invocation-unavailable', endpoint, 'only owner Peers answer forwarded Remote events')
+        const device = peer.principal.kind === 'remote-device'
+        if (!device) {
+          requireInteractions(peer, endpoint)
+          // Other principals may be registered by Host plugins.
+          // oxlint-disable-next-line typescript/no-unnecessary-condition
+          if (peer.principal.kind !== 'owner') {
+            throw new TypertGatewayError('gateway/invocation-unavailable', endpoint, 'only owner Peers answer forwarded Remote events')
+          }
         }
         const result = parseRemoteEventResultPayload(payload)
         const client = this.remoteEventClients.get(result.clientId)
         if (client === undefined) {
           throw new Error('typert gateway: Remote event result identifies no active event stream')
         }
-        if (client.peer !== peer) {
+        const ownsDelivery = device
+          ? this.ctx.get('connection')?.sharesDeviceSession?.(peer, client.peer) === true
+          : client.peer === peer
+        if (!ownsDelivery) {
           throw new TypertGatewayError(
             'gateway/interactions-forbidden', endpoint,
-            'Remote event result belongs to another Peer',
+            'Remote event result belongs to another login',
           )
+        }
+        if (device) {
+          const pending = client.deliveries.get(result.eventId)
+          if (pending === undefined) return { ok: true, value: undefined }
+          const { event, request } = pending.frame
+          if (event === 'user-questions/request' && result.outcome.kind === 'rejected') {
+            const { code } = result.outcome.error
+            const message = code === 'ASK_CANCELLED' ? 'the user cancelled ask_user_question'
+              : code === 'ASK_TIMED_OUT' && isTimedDeviceQuestion(request)
+                ? 'ask_user_question timed out before the user answered' : undefined
+            if (code !== undefined && message !== undefined) {
+              this.cancelRemoteEvent(pending, restoreRemoteEventRejection({ name: 'UserQuestionError', code, message }))
+              return { ok: true, value: undefined }
+            }
+          }
+          if (result.outcome.kind !== 'result'
+            || (event === 'approval/request'
+              ? result.outcome.value !== 'allowed-once' && result.outcome.value !== 'rejected'
+              : event !== 'user-questions/request' || !validDeviceQuestionAnswer(request, result.outcome.value))) {
+            this.removeRemoteEventDelivery(pending, client)
+            return { ok: true, value: undefined }
+          }
         }
         this.receiveRemoteEventResult(client, result)
         return { ok: true, value: undefined }
@@ -535,7 +633,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
       // A Gateway-owned stream reads no uplink: releasing it now keeps its items out of the bounded inbox.
       releaseUplink(uplink)
       assertPeerLive(peer, endpoint)
-      requireInteractions(peer, endpoint)
+      if (peer.principal.kind !== 'remote-device') requireInteractions(peer, endpoint)
       return this.openRemoteEvents(payload, signal, peer)
     }
     return this.openStream({ ...remoteRequest(endpoint, payload, signal, peer), uplink, uplinkWindow }, control)
@@ -580,13 +678,10 @@ export class TypertGatewayService extends Service implements TypertGateway {
       signal: lifetime,
       deliveries: new Map(),
       principal: peer.principal,
-      // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
       answers: peer.principal.kind === 'owner',
     }
     this.remoteEventClients.set(clientId, client)
-    if (client.answers) {
-      for (const pending of this.pendingRemoteEvents.values()) this.deliverRemoteEvent(pending, client)
-    }
+    for (const pending of this.pendingRemoteEvents.values()) this.deliverRemoteEvent(pending, client)
     try {
       yield { ...REMOTE_EVENT_STREAM_READY, clientId, host: registration.host }
       yield* client.queue.iterate(lifetime)
@@ -670,6 +765,9 @@ export class TypertGatewayService extends Service implements TypertGateway {
           ? reason
           : new Error('typert gateway: Remote event was cancelled', { cause: reason }))
       }
+      let timeout: ReturnType<typeof setTimeout> | undefined
+      const expiresAt = source.event === 'approval/request' && this.approvalTimeoutMs > 0
+        ? Date.now() + this.approvalTimeoutMs : undefined
       const pending: PendingRemoteEvent = {
         id,
         source,
@@ -681,17 +779,24 @@ export class TypertGatewayService extends Service implements TypertGateway {
           request: projected.request,
         },
         deliveries: new Set(),
+        ...(expiresAt === undefined ? {} : { expiresAt }),
         releaseContext,
         releaseSignal: () => {
+          clearTimeout(timeout)
           for (const signal of signals) signal.removeEventListener('abort', abort)
         },
       }
       this.pendingRemoteEvents.set(id, pending)
+      if (expiresAt !== undefined) {
+        timeout = setTimeout(() => {
+          this.settleRemoteEvent(pending, { kind: 'next' })
+        }, Math.max(0, expiresAt - Date.now())).unref()
+      }
       for (const signal of signals) signal.addEventListener('abort', abort, { once: true })
       if ([...signals].some(signal => signal.aborted)) abort()
       else {
         for (const client of this.remoteEventClients.values()) {
-          if (client.answers) this.deliverRemoteEvent(pending, client)
+          this.deliverRemoteEvent(pending, client)
         }
       }
     } catch (error) {
@@ -700,6 +805,8 @@ export class TypertGatewayService extends Service implements TypertGateway {
   }
 
   private deliverRemoteEvent(pending: PendingRemoteEvent, client: RemoteEventClient): void {
+    if (!client.answers && !(client.principal.kind === 'remote-device'
+      && (pending.frame.event === 'approval/request' || pending.frame.event === 'user-questions/request'))) return
     pending.deliveries.add(client)
     client.deliveries.set(pending.id, pending)
     client.queue.push(pending.frame)
@@ -713,6 +820,10 @@ export class TypertGatewayService extends Service implements TypertGateway {
     // Settlement and Client replacement may race the result request. Results
     // from a completed event or a superseded delivery are idempotent no-ops.
     if (pending === undefined || !pending.deliveries.has(client)) return
+    if (pending.expiresAt !== undefined && pending.expiresAt <= Date.now()) {
+      this.settleRemoteEvent(pending, { kind: 'next' })
+      return
+    }
     this.removeRemoteEventDelivery(pending, client)
     if (result.outcome.kind === 'result') {
       this.settleRemoteEvent(pending, {
@@ -800,7 +911,6 @@ export class TypertGatewayService extends Service implements TypertGateway {
     assertExactArguments(request.args, descriptor, endpoint)
     const validated = validateArguments(descriptor, request.args, endpoint)
     // Access precedes lookup resolution, so a refused call activates nothing.
-    // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
     if (request.peer.principal.kind !== 'owner') {
       const resources = callResources(
         this.ctx.typert,
@@ -1734,6 +1844,42 @@ function assertJsonValue(value: unknown, ancestors: Set<object>): void {
   } finally {
     ancestors.delete(value)
   }
+}
+
+function isDeviceInteractionEndpoint(endpoint: string): boolean {
+  return endpoint === 'deviceApproval/list' || endpoint === 'deviceApproval/answer'
+    || endpoint === 'deviceQuestion/list' || endpoint === 'deviceQuestion/answer'
+}
+
+function isTimedDeviceQuestion(request: unknown): boolean {
+  if (!isObject(request) || !isPlainObject(request)) return false
+  const { wait } = request
+  return isObject(wait) && isPlainObject(wait) && wait.timed === true && typeof wait.callId === 'string'
+}
+
+function validDeviceQuestionAnswer(request: unknown, value: unknown): boolean {
+  if (!isObject(request) || !isPlainObject(request) || !Array.isArray(request.questions)
+    || !isObject(value) || !isPlainObject(value) || !Array.isArray(value.answers)
+    || Object.keys(value).length !== 1 || value.answers.length !== request.questions.length) return false
+  const questions: readonly unknown[] = request.questions
+  const answers: readonly unknown[] = value.answers
+  const seen = new Set<string>()
+  return answers.every((answer) => {
+    if (!isObject(answer) || !isPlainObject(answer) || typeof answer.id !== 'string' || seen.has(answer.id)
+      || !Array.isArray(answer.selected) || Object.keys(answer).some(key => !['id', 'selected', 'custom'].includes(key))
+      || (answer.custom !== undefined && (typeof answer.custom !== 'string' || answer.custom.trim().length === 0))) return false
+    const id = answer.id
+    const question = questions.find((candidate): candidate is Record<string, unknown> =>
+      isObject(candidate) && isPlainObject(candidate) && candidate.id === id)
+    if (question === undefined) return false
+    seen.add(id)
+    const selected: readonly unknown[] = answer.selected
+    const options: readonly unknown[] = Array.isArray(question.options) ? question.options : []
+    return (question.multiSelect === true || selected.length + Number(answer.custom !== undefined) <= 1)
+      && new Set(selected).size === selected.length
+      && selected.every(label => typeof label === 'string' && options.some(option =>
+        isObject(option) && isPlainObject(option) && option.label === label))
+  })
 }
 
 function isPlainObject(value: object): value is Record<string, unknown> {

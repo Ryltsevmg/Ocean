@@ -4,6 +4,8 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
 import type { PeerId } from '@ocean/ocean-typert-protocol'
 import { CONNECT_PATH, type ConnectionInteractions } from './connect-protocol.ts'
 import { credentialKey } from '@ocean/ocean-credentials'
+import type { Context } from '@deepseek-ai/cordis'
+import { connectionLaunch } from './launch-identity.ts'
 import type { CredentialProvider, CredentialRecord } from '@ocean/ocean-credentials'
 import type {
   ConnectionIndexRequest,
@@ -19,7 +21,6 @@ const COOKIE_PREFIX = 'dsh-auth-'
 const COOKIE_PAYLOAD_VERSION = 1
 const STORED_SECRET_VERSION = 1
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]*$/
-const PROCESS_LAUNCH_TOKENS = new WeakMap<object, string>()
 
 interface StoredSecretPayload {
   readonly version: typeof STORED_SECRET_VERSION
@@ -56,14 +57,6 @@ function decodeBase64Url(value: string): Buffer | undefined {
   const padding = '='.repeat((4 - value.length % 4) % 4)
   const decoded = Buffer.from(value.replaceAll('-', '+').replaceAll('_', '/') + padding, 'base64')
   return encodeBase64Url(decoded) === value ? decoded : undefined
-}
-
-function processLaunchToken(owner: object): string {
-  const existing = PROCESS_LAUNCH_TOKENS.get(owner)
-  if (existing !== undefined) return existing
-  const created = encodeBase64Url(randomBytes(SECRET_BYTES))
-  PROCESS_LAUNCH_TOKENS.set(owner, created)
-  return created
 }
 
 function header(
@@ -208,11 +201,11 @@ export class BrowserAuth {
   private readonly maxAgeMilliseconds: number
 
   private constructor(
-    processOwner: object,
+    processOwner: Context,
     private readonly secret: Buffer,
     maxAgeDays: number,
   ) {
-    this.launchToken = processLaunchToken(processOwner)
+    this.launchToken = connectionLaunch(processOwner).launchToken
     this.maxAgeMilliseconds = maxAgeDays * DAY_MILLISECONDS
     if (!Number.isSafeInteger(this.maxAgeMilliseconds)
       || !Number.isSafeInteger(Date.now() + this.maxAgeMilliseconds)) {
@@ -229,7 +222,7 @@ export class BrowserAuth {
    * @returns initialized authentication owner with the process owner's launch token.
    */
   static async create(
-    processOwner: object,
+    processOwner: Context,
     credentials: CredentialProvider,
     maxAgeDays: number,
   ): Promise<BrowserAuth> {

@@ -630,7 +630,6 @@
   width: 100%;
   margin: 0;
   border-inline: 0;
-  padding-right: 38px;
   background: transparent;
 }
 
@@ -639,35 +638,9 @@
   background-color: var(--dsw-alias-interactive-bg-hover);
 }
 
-.panelUnpin {
-  position: absolute;
-  right: 0;
-  top: 2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--dsw-radius-sm);
-  background: transparent;
-  color: var(--dsw-alias-label-caption);
-  cursor: pointer;
-}
-
-.panelUnpin:focus-visible {
-  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
-  outline-offset: -2px;
-}
-
 @media (hover: hover) {
-  .panelUnpin { opacity: 0; }
   .panelEntry:hover { background-color: var(--dsw-alias-interactive-bg-hover); }
   .panelEntry .panelRow:hover { background: transparent; }
-  .panelUnpin:hover { color: var(--dsw-alias-label-primary); }
-  .panelEntry:hover .panelUnpin,
-  .panelEntry:has(:focus-visible) .panelUnpin { opacity: 1; }
 }
 
 .panelList {
@@ -714,21 +687,6 @@
 .panelRow:focus-visible {
   outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
   outline-offset: -2px;
-}
-
-/* The More launcher keeps the panel rows' geometry inside the menu's anchor wrapper. */
-.moreAnchor {
-  display: flex;
-  flex-direction: column;
-}
-
-.panelRow[aria-expanded='true'] {
-  background-color: var(--dsw-alias-interactive-bg-hover);
-}
-
-.moreMenu {
-  width: 288px;
-  max-width: calc(100vw - 24px);
 }
 
 .panelGlyph {
@@ -820,42 +778,5 @@
   .railIn .regionArea {
     transition: none;
     animation: none;
-  }
-}
-
-/* Settings owns the launcher viewport; sidebar collapse never affects these rows. */
-.settingsPanels {
-  --ocean-sidebar-label-gap: 10px;
-  --ocean-sidebar-row-padding: 12px;
-  --ocean-sidebar-paint-inset: 0px;
-  min-width: 0;
-}
-.settingsPanels .panelList {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-.settingsPanels .panelRow {
-  min-height: 40px;
-  font-size: 13px;
-}
-.settingsPanels .panelUnpin {
-  top: 6px;
-}
-.settingsPanels .wide {
-  opacity: 1;
-}
-
-@media (max-width: 767px) {
-  :global(html:not([data-windows-titlebar]):not([data-platform='darwin'])) .settingsPanels {
-    flex: none;
-  }
-  :global(html:not([data-windows-titlebar]):not([data-platform='darwin'])) .settingsPanels .panelList {
-    flex-direction: row;
-  }
-  :global(html:not([data-windows-titlebar]):not([data-platform='darwin'])) .settingsPanels .panelRow {
-    min-width: 108px;
-    justify-content: center;
-    padding-inline: 14px;
   }
 }

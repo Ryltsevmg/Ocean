@@ -155,7 +155,7 @@ function harness(placement: Placement, controller: AbortController, book: Worksp
   const { hooks, keyedHooks, ...members } = face
   const t = makeTranslate(zh)
   const onOpen = vi.fn<(address: string) => void>()
-  const openMenu = vi.fn()
+  const openMenu = vi.fn<NonNullable<Parameters<typeof contextMenuHook>[0]>>()
   const shared = {
     onOpen,
     useTabInfo,

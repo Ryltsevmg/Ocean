@@ -741,6 +741,24 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'the Peer and idempotent release, or 409 for duplicate API ownership. The carrier releases on socket termination or failed upgrade; release removes API admission synchronously without cancelling independent HTTP calls.',
       },
       {
+        signature: 'admitTransport(request: ConnectionTrustRequest & { readonly destroyed: boolean }, socket: boolean): Promise<ConnectionAdmission>',
+        description: 'Authenticate a network request and return an owned transport lease.',
+        parameters: [{ name: 'request', description: 'Incoming HTTP request or upgrade.' }, { name: 'socket', description: 'Whether the request upgrades to a socket.' }],
+        returns: 'A rejection or the Peer and its release callback.',
+      },
+      {
+        signature: 'admitDeviceDocument?(request: Request): Promise<ConnectionAdmission | undefined>',
+        description: 'Admit an index render for a logged-in device where device mode is enabled.',
+        parameters: [{ name: 'request', description: 'Browser document request.' }],
+        returns: 'A render lease or rejection, or undefined for legacy index login.',
+      },
+      {
+        signature: 'sharesDeviceSession?(first: PeerScope, second: PeerScope): boolean',
+        description: 'Check whether a request may answer an event delivered to a device stream.',
+        parameters: [{ name: 'first', description: 'Request Peer.' }, { name: 'second', description: 'Event stream Peer.' }],
+        returns: 'Whether the Peers share a live device login.',
+      },
+      {
         signature: 'authorizeIndex(request: ConnectionIndexRequest, response: ConnectionIndexResponse): boolean',
         description: 'Authenticate one frontend index request, owning a token redirect or 401. The cookie this mints is `Secure` when the mounted Web carrier serves TLS, which only that listener\'s protocol decides.',
         parameters: [{ name: 'request', description: 'root or configured-index HTTP request.' }, { name: 'response', description: 'response owned when the result is false.' }],
@@ -963,6 +981,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Prepare every currently registered field from one immutable base request. A provider whose preparation throws, or whose value cannot be cloned, is omitted from this request; the first such failure per field is logged. Only cancellation rejects. Field values are cloned and frozen; providers retain no mutable alias to the outgoing request.',
         parameters: [{ name: 'request', description: 'exact serialized request facts before extension fields.' }],
         returns: 'detached fields and their idempotent joint acceptance transaction.',
+      },
+    ],
+  },
+  {
+    key: 'deviceBootstrap',
+    summary: 'Uses the selected credential provider\'s serialization and file-access policy.',
+    description: 'Uses the selected credential provider\'s serialization and file-access policy.',
+    methods: [
+      {
+        signature: 'issue(label: string): Promise<{ id: DeviceId; token: string }>',
+        description: 'Create a device in the local credential home without exposing a listener.',
+        parameters: [{ name: 'label', description: 'User-visible name for the device.' }],
+        returns: 'The device identifier and its token, shown once after the write commits.',
+      },
+      {
+        signature: 'list(): Promise<DeviceMetadata[]>',
+        description: 'Read local device metadata without credential material.',
+        parameters: [],
+        returns: 'The credential provider\'s current device inventory.',
       },
     ],
   },
@@ -2994,7 +3031,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: 'async connectStream(endpoint: SshStreamEndpoint, signal?: AbortSignal): Promise<Socket>',
-        description: 'Forward one authenticated stream through an independent SSH channel.',
+        description: 'Forward one authenticated stream through an independent SSH channel. Cancellation before socket creation releases its forwarding reservation.',
         parameters: [{ name: 'endpoint', description: 'private coordinates issued by this connection\'s helper.' }, { name: 'signal', description: 'cancellation of allocation and the resulting socket.' }],
         returns: 'a paused socket; attach a consumer before resuming it.',
       },
@@ -5234,7 +5271,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'ConnectionAdmission',
-    declaration: 'export type ConnectionAdmission = {\n    readonly peer: PeerScope;\n    readonly release: () => Promise<void>;\n} | {\n    readonly rejection: 401 | 403 | 409;\n};',
+    declaration: 'export type ConnectionAdmission = {\n    readonly peer: PeerScope;\n    readonly release: () => Promise<void>;\n} | {\n    readonly rejection: 401 | 403 | 409 | 503;\n};',
   },
   {
     name: 'ConnectionFetchHandler',
@@ -5246,7 +5283,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'ConnectionFetchRoute',
-    declaration: 'export interface ConnectionFetchRoute {\n    readonly path: string;\n    readonly methods: readonly ConnectionFetchMethod[];\n    readonly requestBody: ConnectionRequestBodyMode;\n    readonly fetch: (request: Request) => Promise<Response>;\n}',
+    declaration: 'export interface ConnectionFetchRoute {\n    readonly path: string;\n    readonly methods: readonly ConnectionFetchMethod[];\n    readonly requestBody: ConnectionRequestBodyMode;\n    readonly allowRemoteDevice?: true;\n    readonly fetch: (request: Request) => Promise<Response>;\n}',
   },
   {
     name: 'ConnectionIndexRequest',
@@ -5423,6 +5460,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'DeveloperMessage',
     declaration: 'export interface DeveloperMessage extends MessageBase {\n    readonly role: \'developer\';\n}',
+  },
+  {
+    name: 'DeviceId',
+    declaration: 'export type DeviceId = z.infer<typeof deviceId>;',
+  },
+  {
+    name: 'DeviceMetadata',
+    declaration: 'export interface DeviceMetadata {\n    readonly id: DeviceId;\n    readonly label: string;\n    readonly revoked: boolean;\n}',
   },
   {
     name: 'DiffCallView',
@@ -6782,11 +6827,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'RemoteAccessGrant',
-    declaration: 'export interface RemoteAccessGrant {\n    readonly resource: RemoteAccessResource;\n    readonly actions: readonly string[];\n}',
+    declaration: 'export interface RemoteAccessGrant {\n    readonly resource: RemoteAccessResource;\n    readonly actions: readonly string[];\n    readonly allResources?: readonly string[];\n}',
   },
   {
     name: 'RemoteAccessPolicy',
-    declaration: 'export interface RemoteAccessPolicy<P extends Principal> {\n    bindings(principal: P): readonly RemoteAccessBinding[];\n    explain?(request: RemoteAccessRequest<P>): string | undefined;\n}',
+    declaration: 'export interface RemoteAccessPolicy<P extends Principal> {\n    readonly globalActions?: ReadonlySet<RemoteAccessAction>;\n    bindings(principal: P): readonly RemoteAccessBinding[];\n    explain?(request: RemoteAccessRequest<P>): string | undefined;\n}',
   },
   {
     name: 'RemoteAccessRequest',

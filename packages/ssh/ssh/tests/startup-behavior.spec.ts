@@ -66,6 +66,7 @@ function setup(options: {
   holdHello?: boolean
   holdConnect?: boolean
   forwardFailure?: Error
+  afterForward?: () => void
   heartbeatFailure?: Error
   directoryFailure?: Error
 } = {}) {
@@ -97,7 +98,11 @@ function setup(options: {
   transport.spawn.mockReturnValue(child)
   transport.exec.mockImplementation((_file: string, args: string[], _options: unknown, callback: (error: Error | null) => void) => {
     const command = new Child()
-    queueMicrotask(() => { callback(args.includes('forward') ? options.forwardFailure ?? null : null); command.kill() })
+    queueMicrotask(() => {
+      callback(args.includes('forward') ? options.forwardFailure ?? null : null)
+      if (args.includes('forward')) options.afterForward?.()
+      command.kill()
+    })
     return command
   })
   transport.connect.mockImplementation(() => {
@@ -255,6 +260,29 @@ describe.skipIf(process.platform === 'win32')('SSH connection startup', () => {
     await expect(test.service.connectStream({ path: '/tmp/remote-helper/control', capability: 'b'.repeat(64) })).rejects.toBe(failure)
     expect(transport.exec.mock.calls[1]?.[1]).toContain('cancel')
     expect(transport.connect).not.toHaveBeenCalled()
+  })
+
+  it('cancels forwarding when the caller aborts before socket creation', async () => {
+    const controller = new AbortController()
+    const failure = new Error('caller stopped after forwarding')
+    const test = setup({ afterForward: () => { controller.abort(failure) } })
+    await test.service.ready
+    const endpoint = { path: '/tmp/remote-helper/control', capability: 'b'.repeat(64) }
+    await expect(test.service.connectStream(endpoint, controller.signal)).rejects.toBe(failure)
+    expect(transport.exec).toHaveBeenCalledTimes(2)
+    expect(transport.exec.mock.calls[1]?.[1]).toContain('cancel')
+    expect(transport.remove).toHaveBeenCalledWith('/virtual/ssh-startup/s0', { force: true })
+    expect(transport.connect).not.toHaveBeenCalled()
+  })
+
+  it('cancels forwarding when socket creation throws', async () => {
+    const test = setup()
+    const failure = new Error('local socket allocation failed')
+    transport.connect.mockImplementationOnce(() => { throw failure })
+    await test.service.ready
+    await expect(test.service.connectStream({ path: '/tmp/remote-helper/control', capability: 'b'.repeat(64) })).rejects.toBe(failure)
+    expect(transport.exec.mock.calls[1]?.[1]).toContain('cancel')
+    expect(transport.remove).toHaveBeenCalledWith('/virtual/ssh-startup/s0', { force: true })
   })
 
   it('keeps caller cancellation attached while a forwarded socket is connecting', async () => {

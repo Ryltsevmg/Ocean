@@ -7,7 +7,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { downloadArtifact } from '@electron/get'
-import extractZip from 'extract-zip'
+import { extractRuntimeZip } from '../../../scripts/extract-runtime-zip.ts'
 import { readPrimaryRuntime } from '../../../packages/skill/tool-workspace-dependencies/src/index.ts'
 import { desktopTargetPlatform, resolveDesktopBuildTarget, resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
 import { packagingStep } from './packaging-step.mjs'
@@ -27,7 +27,7 @@ async function prepareElectron({ platform, arch }: DesktopTarget): Promise<strin
   const archive = await packagingStep(process.env.OCEAN_DESKTOP_PACKAGING_RUN_DIR, 'download:electron',
     () => downloadArtifact({ version, platform, arch, artifactName: 'electron', cacheRoot: BUILD_PATHS.downloads }))
   rmSync(BUILD_PATHS.electron, { recursive: true, force: true })
-  await packagingStep(process.env.OCEAN_DESKTOP_PACKAGING_RUN_DIR, 'extract:electron', () => extractZip(archive, { dir: BUILD_PATHS.electron }))
+  await packagingStep(process.env.OCEAN_DESKTOP_PACKAGING_RUN_DIR, 'extract:electron', () => extractRuntimeZip(archive, BUILD_PATHS.electron))
   const executable = desktopElectronExecutable(BUILD_PATHS.electron, platform)
   return execFileSync(executable, ['-p', 'process.versions.node'], {
     encoding: 'utf8', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },

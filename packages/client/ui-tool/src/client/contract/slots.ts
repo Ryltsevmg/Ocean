@@ -10,7 +10,7 @@ import type {
 import type { MessageImageLoader, MessageImageSource } from '@ocean/ocean-client-ui-conversation/client'
 import type { AskUserQuestionAnswerItem, AskUserQuestionItem } from '@ocean/ocean-user-questions/types'
 import type {} from '@ocean/ocean-client-locale/client'
-import type { ToolFileInjected } from '../tool/file-menu.ts'
+import type { ToolFileInjected } from './file-menu.ts'
 
 declare module '@ocean/ocean-client-ui-slots' {
   interface SlotMap {

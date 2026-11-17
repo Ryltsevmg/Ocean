@@ -78,7 +78,7 @@ function styleInjectionModule(
 /**
  * Contract layers and pure folds a client bundle may inline: browser-safe
  * values with no runtime identity to share (no Symbol/instanceof/singleton state).
- * Everything else under @deepseek-ai/* is either a module-table entry
+ * Everything else under @ocean/* or @deepseek-ai/* is either a module-table entry
  * (external) or a leak the purity gate rejects.
  */
 export const INLINE_SAFE = /^(?:@ocean\/ocean-(?:file-reference|fs-patch|session|llm|tools|brand|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-time|util-values|util-workspace-path)(?:\/|$)|@ocean\/ocean-util-file-drag$|@ocean\/ocean-token-meter\/client$|@ocean\/ocean-commands\/builtin$|@ocean\/ocean-native-command\/types$|@ocean\/ocean-host-open-in-app\/shared$|@ocean\/ocean-plugin-manager\/registry$|@ocean\/ocean-agent-preset-registry\/display$|@ocean\/ocean-api-workspace-controller\/default-workspace$|@ocean\/ocean-spill-policy\/notice$)/
@@ -135,12 +135,14 @@ export function clientBundle(
   options: ClientBundleOptions = {},
 ): BuildFaceConfig {
   const manifest = readPackageManifest(packageDir)
-  const lib = clientLibraryConfig(manifest, libEntry, options.lib)
+  const libraries = options.independentLibEntries === true
+    ? libEntry.map(entry => clientLibraryConfig(manifest, [entry], options.lib))
+    : [clientLibraryConfig(manifest, libEntry, options.lib)]
   return ({ env }) => {
     const face = buildFace(env?.OCEAN_BUILD_FACE)
     const clientEntry = face === undefined ? 'src/client/index.ts' : 'lib/types/client/index.js'
     const client = clientConfig(manifest, packageDir, clientEntry, options.clientBanner, options.dualClient === true)
-    const node = [lib, ...(options.companions ?? [])]
+    const node = [...libraries, ...(options.companions ?? [])]
     const clientFaces = options.dualClient === true
       ? [nodeClientConfig(manifest, clientEntry), client]
       : [client]
@@ -230,6 +232,8 @@ export function clientOnly(configs: readonly UserConfig[]): BuildFaceConfig {
 }
 
 interface ClientBundleOptions {
+  /** Bundle each Node entry independently, without cross-entry shared chunks. */
+  readonly independentLibEntries?: boolean
   /** Emit the Node-side artifacts during the Host pass instead of the Client pass. */
   readonly hostPhase?: boolean
   /** Emit independent ESM `client.node.js` and browser-factory `client.browser.js` from the same Client entry. */
@@ -852,7 +856,7 @@ function clientConfig(
       // Cross-plugin collaboration goes through cordis services instead.
       name: 'ocean-client-bundle-purity',
       resolveId(source: string) {
-        if (!source.startsWith('@deepseek-ai/')) return null
+        if (!source.startsWith('@ocean/') && !source.startsWith('@deepseek-ai/')) return null
         if (isRequested(source)) return null // requested module-table row: external wins
         if (VENDORED_LIBRARY.test(source)) return null // vendored library: inline, no shared identity
         if (INLINE_SAFE.test(source) || GENERATED_REMOTE.test(source)) return null // wire contribution: inline is the point

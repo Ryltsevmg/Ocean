@@ -15,9 +15,40 @@
 | `ocean --profile sdk` | 通过 JSON-RPC stdio 为 SDK 客户端提供服务，直至关闭或断开连接。 |
 | `ocean --profile sdk-minimal` | 以独立极简 agent（智能体）配置树为 SDK 客户端提供服务。 |
 | `ocean web` | 启动 Web profile。 |
+| `ocean serve` | 为远程设备运行 Host。 |
+| `ocean connect` | 向远程 Host 发送命令。 |
+| `ocean remote-device` | 在本地初始化设备凭据，或通过运行中 Host 的 Unix 套接字管理凭据。 |
 | `ocean plugin --profile <name> <pnpm args>` | 通过在 profile 目录中转发给 pnpm 来管理该 profile 的插件。 |
 
-运行命令时所在的目录将作为默认 workspace 根目录。`web`、`headless`、`sdk`、`sdk-minimal` 和 `acp` profile 在首次使用时会从随附模板自动初始化。使用 `--from-default-profile` 可以基于这些模板之一，在非内置名称处创建或重置其他 profile；通过 `ocean plugin` 则可以初始化一个以 base 为基础的 profile。`desktop` 名称保留给 Electron 持有的 profile，因此 CLI（命令行界面）会拒绝针对它的启动和配置 dump 请求。npm CLI 也会拒绝其插件管理请求；[Desktop 内置命令](../desktop/README.zh.md#bundled-command-runtime)可以使用该安装的运行时管理已初始化的 Desktop profile。
+运行命令时所在的目录将作为默认 workspace 根目录。`web`、`serve`、`connect`、`remote-device`、`headless`、`sdk`、`sdk-minimal` 和 `acp` profile 在首次使用时会从随附模板自动初始化。使用 `--from-default-profile` 可以基于这些模板之一，在非内置名称处创建或重置其他 profile；通过 `ocean plugin` 则可以初始化一个以 base 为基础的 profile。`desktop` 名称保留给 Electron 持有的 profile，因此 CLI（命令行界面）会拒绝针对它的启动和配置 dump 请求。npm CLI 也会拒绝其插件管理请求；[Desktop 内置命令](../desktop/README.zh.md#bundled-command-runtime)可以使用该安装的运行时管理已初始化的 Desktop profile。
+
+`serve` profile 运行 Web Host，不打开浏览器，也不监视配置。就绪消息输出不含凭据的 URL。非环回监听地址必须使用 TLS。可在浏览器、Desktop 的**连接远程 Host**对话框或通过 `ocean connect` 使用设备令牌登录。此 profile 拒绝旧版所有者凭据。
+
+使用原生 TLS 时，通过 `--tls-cert` 传入 PEM 证书链，通过 `--tls-key` 传入对应的密钥。当 HTTPS 反向代理终止 TLS 时，将 Ocean 绑定到环回地址，用 `--public-url` 指定外部 HTTPS 根地址，用 `--trusted-host` 指定其主机名。配置代理以保留公共 Host 标头、转发 WebSocket 升级请求，并在将请求转发给 Ocean 前移除外部挂载路径前缀。客户端使用包含挂载路径的公共 URL。服务、容器和恢复步骤见[部署远程 Host](../../docs/cookbook/deploying-remote-host.zh.md)。
+
+在 Windows、macOS 和 Linux 上，以 Host 的服务账户并使用相同的 `OCEAN_HOME` 运行 `ocean remote-device --bootstrap create <label>`，无需启动监听器即可创建设备。使用 `ocean remote-device --bootstrap list` 查看设备元数据，不输出令牌。运行中的 Host 通过文件监听器读取凭据更新；配置为 `watch: false` 的凭据提供者需要重新加载。Bootstrap 仅支持 create 和 list；rotate 和 revoke 需要使用运行中的 Unix 管理套接字。`--bootstrap` 和 `--socket` 必须且只能选择一个。`--timeout` 仅限制套接字操作的等待时间。
+
+在 Unix 上，使用 `ocean serve --device-admin-socket /absolute/private-dir/admin.sock` 启动 Host。目录必须已存在，且只能由服务器用户访问。运行 `ocean remote-device --socket /absolute/private-dir/admin.sock create <label>`，或使用 `list`、`rotate <id>` 和 `revoke <id>`。创建和轮换会将持有者令牌输出到 stdout。请直接将它交给目标客户端，避免写入日志。
+
+运行 `ocean connect --url https://host.example --token-env OCEAN_DEVICE_TOKEN list` 可用 JSON 输出远程 Session 摘要。启动前请设置指定的环境变量，或配合管道或输入重定向使用 `--token-stdin`。客户端正常验证 TLS 证书，并在命令执行期间将登录凭据保存在内存中。
+
+同一客户端支持 `create [--cwd <host-path>]`、`history <session-id>`、`prompt <session-id> <text> [--steer]`、`state <session-id>`、`wait <session-id>` 和 `cancel <session-id>`。发送提示前会把请求 ID 写入 stderr，结果未知时的诊断也会显示该 ID。仅在重试同一个提示时使用 `--request-id <uuid>`。其他修改状态的命令结果未知时，请先检查会话再重试。
+
+使用 `approvals <session-id>` 列出待处理的工具审批，并使用 `approve <session-id> <approval-id> <allow-or-deny>` 作答。响应中的 `accepted: false` 表示该会话已无对应的待处理请求。Host 设置了审批期限时，待处理项会包含以 Unix 毫秒表示的 `expiresAt`。
+
+使用 `questions <session-id>` 列出当前问题，并用 `answer-question <session-id> <question-request-id> <answer-json>` 提交结构化答复。例如，`{"answers":[{"id":"q1","selected":["Remote"]}]}` 选择一个已提供的选项。自由文本答复使用空的 `selected` 数组和 `custom` 字符串。前台计时结束后，使用 `questions <session-id> --continued` 查找问题的 `callId`。将该 ID 传给带有 `--continued` 的 `answer-question`。
+
+使用 `files <session-id> [path]` 列出 Host 的工作区目录。使用 `read <session-id> <path> [--offset <line>] [--limit <lines>]` 读取文本页。相对路径以 Host 上的 Session 工作区为基准。
+
+使用 `upload <session-id> <local-path>` 流式上传本地文件并获取 JSON 附件回执。向同一会话发送 `prompt <session-id> <text> --file <receipt-id>` 时传入返回的 `receiptId`。
+
+使用 `terminals <session-id>` 列出 Host 终端，使用 `terminal-create <session-id> [--id <id>]` 启动 Host shell，并使用 `terminal-close <session-id> <terminal-id>` 结束它。创建命令会在发送请求前打印终端 ID，以便丢失响应时复用相同标识。
+
+使用 `terminal-watch <session-id> <terminal-id>` 以 JSON Lines 格式读取保留终端的屏幕和后续帧。传输失败后，客户端检查现有登录并按退避策略重试。下一张快照替换此前的屏幕。Host 或启动 epoch 变更时，监视结束。
+
+使用 `terminal-write <session-id> <terminal-id> <text>` 发送一次输入并等待 Host 确认。需要 shell 执行该行时，请在文本中包含换行符。如果提交后连接断开，请先检查终端，再决定是否重新发送。
+
+使用 `follow <session-id>` 以 JSON Lines 格式读取历史快照和后续事件。连接中断后，新的有界快照替换此前的基线。如果 Host 在恢复期间拒绝当前登录，命令会退出并提示使用有效的设备令牌。使用 `history <session-id> --before-seq <seq>` 请求当前页首个事件之前的历史。
 
 ## 应用参数
 

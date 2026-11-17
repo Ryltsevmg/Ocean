@@ -24,6 +24,8 @@ const CLIENT_DIR = join(root, 'packages/client')
 const CONTRACT_DIRS = new Set(['contract'])
 /** Top-level client files allowed to import across domains (assembly layer). */
 const ASSEMBLY_FILES = new Set(['apply.ts', 'index.ts', 'index.tsx'])
+/** Static resources contain no domain implementation, regardless of their owning directory. */
+const RESOURCE_EXTENSION = /\.(?:css|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)(?:[?#].*)?$/
 
 interface Violation { file: string; imported: string; reason: string }
 
@@ -51,28 +53,38 @@ export function resolveClientImport(file: string, specifier: string): string {
   return posix.normalize(posix.join(posix.dirname(file), specifier))
 }
 
+/**
+ * Check a relative source import against the client implementation layers.
+ * @param file - Importing source relative to `src/client`.
+ * @param specifier - Relative module or static-resource specifier.
+ * @returns A layering violation, or undefined for an allowed import.
+ */
+export function clientImportViolation(file: string, specifier: string): string | undefined {
+  const fromDomain = domainOf(file)
+  if (fromDomain === '' && ASSEMBLY_FILES.has(file)) return undefined
+  const target = resolveClientImport(file, specifier)
+  if (target === '..' || target.startsWith('../') || RESOURCE_EXTENSION.test(target)) return undefined
+  const toDomain = domainOf(target)
+  if (toDomain === '' || CONTRACT_DIRS.has(toDomain) || fromDomain === toDomain) return undefined
+  return fromDomain === ''
+    ? `top-level non-assembly file imports domain "${toDomain}" (only apply/index may assemble)`
+    : `domain "${fromDomain}" imports sibling domain "${toDomain}" (route shared API through contract/)`
+}
+
 function checkPackage(pkgName: string, clientDir: string): Violation[] {
   const violations: Violation[] = []
   const files = listSources(clientDir)
   for (const rel of files) {
-    const fromDomain = domainOf(rel)
-    const isAssembly = fromDomain === '' && ASSEMBLY_FILES.has(rel)
-    if (isAssembly) continue
     const source = readFileSync(join(clientDir, rel), 'utf8')
     for (const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g)) {
       const spec = match[1]
       if (spec === undefined) continue
-      const target = resolveClientImport(rel, spec)
-      if (target === '..' || target.startsWith('../')) continue // package-level rules govern
-      const toDomain = domainOf(target)
-      if (toDomain === '' || CONTRACT_DIRS.has(toDomain)) continue // top-level shared file or contract layer
-      if (fromDomain === toDomain) continue // inside one domain
+      const reason = clientImportViolation(rel, spec)
+      if (reason === undefined) continue
       violations.push({
         file: `${pkgName}/src/client/${rel}`,
         imported: spec,
-        reason: fromDomain === ''
-          ? `top-level non-assembly file imports domain "${toDomain}" (only apply/index may assemble)`
-          : `domain "${fromDomain}" imports sibling domain "${toDomain}" (route shared API through contract/)`,
+        reason,
       })
     }
   }

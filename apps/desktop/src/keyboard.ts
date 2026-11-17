@@ -13,11 +13,13 @@ import { DESKTOP_IPC, assertDesktopSender } from './ipc.ts'
  * @param platform - local device platform.
  * @param updateMenu - rebuild the application menu when the close accelerator or availability changes.
  * @param overlayInput - Current shell-owned input blocking state for the product window.
+ * @param getActiveContents - current application view, including an embedded Host view.
  * @returns menu construction, editor key delivery, window attachment, and teardown operations.
  */
 export function installDesktopShortcuts(
   getWindow: () => BrowserWindow | undefined, userData: string, platform: ShortcutPlatform, updateMenu: () => void,
   overlayInput: (window: BrowserWindow) => { readonly revision: number; readonly blocked: boolean },
+  getActiveContents: () => WebContents | undefined = () => getWindow()?.webContents,
 ): {
   fileMenu(labels: { fileMenu: string; closePage: string }): MenuItemConstructorOptions
   /**
@@ -27,6 +29,13 @@ export function installDesktopShortcuts(
    */
   sendEditingKey(keyCode: string, modifiers: Array<'control'>): void
   attach(window: BrowserWindow): void
+  /**
+   * Attach a product renderer hosted inside the same native window.
+   * @param window - Native owner.
+   * @param contents - Owned remote application contents.
+   * @returns Idempotent input listener disposer.
+   */
+  attachView(window: BrowserWindow, contents: WebContents): () => void
   /**
    * Intercept an approved browser guest's keys until its lease ends.
    * @param window - owning product window.
@@ -38,20 +47,22 @@ export function installDesktopShortcuts(
   dispose(): void
 } {
   let definitions: readonly ShortcutDefinition[] = []
-  let recording = false
+  let recordingContents: WebContents | undefined
+  const isRecording = (): boolean => recordingContents !== undefined && recordingContents === getActiveContents()
   let revision: ShortcutRevision | undefined
   let closeBinding: NormalizedBinding | null = null
   let editingInput: BrowserWindow['webContents'] | undefined
   const scopedDesktop = platform === 'windows' || platform === 'macos'
   const disposers = new Set<() => void>()
+  const productInputs = new Map<WebContents, BrowserWindow>()
   const guestInputs = new Map<WebContents, { window: BrowserWindow; reset(): void }>()
   const closeAccelerator = (): string | undefined => presentBinding(closeBinding, platform).aria
     ?.replace('Meta+', 'Command+').replace(/Arrow(Up|Down|Left|Right)$/u, '$1')
   const sendMenuClose = (): void => {
     const window = getWindow()
     if (window === undefined || window.isDestroyed() || !window.isFocused() || !window.isEnabled()
-      || revision === undefined || recording || overlayInput(window).blocked) return
-    window.webContents.send(DESKTOP_IPC.shortcutsInput, { kind: 'menu', commandId: 'page.close', revision })
+      || revision === undefined || isRecording() || overlayInput(window).blocked) return
+    getActiveContents()?.send(DESKTOP_IPC.shortcutsInput, { kind: 'menu', commandId: 'page.close', revision })
   }
   let keys = new Set<string>()
   const publish = (snapshot: ShortcutConfigSnapshot): void => {
@@ -64,23 +75,26 @@ export function installDesktopShortcuts(
     const close = rows.find(row => row.id === 'page.close')
     closeBinding = close?.issue === null && close.conflicts.length === 0 ? close.binding : null
     if (wasEnabled !== (revision !== undefined) || previousAccelerator !== closeAccelerator()) updateMenu()
-    const window = getWindow()
-    if (window !== undefined && !window.isDestroyed() && window.webContents.mainFrame.url.startsWith('dsh-app://app/')) {
-      window.webContents.send(DESKTOP_IPC.shortcutsChanged, snapshot)
+    for (const [contents, window] of productInputs) {
+      if (!window.isDestroyed() && !contents.isDestroyed() && contents.mainFrame.url.startsWith('dsh-app://app/')) {
+        contents.send(DESKTOP_IPC.shortcutsChanged, snapshot)
+      }
     }
   }
   const persistence = desktopKeybindings(userData, platform, publish)
-  const assertSender = (event: IpcMainInvokeEvent): BrowserWindow => {
+  const assertSender = (event: IpcMainInvokeEvent, allowBackground = false): BrowserWindow => {
     const window = getWindow()
-    if (window === undefined || window.isDestroyed() || event.sender !== window.webContents
-      || event.senderFrame !== window.webContents.mainFrame) throw new Error('desktop shortcuts: rejected sender')
+    if (window === undefined || window.isDestroyed() || productInputs.get(event.sender) !== window
+      || (!allowBackground && event.sender !== getActiveContents()) || event.senderFrame !== event.sender.mainFrame) throw new Error('desktop shortcuts: rejected sender')
     assertDesktopSender(event, ['app'])
     return window
   }
   ipcMain.handle(DESKTOP_IPC.shortcutsGet, async (event, input: unknown) => {
-    assertSender(event)
-    definitions = parseShortcutDefinitions(input)
-    persistence.setDefinitions(definitions)
+    const window = assertSender(event, true)
+    if (event.sender === window.webContents) {
+      definitions = parseShortcutDefinitions(input)
+      persistence.setDefinitions(definitions)
+    }
     return persistence.readCurrent()
   })
   ipcMain.handle(DESKTOP_IPC.shortcutsEdit, async (event, input: unknown, expectedRevision: unknown) => {
@@ -89,18 +103,19 @@ export function installDesktopShortcuts(
     return persistence.edit(parseShortcutEdit(input), expectedRevision as ShortcutRevision)
   })
   ipcMain.handle(DESKTOP_IPC.shortcutsRecording, (event, active: unknown) => {
-    const window = assertSender(event)
+    assertSender(event)
     if (typeof active !== 'boolean') throw new Error('desktop shortcuts: invalid recording state')
-    recording = active
-    window.webContents.setIgnoreMenuShortcuts(active)
+    recordingContents = active ? event.sender : undefined
+    event.sender.setIgnoreMenuShortcuts(active)
   })
   ipcMain.handle(DESKTOP_IPC.shortcutsCloseWindow, (event, expected: unknown) => {
     const window = assertSender(event)
-    if (expected !== revision || revision === undefined || recording || !window.isFocused() || !window.isEnabled()
+    if (expected !== revision || revision === undefined || isRecording() || !window.isFocused() || !window.isEnabled()
       || overlayInput(window).blocked) return
     window.close()
   })
   function attachInput(window: BrowserWindow, contents: WebContents, guestName?: DesktopBrowserLeaseId): () => void {
+    const isLocalRenderer = guestName === undefined && window.webContents === contents
     let deadKey = false
     const held = new Set<string>()
     const consumed = new Map<string, 'press' | 'repeat'>()
@@ -111,15 +126,17 @@ export function installDesktopShortcuts(
       deadKey = false; held.clear(); consumed.clear(); inputFrame = null; inputRevision = undefined
       if (!contents.isDestroyed()) contents.setIgnoreMenuShortcuts(false)
     }
-    if (guestName !== undefined) guestInputs.set(contents, { window, reset: resetInput })
+    if (guestName === undefined) productInputs.set(contents, window)
+    else guestInputs.set(contents, { window, reset: resetInput })
     const resetWindow = (): void => {
       resetInput()
       for (const guest of guestInputs.values()) if (guest.window === window) guest.reset()
     }
     const clear = (): void => {
       resetInput()
-      if (guestName !== undefined) return
-      definitions = []; keys.clear(); recording = false
+      if (recordingContents === contents) recordingContents = undefined
+      if (!isLocalRenderer) return
+      definitions = []; keys.clear()
       persistence.setDefinitions(null)
     }
     const navigation = (event: Electron.Event<Electron.WebContentsDidStartNavigationEventParams>): void => {
@@ -137,7 +154,7 @@ export function installDesktopShortcuts(
         return
       }
       if (window !== getWindow() || !window.isFocused() || !window.isEnabled() || revision === undefined
-        || (guestName !== undefined && !contents.isFocused())) {
+        || (guestName === undefined ? contents !== getActiveContents() : !contents.isFocused())) {
         contents.setIgnoreMenuShortcuts(false)
         held.clear()
         consumed.clear()
@@ -148,11 +165,11 @@ export function installDesktopShortcuts(
       const match = keys.has(key)
       const menuMatch = closeBinding !== null && closeBinding.secondCode === undefined && modifiers.join('+') === closeBinding.modifiers.join('+')
         && input.key.toUpperCase() === (closeBinding.code.startsWith('Key') ? closeBinding.code.slice(3) : input.code === closeBinding.code ? input.key.toUpperCase() : '')
-      contents.setIgnoreMenuShortcuts(recording || match || menuMatch)
+      contents.setIgnoreMenuShortcuts(isRecording() || match || menuMatch)
       const frame = contents.focusedFrame
       const composing = input.isComposing || input.key === 'Dead' || deadKey || input.modifiers.includes('altgr')
       if (input.type === 'keyDown') deadKey = input.key === 'Dead'
-      if (recording || composing || frame === null) { held.clear(); consumed.clear(); return }
+      if (isRecording() || composing || frame === null) { held.clear(); consumed.clear(); return }
       let binding: NormalizedBinding = { code: input.code, modifiers }
       let priority = false
       if (scopedDesktop) {
@@ -196,7 +213,8 @@ export function installDesktopShortcuts(
       while (guestName === undefined && !main && embedding.parent !== null && embedding.parent !== contents.mainFrame) {
         embedding = embedding.parent
       }
-      window.webContents.send(DESKTOP_IPC.shortcutsInput, { kind: guestName === undefined ? main ? 'keyboard' : 'iframe' : 'webview',
+      const recipient = guestName === undefined ? contents : window.webContents
+      recipient.send(DESKTOP_IPC.shortcutsInput, { kind: guestName === undefined ? main ? 'keyboard' : 'iframe' : 'webview',
         revision, frameName: guestName ?? (main ? '' : embedding.name),
         code: binding.code, ...(binding.secondCode === undefined ? {} : { secondCode: binding.secondCode }),
         repeat: input.isAutoRepeat, control: input.control, alt: input.alt, shift: input.shift, meta: input.meta })
@@ -209,6 +227,8 @@ export function installDesktopShortcuts(
       if (guestName === undefined) { window.off('blur', resetWindow); window.off('closed', closed) }
       disposers.delete(dispose)
       guestInputs.delete(contents)
+      productInputs.delete(contents)
+      if (recordingContents === contents) recordingContents = undefined
       if (!contents.isDestroyed()) contents.setIgnoreMenuShortcuts(false)
     }
     const closed = (): void => { clear(); dispose() }
@@ -226,7 +246,8 @@ export function installDesktopShortcuts(
       const window = getWindow()
       if (window === undefined || window.isDestroyed() || overlayInput(window).blocked) return
       const contents = [...guestInputs].find(([guest, owner]) => owner.window === window && !guest.isDestroyed() && guest.isFocused())?.[0]
-        ?? window.webContents
+        ?? getActiveContents()
+      if (contents === undefined || contents.isDestroyed()) return
       contents.focus()
       const previous = editingInput
       editingInput = contents
@@ -236,7 +257,7 @@ export function installDesktopShortcuts(
         contents.sendInputEvent({ type: 'keyUp', keyCode, modifiers })
       } finally {
         editingInput = previous
-        if (!contents.isDestroyed()) contents.setIgnoreMenuShortcuts(recording)
+        if (!contents.isDestroyed()) contents.setIgnoreMenuShortcuts(isRecording())
       }
     },
     fileMenu: (labels) => {
@@ -248,6 +269,7 @@ export function installDesktopShortcuts(
       }] }
     },
     attach(window) { attachInput(window, window.webContents) },
+    attachView: attachInput,
     attachGuest: attachInput,
     dispose() {
       for (const dispose of disposers) dispose()

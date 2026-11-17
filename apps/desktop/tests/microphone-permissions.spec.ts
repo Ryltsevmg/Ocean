@@ -6,12 +6,12 @@ import { installMicrophonePermissions } from '../src/microphone-permissions.ts'
 const access = vi.hoisted(() => ({ getMediaAccessStatus: vi.fn(() => 'granted'), askForMediaAccess: vi.fn(async () => true) }))
 vi.mock('electron', () => ({ systemPreferences: access }))
 afterEach(() => { vi.unstubAllGlobals(); vi.resetAllMocks() })
-function fixture(platform: NodeJS.Platform = 'darwin') {
+function fixture(platform: NodeJS.Platform = 'darwin', scope: 'local' | 'remote' = 'local') {
   vi.stubGlobal('process', { ...process, platform })
   const setPermissionCheckHandler = vi.fn<Session['setPermissionCheckHandler']>()
   const setPermissionRequestHandler = vi.fn<Session['setPermissionRequestHandler']>()
   const primary = {} as WebContents
-  installMicrophonePermissions({ setPermissionCheckHandler, setPermissionRequestHandler }, () => primary)
+  installMicrophonePermissions({ setPermissionCheckHandler, setPermissionRequestHandler }, () => primary, scope)
   return { primary, check: setPermissionCheckHandler.mock.calls[0]![0]!, request: setPermissionRequestHandler.mock.calls[0]![0]! }
 }
 it('allows only audio checks from the owned primary application frame', () => {
@@ -66,4 +66,19 @@ it.each(['win32', 'linux'] as const)('leaves system authorization to Chromium on
   f.request(f.primary, 'media', done, { isMainFrame: true, requestingUrl: 'dsh-app://app/', mediaTypes: ['audio'] })
   expect(done).toHaveBeenCalledWith(true)
   expect(access.askForMediaAccess).not.toHaveBeenCalled()
+})
+it('denies remote device permissions outside audio and owned-frame clipboard writes', () => {
+  const f = fixture('linux', 'remote'), done = vi.fn()
+  const details = { isMainFrame: true, requestingUrl: 'dsh-app://app/', mediaType: 'audio' as const, mediaTypes: ['audio'] }
+  for (const permission of ['geolocation', 'hid', 'serial', 'usb', 'clipboard-read', 'notifications'] as const) {
+    expect(f.check(f.primary, permission, 'dsh-app://app', details)).toBe(false)
+    f.request(f.primary, permission, done, details)
+    expect(done).toHaveBeenLastCalledWith(false)
+  }
+  expect(f.check(f.primary, 'clipboard-sanitized-write', 'dsh-app://app', details)).toBe(true)
+  f.request(f.primary, 'clipboard-sanitized-write', done, details)
+  expect(done).toHaveBeenLastCalledWith(true)
+  expect(f.check(f.primary, 'clipboard-sanitized-write', 'https://other.example', details)).toBe(false)
+  f.request(f.primary, 'clipboard-sanitized-write', done, { ...details, isMainFrame: false })
+  expect(done).toHaveBeenLastCalledWith(false)
 })

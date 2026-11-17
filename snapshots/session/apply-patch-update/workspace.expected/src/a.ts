@@ -1,1 +1,1 @@
-export const ALPHA = 1;
+﻿export const ALPHA = 1;

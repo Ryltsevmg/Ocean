@@ -105,6 +105,6 @@ Production 历史读取使用 `{ recovery: 'recoverable', validation: 'transform
 <details>
 <summary>维护者的工作上下文——点击展开</summary>
 
-无。
+[`tests/fixtures/upstream-e8f7b93a/`](tests/fixtures/upstream-e8f7b93a/source-evidence.json) 中冻结的上游 fixture 保留原始字节和源路径，包括上游名称。记录的摘要使兼容性输入的校验独立于 Ocean 生成的示例；产品更名不得重写这些文件或替换其摘要。Fixture 布局迁移排除这四个证据文件，包括当前格式的输入；其原始物理编码仍是 fixture 的一部分。
 
 </details>

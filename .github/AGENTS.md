@@ -7,11 +7,11 @@ Use read-only repository permissions, SHA-pinned actions, nonpersistent checkout
 <a id="ocean-qualification"></a>
 ## Ocean qualification
 
-[Ocean verification](workflows/ocean-verify.yml) is configured for pushes and pull requests targeting `main`, plus manual dispatch, in `Ryltsevmg/Ocean`. It selects offline release-policy tests, build and type checks, localization checks and focused plugin, UI and Codex tests. This is not exhaustive regression coverage, live authentication or visual acceptance.
+[Ocean verification](workflows/ocean-verify.yml) is configured for pushes and pull requests targeting `main`, plus manual dispatch, in `Ryltsevmg/Ocean`. Separate hosted jobs run static checks, the unit inventory with per-file coverage, and built CLI, Session, Python SDK and Web comparisons. Coverage-heavy exemptions run uninstrumented once. Build stages and each job’s test workers are bounded independently; the workflow owns their exact limits. All replay is keyless and compares committed expected output.
 
 [Linux packaging](workflows/ocean-package-linux.yml) requires manual dispatch on `main`. Its file-scoped push event registers the definition but does not run packaging. Separate x64 and ARM64 dispatches select native hosted Ubuntu runners. Unsigned archives, SHA-256 checksums and build metadata are retained as workflow artifacts for seven days, not GitHub Releases or an update feed. Both workflows use read-only repository access without signing or deployment secrets.
 
-Hosted execution has not been verified here. Configured tool versions alone do not establish runner availability, quota, memory, native dependency support or download access. Local checks do not qualify hosted CI. Full regression and macOS/Windows packaging and signing are outside these definitions.
+Hosted execution has not been verified here. Configured checks and tool versions do not establish runner availability, quota, memory, native dependency support or download access. Local checks do not qualify hosted CI. Live authentication, real-model tests, performance benchmarks, compatibility matrices, installed Python wheels, and macOS/Windows packaging and signing are outside these definitions.
 
 <a id="release-prerequisites"></a>
 ## Release prerequisites

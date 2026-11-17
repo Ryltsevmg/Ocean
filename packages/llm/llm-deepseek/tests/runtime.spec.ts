@@ -426,7 +426,7 @@ describe('DeepSeekAdapter against a mock server', () => {
     expect(server.fileRequests).toEqual([{
       method: 'POST',
       path: '/v1/files',
-      filename: `ocean-${'a'.repeat(16)}-${'b'.repeat(8)}.png`,
+      filename: `dsh-${'a'.repeat(16)}-${'b'.repeat(8)}.png`,
       bytes: 3,
     }])
     expect(signalSeen[0]).toBeInstanceOf(AbortSignal)

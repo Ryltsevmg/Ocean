@@ -14,7 +14,8 @@ import { isPresentedData, isPresentedFile, PRESENT_OPEN_PATH, PRESENT_HOST_PATH,
 /**
  * Register the deliverables routes inside Connection's authentication fence:
  * desktop metadata, change summaries and comparisons, declared-file actions,
- * and changed-file opening.
+ * and changed-file opening. Devices may read summaries and comparisons;
+ * desktop metadata, application discovery, and native opens remain owner-only.
  * @param ctx - Session lookup, change summaries, native opener, and route lifetime.
  */
 export function registerPresentOpen(ctx: Context): void {
@@ -25,6 +26,7 @@ export function registerPresentOpen(ctx: Context): void {
   })
   ctx.connection.fetch.register({
     path: CHANGED_FILES_PATH, methods: ['GET'], requestBody: 'buffered',
+    allowRemoteDevice: true,
     fetch: request => Promise.resolve(handleChangesSummary(ctx, request)),
   })
   const lifetime = new AbortController()
@@ -41,6 +43,7 @@ export function registerPresentOpen(ctx: Context): void {
       path,
       methods: [...methods],
       requestBody: 'buffered',
+      ...(path === CHANGES_DIFF_PATH ? { allowRemoteDevice: true as const } : {}),
       fetch: (request) => {
         const task = handler(ctx, new Request(request, {
           signal: AbortSignal.any([request.signal, lifetime.signal]),

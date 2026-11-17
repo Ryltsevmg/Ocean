@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Mercado de plugins",
+    "description": "Um separador «Catálogo» na página Plugins com pacotes selecionados que podem ser instalados, removidos e atualizados pelo gestor de plugins do perfil.",
+    "detail": "docs/DETAIL.md"
+  }
+}

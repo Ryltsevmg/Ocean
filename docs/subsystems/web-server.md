@@ -161,6 +161,29 @@ createPeer(options: { readonly principal: Principal; readonly interactions?: 'an
 admitConnection(request: ConnectionTrustRequest): ConnectionAdmission
 
 /**
+ * Authenticate a network request and return an owned transport lease.
+ * @param request - Incoming HTTP request or upgrade.
+ * @param socket - Whether the request upgrades to a socket.
+ * @returns A rejection or the Peer and its release callback.
+ */
+admitTransport(request: ConnectionTrustRequest & { readonly destroyed: boolean }, socket: boolean): Promise<ConnectionAdmission>
+
+/**
+ * Admit an index render for a logged-in device where device mode is enabled.
+ * @param request - Browser document request.
+ * @returns A render lease or rejection, or undefined for legacy index login.
+ */
+admitDeviceDocument?(request: Request): Promise<ConnectionAdmission | undefined>
+
+/**
+ * Check whether a request may answer an event delivered to a device stream.
+ * @param first - Request Peer.
+ * @param second - Event stream Peer.
+ * @returns Whether the Peers share a live device login.
+ */
+sharesDeviceSession?(first: PeerScope, second: PeerScope): boolean
+
+/**
  * Authenticate one frontend index request, owning a token redirect or 401.
  * The cookie this mints is `Secure` when the mounted Web carrier serves TLS,
  * which only that listener's protocol decides.

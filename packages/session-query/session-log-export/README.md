@@ -106,7 +106,7 @@ The shared context-menu package declares the captured `sessionHeader` target, in
 
 Both entry paths issue a `HEAD` preflight to the document-relative `api/session.export?...`, then hand the GET route to the browser download manager without buffering the ZIP in JavaScript. One controller owns one in-flight download per session, collapses concurrent gestures into that operation, and cancels the preflight on plugin disposal. The root component selects the earliest open entry from the controller’s Session-keyed snapshot using each operation’s initiation order; no separate dialog queue is maintained. Disposal waits for all preflights to settle and prevents a late response from starting a browser save; a download already handed to the browser remains browser-owned.
 
-The Host route is a feature-owned exact Fetch contribution. Connection applies its Host/Origin and browser-session checks and bridges the streaming `Response`; this package owns query validation, live-session flushes, handle-based log reads and attachment reads, ZIP generation, and HTTP status semantics.
+The Host route is a feature-owned exact Fetch contribution. Connection applies its Host/Origin and owner or remote-device session checks and bridges the streaming `Response`; both export routes admit only GET and HEAD. This package owns query validation, live-session flushes, handle-based log reads and attachment reads, ZIP generation, and HTTP status semantics.
 
 ### Markdown copy flow
 

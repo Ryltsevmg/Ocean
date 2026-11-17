@@ -38,7 +38,7 @@ afterEach(async () => {
  * @param args - the invocation's inner arguments.
  * @returns the service value and observed consumer/process effects.
  */
-async function bootProvider(args: string[]): Promise<{
+async function bootProvider(args: string[], profile?: string): Promise<{
   values: WebStartupValues | undefined
   observed: Observed
 }> {
@@ -81,6 +81,12 @@ export const apply = ctx => globalThis.__webStartupApply(ctx)
   globals.__webStartupObserved = observed
 
   const ctx = new Context()
+  if (profile !== undefined) {
+    ctx.provide('profileContext', {
+      name: profile, dir, patchPath: join(dir, 'cordis.patch.yml'), installAnchor: join(dir, 'package.json'),
+      cwd: dir, home: dir, startedBundles: [], overlays: [], telemetryDisabledEnv: undefined,
+    })
+  }
   await ctx.plugin(Loader)
   ctx.loader.builtins.include = Include
   provideCmdline(ctx, { args, exit: code => void observed.exits.push(code) })
@@ -94,6 +100,74 @@ export const apply = ctx => globalThis.__webStartupApply(ctx)
 }
 
 describe('web command-line provider', () => {
+  it.each([
+    { profile: 'connect', command: 'prompt', description: 'Submit or steer a prompt' },
+    { profile: 'remote-device', command: 'create', description: 'Create a device and return its token once' },
+    { profile: 'remote-device', command: 'rotate', description: 'Replace a device token' },
+    { profile: 'remote-device', command: 'revoke', description: 'Revoke a device and close its live connections' },
+  ])('describes $profile $command before startup', async ({ profile, command, description }) => {
+    const { values, observed } = await bootProvider([command, '--help'], profile)
+    expect(observed.out).toContain(description)
+    expect(values).toBeUndefined()
+    expect(observed.exits).toEqual([0])
+  })
+
+  it.each(['0', '-1', '1.5', '2147483648'])('rejects invalid admin timeout %s before startup', async (timeout) => {
+    const { observed } = await bootProvider(['--socket', '/local/admin.sock', '--timeout', timeout, 'list'], 'remote-device')
+    expect(observed.out).toContain('expected an integer from 1 to 2147483647')
+    expect(observed.exits).toEqual([1])
+  })
+
+  it.each([
+    { args: ['list'], message: 'supply exactly one of --socket and --bootstrap' },
+    { args: ['--bootstrap', '--socket', '/local/admin.sock', 'list'], message: 'supply exactly one of --socket and --bootstrap' },
+    { args: ['--socket', 'relative.sock', 'list'], message: 'requires an absolute socket path' },
+    { args: ['--bootstrap', 'rotate', 'device-id'], message: '--bootstrap supports create and list' },
+    { args: ['--bootstrap', 'revoke', 'device-id'], message: '--bootstrap supports create and list' },
+  ])('rejects administrative arguments $args before startup', async ({ args, message }) => {
+    const { values, observed } = await bootProvider(args, 'remote-device')
+    expect(observed.out).toContain(message)
+    expect(observed.exits).toEqual([1])
+    expect(values).toBeUndefined()
+    expect(observed.readerConfig).toBeUndefined()
+  })
+
+  it.each([
+    { args: ['--url', 'https://host.example', 'list'], message: 'supply exactly one of --token-env and --token-stdin' },
+    { args: ['--url', 'https://host.example', '--token-env', 'OCEAN_DEVICE_TEST_TOKEN', '--token-stdin', 'list'], message: 'supply exactly one of --token-env and --token-stdin' },
+    { args: ['--url', 'http://host.example', '--token-stdin', 'list'], message: 'use an HTTPS URL without credentials, query, or fragment' },
+    { args: ['--url', 'https://host.example/?token=secret', '--token-stdin', 'list'], message: 'use an HTTPS URL without credentials, query, or fragment' },
+  ])('rejects remote client arguments $args before startup', async ({ args, message }) => {
+    const { values, observed } = await bootProvider(args, 'connect')
+    expect(observed.out).toContain(message)
+    expect(observed.exits).toEqual([1])
+    expect(values).toBeUndefined()
+  })
+
+  it('describes device-authenticated server startup without browser handoff', async () => {
+    const { values, observed } = await bootProvider(['--help'], 'serve')
+    expect(observed.out).toContain('Serve an Ocean Host with device authentication.')
+    expect(observed.out).toContain('Non-loopback listeners require --tls-cert and --tls-key')
+    expect(observed.out).toContain('ocean remote-device')
+    expect(observed.out).not.toContain('--no-open')
+    expect(observed.out).not.toContain('ocean --profile web')
+    expect(values).toBeUndefined()
+    expect(observed.exits).toEqual([0])
+  })
+
+  it('disables browser opening for a server invocation', async () => {
+    const { values, observed } = await bootProvider([], 'serve')
+    expect(values?.openBrowser).toBe(false)
+    expect(observed.exits).toEqual([])
+  })
+
+  it('rejects browser-only options in a server invocation', async () => {
+    const { values, observed } = await bootProvider(['--no-open'], 'serve')
+    expect(observed.out).toContain("unknown option '--no-open'")
+    expect(values).toBeUndefined()
+    expect(observed.exits).toEqual([1])
+  })
+
   it('publishes each flag and releases direct service expressions', async () => {
     const { values, observed } = await bootProvider([
       '--host', '127.0.0.1',

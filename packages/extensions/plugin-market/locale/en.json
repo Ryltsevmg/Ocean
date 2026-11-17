@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Plugin market",
+    "description": "A “Catalogue” tab on the Plugins page: curated bundles with install, remove and update through the profile plugin manager.",
+    "detail": "docs/DETAIL.md"
+  }
+}

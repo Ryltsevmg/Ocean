@@ -1,6 +1,6 @@
 # 开发指南
 
-本页链接的上游工作流已归档，不在 Ocean 中执行。当前验证由 [Ocean verification](../.github/workflows/ocean-verify.yml) 定义；归档文件仅供历史参考。
+当前验证与打包由 [Ocean 工作流](../.github/AGENTS.md#ocean-qualification)定义。
 
 [English](development.md) | 中文
 
@@ -106,13 +106,13 @@ pnpm run build:web
 | 只做类型检查、不需要 Web 与 Desktop 产物 | `pnpm run typecheck` |
 | lint 或文档代码块检查 | `pnpm run lint` 或 `pnpm run doc-typecheck`；它们各自先准备 `host-contracts` |
 
-PR 产物 builder 运行 `build:artifacts`；必需的 Linux 与 Windows 普通构建以及公开 `typecheck` 还检查仓库级测试和脚本 program。CI benchmark 准备阶段还对其临时 library 输出使用 `--noCheck`，由这些必需构建负责诊断；其他产物 builder 保留包检查。
+`build:artifacts` 生成运行时产物；`build` 还检查仓库级测试和脚本 program。Ocean 验证在比较构建后的运行时之前串行执行完整构建。基准准备阶段对临时 library 输出使用 `--noCheck`，并需另行执行完整构建以获得诊断。
 
 两次 tsdown 都匹配 `vendor/*`、`packages/*/*` 与 `apps/cli`，Host 阶段另外匹配 `apps/desktop-host`；两者都不扫描构建产物来发现 Client 包，也不维护 Host/Client 包过滤表。包内 tsdown 配置根据 `OCEAN_BUILD_FACE` 决定当前阶段的入口：普通 Client 插件在 Client 阶段同时生成 Node loader 与 browser bundle；`api-remotes` 通过 `hostPhase: true` 提前生成 Host 入口，再在 Client 阶段只生成 browser bundle。tsdown 只消费 `lib/types` 中由前置 tsc 发射的 JavaScript。tsdown 并发构建匹配到的 workspace 成员；`apps/desktop` 的主进程 bundle 需要从工作区 devDependencies 的 `lib/` 产物内联这些包，因此在 Host 阶段之后单独一步打 bundle（[Desktop README](../apps/desktop/README.zh.md#bundled-workspace-dependencies)）。
 
 Typert 通过 `tsconfig.host.json` 分析 Host 类型，在包编译之前生成 Host 反射和 Host-for-Client Remote 声明。仅源码的 [`generate-typert.ts`](../scripts/generate-typert.ts) 阶段拒绝依赖构建产物的工作区导入，包括经由依赖回到生成声明的元数据依赖。Host tsdown 转换源码装饰器，但不重复生成元数据；Client tsdown 同样使用已有元数据。`pnpm run typecheck` 生成元数据，按 reference 顺序编译 Host 与 Client 包，并在每个 aggregate 的包编译完成后以 `tsc -b` 检查它。该命令跳过 native addon、bundle、Web 和 client build record。`lint`、`lint:fix` 与 `doc-typecheck` 通过 `compile-referenced-projects.ts host-contracts` 准备元数据与 Host 包声明；生成失败时不启动依赖它的编译。这些仅生成声明的命令不更新运行时 bundle；启动或测试构建产物之前应运行 `build:artifacts`。
 
-`pnpm run build` 与 `build:artifacts` 会内联根包版本、七位源码 commit，并在 Git 报告本地变化时内联 dirty 标记；调用方提供的其他 `OCEAN_CLIENT_*` 值也会被继承。`pnpm run build:official` 是与 CI 和 release 产物构建等价的跨平台本地命令，并省略本地 dirty 标记。每次 `build` 或 `build:artifacts` 成功后都会写入一份被 gitignore 的记录，把精确公开值与 Vite 输出及动态 client bundle 绑定；release 打包和 built Web 测试会拒绝缺少记录或被后续局部构建改动的产物。`pnpm run dev:web` 会先执行 `build:artifacts`（`--skip-build` 则复用现有产物树），再读取一次当前版本和 Git 状态，并在本次会话的所有 watcher stage 之间共享该环境；它不会校验完整构建记录，因为 watcher stage 会重写记录覆盖的产物。
+`pnpm run build` 与 `build:artifacts` 会内联根包版本、七位源码 commit，并在 Git 报告本地变化时内联 dirty 标记；调用方提供的其他 `OCEAN_CLIENT_*` 值也会被继承。`pnpm run build:official` 是官方 profile 产物构建的跨平台本地命令，并省略本地 dirty 标记。每次 `build` 或 `build:artifacts` 成功后都会写入一份被 gitignore 的记录，把精确公开值与 Vite 输出及动态 client bundle 绑定；release 打包和 built Web 测试会拒绝缺少记录或被后续局部构建改动的产物。`pnpm run dev:web` 会先执行 `build:artifacts`（`--skip-build` 则复用现有产物树），再读取一次当前版本和 Git 状态，并在本次会话的所有 watcher stage 之间共享该环境；它不会校验完整构建记录，因为 watcher stage 会重写记录覆盖的产物。
 
 `pnpm run build --profile local` 显式选择本地客户端品牌，保留仓库版本、commit 与 dirty 元数据，并丢弃继承的客户端标题及其他公开覆盖值。`build:official` 保留其精确的官方值。[Desktop 打包](../apps/desktop/packaging/README.zh.md#configuration-and-local-builds) 按签名模式选择 profile。
 
@@ -154,19 +154,19 @@ vendor manifest 守卫检查 `vendor/*/src` 下的改动是否连同对应的 `v
 
 pi-ai 检查会在内存中重新生成预期元数据。数据过期时，检查拒绝提交，不改写或暂存文件。修改 pi-ai 依赖或生成器后，请按包内的[提供方元数据更新步骤](../packages/llm/llm-pi-ai/README.zh.md#generated-provider-metadata)操作。
 
-除限定范围的配对和提供方元数据检查外，这些钩子有意不运行测试、快照、文档检查、构建或 `hygiene`。贡献者只运行一次[与改动行为相关的检查](../AGENTS.md#run-relevant-checks-locally)；CI 负责全量覆盖率门禁、构建产物冒烟测试，以及 Node 24.9、最新的 24 和 26 兼容性矩阵。
+除限定范围的配对和提供方元数据检查外，这些钩子有意不运行测试、快照、文档检查、构建或 `hygiene`。贡献者只运行一次[与改动行为相关的检查](../AGENTS.md#run-relevant-checks-locally)；[Ocean 工作流](../.github/workflows/ocean-verify.yml)定义已配置的 CI 检查清单。兼容性矩阵仍为独立的本地检查。
 
 贡献者可以选择运行 `pnpm run check:all`，执行全面的本地门禁集。该命令独立于 Git 钩子，也不是对 agent 的指令。
 
-在 CI 之外（`CI` 不为 `true`），默认 worker 数遵循[本地 worker 预算](../scripts/parallelism.ts)：门禁调度器、`build`、`typecheck`、Oxlint 与 publint 为 12，Vitest fork 与本地覆盖率为 48。`doc-sync`、`test:docs`、`hygiene` 与 `check:all` 最多同时运行 8 个门禁，CI 中同样如此。`os.availableParallelism()` 报告的是宿主 CPU 数而不是容器的 CPU 配额，因此不设上限的默认值会在共享主机上超额订阅。CI 仍使用 runner 的 CPU 数。`OCEAN_GATE_CONCURRENCY`、`OCEAN_OXLINT_THREADS`、`OCEAN_COVERAGE_MAX_WORKERS` 与 Vitest 的 `--maxWorkers` 可覆盖这些默认值。
+在 CI 之外（`CI` 不为 `true`），默认 worker 数遵循[本地 worker 预算](../scripts/parallelism.ts)：门禁调度器、`build`、`typecheck`、Oxlint 与 publint 为 12，Vitest fork 与本地覆盖率为 48。`doc-sync`、`test:docs`、`hygiene` 与 `check:all` 最多同时运行 8 个门禁，CI 中同样如此。`os.availableParallelism()` 报告的是宿主 CPU 数而不是容器的 CPU 配额，因此不设上限的默认值会在共享主机上超额订阅。Ocean CI 显式限制 worker 数。`OCEAN_GATE_CONCURRENCY`、`OCEAN_OXLINT_THREADS`、`OCEAN_COVERAGE_MAX_WORKERS` 与 Vitest 的 `--maxWorkers` 可覆盖这些默认值。
 
 `run-gates` 让 CLI 帮助生成器每次只运行一个子进程；直接执行 `pnpm run verify-cli-help` 时使用独立运行的 worker 预算。`OCEAN_CLI_HELP_CONCURRENCY` 可用正整数覆盖该子进程上限，并在启动前校验。每次调用仍使用独立的 `OCEAN_HOME` 与 `OCEAN_AGENTS_HOME`，超时限制仍为 30 秒。
 
 ### CI 门禁
 
-自动 CI 就是 keyless 的 [Ocean 验证工作流](../.github/workflows/ocean-verify.yml)：离线发布策略测试、带类型检查的串行产物构建、本地化检查、聚焦的 plugin、UI 与 Codex 测试套件，以及隔离的 Codex 提供方测试，全部运行在同一个固定的托管运行器上。未签名的 Linux 打包只能通过 [ocean-package-linux.yml](../.github/workflows/ocean-package-linux.yml) 手动触发运行。资格限制与发布前提由 [.github 贡献者说明](../.github/AGENTS.md#ocean-qualification)负责。本地门禁清单见 [scripts/run-gates.ts](../scripts/run-gates.ts)。
+自动 CI 使用无密钥的 [Ocean 验证工作流](../.github/workflows/ocean-verify.yml)。静态检查、覆盖率和组装后的运行时比较分别在独立的托管任务中执行。[.github 贡献者说明](../.github/AGENTS.md#ocean-qualification)定义检查范围、资格限制和发布前提。本地检查清单见 [scripts/run-gates.ts](../scripts/run-gates.ts)。
 
-不带凭据的 ocean 依赖布局检查与 ocean/vendor 打包演练仅在 `OCEAN_CI_FAILOVER_LINUX=selfhosted`，且事件为受信任的 master 推送或同仓库、非 fork、非 Dependabot 拉取请求时使用现有 Linux 自托管池。其余情况（包括手动触发）均使用 `ubuntu-24.94`；手动发布仍使用托管运行器。
+未签名的 Linux 打包需手动触发 [ocean-package-linux.yml](../.github/workflows/ocean-package-linux.yml)。Ocean 工作流不发布包，也不使用自托管运行器。
 
 ### 日常命令
 

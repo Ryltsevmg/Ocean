@@ -135,6 +135,20 @@ describe('Session Markdown Fetch route', () => {
   })
 
 
+  it('lets devices copy the transcript without admitting mutation methods', async () => {
+    const { shared, connection } = await mounted(query())
+    const peer = connection.createPeer({ principal: {
+      kind: 'remote-device',
+      deviceId: '00000000-0000-4000-8000-000000000001' as Extract<Parameters<HostConnectionService['createPeer']>[0]['principal'], { kind: 'remote-device' }>['deviceId'],
+    } })
+    const url = `${SESSION_MARKDOWN_EXPORT_PATH}?sessionId=${SESSION_ID}`
+    const response = await shared.fetch(request(url), peer)
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('Route answer')
+    expect((await shared.fetch(request(url, { method: 'HEAD' }), peer)).status).toBe(200)
+    for (const method of ['POST', 'DELETE']) expect((await shared.fetch(request(url, { method }), peer)).status).toBe(404)
+  })
+
   it('emits the actual selected artifact path from persistence metadata', async () => {
     const sourcePath = '/tmp/project/session.v4.jsonl'
     const stat = vi.fn(async (_id: SessionId, _options?: { readonly signal?: AbortSignal }) => ({

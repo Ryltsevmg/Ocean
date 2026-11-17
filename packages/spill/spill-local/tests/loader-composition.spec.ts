@@ -54,13 +54,19 @@ describe('spill-local real Loader composition through cordis.yml', () => {
     context.baseUrl = pathToFileURL(root).href + '/'
     await context.plugin(Loader)
     context.loader.builtins.include = Include
+    const unsupported = (): never => { throw new Error('Unexpected native loader operation in composition fixture') }
     context.loader.internal = {
       version: 'v2',
+      get loadCache() { return unsupported() },
+      register: unsupported,
+      getOrCreateModuleJob: unsupported,
+      resolveSync: unsupported,
+      load: unsupported,
       async import(specifier: string) {
         if (specifier !== '@ocean/ocean-spill-local') throw new Error(`unexpected Loader import: ${specifier}`)
         return LocalSpillStore
       },
-    } as unknown as NonNullable<typeof context.loader.internal>
+    }
     await context.loader.create({
       name: 'cordis:include',
       config: { path: pathToFileURL(configPath).href },

@@ -7,6 +7,14 @@
     "type": "separator"
   },
   {
+    "label": "Connect to remote Host…",
+    "enabled": true
+  },
+  {
+    "label": "Use local Host",
+    "enabled": false
+  },
+  {
     "label": "Check for Updates…"
   },
   {

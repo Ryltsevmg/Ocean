@@ -22,7 +22,7 @@ describe.skipIf(process.platform !== 'linux')('read-only legacy diagnostic expor
     expect(result.version).toBe(version)
     expect(document.warning).toContain('NOT a migrated')
     expect(document.sourceSha256).toBe(createHash('sha256').update(bytes).digest('hex'))
-    expect(document.physicalRows).toEqual(bytes.toString().trim().split('\n').map(line => JSON.parse(line) as unknown))
+    expect(document.physicalRows).toEqual(bytes.toString().trim().split('\n').map((line): unknown => JSON.parse(line)))
     expect(await readFile(input)).toEqual(bytes)
     const after = await stat(input, { bigint: true })
     expect([after.ino, after.size, after.mtimeNs, after.ctimeNs]).toEqual([before.ino, before.size, before.mtimeNs, before.ctimeNs])

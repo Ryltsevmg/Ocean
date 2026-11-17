@@ -27,6 +27,17 @@ afterEach(async () => {
 })
 
 describe('Remote stream mux server carrier lifecycle', () => {
+  it('closes an overloaded socket before dispatching another stream', async () => {
+    const open = vi.fn<RemoteStreamOpener>(async (_endpoint, _payload, _uplink, _peer, control) => waitForAbort(control.signal))
+    const entry = await startMux(open, 2_000, 262_144, true, undefined, 1)
+    const client = await connect(entry.url)
+    const closed = once(client, 'close')
+    client.send(openFrame('active'))
+    client.send(openFrame('overflow'))
+    expect((await closed)[0]).toBe(1013)
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
   it('sends WebSocket Ping control frames without application messages', async () => {
     const entry = await startMux(async (_endpoint, _payload, _uplink, _peer, control) => waitForAbort(control.signal), 20)
     const client = await connect(entry.url)
@@ -83,7 +94,7 @@ describe('Remote stream mux server carrier lifecycle', () => {
 
   it('counts a downlink write that waited in the send buffer as liveness', async () => {
     const stop = Promise.withResolvers<undefined>()
-    const entry = await startMux(async () => steadyItems(stop.promise), 20)
+    const entry = await startMux(async () => steadyItems(stop.promise), 100)
     const client = await connect(entry.url, false)
     const serverSocket = acceptedSocket(entry.mux)
     const terminated = vi.spyOn(serverSocket, 'terminate')
@@ -240,17 +251,20 @@ describe('Remote stream mux server carrier lifecycle', () => {
 
   it('leaves a failed stream silent once its socket is no longer open', async () => {
     const opened = Promise.withResolvers<undefined>()
+    const finish = Promise.withResolvers<undefined>()
     const entry = await startMux(async () => {
       opened.resolve(undefined)
+      await finish.promise
       throw new Error('fixture opener failure')
     })
     const client = await connect(entry.url)
     const frames = collectFrames(client)
     const serverSocket = acceptedSocket(entry.mux)
+    client.send(openFrame('silent'))
+    await opened.promise
     Object.defineProperty(serverSocket, 'readyState', { configurable: true, value: WebSocket.CLOSING })
     try {
-      client.send(openFrame('silent'))
-      await opened.promise
+      finish.resolve(undefined)
       // The failure path awaits nothing before it inspects the socket, so one
       // macrotask hop drains every microtask it can schedule.
       await new Promise<void>((resolve) => { setImmediate(resolve) })
@@ -667,11 +681,13 @@ async function startMux(
   streamInboxBytes = 262_144,
   compression = true,
   peer?: PeerScope,
+  maxStreamsPerSocket = 256,
 ): Promise<RunningMux> {
   const admitted = peer ?? await fixturePeer()
   const mux = new RemoteStreamMuxServer(open, mapFailure, {
     heartbeatIntervalMs,
     streamInboxBytes,
+    maxStreamsPerSocket,
     compression,
   })
   const http = createServer()

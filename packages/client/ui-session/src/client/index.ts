@@ -13,7 +13,7 @@ import type {
 import type { SessionId } from '@ocean/ocean-session/types'
 import type {} from '@ocean/ocean-api-remotes/client'
 import type { AccessEffect, RemoteEndpoint } from '@ocean/ocean-api-remote-access/client'
-import { notifySubscribers } from '@ocean/ocean-client-store'
+import { createSnapshotStore, notifySubscribers } from '@ocean/ocean-client-store'
 import { WeakMapWithValues } from '@ocean/ocean-util-values'
 import { standardHookPropName } from '@ocean/ocean-client-ui-slots'
 import type {
@@ -287,6 +287,12 @@ export class UiSession extends Service {
   private readonly absent: BindingSource
   private readonly current: BindingSource
   private readonly pendingDomains: RuntimePendingDomain[] = []
+  private readonly pendingEntries = createSnapshotStore<readonly SessionPendingInteractionBase[]>([])
+  /** Every pending UI request, including requests masked by a higher-precedence status in the same Session. */
+  readonly pendingInteractions: HostObservable<readonly SessionPendingInteractionBase[]> = {
+    getSnapshot: () => this.pendingEntries.getSnapshot(),
+    subscribe: listener => this.pendingEntries.subscribe(listener),
+  }
   private pendingSnapshot: ReadonlyMap<SessionId, SessionPendingInteractionBase> = new Map()
   private readonly running = new Map<SessionId, boolean>()
   private readonly completionUnread = new Set<SessionId>()
@@ -484,6 +490,11 @@ export class UiSession extends Service {
   }
 
   private publishPendingInteractions(): void {
+    const all = this.pendingDomains.flatMap(domain => domain.valuesSnapshot())
+    const previousAll = this.pendingEntries.getSnapshot()
+    if (all.length !== previousAll.length || all.some((value, index) => value !== previousAll[index])) {
+      this.pendingEntries.set(all)
+    }
     const next = new Map<SessionId, {
       interaction: SessionPendingInteractionBase
       precedence: number

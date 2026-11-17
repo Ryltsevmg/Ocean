@@ -3,7 +3,7 @@ import { createSnapshotStore } from '@ocean/ocean-client-store'
 import { RemoteError } from '@ocean/ocean-client-test-runtime'
 import type { Resources, ResourceSnapshot } from '@ocean/ocean-client-resources/client'
 import type { WorkspaceFileStat } from '@ocean/ocean-api-workspace-files/types'
-import { ResourceGroup } from '../src/client/document/resource-group.ts'
+import { ResourceGroup } from '../src/client/resource-group.ts'
 
 function harness() {
   const state = createSnapshotStore<ResourceSnapshot<WorkspaceFileStat>>({ status: 'loading', value: undefined, failure: undefined })

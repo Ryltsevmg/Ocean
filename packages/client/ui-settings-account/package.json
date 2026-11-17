@@ -31,6 +31,7 @@
     "client": {
       "inject": [
         "@ocean/ocean-api-remotes",
+        "@ocean/ocean-client-connection",
         "@ocean/ocean-client-locale",
         "@ocean/ocean-client-ui-chat",
         "@ocean/ocean-client-ui-layout",
@@ -52,6 +53,7 @@
     "@deepseek-ai/cordis": "workspace:~",
     "@ocean/ocean-api-remote-access": "workspace:*",
     "@ocean/ocean-api-remotes": "workspace:*",
+    "@ocean/ocean-client-connection": "workspace:*",
     "@ocean/ocean-client-locale": "workspace:*",
     "@ocean/ocean-client-store": "workspace:*",
     "@ocean/ocean-client-test-runtime": "workspace:*",
@@ -60,6 +62,7 @@
     "@ocean/ocean-client-ui-primitives": "workspace:*",
     "@ocean/ocean-client-ui-renderer": "workspace:*",
     "@ocean/ocean-client-ui-settings": "workspace:*",
+    "@ocean/ocean-client-ui-sidebar": "workspace:*",
     "@ocean/ocean-client-ui-slots": "workspace:*",
     "@ocean/ocean-client-ui-theme": "workspace:*",
     "@ocean/ocean-deepseek-account": "workspace:*",

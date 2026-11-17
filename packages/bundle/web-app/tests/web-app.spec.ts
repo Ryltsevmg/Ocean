@@ -97,6 +97,23 @@ interface BashContribution {
 }
 
 describe('web-app runtime glue', () => {
+  it('announces a clean serve URL without launching a browser', async () => {
+    stageDist()
+    const ctx = new Context()
+    ctx.provide('webServer', fakeHttpServer().server)
+    provideConnection(ctx)
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const opener = vi.fn(async () => {})
+    internals.openBrowser = opener
+    const fiber = ctx.plugin({ apply }, {
+      openBrowser: true, printUrl: true, surfaceContext: false, serverMode: true,
+    })
+    onTestFinished(() => fiber.dispose())
+    await fiber.await()
+    expect(log).toHaveBeenCalledWith('ocean serve: http://127.0.0.1:4567')
+    expect(opener).not.toHaveBeenCalled()
+  })
+
   it.each([
     '127.0.0.1',
     '::ffff:127.0.0.1',

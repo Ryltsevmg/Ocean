@@ -6,6 +6,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   apply,
+  installConnection,
   type ClientConnectionRpc,
   type ClientTransportHooks,
   type ConnectionGenerationSource,
@@ -73,6 +74,78 @@ async function mount(): Promise<ConnectionHandle> {
 }
 
 describe('connection client apply', () => {
+  it('keeps two explicitly composed carriers and their connection lifecycles independent', async () => {
+    const createClient = (home: string) => {
+      const ctx = new Context()
+      const call = vi.fn<ClientConnectionRpc['call']>(async () => ({ ok: true, value: { home } }))
+      installConnection(ctx, { transport: { rpc: { call } } })
+      const handle = ctx.get('connection') as ConnectionHandle | undefined
+      if (handle === undefined) throw new Error('ctx.connection not provided')
+      const stopped = vi.fn()
+      const unregister = handle.registerGenerationSource((signal, ready) => new Promise<void>((resolve) => {
+        signal.addEventListener('abort', () => { stopped(); resolve() }, { once: true })
+        ready({ home })
+      }))
+      return { handle, call, stopped, unregister, loop: handle.start({}) }
+    }
+    const first = createClient('/first')
+    const second = createClient('/second')
+    try {
+      await vi.waitFor(() => {
+        expect(first.handle.generation.getSnapshot()?.host.home).toBe('/first')
+        expect(second.handle.generation.getSnapshot()?.host.home).toBe('/second')
+      })
+      const args = { request: { sessionId: 'same-id' } }
+      await expect(first.handle.rpc.call('/api', 'session/get', args)).resolves.toMatchObject({ value: { home: '/first' } })
+      expect(second.call).not.toHaveBeenCalled()
+      first.loop.stop()
+      expect(first.stopped).toHaveBeenCalledOnce()
+      expect(first.handle.generation.getSnapshot()).toBeUndefined()
+      expect(second.stopped).not.toHaveBeenCalled()
+      expect(second.handle.generation.getSnapshot()?.host.home).toBe('/second')
+      await expect(second.handle.rpc.call('/api', 'session/get', args)).resolves.toMatchObject({ value: { home: '/second' } })
+      expect(first.call).toHaveBeenCalledOnce()
+    } finally {
+      first.loop.stop()
+      second.loop.stop()
+      first.unregister()
+      second.unregister()
+    }
+  })
+
+  it('retries a temporary device check failure but returns to sign-in on 401', async () => {
+    vi.useFakeTimers()
+    const signIn = vi.fn()
+    const connectUrl = new URL('https://127.0.0.1/ocean/connect')
+    const check = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+    vi.stubGlobal('fetch', check)
+    const ctx = new Context()
+    installConnection(ctx, { location: { hostname: '127.0.0.1' }, deviceDocument: { connectUrl, signIn } })
+    const handle = ctx.get('connection') as ConnectionHandle | undefined
+    if (handle === undefined) throw new Error('ctx.connection not provided')
+    const probe = installGeneration(handle)
+    const loop = handle.start({}, { backoffBaseMs: 10, backoffMaxMs: 10 })
+    try {
+      expect(handle.isLoopback).toBe(false)
+      await vi.advanceTimersByTimeAsync(10)
+      expect(handle.state.getSnapshot()).toBe('connected')
+      probe.end()
+      await vi.advanceTimersByTimeAsync(10)
+      expect(signIn).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(check).toHaveBeenCalledTimes(3)
+      expect(check).toHaveBeenLastCalledWith(new URL('https://127.0.0.1/ocean/connect'), expect.objectContaining({
+        method: 'HEAD', credentials: 'same-origin', redirect: 'error', cache: 'no-store',
+      }))
+      expect(handle.generation.getSnapshot()).toBeUndefined()
+    } finally {
+      loop.stop()
+    }
+  })
+
   it('uses Host bootstrap timing when Gateway starts without overrides', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('__OCEAN_CONNECTION_RECOVERY__', {

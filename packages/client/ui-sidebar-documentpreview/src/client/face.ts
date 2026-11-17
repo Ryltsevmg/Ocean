@@ -21,9 +21,9 @@ import type { TabId } from '@ocean/ocean-client-ui-dockkit'
 import type { SessionId } from '@ocean/ocean-session/types'
 import type { ReadDocumentBytes, ReadWorkspaceFilePage, SessionFile } from './rpc.ts'
 import type { TextStore } from './store.ts'
-import type { DocumentLoadMode } from './document/registry.ts'
+import type { DocumentLoadMode } from './contract/preview.ts'
 import type { Resources } from '@ocean/ocean-client-resources/client'
-import { ResourceGroup } from './document/resource-group.ts'
+import { ResourceGroup } from './resource-group.ts'
 
 /** The preview's injected business face, as the body receives it. */
 export interface TextInjected {

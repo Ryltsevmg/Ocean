@@ -15,9 +15,40 @@ The `ocean` command is the sole supported Node application launcher: profiles ar
 | `ocean --profile sdk` | Serve SDK clients over JSON-RPC stdio until shutdown or disconnect. |
 | `ocean --profile sdk-minimal` | Serve SDK clients with the standalone minimal agent tree. |
 | `ocean web` | Boot the Web profile. |
+| `ocean serve` | Run a Host for remote devices. |
+| `ocean connect` | Send a command to a remote Host. |
+| `ocean remote-device` | Bootstrap local device credentials or administer them over a running Host’s Unix socket. |
 | `ocean plugin --profile <name> <pnpm args>` | Manage a profile's plugins by forwarding to pnpm in the profile directory. |
 
-The invoking directory is the default workspace root. The `web`, `headless`, `sdk`, `sdk-minimal`, and `acp` profiles auto-initialize on first use from shipped templates. Create or reset another profile at a non-shipped name with `--from-default-profile`, or initialize a base-backed profile through `ocean plugin`. The `desktop` name is reserved for the Electron-owned profile, so the CLI rejects boot and config-dump requests for it. The npm CLI also rejects its plugin-management requests; the [Desktop-installed command](../desktop/README.md#bundled-command-runtime) can manage the initialized Desktop profile using that installation’s runtime.
+The invoking directory is the default workspace root. The `web`, `serve`, `connect`, `remote-device`, `headless`, `sdk`, `sdk-minimal`, and `acp` profiles auto-initialize on first use from shipped templates. Create or reset another profile at a non-shipped name with `--from-default-profile`, or initialize a base-backed profile through `ocean plugin`. The `desktop` name is reserved for the Electron-owned profile, so the CLI rejects boot and config-dump requests for it. The npm CLI also rejects its plugin-management requests; the [Desktop-installed command](../desktop/README.md#bundled-command-runtime) can manage the initialized Desktop profile using that installation’s runtime.
+
+The `serve` profile runs the Web Host without opening a browser or watching configuration. Its readiness line carries a clean URL. A non-loopback listener requires TLS. Sign in with a device token in the browser, in Desktop’s **Connect to remote Host** dialog, or through `ocean connect`. The profile refuses legacy owner credentials.
+
+For native TLS, pass `--tls-cert` with the PEM chain and `--tls-key` with its key. When an HTTPS reverse proxy terminates TLS, bind Ocean to loopback and pass the external HTTPS root as `--public-url` and its hostname as `--trusted-host`. Configure the proxy to preserve the public Host authority, forward WebSocket upgrades, and strip the external mount prefix before forwarding requests to Ocean. Clients use the public URL, including its mount path. See [deploying a remote Host](../../docs/cookbook/deploying-remote-host.md) for service, container, and recovery procedures.
+
+On Windows, macOS, and Linux, run `ocean remote-device --bootstrap create <label>` under the Host’s service account with the same `OCEAN_HOME` to create a device without starting a listener. Use `ocean remote-device --bootstrap list` to inspect device metadata without printing tokens. A running Host observes the credential update through its file watcher; a credential provider with `watch: false` needs a reload. Bootstrap supports only create and list; rotate and revoke require the active Unix administrator socket. Choose exactly one of `--bootstrap` and `--socket`. The `--timeout` option bounds socket operations only.
+
+On Unix, start the Host with `ocean serve --device-admin-socket /absolute/private-dir/admin.sock`. The directory must already exist and be accessible only to the server user. Run `ocean remote-device --socket /absolute/private-dir/admin.sock create <label>`, or use `list`, `rotate <id>`, and `revoke <id>`. Create and rotate print a bearer secret to stdout. Send it directly to the intended client and keep it out of logs.
+
+Run `ocean connect --url https://host.example --token-env OCEAN_DEVICE_TOKEN list` to print remote Session summaries as JSON. Set the named environment variable before launch, or use `--token-stdin` with a pipe or redirected input. The client uses normal TLS certificate verification and owns a temporary in-memory login for the command.
+
+The same client supports `create [--cwd <host-path>]`, `history <session-id>`, `prompt <session-id> <text> [--steer]`, `state <session-id>`, `wait <session-id>`, and `cancel <session-id>`. Prompt writes its request ID to stderr before submission and includes it in the diagnostic if the result is unknown. Use `--request-id <uuid>` only to retry the same prompt. For other commands that change state, inspect the session before retrying an unknown result.
+
+Use `approvals <session-id>` to list pending tool approvals and `approve <session-id> <approval-id> <allow-or-deny>` to answer one. A response with `accepted: false` means the request is no longer pending for that session. Pending approvals with a Host deadline include `expiresAt` in Unix milliseconds.
+
+Use `questions <session-id>` to list live questions. Send a structured answer with `answer-question <session-id> <question-request-id> <answer-json>`. For example, `{"answers":[{"id":"q1","selected":["Remote"]}]}` selects an offered option. A free-text answer uses an empty `selected` array and a `custom` string. For a question whose foreground timer ended, use `questions <session-id> --continued` to find its `callId`. Pass that ID to `answer-question` with `--continued`.
+
+Use `files <session-id> [path]` to list a Host workspace directory. Use `read <session-id> <path> [--offset <line>] [--limit <lines>]` to read a text page. Relative paths resolve against the Session’s workspace on the Host.
+
+Use `upload <session-id> <local-path>` to stream a local file and receive its attachment receipt as JSON. Pass the returned `receiptId` to `prompt <session-id> <text> --file <receipt-id>` for the same session.
+
+Use `terminals <session-id>` to list Host terminals, `terminal-create <session-id> [--id <id>]` to start a Host shell, and `terminal-close <session-id> <terminal-id>` to stop it. Create prints the terminal ID before sending the request so the same identity can be used if its reply is lost.
+
+Use `terminal-watch <session-id> <terminal-id>` to stream a retained terminal’s screen and subsequent frames as JSON lines. After a transport failure it checks the existing login and retries with backoff. The next snapshot replaces the previous screen. A changed Host or launch epoch ends the watch.
+
+Use `terminal-write <session-id> <terminal-id> <text>` to send one input and wait for the Host to acknowledge it. Include a newline in the text when the shell should execute the line. If the connection drops after submission, inspect the terminal before sending the input again.
+
+Use `follow <session-id>` to stream a JSON Lines history snapshot and subsequent events. After a connection interruption a fresh bounded snapshot replaces the previous baseline. If the Host rejects the login during recovery, the command exits and asks for an active device token. Use `history <session-id> --before-seq <seq>` to request older history before the first event in the current page.
 
 ## App arguments
 

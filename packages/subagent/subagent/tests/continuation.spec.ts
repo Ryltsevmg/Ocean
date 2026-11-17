@@ -1589,26 +1589,40 @@ describe('continuable durability and teardown', () => {
     await waitNoActivation(ctx, started.childId)
   })
 
-  it('settles despite the persistence backend being disposed mid-run', async () => {
+  it('drains a cancelled child durably when its persistence backend unloads mid-run', async () => {
     const releaseResponse = Promise.withResolvers<undefined>()
     const adapter = new GatedAdapter([
       { chunks: textResponse('unconfirmed answer'), gate: releaseResponse.promise },
     ])
-    const { ctx, parent, disposePersistence } = await setupWith(adapter)
+    const { ctx, parent, disposePersistence, root } = await setupWith(adapter)
     const warnings: string[] = []
     ctx.logger.warn = (message: string) => { warnings.push(message) }
 
-    const started = await ctx.subagents.startActivation({ ...startSpec(parent), delivery: 'parent' })
-    await vi.waitFor(() => { expect(adapter.requests).toHaveLength(1) })
-    // Tear down the whole backend under the child's open write path: its
-    // teardown closes the handle (draining what was buffered) and detaches
-    // the durability listeners, so the final flush finds no participant and
-    // never pins the Activation.
-    await disposePersistence!()
-    releaseResponse.resolve(undefined)
+    let disposal: Promise<void> | undefined
+    try {
+      const started = await ctx.subagents.startActivation({ ...startSpec(parent), delivery: 'parent' })
+      await vi.waitFor(() => { expect(adapter.requests).toHaveLength(1) })
+      const child = ctx.agents.get(started.childId)!
+      disposal = disposePersistence!()
+      await vi.waitFor(() => { expect(adapter.requests[0]?.signal?.aborted).toBe(true) })
+      releaseResponse.resolve(undefined)
+      await disposal
 
-    await waitNoActivation(ctx, started.childId)
-    expect(warnings.join('\n')).not.toContain('final session flush')
+      await waitNoActivation(ctx, started.childId)
+      const reader = new Context()
+      try {
+        await reader.plugin(JsonlSessionPersistence, { root: root! })
+        const stored = await loadStoredSession(reader.sessionPersistence, started.childId)
+        expect(stored.events).toEqual(child.session.snapshotEvents())
+        expect(stored.events.at(-1)).toMatchObject({ type: 'turn/end' })
+      } finally {
+        await reader.fiber.dispose()
+      }
+      expect(warnings.join('\n')).not.toContain('final session flush')
+    } finally {
+      releaseResponse.resolve(undefined)
+      await disposal
+    }
   })
 
   it('logs a failed final flush after every listener settles without failing the Activation', async () => {

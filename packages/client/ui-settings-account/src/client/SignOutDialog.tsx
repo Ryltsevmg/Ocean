@@ -5,8 +5,9 @@ import type { AccountKey } from './locales.ts'
 import css from './SignInDialog.module.css'
 
 /** @param props - task impact at opening, localized copy, and account actions. @returns sign-out confirmation. */
-export function SignOutDialog({ running, signOut, close, t }: {
+export function SignOutDialog({ running, device = false, signOut, close, t }: {
   running: boolean | 'unknown'
+  device?: boolean
   signOut: () => Promise<void>
   close: () => void
   t: (key: AccountKey) => string
@@ -21,21 +22,22 @@ export function SignOutDialog({ running, signOut, close, t }: {
     catch { setFailed(true) }
     finally { setBusy(false) }
   }
-  return <Modal open headless title={t('signOut')} onClose={dismiss} className={css.dialog as string}>
+  const title = t(device ? 'deviceSignOut' : 'signOut')
+  return <Modal open headless title={title} onClose={dismiss} className={css.dialog as string}>
     <div className={css.content}>
       <div className={css.header}>
-        <h2 className={css.title}>{t('signOut')}</h2>
+        <h2 className={css.title}>{title}</h2>
         <button type="button" className={css.close} aria-label={t('close')} disabled={busy} onClick={dismiss}>
           <IconCloseOutlineRegular size={14} />
         </button>
       </div>
-      <p className={css.description}>{t(running === 'unknown' ? 'signOutUnknownDescription' : running ? 'signOutRunningDescription' : 'signOutDescription')}</p>
+      <p className={css.description}>{t(device ? 'deviceSignOutDescription' : running === 'unknown' ? 'signOutUnknownDescription' : running ? 'signOutRunningDescription' : 'signOutDescription')}</p>
       {failed && <p className={css.description} role="alert">{t('failed')}</p>}
     </div>
     <div className={css.actions}>
       <Button variant="outline" className={css.secondaryButton} disabled={busy} onClick={dismiss}>{t('cancel')}</Button>
       <Button variant="primary" className={css.primaryButton} disabled={busy}
-        onClick={() => { void confirm() }}>{t('signOut')}</Button>
+        onClick={() => { void confirm() }}>{title}</Button>
     </div>
   </Modal>
 }

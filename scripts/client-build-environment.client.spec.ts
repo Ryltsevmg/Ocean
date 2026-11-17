@@ -26,16 +26,7 @@ const COMMIT_HASH = '0123456789abcdef0123456789abcdef01234567'
 const PROBE_KEY = `process.env.${PROBE_NAME}`
 const originalProbe = process.env[PROBE_NAME]
 const roots: string[] = []
-const oceanBuildWorkflows = [
-  'build-exe-for-python-sdk.yml',
-  'ci.yml',
-  'ci-python.yml',
-  'ci-windows.yml',
-  'e2e.yml',
-  'release.yml',
-  'release-publish.yml',
-  'sandbox.yml',
-]
+const oceanBuildWorkflows = ['ocean-verify.yml', 'ocean-package-linux.yml']
 
 afterEach(() => {
   if (originalProbe === undefined) Reflect.deleteProperty(process.env, PROBE_NAME)

@@ -1,4 +1,5 @@
-import { toolFileInject, type ToolFileInjected } from '../file-menu.ts'
+import { toolFileInject } from '../file-menu.ts'
+import type { ToolFileInjected } from '../../contract/file-menu.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import { IconEditOutlineRegular } from '@ocean/ocean-client-ui-primitives'
 import type { PropsLocale } from '@ocean/ocean-client-ui-slots'

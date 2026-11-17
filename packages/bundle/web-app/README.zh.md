@@ -46,6 +46,12 @@ ocean --profile web --no-open --port 8080
 
 已保存的模型选择覆盖组合默认值。设置卡接受兼容 Messages 的 API 地址与凭据引用。
 
+内置名录不含 ChatGPT 订阅登录提供方；请在设置 → 模型中选择已配置的可用模型。
+
+### 远程 Host 与设备命令
+
+本 bundle 还提供 `serve`、`connect` 和 `remote-device`。这些配置禁用配置文件与客户端模块监听。`serve` 要求设备认证，输出不含凭据的 URL，并且不打开浏览器；非回环监听器必须使用 TLS。`connect` 和 `remote-device` 不启动本地 Web 监听器及其依赖的 HTTP 和 Session UI 插件。本地 bootstrap 可在 Windows、macOS 和 Linux 上创建和列出设备；轮换与撤销需要运行中 Host 的 Unix 管理套接字。[CLI 指南](../../../apps/cli/README.zh.md) 说明参数、凭据主目录选择及令牌处理。
+
 ### 配置
 
 `minimal` agent preset 使用持久 Shell、`read_image` 工具和固定 persona，支持自动历史压缩以及会话空闲时的 `/compact` 命令。它复用 Host token meter，并拥有隔离的压缩后端。[压缩配置与保留策略](../../compaction/compaction-basic/README.zh.md#use-this-package) 沿用现有后端。图片读取复用 Host 文件系统和附件存储，要求模型支持图片输入；不加载文本读取、写入和编辑工具。
@@ -238,3 +244,5 @@ preset 提供一条目录项。没有其他 skill 的会话还会收到目录的
 </details>
 
 Web 组合包含账号 Remote 控制器和账号设置页面。
+
+所有 Web 与 Desktop 组合均在共用插件页面中提供[内置插件目录](../../extensions/plugin-market/README.zh.md)。目录源码与浏览器产物随 Ocean 分发，无需外部 checkout 或本地 overlay。

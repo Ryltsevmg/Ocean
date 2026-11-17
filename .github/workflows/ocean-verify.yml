@@ -13,8 +13,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  OCEAN_GATE_CONCURRENCY: '1'
+  OCEAN_OXLINT_THREADS: '1'
+  OCEAN_COVERAGE_MAX_WORKERS: '1'
+  OCEAN_PUBLINT_CONCURRENCY: '1'
+
 jobs:
-  verify:
+  static:
     if: github.repository == 'Ryltsevmg/Ocean'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -31,15 +37,80 @@ jobs:
         run: npm install --global pnpm@11.28.5
       - name: Install locked dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Build artifacts and check types
-        run: pnpm run build --serial
+      - name: Check lint
+        run: pnpm run lint
+      - name: Check duplication
+        run: pnpm run duplication
+      - name: Check documentation and generated references
+        run: pnpm run doc-sync
       - name: Check localization
         run: pnpm run check:i18n
-      - name: Test plugin inventory and package policies
-        run: pnpm exec vitest run packages/boot/plugin-manager/tests/manager.spec.ts scripts/ocean-verification-workflow.spec.ts --maxWorkers=1
-      - name: Test theme and dock geometry
-        run: pnpm exec vitest run packages/client/ui-theme/tests packages/client/ui-dockkit/tests/tab-layout.client.spec.tsx packages/client/ui-dockkit/tests/geometry.client.spec.ts packages/client/ui-dockkit/tests/app-region-styles.client.spec.ts --maxWorkers=1
-      - name: Test isolated Codex integration
-        run: pnpm --dir vendor/codex-subscription run test:ocean
 
-# Ocean verification workflow (active)
+  unit-coverage:
+    if: github.repository == 'Ryltsevmg/Ocean'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    env:
+      OCEAN_EXAMPLE_MODE: lib
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.0'
+      - name: Install pinned package manager
+        run: npm install --global pnpm@11.28.5
+      - name: Install locked dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Require PowerShell coverage support
+        run: pwsh -NoLogo -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion'
+      - name: Build runtime artifacts for process fixtures
+        run: pnpm run build:artifacts --serial
+      - name: Test unit inventory with per-file coverage
+        # The aggregate also runs its compiler-heavy exemptions uninstrumented.
+        # One gate and one worker keep those inventories disjoint and sequential.
+        run: pnpm run check:ci:coverage
+
+  integration:
+    if: github.repository == 'Ryltsevmg/Ocean'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      OCEAN_EXAMPLE_MODE: lib
+      OCEAN_SNAPSHOT: replay
+      OCEAN_SNAPSHOT_MAX_WORKERS: '1'
+      OCEAN_SNAPSHOT_MAX_CONCURRENCY: '1'
+      OCEAN_WEB_SNAPSHOT_WORKERS: '1'
+      UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/python-sdk-venv
+      UV_PYTHON_DOWNLOADS: never
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.0'
+      - name: Install pinned package manager
+        run: npm install --global pnpm@11.28.5
+      - name: Install locked dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build artifacts and check types
+        run: pnpm run build --serial
+      - name: Test assembled CLI expectations
+        run: pnpm run test:expected --maxWorkers=1
+      - name: Replay recorded sessions
+        run: pnpm run test:snapshot
+      - name: Install pinned Python tooling
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/python" -m pip install uv==0.13.9
+      - name: Install locked Python SDK test dependencies
+        run: '"$RUNNER_TEMP/uv/bin/uv" sync --locked --project python/sdk --group test --python python3'
+      - name: Test Python SDK and built runtime projections
+        run: '"$RUNNER_TEMP/uv/bin/uv" run --no-sync --directory python/sdk pytest -ra'
+      - name: Install locked browser engines and host libraries
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium webkit
+      - name: Compare Web snapshots
+        # Live HMR fixtures rebuild artifacts, so browser tests own the final step.
+        run: pnpm run test:web:ci

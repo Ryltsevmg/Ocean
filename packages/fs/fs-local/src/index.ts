@@ -40,7 +40,7 @@ import {
   readWholeBytes,
   readWholeText,
   resolveLocalTarget,
-  restoreLineEndings,
+  restoreTextFormat,
   removeFile,
   streamWholeText,
   writeFileAtomic,
@@ -268,7 +268,7 @@ export class LocalFileSystem extends FileSystem {
 
       const original = await readForEdit(target.targetKey, target.displayPath, signal)
       const edited = applyLiteralEdit(original.content, edit.oldString, edit.newString, edit.replaceAll, target.displayPath)
-      const content = restoreLineEndings(edited.content, original.lineEndings)
+      const content = restoreTextFormat(edited.content, original)
       await writeFileAtomic(target.targetKey, content, existing.mode, signal, this.internals, { displayPath: target.displayPath })
 
       const after = await probe(target.targetKey)
@@ -289,7 +289,7 @@ export class LocalFileSystem extends FileSystem {
       const existing = await this.requireFile(target, expected, 'patch')
       const original = await readForEdit(target.targetKey, target.displayPath, signal)
       const after = this.patchContent(target, original.content, hunks)
-      await writeFileAtomic(target.targetKey, restoreLineEndings(after, original.lineEndings), existing.mode, signal, this.internals,
+      await writeFileAtomic(target.targetKey, restoreTextFormat(after, original), existing.mode, signal, this.internals,
         { displayPath: target.displayPath })
       return { version: this.versionAfterWrite(await probe(target.targetKey), target), before: original.content, after }
     })
@@ -317,7 +317,7 @@ export class LocalFileSystem extends FileSystem {
       const existing = await this.writeTarget(destination, options.expectedDestination)
       const original = await readForEdit(source.targetKey, source.displayPath, signal)
       const after = options.hunks === undefined ? original.content : this.patchContent(source, original.content, options.hunks)
-      const content = restoreLineEndings(after, original.lineEndings)
+      const content = restoreTextFormat(after, original)
       const before = existing && Buffer.byteLength(content, 'utf8') < this.config.diffBasisMaxBytes
         ? await readTextForDiff(destination.targetKey, this.config.diffBasisMaxBytes, signal) : null
       await this.internals.inspectBeforeMutation?.(source)

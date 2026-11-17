@@ -7,6 +7,14 @@
     "type": "separator"
   },
   {
+    "label": "连接远程 Host…",
+    "enabled": true
+  },
+  {
+    "label": "使用本地 Host",
+    "enabled": false
+  },
+  {
     "label": "检查更新…"
   },
   {

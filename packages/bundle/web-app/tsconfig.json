@@ -24,7 +24,13 @@
       "path": "../../boot/cmdline"
     },
     {
+      "path": "../../api/gateway/tsconfig.host.json"
+    },
+    {
       "path": "../../client/connection/tsconfig.host.json"
+    },
+    {
+      "path": "../../client/file-upload/tsconfig.host.json"
     },
     {
       "path": "../../host/frontend-static"

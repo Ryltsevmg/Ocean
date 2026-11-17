@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <defs>
+    <linearGradient id="marketStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4FA8C9"/>
+      <stop offset="1" stop-color="#2F6E8F"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#marketStroke)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13 L18 8 L26 13"/>
+    <path d="M12 16 V26 H24 V16"/>
+    <path d="M17 26 V20 H19 V26"/>
+  </g>
+  <circle cx="18" cy="8" r="1.8" fill="#4FA8C9" stroke="none"/>
+  <rect x="9" y="14" width="4" height="2.4" rx="1.2" fill="#3D87AB"/>
+  <rect x="23" y="14" width="4" height="2.4" rx="1.2" fill="#2F6E8F"/>
+</svg>

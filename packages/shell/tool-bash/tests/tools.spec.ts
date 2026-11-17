@@ -1379,7 +1379,7 @@ describe('the model-facing bash tool builds its request from named args only (no
     expect(description).toContain('$OCEAN_*')
   })
 
-  it('injects built-ins and the stable session id into a foreground request', async () => {
+  it('injects built-ins, legacy aliases, and the stable session id into a foreground request', async () => {
     const { ctx, bash } = await setupRecording()
     const agent = await registerFakeAgent(ctx, 'request-fg', () => undefined)
     const ambient = process.env.OCEAN_SESSION_ID
@@ -1397,6 +1397,10 @@ describe('the model-facing bash tool builds its request from named args only (no
       OCEAN_NODE_EXECUTABLE: process.execPath,
       OCEAN_SESSION_ID: 'request-fg',
       OCEAN_SHELL: '1',
+      DSH_HOME: recordingOceanHome,
+      DSH_NODE_EXECUTABLE: process.execPath,
+      DSH_SESSION_ID: 'request-fg',
+      DSH_SHELL: '1',
     })
     expect(process.env.OCEAN_SESSION_ID).toBe(ambient)
   })
@@ -1413,7 +1417,7 @@ describe('the model-facing bash tool builds its request from named args only (no
         command: 'sleep 1',
         description: 'run command',
         run_in_background: true,
-        env: { OCEAN_SESSION_ID: 'spoofed' },
+        env: { OCEAN_SESSION_ID: 'spoofed', DSH_SESSION_ID: 'spoofed' },
       },
       agent,
     })
@@ -1424,6 +1428,10 @@ describe('the model-facing bash tool builds its request from named args only (no
       OCEAN_NODE_EXECUTABLE: process.execPath,
       OCEAN_SESSION_ID: 'request-bg',
       OCEAN_SHELL: '1',
+      DSH_HOME: recordingOceanHome,
+      DSH_NODE_EXECUTABLE: process.execPath,
+      DSH_SESSION_ID: 'request-bg',
+      DSH_SHELL: '1',
     })
   })
 
@@ -1448,12 +1456,20 @@ describe('the model-facing bash tool builds its request from named args only (no
         OCEAN_NODE_EXECUTABLE: process.execPath,
         OCEAN_SESSION_ID: 'request-parent',
         OCEAN_SHELL: '1',
+        DSH_HOME: recordingOceanHome,
+        DSH_NODE_EXECUTABLE: process.execPath,
+        DSH_SESSION_ID: 'request-parent',
+        DSH_SHELL: '1',
       },
       {
         OCEAN_HOME: recordingOceanHome,
         OCEAN_NODE_EXECUTABLE: process.execPath,
         OCEAN_SESSION_ID: 'request-child',
         OCEAN_SHELL: '1',
+        DSH_HOME: recordingOceanHome,
+        DSH_NODE_EXECUTABLE: process.execPath,
+        DSH_SESSION_ID: 'request-child',
+        DSH_SHELL: '1',
       },
     ])
   })
