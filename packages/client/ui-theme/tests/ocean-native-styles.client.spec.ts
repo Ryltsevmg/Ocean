@@ -21,8 +21,8 @@ describe('Ocean native visual foundation', () => {
     expect(shared.declarations).toContainEqual(['--dsw-alias-button-primary-fill', '#1766bc'])
   })
   it('keeps Ocean font order and compact native radii', () => {
-    expect(base).toContain("--dsh-font-family-text-default: 'Inter'")
-    expect(base).toContain("--dsh-font-family-code-default: 'JetBrains Mono'")
+    expect(base).toContain("--ocean-font-family-text-default: 'Inter'")
+    expect(base).toContain("--ocean-font-family-code-default: 'JetBrains Mono'")
     for (const size of ['sm', 'md', 'lg', 'xl', 'panel']) expect(base).toContain(`--dsw-radius-${size}: 8px`)
   })
   it('preserves a light palette and distinguishes disabled actions', () => {

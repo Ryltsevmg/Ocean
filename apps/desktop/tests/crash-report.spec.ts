@@ -23,8 +23,8 @@ async function scratch(): Promise<string> {
 const input = (overrides: Partial<CrashReportInput> = {}): CrashReportInput => ({
   source: 'host',
   phase: 'running',
-  error: Object.assign(new Error("ENOENT: no such file or directory, open 'C:\\\\Temp\\\\dsh-subprocess-x\\\\out.log'"), {
-    errno: -4058, code: 'ENOENT', syscall: 'open', path: 'C:\\Temp\\dsh-subprocess-x\\out.log',
+  error: Object.assign(new Error("ENOENT: no such file or directory, open 'C:\\\\Temp\\\\ocean-subprocess-x\\\\out.log'"), {
+    errno: -4058, code: 'ENOENT', syscall: 'open', path: 'C:\\Temp\\ocean-subprocess-x\\out.log',
   }),
   rendererConsole: [],
   app: { name: 'Ocean-Chat', version: '0.1.7', platform: 'win32', arch: 'x64', electron: '44.0.0', node: '24.18.1', locale: 'zh_CN' },
@@ -44,7 +44,7 @@ it('renders the facts header, the inspected error with its properties and cause,
   expect(text).toContain('time: 2026-09-22T10:30:00.123Z\nsource: host\nphase: running\napp: Ocean-Chat 0.1.7\nplatform: win32 x64\nelectron: 44.0.0\nnode: 24.18.1\nlocale: zh_CN\n')
   expect(text).toContain('--- error ---\nError: wrapper')
   expect(text).toContain("syscall: 'open'")
-  expect(text).toContain("path: 'C:\\\\Temp\\\\dsh-subprocess-x\\\\out.log'")
+  expect(text).toContain("path: 'C:\\\\Temp\\\\ocean-subprocess-x\\\\out.log'")
   expect(text).toContain('[cause]: Error: ENOENT')
   expect(text).toContain('--- renderer console (error level, oldest first) ---\ndsh-app://app/assets/entry.js:12 client-modules: bundle script')
   expect(text.endsWith('\n')).toBe(true)
@@ -78,7 +78,7 @@ it('returns undefined and logs when the report cannot be written', async () => {
   const blocked = join(root, 'not-a-directory')
   await writeFile(blocked, '')
   expect(await writeCrashReport(blocked, input())).toBeUndefined()
-  expect(error).toHaveBeenCalledWith('dsh desktop: crash report could not be written', expect.stringContaining('crash-'), expect.anything())
+  expect(error).toHaveBeenCalledWith('ocean desktop: crash report could not be written', expect.stringContaining('crash-'), expect.anything())
 })
 
 it('prunes only the oldest crash reports and leaves other files alone', async () => {

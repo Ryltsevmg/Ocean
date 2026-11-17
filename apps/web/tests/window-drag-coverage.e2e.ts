@@ -193,7 +193,7 @@ describe('web e2e: macOS window drag coverage', () => {
     const page = await newEnglishPage(browser)
     await page.addInitScript(({ value, snapshot }) => {
       // The Desktop platform marker requires the preload's keyboard and preference capabilities.
-      Object.assign(window, { dshDesktop: { protocolVersion: 1,
+      Object.assign(window, { oceanDesktop: { protocolVersion: 1,
         keyboard: { subscribe: () => () => {}, closeWindow: async () => {} },
         shortcuts: { get: async () => ({ ...snapshot, status: 'ready' }),
           subscribe: () => () => {}, recording: async () => {},
@@ -203,7 +203,7 @@ describe('web e2e: macOS window drag coverage', () => {
         document.documentElement.setAttribute('data-platform', value)
         if (value === 'win32') {
           document.documentElement.setAttribute('data-windows-titlebar', '')
-          document.documentElement.style.setProperty('--dsh-windows-titlebar-height', '40px')
+          document.documentElement.style.setProperty('--ocean-windows-titlebar-height', '40px')
         }
       }
       if (document.documentElement === null) document.addEventListener('DOMContentLoaded', mark, { once: true })

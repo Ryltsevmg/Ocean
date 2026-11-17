@@ -217,7 +217,7 @@ describe('ui-settings-general apply', () => {
     const channels: DesktopChannelBridge = { get: async () => state, set: save,
       subscribe: () => unsubscribe }
     const open = vi.fn(async () => {})
-    vi.stubGlobal('dshDesktop', { protocolVersion: 1, updates: { channels,
+    vi.stubGlobal('oceanDesktop', { protocolVersion: 1, updates: { channels,
       status: async () => ({ phase: 'idle' }), open, subscribe: () => () => {} } })
     onTestFinished(() => { vi.unstubAllGlobals() })
     const { c } = await client(mock, start)

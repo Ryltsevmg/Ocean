@@ -3,29 +3,29 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/cookbook/reviewing-ui-design.md
 /:
-  en: 7a1a3135b7683184
-  zh: b518133afc663a6e
+  en: 1557629cd4e54cca
+  zh: a7f616435dde9c85
 /cookbook-review-a-ui-design:
-  en: d42b121ca63177aa
-  zh: 68b637fae3252c7b
+  en: d60afdcf0af40462
+  zh: 8fd5baff96be6a51
 /cookbook-review-a-ui-design/summary:
-  en: 8a1ff691b28a2533
-  zh: 8c54ae85df6f6e12
+  en: 14d870ac9ff692a6
+  zh: c2d456887554b8bf
 /cookbook-review-a-ui-design/table-of-contents:
   en: 84af073b2a7eca95
   zh: 750633fa3c458d5b
 /cookbook-review-a-ui-design/1-define-the-page-or-modal-in-scope:
-  en: c9ee94acd903d809
-  zh: c8d07c75ba94531b
+  en: 492e870785e132d6
+  zh: a6ecfcde57f122c2
 /cookbook-review-a-ui-design/1-define-the-page-or-modal-in-scope/select-scope-by-visual-impact:
-  en: ef9ad1428375f1d9
-  zh: 8f59cd04947c16dd
+  en: 407e0a1e15a8856b
+  zh: 0f406f73e6ac29c0
 /cookbook-review-a-ui-design/2-inspect-the-task-and-its-implementation:
   en: 86301e7487e9cd74
   zh: f13bc3da0b2ac2d3
 /cookbook-review-a-ui-design/2-inspect-the-task-and-its-implementation/reconcile-the-baseline-across-the-whole-interface:
-  en: 76d008d0bac44f1f
-  zh: 2357d78f350b5540
+  en: 4ea667e01a2bcbb9
+  zh: db6a61d67d173e26
 /cookbook-review-a-ui-design/2-inspect-the-task-and-its-implementation/make-the-relationships-explicit:
   en: 4d26eca838abeb7a
   zh: 30f2046b2dc70ed6
@@ -36,20 +36,20 @@
   en: a0f8e8d720097515
   zh: 4ff54f0c03bfdb48
 /cookbook-review-a-ui-design/4-change-the-smallest-responsible-component:
-  en: 8bcdb909b6825a5e
-  zh: e140ca3873b302b9
+  en: 616a29702ad74fda
+  zh: 20adc62ee49e0080
 /cookbook-review-a-ui-design/5-verify-behavior-and-comparable-images:
   en: 437f3a735dbfa486
   zh: 7d6ccfd8da698c49
 /cookbook-review-a-ui-design/6-deliver-the-complete-evidence:
-  en: cea04ecd81785ca2
-  zh: b321ae244f050b1c
+  en: 4acb7757f28be140
+  zh: 9ed40c0122fb9652
 /cookbook-review-a-ui-design/6-deliver-the-complete-evidence/comparison-delivery-and-cumulative-changes:
   en: c81cdec4ac3decca
   zh: 9dcb16b292414fda
 /cookbook-review-a-ui-design/further-exploration:
-  en: 98ac3512211d94ae
-  zh: 055418a72f29a15b
+  en: 0e3eaa327222ad8a
+  zh: b26041605a254904
 /cookbook-review-a-ui-design/dev-note:
   en: b75c8458928b72b9
   zh: 003ba4e17b4b5269

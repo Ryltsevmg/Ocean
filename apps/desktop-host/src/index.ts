@@ -22,12 +22,12 @@ async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
   const projectDir = process.argv[3] as string
   // Set before the launch-environment snapshot and profile evaluation; empty means the payload sits beside the runtime directory.
-  process.env.DSH_PRIMARY_RUNTIME = process.argv[4] || join(runtimeDir, '..', 'runtime', 'primary-runtime')
+  process.env.OCEAN_PRIMARY_RUNTIME = process.argv[4] || join(runtimeDir, '..', 'runtime', 'primary-runtime')
   const installAnchor = join(runtimeDir, 'node_modules', '@ocean', 'ocean', 'package.json')
-  const profile = loadProfileDirectory('dsh', projectDir, installAnchor)
-  reportSkippedBundles('dsh', profile)
+  const profile = loadProfileDirectory('ocean', projectDir, installAnchor)
+  reportSkippedBundles('ocean', profile)
   const application = runProfile({
-    environment: loadLayeredEnv('dsh'),
+    environment: loadLayeredEnv('ocean'),
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
     patchFiles: [],
@@ -38,7 +38,7 @@ async function main(): Promise<void> {
         args: ['--expose-internals', process.argv[5]],
         env: {
           ELECTRON_RUN_AS_NODE: '1',
-          DSH_DESKTOP_NODE_EXECUTABLE: process.execPath,
+          OCEAN_DESKTOP_NODE_EXECUTABLE: process.execPath,
           PATH: `${process.argv[6] ?? ''}${delimiter}${process.env.PATH ?? ''}`,
         },
       },

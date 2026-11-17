@@ -22,11 +22,11 @@ export { ClientModuleSystem }
 export { tearDownEntryFiber } from './entry-lifecycle.ts'
 export type { ClientReleaseChange } from './release-change.ts'
 export type { ClientEntries, ClientEntryState } from './entries.ts'
-export { exactPackageSpecifier, parseBootManifest, parseDshClient, stripClientSuffix } from './manifest.ts'
+export { exactPackageSpecifier, parseBootManifest, parseOceanClient, stripClientSuffix } from './manifest.ts'
 export type {
   BootManifest, BootModuleRow, BootPluginRow, ClientBootstrapModule, ClientBundleRegistration,
   ClientModuleCreateOptions, ClientModuleLoader, ClientModuleLoaderTarget, ClientModuleRecord,
-  ClientModuleSystemOptions, DshWindow,
+  ClientModuleSystemOptions, OceanWindow,
   WebBootEntry, WebBootGraph, WebBootRelease,
 } from './manifest.ts'
 

@@ -14,7 +14,7 @@ import { renderContextSnapshot, renderPrompt } from '@ocean/ocean-system-prompt'
 import * as WorkingDirectoryTool from '@ocean/ocean-tool-working-directory'
 
 async function fixture(config?: (root: string) => WorkingDirectoryConfig) {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-working-directory-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'ocean-working-directory-')))
   const ctx = new Context()
   try {
     await mountAgentLoopTestDependencies(ctx, { systemPrompt: { includeRuntimeContext: false } })

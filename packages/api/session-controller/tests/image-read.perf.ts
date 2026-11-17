@@ -158,12 +158,12 @@ async function transfer(payloads: readonly string[]): Promise<readonly number[]>
 }
 
 async function measure(workload: keyof typeof WORKLOADS) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-image-read-perf-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-image-read-perf-'))
   const ctx = new Context()
   try {
     await ctx.plugin(SessionStore)
     await ctx.plugin(ImageReadSessionQuery)
-    await ctx.plugin(LocalAttachmentStore, { dshHome: root })
+    await ctx.plugin(LocalAttachmentStore, { oceanHome: root })
     const refs: ImageAttachmentRef[] = []
     for (let ordinal = 0; ordinal < WORKLOADS[workload].images; ordinal++) {
       refs.push(await ctx.attachments.saveImage({ data: image(ordinal), mediaType: 'image/png' }))

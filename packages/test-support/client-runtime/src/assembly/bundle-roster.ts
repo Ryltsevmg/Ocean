@@ -1,9 +1,9 @@
 /**
- * The browser roster of a `dsh --profile`, read from its bundle patch files
- * the way the launcher composes them: each bundle's `dsh.bundle.patch` file list is
+ * The browser roster of a `ocean --profile`, read from its bundle patch files
+ * the way the launcher composes them: each bundle's `ocean.bundle.patch` file list is
  * parsed with the include plugin's YAML dialect (`entryListSchema`) and
  * composed by its `applyEntryPatches`; every enabled row whose package
- * declares `dsh.client.platform === 'web'` becomes a roster row carrying that
+ * declares `ocean.client.platform === 'web'` becomes a roster row carrying that
  * declaration's `inject` and `immediately`; rows nested in Loader groups count
  * like the Loader counts them, a disabled group disabling every row beneath
  * it. A patch that matches nothing
@@ -19,18 +19,19 @@ import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { evaluate, isJsExpr, type EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { applyEntryPatches, entryListSchema, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import { exactPackageSpecifier, parseDshClient } from '@ocean/ocean-client-modules/client'
+import { exactPackageSpecifier, parseOceanClient } from '@ocean/ocean-client-modules/client'
 import * as yaml from 'js-yaml'
 import { ClientRoster, type ClientRosterRow } from './roster.ts'
 
 /**
- * The `web` profile's bundle layers, in the order `dsh --profile web` applies them
+ * The `web` profile's bundle layers, in the order `ocean --profile web` applies them
  * (`PROFILE_TEMPLATES.web` in `@ocean/ocean-official-bundles`).
  */
 export const WEB_PROFILE_BUNDLES: readonly string[] = ['@ocean/ocean-base', '@ocean/ocean-web-app']
 
 interface PackageManifest {
   name?: unknown
+  ocean?: { bundle?: { patch?: unknown }; client?: unknown }
   dsh?: { bundle?: { patch?: unknown }; client?: unknown }
 }
 
@@ -75,7 +76,7 @@ export function bundleRoster(
     if (manifest.name !== name) {
       throw new Error(`client-test-runtime: ${manifestPath} names ${JSON.stringify(manifest.name)}, expected ${name}`)
     }
-    const declaration = parseDshClient(name, manifest.dsh?.client)
+    const declaration = parseOceanClient(name, manifest.ocean?.client)
     if (declaration === undefined || declaration.platform !== 'web') continue
     if (disabled.some(value => value !== undefined && value !== null && typeof value !== 'boolean'
       && !(disabledContext !== undefined && isJsExpr(value)))) {
@@ -89,10 +90,10 @@ export function bundleRoster(
 function readLayer(bundle: string, anchor: string): BundleLayer {
   const manifestPath = locateManifest([anchor], bundle)
   if (manifestPath === undefined) throw new Error(`client-test-runtime: cannot resolve bundle ${bundle} from ${anchor}`)
-  const declared = readManifest(manifestPath).dsh?.bundle?.patch
+  const declared = readManifest(manifestPath).ocean?.bundle?.patch
   const files = typeof declared === 'string' ? [declared] : declared
   if (!Array.isArray(files) || !files.every(file => typeof file === 'string')) {
-    throw new Error(`client-test-runtime: bundle ${bundle} declares no dsh.bundle.patch file list in ${manifestPath}`)
+    throw new Error(`client-test-runtime: bundle ${bundle} declares no ocean.bundle.patch file list in ${manifestPath}`)
   }
   const patches = files.flatMap((patch) => {
     const file = join(dirname(manifestPath), patch)
@@ -130,7 +131,8 @@ function flattenGroups(entries: readonly EntryOptions[], inherited: readonly unk
 }
 
 function readManifest(path: string): PackageManifest {
-  return JSON.parse(readFileSync(path, 'utf8')) as PackageManifest
+  const manifest = JSON.parse(readFileSync(path, 'utf8')) as PackageManifest
+  return Object.hasOwn(manifest, 'ocean') || manifest.dsh === undefined ? manifest : { ...manifest, ocean: manifest.dsh }
 }
 
 /**

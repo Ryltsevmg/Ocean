@@ -1,4 +1,4 @@
-/** DeepSeek Files API transport. @module dsh-llm-deepseek/files-api */
+/** DeepSeek Files API transport. @module ocean-llm-deepseek/files-api */
 
 import { attributionHeaders, LlmError } from '@ocean/ocean-llm'
 import type { ImageMediaType } from '@ocean/ocean-attachment'

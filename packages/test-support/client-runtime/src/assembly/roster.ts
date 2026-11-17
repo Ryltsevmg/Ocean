@@ -9,13 +9,13 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { WebBootEntry, WebBootGraph } from '@ocean/ocean-client-modules/client'
 import { PLATFORM_MODULES } from '@ocean/ocean-client-web/src/platform.ts'
 
-/** One browser plugin row as `dsh.client` declares it, keyed by package name. */
+/** One browser plugin row as `ocean.client` declares it, keyed by package name. */
 export interface ClientRosterRow {
   /** Package name (== manifest entry id == Loader entry name). */
   readonly name: string
-  /** Package-name dependency edges from `dsh.client.inject` ([] when absent). */
+  /** Package-name dependency edges from `ocean.client.inject` ([] when absent). */
   readonly inject: readonly string[]
-  /** Stage-one prefetch mark from `dsh.client.immediately` (false when absent). */
+  /** Stage-one prefetch mark from `ocean.client.immediately` (false when absent). */
   readonly immediately: boolean
 }
 

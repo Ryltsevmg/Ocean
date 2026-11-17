@@ -50,7 +50,7 @@ Kit 缺失时提供方照常注册，例如未下载 Office sidecar 就启动的
 | `timeoutMs` | `60000` | 获取转换器后的转换期限。 |
 | `maxInputBytes` | `52428800` | 最大源字节数。 |
 | `maxOutputBytes` | `104857600` | 最大完整 PDF、转换或重算文件字节数。 |
-| `outputDirectory` | `$DSH_HOME/office-kit/outputs` | 转换和重算文件的绝对目录。 |
+| `outputDirectory` | `$OCEAN_HOME/office-kit/outputs` | 转换和重算文件的绝对目录。 |
 | `outputRetentionMs` | `86400000` | 输出保留的毫秒数。 |
 | `maxOutputStoreBytes` | `536870912` | 保留输出的最大总字节数。 |
 | `maxImageResolution` | `192` | PDF 导出中图像的 DPI；覆盖 kit 的默认值 `144`。`renderImages()` 改用每个请求的 `dpi`。 |

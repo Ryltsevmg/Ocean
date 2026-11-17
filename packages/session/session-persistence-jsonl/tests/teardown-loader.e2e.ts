@@ -15,7 +15,7 @@ import { expect, it } from 'vitest'
 import { logPath } from '../src/format.ts'
 
 it('waits for injected consumer teardown, persists its final event, and releases listeners and leases', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-jsonl-teardown-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-jsonl-teardown-'))
   const ctx = new Context()
   const entered = Promise.withResolvers<undefined>()
   const release = Promise.withResolvers<undefined>()

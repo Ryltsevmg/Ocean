@@ -16,24 +16,24 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js oceanHomePath('sessions')
     compression: none
 
 - insert:
     - id: mock-llm
-      name: '../../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/mock-delegating-llm.ts'
-      disabled: !!js process.env.DSH_SNAPSHOT !== 'record'
+      name: '../../../packages/subagent/subagent-ocean-sdk/tests/fixtures/loader/mock-delegating-llm.ts'
+      disabled: !!js process.env.OCEAN_SNAPSHOT !== 'record'
 
-    - id: subagent-dsh-sdk
-      name: '@ocean/ocean-subagent-dsh-sdk'
+    - id: subagent-ocean-sdk
+      name: '@ocean/ocean-subagent-ocean-sdk'
       config:
         profile: sdk
-        patches: !!js JSON.parse(process.env.DSH_TEST_CHILD_PATCHES ?? '[]')
-        dshHome: !!js process.env.DSH_TEST_CHILD_HOME
+        patches: !!js JSON.parse(process.env.OCEAN_TEST_CHILD_PATCHES ?? '[]')
+        oceanHome: !!js process.env.OCEAN_TEST_CHILD_HOME
         provider: mock
         model: mock-routed
         env:
-          DSH_TELEMETRY_DISABLED: '1'
+          OCEAN_TELEMETRY_DISABLED: '1'
 
     - id: subagent-model-selection-settings
       name: '@ocean/ocean-tool-subagent/model-selection-settings'
@@ -43,8 +43,8 @@
           - provider: mock
             model: mock-routed
 
-    - id: tool-subagent-dsh-sdk
-      name: '../../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/scoped-tool-subagent.ts'
+    - id: tool-subagent-ocean-sdk
+      name: '../../../packages/subagent/subagent-ocean-sdk/tests/fixtures/loader/scoped-tool-subagent.ts'
       config:
         provider: dsh-sdk
         toolName: subagent
@@ -55,7 +55,7 @@
     - id: sdk-jsonrpc-server-dynamic-live
       name: '@ocean/ocean-sdk-jsonrpc-server'
       inject: [sdkAppStartup, loader]
-      disabled: !!js process.env.DSH_SNAPSHOT !== 'record'
+      disabled: !!js process.env.OCEAN_SNAPSHOT !== 'record'
       config:
         maxTokensAsSuccess: true
 

@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/cookbook/adding-a-vendored-package.md
 /cookbook-adding-a-vendored-package:
-  en: f4eda20eb37f2d46
-  zh: ecf2b59d40f63275
+  en: b7252cc8d7c654c8
+  zh: 0e65f30d611a2cd8
 /cookbook-adding-a-vendored-package/1-copy-the-source-in:
-  en: 4cde59b8108d03e2
-  zh: 39b842dcdc678a45
+  en: 809b4207907f69e0
+  zh: 75d790108f4dc23c
 /cookbook-adding-a-vendored-package/2-register-it-in-the-root-configs:
   en: 5c29db234af3eb3b
   zh: 7cea907bf30e2043
@@ -15,5 +15,5 @@
   en: 04f0b9d516b61910
   zh: 919a32ce8cb5536a
 /cookbook-adding-a-vendored-package/4-verify:
-  en: d73b1b6a5aa6353f
-  zh: 15b3a4241e3b65ff
+  en: f6a25d3d38f16a1e
+  zh: 005ef68011948442

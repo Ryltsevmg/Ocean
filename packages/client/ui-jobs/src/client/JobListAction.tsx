@@ -407,7 +407,7 @@ export function JobListAction({ sessionId, useJobs, watchRows, observe, killJob,
   // Timers belong to this mounted session and cannot survive a disappearing trigger.
   useEffect(() => cancelHover, [cancelHover, sessionId, hasJobs])
 
-  const anchorName = `--dsh-jobs-${useId().replaceAll(':', '')}`
+  const anchorName = `--ocean-jobs-${useId().replaceAll(':', '')}`
   useDismissOnOutsidePointer(rootRef, open, changeOpen, menuRef)
   // Hover does not move focus; Escape must also work from the rest of the page.
   useEffect(() => {

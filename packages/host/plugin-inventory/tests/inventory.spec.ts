@@ -40,7 +40,7 @@ async function harness(baseUrl?: string): Promise<{
 }
 
 function metadataFixture(mode: 'native' | 'runtime') {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-inventory-meta-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-inventory-meta-'))
   roots.push(root)
   const profilesDir = join(root, 'profiles')
   const profileDir = join(profilesDir, 'test')
@@ -59,7 +59,7 @@ function metadataFixture(mode: 'native' | 'runtime') {
     expect(lstatSync(dir).isDirectory()).toBe(true)
     for (const path of [
       join(profileDir, 'node_modules'), join(profilesDir, 'node_modules'),
-      join(root, 'node_modules'), join(profileDir, '.dsh-module-fallback'),
+      join(root, 'node_modules'), join(profileDir, '.ocean-module-fallback'),
     ]) expect(lstatSync(path, { throwIfNoEntry: false }), path).toBeUndefined()
   }
   return { dir, baseUrl, resolution, expectUnlinked }

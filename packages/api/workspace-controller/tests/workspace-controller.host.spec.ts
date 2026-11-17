@@ -52,7 +52,7 @@ function deferred<T>(): Deferred<T> {
 }
 
 async function harness(options: { systemDocuments?: boolean } = {}) {
-  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-workspace-controller-')))
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-workspace-controller-')))
   tempDirs.push(root)
   const ctx = new Context()
   roots.push(ctx)

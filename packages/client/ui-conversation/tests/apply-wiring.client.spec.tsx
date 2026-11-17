@@ -48,7 +48,7 @@ function entry(
 
 describe('target-neutral Conversation apply wiring', () => {
   it('hands every Session header the same in-memory View pins without restoring saved choices', async () => {
-    localStorage.setItem('dsh.slot.manual-order.conversation.view.v1', JSON.stringify({ unpinned: ['trajectory'] }))
+    localStorage.setItem('ocean.slot.manual-order.conversation.view.v1', JSON.stringify({ unpinned: ['trajectory'] }))
     try {
       const b = await bench()
       const header = b.runtime.slots.entries('conversation.session.header')[0]!

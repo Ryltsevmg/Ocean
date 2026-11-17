@@ -27,7 +27,7 @@
     "./locale/*.json": "./locale/*.json",
     "./assets/*": "./lib/assets/*"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-client-ui-renderer",

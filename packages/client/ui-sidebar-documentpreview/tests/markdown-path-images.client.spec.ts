@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { markdownImageUrl } from '../src/client/markdown/path-images.ts'
 
-const BASE = 'https://example.test/tools/dsh/'
+const BASE = 'https://example.test/tools/ocean/'
 
 describe('Markdown preview image URLs', () => {
   it.each([

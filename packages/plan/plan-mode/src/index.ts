@@ -219,14 +219,14 @@ export class PlanModeController extends Service {
       try {
         this.onBoundary(agent.session)
       } catch (error) {
-        ctx.logger.warn('dsh-plan-mode: failed to append selected plan mode at step start: %o', error)
+        ctx.logger.warn('ocean-plan-mode: failed to append selected plan mode at step start: %o', error)
         return decision
       }
       return !pending.narrate || narration === undefined
         ? decision
         : { ...decision, messages: [...decision.messages, narration] }
     })
-    ctx.effect(() => () => { disposed = true }, 'dsh-plan-mode: close service lifetime')
+    ctx.effect(() => () => { disposed = true }, 'ocean-plan-mode: close service lifetime')
 
     // The command child activates only when a command registry is composed.
     ctx.inject(['commands'], (commandCtx) => {

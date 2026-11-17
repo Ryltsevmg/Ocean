@@ -31,7 +31,7 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js oceanHomePath('sessions')
     compression: none
 
 - id: agent-instructions

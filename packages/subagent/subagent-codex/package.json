@@ -34,7 +34,7 @@
     "src"
   ],
   "license": "MIT",
-  "dsh": {
+  "ocean": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }

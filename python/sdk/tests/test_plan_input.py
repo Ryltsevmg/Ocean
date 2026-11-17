@@ -138,7 +138,7 @@ def configured_harness(**options):
     )
 
 example["main"].__globals__["DeepSeekHarness"] = configured_harness
-sys.argv = [example_path, "--dsh-home", str(root / "home"), "--workspace", str(root), "Plan a change."]
+sys.argv = [example_path, "--ocean-home", str(root / "home"), "--workspace", str(root), "Plan a change."]
 try:
     example["main"]()
 except KeyboardInterrupt:
@@ -146,7 +146,7 @@ except KeyboardInterrupt:
 finally:
     (root / "cleanup.json").write_text(json.dumps({
         "readers": [{"pid": reader.pid, "returncode": reader.poll()} for reader in readers],
-        "callbacks": [thread.name for thread in threading.enumerate() if thread.name == "dsh-user-question"],
+        "callbacks": [thread.name for thread in threading.enumerate() if thread.name == "ocean-user-question"],
     }))
 '''
 

@@ -12,7 +12,7 @@ const row = (id: string, value: number): EntryOptions => ({ id, name: 'cordis:ex
 
 // File rows may omit ids; Include assigns them.
 async function fixture(data: Array<Omit<EntryOptions, 'id'> & { id?: string }>) {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-include-journal-'))
+  const dir = await mkdtemp(join(tmpdir(), 'ocean-include-journal-'))
   const ctx = new Context()
   onTestFinished(async () => {
     await ctx.fiber.dispose()

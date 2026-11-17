@@ -25,7 +25,7 @@ description: "Windows 已安装应用更新的人工清单，覆盖下载失败�
 
 示例以 `0.1.6-alpha.1` 为基础版本。创建新物料前，按[发布版本规则](../../packaging/README.zh.md#release-versions)替换为实际基础版本、北京时间日期和未使用的序号。
 
-运行任何验收命令前，显式设置 `DSH_DESKTOP_AUTO_UPDATE_ENV=test`，将 `DOWNLOAD_TEST_ORIGIN` 设置为自己的 Ocean HTTPS 测试源，将 `DOWNLOAD_TEST_COS_BUCKET` 设置为测试 COS 存储桶。整个批次及签名、发布使用的 Windows 文件配置必须保持一致。上游地址及与已配置生产设置相同的目标会被拒绝。新清单使用 schema 2 和 Ocean 测试身份；不要通过编辑旧清单升级，应创建新批次。这些设置不会分配服务器，也不代表已完成安装后更新验收。
+运行任何验收命令前，显式设置 `OCEAN_DESKTOP_AUTO_UPDATE_ENV=test`，将 `DOWNLOAD_TEST_ORIGIN` 设置为自己的 Ocean HTTPS 测试源，将 `DOWNLOAD_TEST_COS_BUCKET` 设置为测试 COS 存储桶。整个批次及签名、发布使用的 Windows 文件配置必须保持一致。上游地址及与已配置生产设置相同的目标会被拒绝。新清单使用 schema 2 和 Ocean 测试身份；不要通过编辑旧清单升级，应创建新批次。这些设置不会分配服务器，也不代表已完成安装后更新验收。
 
 ```powershell
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts init 0.1.6-alpha.1.20260916.1 0.1.6-alpha.1.20260916.2
@@ -42,7 +42,7 @@ node --import tsx apps/desktop/scripts/prepare-installed-update.ts runtime "<run
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts application "<run.json>"
 ```
 
-将生成的 `bootstrap` 目录中的两个文件放在包内 `lib/` 同级，将包主入口设为 `qualification-bootstrap.mjs`。该入口在加载生产主程序前验证已安装应用的 ID 与版本。它将 Electron 用户/会话数据、Harness home 和日志放在操作系统应用数据目录下的 `dsh-update-qualification/<id>/`；两个版本使用相同路径。运行时复制器仅修改发布家族包版本和对应依赖引用，保留第三方版本，并重新校验两个副本清单和未修改的原始资源。其 `runtime-preparation/result.json` 记录哈希，并明确不宣称签名或副本版本的启动验收通过。这些合成版本属于测试物料，不是 npm 发布版本。
+将生成的 `bootstrap` 目录中的两个文件放在包内 `lib/` 同级，将包主入口设为 `qualification-bootstrap.mjs`。该入口在加载生产主程序前验证已安装应用的 ID 与版本。它将 Electron 用户/会话数据、Harness home 和日志放在操作系统应用数据目录下的 `ocean-update-qualification/<id>/`；两个版本使用相同路径。运行时复制器仅修改发布家族包版本和对应依赖引用，保留第三方版本，并重新校验两个副本清单和未修改的原始资源。其 `runtime-preparation/result.json` 记录哈希，并明确不宣称签名或副本版本的启动验收通过。这些合成版本属于测试物料，不是 npm 发布版本。
 
 `application` 命令将已构建的主程序/预加载模块、界面文件和准备好的启动入口复制到 `application/files`，并在 `application/result.json` 中记录 SHA-256。它不复制应用根目录的 `.env.windows`，也不冻结 `node_modules` 与构建工具。[验收打包配置](../../scripts/installed-update-builder.ts)校验该清单与选定的独立运行时，选用共享冻结文件和隔离包元数据，并保留常规安装器与签名钩子。其测试替换签名器，并通过固定版本构建器的配置校验；测试不生成安装器。另行授权的受监督构建仍须记录依赖/工具输入，并验证最终包内容及签名。
 
@@ -54,7 +54,7 @@ node --import tsx apps/desktop/scripts/package-installed-update.ts "<run.json>" 
 
 实际打包仍未验证，必须另行获得硬件恢复授权并有操作者在场。`--execute` 模式要求终端和包含版本、批次 ID 的准确确认，没有管道批准选项。它再次检查保护锁，并独占创建该版本的 `packaging` 目录。受监督子进程只构建该版本、禁用发布、移除无关凭据，失败或达到 15 分钟整体期限时停止。该期限不限制单次 CSP 内部认证尝试。记录保留源码/工具哈希、脱敏输出、事件和产物文件哈希；已有尝试或输出拒绝复用。`builderCompleted` 与监督程序成功结果不证明包验证、验签或安装成功；独立完成这些检查前，`packageVerification` 保持 `pending`。
 
-操作者开始前，提供两个已验证安装包、生成的元数据与 blockmap、打包和签名记录、准确的安装后可执行文件路径与固定 test feed URL。两个安装包必须使用相同的测试身份、隔离数据目录，并在每次启动时设置同一个安装目录外的绝对路径 `DSH_DESKTOP_UPDATE_JOURNAL_DIR`，包括安装器触发的重启。仅在首次启动终端中设置变量是不够的。[Windows 签名规则](../../windows-signing/README.zh.md#windows-ev-signing)仍适用；清单绝不解除签名保护锁。
+操作者开始前，提供两个已验证安装包、生成的元数据与 blockmap、打包和签名记录、准确的安装后可执行文件路径与固定 test feed URL。两个安装包必须使用相同的测试身份、隔离数据目录，并在每次启动时设置同一个安装目录外的绝对路径 `OCEAN_DESKTOP_UPDATE_JOURNAL_DIR`，包括安装器触发的重启。仅在首次启动终端中设置变量是不够的。[Windows 签名规则](../../windows-signing/README.zh.md#windows-ev-signing)仍适用；清单绝不解除签名保护锁。
 
 Windows [只读签名检查器](../../scripts/installed-update-signature.mjs)使用真实 updater 验签，发布者来自可信公钥证书，随后要求 Authenticode 与时间戳属性有效且 SHA-512 未变。验签子进程不继承签名/上传秘密或 PowerShell 模块路径覆盖。检查器绝不加载 `.env.windows`、签名文件或执行被检查的可执行文件。本地已观察到签名探针通过、未签名安装包被拒绝；这些结果不能证明任一准备版本、包身份或安装行为已验收。
 
@@ -101,7 +101,7 @@ node --import tsx apps/desktop/scripts/prepare-installed-update.ts inspect 0.1.6
 
 退出码 0 表示按序日志标记齐全；退出码 2 表示缺少标记；退出码 1 表示输入或命令验证失败。失败重试序列不能拼接不同版本 1 进程。早于原进程退出就启动的后继进程不计入；系统时间变化可能导致证据不完整，需要调查。`recordedFlow: complete` 不等于整体验收通过。报告始终要求独立人工检查发布时间、网络失败与恢复、安装器完成与路径、数据保留以及截图和确认。
 
-使用 `collect` 及匹配安装应用的 `dsh-update-qualification/<run-id>/journals` 目录保存本地日志快照与报告。它先验证所有选中记录，再在物料批次下创建新的 `evidence/collection-*`。复制的日志与 `report.json` 描述同一份内存快照，包含 SHA-256 和 `operatorAcceptance: pending`；原文件保持不变。不收集其他文件、设置、会话、构建输出或凭据。将这些另外审查过的证据与报告一同保留，不放进日志目录。
+使用 `collect` 及匹配安装应用的 `ocean-update-qualification/<run-id>/journals` 目录保存本地日志快照与报告。它先验证所有选中记录，再在物料批次下创建新的 `evidence/collection-*`。复制的日志与 `report.json` 描述同一份内存快照，包含 SHA-256 和 `operatorAcceptance: pending`；原文件保持不变。不收集其他文件、设置、会话、构建输出或凭据。将这些另外审查过的证据与报告一同保留，不放进日志目录。
 
 ```powershell
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts collect "<run.json>" "<journal-directory>"

@@ -30,7 +30,7 @@ const dirs: string[] = []
 afterEach(async () => { for (const d of dirs.splice(0)) await rm(d, { recursive: true, force: true }) })
 
 async function persistentHarness(adapter: MockAdapter): Promise<{ ctx: Context; root: string }> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-resume-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-resume-'))
   dirs.push(root)
   return { ctx: await mountPersistentHarness(root, adapter), root }
 }
@@ -577,7 +577,7 @@ describe('AgentLoop factory create/resume', () => {
 
   it('resume over a torn physical tail continues from the committed prefix', async () => {
     const sessionId = SessionId('torn-tail-resume')
-    const root = await mkdtemp(join(tmpdir(), 'dsh-resume-torn-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-resume-torn-'))
     dirs.push(root)
     const ctx1 = await mountPersistentHarness(root, new MockAdapter([]), 'none')
     await seedStoredSession(ctx1, sessionId, [

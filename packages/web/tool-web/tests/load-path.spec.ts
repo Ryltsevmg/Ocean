@@ -14,7 +14,7 @@ import ToolRuntime from '@ocean/ocean-tools'
 import WebRuntime from '@ocean/ocean-web'
 import * as toolWeb from '@ocean/ocean-tool-web'
 
-describe('dsh-tool-web real-load-path guard', () => {
+describe('ocean-tool-web real-load-path guard', () => {
   it('has no default export and keeps name/inject/Config through unwrapExports', () => {
     expect('default' in toolWeb).toBe(false)
 

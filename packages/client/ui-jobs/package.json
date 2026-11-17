@@ -58,7 +58,7 @@
     "lib/**/*.js.map",
     "src"
   ],
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-api-job-controller",

@@ -15,7 +15,7 @@ import { MockAdapter, textResponse } from '../../../core/agent-loop/tests/mock-a
 import { HarnessSdkJsonRpcServer } from '../src/server.ts'
 
 async function setup(beforeServer?: (ctx: Context) => void) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-sdk-wait-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-sdk-wait-'))
   const ctx = new Context()
   await mountAgentLoopTestDependencies(ctx)
   await ctx.plugin(AgentLoop, { agents: [] })

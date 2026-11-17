@@ -6,23 +6,23 @@
   en: 8904d5f5d5251a83
   zh: 69b48f289b0416f0
 /ocean-ocean-ptc-runtime:
-  en: 9cf636e3e405de6c
-  zh: 6fe3ecfebd7ad8a5
+  en: deef551ffd1d07b9
+  zh: d0f9238d7773e563
 /ocean-ocean-ptc-runtime/summary:
-  en: 6bf8184a933be9fa
-  zh: 19fe0bb198744a77
+  en: ae849bb5701dcb34
+  zh: 57436d8ce311db7f
 /ocean-ocean-ptc-runtime/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-ptc-runtime/use-this-package:
-  en: 346f62bbfd0e6d9d
-  zh: bf86b2d7a26e8193
+  en: 1c3c82763795e0da
+  zh: 116bdbd7c4e6875e
 /ocean-ocean-ptc-runtime/use-this-package/run-a-program:
-  en: cc02624f3e84fba5
-  zh: 0294523cc7ebbbd9
+  en: 95e15f500fc64194
+  zh: 9a63da6e20a94ef3
 /ocean-ocean-ptc-runtime/use-this-package/choose-a-backend:
-  en: a7ffbb6dfe129164
-  zh: 110a800394ef7d26
+  en: e98040241baddf53
+  zh: eb8a5de061630a88
 /ocean-ocean-ptc-runtime/use-this-package/name-your-bindings-portably:
   en: ff1970944a8d6874
   zh: 14da7a9e54ca26e3
@@ -33,26 +33,26 @@
   en: 686d570f5e669fa4
   zh: 2075cf27c30f251a
 /ocean-ocean-ptc-runtime/understand-the-implementation/design-concept:
-  en: f4fbeac4c844a37b
-  zh: c1b8f88022136543
+  en: 6b321a91610cd283
+  zh: 34eca1689e9933a2
 /ocean-ocean-ptc-runtime/understand-the-implementation/service-api:
-  en: 1d7a792c9a78a517
-  zh: b49bddf18c259edc
+  en: ea307a1321d7ae27
+  zh: f5fd284b090c7cf4
 /ocean-ocean-ptc-runtime/understand-the-implementation/vocabulary:
   en: a499ed426b20e296
   zh: 53a2bdb062cf85ba
 /ocean-ocean-ptc-runtime/understand-the-implementation/portable-identifiers:
-  en: f76c4f5d4877d746
-  zh: 21ec1e77e3861fcc
+  en: 00ae8ac737fcc6ed
+  zh: c08f9860015ecdd8
 /ocean-ocean-ptc-runtime/understand-the-implementation/source-map:
   en: 85b65ceb9be0c49f
   zh: 52df7f06d4e49d6e
 /ocean-ocean-ptc-runtime/further-exploration:
-  en: fefa5b81da0fce3d
-  zh: e89565272341eb15
+  en: cb02b49cd0c268ce
+  zh: 1b1ba8557475fbd0
 /ocean-ocean-ptc-runtime/model-experience:
-  en: 711163291bdd8157
-  zh: 4e05f1e7c60058a0
+  en: 9d68e987902bd790
+  zh: 5fb6dffd27870212
 /ocean-ocean-ptc-runtime/model-experience/kv-cache-effect:
   en: 40294c1c31b74824
   zh: 081cebc2e2650f03

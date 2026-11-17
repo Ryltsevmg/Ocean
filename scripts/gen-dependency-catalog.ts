@@ -96,7 +96,7 @@ function parseEntry(value: unknown, location: string): PackageEntry {
 
 /**
  * Read npm's resolved production tree without substituting workspace or development dependencies.
- * @param input - Parsed npm lockfile v3 from a consumer with only dsh as its dependency.
+ * @param input - Parsed npm lockfile v3 from a consumer with only ocean as its dependency.
  * @returns The CLI version and sorted package locations, excluding the synthetic consumer and CLI itself.
  */
 export function collectDependencies(input: unknown): { version: string; rows: DependencyRow[] } {
@@ -257,10 +257,10 @@ async function runNpm(args: readonly string[], cwd: string, env: NodeJS.ProcessE
 }
 
 async function refreshResolution(): Promise<void> {
-  const temporary = await mkdtemp(join(tmpdir(), 'dsh-dependency-catalog-'))
+  const temporary = await mkdtemp(join(tmpdir(), 'ocean-dependency-catalog-'))
   try {
     writeFileSync(join(temporary, 'package.json'), `${JSON.stringify({
-      name: 'dsh-dependency-catalog', version: '0.0.0', private: true, dependencies: { [PACKAGE]: 'latest' },
+      name: 'ocean-dependency-catalog', version: '0.0.0', private: true, dependencies: { [PACKAGE]: 'latest' },
     }, null, 2)}\n`)
     const environment = createNpmResolutionEnvironment(temporary)
     const npm = await runNpm(['--version'], temporary, environment)

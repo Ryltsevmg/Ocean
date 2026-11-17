@@ -114,9 +114,9 @@ describe('PluginInventorySettingsTab', () => {
       ['@ocean/ocean-client-tabs', 'tabs'],
       ['@deepseek-ai/cordis-plugin-hmr', 'hmr'],
       ['cordis:timer', 'timer'],
-      ['@acme/dsh-sidebar/navigation', 'sidebar/navigation'],
-      ['@legacy/dsh-host-web', 'web'],
-      ['@legacy/dsh-client-tabs', 'tabs'],
+      ['@acme/ocean-sidebar/navigation', 'sidebar/navigation'],
+      ['@legacy/ocean-host-web', 'web'],
+      ['@legacy/ocean-client-tabs', 'tabs'],
       ['oceanography-plugin', 'oceanography-plugin'],
       ['plugin-ocean-client-tabs', 'plugin-ocean-client-tabs'],
       ['plain-plugin', 'plain-plugin'],
@@ -156,17 +156,17 @@ describe('PluginInventorySettingsTab', () => {
   it('keeps authored locale titles verbatim when they resemble module names', async () => {
     const { locale, pageProps } = localizedProps(async () => ({
       entries: [{
-        entryId: 'include:navigation' as PluginEntryId, moduleName: '@acme/dsh-navigation', enabled: true, fiberPhase: null,
-        meta: { title: { en: 'dsh-Navigation', zh: 'dsh-导航' } },
+        entryId: 'include:navigation' as PluginEntryId, moduleName: '@acme/ocean-navigation', enabled: true, fiberPhase: null,
+        meta: { title: { en: 'ocean-Navigation', zh: 'ocean-导航' } },
       }],
     }))
     const view = render(<PluginInventorySettingsTab {...pageProps} />)
     await screen.findByRole('searchbox', { name: en.search })
     fireEvent.click(globalToggle())
-    expect(screen.getByRole('button', { name: 'dsh-Navigation, include:navigation, Enabled' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'ocean-Navigation, include:navigation, Enabled' })).toBeTruthy()
     locale.setLocale('zh')
     view.rerender(<PluginInventorySettingsTab {...pageProps} />)
-    expect(screen.getByRole('button', { name: 'dsh-导航, include:navigation, 已启用' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'ocean-导航, include:navigation, 已启用' })).toBeTruthy()
   })
 
   it('localizes global and preset metadata at render time while preserving identities and query state', async () => {
@@ -244,16 +244,16 @@ describe('PluginInventorySettingsTab', () => {
   it.each(['global', 'preset'])('resolves each %s row field independently and hides empty English descriptions', async (scope) => {
     const rows: Snapshot['entries'] = [
       {
-        entryId: 'include:navigation' as PluginEntryId, moduleName: '@acme/dsh-sidebar/navigation', enabled: true, fiberPhase: null,
+        entryId: 'include:navigation' as PluginEntryId, moduleName: '@acme/ocean-sidebar/navigation', enabled: true, fiberPhase: null,
         meta: { description: { en: 'Navigation description.' } },
       },
       {
-        entryId: 'include:commands' as PluginEntryId, moduleName: '@acme/dsh-sidebar/commands', enabled: true, fiberPhase: null,
+        entryId: 'include:commands' as PluginEntryId, moduleName: '@acme/ocean-sidebar/commands', enabled: true, fiberPhase: null,
         meta: { title: { en: 'English title' }, description: { en: 'Package description.', zh: '中文命令说明。' } },
       },
       {
-        entryId: 'include:theme' as PluginEntryId, moduleName: '@acme/dsh-theme/client', enabled: true, fiberPhase: null,
-        meta: { title: { en: '@acme/dsh-theme', zh: '主题插件' }, description: { en: '', zh: '中文主题说明。' } },
+        entryId: 'include:theme' as PluginEntryId, moduleName: '@acme/ocean-theme/client', enabled: true, fiberPhase: null,
+        meta: { title: { en: '@acme/ocean-theme', zh: '主题插件' }, description: { en: '', zh: '中文主题说明。' } },
       },
     ]
     const snapshot: Snapshot = scope === 'global'
@@ -268,7 +268,7 @@ describe('PluginInventorySettingsTab', () => {
     expect(screen.getByText('Navigation description.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'English title, include:commands, Enabled' })).toBeTruthy()
     expect(screen.getByText('Package description.')).toBeTruthy()
-    const theme = screen.getByRole('button', { name: '@acme/dsh-theme, include:theme, Enabled' })
+    const theme = screen.getByRole('button', { name: '@acme/ocean-theme, include:theme, Enabled' })
     expect(theme.getAttribute('aria-describedby')).toBeNull()
     expect(screen.queryByText('中文主题说明。')).toBeNull()
 
@@ -286,16 +286,16 @@ describe('PluginInventorySettingsTab', () => {
     expect(screen.queryByText('Package description.')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '主题插件, include:theme, 已启用' }))
     expect(view.container.querySelector('[data-loader-entry]')?.textContent).toBe('include:theme')
-    expect(screen.getByText(zh.moduleLabel).nextElementSibling?.textContent).toBe('@acme/dsh-theme/client')
+    expect(screen.getByText(zh.moduleLabel).nextElementSibling?.textContent).toBe('@acme/ocean-theme/client')
 
     fireEvent.change(screen.getByRole('searchbox', { name: zh.search }), { target: { value: '中文主题说明。' } })
     expect(screen.getAllByRole('listitem')).toHaveLength(1)
     locale.setLocale('en')
     view.rerender(<PluginInventorySettingsTab {...pageProps} />)
     expect(screen.getByText(en.emptySearch)).toBeTruthy()
-    fireEvent.change(screen.getByRole('searchbox', { name: en.search }), { target: { value: '@acme/dsh-theme/client' } })
+    fireEvent.change(screen.getByRole('searchbox', { name: en.search }), { target: { value: '@acme/ocean-theme/client' } })
     expect(screen.getAllByRole('listitem')).toHaveLength(1)
-    expect(screen.getByRole('button', { name: '@acme/dsh-theme, include:theme, Enabled' }).getAttribute('aria-describedby')).toBeNull()
+    expect(screen.getByRole('button', { name: '@acme/ocean-theme, include:theme, Enabled' }).getAttribute('aria-describedby')).toBeNull()
     expect(list).toHaveBeenCalledOnce()
   })
 
@@ -303,7 +303,7 @@ describe('PluginInventorySettingsTab', () => {
     const error = 'locale/zh.json: invalid title'
     await renderReady({
       entries: [{
-        entryId: 'include:legacy' as PluginEntryId, moduleName: '@acme/dsh-legacy', enabled: false, fiberPhase: null,
+        entryId: 'include:legacy' as PluginEntryId, moduleName: '@acme/ocean-legacy', enabled: false, fiberPhase: null,
         meta: { error },
       }],
     })
@@ -313,7 +313,7 @@ describe('PluginInventorySettingsTab', () => {
     expect(card).toHaveProperty('disabled', false)
     expect(card.closest('li')?.getAttribute('data-failed')).toBeNull()
     fireEvent.click(card)
-    expect(screen.getByText(en.moduleLabel).nextElementSibling?.textContent).toBe('@acme/dsh-legacy')
+    expect(screen.getByText(en.moduleLabel).nextElementSibling?.textContent).toBe('@acme/ocean-legacy')
   })
 
   it('shows the default preset first with its group open and the global plane folded', async () => {

@@ -42,7 +42,7 @@ export async function prepareDesktopRollout(directory: string, manifest: Desktop
   const source = manifest.source
   const windows = source.target === 'win-x64'
   const platform = windows ? 'win32' : 'darwin'
-  const update = resolveDesktopUploadConfig({ ...environment, DSH_DESKTOP_UPDATE_CHANNEL: source.channel },
+  const update = resolveDesktopUploadConfig({ ...environment, OCEAN_DESKTOP_UPDATE_CHANNEL: source.channel },
     platform, source.target === 'mac-arm64' ? 'arm64' : 'x64')
   if (update.environment !== source.preset) throw new Error('desktop rollout: environment differs from original package')
   const filename = desktopUpdateMetadataFilename(source.version, platform, source.channel)

@@ -206,7 +206,7 @@ describe('volatile Loader updates', () => {
 })
 
 it('reloads real YAML and persists plain values independently of custom update hooks', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-volatile-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-volatile-'))
   const ctx = new Context()
   onTestFinished(async () => { await ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   ctx.baseUrl = pathToFileURL(root).href + '/'
@@ -269,7 +269,7 @@ it('reloads real YAML and persists plain values independently of custom update h
 })
 
 it('updates volatile children through Group and Include custom updates and saves ordinary config', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-volatile-tree-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-volatile-tree-'))
   const ctx = new Context()
   onTestFinished(async () => { await ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   ctx.baseUrl = pathToFileURL(root).href + '/'
@@ -420,7 +420,7 @@ it.each([true, false])('keeps old references untouched when isolation replaces a
 })
 
 it.each(['group', 'include'] as const)('applies profile patches to a %s subtree without HMR and keeps mixed updates on the normal lifecycle', async (kind) => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-volatile-profile-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-volatile-profile-'))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const configs: ReturnType<typeof Config>[] = []
   const events = vi.fn()

@@ -7,7 +7,7 @@ const MIME: Readonly<Record<string, string>> = {
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json',
   '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon',
 }
-const BOOT = '<script>globalThis.__DSH_BOOT_READY__ = Promise.withResolvers()</script>'
+const BOOT = '<script>globalThis.__OCEAN_BOOT_READY__ = Promise.withResolvers()</script>'
 
 /**
  * Read an application-owned static asset; the index waits for asynchronous Host injections.
@@ -56,7 +56,7 @@ export interface HostCookieStore {
 }
 
 /**
- * Remove every `dsh-auth-*` cookie that earlier releases left in a cookie store for the Host's hostname.
+ * Remove every `ocean-auth-*` cookie that earlier releases left in a cookie store for the Host's hostname.
  * Cookies ignore ports, so cookies from earlier random-port Hosts would otherwise travel with every
  * request to that hostname until they expire.
  * @param cookies - Electron session cookie store.
@@ -65,7 +65,7 @@ export interface HostCookieStore {
 export async function removeLegacyHostCookies(cookies: HostCookieStore, url: string): Promise<void> {
   const origin = new URL(url).origin
   for (const { name } of await cookies.get({ url: origin })) {
-    if (name.startsWith('dsh-auth-')) await cookies.remove(origin, name)
+    if (name.startsWith('ocean-auth-')) await cookies.remove(origin, name)
   }
 }
 

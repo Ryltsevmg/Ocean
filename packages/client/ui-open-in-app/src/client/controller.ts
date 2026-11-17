@@ -27,7 +27,7 @@ export class OpenInAppController {
   readonly apps: SnapshotStore<readonly string[] | null> = createSnapshotStore<readonly string[] | null>(null)
   /** Last chosen app id, or empty before the first choice, shared across sessions and browser restarts. */
   readonly choice: SnapshotStore<string> = createSnapshotStore<string>('', {
-    persist: { name: 'dsh.open-in-app.choice' },
+    persist: { name: 'ocean.open-in-app.choice' },
   })
 
   /** Current launch, shared by pointer and keyboard gestures. */

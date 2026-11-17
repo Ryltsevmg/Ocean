@@ -11,7 +11,7 @@ import { officeCalls, officeModelPatches, officeToolPatches } from './real-offic
 
 const repo = fileURLToPath(new URL('../../../../../', import.meta.url))
 const assetRoot = fileURLToPath(new URL('../../assets/', import.meta.url))
-const runtime = process.env.DSH_PRIMARY_RUNTIME
+const runtime = process.env.OCEAN_PRIMARY_RUNTIME
 const python = runtime && join(runtime, 'dependencies/python', process.platform === 'win32' ? 'python.exe' : 'bin/python3')
 
 type DocumentFormat = 'docx' | 'pptx' | 'xlsx'
@@ -68,26 +68,26 @@ export function registerVisualIntentCases(selected: readonly DocumentFormat[]): 
   ])
 
   it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(cases)('$format $kind $intent visual intent', async ({ format, kind, task, seed, verify, intent, suffix, rendersUnrequested }) => {
-    const controlRoot = await mkdtemp(join(tmpdir(), 'dsh-office-control-test-'))
+    const controlRoot = await mkdtemp(join(tmpdir(), 'ocean-office-control-test-'))
     try {
       const previewRoot = join(controlRoot, 'tmp')
       await mkdir(previewRoot)
       const configPath = join(controlRoot, 'office.patch.json')
       const sessionRoot = join(controlRoot, 'sessions')
       await runLoaderSmoke({
-        label: `Office ${format} ${kind} ${intent} visual intent`, tempDirPrefix: `dsh-office-${format}-${kind}-${intent}-`,
+        label: `Office ${format} ${kind} ${intent} visual intent`, tempDirPrefix: `ocean-office-${format}-${kind}-${intent}-`,
         binScript: join(repo, 'apps/cli/src/bin.ts'), sourceImport: 'tsx/esm', tsconfigPath: join(repo, 'tsconfig.base.json'),
         configPath, processTimeoutMs: 110_000,
         binArgs: ['--profile', 'headless', '--patch', configPath,
           `In input.${format}, ${task}; save result.${format}. ${suffix} Respond briefly in English.`],
-        env: { DSH_PRIMARY_RUNTIME: runtime, DSH_PERMISSION_MODE: 'danger-full-access',
-          DSH_HOME: join(controlRoot, 'home'), DSH_AGENTS_HOME: join(controlRoot, 'agents'),
-          DSH_TELEMETRY_DISABLED: '1',
+        env: { OCEAN_PRIMARY_RUNTIME: runtime, OCEAN_PERMISSION_MODE: 'danger-full-access',
+          OCEAN_HOME: join(controlRoot, 'home'), OCEAN_AGENTS_HOME: join(controlRoot, 'agents'),
+          OCEAN_TELEMETRY_DISABLED: '1',
           TMPDIR: previewRoot, TMP: previewRoot, TEMP: previewRoot,
-          HTTP_PROXY: process.env.DSH_OFFICE_TEST_PROXY, HTTPS_PROXY: process.env.DSH_OFFICE_TEST_PROXY },
+          HTTP_PROXY: process.env.OCEAN_OFFICE_TEST_PROXY, HTTPS_PROXY: process.env.OCEAN_OFFICE_TEST_PROXY },
         async prepare(cwd) {
           await execa(python!, ['-c', seed], { cwd })
-          const testAssetRoot = process.env.DSH_OFFICE_TEST_ASSET_ROOT ?? assetRoot
+          const testAssetRoot = process.env.OCEAN_OFFICE_TEST_ASSET_ROOT ?? assetRoot
           await writeFile(configPath, JSON.stringify([
             { insert: [{ id: 'skill-office', name: '@ocean/ocean-skill-office', config: { assetRoot: testAssetRoot } }] },
             ...officeToolPatches(),
@@ -101,7 +101,7 @@ export function registerVisualIntentCases(selected: readonly DocumentFormat[]): 
           const log = logs.find(path => path.endsWith('session.v4.jsonl'))
           expect(log, `No recorded session for ${format} ${intent} in ${sessionRoot}`).toBeDefined()
           const bytes = await readFile(join(sessionRoot, log!))
-          const traceDir = process.env.DSH_OFFICE_TRACE_DIR
+          const traceDir = process.env.OCEAN_OFFICE_TRACE_DIR
           if (traceDir !== undefined) {
             await mkdir(traceDir, { recursive: true })
             await writeFile(join(traceDir, `${format}-${kind}-${intent}.jsonl`), bytes)

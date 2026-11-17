@@ -3,26 +3,26 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/tests/README.md
 /desktop-local-verification:
-  en: 5056a9b4d24c1880
-  zh: 4d0c9d8e5f69d153
+  en: 97175193bf277b4a
+  zh: f09fc98264b78de1
 /desktop-local-verification/summary:
-  en: 95f8c9f7b9a61506
-  zh: 16bf1b67e4516e51
+  en: 5b27f0f9a421acaa
+  zh: a971b81326c429a0
 /desktop-local-verification/table-of-contents:
   en: fa9e3048995c0e3c
   zh: ef30232afa4ba125
 /desktop-local-verification/fault-report-verification:
-  en: a418eb04ce93b1ee
-  zh: 1ec04872a66ce1b7
+  en: 109a4abb2da18cc2
+  zh: 7aecce6d9b183ea7
 /desktop-local-verification/update-dialog-themes:
   en: d086c3b38ce623f1
   zh: 8327c31092f5f174
 /desktop-local-verification/native-overlay-visibility:
-  en: 6f4de4503748f3e2
-  zh: 648370375f16e463
+  en: eb8a1094acf87c97
+  zh: a39e1e08e06177eb
 /desktop-local-verification/manual-walkthrough:
-  en: 1f333416e5a3fef1
-  zh: fe0f30418db59cb0
+  en: dfd56af70c2f7423
+  zh: de4fbfa5b22f43e9
 /desktop-local-verification/evidence:
   en: dcb2473264c825d4
   zh: cebb2832efa15974

@@ -713,7 +713,7 @@ function isUnclassifiedCancellation(error: unknown, signal: AbortSignal): boolea
 
 /** Mint a same-process correlation token whose identity is its value. */
 function createExecutionToken(): ToolExecutionToken {
-  return Symbol('dsh.tool.execution') as ToolExecutionToken
+  return Symbol('ocean.tool.execution') as ToolExecutionToken
 }
 
 function toolErrorResult(error: unknown, info = errorInfo(error)): ToolExecutionResult {

@@ -26,11 +26,11 @@ function notificationOperations(c: TestClient): AccountNotificationsInjected {
   const injected: object = c.ctx.slots.entries('settings.launcher.notifications')[0]!.inject!()
   return injected as AccountNotificationsInjected
 }
-beforeEach(() => { vi.stubEnv('DSH_CLIENT_VERSION', '0.0.0-test') })
+beforeEach(() => { vi.stubEnv('OCEAN_CLIENT_VERSION', '0.0.0-test') })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks() })
 
 it('reads the unnotified bonus in the active locale and acknowledges only after the card renders', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const orderId = '4c1b0000-0000-4000-8000-000000000000'
   c.mock.remote.account.getNotifications.mockResolvedValue(ok(bonus(orderId)))
@@ -118,7 +118,7 @@ it('clears notification cards and ignores old event failures when credentials ch
 }, 60_000)
 
 it('keeps the notice without retrying its event across repeated signed-in frames', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const orderId = '4c1b0000-0000-4000-8000-000000000000' as AccountNotificationId
   c.mock.remote.account.getNotifications.mockResolvedValue(ok(bonus(orderId)))
@@ -144,7 +144,7 @@ it('keeps the notice without retrying its event across repeated signed-in frames
 }, 60_000)
 
 it('keeps the notice absent when the bonus read is refused, then shows the next read', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   const orderId = '4c1b0000-0000-4000-8000-000000000000'
@@ -163,7 +163,7 @@ it('keeps the notice absent when the bonus read is refused, then shows the next 
 }, 60_000)
 
 it('drops the previous account notice and stops reading after sign-out', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   c.mock.remote.account.getNotifications.mockResolvedValue(ok(bonus('4c1b0000-0000-4000-8000-000000000001')))
@@ -181,7 +181,7 @@ it('drops the previous account notice and stops reading after sign-out', async (
 }, 60_000)
 
 it('refreshes balances and notifications immediately on Settings entry', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   const balance: AccountDetails['balance'] = {
@@ -239,7 +239,7 @@ it('replaces polling on startup, sign-in and Settings entry and stops on sign-ou
 }, 60_000)
 
 it('publishes a failed balance from a Settings entry without dropping the bonus read', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   c.mock.remote.account.getBalance.mockResolvedValueOnce({ ok: false, error: new RemoteError('gateway/internal', 'offline', {}) })
@@ -253,7 +253,7 @@ it('publishes a failed balance from a Settings entry without dropping the bonus 
 }, 60_000)
 
 it('refreshes consumed notification content on a locale change without reading the unconsumed list again', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const id = '4c1b0000-0000-4000-8000-000000000000'
   c.mock.remote.account.getNotifications.mockResolvedValue(ok(bonus(id)))

@@ -6,7 +6,7 @@
 [English](python-sdk.md) | [中文](python-sdk.zh.md) | Русский | [日本語](python-sdk.ja.md) | [Español](python-sdk.es.md) | [Français](python-sdk.fr.md) | [Deutsch](python-sdk.de.md) | [Português](python-sdk.pt.md) | [한국어](python-sdk.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-В этом руководстве вы соберёте Python SDK из исходников, запустите поставляемый автономный минимальный профиль и настроите тот же профиль `dsh` из своей программы. У Ocean пока нет проверенного публичного дистрибутива SDK в npm или PyPI.
+В этом руководстве вы соберёте Python SDK из исходников, запустите поставляемый автономный минимальный профиль и настроите тот же профиль `ocean` из своей программы. У Ocean пока нет проверенного публичного дистрибутива SDK в npm или PyPI.
 
 <a id="prerequisites"></a>
 
@@ -58,7 +58,7 @@ python -m pip install (Get-ChildItem dist-python\*.whl)
 
 :::
 
-Выберите значение `--platform` и соответствующий исполняемый файл в `dist-exe/` для вашей машины: `linux-x64`, `linux-arm64`, `macos-arm64`, `macos-x64` или `win-x64`. Собирайте каждую цель на её собственной архитектуре. Установка включает wheel-пакет с нативным рантаймом для выбранной платформы и команду `dsh`. Для обычного запуска SDK системный Node.js не нужен. Точные имена файлов, процедуру сборки и проверки релиза см. в [инструкции по разработке Python](../../../python/development.md).
+Выберите значение `--platform` и соответствующий исполняемый файл в `dist-exe/` для вашей машины: `linux-x64`, `linux-arm64`, `macos-arm64`, `macos-x64` или `win-x64`. Собирайте каждую цель на её собственной архитектуре. Установка включает wheel-пакет с нативным рантаймом для выбранной платформы и команду `ocean`. Для обычного запуска SDK системный Node.js не нужен. Точные имена файлов, процедуру сборки и проверки релиза см. в [инструкции по разработке Python](../../../python/development.md).
 
 <a id="run-the-checked-in-example"></a>
 
@@ -99,7 +99,7 @@ $env:DEEPSEEK_API_KEY = "sk-your-key-here"
 ```sh [Linux/macOS]
 python python/sdk/examples/minimal.py \
   --workspace /absolute/path/to/disposable-workspace \
-  --dsh-home /absolute/path/to/example-dsh-home \
+  --ocean-home /absolute/path/to/example-ocean-home \
   --session-id example-001 \
   "Inspect the repository and fix the failing tests."
 ```
@@ -107,14 +107,14 @@ python python/sdk/examples/minimal.py \
 ```powershell [Windows PowerShell]
 python python/sdk/examples/minimal.py `
   --workspace C:\work\disposable-workspace `
-  --dsh-home C:\work\example-dsh-home `
+  --ocean-home C:\work\example-ocean-home `
   --session-id example-001 `
   "Inspect the repository and fix the failing tests."
 ```
 
 :::
 
-Скрипт выводит итоговый ответ помощника или результат команды, предоставленный выбранным профилем. В заданном каталоге хранятся созданный профиль `sdk-minimal`, установленные плагины и несжатые журналы сессий JSONL в `sessions/`. Пример и SDK не читают `~/.dsh` неявно.
+Скрипт выводит итоговый ответ помощника или результат команды, предоставленный выбранным профилем. В заданном каталоге хранятся созданный профиль `sdk-minimal`, установленные плагины и несжатые журналы сессий JSONL в `sessions/`. Пример и SDK не читают `~/.ocean` неявно.
 
 <a id="use-the-sdk-in-your-program"></a>
 
@@ -126,13 +126,13 @@ from pathlib import Path
 from deepseek_harness import DeepSeekHarness
 
 workspace = Path("/absolute/path/to/disposable-workspace").resolve()
-dsh_home = Path("/absolute/path/to/example-dsh-home").resolve()
+ocean_home = Path("/absolute/path/to/example-ocean-home").resolve()
 with DeepSeekHarness(
     provider="deepseek-official",
     model="deepseek-v4-flash",
     max_tokens=49_152,
     cwd=str(workspace),
-    dsh_home=str(dsh_home),
+    ocean_home=str(ocean_home),
     profile="sdk-minimal",
 ) as harness:
     result = harness.run(
@@ -143,13 +143,13 @@ with DeepSeekHarness(
 print(result.final_response)
 ```
 
-SDK запускает поставляемый процесс `dsh --profile sdk-minimal` при первом обращении и повторно использует его до выхода из контекстного менеджера. Профиль, его постоянный патч, общий патч домашнего каталога и переданный по порядку кортеж `patches` образуют конфигурацию приложения. У Python нет отдельной команды рантайма или возможности передать полную конфигурацию в обход этого механизма.
+SDK запускает поставляемый процесс `ocean --profile sdk-minimal` при первом обращении и повторно использует его до выхода из контекстного менеджера. Профиль, его постоянный патч, общий патч домашнего каталога и переданный по порядку кортеж `patches` образуют конфигурацию приложения. У Python нет отдельной команды рантайма или возможности передать полную конфигурацию в обход этого механизма.
 
 <a id="install-or-define-plugins"></a>
 
 ## Установить или определить плагины
 
-Используйте `dsh plugin` для зависимостей и слоев пучка, которые должны сохраняться в этом доме:
+Используйте `ocean plugin` для зависимостей и слоев пучка, которые должны сохраняться в этом доме:
 
 <div>
 <a id="linux-and-macos-3"></a>
@@ -160,20 +160,20 @@ SDK запускает поставляемый процесс `dsh --profile sd
 ::: code-group
 
 ```sh [Linux/macOS]
-export DSH_HOME=/absolute/path/to/example-dsh-home
-dsh --profile sdk-minimal --dump-default-config >/dev/null
-dsh plugin --profile sdk-minimal add file:/absolute/path/to/my-plugin-bundle
+export OCEAN_HOME=/absolute/path/to/example-ocean-home
+ocean --profile sdk-minimal --dump-default-config >/dev/null
+ocean plugin --profile sdk-minimal add file:/absolute/path/to/my-plugin-bundle
 ```
 
 ```powershell [Windows PowerShell]
-$env:DSH_HOME = "C:\work\example-dsh-home"
-dsh --profile sdk-minimal --dump-default-config | Out-Null
-dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
+$env:OCEAN_HOME = "C:\work\example-ocean-home"
+ocean --profile sdk-minimal --dump-default-config | Out-Null
+ocean plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
 ```
 
 :::
 
-Первая команда инициализирует поставляемый автономный профиль. Вторая передаёт управление пакетами в `pnpm` и регистрирует установленные пакеты, экспортирующие слой `dsh.bundle`. Установите `pnpm`, только если вам нужно управлять пакетами. Для запуска установленного SDK он не нужен. Для постоянных изменений записей редактируйте `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml`. Для изменений на один запуск передавайте файлы патчей из Python.
+Первая команда инициализирует поставляемый автономный профиль. Вторая передаёт управление пакетами в `pnpm` и регистрирует установленные пакеты, экспортирующие слой `ocean.bundle`. Установите `pnpm`, только если вам нужно управлять пакетами. Для запуска установленного SDK он не нужен. Для постоянных изменений записей редактируйте `$OCEAN_HOME/profiles/sdk-minimal/cordis.patch.yml`. Для изменений на один запуск передавайте файлы патчей из Python.
 
 Можно указать другой `profile`, если он включает `@ocean/ocean-sdk-app` или другую запись сервера JSON-RPC. При отсутствии сервера, неразрешённом плагине или неверном патче запуск завершится ошибкой, без подстановки другой конфигурации.
 
@@ -188,7 +188,7 @@ dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
       name: '@ocean/ocean-tool-str-replace-editor'
 ```
 
-Передайте `patches=("/absolute/path/to/editor.patch.yml",)` при создании `DeepSeekHarness(profile="sdk-minimal", ...)` или сохраните патч в `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` для постоянной настройки. При следующем запуске в запросах к модели появится `str_replace_editor` вместе с инструментами по умолчанию. Локальный провайдер файловой системы разрешает относительные пути от рабочего каталога рантайма, но, как и оболочка минимального профиля, не ограничивает доступ этим каталогом. Этот же патч работает со стандартным профилем `sdk`.
+Передайте `patches=("/absolute/path/to/editor.patch.yml",)` при создании `DeepSeekHarness(profile="sdk-minimal", ...)` или сохраните патч в `$OCEAN_HOME/profiles/sdk-minimal/cordis.patch.yml` для постоянной настройки. При следующем запуске в запросах к модели появится `str_replace_editor` вместе с инструментами по умолчанию. Локальный провайдер файловой системы разрешает относительные пути от рабочего каталога рантайма, но, как и оболочка минимального профиля, не ограничивает доступ этим каталогом. Этот же патч работает со стандартным профилем `sdk`.
 
 <a id="enable-team-mode"></a>
 ### Включить режим Team
@@ -211,20 +211,20 @@ dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
 
 | Собственность | ценность |
 |---|---|
-| Системная инструкция | `DSH_SYSTEM_PROMPT`, по умолчанию `You are a helpful software engineer assistant.` |
-| Модель в `minimal.py` | `--model`, затем `DSH_MODEL`, затем `deepseek-v4-flash` |
+| Системная инструкция | `OCEAN_SYSTEM_PROMPT`, по умолчанию `You are a helpful software engineer assistant.` |
+| Модель в `minimal.py` | `--model`, затем `OCEAN_MODEL`, затем `deepseek-v4-flash` |
 | Инструменты для модели | Постоянная оболочка `bash` на Linux и macOS или `pwsh` на Windows, а также `read_image` и `working_directory` |
 | Тайм-аут | 300 секунд |
 | Необязательный контекст времени выполнения | отсутствует |
 | Сжатие контекста | Автоматически суммирует старую историю отдельным запросом к модели |
-| Сессионная устойчивость | Uncompressed JSONL `<dsh_home>/sessions` |
+| Сессионная устойчивость | Uncompressed JSONL `<ocean_home>/sessions` |
 
-Единственный пакет профиля формирует полное дерево из пустого корня и не включает `dsh-base`, поэтому инструменты базового профиля не появятся неявно. Профиль содержит протокол SDK, один настроенный через окружение адаптер DeepSeek, локальное выполнение и хранение данных. Инструментов для текстовых файлов, настроек, управляемых учётных данных, OTel, веб-инструментов, субагентов и поиска локальных инструкций в нём нет. [Компонент журнала сессий DeepSeek](../../../packages/session/session-log-deepseek/README.md) по умолчанию отправляет ещё не принятые события журнала с запросами к DeepSeek, не более `maxBytes` (8 МиБ) на запрос. Для отключения задайте `session-log-deepseek.enabled: false` в патче профиля. Профиль использует `danger-full-access`: оболочка выбранной платформы может изменять любой путь, доступный рантайму. Для испытаний используйте временную копию репозитория или контейнер.
+Единственный пакет профиля формирует полное дерево из пустого корня и не включает `ocean-base`, поэтому инструменты базового профиля не появятся неявно. Профиль содержит протокол SDK, один настроенный через окружение адаптер DeepSeek, локальное выполнение и хранение данных. Инструментов для текстовых файлов, настроек, управляемых учётных данных, OTel, веб-инструментов, субагентов и поиска локальных инструкций в нём нет. [Компонент журнала сессий DeepSeek](../../../packages/session/session-log-deepseek/README.md) по умолчанию отправляет ещё не принятые события журнала с запросами к DeepSeek, не более `maxBytes` (8 МиБ) на запрос. Для отключения задайте `session-log-deepseek.enabled: false` в патче профиля. Профиль использует `danger-full-access`: оболочка выбранной платформы может изменять любой путь, доступный рантайму. Для испытаний используйте временную копию репозитория или контейнер.
 
 Для чтения изображений нужен маршрут с поддержкой изображений. Автоматическое сжатие контекста сохраняет полный журнал сессии. В [справке по пакету](../../../packages/bundle/sdk-minimal/README.md) описано, как это влияет на модель и хранилище. Неподдерживаемые команды с косой чертой в `sdk-minimal` остаются обычным текстом запроса.
 
-Установленный wheel-пакет также содержит полный профиль `web` и ресурсы интерфейса. Если нужен браузерный клиент, запустите `dsh web` с явно указанным `DSH_HOME`. Профиль `web` запускает отдельное приложение CLI и не обслуживает клиентов Python SDK.
+Установленный wheel-пакет также содержит полный профиль `web` и ресурсы интерфейса. Если нужен браузерный клиент, запустите `ocean web` с явно указанным `OCEAN_HOME`. Профиль `web` запускает отдельное приложение CLI и не обслуживает клиентов Python SDK.
 
 Для изоляции профилей, плагинов, учётных данных, настроек и сессий укажите новый домашний каталог. Для независимой работы используйте новый идентификатор сессии. Повторно используйте тот же экземпляр, каталог и идентификатор только для продолжения того же сохранённого чата и работы с его ресурсами.
 
-Точный состав профиля описан в [справке по пакету](../../../packages/bundle/sdk-minimal/README.md), рабочая программа — в [описании примеров](../../../python/sdk/examples/README.md). В [справке по Python SDK](../../../python/sdk/README.md) описаны жизненный цикл, результаты, уведомления и низкоуровневое поведение. Правила наложения профилей приведены в [справке по dsh CLI](../../../apps/cli/reference/README.md).
+Точный состав профиля описан в [справке по пакету](../../../packages/bundle/sdk-minimal/README.md), рабочая программа — в [описании примеров](../../../python/sdk/examples/README.md). В [справке по Python SDK](../../../python/sdk/README.md) описаны жизненный цикл, результаты, уведомления и низкоуровневое поведение. Правила наложения профилей приведены в [справке по ocean CLI](../../../apps/cli/reference/README.md).

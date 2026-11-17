@@ -1,4 +1,4 @@
-# Keyless parent-model overlay for the DSH SDK diagnostic snapshot.
+# Keyless parent-model overlay for the OCEAN SDK diagnostic snapshot.
 
 - id: llm-deepseek
   name: '@ocean/ocean-llm-deepseek-api-key'

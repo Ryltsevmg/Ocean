@@ -3,23 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/web-styling.md
 /web-ui-style-reference:
-  en: aab8007f4e9287d7
-  zh: 158960e753f32a91
+  en: 74fb4e51745c6078
+  zh: 717c23638a060188
 /web-ui-style-reference/ownership:
-  en: dc8c41fbf9869179
-  zh: e45976a585cb9c86
+  en: 365b4267cd0fccf2
+  zh: 8fd97f8de41a8dae
 /web-ui-style-reference/component-rules:
-  en: 2cc062ec3939d19f
-  zh: 87bb9246cfd2a713
+  en: 4da2fef0c76f1289
+  zh: c81898d5c6a28519
 /web-ui-style-reference/input-capabilities:
-  en: bf2e98bce68743e2
-  zh: fc58dcbb60bb944a
+  en: 6c3a244fd055d183
+  zh: 7298710bbb51ca41
 /web-ui-style-reference/corner-radii-and-settings-cards:
-  en: 118972f6c2bd6ce4
-  zh: 85f8416b03e4dd8b
+  en: fccd28549cc73a00
+  zh: 3b2ac70858f4f29b
 /web-ui-style-reference/review-the-assembled-design:
-  en: 21bed565fa27b823
-  zh: 84b5a96127c842c0
+  en: 5e13f828eaac4f72
+  zh: 4b5ed1a07be106dd
 /web-ui-style-reference/changing-the-system:
-  en: 9bd14a616b38fb30
-  zh: 5b8d14a6c97176ea
+  en: 590d607a47466422
+  zh: 8bec06d3afd46637

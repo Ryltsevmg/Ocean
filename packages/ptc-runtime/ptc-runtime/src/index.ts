@@ -28,7 +28,7 @@ export type {
  * Binding globals EVERY backend refuses because SOME backend owns the slot in
  * the program's namespace: `console` and `inspect` (Node's output bindings),
  * `Image` (Node's program image class), and
- * `__dsh_main__`/`__builtins__`/`__name__` (the Python backend's bootstrap
+ * `__ocean_main__`/`__builtins__`/`__name__` (the Python backend's bootstrap
  * wrapper and seeded module globals),
  * and `__debug__`. One shared set — rather than each backend refusing only its
  * own slots — keeps the portability promise real: a namespace list valid on
@@ -46,7 +46,7 @@ export type {
  */
 export const RESERVED_BINDING_GLOBALS: ReadonlySet<string> = new Set([
   'console', 'inspect', 'Image',
-  '__dsh_main__', '__builtins__', '__name__', '__debug__',
+  '__ocean_main__', '__builtins__', '__name__', '__debug__',
 ])
 
 /**
@@ -113,7 +113,7 @@ export abstract class PtcRuntime extends Service {
    * generates language-specific presentation (typed SDK stubs, usage
    * instructions) switches on it and fails loud on a language it cannot
    * present. Well-known values: `'typescript'` and `'python'`, those
-   * `dsh-tool-executor-ptc` presents; the TypeScript backend is released, the Python
+   * `ocean-tool-executor-ptc` presents; the TypeScript backend is released, the Python
    * backend is experimental and private (not published).
    */
   abstract readonly language: string

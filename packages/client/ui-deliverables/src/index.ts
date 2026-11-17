@@ -1,7 +1,7 @@
 /**
  * Deliverables plugin, node half. Serves authenticated native opens of declared files. The browser
  * half ships via exports["./client"], discovered through the package.json
- * dsh.client declaration.
+ * ocean.client declaration.
  */
 
 import type { Context } from '@deepseek-ai/cordis'

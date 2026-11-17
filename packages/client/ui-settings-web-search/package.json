@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-client-ui-settings-web-search",
-  "description": "Settings page for web search and fetch on the dsh web client's Plugins page: the Search and Fetch provider menus, the DeepSeek Search API result count, DeepSeek Search and Fetch API billing, and legacy Messages search settings",
+  "description": "Settings page for web search and fetch on the ocean web client's Plugins page: the Search and Fetch provider menus, the DeepSeek Search API result count, DeepSeek Search and Fetch API billing, and legacy Messages search settings",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
@@ -26,7 +26,7 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-client-locale",

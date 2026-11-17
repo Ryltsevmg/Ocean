@@ -12,7 +12,7 @@
 
 ## 1. アプリをアンインストールする
 
-Desktop に同梱された CLI を使うコマンドをすべて終了してください。Desktop から `dsh` コマンドをインストールした場合は、先にアプリケーションメニューの **Manage dsh Command… → Remove** を選びます。これにより Desktop のコマンド登録が解除されますが、独立した CLI プログラムはアンインストールされません。
+Desktop に同梱された CLI を使うコマンドをすべて終了してください。Desktop から `ocean` コマンドをインストールした場合は、先にアプリケーションメニューの **Manage ocean Command… → Remove** を選びます。これにより Desktop のコマンド登録が解除されますが、独立した CLI プログラムはアンインストールされません。
 
 Ocean を終了し、各プラットフォームの手順でアンインストールします：
 
@@ -24,18 +24,18 @@ Ocean を終了し、各プラットフォームの手順でアンインスト�
 
 ## 2. 削除前にローカルデータを確認する
 
-ローカルデータを削除すると、セッション、認証情報、設定、プラグイン、キャッシュ、共有の CLI 状態が完全に失われる場合があります。残したいものはバックアップしてください。名前が Ocean や DSH に似ているという理由だけで、ディレクトリを削除しないでください。
+ローカルデータを削除すると、セッション、認証情報、設定、プラグイン、キャッシュ、共有の CLI 状態が完全に失われる場合があります。残したいものはバックアップしてください。名前が Ocean や OCEAN に似ているという理由だけで、ディレクトリを削除しないでください。
 
-現在の Ocean の既定のホームは `~/.ocean`、Windows ではユーザープロファイル内の `.ocean` です。`DSH_HOME` で別の場所を指定できます。現在のターミナルとは異なる場合があるため、Desktop の起動時に使われた設定を確認してください。以下のコマンドは候補の場所を表示するだけで、何も削除しません。Electron の実際の `userData` ディレクトリや、インストール固有のすべてのキャッシュを検出するものではありません。
+現在の Ocean の既定のホームは `~/.ocean`、Windows ではユーザープロファイル内の `.ocean` です。`OCEAN_HOME` で別の場所を指定できます。現在のターミナルとは異なる場合があるため、Desktop の起動時に使われた設定を確認してください。以下のコマンドは候補の場所を表示するだけで、何も削除しません。Electron の実際の `userData` ディレクトリや、インストール固有のすべてのキャッシュを検出するものではありません。
 
 ::: code-group
 
 ```sh [macOS]
 : "${HOME:?HOME must be set}"
 printf '%s\n' \
-  "Ocean home candidate: ${DSH_HOME:-$HOME/.ocean}" \
+  "Ocean home candidate: ${OCEAN_HOME:-$HOME/.ocean}" \
   "Updater cache candidate: $HOME/Library/Caches/@oceanocean-desktop-updater"
-# Previous-release ~/.dsh and donor-era appId caches require separate ownership checks.
+# Previous-release ~/.ocean and donor-era appId caches require separate ownership checks.
 ```
 
 ```powershell [Windows]
@@ -43,28 +43,28 @@ $ErrorActionPreference = 'Stop'
 if (-not $env:USERPROFILE -or -not $env:LOCALAPPDATA) {
     throw 'USERPROFILE and LOCALAPPDATA must be set.'
 }
-$oceanHome = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $env:USERPROFILE '.ocean' }
+$oceanHome = if ($env:OCEAN_HOME) { $env:OCEAN_HOME } else { Join-Path $env:USERPROFILE '.ocean' }
 "Ocean home candidate: $oceanHome"
 "Updater cache candidate: $(Join-Path $env:LOCALAPPDATA '@oceanocean-desktop-updater')"
-# Previous-release .dsh and @deepseek-ai data are NOT removed.
+# Previous-release .ocean and @deepseek-ai data are NOT removed.
 # Inspect them separately; delete only data you recognize and no longer need.
 ```
 
 ```sh [Linux]
 : "${HOME:?HOME must be set}"
 printf '%s\n' \
-  "Ocean home candidate: ${DSH_HOME:-$HOME/.ocean}" \
+  "Ocean home candidate: ${OCEAN_HOME:-$HOME/.ocean}" \
   "Updater cache candidate: ${XDG_CACHE_HOME:-$HOME/.cache}/@oceanocean-desktop-updater"
-# Previous-release ~/.dsh requires a separate ownership check.
+# Previous-release ~/.ocean requires a separate ownership check.
 ```
 
 :::
 
 アップデーターのキャッシュ名は、製品名ではなく Desktop のパッケージ名から決まります。これらの候補は現在の `@ocean/ocean-desktop` パッケージに基づいており、別のビルドでは異なる場合があります。Windows の[アンインストーラー](../../../apps/desktop/installer/uninstall.nsh)は、製品名・パッケージ名に基づくアプリデータのディレクトリとアップデーターキャッシュを確認しますが、Ocean のホームは保持します。更新やデータを保持した再インストールでも、アプリデータが保持される場合があります。
 
-削除前に、お使いのインストールで実際に使われている Electron のデータ・ログディレクトリを特定してください。ログの場所は[診断リファレンス](../../../apps/desktop/docs/diagnostics/README.md#report-contents)に記載されています。macOS の設定、ShipIt、HTTP ストレージ、システムキャッシュの名前は、インストールされたバンドル識別子によって異なります。パッケージ作成には明示的な `DSH_DESKTOP_APP_ID` が必要です。`com.deepseek.dsh` は、すべての Ocean に共通する識別子ではありません。その識別子のファイルが以前のインストールの残存物だと個別に確認できていない限り、ワイルドカードでまとめて削除しないでください。
+削除前に、お使いのインストールで実際に使われている Electron のデータ・ログディレクトリを特定してください。ログの場所は[診断リファレンス](../../../apps/desktop/docs/diagnostics/README.md#report-contents)に記載されています。macOS の設定、ShipIt、HTTP ストレージ、システムキャッシュの名前は、インストールされたバンドル識別子によって異なります。パッケージ作成には明示的な `OCEAN_DESKTOP_APP_ID` が必要です。`com.deepseek.ocean` は、すべての Ocean に共通する識別子ではありません。その識別子のファイルが以前のインストールの残存物だと個別に確認できていない限り、ワイルドカードでまとめて削除しないでください。
 
-`~/.dsh` は以前の既定値であり、現在の既定値ではありません。このディレクトリ、以前の `@deepseek-ai` アプリデータ、移植元の時代の識別子に対応するキャッシュは、残存物だと認識でき、ほかのインストールが必要としていない場合に限って削除してください。開発・テスト用ディレクトリは、それぞれ別途確認が必要です。
+`~/.ocean` は以前の既定値であり、現在の既定値ではありません。このディレクトリ、以前の `@deepseek-ai` アプリデータ、移植元の時代の識別子に対応するキャッシュは、残存物だと認識でき、ほかのインストールが必要としていない場合に限って削除してください。開発・テスト用ディレクトリは、それぞれ別途確認が必要です。
 
 <a id="3-remove-verified-data-and-check"></a>
 

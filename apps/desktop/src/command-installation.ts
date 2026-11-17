@@ -189,7 +189,7 @@ export async function installFileCommand(options: FileCommandInstallation, expec
     if (state.fingerprint !== expected) throw new CommandInstallationError('ESTALE', 'The command changed after confirmation.')
     if (!await available(options.launcher)) throw new CommandInstallationError('ENOENT', 'The installed launcher is unavailable.')
     const moved = await withdraw(options, options.destination, entry)
-    const pending = join(dirname(options.destination), '.dsh-command-new-' + randomUUID())
+    const pending = join(dirname(options.destination), '.ocean-command-new-' + randomUUID())
     let created: Entry | undefined
     try {
       await symlink(options.launcher, pending)

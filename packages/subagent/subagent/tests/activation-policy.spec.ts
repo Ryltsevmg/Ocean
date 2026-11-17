@@ -29,7 +29,7 @@ const contexts: Context[] = []
 let workspace: string
 
 beforeEach(async () => {
-  workspace = await realpath(await mkdtemp(join(tmpdir(), 'dsh-inherit-')))
+  workspace = await realpath(await mkdtemp(join(tmpdir(), 'ocean-inherit-')))
 })
 
 afterEach(async () => {
@@ -78,7 +78,7 @@ function toolResultTexts(agent: Agent): string[] {
 
 describe('in-process policy inheritance', () => {
   it.each(['auto', 'danger-full-access'] as const)(
-    'records the parent %s identity before publishing a DSH in-process child',
+    'records the parent %s identity before publishing a OCEAN in-process child',
     async (preset) => {
       const { ctx, parent } = await setupWalled([textResponse('child done')])
       parent.session.append('permission/preset', { preset })
@@ -181,7 +181,7 @@ describe('in-process policy inheritance', () => {
         .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
         .map(block => block.text)
         .join('\n')
-      expect(contextText).toContain('Current DSH file policy: read-only')
+      expect(contextText).toContain('Current OCEAN file policy: read-only')
       expect(contextText).toContain('Approval prompts are disabled')
       // The statement rides runtime context; the system node (surface node 0) stays uniform.
       expect(contextText).toContain('You are a delegated subagent')

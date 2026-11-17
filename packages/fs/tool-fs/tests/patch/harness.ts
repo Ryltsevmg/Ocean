@@ -32,7 +32,7 @@ export const move = (source: string, destination: string, before = 'old', after 
   `*** Update File: ${source}\n*** Move to: ${destination}\n@@\n-${before}\n+${after}`
 
 export async function setup(options: { policy?: boolean; mode?: SandboxMode; provider?: typeof LocalFileSystem; applyPatch?: boolean; toolMode?: 'native' | 'ptc' } = {}) {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-patch-executor-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'ocean-patch-executor-')))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const workspace = join(root, 'workspace')
   const providerRoot = join(root, 'provider')

@@ -80,7 +80,7 @@ afterEach(async () => {
 })
 
 async function mount(config: Partial<Config> = {}): Promise<OfficeKit> {
-  const outputDirectory = await mkdtemp(join(tmpdir(), 'dsh-office-kit-outputs-'))
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'ocean-office-kit-outputs-'))
   onTestFinished(() => rm(outputDirectory, { recursive: true, force: true }))
   await ctx.plugin(OfficeKit, { outputDirectory, ...config })
   return ctx.officeKit

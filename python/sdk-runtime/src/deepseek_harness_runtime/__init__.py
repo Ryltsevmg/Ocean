@@ -1,4 +1,4 @@
-"""Locate and execute the bundled dsh CLI shipped with the Python SDK runtime.
+"""Locate and execute the bundled ocean CLI shipped with the Python SDK runtime.
 
 Two runtime carriers coexist under ``runtime/``, both injected by the repo's
 ``scripts/build-exe-for-python-sdk.ts`` build (neither is checked into git):
@@ -14,9 +14,9 @@ Two runtime carriers coexist under ``runtime/``, both injected by the repo's
   system Node >= 24.9. It is the current checkout's source build, never
   selected automatically, and excluded from wheel/sdist distributions.
 
-Both carriers execute the same dsh command grammar. The Python SDK selects the
-``sdk`` profile and requires an explicit Harness home; the installed ``dsh``
-console command requires ``DSH_HOME`` for the same reason.
+Both carriers execute the same ocean command grammar. The Python SDK selects the
+``sdk`` profile and requires an explicit Harness home; the installed ``ocean``
+console command requires ``OCEAN_HOME`` for the same reason.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from ._resources import validate_downloads, validate_resources, office_launch_ar
 
 PACKAGE_METADATA_FILENAME = "deepseek-harness-runtime.json"
 
-RUNTIME_MODE_ENV_VAR = "DSH_RUNTIME_MODE"
+RUNTIME_MODE_ENV_VAR = "OCEAN_RUNTIME_MODE"
 
 _PLATFORM_TAGS = {"linux": "linux", "darwin": "macos", "win32": "win"}
 _ARCH_TAGS = {"x86_64": "x64", "amd64": "x64", "arm64": "arm64", "aarch64": "arm64"}
@@ -99,7 +99,7 @@ def resolve_bundled_launch_args(mode: str | None = None) -> tuple[str, ...]:
     """The argv tuple that launches the bundled runtime.
 
     Mode selection: the explicit ``mode`` argument wins, then the
-    ``DSH_RUNTIME_MODE`` environment variable (``exe`` | ``node``), then
+    ``OCEAN_RUNTIME_MODE`` environment variable (``exe`` | ``node``), then
     automatic resolution. Automatic resolution finds the production exe ONLY —
     the dev-only node carrier must be selected explicitly so a production
     deployment can never silently ride on a source build. Returns
@@ -107,7 +107,7 @@ def resolve_bundled_launch_args(mode: str | None = None) -> tuple[str, ...]:
     raises FileNotFoundError when the selected carrier is unavailable and
     ValueError for an unknown mode value.
     """
-    selected = mode if mode is not None else os.environ.get(RUNTIME_MODE_ENV_VAR)
+    selected = mode if mode is not None else os.environ.get(RUNTIME_MODE_ENV_VAR, os.environ.get("DSH_RUNTIME_MODE"))
     if selected is None or selected == "exe":
         return (str(bundled_runtime_path()),)
     if selected == "node":
@@ -154,8 +154,12 @@ def _node_launch_args() -> tuple[str, str]:
 
 
 def _download(resource: str) -> Path:
+    env = dict(os.environ)
+    for name, value in tuple(env.items()):
+        if name.startswith("DSH_"):
+            env.setdefault("OCEAN_" + name[4:], value)
     result = subprocess.run(resolve_bundled_launch_args(), capture_output=True, encoding="utf-8",
-                            env={**os.environ, "DSH_RUNTIME_DOWNLOAD": resource})
+                            env={**env, "OCEAN_RUNTIME_DOWNLOAD": resource})
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or f"resource download failed with exit code {result.returncode}")
     path = json.loads(result.stdout)
@@ -168,7 +172,7 @@ def download_office() -> Path:
     """Download the locked npm Office sidecar and standalone Node into the resource cache.
 
     Return its absolute directory. Reuse completed downloads; failures leave no
-    published partial installation. DSH_RESOURCE_CACHE selects the cache root.
+    published partial installation. OCEAN_RESOURCE_CACHE selects the cache root.
     This explicit operation requires network access on a cache miss, not a
     Harness home, agent, or model. Other SDK operations never trigger downloads.
     """
@@ -180,7 +184,7 @@ def download_primary_runtime() -> Path:
 
     Return the absolute primary-runtime directory. This is independent of the
     Office engine download and does not copy resources into a Harness home.
-    Completed downloads are reused; DSH_RESOURCE_CACHE selects the cache root.
+    Completed downloads are reused; OCEAN_RESOURCE_CACHE selects the cache root.
     """
     path = _download("primary")
     validate_resources(path.parent, _current_platform_tag())
@@ -194,19 +198,22 @@ def resolve_office_launch_args() -> tuple[str, str]:
 
 
 def main() -> None:
-    """Launch the CLI with explicit DSH_HOME; wait on Windows, replace the process on POSIX."""
-    if not os.environ.get("DSH_HOME", "").strip():
+    """Launch the CLI with explicit OCEAN_HOME; wait on Windows, replace the process on POSIX."""
+    env = dict(os.environ)
+    if "OCEAN_HOME" not in env and "DSH_HOME" in env:
+        env["OCEAN_HOME"] = env["DSH_HOME"]
+    if not env.get("OCEAN_HOME", "").strip():
         print(
-            "dsh: the Python runtime command requires an explicit DSH_HOME; "
-            "it never uses ~/.dsh implicitly",
+            "ocean: the Python runtime command requires an explicit OCEAN_HOME; "
+            "it never uses ~/.ocean implicitly",
             file=sys.stderr,
         )
         raise SystemExit(2)
     argv = (*resolve_bundled_launch_args(), *sys.argv[1:])
     if sys.platform == "win32":
         # Windows CRT exec does not replace the process; wait and preserve the runtime status.
-        raise SystemExit(subprocess.run(argv, env=os.environ).returncode)
-    os.execvpe(argv[0], argv, os.environ)
+        raise SystemExit(subprocess.run(argv, env=env).returncode)
+    os.execvpe(argv[0], argv, env)
 
 
 __all__ = [

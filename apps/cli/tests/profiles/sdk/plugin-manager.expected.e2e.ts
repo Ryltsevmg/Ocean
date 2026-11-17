@@ -68,7 +68,7 @@ it.for(['standard', 'ptc'] as const)('keeps %s plugin changes pending until the 
   if (address === null || typeof address === 'string') throw new Error('model fixture has no TCP address')
   const env = profileEnvironment(root, `http://127.0.0.1:${address.port}`)
   const options = {
-    cwd: root, processCwd: root, dshHome: join(root, 'home'), env, model: 'deepseek-v4-pro',
+    cwd: root, processCwd: root, oceanHome: join(root, 'home'), env, model: 'deepseek-v4-pro',
     patches: mode === 'ptc' ? [fileURLToPath(new URL('../../../config/examples/ptc.yml', import.meta.url))] : [],
   }
   async function run(restarted: boolean): Promise<void> {
@@ -95,7 +95,7 @@ it.for(['standard', 'ptc'] as const)('keeps %s plugin changes pending until the 
   expect(advertises(requests[0]!, 'plugin_manager')).toBe(true)
   expect(JSON.stringify(requests[changedAt]!.messages)).toContain('restart-required')
   expect(JSON.stringify(requests[changedAt]!.messages)).toContain('no-hmr')
-  expect(JSON.stringify(requests[changedAt]!.messages)).toContain('restart DSH')
+  expect(JSON.stringify(requests[changedAt]!.messages)).toContain('restart OCEAN')
   expect(advertises(requests.at(-1)!, 'web_fetch')).toBe(true)
   const saved = await readFile(join(root, 'home/profiles/sdk/cordis.patch.yml'), 'utf8')
   expect(saved).toContain('tool-web')
@@ -133,12 +133,12 @@ it.for(['unavailable', 'approved', 'missing-pnpm'] as const)('reports the %s plu
   const address = server.address()
   if (address === null || typeof address === 'string') throw new Error('model fixture has no TCP address')
   const env = profileEnvironment(root, `http://127.0.0.1:${address.port}`)
-  env.DSH_PERMISSION_MODE = scenario === 'missing-pnpm' ? 'danger-full-access' : 'workspace-write'
+  env.OCEAN_PERMISSION_MODE = scenario === 'missing-pnpm' ? 'danger-full-access' : 'workspace-write'
   if (scenario === 'missing-pnpm') {
     for (const key of Object.keys(env)) if (key.toLowerCase() === 'path') Reflect.deleteProperty(env, key)
     env.PATH = root
   }
-  const harness = new DeepSeekHarness({ cwd: root, processCwd: root, dshHome: join(root, 'home'),
+  const harness = new DeepSeekHarness({ cwd: root, processCwd: root, oceanHome: join(root, 'home'),
     env, model: 'deepseek-v4-pro', approvalRequests: scenario === 'approved' })
   let approvals = 0
   const abort = (): void => { void harness.close() }

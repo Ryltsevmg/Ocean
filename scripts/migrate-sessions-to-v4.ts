@@ -18,7 +18,7 @@ import { classifyMigrationFailure, type MigrationFailureDiagnostic } from './mig
 const usage = `Usage: pnpm run migrate:sessions-to-v4 [--sessions-dir PATH] [--jobs N]
 
 Publish V4 successors beside unchanged historical Session generations.
-Defaults to ~/.dsh/sessions. Already-V4 Sessions are opened read-only.
+Defaults to ~/.ocean/sessions. Already-V4 Sessions are opened read-only.
 No model or API key is used. Failures do not stop subsequent Sessions.
 The text log and final JSON summary are saved in a private OS temporary directory.
 
@@ -165,7 +165,7 @@ export async function runMigrationJobs(
 }
 
 async function migrate(root: string, jobs: number): Promise<number> {
-  const reportDirectory = mkdtempSync(join(tmpdir(), 'dsh-migrate-v4-'))
+  const reportDirectory = mkdtempSync(join(tmpdir(), 'ocean-migrate-v4-'))
   const logPath = join(reportDirectory, 'migration.log')
   const summaryPath = join(reportDirectory, 'summary.json')
   const log = openSync(logPath, 'wx', 0o600)
@@ -293,7 +293,7 @@ if (process.argv[1] !== undefined && realpathSync(process.argv[1]) === realpathS
       if (!Number.isSafeInteger(jobs) || jobs < 1) {
         throw new Error('--jobs must be a positive safe integer')
       }
-      process.exitCode = await migrate(resolve(values['sessions-dir'] ?? join(homedir(), '.dsh', 'sessions')), jobs)
+      process.exitCode = await migrate(resolve(values['sessions-dir'] ?? join(homedir(), '.ocean', 'sessions')), jobs)
     }
   } catch (error: unknown) {
     console.error(error instanceof Error ? error.message : String(error))

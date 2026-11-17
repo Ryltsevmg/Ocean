@@ -5,7 +5,7 @@
 - id: sandbox-policy
   name: '@ocean/ocean-sandbox-policy'
   config:
-    mode: !!js "process.env.DSH_PERMISSION_MODE ?? (process.env.DSH_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')"
+    mode: !!js "process.env.OCEAN_PERMISSION_MODE ?? (process.env.OCEAN_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')"
     workspaceRoot: /tmp
 
 - id: headless-runner

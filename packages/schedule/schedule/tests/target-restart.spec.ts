@@ -21,7 +21,7 @@ afterEach(async () => {
 })
 
 it('reopens Host tasks of every target kind byte-identical without activating a Session', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-targets-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-targets-'))
   roots.push(root)
   const setup = () => harness({ backend: new JsonStorageBackend(root), onContext: ctx => contexts.push(ctx) })
   const first = await setup()

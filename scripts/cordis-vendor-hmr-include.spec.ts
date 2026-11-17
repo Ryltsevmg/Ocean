@@ -10,11 +10,11 @@ import Timer from '@deepseek-ai/cordis-plugin-timer'
 import { expect, it, onTestFinished, vi } from 'vitest'
 
 // A literal import would add vendor HMR's `Context.hmr` declaration to the
-// repository type program, where DSH HMR declares the same property.
+// repository type program, where OCEAN HMR declares the same property.
 const vendorHmr: string = '@deepseek-ai/cordis-plugin-hmr'
 
 it('logs a rejected Include refresh instead of leaving it unhandled', async () => {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-vendor-hmr-include-')))
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-vendor-hmr-include-')))
   const ctx = new Context()
   ctx.baseUrl = pathToFileURL(dir).href + '/'
   onTestFinished(async () => { await ctx.fiber.dispose(); rmSync(dir, { recursive: true, force: true }) })

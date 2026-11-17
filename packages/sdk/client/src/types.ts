@@ -24,15 +24,19 @@ export type NotificationFilter = (notification: HarnessNotification) => boolean
 export interface HarnessClientOptions {
   /** Answer or dismiss runtime questions; observe the signal to release host work on runtime cancellation. */
   onUserQuestion?: (request: SdkUserQuestionRequest, context: { signal: AbortSignal }) => Promise<SdkUserQuestionResult>
-  /** Absolute or caller-relative dsh CLI module; omitted resolves this package's same-version dependency. */
+  /** Absolute or caller-relative ocean CLI module; omitted resolves this package's same-version dependency. */
+  oceanBin?: string
+  /** Legacy CLI override, used only when `oceanBin` is absent. */
   dshBin?: string
   /** Named profile serving the SDK protocol (default `sdk`). */
   profile?: string
   /** Ordered per-launch profile patches; relative paths resolve before spawn. */
   patches?: string[]
   /** Explicit Harness home for this child; relative paths resolve before spawn. */
+  oceanHome?: string
+  /** Legacy home override, used only when `oceanHome` is absent. */
   dshHome?: string
-  /** Working directory for the dsh process itself. */
+  /** Working directory for the ocean process itself. */
   processCwd?: string
   /**
    * The complete child environment, read when {@link HarnessClient.start}

@@ -34,9 +34,9 @@ afterEach(async () => {
   vi.unstubAllGlobals()
 })
 async function boot(models?: Messages.Options['models'], baseURL = Protocol.PUBLIC_BASE_URL) {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-messages-e2e-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-messages-e2e-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
-  vi.stubEnv('DSH_HOME', home)
+  vi.stubEnv('OCEAN_HOME', home)
   const ctx = new Context()
   cleanups.push(() => ctx.fiber.dispose())
   await ctx.plugin(LlmRuntime)
@@ -163,7 +163,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY)('DeepSeek Messages real API', () 
   })
 
   it.each([false, true])('submits Loader package inventory and records HTTP acceptance with session-log enabled=%s', async (enabled) => {
-    const pluginRoot = await mkdtemp(join(tmpdir(), 'dsh-unversioned-plugin-e2e-'))
+    const pluginRoot = await mkdtemp(join(tmpdir(), 'ocean-unversioned-plugin-e2e-'))
     cleanups.push(() => rm(pluginRoot, { recursive: true, force: true }))
     const unversionedName = 'unversioned-e2e-plugin'
     await writeFile(join(pluginRoot, 'package.json'), JSON.stringify({ name: unversionedName, type: 'module' }))

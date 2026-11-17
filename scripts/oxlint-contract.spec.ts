@@ -18,7 +18,7 @@ let repositoryRoot = ''
 
 // Probes belong to a private copy: repository compiler scans run in other workers and processes.
 beforeAll(async () => {
-  repositoryRoot = await mkdtemp(join(tmpdir(), 'dsh-oxlint-contract-'))
+  repositoryRoot = await mkdtemp(join(tmpdir(), 'ocean-oxlint-contract-'))
   repositoryRoot = await realpath(repositoryRoot)
   const files = [
     ...globSync('tsconfig*.json', { cwd: sourceRepositoryRoot }),

@@ -14,7 +14,7 @@ import { MockAdapter, textResponse } from '../../../core/agent-loop/tests/mock-a
 
 describe.each(['pre-step', 'prepareCall'] as const)('%s context changes', (phase) => {
   it.each([false, true])('admits current directory and permissions with optional context=%s', async (optional) => {
-    const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-directory-admission-')))
+    const root = await realpath(await mkdtemp(join(tmpdir(), 'ocean-directory-admission-')))
     const selected = join(root, 'selected')
     await mkdir(selected)
     const ctx = new Context()
@@ -60,9 +60,9 @@ describe.each(['pre-step', 'prepareCall'] as const)('%s context changes', (phase
       const body = snapshots.flatMap(message => message.content).map(block => block.type === 'text' ? block.text : '').join('')
       expect(body).toContain(`Current working directory: ${JSON.stringify(selected)}.`)
       expect(body).not.toContain(`Current working directory: ${JSON.stringify(root)}.`)
-      expect(body.includes('Current DSH file policy: danger-full-access')).toBe(optional)
+      expect(body.includes('Current OCEAN file policy: danger-full-access')).toBe(optional)
       expect(body.includes('Approval prompts are enabled in this session')).toBe(optional)
-      expect(body).not.toContain('Current DSH file policy: read-only')
+      expect(body).not.toContain('Current OCEAN file policy: read-only')
       expect(body).not.toContain('Approval prompts are disabled')
       expect(ctx.workingDirectory.get(agent.session)).toBe(selected)
       expect(agent.session.header.cwd).toBe(root)

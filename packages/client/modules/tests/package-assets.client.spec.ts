@@ -50,7 +50,7 @@ afterEach(async () => {
 
 /** Own one fresh temporary directory per test. */
 function fixtureRoot(): string {
-  root ??= realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-assets-')))
+  root ??= realpathSync(mkdtempSync(join(tmpdir(), 'ocean-client-assets-')))
   return root
 }
 
@@ -67,7 +67,7 @@ function writeClientPackage(packageName: string, exports: Record<string, string 
   writeFile(join(pkgRoot, 'package.json'), JSON.stringify({
     name: packageName,
     exports: { '.': './lib/index.js', './client': './lib/client.js', './package.json': './package.json', ...exports },
-    dsh: { client: { platform: 'web' } },
+    ocean: { client: { platform: 'web' } },
   }))
   writeFile(join(pkgRoot, 'lib', 'index.js'), 'export default {}\n')
   writeFile(join(pkgRoot, 'lib', 'client.js'), 'module.exports = {}\n')

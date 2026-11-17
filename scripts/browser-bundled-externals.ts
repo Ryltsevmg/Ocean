@@ -11,7 +11,7 @@ import { browserDependencyAnalysis } from '../apps/web/product-isolation.ts'
 interface Manifest {
   name: string
   private?: boolean
-  dsh?: { client?: unknown }
+  ocean?: { client?: unknown }
   exports?: Record<string, unknown>
 }
 
@@ -34,7 +34,7 @@ export function browserPackageOfFile(file: string): string | undefined {
 
 function recorder(seen: Set<string>, workspaceNames: ReadonlySet<string>, followWorkspace = false) {
   return {
-    name: 'dsh-browser-direct-dependencies',
+    name: 'ocean-browser-direct-dependencies',
     enforce: 'pre' as const,
     resolveId: {
       order: 'pre' as const,
@@ -87,7 +87,7 @@ async function collectClientBundles(
   seen: Set<string>,
 ): Promise<void> {
   for (const [manifestPath, manifest] of manifests) {
-    if (manifest.private === true || manifest.dsh?.client === undefined) continue
+    if (manifest.private === true || manifest.ocean?.client === undefined) continue
     const dir = dirname(manifestPath)
     const configPath = ['tsdown.config.ts', 'tsdown.config.mjs'].map(file => resolve(dir, file)).find(file => existsSync(file))
     if (configPath === undefined) throw new Error(`browser notices: ${manifest.name} has no build config`)

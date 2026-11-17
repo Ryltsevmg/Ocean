@@ -15,7 +15,7 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js process.env.DSH_SNAPSHOT_SESSIONS_ROOT ?? dshHomePath('sessions')
+    root: !!js process.env.OCEAN_SNAPSHOT_SESSIONS_ROOT ?? oceanHomePath('sessions')
     compression: none
 
 - id: sandbox
@@ -47,6 +47,6 @@
     - id: snapshot-shell-path
       name: ../../../scripts/snapshot-shell-path.ts
       config:
-        command: "printf 'escalated\\n' > /tmp/dsh-escalated.txt && cat /tmp/dsh-escalated.txt && rm /tmp/dsh-escalated.txt"
-        recordedPath: /tmp/dsh-escalated.txt
-        livePath: !!js process.env.DSH_SNAPSHOT_SPILL_ROOT + '/dsh-escalated.txt'
+        command: "printf 'escalated\\n' > /tmp/ocean-escalated.txt && cat /tmp/ocean-escalated.txt && rm /tmp/ocean-escalated.txt"
+        recordedPath: /tmp/ocean-escalated.txt
+        livePath: !!js process.env.OCEAN_SNAPSHOT_SPILL_ROOT + '/ocean-escalated.txt'

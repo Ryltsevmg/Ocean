@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write python/sdk/examples/README.md
 /python-sdk-example:
-  en: c97ffc5ce0f7db05
-  zh: bdd91202075498a3
+  en: ab845034e3a1e306
+  zh: 9a2654cf38cbc058
 /python-sdk-example/run-the-minimal-agent:
-  en: 18be132e72716fdc
-  zh: b87c2b6348bce082
+  en: 97f0ba9660d8563a
+  zh: 692ff4f440dbe4ce
 /python-sdk-example/compact-a-full-sdk-session:
-  en: 6325ac9aaf9b9b67
-  zh: 004a0ba5c2ff341b
+  en: 527b405f0dc5b4bb
+  zh: cc34c367323309f5
 /python-sdk-example/change-session-permissions:
-  en: 1fe5e06c6842a53b
-  zh: ff0836d8cffaeef7
+  en: ca5023c3f3cfeabc
+  zh: c5cfe48109e741de
 /python-sdk-example/review-a-plan:
   en: 7a6d2d7929724240
   zh: 8a938c71a827f09b
@@ -21,8 +21,8 @@
   en: 59f62e70dc508bd6
   zh: bb10e2db241a2e92
 /python-sdk-example/manage-full-profile-plugins-with-approvals:
-  en: 654011a3ca04a691
-  zh: c33714237e9d5c64
+  en: 7cabf025db7a8081
+  zh: 97fcd6cd3851c1c4
 /python-sdk-example/add-plugins:
-  en: 2b140da2385a736f
-  zh: e6ecdf05b44c4449
+  en: 6a364aadc1aa05ce
+  zh: 3b2be5320939284a

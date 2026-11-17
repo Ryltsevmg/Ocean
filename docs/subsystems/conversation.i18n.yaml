@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/conversation.md
 /conversation-assembly:
-  en: 2d47472f8b59c9b2
-  zh: ffb8d79ed792778f
+  en: 063ad3016deeb6c1
+  zh: 8fd0b3ee4eaefd5e
 /conversation-assembly/data-model-and-ownership:
   en: 9f86eaf987b4f631
   zh: b1ecc4c292715445
@@ -18,8 +18,8 @@
   en: c216e2df128b8cb9
   zh: c039cf84b0d86ad8
 /conversation-assembly/definition-and-typed-chat-payload:
-  en: d8f5e4773704c718
-  zh: f3db8c0d01080dba
+  en: e3af0aa39d55c342
+  zh: c34398b7801c9ad8
 /conversation-assembly/predecessor-reads:
   en: da849b3b5da81da8
   zh: 467a05d89664602f

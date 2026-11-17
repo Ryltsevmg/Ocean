@@ -400,7 +400,7 @@ describe.skipIf(MODE === 'record')('web e2e: pending plan review across Sidebar 
 describe('web e2e: dismissed plan history', () => {
   it.skipIf(MODE === 'record')('reopens the permanent plan card after dismissing its review', async () => {
     // A dismissed review concludes the turn, so only the call presenting the plan replays.
-    const replayRoot = await mkdtemp(join(tmpdir(), 'dsh-plan-review-dismiss-replay-'))
+    const replayRoot = await mkdtemp(join(tmpdir(), 'ocean-plan-review-dismiss-replay-'))
     const replayOverride = join(replayRoot, 'replay.override.json')
     const script = deriveReplayScript(parseSessionLog(await readFile(FIXTURE, 'utf8')))
     await writeFile(replayOverride, JSON.stringify(script.slice(0, 1)))

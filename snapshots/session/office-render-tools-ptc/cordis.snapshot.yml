@@ -14,7 +14,7 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js oceanHomePath('sessions')
     compression: none
 
 - id: sandbox
@@ -50,7 +50,7 @@
     - id: office-kit
       name: '@ocean/ocean-office-kit'
       config:
-        outputDirectory: !!js dshHomePath('office-kit', 'outputs')
+        outputDirectory: !!js oceanHomePath('office-kit', 'outputs')
 
     - id: tool-office
       name: '@ocean/ocean-tool-office'

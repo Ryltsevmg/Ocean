@@ -195,7 +195,7 @@ describe('directory-picker-native client half', () => {
       const entry = b.slots.entries(HOLES[0])[0]!
       const injected = (entry.inject as () => { pick: () => Promise<string | null> })()
       await expect(injected.pick()).resolves.toBe('/desktop/workspace')
-      expect(desktopIpc.invoke).toHaveBeenCalledExactlyOnceWith('dsh-desktop:directory-pick')
+      expect(desktopIpc.invoke).toHaveBeenCalledExactlyOnceWith('ocean-desktop:directory-pick')
       expect(b.pickDirectory).not.toHaveBeenCalled()
     } finally {
       await fiber.dispose()
@@ -205,7 +205,7 @@ describe('directory-picker-native client half', () => {
 
   it('uses the desktop bridge without calling the Host and preserves cancellation and errors', async () => {
     const pick = vi.fn<() => Promise<string | null>>().mockResolvedValue('/desktop/workspace')
-    vi.stubGlobal('__DSH_DIRECTORY_PICKER__', { pick })
+    vi.stubGlobal('__OCEAN_DIRECTORY_PICKER__', { pick })
     const b = await bench()
     b.declare()
     const fiber = b.ctx.plugin({ inject: [...inject], apply })

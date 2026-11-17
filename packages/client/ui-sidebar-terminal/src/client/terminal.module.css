@@ -23,4 +23,4 @@
 .statusDescription { margin: 0; max-width: 40ch; font-size: 13px; color: var(--dsw-alias-label-secondary); }
 
 /* Elevated terminal status surfaces inherit their matching scrollbar palette. */
-.status, .error { --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2); --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2); }
+.status, .error { --ocean-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2); --ocean-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2); }

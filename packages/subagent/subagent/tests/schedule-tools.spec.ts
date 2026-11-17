@@ -41,7 +41,7 @@ afterEach(async () => {
 async function setupScheduleHost(): Promise<{ ctx: Context; parent: Agent; dispatched: ReturnType<typeof vi.fn> }> {
   const ctx = new Context()
   contexts.push(ctx)
-  const root = mkdtempSync(join(tmpdir(), 'dsh-schedule-tools-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-schedule-tools-'))
   roots.push(root)
   ctx.baseUrl = pathToFileURL(FIXTURES).href + '/'
   await ctx.plugin(Loader)

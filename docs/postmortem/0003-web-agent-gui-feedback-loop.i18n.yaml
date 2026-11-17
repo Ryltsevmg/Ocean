@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/postmortem/0003-web-agent-gui-feedback-loop.md
 /post-mortem-0003-web-agent-validated-a-replacement-server-instead-of-its-current-gui:
-  en: 348d9ff129e5494a
-  zh: ac88ae827ead8ec1
+  en: dc68e14d637b7719
+  zh: 50d34218ff1e3249
 /post-mortem-0003-web-agent-validated-a-replacement-server-instead-of-its-current-gui/executive-summary:
   en: 562cbc1e8c6eb15a
   zh: 0bfbc34b7d2ef54a

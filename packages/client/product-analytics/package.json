@@ -37,7 +37,7 @@
     },
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-api-gateway"

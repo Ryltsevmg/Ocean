@@ -153,7 +153,7 @@ export function fileUploadWorker(
 }
 
 interface ClientFileUploadGlobal {
-  __DSH_FILE_UPLOAD__?: ClientFileUploadHooks
+  __OCEAN_FILE_UPLOAD__?: ClientFileUploadHooks
 }
 
 interface FileUploadTransport {
@@ -167,7 +167,7 @@ export class FileUploadRuntime extends Service implements FileUploadService {
   /** @param ctx - providing Client context. */
   constructor(ctx: Context) {
     super(ctx, 'fileUpload')
-    const hook = (globalThis as ClientFileUploadGlobal).__DSH_FILE_UPLOAD__
+    const hook = (globalThis as ClientFileUploadGlobal).__OCEAN_FILE_UPLOAD__
     this.transport = hook === undefined ? workerTransport() : customTransport(hook.fetch)
   }
 
@@ -280,7 +280,7 @@ function workerTransport(): FileUploadTransport {
       const workerUrl = URL.createObjectURL(new Blob([
         `(${fileUploadWorker.toString()})()`,
       ], { type: 'text/javascript' }))
-      const worker = new Worker(workerUrl, { name: 'dsh-file-upload' })
+      const worker = new Worker(workerUrl, { name: 'ocean-file-upload' })
       URL.revokeObjectURL(workerUrl)
       return new Promise((resolve, reject) => {
         let settled = false

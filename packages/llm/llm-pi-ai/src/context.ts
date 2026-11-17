@@ -1,7 +1,7 @@
 /**
  * Harness request-history conversion into pi-ai's Context vocabulary.
  *
- * @module dsh-llm-pi-ai/context
+ * @module ocean-llm-pi-ai/context
  */
 
 import { brandString } from '@ocean/ocean-brand'

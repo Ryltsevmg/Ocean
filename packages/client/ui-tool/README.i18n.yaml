@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-tool/README.md
 /:
-  en: d5ef8fa5a5ebfbc2
-  zh: 9870b3f207a248cc
+  en: 87873f2812488800
+  zh: 8fee308024107736
 /ocean-ocean-client-ui-tool:
-  en: 325f06784cf90389
-  zh: 2fade593737a8d1c
+  en: f117b4902eeaf431
+  zh: 98e0d2897b5ec64f
 /ocean-ocean-client-ui-tool/summary:
-  en: e7ef510d1764f9b2
-  zh: 236bc66607211f0f
+  en: f9fc7c5b45db7f1d
+  zh: 80213c4a0a0276e7
 /ocean-ocean-client-ui-tool/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -21,23 +21,23 @@
   en: 3dd6bd71dfc5527d
   zh: 9fe3c2135014bb7b
 /ocean-ocean-client-ui-tool/use-this-package/built-in-views:
-  en: b4d45adb80c8e9c9
-  zh: a675ff6d2d97c2a0
+  en: 0d3a93bf1b7b7c43
+  zh: 32d81fb658cddfae
 /ocean-ocean-client-ui-tool/understand-the-implementation:
   en: 00bc7b0c84edc603
   zh: 1cfcf5b435248a91
 /ocean-ocean-client-ui-tool/understand-the-implementation/rendering-contract:
-  en: 672e63b2f92e689b
-  zh: ba950ecb480325a6
+  en: 65a365501b76aa76
+  zh: f0e1d958141518a0
 /ocean-ocean-client-ui-tool/understand-the-implementation/cards:
-  en: b02142d18fa89b8a
-  zh: 17a9689d5b5e97be
+  en: 3066f5c9bcb8297f
+  zh: ea77906d0db5fb4c
 /ocean-ocean-client-ui-tool/understand-the-implementation/declared-optional-capabilities:
   en: c1926deb4e5f3734
   zh: c5845f465b94a459
 /ocean-ocean-client-ui-tool/further-exploration:
-  en: ca7d0bcd2ff30f5e
-  zh: 40ef9b216c21b70b
+  en: 7ad14cd6c5e0da11
+  zh: 0943c11c57502059
 /ocean-ocean-client-ui-tool/model-experience:
   en: 1e5e72dd269855d5
   zh: 81a4756d460e3af9

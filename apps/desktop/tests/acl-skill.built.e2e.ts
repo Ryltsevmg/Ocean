@@ -16,8 +16,8 @@ const { createPackageWithOptions } = builderRequire('@electron/asar') as {
 }
 const packageDirectory = fileURLToPath(new URL('../../../packages/sandbox/sandbox-windows-acl/', import.meta.url))
 
-it.skipIf(process.platform !== 'win32' || process.env.DSH_EXAMPLE_MODE !== 'lib')('executes the archived ACL skill through external PowerShell and disposes its copy', { retry: 0 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-acl-asar-'))
+it.skipIf(process.platform !== 'win32' || process.env.OCEAN_EXAMPLE_MODE !== 'lib')('executes the archived ACL skill through external PowerShell and disposes its copy', { retry: 0 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'ocean-acl-asar-'))
   try {
     const source = join(root, 'package')
     // Electron reads the archived package here; full installer layout and SEA execution have separate coverage needs.

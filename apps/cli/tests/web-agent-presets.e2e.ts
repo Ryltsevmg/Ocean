@@ -40,10 +40,10 @@ import type {} from '@ocean/ocean-token-meter'
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 const { boot } = createRequire(import.meta.url)(join(REPO_ROOT, 'packages/boot/app-boot/lib/index.js')) as typeof import('@ocean/ocean-app-boot')
-/** The shipped Web surface: the dsh-base and dsh-web-app bundle patches over an empty profile. */
+/** The shipped Web surface: the ocean-base and ocean-web-app bundle patches over an empty profile. */
 const BASE_PATCH = join(REPO_ROOT, 'packages/bundle/base/cordis.patch.yml')
 const WEB_BUNDLE = join(REPO_ROOT, 'packages/bundle/web-app')
-const WEB_PATCHES = bundlePatchPaths(WEB_BUNDLE, (JSON.parse(readFileSync(join(WEB_BUNDLE, 'package.json'), 'utf8')) as { dsh: { bundle: { patch: string[] } } }).dsh.bundle)
+const WEB_PATCHES = bundlePatchPaths(WEB_BUNDLE, (JSON.parse(readFileSync(join(WEB_BUNDLE, 'package.json'), 'utf8')) as { ocean: { bundle: { patch: string[] } } }).ocean.bundle)
 const webPatches = (label: string): PatchOptions[] => WEB_PATCHES.flatMap(file => loadOverlayPatches(label, file))
 const CODEX_PACKAGE_DIR = join(REPO_ROOT, 'packages/subagent/subagent-codex')
 const CLAUDE_CODE_PACKAGE_DIR = join(REPO_ROOT, 'packages/subagent/subagent-claude-code')
@@ -114,14 +114,14 @@ async function bootWeb(
 ): Promise<Context> {
   const storageRoot = join(profileHome, 'storages')
   const overrides: PatchOptions[] = [
-    // storage-json's root is anchored to the real $DSH_HOME. Unpinned, this
-    // file writes the developer's own `~/.dsh/storages/` — and then reads it
+    // storage-json's root is anchored to the real $OCEAN_HOME. Unpinned, this
+    // file writes the developer's own `~/.ocean/storages/` — and then reads it
     // back on the next run, so a stored document from any other build decides
     // this test's boot.
     { id: 'storage-json', config: { root: storageRoot } },
     // Fixed Session IDs must stay inside this boot's temporary profile root.
     { id: 'session-persistence-jsonl', config: { root: join(profileHome, 'sessions') } },
-    { id: 'attachment-local', config: { dshHome: profileHome } },
+    { id: 'attachment-local', config: { oceanHome: profileHome } },
     // Host rows with side effects outside this process: a bound port, a served
     // asset tree, a telemetry exporter. `api-gateway` and `directory-picker`
     // stay ENABLED on purpose — the api-proxy is the host row that injects
@@ -170,7 +170,7 @@ async function bootWeb(
   await mkdir(profileDir, { recursive: true })
   if (surface === 'desktop') createPluginProfile(profileDir)
   else if (profileBundles === undefined) initProfile(profileDir, ['@ocean/ocean-base', '@ocean/ocean-web-app'])
-  // Product Bundles are installed into the Profile, not the dsh app. Model
+  // Product Bundles are installed into the Profile, not the ocean app. Model
   // pnpm's package link for only the selected products; their own production
   // dependencies resolve from the linked workspace packages, while shared
   // peers still resolve through the installation fallback above.
@@ -188,31 +188,31 @@ async function bootWeb(
     patches: [],
   }
   let bundlePatches: PatchOptions[] = [
-    ...loadOverlayPatches('dsh-test', BASE_PATCH),
-    ...webPatches('dsh-test'),
+    ...loadOverlayPatches('ocean-test', BASE_PATCH),
+    ...webPatches('ocean-test'),
   ]
   if (profileBundles !== undefined) {
     await writeFile(join(profileDir, 'package.json'), JSON.stringify({
       private: true,
       dependencies: Object.fromEntries(profileBundles.map(name => [name, 'workspace:*'])),
-      dsh: { profile: { bundles: profileBundles } },
+      ocean: { profile: { bundles: profileBundles } },
     }, null, 2) + '\n')
-    profile = loadProfile('dsh-test', surface, INSTALL_ANCHOR, home, { userLayer: false })
+    profile = loadProfile('ocean-test', surface, INSTALL_ANCHOR, home, { userLayer: false })
     bundlePatches = profile.layers.flatMap(layer => layer.patches)
   }
   // Deployment defaults live in a bundle beneath the profile patch, so Settings writes are not shadowed by overlays.
-  const fixtureName = 'dsh-web-presets-defaults'
+  const fixtureName = 'ocean-web-presets-defaults'
   const fixtureDir = join(profileDir, 'node_modules', fixtureName)
   await mkdir(fixtureDir, { recursive: true })
-  await writeFile(join(fixtureDir, 'package.json'), JSON.stringify({ name: fixtureName, version: '1.0.0', dsh: { bundle: { patch: 'cordis.patch.yml' } } }))
+  await writeFile(join(fixtureDir, 'package.json'), JSON.stringify({ name: fixtureName, version: '1.0.0', ocean: { bundle: { patch: 'cordis.patch.yml' } } }))
   await writeFile(join(fixtureDir, 'cordis.patch.yml'), JSON.stringify(overrides))
-  const manifest = JSON.parse(await readFile(join(profileDir, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
-  manifest.dsh.profile.bundles.push(fixtureName)
+  const manifest = JSON.parse(await readFile(join(profileDir, 'package.json'), 'utf8')) as { ocean: { profile: { bundles: string[] } } }
+  manifest.ocean.profile.bundles.push(fixtureName)
   await writeFile(join(profileDir, 'package.json'), JSON.stringify(manifest))
   const resolution = await createRuntimeResolution({ installAnchor: INSTALL_ANCHOR, home, profile })
   const rootConfig = join(profileDir, 'cordis.yml')
   await writeFile(rootConfig, '[]\n')
-  return await boot('dsh-test', rootConfig, [...bundlePatches, ...overrides], async (bootCtx) => {
+  return await boot('ocean-test', rootConfig, [...bundlePatches, ...overrides], async (bootCtx) => {
     bootCtx.provide('profileContext', { name: surface, dir: profileDir, patchPath: profile.patchPath,
       installAnchor: INSTALL_ANCHOR, home, cwd: home,
       startedBundles: profileBundles ?? ['@ocean/ocean-base', '@ocean/ocean-web-app'],
@@ -241,7 +241,7 @@ function toolParameterNames(ctx: Context, agent: Agent, toolName: string): strin
 
 let ctx: Context
 beforeAll(async () => {
-  ctx = await bootWeb(await mkdtemp(join(tmpdir(), 'dsh-web-presets-')))
+  ctx = await bootWeb(await mkdtemp(join(tmpdir(), 'ocean-web-presets-')))
 }, 120_000)
 
 describe('the shipped Web composition', () => {
@@ -303,7 +303,7 @@ describe('the shipped Web composition', () => {
   })
 
   it.each(['standard', 'cordis', 'ptc'] as const)('restores interruption through a complete %s declaration override', async (preset) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-preset-interrupt-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-preset-interrupt-'))
     onTestFinished(() => rm(root, { recursive: true, force: true }))
     const declaration = composeEntries([webPatches('interrupt migration')])
       .find(row => row.id === `preset-${preset}`)!.config as {
@@ -473,7 +473,7 @@ describe('the shipped Web composition', () => {
   })
 
   it('reads an image in minimal mode and carries its durable reference into the next request', async () => {
-    const cwd = await mkdtemp(join(tmpdir(), 'dsh-minimal-image-'))
+    const cwd = await mkdtemp(join(tmpdir(), 'ocean-minimal-image-'))
     onTestFinished(() => rm(cwd, { recursive: true, force: true }))
     await writeFile(join(cwd, 'red.png'), Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', 'base64'))
     const adapter = new MinimalImageAdapter()
@@ -612,27 +612,27 @@ describe('the shipped Web composition', () => {
       const packageSkills = realpathSync(join(REPO_ROOT, 'packages/preset/agent-preset/skills'))
       const shipped = (await ctx.skills.list({ scope: handle.agent }))
         .filter(skill => skill.path?.startsWith(packageSkills) === true).map(skill => skill.name)
-      expect(shipped).toEqual(['dsh-doc'])
-      expect((await ctx.skills.list()).map(skill => skill.name)).not.toContain('dsh-doc')
+      expect(shipped).toEqual(['ocean-doc'])
+      expect((await ctx.skills.list()).map(skill => skill.name)).not.toContain('ocean-doc')
       const loaded = await executeToolFixture(ctx, {
-        callId: ToolCallId('preset-cordis-dsh-doc'),
+        callId: ToolCallId('preset-cordis-ocean-doc'),
         name: 'skill',
-        arguments: { name: 'dsh-doc' },
+        arguments: { name: 'ocean-doc' },
         signal: new AbortController().signal,
         agent: handle.agent,
       })
       expect(loaded.isError).toBe(false)
       const output = loaded.content.flatMap(block => block.type === 'text' ? [block.text] : []).join('\n')
-      expect(output).toContain('<skill_content name="dsh-doc">')
-      expect(output).toContain(`Base directory for this skill: ${join(packageSkills, 'dsh-doc')}`)
+      expect(output).toContain('<skill_content name="ocean-doc">')
+      expect(output).toContain(`Base directory for this skill: ${join(packageSkills, 'ocean-doc')}`)
       expect(output).toContain('Loading this skill does not authorize changes.')
       // The composed `read` tool, behind the fs sandbox, returns each whole reference below the
       // pruner threshold, leaving room for an installation path of up to 256 characters.
-      const references = join(packageSkills, 'dsh-doc', 'references')
+      const references = join(packageSkills, 'ocean-doc', 'references')
       for (const file of readdirSync(references).filter(entry => entry !== 'packages.md')) {
         const path = join(references, file)
         const result = await executeToolFixture(ctx, {
-          callId: ToolCallId(`preset-cordis-dsh-doc-${file}`),
+          callId: ToolCallId(`preset-cordis-ocean-doc-${file}`),
           name: 'read',
           arguments: { file_path: path },
           signal: new AbortController().signal,
@@ -644,7 +644,7 @@ describe('the shipped Web composition', () => {
         expect(codePointLength(text) - codePointLength(path) + 256, file).toBeLessThan(8192)
       }
 
-      // Creator adds its DSH customization intent to the shared coding persona.
+      // Creator adds its OCEAN customization intent to the shared coding persona.
       const standard = await ctx.agents.create({
         sessionId: SessionId('preset-cordis-standard-persona'),
         setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
@@ -732,16 +732,16 @@ describe('the shipped Web composition', () => {
     }
   })
 
-  it('ships the dsh-doc skill in the declaration package', async () => {
-    const skill = join(REPO_ROOT, 'packages/preset/agent-preset', 'skills', 'dsh-doc', 'SKILL.md')
+  it('ships the ocean-doc skill in the declaration package', async () => {
+    const skill = join(REPO_ROOT, 'packages/preset/agent-preset', 'skills', 'ocean-doc', 'SKILL.md')
 
-    expect((await readFile(skill, 'utf8')).startsWith('---\nname: dsh-doc\n')).toBe(true)
+    expect((await readFile(skill, 'utf8')).startsWith('---\nname: ocean-doc\n')).toBe(true)
   })
 
   it('merges the global skill layer into a preset agent\'s catalog, keeping local discovery preset-side', async () => {
-    const proj = await mkdtemp(join(tmpdir(), 'dsh-preset-skill-proj-'))
-    await mkdir(join(proj, '.dsh', 'skills', 'project-proof'), { recursive: true })
-    await writeFile(join(proj, '.dsh', 'skills', 'project-proof', 'SKILL.md'), [
+    const proj = await mkdtemp(join(tmpdir(), 'ocean-preset-skill-proj-'))
+    await mkdir(join(proj, '.ocean', 'skills', 'project-proof'), { recursive: true })
+    await writeFile(join(proj, '.ocean', 'skills', 'project-proof', 'SKILL.md'), [
       '---',
       'name: project-proof',
       'description: Proves the preset layer discovers project skills beside global ones.',
@@ -752,7 +752,7 @@ describe('the shipped Web composition', () => {
     ].join('\n'))
 
     const handle = await ctx.agents.create({
-      // Unique per run: the composition persists into the ambient DSH home,
+      // Unique per run: the composition persists into the ambient OCEAN home,
       // and a fixed id would collide with a log an earlier run left there.
       sessionId: SessionId(`preset-skills-standard-${randomUUID()}`),
       setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
@@ -826,7 +826,7 @@ describe('the shipped Web composition', () => {
 
 describe('preset-selected delegation through the Web Loader', () => {
   it('exposes configured delegation tools when each preset switch resolves', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-delegation-switch-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-delegation-switch-'))
     try {
       const configured = await bootWeb(root, loadOverlayPatches('delegation-switch',
         join(REPO_ROOT, 'apps/cli/tests/profiles/subagent-preset-switch.overlay.yml')))
@@ -866,7 +866,7 @@ describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surfac
   const toolName = (product: Product): string => `subagent_${product.replaceAll('-', '_')}`
 
   async function bootSelected(installed: readonly Product[], extra: PatchOptions[] = []): Promise<Context> {
-    const root = await mkdtemp(join(tmpdir(), `dsh-${surface}-native-bundles-`))
+    const root = await mkdtemp(join(tmpdir(), `ocean-${surface}-native-bundles-`))
     onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
     return await bootWeb(root, extra, installed.map(packageDir), [
       '@ocean/ocean-base', '@ocean/ocean-web-app', ...installed.map(product => `@ocean/ocean-subagent-${product}`),
@@ -911,7 +911,7 @@ describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surfac
     }, 120_000)
 
   it('keeps provider identities and applies later Host row overrides', async () => {
-    const providerConfig = { model: 'adoption-model', env: { DSH_NATIVE_ADOPTION: 'preserved' } }
+    const providerConfig = { model: 'adoption-model', env: { OCEAN_NATIVE_ADOPTION: 'preserved' } }
     const productCtx = await bootSelected(products, [
       ...products.map(product => ({ id: `subagent-${product}`, config: providerConfig })),
       { id: 'tool-subagent-codex', disabled: true },
@@ -933,10 +933,10 @@ describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surfac
 
 describe('the standard preset documentation skill', () => {
   it.for([false, true])('loads the packaged skill without adding tools (global office skills: %s)', async (withOfficeSkills: boolean) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-standard-doc-'))
-    vi.stubEnv('DSH_HOME', join(root, 'home'))
-    vi.stubEnv('DSH_AGENTS_HOME', join(root, 'agents-home'))
-    vi.stubEnv('DSH_BUNDLED_SKILL_DIR', join(root, 'bundled-skills'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-standard-doc-'))
+    vi.stubEnv('OCEAN_HOME', join(root, 'home'))
+    vi.stubEnv('OCEAN_AGENTS_HOME', join(root, 'agents-home'))
+    vi.stubEnv('OCEAN_BUNDLED_SKILL_DIR', join(root, 'bundled-skills'))
     let docCtx: Context | undefined
     try {
       const standard = composeEntries([webPatches('standard documentation')])
@@ -969,15 +969,15 @@ describe('the standard preset documentation skill', () => {
       const baselineSkills = await testCtx.skills.list({ cwd: root, scope: baseline.agent })
       const skills = await testCtx.skills.list({ cwd: root, scope: standardAgent.agent })
       expect(skills.map(skill => skill.name).sort())
-        .toEqual([...baselineSkills.map(skill => skill.name), 'dsh-doc'].sort())
-      const definition = await testCtx.skills.get('dsh-doc', { cwd: root, scope: standardAgent.agent })
-      expect(definition?.path).toBe(await realpath(join(REPO_ROOT, 'packages/preset/agent-preset/skills/dsh-doc/SKILL.md')))
-      if (definition === undefined) throw new Error('standard has no packaged dsh-doc skill')
+        .toEqual([...baselineSkills.map(skill => skill.name), 'ocean-doc'].sort())
+      const definition = await testCtx.skills.get('ocean-doc', { cwd: root, scope: standardAgent.agent })
+      expect(definition?.path).toBe(await realpath(join(REPO_ROOT, 'packages/preset/agent-preset/skills/ocean-doc/SKILL.md')))
+      if (definition === undefined) throw new Error('standard has no packaged ocean-doc skill')
       const creator = await testCtx.agents.create({
         sessionId: SessionId('standard-doc-creator'), meta: { cwd: root },
         setup: agentCtx => testCtx.agentPresets.mount(agentCtx, 'cordis').then(() => undefined),
       })
-      expect((await testCtx.skills.get('dsh-doc', { cwd: root, scope: creator.agent }))?.path).toBe(definition.path)
+      expect((await testCtx.skills.get('ocean-doc', { cwd: root, scope: creator.agent }))?.path).toBe(definition.path)
       const schemas = testCtx.tools.schemas(standardAgent.agent)
       expect(schemas).toEqual(testCtx.tools.schemas(baseline.agent))
       expect(schemas.map(tool => tool.name)).not.toContain('cordis_inspect_list')
@@ -1020,7 +1020,7 @@ describe('the standard preset documentation skill', () => {
       const before = await readFile(profileManifest, 'utf8')
       const loaded = await executeToolFixture(testCtx, {
         agent: standardAgent.agent, callId: ToolCallId('standard-doc-load'),
-        name: 'skill', arguments: { name: 'dsh-doc' }, signal: new AbortController().signal,
+        name: 'skill', arguments: { name: 'ocean-doc' }, signal: new AbortController().signal,
       })
       expect(loaded.isError).toBe(false)
       expect(loaded.content.some(block => block.type === 'text' && block.text.includes(definition.content))).toBe(true)
@@ -1033,30 +1033,30 @@ describe('the standard preset documentation skill', () => {
       }
     }
   })
-  it('prefers project dsh-doc overrides while packaged guidance wins over user skills', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-standard-doc-priority-'))
+  it('prefers project ocean-doc overrides while packaged guidance wins over user skills', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ocean-standard-doc-priority-'))
     const home = join(root, 'home')
     const agentsHome = join(root, 'agents-home')
     const workspace = join(root, 'workspace')
     const projectAgents = join(root, 'project-agents')
-    const projectDsh = join(root, 'project-dsh')
-    vi.stubEnv('DSH_HOME', home)
-    vi.stubEnv('DSH_AGENTS_HOME', agentsHome)
-    vi.stubEnv('DSH_BUNDLED_SKILL_DIR', join(root, 'bundled-skills'))
+    const projectOcean = join(root, 'project-ocean')
+    vi.stubEnv('OCEAN_HOME', home)
+    vi.stubEnv('OCEAN_AGENTS_HOME', agentsHome)
+    vi.stubEnv('OCEAN_BUNDLED_SKILL_DIR', join(root, 'bundled-skills'))
     let priorityCtx: Context | undefined
     try {
       await mkdir(workspace)
-      for (const project of [projectAgents, projectDsh]) await mkdir(join(project, '.git'), { recursive: true })
+      for (const project of [projectAgents, projectOcean]) await mkdir(join(project, '.git'), { recursive: true })
       for (const [directory, description] of [
-        [join(home, 'skills'), 'User DSH skill'],
+        [join(home, 'skills'), 'User OCEAN skill'],
         [join(agentsHome, 'skills'), 'User agents skill'],
         [join(projectAgents, '.agents/skills'), 'Project agents skill'],
-        [join(projectDsh, '.agents/skills'), 'Lower priority project skill'],
-        [join(projectDsh, '.dsh/skills'), 'Project DSH skill'],
+        [join(projectOcean, '.agents/skills'), 'Lower priority project skill'],
+        [join(projectOcean, '.ocean/skills'), 'Project OCEAN skill'],
       ] as const) {
-        const skill = join(directory, 'dsh-doc')
+        const skill = join(directory, 'ocean-doc')
         await mkdir(skill, { recursive: true })
-        await writeFile(join(skill, 'SKILL.md'), `---\nname: dsh-doc\ndescription: ${description}\n---\n\n${description}\n`)
+        await writeFile(join(skill, 'SKILL.md'), `---\nname: ocean-doc\ndescription: ${description}\n---\n\n${description}\n`)
       }
       priorityCtx = await bootWeb(root)
       const testCtx = priorityCtx
@@ -1065,13 +1065,13 @@ describe('the standard preset documentation skill', () => {
         setup: agentCtx => testCtx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
       })
       for (const [cwd, path] of [
-        [workspace, join(REPO_ROOT, 'packages/preset/agent-preset/skills/dsh-doc/SKILL.md')],
-        [projectAgents, join(projectAgents, '.agents/skills/dsh-doc/SKILL.md')],
-        [projectDsh, join(projectDsh, '.dsh/skills/dsh-doc/SKILL.md')],
+        [workspace, join(REPO_ROOT, 'packages/preset/agent-preset/skills/ocean-doc/SKILL.md')],
+        [projectAgents, join(projectAgents, '.agents/skills/ocean-doc/SKILL.md')],
+        [projectOcean, join(projectOcean, '.ocean/skills/ocean-doc/SKILL.md')],
       ] as const) {
         const skills = await testCtx.skills.list({ cwd, scope: handle.agent })
-        expect(skills.filter(skill => skill.name === 'dsh-doc')).toHaveLength(1)
-        expect((await testCtx.skills.get('dsh-doc', { cwd, scope: handle.agent }))?.path).toBe(await realpath(path))
+        expect(skills.filter(skill => skill.name === 'ocean-doc')).toHaveLength(1)
+        expect((await testCtx.skills.get('ocean-doc', { cwd, scope: handle.agent }))?.path).toBe(await realpath(path))
       }
     } finally {
       try { await priorityCtx?.fiber.dispose() } finally {
@@ -1093,7 +1093,7 @@ describe('a user preset declared from the shipped cordis rows', () => {
     // host composition (`@ocean/ocean-tool-cordis/host`); each preset's
     // `tool-cordis` row only registers the tools. Before that split the copy
     // failed to mount: its row re-registered provider "Service".
-    const root = await mkdtemp(join(tmpdir(), 'dsh-copied-preset-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-copied-preset-'))
     const cordis = composeEntries([webPatches('test')]).find(row => row.id === 'preset-cordis')!.config as import('@ocean/ocean-agent-preset-registry').PresetDefinition
     const copyCtx = await bootWeb(root, [{ insert: [{
       id: 'preset-cordis-copy', name: '@ocean/ocean-agent-preset',
@@ -1355,7 +1355,7 @@ describe('a profile patch stored before Developer tools owned preset selection',
   let legacy: Context
   let legacyHome: string
   beforeAll(async () => {
-    legacyHome = await mkdtemp(join(tmpdir(), 'dsh-web-presets-legacy-'))
+    legacyHome = await mkdtemp(join(tmpdir(), 'ocean-web-presets-legacy-'))
     // A stored configuration from before the switch moved to Developer tools:
     // it carries the retired key beside the default the user had saved. The
     // Loader resolves the declared fields and leaves the extra one alone.

@@ -25,12 +25,12 @@ declare module '@ocean/ocean-typert-protocol' {
 /** Reasons a profile control cannot modify its target. */
 export type ReadOnlyReason = 'management-required' | 'unaddressable'
 
-/** A package whose declared DSH requirements reject the running DSH version, without an exemption for the exact pair. */
+/** A package whose declared OCEAN requirements reject the running OCEAN version, without an exemption for the exact pair. */
 export interface IncompatiblePlugin {
   name: string
   version: string
   runtimeVersion: string
-  /** Only the requirements the running version does not satisfy, keyed `engines.dsh` or by DSH peer package name. */
+  /** Only the requirements the running version does not satisfy, keyed `engines.ocean` or by OCEAN peer package name. */
   requirements: Record<string, string>
 }
 
@@ -38,13 +38,13 @@ export interface IncompatiblePlugin {
 export interface ManagementError {
   code: ReadOnlyReason | 'unknown-plugin' | 'invalid-spec' | 'already-installed' | 'ambiguous-install' | 'not-bundle' | 'not-removable' | 'stop-profile' | 'bundle-in-use' | 'stale-approval' | 'incompatible-version' | 'unsupported-platform' | 'unexpected-package' | 'operation-error'
   diagnostic?: string
-  /** Present with `incompatible-version`: the packages the running DSH version rejects. */
+  /** Present with `incompatible-version`: the packages the running OCEAN version rejects. */
   incompatible?: IncompatiblePlugin[]
 }
 
 /**
  * Why a change waits for the next start: `no-hmr` profiles apply changes only at startup; `package-moved` changes map an
- * installed package to another directory without removing it first, or change or locally override a package the DSH
+ * installed package to another directory without removing it first, or change or locally override a package the OCEAN
  * installation provides; `host-module` changes reach
  * modules the running process itself imports; `unmanaged-plugin` changes reach a plugin running outside a Loader entry;
  * `module-comparison` means loaded modules could not be compared with disk.
@@ -157,7 +157,7 @@ export interface PackageResult {
    * its failure is read as rather than a status the process returned.
    */
   timedOut?: boolean
-  /** Present when a compatibility check refused the run: the packages the running DSH version rejects. */
+  /** Present when a compatibility check refused the run: the packages the running OCEAN version rejects. */
   incompatible?: IncompatiblePlugin[]
   /**
    * Present when an `expected` check refused the run: `unexpected-package` when the run left the expected package
@@ -289,9 +289,9 @@ export interface PluginVersion {
   readonly prerelease: boolean
   /** The registry's deprecation message, when the version is deprecated. */
   readonly deprecated?: string
-  /** Whether the version declares a `dsh.bundle`; a version that does not cannot replace a bundle. */
+  /** Whether the version declares a `ocean.bundle`; a version that does not cannot replace a bundle. */
   readonly bundle: boolean
-  /** Present when the version's `engines.dsh` or DSH peers reject the running DSH version without an exemption for the exact pair. */
+  /** Present when the version's `engines.ocean` or OCEAN peers reject the running OCEAN version without an exemption for the exact pair. */
   readonly incompatible?: IncompatiblePlugin
 }
 

@@ -6,32 +6,32 @@
 
 ## Cordis
 
-[Cordis](cordis-primer.zh.md) 插件向 dsh 的共享上下文贡献服务、类型化事件和可逆副作用。每个产品组件——包括模型适配器、工具注册表、会话日志和 agent loop（智能体循环）——都是可通过配置替换的插件。
+[Cordis](cordis-primer.zh.md) 插件向 ocean 的共享上下文贡献服务、类型化事件和可逆副作用。每个产品组件——包括模型适配器、工具注册表、会话日志和 agent loop（智能体循环）——都是可通过配置替换的插件。
 
-通过挂载插件扩展 dsh，而不是修改特权内核。注册项在其插件卸载时撤销。
+通过挂载插件扩展 ocean，而不是修改特权内核。注册项在其插件卸载时撤销。
 
 ## Profile 与组合包
 
-运行中的 `dsh` 是一棵插件树，由启动时按序叠加的各层组合而成。
+运行中的 `ocean` 是一棵插件树，由启动时按序叠加的各层组合而成。
 
 **profile** 是 Harness home 中的具名组装：有序组合包、已安装的树外插件和用户的 `cordis.patch.yml`。模板包括 `web`、`headless`、`sdk`、`sdk-minimal` 和 `acp`。
 
 **组合包**分发 Cordis 配置项及其代码；上层可以 patch 它的条目。
 
-两者在 `package.json` 中通过 `dsh.profile` 列出 profile 的组合包，通过 `dsh.bundle` 定位组合包的 patch 文件。
+两者在 `package.json` 中通过 `ocean.profile` 列出 profile 的组合包，通过 `ocean.bundle` 定位组合包的 patch 文件。
 
-[`dsh-base`](../packages/bundle/base/README.zh.md) 是 `web`、`headless`、`sdk` 与 `acp` profile 的共享第一层：模型适配器、工具、持久化、沙箱与审批策略、设置、凭据、遥测。[`dsh-web-app`](../packages/bundle/web-app/README.zh.md) 增加浏览器应用，[`dsh-headless`](../packages/bundle/headless/README.zh.md) 增加不带服务器的一次性运行器，[`dsh-sdk-app`](../packages/bundle/sdk-app/README.zh.md) 增加 SDK JSON-RPC 服务器，[`dsh-acp-app`](../packages/bundle/acp-app/README.zh.md) 增加仅用于自动化的 ACP 服务器。[`dsh-sdk-minimal`](../packages/bundle/sdk-minimal/README.zh.md) 是刻意保留的例外：一个组合包拥有完整的显式 SDK 配置树，不应用 `dsh-base`。
+[`ocean-base`](../packages/bundle/base/README.zh.md) 是 `web`、`headless`、`sdk` 与 `acp` profile 的共享第一层：模型适配器、工具、持久化、沙箱与审批策略、设置、凭据、遥测。[`ocean-web-app`](../packages/bundle/web-app/README.zh.md) 增加浏览器应用，[`ocean-headless`](../packages/bundle/headless/README.zh.md) 增加不带服务器的一次性运行器，[`ocean-sdk-app`](../packages/bundle/sdk-app/README.zh.md) 增加 SDK JSON-RPC 服务器，[`ocean-acp-app`](../packages/bundle/acp-app/README.zh.md) 增加仅用于自动化的 ACP 服务器。[`ocean-sdk-minimal`](../packages/bundle/sdk-minimal/README.zh.md) 是刻意保留的例外：一个组合包拥有完整的显式 SDK 配置树，不应用 `ocean-base`。
 
 各层依次应用在空条目列表之上：profile 中有序的组合包、其 `cordis.patch.yml`、home patch，最后是 `--patch` overlay。一条 patch 按 id 定位某个条目并替换其整个 config，或插入新条目。`preset` patch 在目标声明的 `config.plugins` 内应用这些操作，沿用相同的层优先级。
 
-YAML 控制 HMR：base 启用仅监视配置的 `dsh-hmr`；Headless、SDK 和 ACP 禁用它；`sdk-minimal` 不包含它。Profile patch 覆盖这些默认值。HMR 协调监听和重载；启动器提供 profile 数据和就绪信号。
+YAML 控制 HMR：base 启用仅监视配置的 `ocean-hmr`；Headless、SDK 和 ACP 禁用它；`sdk-minimal` 不包含它。Profile patch 覆盖这些默认值。HMR 协调监听和重载；启动器提供 profile 数据和就绪信号。
 
 base 提供用于 Web 和 Agent 的[插件管理器](../packages/boot/plugin-manager/README.zh.md)。
 
 要查看你的机器启动的配置树：
 
 ```sh
-dsh --profile web --dump-config
+ocean --profile web --dump-config
 ```
 
 它打印出的任何条目，都可以由你自己的 patch 替换。
@@ -40,15 +40,15 @@ dsh --profile web --dump-config
 
 ## 应用启动
 
-受支持的 Node 应用通过具名 `dsh` profile 启动。随附 profile 为 `web`、`headless`、`sdk`、`sdk-minimal` 和 `acp`，可通过 `dsh --profile <name>` 或 `dsh <name>` 选择。`plugin` 表示管理命令；同名 profile 必须用 `--profile plugin` 选择。TypeScript SDK 会解析其同版本 `dsh` 依赖并选择 `sdk`；自定义插件组合继续由 profile 与有序 patch 文件表达，而不是另一个可执行文件或内联应用树。`sdk-minimal` 是位于同一 launcher 后的仓库自有独立组合包，而不是由调用方提供的 Cordis 配置树。
+受支持的 Node 应用通过具名 `ocean` profile 启动。随附 profile 为 `web`、`headless`、`sdk`、`sdk-minimal` 和 `acp`，可通过 `ocean --profile <name>` 或 `ocean <name>` 选择。`plugin` 表示管理命令；同名 profile 必须用 `--profile plugin` 选择。TypeScript SDK 会解析其同版本 `ocean` 依赖并选择 `sdk`；自定义插件组合继续由 profile 与有序 patch 文件表达，而不是另一个可执行文件或内联应用树。`sdk-minimal` 是位于同一 launcher 后的仓库自有独立组合包，而不是由调用方提供的 Cordis 配置树。
 
-Vendored CLI、仅用于构建和测试的可执行文件以及进程内直接挂载插件都不属于 Harness 应用启动器。[`verify-application-entrypoints`](../scripts/verify-application-entrypoints.ts)将每个包 bin、可执行源码、根 demo 以及根脚本 `start:web` 与 `dev:web` 归入显式类别，并拒绝任何绕过 `dsh` 的 Node 应用路径。
+Vendored CLI、仅用于构建和测试的可执行文件以及进程内直接挂载插件都不属于 Harness 应用启动器。[`verify-application-entrypoints`](../scripts/verify-application-entrypoints.ts)将每个包 bin、可执行源码、根 demo 以及根脚本 `start:web` 与 `dev:web` 归入显式类别，并拒绝任何绕过 `ocean` 的 Node 应用路径。
 
-Python SDK 遵循相同的应用架构。其运行时 wheel 把普通 `dsh` CLI 打包为 `deepseek-harness-sdk-runtime-<platform>-<arch>`，客户端默认以显式 Harness home 启动 `dsh --profile sdk`。极简示例选择随附的 `sdk-minimal` profile。Python 暴露 profile 选择与有序 patch 文件，而不是完整 Cordis 树；持久外部插件通过 `dsh plugin` 安装。已删除的私有直读配置载体没有兼容 bin 或回退 parser。
+Python SDK 遵循相同的应用架构。其运行时 wheel 把普通 `ocean` CLI 打包为 `deepseek-harness-sdk-runtime-<platform>-<arch>`，客户端默认以显式 Harness home 启动 `ocean --profile sdk`。极简示例选择随附的 `sdk-minimal` profile。Python 暴露 profile 选择与有序 patch 文件，而不是完整 Cordis 树；持久外部插件通过 `ocean plugin` 安装。已删除的私有直读配置载体没有兼容 bin 或回退 parser。
 
 ## 桌面应用
 
-[Electron 桌面应用](../apps/desktop/README.zh.md)在签名资源中携带精确匹配的 dsh 生产运行时，并拥有保留的 `$DSH_HOME/profiles/desktop`。共享 helper 初始化 profile 文件、协调 bundle，并解析安装与 bundle 的依赖而不替换 pnpm 拥有的包。Desktop 与 npm CLI 共享产品数据，但包、启用选择与锁文件保持独立。Desktop 内置 CLI 管理其已初始化的插件。
+[Electron 桌面应用](../apps/desktop/README.zh.md)在签名资源中携带精确匹配的 ocean 生产运行时，并拥有保留的 `$OCEAN_HOME/profiles/desktop`。共享 helper 初始化 profile 文件、协调 bundle，并解析安装与 bundle 的依赖而不替换 pnpm 拥有的包。Desktop 与 npm CLI 共享产品数据，但包、启用选择与锁文件保持独立。Desktop 内置 CLI 管理其已初始化的插件。
 
 Electron 使用 Electron Node 模式启动私有 Desktop Host。Host 调用共享 CLI profile runner 与完整 Web 应用。窗口立即加载打包 Web 资源，等待启动注入后在同一文档中激活客户端插件。Web 负责 RPC 与流；桌面载体将本地页面连接到已认证的 Host。Node IPC 承载启动注入、就绪、致命错误与关闭。Desktop 默认监听系统分配的端口，profile 配置可覆盖。壳拥有的 UI 通过内置 pnpm 执行插件事务，并遵循正常用户与 profile 配置。
 
@@ -135,7 +135,7 @@ Session 消费方只了解当前逻辑格式。仅 header 的 `stat` 与 `list` 
 
 **模型可见即已记录。** 每个模型请求都必须能从日志重建。新增模型可见输入需要会话事件。修改现有消息内容的插件注册[纯消息投影](subsystems/session.zh.md#plugin-owned-message-projections)，独立读取器显式传入相同的处理器。 工具变更不依赖能力；[Session 工具历史](../packages/core/session/README.zh.md)提供提供方声明。
 
-**投影 seam。** `dsh-session-projection` 提供 `ctx.sessionProjections`：已注册单元折叠已提交事件，载体通过 `snapshot()` 读取选定的客户端视图。领域服务等待注册完成，在内部保留句柄，并提供业务方法（[注册生命周期](../packages/session/session-projection/README.zh.md)）。`AgentRegistry` 通过 `turnBoundaryOf(session)` 提供轮次和步骤状态。`AgentLoop` 持有 `modelSelection` 和 inbox 状态（[Loop 生命周期](../packages/core/agent-loop/README.zh.md)）。
+**投影 seam。** `ocean-session-projection` 提供 `ctx.sessionProjections`：已注册单元折叠已提交事件，载体通过 `snapshot()` 读取选定的客户端视图。领域服务等待注册完成，在内部保留句柄，并提供业务方法（[注册生命周期](../packages/session/session-projection/README.zh.md)）。`AgentRegistry` 通过 `turnBoundaryOf(session)` 提供轮次和步骤状态。`AgentLoop` 持有 `modelSelection` 和 inbox 状态（[Loop 生命周期](../packages/core/agent-loop/README.zh.md)）。
 
 [工作目录](subsystems/working-directory.zh.md) 提供用户上下文和执行路径，不改变原始项目标识、沙箱写入根目录或已有进程目录。
 

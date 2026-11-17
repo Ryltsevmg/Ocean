@@ -68,7 +68,7 @@ describe('web e2e: a git workspace turn ends with its changed files', () => {
   beforeAll(async () => {
     let replayOverride: string | undefined
     if (MODE !== 'record') {
-      replayRoot = await mkdtemp(join(tmpdir(), 'dsh-changed-files-turn-replay-'))
+      replayRoot = await mkdtemp(join(tmpdir(), 'ocean-changed-files-turn-replay-'))
       replayOverride = join(replayRoot, 'replay.override.json')
       const script = deriveReplayScript(parseSessionLog(await readFile(FIXTURE, 'utf8')))
       // Recorded absolute paths must follow each isolated Session's working directory.

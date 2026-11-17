@@ -31,7 +31,7 @@ export const Shared = Schema.union([
 `
 
 function fixture(schema = sharedSchema) {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-config-catalog-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-config-catalog-'))
   roots.push(root)
   const write = (path: string, value: string): void => {
     const file = join(root, path)
@@ -298,6 +298,6 @@ describe('config catalog rendering', () => {
 
   it('leaves the consistency record unchanged when only package data changes', () => {
     expect(record(['jobs', 'typert'])).toEqual(record(['jobs']))
-    expect([...record(['jobs']).keys()].some(key => key.includes('dsh-demo'))).toBe(false)
+    expect([...record(['jobs']).keys()].some(key => key.includes('ocean-demo'))).toBe(false)
   })
 })

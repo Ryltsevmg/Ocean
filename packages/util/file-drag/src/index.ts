@@ -3,7 +3,7 @@ import mime from 'mime'
 import type { Branded } from '@ocean/ocean-brand'
 
 /** Browser transfer token type; original bytes stay with the application owner. */
-export const FILE_DRAG_TOKEN_TYPE = 'application/x-dsh-file'
+export const FILE_DRAG_TOKEN_TYPE = 'application/x-ocean-file'
 
 /** Opaque preparation identity, minted and resolved only by the desktop main process. */
 export type FileDragHandle = Branded<'FileDragHandle'>

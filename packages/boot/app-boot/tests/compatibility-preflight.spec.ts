@@ -9,14 +9,14 @@ import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { load } from 'js-yaml'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import {
-  PROFILE_COMPATIBILITY_FILENAME, PluginPackages, boot, getDshRuntimeVersion,
+  PROFILE_COMPATIBILITY_FILENAME, PluginPackages, boot, getOceanRuntimeVersion,
   prepareProfileEntries, prepareProfilePatches, type ProfileContext,
 } from '../src/index.ts'
 
-const runtime = getDshRuntimeVersion()
+const runtime = getOceanRuntimeVersion()
 
 function fixture() {
-  const temporary = mkdtempSync(join(tmpdir(), 'dsh-preflight-'))
+  const temporary = mkdtempSync(join(tmpdir(), 'ocean-preflight-'))
   let ctx: Context | undefined
   onTestFinished(async () => {
     try { await ctx?.fiber.dispose() } finally { rmSync(temporary, { recursive: true, force: true }) }
@@ -207,7 +207,7 @@ it('starts with no exemptions and a warning when the permission file is unparsab
   writeFileSync(join(f.dir, PROFILE_COMPATIBILITY_FILENAME), '{ not json')
   expect(await f.run(insert('denied-plugin'))).toEqual([])
   expect(f.warnings.join('\n')).toContain('is not valid JSON')
-  expect(f.warnings.join('\n')).toContain('is incompatible with dsh')
+  expect(f.warnings.join('\n')).toContain('is incompatible with ocean')
 })
 
 describe('manifest resolution', () => {
@@ -298,8 +298,8 @@ describe('manifest resolution', () => {
     // A preset declaration may omit the id that the Loader type requires.
     prepareProfileEntries(context(f), [{ name: 'denied-plugin' } as EntryOptions], base)
     expect(f.warnings).toEqual([
-      expect.stringMatching(/^dsh: disabling profile plugin row "row": Plugin denied-plugin@1\.0\.0 /),
-      expect.stringMatching(/^dsh: disabling profile plugin denied-plugin: Plugin denied-plugin@1\.0\.0 /),
+      expect.stringMatching(/^ocean: disabling profile plugin row "row": Plugin denied-plugin@1\.0\.0 /),
+      expect.stringMatching(/^ocean: disabling profile plugin denied-plugin: Plugin denied-plugin@1\.0\.0 /),
     ])
   })
 

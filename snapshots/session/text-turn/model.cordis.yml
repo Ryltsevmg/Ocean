@@ -4,5 +4,5 @@
 - id: agent-default-model
   name: '@ocean/ocean-agent-default-model'
   config:
-    provider: !!js process.env.DSH_SNAPSHOT_PROVIDER
-    model: !!js process.env.DSH_SNAPSHOT_MODEL
+    provider: !!js process.env.OCEAN_SNAPSHOT_PROVIDER
+    model: !!js process.env.OCEAN_SNAPSHOT_MODEL

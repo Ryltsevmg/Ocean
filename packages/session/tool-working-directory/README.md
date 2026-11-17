@@ -63,7 +63,7 @@ No runtime invariant companion is published because the tool delegates all direc
 
 #### What the model sees
 
-The [tool catalog](../../../docs/tool-catalog.md#oceanocean-tool-working-directory) defines the optional `cd` argument and canonical `cwd` result. Directory notices are owned by `dsh-working-directory`.
+The [tool catalog](../../../docs/tool-catalog.md#oceanocean-tool-working-directory) defines the optional `cd` argument and canonical `cwd` result. Directory notices are owned by `ocean-working-directory`.
 
 #### Token effect
 

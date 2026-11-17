@@ -11,7 +11,7 @@ import { expect, it, onTestFinished, vi } from 'vitest'
 import { localDragResource } from '../src/file-drag.ts'
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-host-drag-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-host-drag-'))
   const ctx = new Context()
   onTestFinished(async () => { await ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   await ctx.plugin(LocalFileSystem, { cwd: root })

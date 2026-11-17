@@ -97,7 +97,7 @@ describe('typertPlugin', () => {
 
   it('skips outputs that do not identify a Typert contributor', async () => {
     const plugin = typertPlugin()
-    expect(plugin.name).toBe('dsh-typert-generator')
+    expect(plugin.name).toBe('ocean-typert-generator')
     plugin.buildStart({ cwd: tmpdir() })
     await plugin.writeBundle({})
 
@@ -386,7 +386,7 @@ async function rejection(promise: Promise<void>): Promise<Error> {
 }
 
 async function workspace(): Promise<string> {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-typert-tsdown-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-typert-tsdown-'))
   roots.push(root)
   writeFileSync(join(root, 'tsconfig.host.json'), '{}\n')
   await mkdir(join(root, 'packages'))

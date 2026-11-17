@@ -12,7 +12,7 @@ const versions = ['0.1.6-nightly.20260914.1', '0.1.6-nightly.20260914.2'] as con
 const source = { version: '0.1.5-rc.2', commit: 'a'.repeat(40), dirtyFiles: [] }
 
 async function fixture<T>(body: (directory: string) => Promise<T>): Promise<T> {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-update-materials-'))
+  const directory = await mkdtemp(join(tmpdir(), 'ocean-update-materials-'))
   try { return await body(directory) }
   finally { await rm(directory, { recursive: true, force: true }) }
 }
@@ -27,7 +27,7 @@ describe('installed-update runtime preparation', () => {
       const result = await prepareInstalledUpdateRuntime(join(run.root, 'run.json'), original)
       expect(result).toMatchObject({ signed: false, bootTested: false })
       for (const version of versions) {
-        const runtime = join(run.root, version, 'dsh')
+        const runtime = join(run.root, version, 'ocean')
         const descriptor = await verifyDesktopRuntime(runtime, version)
         expect(descriptor.sharedPackages.find(entry => entry.name === '@deepseek-ai/cordis')?.version).toBe(source.version)
         expect(descriptor.sharedPackages.find(entry => entry.name === '@ocean/ocean')?.version).toBe(version)

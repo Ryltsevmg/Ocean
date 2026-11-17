@@ -11,7 +11,7 @@ const roots: string[] = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
 
 function fixture(ja: unknown = { meta: { title: '名前 {name}', description: '説明' } }): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-locale-meta-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-locale-meta-'))
   roots.push(root)
   const directory = join(root, 'packages/demo/plugin/locale')
   mkdirSync(directory, { recursive: true })
@@ -65,7 +65,7 @@ it('does not mistake package.json in the locale service package for a translatio
 })
 
 it('rejects an empty discovery', () => {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-locale-empty-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-locale-empty-'))
   roots.push(root)
   expect(localeMetadataProblems(root)).toEqual(['no package locale metadata found'])
 })

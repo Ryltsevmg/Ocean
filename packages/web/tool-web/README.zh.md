@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-tool-web` 让模型使用 `web_search` 搜索 web，并使用 `web_fetch` 取回页面。当 agent（智能体）需要当前信息或完整来源文本时选择它，并通过包配置独立启用任一工具。结果会把提供方控制的文本标记为外部不可信数据，而抓取到的 HTML 会排除活动与隐藏内容。如果配置的提供方缺失或不可用，工具仍保持可见，并返回模型可据此采取行动的结构化错误；选中的提供方无法为其操作鉴权的工具不会提供给该请求。超时与结果大小上限属于部署设置，而非模型参数。
+`ocean-tool-web` 让模型使用 `web_search` 搜索 web，并使用 `web_fetch` 取回页面。当 agent（智能体）需要当前信息或完整来源文本时选择它，并通过包配置独立启用任一工具。结果会把提供方控制的文本标记为外部不可信数据，而抓取到的 HTML 会排除活动与隐藏内容。如果配置的提供方缺失或不可用，工具仍保持可见，并返回模型可据此采取行动的结构化错误；选中的提供方无法为其操作鉴权的工具不会提供给该请求。超时与结果大小上限属于部署设置，而非模型参数。
 
 ## 目录
 
@@ -79,7 +79,7 @@ web_fetch({ url: 'https://example.com' })
 <a id="search-readiness"></a>
 ### 搜索与抓取就绪
 
-每个模型步骤只有在 `ctx.web.searchReady()` 与 `ctx.web.fetchReady()` 对该步骤模型选择的对话路由回答 true 时，才会准入 `web_search` 与 `web_fetch`，即声明、描述并派发它们。服务只询问 `search()` 或 `fetch()` 会选中的那个提供方；未实现就绪判断的提供方视为就绪，选择失败同样回答 true，因此上文稳定注册所述的错误仍会到达模型。该步骤的操作没有凭据时，[`dsh-web-search-deepseek`](../web-search-deepseek/README.zh.md#authentication) 与 [`dsh-web-deepseek-api`](../web-deepseek-api/README.zh.md#authentication) 报告未就绪。随附的 HTTP 抓取提供方不需要凭据，因此选中它时 `web_fetch` 始终准入。检查在每个步骤上执行，因此模型切换或新存储的密钥会在下一个步骤生效。未准入某个工具的步骤，PTC 程序也绑定不到它，对它的调用以 `UNKNOWN_TOOL` 失败。
+每个模型步骤只有在 `ctx.web.searchReady()` 与 `ctx.web.fetchReady()` 对该步骤模型选择的对话路由回答 true 时，才会准入 `web_search` 与 `web_fetch`，即声明、描述并派发它们。服务只询问 `search()` 或 `fetch()` 会选中的那个提供方；未实现就绪判断的提供方视为就绪，选择失败同样回答 true，因此上文稳定注册所述的错误仍会到达模型。该步骤的操作没有凭据时，[`ocean-web-search-deepseek`](../web-search-deepseek/README.zh.md#authentication) 与 [`ocean-web-deepseek-api`](../web-deepseek-api/README.zh.md#authentication) 报告未就绪。随附的 HTTP 抓取提供方不需要凭据，因此选中它时 `web_fetch` 始终准入。检查在每个步骤上执行，因此模型切换或新存储的密钥会在下一个步骤生效。未准入某个工具的步骤，PTC 程序也绑定不到它，对它的调用以 `UNKNOWN_TOOL` 失败。
 
 ### 失败与恢复
 
@@ -137,9 +137,9 @@ schema 校验会在执行前拒绝缺失或非数组的 `queries` 字段、非�
 
 - [web 子系统](../../../docs/subsystems/web.zh.md)——穷尽式的搜索／抓取请求与结果、提供方可用性与错误码。
 - [web 包映射](../README.zh.md)——六包家族与各角色。
-- [dsh-web](../web/README.zh.md)——工具经由其执行的 web 服务。
+- [ocean-web](../web/README.zh.md)——工具经由其执行的 web 服务。
 - [生成工具目录](../../../docs/tool-catalog.zh.md#oceanocean-tool-web)——精确的 `web_search` 与 `web_fetch` schema。
-- [dsh-tool-call-timeout-policy](../../guard/timeout-policy/README.zh.md)——强制执行每个工具超时预算的部署策略。
+- [ocean-tool-call-timeout-policy](../../guard/timeout-policy/README.zh.md)——强制执行每个工具超时预算的部署策略。
 - [生成配置目录](../../../docs/config-catalog.zh.md#oceanocean-tool-web)——每个受支持配置字段及其源声明。
 
 -----
@@ -271,7 +271,7 @@ schema 校验会在执行前拒绝缺失或非数组的 `queries` 字段以及�
 这些限制说明工具在哪些情况下不完整或需要部署配合。它们是当前包约束。
 
 - **没有覆盖整个批次的原生搜索计数器**：`searchMaxQueries` 限制 `ctx.web.search` 调用数，但提供方可以在每次调用内执行多次原生搜索；例如，配置了 `maxUses` 的以模型为后端的提供方最多可以执行 `searchMaxQueries × maxUses` 次原生搜索，`searchMaxResults` 只限制返回给调用方的组合来源。部署通过这些独立的消费方与提供方设置控制成本，因为服务不知道提供方内部的搜索计量单位。
-- **一个查询失败会使整次调用失败**——一次调用中的查询并发执行，首个提供方失败会中止其余查询并丢弃已成功的结果。因此提供方限流会使调用失败；[`dsh-web-deepseek-api`](../web-deepseek-api/README.zh.md#known-limitations-and-deferred-work) 在单个进程内把自己的 Search 请求限制在账号的 5 QPS 以内。
+- **一个查询失败会使整次调用失败**——一次调用中的查询并发执行，首个提供方失败会中止其余查询并丢弃已成功的结果。因此提供方限流会使调用失败；[`ocean-web-deepseek-api`](../web-deepseek-api/README.zh.md#known-limitations-and-deferred-work) 在单个进程内把自己的 Search 请求限制在账号的 5 QPS 以内。
 - **HTML→markdown 转换会省略无法安全表示的输入**——[turndown](https://github.com/mixmark-io/turndown) 会通过真实 DOM 转换至多 `fetchMaxOutputChars` 个源字符。512 层嵌套守卫与转换异常会产生固定省略标记，而不是返回原始 HTML；表格 `colspan` 仍不受支持，因为 GFM 无法表示跨列单元格（依赖决策）。
 - **面向模型的接口有意保持精简，后续扩展暂缓**：`max_results` 保持为配置上限（不是模型参数），`web_fetch` 只接受 `url`（没有 `format`／`prompt`／LLM（大语言模型）摘要模式）；两项都是后续步骤。
 - **抓取不请求审批**——随产品交付的 `cordis`、`code` 与 `standard` preset 在所有 sandbox 和审批模式下公开 `web_fetch`。HTTP 提供方不限制目标地址，因此模型可以访问 loopback 与内网主机，并向任何可访问的 URL 发送数据。需要逐次确认的部署必须添加 `tools/pre-execute` 策略或禁用抓取。

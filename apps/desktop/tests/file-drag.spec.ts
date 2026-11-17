@@ -15,7 +15,7 @@ afterEach(() => { vi.resetAllMocks() })
 
 type Handler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-native-file-drag-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-native-file-drag-'))
   onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
   electron.getPath.mockReturnValue(root)
   const icon = {} as NativeImage

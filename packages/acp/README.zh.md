@@ -31,7 +31,7 @@ acp 组提供一个包：一个服务器，让程序与自动化流程可以通�
 <a id="related-documentation"></a>
 ## 相关文档
 
-- [dsh-subagent-acp](../subagent/subagent-acp/README.zh.md)——spawn 并驱动本服务器的进程外 ACP 客户端。
+- [ocean-subagent-acp](../subagent/subagent-acp/README.zh.md)——spawn 并驱动本服务器的进程外 ACP 客户端。
 - 在单个连接上多路复用并发 ACP 会话——按会话隔离、归属与清理决策。
 
 <a id="dev-note"></a>

@@ -943,8 +943,8 @@ describe('SubagentHeaderLineage', () => {
     expect(menu.style.positionAnchor).toBe(placement)
     expect(menu.style.left).toBe('')
     expect(menu.style.top).toBe('')
-    expect(menu.style.getPropertyValue('--dsh-anchored-max-width')).toBe('')
-    expect(menu.style.getPropertyValue('--dsh-anchored-max-height')).toBe('')
+    expect(menu.style.getPropertyValue('--ocean-anchored-max-width')).toBe('')
+    expect(menu.style.getPropertyValue('--ocean-anchored-max-height')).toBe('')
     expect(listen).not.toHaveBeenCalled()
   })
 

@@ -47,7 +47,7 @@ describe('published document preview licenses', () => {
   // The real pnpm pack subprocess competes with the full GUI worker pool.
   it.skipIf(!existsSync(bundlePath))('keeps bundled licenses in the packed lazy chunks', ({ task }) => {
     expect(existsSync(pdfChunkPath)).toBe(true)
-    const output = mkdtempSync(join(tmpdir(), 'dsh-document-preview-pack-'))
+    const output = mkdtempSync(join(tmpdir(), 'ocean-document-preview-pack-'))
     try {
       const packed = JSON.parse(runPnpm([
         'pack', '--json', '--pack-destination', output,

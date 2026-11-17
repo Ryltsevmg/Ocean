@@ -39,12 +39,12 @@ async function fixture(target: 'mac-arm64' | 'mac-x64' | 'win-x64' = 'mac-arm64'
     const filename = `${channel}${target === 'win-x64' ? '' : '-mac'}.yml`
     const manifest: DesktopRetainedManifest = { schemaVersion: 1, source: {
       repository: 'owner/repo', runId: '42', attempt: '1', commit: 'a'.repeat(40), workflowCommit: 'b'.repeat(40),
-      sourceRef: 'dsh-v0.2.2-rc.1', runnerName: 'runner', target, preset, channel,
+      sourceRef: 'ocean-v0.2.2-rc.1', runnerName: 'runner', target, preset, channel,
       productVersion: version, version, testReleaseId: preset === 'test' ? 'a'.repeat(32) : null, qualification: target === 'win-x64' ? 'signed' : 'notarized',
     }, files: [{ name: filename, ...digest(contents) }, { name: payload, ...digest('installer') }] }
     await writeFile(join(directory, filename), contents)
     await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifest))
-    const environment = { DSH_DESKTOP_AUTO_UPDATE_ENV: preset, OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example', DOWNLOAD_PROD_COS_BUCKET: 'bucket-123',
+    const environment = { OCEAN_DESKTOP_AUTO_UPDATE_ENV: preset, OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example', DOWNLOAD_PROD_COS_BUCKET: 'bucket-123',
       DOWNLOAD_TEST_ORIGIN: 'https://test.example.com', DOWNLOAD_TEST_COS_BUCKET: 'test-123', DOWNLOAD_TEST_RELEASE_ID: 'a'.repeat(32) }
     const plan = await prepareDesktopRollout(directory, manifest, environment)
     return { root, directory, manifest, plan, filename, environment }
@@ -142,8 +142,8 @@ it('requires initial publication evidence and prepares approval without installe
       bucket: 'bucket-123', origin: 'https://updates.ocean.example', credentialsFile: join(f.root, 'absent-secret'),
       githubApp: { clientId: 'app', privateKeyFile: join(f.root, 'absent-key') },
     }))
-    const route = { ...f.manifest.source, runnerLabel: 'dsh-runner' }
-    const env = { RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', DSH_PACKAGING_CONFIG_DIR: config,
+    const route = { ...f.manifest.source, runnerLabel: 'ocean-runner' }
+    const env = { RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', OCEAN_PACKAGING_CONFIG_DIR: config,
       DESKTOP_PUBLISH_ROUTE: JSON.stringify(route), DESKTOP_ROLLOUT_PERCENTAGE: '30', DESKTOP_UPLOAD_WEBSITE: 'false' }
     await expect(prepareDesktopRolloutCi(env)).rejects.toThrow(/initial COS/u)
     const record = await createDesktopPublicationRecord(join(f.root, 'upload-records'), {
@@ -180,8 +180,8 @@ it.each(['apply', 'changed-approval', 'replaced-feed', 'website'] as const)('che
       destination: `bucket-123/${f.plan.upload.publicUrl}nightly`, operation: 'publish', reason: 'fixture',
     })
     await record.record({ type: 'feeds-complete' })
-    const env = { RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', DSH_PACKAGING_CONFIG_DIR: config,
-      DESKTOP_PUBLISH_ROUTE: JSON.stringify({ ...f.manifest.source, runnerLabel: 'dsh-runner' }),
+    const env = { RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', OCEAN_PACKAGING_CONFIG_DIR: config,
+      DESKTOP_PUBLISH_ROUTE: JSON.stringify({ ...f.manifest.source, runnerLabel: 'ocean-runner' }),
       DESKTOP_ROLLOUT_PERCENTAGE: scenario === 'website' ? '' : '30', DESKTOP_UPLOAD_WEBSITE: scenario === 'website' ? 'true' : 'false',
       DOWNLOAD_PROD_EO_ZONE_ID: 'zone-fixture', GITHUB_OUTPUT: join(f.root, 'output'), GITHUB_STEP_SUMMARY: join(f.root, 'summary') }
     const context = await prepareDesktopRolloutCi(env)
@@ -225,12 +225,12 @@ it.each(['apply', 'changed-approval', 'replaced-feed', 'website'] as const)('che
 it('routes without package binaries only for the explicit metadata-only reader and keeps reviewer checks', async () => {
   const f = await fixture()
   try {
-    const env = { RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', DSH_PACKAGING_CONFIG_DIR: join(f.root, 'config'),
+    const env = { RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', OCEAN_PACKAGING_CONFIG_DIR: join(f.root, 'config'),
       DESKTOP_PACKAGE_SELECTION: JSON.stringify({ runnerName: 'runner',
         run: { id: 42, run_attempt: 1, head_sha: f.manifest.source.workflowCommit, path: '.github/workflows/macos-package.yml',
           conclusion: 'success', event: 'workflow_dispatch', repository: { full_name: 'owner/repo' } },
-        jobs: [{ name: 'package', runner_name: 'runner', conclusion: 'success', labels: ['self-hosted', 'dsh-runner'] }],
-        routes: { runner: { label: 'dsh-runner', target: 'mac-arm64' } },
+        jobs: [{ name: 'package', runner_name: 'runner', conclusion: 'success', labels: ['self-hosted', 'ocean-runner'] }],
+        routes: { runner: { label: 'ocean-runner', target: 'mac-arm64' } },
       }) }
     const api = async (path: string) => path.includes('/environments/')
       ? { protection_rules: [{ type: 'required_reviewers', reviewers: [{}] }] } : { sha: f.manifest.source.commit }
@@ -263,15 +263,15 @@ it('runs the real route CLI without gh and emits the selected route and preset',
     const selection = { runnerName: 'runner',
       run: { id: 42, run_attempt: 1, head_sha: f.manifest.source.workflowCommit, path: '.github/workflows/macos-package.yml',
         conclusion: 'success', event: 'workflow_dispatch', repository: { full_name: 'owner/repo' } },
-      jobs: [{ name: 'package', runner_name: 'runner', conclusion: 'success', labels: ['self-hosted', 'dsh-runner'] }],
-      routes: { runner: { label: 'dsh-runner', target: 'mac-arm64' } },
+      jobs: [{ name: 'package', runner_name: 'runner', conclusion: 'success', labels: ['self-hosted', 'ocean-runner'] }],
+      routes: { runner: { label: 'ocean-runner', target: 'mac-arm64' } },
     }
     const result = await promisify(execFile)(process.execPath,
       ['--import', 'tsx/esm', 'apps/desktop/scripts/publish-desktop-rollout-ci.ts', 'route'], {
         timeout: 30_000, env: {
           ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'path')), PATH: '',
           GH_TOKEN: 'fixture-token', GITHUB_API_URL: `http://127.0.0.1:${address.port}`, GITHUB_OUTPUT: output,
-          RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', DSH_PACKAGING_CONFIG_DIR: join(f.root, 'config'),
+          RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', OCEAN_PACKAGING_CONFIG_DIR: join(f.root, 'config'),
           DESKTOP_PACKAGE_SELECTION: JSON.stringify(selection),
         },
       })
@@ -345,7 +345,7 @@ it.each(['missing-yaml', 'wrong-approval', 'not-uploaded', 'wrong-zone', 'not-se
       vi.spyOn(process.stdout, 'write').mockReturnValue(true)
       const execution = publishDesktopRolloutCi('website-purge', {
         RUNNER_NAME: 'runner', GITHUB_REPOSITORY: 'owner/repo', GITHUB_RUN_ID: '99', GITHUB_RUN_ATTEMPT: '2',
-        DSH_PACKAGING_CONFIG_DIR: config, DESKTOP_PUBLISH_ROUTE: JSON.stringify({ ...f.manifest.source, runnerLabel: 'dsh-runner' }),
+        OCEAN_PACKAGING_CONFIG_DIR: config, DESKTOP_PUBLISH_ROUTE: JSON.stringify({ ...f.manifest.source, runnerLabel: 'ocean-runner' }),
         DESKTOP_UPLOAD_WEBSITE: scenario === 'not-selected' ? 'false' : 'true',
         DESKTOP_WEBSITE_APPROVAL: scenario === 'wrong-approval' ? 'changed' : approval,
         DOWNLOAD_PROD_EO_ZONE_ID: scenario === 'wrong-zone' ? 'zone-changed' : 'zone-fixture',

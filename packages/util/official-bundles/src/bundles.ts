@@ -1,4 +1,4 @@
-/** The bundle package names the dsh installation selects, offers, installs on demand, or retires. */
+/** The bundle package names the ocean installation selects, offers, installs on demand, or retires. */
 
 /** Installation-owned defaults used when a shipped profile is first opened. */
 export interface ProfileTemplate {
@@ -109,12 +109,12 @@ export const RETIRED_BUNDLES: ReadonlySet<string> = new Set([
   '@ocean/ocean-webhook-github',
 ])
 
-/** The bundle list a `dsh plugin` init uses for a name with no shipped template. */
+/** The bundle list a `ocean plugin` init uses for a name with no shipped template. */
 export const DEFAULT_PROFILE_BUNDLES: readonly string[] = ['@ocean/ocean-base']
 
 /**
- * The bundles the dsh installation ships for a person to switch on: each a
- * runtime dependency of the installation that declares `dsh.bundle.patch`,
+ * The bundles the ocean installation ships for a person to switch on: each a
+ * runtime dependency of the installation that declares `ocean.bundle.patch`,
  * an `icon`, and `./locale/*.json` display metadata, selected by no shipped
  * template, and offered switched off by the plugin manager.
  */
@@ -122,7 +122,7 @@ export const OPTIONAL_BUNDLES: readonly string[] = [
   '@ocean/ocean-subagent-codex',
 ]
 
-/** Public DSH release members available through the ordinary on-demand bundle installer. */
+/** Public OCEAN release members available through the ordinary on-demand bundle installer. */
 export const ON_DEMAND_BUNDLES: readonly string[] = [
   '@ocean/ocean-subagent-claude-code',
 ]

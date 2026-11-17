@@ -6,8 +6,8 @@
   en: d88f75fc0178ba53
   zh: 52bc7ae9551ab1cf
 /ocean-ocean-client-ui-chat:
-  en: e500aa75ef57115d
-  zh: 400bba0d84bfecca
+  en: dcb4b7fab6fa7f99
+  zh: 2a2b1de4a30dd50e
 /ocean-ocean-client-ui-chat/summary:
   en: 4f2d50107db6c4f8
   zh: ea7ccfcce8f1849e
@@ -15,29 +15,29 @@
   en: 41cd21266011d571
   zh: 3172d1a2acbb27b7
 /ocean-ocean-client-ui-chat/reference-previews:
-  en: c07a50787d77a7cd
-  zh: 70ee4e32d664e88e
+  en: 89a1581ce79f5e69
+  zh: e68204b9ce707aa0
 /ocean-ocean-client-ui-chat/hidden-chat-rows:
   en: 8ca277dc7fed699f
   zh: 167478dba50f3904
 /ocean-ocean-client-ui-chat/command-and-failure-rows:
-  en: a1eaf6b1ef3d112f
-  zh: 239a206629868a62
+  en: 994271fbb3a27ac2
+  zh: e7974678c570b03d
 /ocean-ocean-client-ui-chat/turn-token-usage:
-  en: d363057b5c0b2571
-  zh: 0f6fe864d9673576
+  en: 1ab890b948c95344
+  zh: d39a5df3dc6857ee
 /ocean-ocean-client-ui-chat/completed-turn-footer:
   en: 382821ca3ffa60dd
   zh: 9840ffa07c13082a
 /ocean-ocean-client-ui-chat/turn-process-folding:
-  en: 7cc6692b879aa500
-  zh: e924733c88b526c9
+  en: 896f599289e72938
+  zh: fe9fabd4460b2370
 /ocean-ocean-client-ui-chat/grouped-rendering:
-  en: f6d8bbae13a1a8f8
-  zh: 96c8f400c215e33d
+  en: 68a8a6527cedd3fb
+  zh: bc8bd2e3d219d487
 /ocean-ocean-client-ui-chat/scroll-ownership:
-  en: 1b12aa6c505dde3b
-  zh: 88e1654dd63816d7
+  en: c78698943a1f5df9
+  zh: c0c0c3d620f0454a
 /ocean-ocean-client-ui-chat/model-experience:
   en: c17b4dd43a61c569
   zh: f7414309810c3a08
@@ -45,8 +45,8 @@
   en: 15a7151ff9268f15
   zh: 6eae68c718be579b
 /ocean-ocean-client-ui-chat/known-limitations-and-deferred-work:
-  en: b3b03e8e2fe371a1
-  zh: c5eb8b7205e0e880
+  en: 34f8464ac7b9e985
+  zh: 7835e39261317acb
 /ocean-ocean-client-ui-chat/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

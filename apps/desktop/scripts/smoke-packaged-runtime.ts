@@ -14,10 +14,10 @@ const target = resolveDesktopBuildTarget()
 const windows = target === 'win-x64'
 const artifacts = desktopArtifactOutput(paths, { unsigned: values.unsigned, skipNotarization: values['skip-notarization'] }).directory
 const { application, resources, executable } = desktopPackagedPaths(artifacts, target)
-const descriptor = await verifyDesktopRuntime(paths.dsh, readDesktopRuntime(paths.dsh).release.version,
+const descriptor = await verifyDesktopRuntime(paths.ocean, readDesktopRuntime(paths.ocean).release.version,
   resolveDesktopPackageTarget(target))
 if (windows && !values.unsigned) await verifyWindowsCode(application)
 const linux = target.startsWith('linux-')
-const root = linux ? join(resources, 'dsh') : join(resources, 'app.asar', 'dsh')
+const root = linux ? join(resources, 'ocean') : join(resources, 'app.asar', 'ocean')
 if (linux) await verifyDesktopRuntime(root, descriptor.release.version, resolveDesktopPackageTarget(target))
 await smokePreparedRuntime(root, linux ? join(resources, 'runtime', 'primary-runtime', 'dependencies', 'node', 'bin', 'node') : executable, join(resources, 'runtime'), descriptor)

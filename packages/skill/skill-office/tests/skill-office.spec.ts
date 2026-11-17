@@ -51,7 +51,7 @@ describe('bundled Office skills', () => {
       expect(catalog.map(skill => skill.name)).toEqual(names)
       for (const skill of catalog) {
         expect(skill.description.length).toBeLessThanOrEqual(500)
-        expect(skill).toMatchObject({ source: 'bundled', provider: 'dsh-office', invocation: { modelInvocable: true, userInvocable: true } })
+        expect(skill).toMatchObject({ source: 'bundled', provider: 'ocean-office', invocation: { modelInvocable: true, userInvocable: true } })
         const loaded = await ctx.skills.get(skill.name)
         expect(loaded?.resourceBase).toEqual({ kind: 'directory', path: join(assets, skill.name).split(sep).join('/') })
         const raw = await readFile(join(assets, skill.name, 'SKILL.md'), 'utf8')
@@ -67,7 +67,7 @@ describe('bundled Office skills', () => {
   })
 
   it('loads relocated resources through a real cordis.yml composition', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-office-skills-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-office-skills-'))
     const ctx = new Context()
     try {
       const external = join(root, '中文 assets')
@@ -140,7 +140,7 @@ describe('bundled Office skills', () => {
     ['description: "Quoted: description"', '\r\n', 'Quoted: description'],
     ['description: >-\n  Folded\n  description', '\n', 'Folded description'],
   ])('parses frontmatter %s and leaves body metadata-like lines intact', async (header, newline, description) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-office-metadata-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-office-metadata-'))
     const ctx = new Context()
     try {
       await cp(assets, root, { recursive: true })
@@ -169,7 +169,7 @@ describe('bundled Office skills', () => {
   })
 
   it('omits unreadable or invalid skills from a complete catalog and reports each failure once', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-office-invalid-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-office-invalid-'))
     const ctx = new Context()
     const warnings: string[] = []
     try {
@@ -223,7 +223,7 @@ describe('bundled Office skills', () => {
   })
 
   it('omits a skill whose frontmatter becomes malformed YAML after discovery', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-office-malformed-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-office-malformed-'))
     const ctx = new Context()
     try {
       await ctx.plugin(SkillRegistry)
@@ -245,7 +245,7 @@ describe('bundled Office skills', () => {
     ['an Error without a code', new Error('temporary read failure')],
     ['a non-Error rejection', 'temporary read failure'],
   ])('retries discovery and preserves load failures for %s', async (_label, error) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-office-unknown-read-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-office-unknown-read-'))
     const ctx = new Context()
     try {
       await ctx.plugin(SkillRegistry)
@@ -279,7 +279,7 @@ describe('bundled Office skills', () => {
   })
 
   it('retries read errors other than a missing path instead of omitting the skill', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-office-retry-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-office-retry-'))
     const ctx = new Context()
     try {
       await ctx.plugin(SkillRegistry)

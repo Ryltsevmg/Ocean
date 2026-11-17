@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import Group from '@deepseek-ai/cordis-plugin-group'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
-import { getDshRuntimeVersion, type ProfileContext } from '@ocean/ocean-app-boot'
+import { getOceanRuntimeVersion, type ProfileContext } from '@ocean/ocean-app-boot'
 import { createScope } from '@ocean/ocean-scope'
 import { expect, it, onTestFinished } from 'vitest'
 import { harness, declare } from './harness.ts'
@@ -104,7 +104,7 @@ it('reports grouped and conditional plugin rows from the activated tree', async 
 it('mounts a profile-denied row disabled and the same row active once exempted', async () => {
   const ctx = await harness()
   onTestFinished(() => ctx.fiber.dispose())
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-preset-compat-')))
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-preset-compat-')))
   onTestFinished(() => { rmSync(dir, { recursive: true, force: true }) })
   const pluginDir = join(dir, 'plugin')
   mkdirSync(pluginDir, { recursive: true })
@@ -140,7 +140,7 @@ it('mounts a profile-denied row disabled and the same row active once exempted',
     scopes.push(deniedScope)
     mounts.push(await mountPreset(deniedScope.ctx, 'denied', [row]))
     loadedWhileDenied.push(existsSync(loaded))
-    writeFileSync(compatibilityPath, JSON.stringify({ 'incompatible-preset-plugin@1.0.0': [getDshRuntimeVersion()] }))
+    writeFileSync(compatibilityPath, JSON.stringify({ 'incompatible-preset-plugin@1.0.0': [getOceanRuntimeVersion()] }))
     const exemptedScope = createScope(owner, {})
     scopes.push(exemptedScope)
     mounts.push(await mountPreset(exemptedScope.ctx, 'exempted', [row]))

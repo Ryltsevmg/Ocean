@@ -20,19 +20,19 @@ import { describe, expect, it } from 'vitest'
 import type { SourceToolEvidence } from '../../../fixtures/source-tool-driver.ts'
 
 const repoRoot = fileURLToPath(new URL('../../../../../../', import.meta.url))
-const dshSourceBin = 'apps/cli/src/bin.ts'
+const oceanSourceBin = 'apps/cli/src/bin.ts'
 const sourceToolTimeoutMs = 90_000
 
-describe.skipIf(!existsSync(join(repoRoot, 'apps/cli/lib/bin.js')))('dsh SOURCE tools with prepared runtime artifacts', () => {
+describe.skipIf(!existsSync(join(repoRoot, 'apps/cli/lib/bin.js')))('ocean SOURCE tools with prepared runtime artifacts', () => {
   it('dispatches a source-profile shell call to a result, including sandbox-unavailable hosts, without mixing tools src/lib', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-source-tool-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-source-tool-'))
     try {
       const cwd = join(root, 'workspace')
       await mkdir(cwd)
       const patch = join(root, 'source-tool.patch.yml')
       await writeFile(patch, JSON.stringify([
         { id: 'headless-startup', disabled: true },
-        { id: 'sandbox-policy', inject: [], config: { mode: process.env.DSH_PERMISSION_MODE ?? 'workspace-write', workspaceRoot: cwd } },
+        { id: 'sandbox-policy', inject: [], config: { mode: process.env.OCEAN_PERMISSION_MODE ?? 'workspace-write', workspaceRoot: cwd } },
         { id: 'headless-runner', disabled: true },
         { id: 'llm-deepseek', disabled: true },
         { id: 'agent-default-model', config: { provider: 'cli-mock', model: 'cli-mock' } },
@@ -50,15 +50,15 @@ describe.skipIf(!existsSync(join(repoRoot, 'apps/cli/lib/bin.js')))('dsh SOURCE 
       ]))
       // Source modules and driver stay unbuilt; native and generated runtime artifacts are required.
       const result = await execa(process.execPath, [
-        '--import', 'tsx/esm', dshSourceBin, '--profile', 'headless', '--patch', patch,
+        '--import', 'tsx/esm', oceanSourceBin, '--profile', 'headless', '--patch', patch,
       ], {
         cwd: repoRoot,
         env: {
           ...clearedProxyEnv(),
-          DSH_HOME: join(root, 'home'),
-          DSH_AGENTS_HOME: join(root, 'agents'),
-          DSH_TELEMETRY_DISABLED: '1',
-          DSH_CLI_MOCK_FAILURE: '0',
+          OCEAN_HOME: join(root, 'home'),
+          OCEAN_AGENTS_HOME: join(root, 'agents'),
+          OCEAN_TELEMETRY_DISABLED: '1',
+          OCEAN_CLI_MOCK_FAILURE: '0',
         },
         input: '',
         timeout: sourceToolTimeoutMs - 15_000,
@@ -69,9 +69,9 @@ describe.skipIf(!existsSync(join(repoRoot, 'apps/cli/lib/bin.js')))('dsh SOURCE 
       expect(result.timedOut, diagnostic).toBe(false)
       expect(result.signal, diagnostic).toBeUndefined()
       expect(result.exitCode, diagnostic).toBe(0)
-      const records = result.stdout.split('\n').filter(line => line.startsWith('DSH_SOURCE_TOOL_RESULT '))
+      const records = result.stdout.split('\n').filter(line => line.startsWith('OCEAN_SOURCE_TOOL_RESULT '))
       expect(records, diagnostic).toHaveLength(1)
-      const evidence = JSON.parse(records[0]!.slice('DSH_SOURCE_TOOL_RESULT '.length)) as SourceToolEvidence
+      const evidence = JSON.parse(records[0]!.slice('OCEAN_SOURCE_TOOL_RESULT '.length)) as SourceToolEvidence
       expect(evidence.execArgv).toEqual(['--import', 'tsx/esm'])
       expect(evidence.errors).toEqual([])
       for (const pkg of ['tools', 'agent-loop']) {

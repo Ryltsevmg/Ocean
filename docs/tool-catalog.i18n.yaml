@@ -6,16 +6,16 @@
   en: 0be8ffbf23193557
   zh: ce2c69aa86875171
 /tool-schema-catalog:
-  en: 6cc2cd9ced70bb09
-  zh: b34897aa4fbdf226
+  en: 54defb17781cb25b
+  zh: 750693b8cdec5fa0
 /tool-schema-catalog/tool-package-map:
-  en: d13690939e5bf31a
+  en: 9c0c694bf4ca0246
   zh: 137c81543fa9bbf4
 /tool-schema-catalog/ocean-ocean-plugin-manager:
   en: a512df99f80ea0d3
   zh: a512df99f80ea0d3
 /tool-schema-catalog/ocean-ocean-plugin-manager/plugin-manager:
-  en: f656df8ea18295dc
+  en: dbb6070435172b27
   zh: 15efbcedef1439d1
 /tool-schema-catalog/ocean-ocean-mcp-resources:
   en: a84b4e8178d47414
@@ -51,7 +51,7 @@
   en: 88d4a9ab4922e3a9
   zh: 88d4a9ab4922e3a9
 /tool-schema-catalog/ocean-ocean-tool-bash/bash:
-  en: b1132a9e2440de7a
+  en: e655f8f4f372b369
   zh: 58cb8a0e12d84070
 /tool-schema-catalog/ocean-ocean-tool-office:
   en: a8594193a4cdcd0f
@@ -75,7 +75,7 @@
   en: 95725de8361f97a4
   zh: 95725de8361f97a4
 /tool-schema-catalog/ocean-ocean-tool-pwsh/pwsh:
-  en: 6b1f4e684d6bcacd
+  en: c6bb1cc186f8052c
   zh: 3a868c5c04d4f708
 /tool-schema-catalog/ocean-ocean-tool-cordis:
   en: ea7ca6a04aba7b3c
@@ -120,7 +120,7 @@
   en: f6f7a1140066ce04
   zh: d528e01a0939795a
 /tool-schema-catalog/ocean-ocean-tool-fs/write:
-  en: 293f8a550b442179
+  en: f89c97b691bf1a4e
   zh: 09a5f461703c0e52
 /tool-schema-catalog/ocean-ocean-tool-fs-search:
   en: 81e1251b6ec55d5f

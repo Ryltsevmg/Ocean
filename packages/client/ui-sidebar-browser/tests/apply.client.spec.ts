@@ -77,7 +77,7 @@ describe('ui-sidebar-browser apply', () => {
       release: vi.fn(async () => {}),
       onOpenRequested: vi.fn(() => () => {}),
     }
-    vi.stubGlobal('dshDesktop', { protocolVersion, browser: bridge })
+    vi.stubGlobal('oceanDesktop', { protocolVersion, browser: bridge })
     const h = await boot()
     expect(h.tabs.get(BROWSER_KIND)?.keepMounted).toBe(protocolVersion === 1)
     const injectFace = h.registered.find(entry => entry.name === 'sidebar.right.pane.tab')!.inject as
@@ -92,7 +92,7 @@ describe('ui-sidebar-browser apply', () => {
     const signal = new AbortController()
     const tabId = 'apply-tab' as TabId
     try {
-      controller.mount({ tabId, signal: signal.signal, viewportId: host.id, applicationOrigin: 'https://dsh.example',
+      controller.mount({ tabId, signal: signal.signal, viewportId: host.id, applicationOrigin: 'https://ocean.example',
         initial: undefined, initialUrl: 'https://example.test/', openTab: vi.fn() })
       expect(replacementStore.getSnapshot().byTab[tabId]).toBeDefined()
       expect(firstStore.getSnapshot().byTab[tabId]).toBeUndefined()
@@ -102,13 +102,13 @@ describe('ui-sidebar-browser apply', () => {
       signal.abort()
       expect(replacementStore.getSnapshot().byTab[tabId]).toBeUndefined()
       const reopened = new AbortController()
-      controller.mount({ tabId, signal: reopened.signal, viewportId: host.id, applicationOrigin: 'https://dsh.example',
+      controller.mount({ tabId, signal: reopened.signal, viewportId: host.id, applicationOrigin: 'https://ocean.example',
         initial: undefined, initialUrl: 'https://retained.example/', openTab: vi.fn() })
       h.openTabs.set([{ sessionId: 'session', tabId }])
       reopened.abort()
       expect(replacementStore.getSnapshot().byTab[tabId]).toBeDefined()
       const active = new AbortController()
-      controller.mount({ tabId, signal: active.signal, viewportId: host.id, applicationOrigin: 'https://dsh.example',
+      controller.mount({ tabId, signal: active.signal, viewportId: host.id, applicationOrigin: 'https://ocean.example',
         initial: undefined, initialUrl: undefined, openTab: vi.fn() })
       await h.fiber.dispose()
       expect(controller.keyedHooks.browserState(tabId)).toBeUndefined()

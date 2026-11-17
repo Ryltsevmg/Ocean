@@ -32,7 +32,7 @@ describe.skipIf(mode === 'record')('web e2e: workspace shortcuts', () => {
     const context = await browser.newContext({ locale: 'en-US', viewport: { width: 1440, height: 1000 } })
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'platform', { value: 'MacIntel' })
-      localStorage.setItem('dsh.open-in-app.choice', JSON.stringify('vscode'))
+      localStorage.setItem('ocean.open-in-app.choice', JSON.stringify('vscode'))
     })
     page = await context.newPage()
     // OS application discovery and launch are the external boundary; the command and HTTP carrier stay real.

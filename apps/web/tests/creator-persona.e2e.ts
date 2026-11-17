@@ -1,4 +1,4 @@
-/** Creator mode adds its DSH customization intent to the actual model prompt. */
+/** Creator mode adds its OCEAN customization intent to the actual model prompt. */
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'

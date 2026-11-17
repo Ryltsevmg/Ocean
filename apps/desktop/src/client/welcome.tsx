@@ -8,12 +8,12 @@ import type { WelcomeApi } from '../welcome-api.ts'
 
 declare global {
   interface Window {
-    dshWelcome: WelcomeApi
+    oceanWelcome: WelcomeApi
   }
 }
 
 const container = document.getElementById('root')
 if (container === null) throw new Error('desktop welcome: missing React root')
 const root = createRoot(container)
-flushSync(() => { root.render(<Welcome api={window.dshWelcome} />) })
+flushSync(() => { root.render(<Welcome api={window.oceanWelcome} />) })
 window.addEventListener('pagehide', () => { root.unmount() }, { once: true })

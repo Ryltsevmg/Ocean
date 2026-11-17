@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-skill/README.md
 /:
-  en: 490d60d7bec05d21
-  zh: 72a1300893d68f31
+  en: 7f9c05681fab9656
+  zh: fa409dff4585567e
 /ocean-ocean-client-ui-skill:
-  en: e9f3f3c30cbfcbb1
-  zh: 61998383a16541da
+  en: b7c731761867b3ad
+  zh: b8204118e34c2699
 /ocean-ocean-client-ui-skill/summary:
-  en: fad7bff8d3371dfc
-  zh: c546189c87d6fbf2
+  en: b2c0dc3dfd2afddf
+  zh: 7acbbf8d3fe71ba5
 /ocean-ocean-client-ui-skill/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -30,11 +30,11 @@
   en: e8921ef18728794c
   zh: dabc89ee5186d8c6
 /ocean-ocean-client-ui-skill/understand-the-implementation/registration:
-  en: 4b06a66c56d19ff9
-  zh: d9c8d118f73d89bb
+  en: 596720a40bdf5fb8
+  zh: c39e189813b2f038
 /ocean-ocean-client-ui-skill/further-exploration:
-  en: c9acda049d771b16
-  zh: 91ee86722b3b007c
+  en: 43e977bbeb8e8471
+  zh: 525f65c88ae857ed
 /ocean-ocean-client-ui-skill/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -42,8 +42,8 @@
   en: ae1928252b0ea55c
   zh: 6c78cb51c6805a2d
 /ocean-ocean-client-ui-skill/model-experience/user-explicit-skill-invocation/what-the-model-sees:
-  en: 02313760445799a2
-  zh: 46007ed9e9f35b44
+  en: e3a05e30fd48aa80
+  zh: 557671eabf11a7a7
 /ocean-ocean-client-ui-skill/model-experience/user-explicit-skill-invocation/token-effect:
   en: cb759321f8c62a96
   zh: 6d479501856d9cd6

@@ -10,14 +10,14 @@ import { loadOverlayPatches } from '../packages/boot/app-boot/src/index.ts'
 import { readPluginMeta } from '../packages/boot/app-boot/src/package-meta.ts'
 import { bundlePatchPaths, composeEntries, initProfile, readProfileManifest } from '../packages/boot/app-boot/src/profile.ts'
 import { OPTIONAL_BUNDLES, PROFILE_TEMPLATES } from '../packages/util/official-bundles/src/bundles.ts'
-import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
+import type { OceanBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { createPluginProfile } from '../apps/desktop/src/project-manager.ts'
 
 const root = resolve(import.meta.dirname, '..')
 
 interface Manifest {
   name: string
-  dsh?: { bundle?: DshBundleManifest }
+  ocean?: { bundle?: OceanBundleManifest }
 }
 
 const bundles = new Map(globSync('packages/*/*/package.json', { cwd: root }).map((path) => {
@@ -27,8 +27,8 @@ const bundles = new Map(globSync('packages/*/*/package.json', { cwd: root }).map
 
 function bundle(name: string): { dir: string; patches: ReturnType<typeof loadOverlayPatches> } {
   const entry = bundles.get(name)
-  if (entry?.manifest.dsh?.bundle === undefined) throw new Error(`${name} is not a workspace bundle`)
-  return { dir: entry.dir, patches: bundlePatchPaths(entry.dir, entry.manifest.dsh.bundle).flatMap(path => loadOverlayPatches('test', path)) }
+  if (entry?.manifest.ocean?.bundle === undefined) throw new Error(`${name} is not a workspace bundle`)
+  return { dir: entry.dir, patches: bundlePatchPaths(entry.dir, entry.manifest.ocean.bundle).flatMap(path => loadOverlayPatches('test', path)) }
 }
 
 function flattenRows(entries: EntryOptions[]): EntryOptions[] {
@@ -36,11 +36,11 @@ function flattenRows(entries: EntryOptions[]): EntryOptions[] {
 }
 
 function profileLayers(surface: 'web' | 'desktop'): ReturnType<typeof loadOverlayPatches>[] {
-  const directory = mkdtempSync(join(tmpdir(), 'dsh-bundle-compatibility-'))
+  const directory = mkdtempSync(join(tmpdir(), 'ocean-bundle-compatibility-'))
   onTestFinished(() => { rmSync(directory, { recursive: true, force: true }) })
   if (surface === 'desktop') createPluginProfile(directory)
   else initProfile(directory, PROFILE_TEMPLATES.web!.bundles)
-  const names = readProfileManifest('test', directory).dsh?.profile?.bundles
+  const names = readProfileManifest('test', directory).ocean?.profile?.bundles
   if (names === undefined) throw new Error(`${surface} profile has no bundle list`)
   return names.map(name => bundle(name).patches)
 }

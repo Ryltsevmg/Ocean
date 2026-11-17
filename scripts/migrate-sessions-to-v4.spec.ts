@@ -18,7 +18,7 @@ const directories = new Set<string>()
 const stopProcesses: Array<() => Promise<void>> = []
 
 function temporaryRoot(): string {
-  const directory = mkdtempSync(join(tmpdir(), 'dsh-migrate-v4-test-'))
+  const directory = mkdtempSync(join(tmpdir(), 'ocean-migrate-v4-test-'))
   directories.add(directory)
   return directory
 }
@@ -399,7 +399,7 @@ describe('one-time V4 migration command', () => {
 
   it('shows help, rejects unknown arguments, and logs a missing root failure', async () => {
     const help = await run('--help')
-    expect(help.stdout).toContain('Defaults to ~/.dsh/sessions')
+    expect(help.stdout).toContain('Defaults to ~/.ocean/sessions')
     expect(help.stdout).toContain('CPU count capped at 16')
     expect((await run('--unknown')).status).toBe(1)
     const missing = join(temporaryRoot(), 'missing')

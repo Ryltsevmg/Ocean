@@ -6,11 +6,11 @@
   en: 1065a4fcafd0430d
   zh: 40bc911b6d01288b
 /ocean-ocean-atomic-write:
-  en: 5596f3af824c952c
-  zh: afb60770c4581138
+  en: 68694992b57202a1
+  zh: 75339d4c4bdea087
 /ocean-ocean-atomic-write/summary:
-  en: d2d40e759179f047
-  zh: c53f56de74b26e5a
+  en: a5f65f3b6eea3972
+  zh: 8013bb9368c99263
 /ocean-ocean-atomic-write/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -33,14 +33,14 @@
   en: aee5320dc8746377
   zh: f35dbbf350f7b5cf
 /ocean-ocean-atomic-write/understand-the-implementation/write-path:
-  en: 72e3b301c2afa045
-  zh: 15fd19ef26164020
+  en: d98e8828b074400f
+  zh: 348a60c4024b5a29
 /ocean-ocean-atomic-write/understand-the-implementation/why-the-swap-stays-safe:
   en: 784e985c1fb3a25e
   zh: 4afda1b9bf5f29cc
 /ocean-ocean-atomic-write/further-exploration:
-  en: 16ece9b754f7fff6
-  zh: 2456fe14cc5a658b
+  en: a1d97f0a59bfba1b
+  zh: c5765948e1babf72
 /ocean-ocean-atomic-write/model-experience:
   en: 225fc1d94a284905
   zh: 7319a43c3b8a884d

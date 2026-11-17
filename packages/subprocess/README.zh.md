@@ -35,7 +35,7 @@ harness 运行的每个子进程与终端会话——bash 命令、语言服务�
 <a id="related-documentation"></a>
 ## 相关文档
 
-- [子进程子系统](../../docs/subsystems/subprocess.zh.md)——spawn spec、输出读取器、结果与受管的 `DSH_*` 环境。
+- [子进程子系统](../../docs/subsystems/subprocess.zh.md)——spawn spec、输出读取器、结果与受管的 `OCEAN_*` 环境。
 
 -----
 

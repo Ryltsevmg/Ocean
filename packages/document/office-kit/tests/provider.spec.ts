@@ -12,11 +12,11 @@ import { expectDefaultOutputsUntouched } from './default-outputs.ts'
 const home = await vi.hoisted(async () => {
   const { mkdtemp } = await import('node:fs/promises')
   const { tmpdir } = await import('node:os')
-  return mkdtemp(`${tmpdir()}/dsh-office-kit-home-`)
+  return mkdtemp(`${tmpdir()}/ocean-office-kit-home-`)
 })
 vi.mock('@ocean/ocean-home-paths', async (original) => {
   const path = await import('node:path')
-  return { ...await original<typeof import('@ocean/ocean-home-paths')>(), dshHomePath: (...segments: string[]) => path.join(home, ...segments) }
+  return { ...await original<typeof import('@ocean/ocean-home-paths')>(), oceanHomePath: (...segments: string[]) => path.join(home, ...segments) }
 })
 expectDefaultOutputsUntouched(home)
 
@@ -63,7 +63,7 @@ beforeEach(() => {
 afterEach(async () => { await ctx.fiber.dispose() })
 
 async function mount(config: Partial<Config> = {}): Promise<OfficeKit> {
-  const outputDirectory = await mkdtemp(join(tmpdir(), 'dsh-office-kit-outputs-'))
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'ocean-office-kit-outputs-'))
   // Runs after the afterEach provider disposal, which deletes the provider's own outputs first.
   onTestFinished(() => rm(outputDirectory, { recursive: true, force: true }))
   await ctx.plugin(OfficeKit, { ...config, outputDirectory })

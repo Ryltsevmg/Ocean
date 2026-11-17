@@ -33,7 +33,7 @@ const pollingTimeout = setTimeout
 const silentReader = { readFrom: (fromByte: number) => ({ text: '', nextOffset: fromByte, lossy: false }) }
 
 const testToolSignal = new AbortController().signal
-const spillDir = mkdtempSync(join(tmpdir(), 'dsh-tool-bash-background-spec-'))
+const spillDir = mkdtempSync(join(tmpdir(), 'ocean-tool-bash-background-spec-'))
 
 /** Job harness with a fast registry pump for tests. */
 async function setup() {
@@ -125,7 +125,7 @@ describe('background bash output', () => {
     const started = await call(ctx, {
       command: 'true',
       description: 'test command',
-      workdir: '/nonexistent-dsh',
+      workdir: '/nonexistent-ocean',
       run_in_background: true,
     })
     expect(text(started)).toMatch(/^started background job bash-[0-9a-f]{16}$/)

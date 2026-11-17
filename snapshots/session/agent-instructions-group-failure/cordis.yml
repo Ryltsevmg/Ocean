@@ -1,4 +1,4 @@
-# The snapshot harness supplies scenario-local .dsh and .agents roots.
+# The snapshot harness supplies scenario-local .ocean and .agents roots.
 - id: agent-default-model
   name: '@ocean/ocean-agent-default-model'
   config:
@@ -8,7 +8,7 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js oceanHomePath('sessions')
     compression: none
 
 - id: agent-instructions
@@ -16,7 +16,7 @@
   config:
     maxBytes: 65536
     projectRootMarkers:
-      - .dsh-project
+      - .ocean-project
 
 - id: system-prompt
   name: '@ocean/ocean-system-prompt'

@@ -1,4 +1,4 @@
-/** Recorded-session replay through the shipped headless `dsh` profile. */
+/** Recorded-session replay through the shipped headless `ocean` profile. */
 
 import { startHttpMcpFixture } from '../../packages/mcp/mcp-client/tests/http-fixture.ts'
 import { chmod, cp, copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, utimes, writeFile } from 'node:fs/promises'
@@ -56,7 +56,7 @@ import { parseSessionLog, prepareSessionSnapshotFixtureForComparison } from '@oc
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url))
 const snapshotsRoot = fileURLToPath(new URL('./', import.meta.url))
-const dshBin = join(repoRoot, 'apps/cli/src/bin.ts')
+const oceanBin = join(repoRoot, 'apps/cli/src/bin.ts')
 const tsconfigPath = join(repoRoot, 'tsconfig.json')
 
 type SnapshotMode = 'replay' | 'record' | 'refresh'
@@ -68,12 +68,12 @@ function snapshotMode(value: string | undefined): SnapshotMode {
     case 'replay': return 'replay'
     case 'record': return 'record'
     case 'refresh': return 'refresh'
-    default: throw new Error(`unknown DSH_SNAPSHOT mode: ${value}`)
+    default: throw new Error(`unknown OCEAN_SNAPSHOT mode: ${value}`)
   }
 }
 
-const mode = snapshotMode(process.env.DSH_SNAPSHOT)
-const RUNTIME_WORKSPACE_ENTRIES = ['.agents', '.dsh', '.snapshot-patches'] as const
+const mode = snapshotMode(process.env.OCEAN_SNAPSHOT)
+const RUNTIME_WORKSPACE_ENTRIES = ['.agents', '.ocean', '.snapshot-patches'] as const
 
 interface JsonObject {
   [key: string]: unknown
@@ -97,7 +97,7 @@ interface SessionLog {
 /** Keep the cwd text priced by compaction independent of the platform's temporary-root length. */
 async function compactionWorkspaceOptions(): Promise<{ tempDirParent: string; tempDirPrefix: string }> {
   const tempDirParent = await realpath(tmpdir())
-  const prefix = 'dsh-log-snap-'
+  const prefix = 'ocean-log-snap-'
   // mkdtemp appends six characters; JSON quoting is part of the runtime-context text.
   const unpaddedLength = JSON.stringify(join(tempDirParent, `${prefix}XXXXXX`)).length
   const paddingLength = 192 - unpaddedLength
@@ -195,7 +195,7 @@ function contextOf(logs: readonly string[]): NormalizeContext {
 }
 
 async function persistedSessions(cwd: string): Promise<SessionLog[]> {
-  const root = join(cwd, '.dsh', 'sessions')
+  const root = join(cwd, '.ocean', 'sessions')
   const files = latestPersistedSessionPaths(await readdir(root, { recursive: true }))
   const logs = await Promise.all(files.map(async (file): Promise<SessionLog> => {
     const content = await readFile(join(root, file), 'utf8')
@@ -387,7 +387,7 @@ function stderrFromSession(log: string): string {
   const appendReasoning = (text: string): void => {
     if (text === '') return
     if (!open) {
-      output += 'dsh: reasoning:\n'
+      output += 'ocean: reasoning:\n'
       open = true
     }
     output += text
@@ -464,7 +464,7 @@ function stderrFromSession(log: string): string {
   if (typeof error?.code !== 'string' || typeof error.message !== 'string') {
     throw new Error('headless snapshot error reason has no code and message')
   }
-  return `${output}dsh: ${error.code}: ${error.message}\n`
+  return `${output}ocean: ${error.code}: ${error.message}\n`
 }
 
 function modelFromSession(log: string): { provider: string; model: string } {
@@ -500,11 +500,11 @@ const workspaceSetups: Record<string, (cwd: string) => Promise<void>> = {
     await mkdir(directory)
     await chmod(directory, 0o555)
   },
-  async 'dsh-doc-resources'(cwd) {
-    await cp(join(repoRoot, 'packages/preset/agent-preset/skills/dsh-doc'), join(cwd, '.dsh/skills/dsh-doc'), { recursive: true })
+  async 'ocean-doc-resources'(cwd) {
+    await cp(join(repoRoot, 'packages/preset/agent-preset/skills/ocean-doc'), join(cwd, '.ocean/skills/ocean-doc'), { recursive: true })
   },
   async 'windows-acl-skill'(cwd) {
-    const target = join(cwd, '.dsh', 'skills', 'diagnose-windows-sandbox-acl', 'SKILL.md')
+    const target = join(cwd, '.ocean', 'skills', 'diagnose-windows-sandbox-acl', 'SKILL.md')
     await mkdir(dirname(target), { recursive: true })
     await copyFile(join(repoRoot, 'packages/sandbox/sandbox-windows-acl/assets/diagnose-windows-sandbox-acl/SKILL.md'), target)
   },
@@ -520,9 +520,9 @@ const workspaceSetups: Record<string, (cwd: string) => Promise<void>> = {
     await writeFile(join(cwd, 'office-ptc-node'), '#!/bin/sh\nexec "$(dirname "$0")/office-node" --stack-trace-limit=0 "$@"\n', { mode: 0o755 })
   },
   async 'skill-root-isolation'(cwd) {
-    const target = join(cwd, '.dsh', 'skills', 'editing-cordis-compositions', 'SKILL.md')
+    const target = join(cwd, '.ocean', 'skills', 'editing-cordis-compositions', 'SKILL.md')
     await mkdir(dirname(target), { recursive: true })
-    await copyFile(join(snapshotsRoot, 'skill-load/workspace/.dsh/skills/editing-cordis-compositions/SKILL.md'), target)
+    await copyFile(join(snapshotsRoot, 'skill-load/workspace/.ocean/skills/editing-cordis-compositions/SKILL.md'), target)
     // A symlink loop produces a real, non-absence read error without relying on chmod or root privileges.
     await symlink('broken-skills', join(cwd, 'broken-skills'))
   },
@@ -858,26 +858,26 @@ async function verifyProviderCwdResume(
   fixture: string,
   task: string,
 ): Promise<void> {
-  const providerCwd = scenario.manifest.environment?.DSH_SNAPSHOT_PROVIDER_CWD
+  const providerCwd = scenario.manifest.environment?.OCEAN_SNAPSHOT_PROVIDER_CWD
   const primary = initial[0]
   expect(providerCwd).toBeDefined()
   expect(primary?.header.cwd).toBe(providerCwd)
   expect(primary?.header.cwd).not.toBe(cwd)
-  const otherHostCwd = await mkdtemp(join(tmpdir(), 'dsh-provider-resume-'))
+  const otherHostCwd = await mkdtemp(join(tmpdir(), 'ocean-provider-resume-'))
   const env = {
     ...REPLAY_CREDENTIAL_ENV,
-    DSH_HOME: join(cwd, '.dsh'),
-    DSH_SNAPSHOT: 'replay',
-    DSH_SNAPSHOT_FILE: fixture,
-    DSH_SNAPSHOT_PROVIDER: model.provider,
-    DSH_SNAPSHOT_MODEL: model.model,
-    DSH_PERMISSION_MODE: 'read-only',
-    DSH_TELEMETRY_DISABLED: '1',
+    OCEAN_HOME: join(cwd, '.ocean'),
+    OCEAN_SNAPSHOT: 'replay',
+    OCEAN_SNAPSHOT_FILE: fixture,
+    OCEAN_SNAPSHOT_PROVIDER: model.provider,
+    OCEAN_SNAPSHOT_MODEL: model.model,
+    OCEAN_PERMISSION_MODE: 'read-only',
+    OCEAN_TELEMETRY_DISABLED: '1',
     NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
   }
   const launch = {
     cwd: otherHostCwd,
-    binScript: dshBin,
+    binScript: oceanBin,
     configPath: patches[0] as string,
     tsconfigPath,
     binArgs: [
@@ -889,7 +889,7 @@ async function verifyProviderCwdResume(
   try {
     const refused = await runLoaderSmoke({
       ...launch, label: 'provider-cwd mismatched resume', expectedExitCode: 1,
-      env: { ...env, DSH_SNAPSHOT_PROVIDER_CWD: `${providerCwd}/other` },
+      env: { ...env, OCEAN_SNAPSHOT_PROVIDER_CWD: `${providerCwd}/other` },
     })
     expect(refused.stdout).toBe('')
     expect(refused.stderr).toContain(`was recorded in "${providerCwd}", not "${providerCwd}/other"`)
@@ -897,7 +897,7 @@ async function verifyProviderCwdResume(
     const resumed = await runLoaderSmoke({
       ...launch, label: 'provider-cwd matching resume',
       binArgs: [...launch.binArgs.slice(0, -1), '--json', task],
-      env: { ...env, DSH_SNAPSHOT_PROVIDER_CWD: providerCwd },
+      env: { ...env, OCEAN_SNAPSHOT_PROVIDER_CWD: providerCwd },
     })
     const output = records(resumed.stdout)
     expect(output[0]).toEqual({ type: 'session', sessionId: primary?.header.id, cwd: providerCwd })
@@ -1050,11 +1050,11 @@ describe('headless recorded-session snapshots', () => {
     ].map(record => JSON.stringify(record)).join('\n')
 
     expect(stderrFromSession(log)).toBe([
-      'dsh: reasoning:',
+      'ocean: reasoning:',
       'first',
-      'dsh: reasoning:',
+      'ocean: reasoning:',
       'second',
-      'dsh: reasoning:',
+      'ocean: reasoning:',
       'third',
       '',
     ].join('\n'))
@@ -1078,7 +1078,7 @@ describe('headless recorded-session snapshots', () => {
         { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } },
       ].map(record => JSON.stringify(record)).join('\n')
 
-      expect(stderrFromSession(log)).toBe('dsh: reasoning:\nfirst thought\n')
+      expect(stderrFromSession(log)).toBe('ocean: reasoning:\nfirst thought\n')
     },
   )
 
@@ -1101,11 +1101,11 @@ describe('headless recorded-session snapshots', () => {
       { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } },
     ].map(record => JSON.stringify(record)).join('\n')
 
-    expect(stderrFromSession(log)).toBe('dsh: reasoning:\nfirst thought\ndsh: reasoning:\nsecond\n')
+    expect(stderrFromSession(log)).toBe('ocean: reasoning:\nfirst thought\nocean: reasoning:\nsecond\n')
   })
 
   it.each([10, 20])('assigns sibling roles by catalog order when the first child timestamp is %i', async (firstCreatedAt) => {
-    const cwd = await mkdtemp(join(tmpdir(), 'dsh-headless-catalog-order-'))
+    const cwd = await mkdtemp(join(tmpdir(), 'ocean-headless-catalog-order-'))
     try {
       const logs = [
         [
@@ -1117,7 +1117,7 @@ describe('headless recorded-session snapshots', () => {
         [{ type: 'session', version: SESSION_FORMAT_VERSION, id: 'child-a', createdAt: 10, parentSession: 'parent' }],
       ].map(rows => rows.map(row => JSON.stringify(row)).join('\n') + '\n')
       for (const content of logs) {
-        const directory = join(cwd, '.dsh', 'sessions', String(headerOf(content).id))
+        const directory = join(cwd, '.ocean', 'sessions', String(headerOf(content).id))
         await mkdir(directory, { recursive: true })
         await writeFile(join(directory, `session.v${SESSION_FORMAT_VERSION}.jsonl`), content)
       }
@@ -1130,7 +1130,7 @@ describe('headless recorded-session snapshots', () => {
   })
 
   it('writes header sidecars without replacing a retained Session generation', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'dsh-headless-sidecars-'))
+    const directory = await mkdtemp(join(tmpdir(), 'ocean-headless-sidecars-'))
     try {
       const scenario: HeadlessScenario = {
         name: 'retained-pin',
@@ -1235,7 +1235,7 @@ describe('headless recorded-session snapshots', () => {
       || mode === 'record' && scenario.manifest.sessionFormat !== undefined
     const scenarioTest = skipped ? it.skip : mode === 'replay' ? it.concurrent : it
     const inputLabel = retainedToolInput === undefined ? '' : ' from retained V3 input'
-    scenarioTest(`${mode}s ${scenario.name}${inputLabel} through dsh --profile headless`, async () => {
+    scenarioTest(`${mode}s ${scenario.name}${inputLabel} through ocean --profile headless`, async () => {
       let fixtureFiles = retainedToolInput === undefined
         ? recordingFixtureNames(await readdir(scenario.dir), mode) : [retainedToolInput]
       let fixtures = await fixtureSessions(scenario, fixtureFiles)
@@ -1278,10 +1278,10 @@ describe('headless recorded-session snapshots', () => {
       try {
         result = await runLoaderSmoke({
           label: `${scenario.name} headless snapshot`,
-          tempDirPrefix: 'dsh-log-snap-',
+          tempDirPrefix: 'ocean-log-snap-',
           ...(scenario.name === 'compaction-recovery' ? await compactionWorkspaceOptions() : {}),
           ...(scenario.manifest.workspace?.parent === 'outside-temp' ? { tempDirParent: outsideTempWorkspaceParent() } : {}),
-          binScript: dshBin,
+          binScript: oceanBin,
           sourceImport: 'tsx/esm',
           configPath: join(baseComposition.dir, 'cordis.yml'),
           binArgs: [
@@ -1297,30 +1297,30 @@ describe('headless recorded-session snapshots', () => {
             : 1,
           env: {
             ...(replaying ? REPLAY_CREDENTIAL_ENV : {}),
-            DSH_SNAPSHOT: replaying ? 'replay' : 'record',
+            OCEAN_SNAPSHOT: replaying ? 'replay' : 'record',
             ...(model === undefined ? {} : {
-              DSH_SNAPSHOT_PROVIDER: model.provider,
-              DSH_SNAPSHOT_MODEL: model.model,
+              OCEAN_SNAPSHOT_PROVIDER: model.provider,
+              OCEAN_SNAPSHOT_MODEL: model.model,
             }),
-            DSH_SNAPSHOT_SPILL_ROOT: spillRoot,
-            DSH_SNAPSHOT_SPILL_LOCATOR_ROOT: locatorRoot,
-            DSH_SNAPSHOT_FILE: fixturePath,
+            OCEAN_SNAPSHOT_SPILL_ROOT: spillRoot,
+            OCEAN_SNAPSHOT_SPILL_LOCATOR_ROOT: locatorRoot,
+            OCEAN_SNAPSHOT_FILE: fixturePath,
             ...(replaying && fixtureFiles.length > 1
-              ? { DSH_SNAPSHOT_CHILD_FILES: fixtureFiles.slice(1).map(file => join(scenario.dir, file)).join(delimiter) }
+              ? { OCEAN_SNAPSHOT_CHILD_FILES: fixtureFiles.slice(1).map(file => join(scenario.dir, file)).join(delimiter) }
               : {}),
             ...(replaying && scenario.manifest.replay?.override === true
-              ? { DSH_SNAPSHOT_OVERRIDE: join(scenario.dir, 'replay.override.json') }
+              ? { OCEAN_SNAPSHOT_OVERRIDE: join(scenario.dir, 'replay.override.json') }
               : {}),
             ...(scenario.manifest.permission === undefined
               ? {}
-              : { DSH_PERMISSION_MODE: scenario.manifest.permission }),
+              : { OCEAN_PERMISSION_MODE: scenario.manifest.permission }),
             ...scenario.manifest.environment,
             ...(scenario.name === 'mcp-resources' || scenario.name === 'mcp-resources-ptc' ? {
-              DSH_MCP_RESOURCES_FIXTURE: join(repoRoot, 'packages/mcp/mcp-client/tests/fixtures/resources-server.ts'),
+              OCEAN_MCP_RESOURCES_FIXTURE: join(repoRoot, 'packages/mcp/mcp-client/tests/fixtures/resources-server.ts'),
             } : {}),
             NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
-            DSH_TELEMETRY_DISABLED: '1',
-            ...(mcpDemo === undefined ? {} : { DSH_MCP_DEMO_URL: mcpDemo.url }),
+            OCEAN_TELEMETRY_DISABLED: '1',
+            ...(mcpDemo === undefined ? {} : { OCEAN_MCP_DEMO_URL: mcpDemo.url }),
           },
           prepare: async (cwd) => {
             if (scenario.manifest.workspace?.parent === 'outside-temp') assertWorkspaceOutsideTemp(cwd)
@@ -1329,7 +1329,7 @@ describe('headless recorded-session snapshots', () => {
               materializeProfilePatch(source, cwd, 'headless', join(cwd, patchRoot), index)
             })
             if (scenario.name === 'plugin-manager-mcp') {
-              const profileDir = join(cwd, '.dsh/profiles/headless')
+              const profileDir = join(cwd, '.ocean/profiles/headless')
               await mkdir(profileDir, { recursive: true })
               await copyFile(join(scenario.dir, 'profile.patch.yml'), join(profileDir, 'cordis.patch.yml'))
             }
@@ -1356,12 +1356,12 @@ describe('headless recorded-session snapshots', () => {
               expect(log).toContain('mcp__demo__ping')
               expect(log).toContain('pong')
               expect(mcpDemo.calls).toEqual(['ping'])
-              const saved = await readFile(join(cwd, '.dsh/profiles/headless/cordis.patch.yml'), 'utf8')
+              const saved = await readFile(join(cwd, '.ocean/profiles/headless/cordis.patch.yml'), 'utf8')
               expect(saved).toContain('id: demo')
               expect(saved).toContain('disabled: false')
             }
             if (scenario.name === 'mcp-template-error' && mcpDemo !== undefined) {
-              const secret = scenario.manifest.environment?.DSH_MCP_TEMPLATE_TOKEN
+              const secret = scenario.manifest.environment?.OCEAN_MCP_TEMPLATE_TOKEN
               expect(secret).toBeDefined()
               verifyMcpTemplateError(actualLogs[0]!.content, secret!)
               expect(mcpDemo.calls).toEqual(['ping'])

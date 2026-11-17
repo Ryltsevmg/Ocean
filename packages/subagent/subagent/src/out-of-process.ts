@@ -5,7 +5,7 @@
  * working-directory validation, the never-reject result settlement, and the standard
  * run-handle publication. Backends compose these with their own wire drivers;
  * the process machinery itself (spawn, env scrub, managed-range teardown)
- * belongs to the `dsh-subprocess` seam.
+ * belongs to the `ocean-subprocess` seam.
  *
  * @module @ocean/ocean-subagent/out-of-process
  */

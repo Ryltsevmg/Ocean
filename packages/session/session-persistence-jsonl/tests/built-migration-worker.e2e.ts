@@ -26,7 +26,7 @@ describe.skipIf(!built)('built migration verifier (plain node)', () => {
         terminations += 1
         return terminate.call(this)
       }
-      const root = await mkdtemp(join(tmpdir(), 'dsh-built-migration-'))
+      const root = await mkdtemp(join(tmpdir(), 'ocean-built-migration-'))
       const id = 'built-migration-worker'
       const directory = join(root, '_no-cwd', id)
       const ctx = new Context()

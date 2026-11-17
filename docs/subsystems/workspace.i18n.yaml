@@ -3,26 +3,26 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/workspace.md
 /workspaces:
-  en: 3a3cac136bf8b8a3
-  zh: 7e3ca68bca06df29
+  en: 3714ad59c203a4c5
+  zh: 94ebae7e1313e584
 /workspaces/identity:
-  en: d61a7e78bbc1fb56
-  zh: 8397869f70cd5b28
+  en: 3d7b6b8992fc9246
+  zh: 845abfb7b33b46d7
 /workspaces/the-workspace-entity:
   en: ce5b65fb4d0b0c7b
   zh: aa332a17810d583a
 /workspaces/the-registry-ctx-workspaceregistry:
-  en: 73b54ccf836b7f46
-  zh: 7ee93ba8bb0a616a
+  en: 41996cbc471ac39b
+  zh: 542042623c31f69a
 /workspaces/default-workspace-initialization:
-  en: c4307480e504ba81
-  zh: dc8a98e1b447b900
+  en: 4b1d5ff82fe71c5d
+  zh: 7799749a29319d03
 /workspaces/session-pinning:
   en: 3f5ab940adbfab1e
   zh: f759cd34e3b06ca1
 /workspaces/archive-admission:
-  en: 9220f55f38f799ae
-  zh: b3f898cd67fb06d4
+  en: 35325e5ce4b4bb46
+  zh: 9a73b2efc3a4e9b1
 /workspaces/consumers:
-  en: 6b592294ff18b4d3
-  zh: a48bec961b8182a9
+  en: 44bd682811639f38
+  zh: 2ea98f24eea641c6

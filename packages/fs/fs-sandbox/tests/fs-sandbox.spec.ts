@@ -40,7 +40,7 @@ async function boot(mode: SandboxMode): Promise<void> {
 
 beforeEach(async ({ onTestFinished }) => {
   // Both siblings must be outside automatic temp grants for containment denials to be meaningful.
-  const directory = await mkdtemp(join(outsideTempWorkspaceParent(), '.dsh-fssbx-'))
+  const directory = await mkdtemp(join(outsideTempWorkspaceParent(), '.ocean-fssbx-'))
   onTestFinished(async () => { await rm(directory, { recursive: true, force: true }) })
   base = realpathSync.native(directory)
   assertWorkspaceOutsideTemp(base)
@@ -159,7 +159,7 @@ describe('workspace-write containment', () => {
   })
 
   it('a write to the platform temp area lands (parity with the bash runner grant)', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-fssbx-tmp-'))
+    const dir = await mkdtemp(join(tmpdir(), 'ocean-fssbx-tmp-'))
     try {
       const path = join(dir, 'temp.txt')
       await fs.writeText(await target(path), 'temp')

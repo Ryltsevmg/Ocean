@@ -410,7 +410,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
 
   it('spans the first root workspace with its insertion marker during a native drag', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-sidebar-first-workspace-drop'))
-    const directory = await mkdtemp(join(tmpdir(), 'dsh-sidebar-drag-'))
+    const directory = await mkdtemp(join(tmpdir(), 'ocean-sidebar-drag-'))
     try {
       const extra = await scaffold.ctx.workspaceRegistry.create(directory, 'Sidebar drag workspace')
       try {
@@ -463,7 +463,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
       ? page.locator('[data-row-key="session:sidebar-action-geometry"]')
       : page.locator('[data-row-key^="workspace:"]').filter({ hasText: workspaceTitle })
     await row.evaluate((element) => {
-      element.parentElement!.style.setProperty('--dsh-workspace-indent', '24px')
+      element.parentElement!.style.setProperty('--ocean-workspace-indent', '24px')
       element.parentElement!.style.setProperty('--unrelated-preview-variable', '17px')
     })
     const box = await row.boundingBox()
@@ -489,7 +489,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
       })
       expect(await spacing(preview)).toEqual(await spacing(row))
       expect(await preview.evaluate(element => [...element.parentElement!.style].filter(name => name.startsWith('--')).sort()))
-        .toEqual(['--dsh-sidebar-label-gap', '--dsh-sidebar-paint-inset', '--dsh-sidebar-row-padding'])
+        .toEqual(['--ocean-sidebar-label-gap', '--ocean-sidebar-paint-inset', '--ocean-sidebar-row-padding'])
       const titleOffset = (target: Locator) => target.evaluate((element) => {
         const title = element.querySelector<HTMLElement>('[class*="title"]')
         if (title === null) throw new Error('Row title is missing')

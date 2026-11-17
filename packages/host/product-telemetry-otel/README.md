@@ -27,9 +27,9 @@ Send selected product usage events to an OTLP/HTTP collector. Events carry a nam
 
 ### Ocean-Chat privacy default
 
-A collector endpoint is required explicitly. Ocean-Chat does not use the upstream collector as a fallback and does not mount this exporter without `DSH_PRODUCT_ANALYTICS_OTLP_URL`. Product collection is separately disabled by default. Configuring an endpoint alone does not authorize enabling collection.
+A collector endpoint is required explicitly. Ocean-Chat does not use the upstream collector as a fallback and does not mount this exporter without `OCEAN_PRODUCT_ANALYTICS_OTLP_URL`. Product collection is separately disabled by default. Configuring an endpoint alone does not authorize enabling collection.
 
-Mount the plugin in a Cordis composition with the application identity; explicitly configure a collector endpoint. The Desktop composition mounts it when [product analytics](../../client/product-analytics/README.md) is enabled; ordinary Web does not. The standalone example below reads `DSH_APP_VERSION`; Desktop supplies `DSH_CLIENT_VERSION` through its native launcher. Both must name the running release; the schema rejects an absent version.
+Mount the plugin in a Cordis composition with the application identity; explicitly configure a collector endpoint. The Desktop composition mounts it when [product analytics](../../client/product-analytics/README.md) is enabled; ordinary Web does not. The standalone example below reads `OCEAN_APP_VERSION`; Desktop supplies `OCEAN_CLIENT_VERSION` through its native launcher. Both must name the running release; the schema rejects an absent version.
 
 ```yaml
 - name: '@ocean/ocean-otel'
@@ -37,7 +37,7 @@ Mount the plugin in a Cordis composition with the application identity; explicit
   config:
     endpoint: http://127.0.0.1:4318/v1/logs # example collector, not a default
     serviceName: deepseek-harness
-    serviceVersion: !!js process.env.DSH_APP_VERSION
+    serviceVersion: !!js process.env.OCEAN_APP_VERSION
     compression: gzip
     scheduledDelayMillis: 30000
 ```

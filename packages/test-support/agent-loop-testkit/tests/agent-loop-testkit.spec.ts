@@ -31,7 +31,7 @@ class FixtureRuntime extends PtcRuntime {
   }
 }
 
-describe('dsh-agent-loop-testkit', () => {
+describe('ocean-agent-loop-testkit', () => {
   it('rejects an invalid program concurrency limit during prerequisite mounting', async () => {
     const ctx = new Context()
     try {

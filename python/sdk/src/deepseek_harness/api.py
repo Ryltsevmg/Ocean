@@ -27,10 +27,10 @@ class DeepSeekHarnessConfig:
     max_tokens: int | None = None
     cwd: str | None = None
     runtime_cwd: str | None = None
-    dsh_bin: str | None = None
+    ocean_bin: str | None = None
     profile: str = "sdk"
     patches: tuple[str, ...] = ()
-    dsh_home: str | None = None
+    ocean_home: str | None = None
     env: dict[str, str] = field(default_factory=dict)
     initialize_timeout_seconds: float = 30.0
     request_timeout_seconds: float | None = None
@@ -39,6 +39,9 @@ class DeepSeekHarnessConfig:
     api_key: str | None = None
     on_user_question: UserQuestionHandler | None = None
     approval_requests: bool = False
+    # Compatibility options; explicit Ocean options take precedence.
+    dsh_bin: str | None = None
+    dsh_home: str | None = None
 
 
 @dataclass(slots=True)
@@ -128,9 +131,11 @@ class DeepSeekHarness:
 
         self._client = HarnessClient(
             HarnessConfig(
-                dsh_bin=self.config.dsh_bin,
+                ocean_bin=self.config.ocean_bin,
                 profile=self.config.profile,
                 patches=self.config.patches,
+                ocean_home=self.config.ocean_home,
+                dsh_bin=self.config.dsh_bin,
                 dsh_home=self.config.dsh_home,
                 cwd=runtime_cwd,
                 env=env,

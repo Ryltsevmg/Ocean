@@ -20,13 +20,13 @@ function write(root: string, path: string, content: unknown): void {
 function directory(name: string): string { return `packages/subagent/${name.slice('@ocean/ocean-'.length)}` }
 
 function fixture(): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-official-catalog-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-official-catalog-'))
   roots.push(root)
   write(root, 'apps/cli/package.json', { name: '@ocean/ocean' })
   for (const name of ON_DEMAND_BUNDLES) {
     const dir = directory(name)
     write(root, `${dir}/package.json`, {
-      name, type: 'module', version: '1.2.3', icon: './icon.svg', dsh: { bundle: { patch: './cordis.patch.yml' } },
+      name, type: 'module', version: '1.2.3', icon: './icon.svg', ocean: { bundle: { patch: './cordis.patch.yml' } },
       exports: { '.': './must-not-run.js', './package.json': './package.json', './locale/*.json': './locale/*.json' },
     })
     write(root, `${dir}/must-not-run.js`, "throw new Error('metadata must not evaluate a provider')")
@@ -64,27 +64,27 @@ describe('Official bundle catalog generation', () => {
     const root = fixture()
     const name = ON_DEMAND_BUNDLES[0]!
     if (kind === 'private') updateManifest(root, name, { private: true })
-    if (kind === 'not-bundle') updateManifest(root, name, { dsh: {} })
+    if (kind === 'not-bundle') updateManifest(root, name, { ocean: {} })
     if (kind === 'missing') rmSync(join(root, directory(name)), { recursive: true })
     if (kind === 'duplicate') write(root, 'packages/subagent/duplicate/package.json', { name })
-    expect(() => generateOfficialBundleCatalog(root)).toThrow(/public DSH bundle|duplicate workspace/)
+    expect(() => generateOfficialBundleCatalog(root)).toThrow(/public OCEAN bundle|duplicate workspace/)
   })
 
   it('embeds the package platform declaration and detects changes before providers are installed', () => {
     const root = fixture()
     const name = ON_DEMAND_BUNDLES[0]!
-    updateManifest(root, name, { dsh: { bundle: { patch: './cordis.patch.yml', platforms: ['darwin'] } } })
+    updateManifest(root, name, { ocean: { bundle: { patch: './cordis.patch.yml', platforms: ['darwin'] } } })
     expect(generateOfficialBundleCatalog(root)[0]?.platforms).toEqual(['darwin'])
     syncOfficialBundleCatalog(root, false)
     expect(readFileSync(join(root, output), 'utf8')).toContain("platforms: ['darwin']")
-    updateManifest(root, name, { dsh: { bundle: { patch: './cordis.patch.yml', platforms: ['win32'] } } })
+    updateManifest(root, name, { ocean: { bundle: { patch: './cordis.patch.yml', platforms: ['win32'] } } })
     expect(() => { syncOfficialBundleCatalog(root, true) }).toThrow('is stale')
   })
 
   it.each([[], ['macos'], 'darwin'].map(platforms => ({ platforms })))('rejects invalid package platform metadata $platforms', ({ platforms }) => {
     const root = fixture()
-    updateManifest(root, ON_DEMAND_BUNDLES[0]!, { dsh: { bundle: { patch: './cordis.patch.yml', platforms } } })
-    expect(() => generateOfficialBundleCatalog(root)).toThrow('dsh.bundle.platforms')
+    updateManifest(root, ON_DEMAND_BUNDLES[0]!, { ocean: { bundle: { patch: './cordis.patch.yml', platforms } } })
+    expect(() => generateOfficialBundleCatalog(root)).toThrow('ocean.bundle.platforms')
   })
 
   it.each([false, true])('rejects an on-demand provider in the installed dependency closure (indirect=%s)', (indirect) => {
@@ -92,7 +92,7 @@ describe('Official bundle catalog generation', () => {
     const name = ON_DEMAND_BUNDLES[0]!
     write(root, 'apps/cli/package.json', { name: '@ocean/ocean', dependencies: { [indirect ? '@ocean/ocean-layer' : name]: '*' } })
     if (indirect) write(root, 'packages/bundle/layer/package.json', { name: '@ocean/ocean-layer', dependencies: { [name]: '*' } })
-    expect(() => generateOfficialBundleCatalog(root)).toThrow('must not be installed by the DSH distribution')
+    expect(() => generateOfficialBundleCatalog(root)).toThrow('must not be installed by the OCEAN distribution')
   })
 
   it('requires distinct nonempty catalog admission', () => {

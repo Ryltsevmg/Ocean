@@ -21,15 +21,15 @@ it.each([false, true])('settles startup after parent IPC disconnect (boot failur
     else symlinkSync(realpathSync(join(hostDirectory, 'node_modules', name)), destination, 'junction')
   }
   writeFileSync(join(root, 'package.json'), '{"type":"module"}')
-  writeFileSync(join(modules, 'dsh-app-boot', 'package.json'), '{"type":"module","exports":"./index.js"}')
-  writeFileSync(join(modules, 'dsh-app-boot', 'index.js'), `
+  writeFileSync(join(modules, 'ocean-app-boot', 'package.json'), '{"type":"module","exports":"./index.js"}')
+  writeFileSync(join(modules, 'ocean-app-boot', 'index.js'), `
     export class StartupError extends Error {}
     export const loadProfileDirectory = () => ({ skippedBundles: [] });
     export const reportSkippedBundles = () => {};
     export const loadLayeredEnv = () => ({});
   `)
-  writeFileSync(join(modules, 'dsh', 'package.json'), '{"type":"module","exports":{"./profile-boot":"./profile-boot.js"}}')
-  writeFileSync(join(modules, 'dsh', 'profile-boot.js'), `
+  writeFileSync(join(modules, 'ocean', 'package.json'), '{"type":"module","exports":{"./profile-boot":"./profile-boot.js"}}')
+  writeFileSync(join(modules, 'ocean', 'profile-boot.js'), `
     import { writeFileSync } from 'node:fs';
     export function runProfile(options) {
       process.send({ type: 'booting', packageManager: options.packageManager });

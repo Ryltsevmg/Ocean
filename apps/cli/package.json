@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean",
-  "description": "dsh CLI: profile launch, plugin management, and configuration inspection",
+  "description": "ocean CLI: profile launch, plugin management, and configuration inspection",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
@@ -24,8 +24,8 @@
     "src"
   ],
   "scripts": {
-    "prepack": "tsx ../../scripts/stage-dsh-docs.ts",
-    "postpack": "tsx ../../scripts/stage-dsh-docs.ts --clean"
+    "prepack": "tsx ../../scripts/stage-ocean-docs.ts",
+    "postpack": "tsx ../../scripts/stage-ocean-docs.ts --clean"
   },
   "license": "MIT",
   "dependencies": {

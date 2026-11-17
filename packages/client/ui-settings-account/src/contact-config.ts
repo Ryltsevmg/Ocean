@@ -16,4 +16,4 @@ export const ContactConfigFields = {
 /** Validate public support options. */
 export const ContactConfig: z<Partial<ContactConfig>, ContactConfig> = z.object(ContactConfigFields)
 /** Bootstrap key containing no account credentials. */
-export const CONTACT_CONFIG_GLOBAL = '__DSH_CONTACT_CONFIG__'
+export const CONTACT_CONFIG_GLOBAL = '__OCEAN_CONTACT_CONFIG__'

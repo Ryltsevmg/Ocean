@@ -18,7 +18,7 @@ describe('Codex provider public Loader composition', () => {
   it('loads the configured default, two named instances, their tools, and job controls without starting Codex', async () => {
     const { stdout, stderr } = await runLoaderSmoke({
       label: 'subagent-codex Loader composition',
-      tempDirPrefix: 'dsh-subagent-codex-loader-',
+      tempDirPrefix: 'ocean-subagent-codex-loader-',
       binScript: driver,
       libBinScript: driver,
       configPath,

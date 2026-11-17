@@ -42,8 +42,8 @@ const TEST_USER_ID = '00000000-0000-4000-8000-000000000001' as AnonymousUserId
 let testHome: string
 
 beforeEach(() => {
-  testHome = mkdtempSync(join(tmpdir(), 'dsh-llm-deepseek-'))
-  vi.stubEnv('DSH_HOME', testHome)
+  testHome = mkdtempSync(join(tmpdir(), 'ocean-llm-deepseek-'))
+  vi.stubEnv('OCEAN_HOME', testHome)
 })
 
 afterEach(async () => {
@@ -210,7 +210,7 @@ describe('DeepSeekAdapter against a mock server', () => {
     const server = await mockServer([{ kind: 'sse', events: textEvents }])
     const accept = vi.fn()
     const prepareExtensions = vi.fn(async () => ({
-      fields: { dsh_test: { version: 1 } },
+      fields: { ocean_test: { version: 1 } },
       accept: async () => { accept() },
     }))
     const adapter = new DeepSeekAdapter({
@@ -221,7 +221,7 @@ describe('DeepSeekAdapter against a mock server', () => {
     })
 
     await drain(adapter.stream({ provider: 'deepseek-official', model: 'm', messages: [], sessionId: SessionId('s') }))
-    expect(server.requests[0]).toMatchObject({ dsh_test: { version: 1 } })
+    expect(server.requests[0]).toMatchObject({ ocean_test: { version: 1 } })
     expect(prepareExtensions).toHaveBeenCalledWith(expect.objectContaining({ sessionId: 's' }))
     expect(accept).toHaveBeenCalledOnce()
   })
@@ -326,7 +326,7 @@ describe('DeepSeekAdapter against a mock server', () => {
       options: () => resolveAdapterOptions({ baseURL: server.url }),
       resolveAuth: () => Promise.resolve({ headers: { 'x-api-key': 'k' } }),
       resolveUserId: () => TEST_USER_ID,
-      prepareExtensions: () => Promise.resolve({ fields: { dsh_test: 1 }, accept: async () => { accept() } }) as never,
+      prepareExtensions: () => Promise.resolve({ fields: { ocean_test: 1 }, accept: async () => { accept() } }) as never,
     })
     const request = { provider: 'deepseek-official', model: 'm', messages: [] }
 
@@ -345,7 +345,7 @@ describe('DeepSeekAdapter against a mock server', () => {
       resolveAuth: () => Promise.resolve({ headers: { 'x-api-key': 'k' } }),
       resolveUserId: () => TEST_USER_ID,
       prepareExtensions: () => Promise.resolve({
-        fields: { dsh_test: 1 },
+        fields: { ocean_test: 1 },
         accept: () => Promise.reject(failure),
       }) as never,
     }
@@ -426,7 +426,7 @@ describe('DeepSeekAdapter against a mock server', () => {
     expect(server.fileRequests).toEqual([{
       method: 'POST',
       path: '/v1/files',
-      filename: `dsh-${'a'.repeat(16)}-${'b'.repeat(8)}.png`,
+      filename: `ocean-${'a'.repeat(16)}-${'b'.repeat(8)}.png`,
       bytes: 3,
     }])
     expect(signalSeen[0]).toBeInstanceOf(AbortSignal)
@@ -2284,7 +2284,7 @@ describe('plugin registration and config', () => {
 
   it('takes DEEPSEEK_BASE_URL from any environment layer, with explicit config still on top', () => {
     const trusted = createLaunchEnvironmentSnapshot([
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DEEPSEEK_BASE_URL: 'https://user.example' } },
+      { source: 'user-env', path: '/home/.ocean/.env', values: { DEEPSEEK_BASE_URL: 'https://user.example' } },
     ])
     expect(resolveAdapterOptions({}, trusted).baseURL).toBe('https://user.example')
     // The product trusts the project it is launched in, so a checkout can

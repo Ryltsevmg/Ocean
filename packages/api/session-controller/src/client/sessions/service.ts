@@ -112,7 +112,7 @@ export interface SessionBinding {
 }
 
 // Scope primitives live in ../scope.ts (the client mirror of host
-// dsh-scope, keyed by Agent identity); re-exported here so existing
+// ocean-scope, keyed by Agent identity); re-exported here so existing
 // consumers keep their import site.
 export { scopeOf } from '../scope.ts'
 

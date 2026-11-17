@@ -1058,7 +1058,7 @@ describe('web e2e: resident question composer round trip', () => {
       // The dragged width is a persisted preference; dropping it and resizing republishes the default.
       const cleanup = await Promise.allSettled([
         outcome,
-        page.evaluate(() => { localStorage.removeItem('dsh.conversation.contentWidth') })
+        page.evaluate(() => { localStorage.removeItem('ocean.conversation.contentWidth') })
           .then(() => page.setViewportSize(original)),
       ])
       if (bodyCompleted) {

@@ -1,4 +1,4 @@
-# TypeScript SDK snapshot-record patch over `dsh --profile sdk`.
+# TypeScript SDK snapshot-record patch over `ocean --profile sdk`.
 
 # The fixture corpus must not depend on the developer's personal skill roots.
 # Ordinary product launches retain the sdk profile's default skill discovery.
@@ -16,8 +16,8 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
-    compression: !!js "process.env.DSH_SNAPSHOT === undefined ? 'zstd' : 'none'"
+    root: !!js oceanHomePath('sessions')
+    compression: !!js "process.env.OCEAN_SNAPSHOT === undefined ? 'zstd' : 'none'"
 
 - id: tool-subagent
   name: '@ocean/ocean-tool-subagent'

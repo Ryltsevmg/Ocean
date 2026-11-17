@@ -5,7 +5,7 @@
  * resolves cwd from the session header). A pick lands the literal `/name `
  * text and the prompt ships the same literal (plain-text-reference decision);
  * determinism
- * lives host-side — the pre-step boundary (`dsh-tool-skill`) recognizes a
+ * lives host-side — the pre-step boundary (`ocean-tool-skill`) recognizes a
  * leading `/name` naming a user-invocable skill and injects the rendered
  * body for every entry point, including `disable-model-invocation` skills the
  * model-side catalog never lists (issue #1470). The RPC rides the plugin's
@@ -224,7 +224,7 @@ export function apply(ctx: ClientContext): void {
       // Plain-text-reference decision (web-input-machine note): the pick
       // lands plain text and the prompt ships the same
       // literal. Determinism lives host-side — the host's
-      // pre-step boundary (dsh-tool-skill) recognizes the leading /name and
+      // pre-step boundary (ocean-tool-skill) recognizes the leading /name and
       // injects the rendered body for every entry point. A name shared with a
       // host command still resolves to the command: adjudication claims the
       // line client-side before it ever becomes a prompt.

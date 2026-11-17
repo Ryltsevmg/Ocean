@@ -211,7 +211,7 @@ export type FsErrorCode = typeof FS_ERROR_CODES[number]
 
 /**
  * Typed filesystem error. Extends {@link HarnessError} so it carries a stable
- * {@link FsErrorCode} and chains `cause`. `dsh-fs` owns this vocabulary so
+ * {@link FsErrorCode} and chains `cause`. `ocean-fs` owns this vocabulary so
  * backends and the policy layer raise the same codes instead of each inventing
  * message strings.
  */

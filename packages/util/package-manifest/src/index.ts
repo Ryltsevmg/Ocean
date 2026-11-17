@@ -4,12 +4,18 @@
  */
 
 export type {
-  DshBundleManifest,
-  DshClientManifest,
-  DshEnginesManifest,
-  DshManifest,
-  DshPackageManifest,
-  DshProfileManifest,
+  OceanBundleManifest as DshBundleManifest,
+  OceanClientManifest as DshClientManifest,
+  OceanEnginesManifest as DshEnginesManifest,
+  OceanManifest as DshManifest,
+  OceanPackageManifest as DshPackageManifest,
+  OceanProfileManifest as DshProfileManifest,
+  OceanBundleManifest,
+  OceanClientManifest,
+  OceanEnginesManifest,
+  OceanManifest,
+  OceanPackageManifest,
+  OceanProfileManifest,
   LocalizedText,
   PluginLocalizedMeta,
 } from './types.ts'

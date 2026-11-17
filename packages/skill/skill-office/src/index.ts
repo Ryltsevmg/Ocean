@@ -109,7 +109,7 @@ export function apply(ctx: Context, config: ResolvedConfig): void {
     return { kind: 'failed', error, persistent }
   }
   ctx.skills.registerProvider(control => ({
-    name: 'dsh-office',
+    name: 'ocean-office',
     async list(options) {
       const reads = await Promise.all(SKILL_NAMES.map(async skillName => ({ skillName, read: await readSkill(skillName, options.signal) })))
       const candidates: SkillCandidate[] = []
@@ -119,7 +119,7 @@ export function apply(ctx: Context, config: ResolvedConfig): void {
         candidates.push({
           name: skillName, description: read.description,
           invocation: { modelInvocable: true, userInvocable: true },
-          provider: 'dsh-office', source: 'bundled', rank: BUNDLED_SKILL_RANK,
+          provider: 'ocean-office', source: 'bundled', rank: BUNDLED_SKILL_RANK,
           resourceBase: { kind: 'directory', path: directory.split(sep).join('/') }, locator: join(directory, 'SKILL.md'),
         })
       }

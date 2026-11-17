@@ -3,56 +3,56 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/shell/shell-env/README.md
 /:
-  en: c54342d0151b089c
-  zh: 9ad6284f24c5e3f6
+  en: 349469bfd678e30e
+  zh: d650764251096580
 /ocean-ocean-shell-env:
-  en: 45b22687822cb6db
-  zh: affdd75a814fb899
+  en: 4896ff0f5ed4b93d
+  zh: ea2c31d1c2b2884e
 /ocean-ocean-shell-env/summary:
-  en: 021be213f32988e1
-  zh: f3ce1ef82377b4f4
+  en: 87e5ea62cd64f02c
+  zh: 78c9f5b29986a8c4
 /ocean-ocean-shell-env/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-shell-env/use-this-package:
-  en: 34d2f05183df200f
-  zh: 7753b97c91743901
+  en: f603d56f2ea4ad3d
+  zh: 8a72e96c18189c98
 /ocean-ocean-shell-env/use-this-package/what-every-shell-call-receives:
-  en: eeff2c2126df8181
-  zh: f3ce2dae406a9484
+  en: d69485f39c031d09
+  zh: 30b8e91a3622c239
 /ocean-ocean-shell-env/use-this-package/adding-your-own-environment-facts:
-  en: 14da34f853d089be
-  zh: 5ad3942aa5321893
+  en: 11ce990c4d15b543
+  zh: f042cdbd0aee033c
 /ocean-ocean-shell-env/use-this-package/choosing-the-harness-home:
-  en: 79ac7d7d344a42d0
-  zh: 5aee168736cce832
+  en: 692080c5d0328c53
+  zh: 0b4b23c2cb893178
 /ocean-ocean-shell-env/use-this-package/what-can-go-wrong:
-  en: 737e5607cb1229cc
-  zh: 835b3f225d91f6ea
+  en: 7c1894169ec65e4d
+  zh: 524c8e05962fe245
 /ocean-ocean-shell-env/understand-the-implementation:
   en: f782557ca8da3138
   zh: e8f0082b9692cacc
 /ocean-ocean-shell-env/understand-the-implementation/design-philosophy:
-  en: 5438a951817526d9
-  zh: 66459cdea830a8c8
+  en: 7639ffb6f40436ae
+  zh: 841bda670ac2e4f9
 /ocean-ocean-shell-env/understand-the-implementation/source-map:
   en: da18240c8c1dc687
   zh: a854ddaca8953832
 /ocean-ocean-shell-env/understand-the-implementation/collection:
-  en: 0c2d7d5b2131630f
-  zh: b44d4f0ddf89421b
+  en: 7cc16dcd24700950
+  zh: ea88ab53a10efbe1
 /ocean-ocean-shell-env/further-exploration:
-  en: cbd26e0880e77127
-  zh: ea8bcf72429d08c8
+  en: 561706f1d987447c
+  zh: 95827c414c5ef0c5
 /ocean-ocean-shell-env/model-experience:
-  en: 8acf3cd9aeef5f55
-  zh: 69725e78f73c2f16
+  en: 87a2d52e15c040af
+  zh: 18855dc9b5b15c0f
 /ocean-ocean-shell-env/model-experience/kv-cache-effect:
   en: e95e649f0410fa75
   zh: b3d64877420b4c0d
 /ocean-ocean-shell-env/known-limitations-and-deferred-work:
-  en: e61f29904019b35b
-  zh: bfe2e8363d6c7e58
+  en: 6076f56323bf19ab
+  zh: 3da09e93da8e10d2
 /ocean-ocean-shell-env/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

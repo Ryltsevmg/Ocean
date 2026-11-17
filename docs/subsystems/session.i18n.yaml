@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/session.md
 /sessions:
-  en: 28fb7eb8f758fdf0
-  zh: a36d6f03e331ad86
+  en: 68ea8484c8709038
+  zh: 26e49b33bfff62f7
 /sessions/sessioneventmap-the-event-vocabulary:
-  en: baed172fd8e9eafc
-  zh: 5154b861d8d1c1ae
+  en: 25dd524c898a65c8
+  zh: 84a45bbe98c2baf7
 /sessions/sessioneventmap-the-event-vocabulary/the-request-header-event-request-header:
   en: 1f92a0467e820b24
   zh: 167aaed5a5e3b241
 /sessions/sessioneventmap-the-event-vocabulary/the-route-capacity-event-request-context:
-  en: 7e21ea8bcdb16b7a
-  zh: a377774d3596dbeb
+  en: b2be5bb6da8b0abe
+  zh: 0f7116b82d10344a
 /sessions/sessionevent-t-one-log-entry:
   en: 622d333d9d903795
   zh: fdc9ee663330f01e
@@ -27,11 +27,11 @@
   en: 8fcc967516a13692
   zh: d3978d3b8d02c566
 /sessions/surface-types/surfaceintent-the-parameter-to-session-append:
-  en: c65cc976acad9005
-  zh: 3efd10779881cba5
+  en: 505a26ec9d186d51
+  zh: 8b7b5494c4735074
 /sessions/surface-types/plugin-owned-message-projections:
-  en: f1f73607d650620f
-  zh: b3ef72f19fb5ee3d
+  en: 694ab3b71e8a38a3
+  zh: 30b5a3bad78e2abe
 /sessions/surface-types/sessionsurface-the-live-readonly-surface-projection:
   en: 350259099d8d60c9
   zh: 7b25db461748c04e
@@ -48,11 +48,11 @@
   en: 45d1a9ee6d610ac5
   zh: 79c061252fde4ceb
 /sessions/live-session-fork-api:
-  en: 06189884c62a80a1
-  zh: 30121aed7a011c72
+  en: e4249564987fb3a3
+  zh: 4f05b5e042957057
 /sessions/why-a-turn-ended-turnendreasonmap:
-  en: 966cc60273fb3911
-  zh: de5123ea9dbb0df2
+  en: 95ac8c8dec720151
+  zh: 77c8bf07ea1c0c58
 /sessions/execution-enclosure-and-standalone-events:
   en: a6408723e2ae4e0d
   zh: 9ed545941cfed474
@@ -60,17 +60,17 @@
   en: 63b4059793255ca3
   zh: 6bc7891c320249f4
 /sessions/plugin-contributed-log-only-events:
-  en: 69dcb8eb1402db37
-  zh: 142f2840b0b4afc5
+  en: a7c4f1199a9eb45e
+  zh: 8533b6113f49622a
 /sessions/plugin-contributed-log-only-events/plugin-records:
-  en: 6d60f2bff2a22f5a
-  zh: 9e9ee7188c33c212
+  en: 7b048f5db468c702
+  zh: d787fbab15b89d17
 /sessions/durability-contract:
-  en: 62e3e4fbcba292a3
-  zh: cb6dcaf531621e85
+  en: c5374f130dd328f3
+  zh: cc5fa84ff161d346
 /sessions/remote-catalog-and-workspace-opening:
   en: dd27307e0d7c893c
   zh: b77d2a749b7b641c
 /sessions/session-log-upload-exclusions:
-  en: cfe3323aade972be
-  zh: 8423b490c47c5013
+  en: 2d3e85081727f8e2
+  zh: 86d79f15d76ba583

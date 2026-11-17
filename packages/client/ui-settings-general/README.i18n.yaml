@@ -3,29 +3,29 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-settings-general/README.md
 /:
-  en: b12def981d836df5
-  zh: 9d813c1937f22c61
+  en: 4d6d488d57e91dbc
+  zh: 22610a08ae41feed
 /ocean-ocean-client-ui-settings-general:
-  en: 7320e0354638d82e
-  zh: db1741f0b8fed7ca
+  en: d00576247b59fb0b
+  zh: eb0641872ab16ac7
 /ocean-ocean-client-ui-settings-general/summary:
-  en: cd94b4a8dae32670
-  zh: 333b8603e77f92d7
+  en: 6d62c6136c92e687
+  zh: 52af293a43ec2d99
 /ocean-ocean-client-ui-settings-general/table-of-contents:
   en: 83760d53b3ee5fb8
   zh: 30dd8802d4ffdcb7
 /ocean-ocean-client-ui-settings-general/use-this-package:
-  en: 8ae337011190f5f3
-  zh: 508eca60c6fcdc34
+  en: 803a6ff5dd60a615
+  zh: 38605bf90683f5fa
 /ocean-ocean-client-ui-settings-general/use-this-package/the-general-section:
-  en: de35e867b2a56d73
-  zh: 6d4e5c912636f889
+  en: f9a04f5cb9887e70
+  zh: bd03e648dcd118f2
 /ocean-ocean-client-ui-settings-general/use-this-package/opening-the-configuration-file:
   en: 597df68b5913e8d7
   zh: bc9114f3e877679a
 /ocean-ocean-client-ui-settings-general/use-this-package/onboarding-steps:
-  en: 7600861d064dbc99
-  zh: a52ba446016e3a21
+  en: 2677082f46130722
+  zh: a0f175df4bd8e2fa
 /ocean-ocean-client-ui-settings-general/understand-the-implementation:
   en: 4d25df8fe0e60b20
   zh: cecd02d3b6e47b24
@@ -36,8 +36,8 @@
   en: e37fb7df883ea356
   zh: c972524e56c6d6c2
 /ocean-ocean-client-ui-settings-general/understand-the-implementation/host-release-changes:
-  en: d464f726b026c39a
-  zh: c949e5f4d65a639f
+  en: 81ff784997b17319
+  zh: 0208ef059a6fa44d
 /ocean-ocean-client-ui-settings-general/understand-the-implementation/document-availability:
   en: ff1aec9eb1a87a79
   zh: eb91ab8bef59742d
@@ -45,8 +45,8 @@
   en: 5d722d055516f905
   zh: e7a236f0ff84f7ff
 /ocean-ocean-client-ui-settings-general/further-exploration:
-  en: 36437e131c1a5072
-  zh: f0461ea4bc4aabc4
+  en: e514132bfaf812be
+  zh: 282374487090f3d9
 /ocean-ocean-client-ui-settings-general/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a

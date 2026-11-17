@@ -1,4 +1,4 @@
-# TypeScript SDK snapshot patch for automatic DSH SDK failure notices.
+# TypeScript SDK snapshot patch for automatic OCEAN SDK failure notices.
 
 - id: skill-filesystem
   name: '@ocean/ocean-skill-filesystem'
@@ -14,8 +14,8 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
-    compression: !!js "process.env.DSH_SNAPSHOT === undefined ? 'zstd' : 'none'"
+    root: !!js oceanHomePath('sessions')
+    compression: !!js "process.env.OCEAN_SNAPSHOT === undefined ? 'zstd' : 'none'"
 
 - id: session-log-deepseek
   name: '@ocean/ocean-session-log-deepseek'
@@ -24,38 +24,38 @@
 
 - insert:
     - id: subagent-dsh-sdk-diagnostic
-      name: '@ocean/ocean-subagent-dsh-sdk'
+      name: '@ocean/ocean-subagent-ocean-sdk'
       config:
         providerName: dsh-sdk-diagnostic
         profile: sdk
         patches:
-          - !!js process.env.DSH_TEST_CHILD_PATCH
-        dshHome: !!js dshHomePath('children/first')
+          - !!js process.env.OCEAN_TEST_CHILD_PATCH
+        oceanHome: !!js oceanHomePath('children/first')
         provider: mock
         model: mock-echo
         env:
-          DSH_TELEMETRY_DISABLED: '1'
-          DSH_TEST_CHILD_FAILURE: '1'
+          OCEAN_TELEMETRY_DISABLED: '1'
+          OCEAN_TEST_CHILD_FAILURE: '1'
     - id: tool-subagent-dsh-sdk-diagnostic
       name: '@ocean/ocean-tool-subagent'
       config:
         provider: dsh-sdk-diagnostic
         toolName: subagent_dsh_sdk
         maxDepth: provider-managed
-    - id: subagent-dsh-sdk-diagnostic-second
-      name: '@ocean/ocean-subagent-dsh-sdk'
+    - id: subagent-ocean-sdk-diagnostic-second
+      name: '@ocean/ocean-subagent-ocean-sdk'
       config:
         providerName: dsh-sdk-diagnostic-second
         profile: sdk
         patches:
-          - !!js process.env.DSH_TEST_CHILD_PATCH
-        dshHome: !!js dshHomePath('children/second')
+          - !!js process.env.OCEAN_TEST_CHILD_PATCH
+        oceanHome: !!js oceanHomePath('children/second')
         provider: mock
         model: mock-echo
         env:
-          DSH_TELEMETRY_DISABLED: '1'
-          DSH_TEST_CHILD_FAILURE: '1'
-    - id: tool-subagent-dsh-sdk-diagnostic-second
+          OCEAN_TELEMETRY_DISABLED: '1'
+          OCEAN_TEST_CHILD_FAILURE: '1'
+    - id: tool-subagent-ocean-sdk-diagnostic-second
       name: '@ocean/ocean-tool-subagent'
       config:
         provider: dsh-sdk-diagnostic-second

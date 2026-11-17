@@ -82,7 +82,7 @@ it.each([0, 1, 2])('retains Agent resources until all work exits with %i failed 
 it.each(['loop', 'root'] as const)('unloads %s while a background child is stopping', async (owner) => {
   const ctx = new Context()
   const release = Promise.withResolvers<undefined>()
-  const root = mkdtempSync(join(tmpdir(), 'dsh-resource-lifecycle-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-resource-lifecycle-'))
   onTestFinished(async () => {
     release.resolve(undefined)
     await ctx.fiber.dispose()

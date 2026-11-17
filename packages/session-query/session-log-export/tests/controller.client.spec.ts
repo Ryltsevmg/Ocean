@@ -27,7 +27,7 @@ describe('SessionLogDownloadController', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal)
     expect(save).toHaveBeenCalledWith(
       route,
-      'dsh-session-session-export-controller.zip',
+      'ocean-session-session-export-controller.zip',
     )
     expect(controller.store.getSnapshot().bySession[SID]).toEqual({
       order: 0, open: true, status: 'success', error: null,
@@ -183,7 +183,7 @@ describe('browser download helpers', () => {
   it('sanitizes the archive filename and hands the relative route to a download anchor', () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
-    expect(sessionLogZipFilename('a/b' as SessionId)).toBe('dsh-session-a_b.zip')
+    expect(sessionLogZipFilename('a/b' as SessionId)).toBe('ocean-session-a_b.zip')
     downloadUrl('api/session.export?sessionId=a', 'archive.zip')
     expect(click).toHaveBeenCalledOnce()
     const anchor = click.mock.instances[0] as HTMLAnchorElement

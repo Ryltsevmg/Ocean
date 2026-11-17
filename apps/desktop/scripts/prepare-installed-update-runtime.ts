@@ -17,7 +17,7 @@ interface PackageMetadata {
 /**
  * Clone one verified source tree into two synthetic release versions, retaining source bytes unchanged.
  * @param manifest The existing test run manifest; both version directories must be absent.
- * @param sourceRoot Fresh prepared dsh runtime, never the user's installed application.
+ * @param sourceRoot Fresh prepared ocean runtime, never the user's installed application.
  * @returns Completion record with descriptor hashes; this is not signed or boot-tested artifact evidence.
  */
 export async function prepareInstalledUpdateRuntime(manifest: string, sourceRoot: string): Promise<object> {
@@ -37,7 +37,7 @@ export async function prepareInstalledUpdateRuntime(manifest: string, sourceRoot
     for (const version of run.versions) {
       const directory = join(run.root, version)
       await mkdir(directory)
-      const runtime = join(directory, 'dsh')
+      const runtime = join(directory, 'ocean')
       await cp(sourceRoot, runtime, { recursive: true, force: false, errorOnExist: true })
       const paths = [join(runtime, 'package.json'), ...source.sharedPackages.filter(entry => releaseNames.has(entry.name))
         .map(entry => join(runtimePath(runtime, entry.path), 'package.json'))]

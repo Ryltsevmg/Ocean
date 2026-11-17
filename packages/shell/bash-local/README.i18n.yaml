@@ -6,11 +6,11 @@
   en: f70a1e0bb1e0d56d
   zh: 927e75bc75573410
 /ocean-ocean-bash-local:
-  en: a4bf362de7a9c9f0
-  zh: ab4746b56bb809dd
+  en: 0193ac4be81afec8
+  zh: f9a91f7fa793d705
 /ocean-ocean-bash-local/summary:
-  en: 518e199306e5cc7d
-  zh: ccfb150038dc4afa
+  en: 3663347f89771029
+  zh: e8ea1e158148129f
 /ocean-ocean-bash-local/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,8 +18,8 @@
   en: 95ae7843275778ca
   zh: 43b5069075a99625
 /ocean-ocean-bash-local/use-this-package/minimal-configuration:
-  en: efe3cc15d85f7a67
-  zh: 86cb4a08cb0029eb
+  en: 24006108a4a4a556
+  zh: 846ce70f85cebd2c
 /ocean-ocean-bash-local/use-this-package/running-commands:
   en: a27f24e1c9908612
   zh: 4183e0c89aebb96c
@@ -42,20 +42,20 @@
   en: 723bbaedc34e58f3
   zh: d0239dcfdd8a53c6
 /ocean-ocean-bash-local/understand-the-implementation/invariants-and-ownership:
-  en: dd0e8349896efbff
-  zh: 15cd675f9806468e
+  en: c488511c01f9e09d
+  zh: ece10fc9595c2eda
 /ocean-ocean-bash-local/further-exploration:
-  en: 02adacff32fe6aaa
-  zh: 985d507298f0d113
+  en: ec1eaa7943ea2b09
+  zh: 5c6a63ce855089eb
 /ocean-ocean-bash-local/model-experience:
-  en: 6f1b2f8c867cac58
-  zh: 36ce16f256972e88
+  en: ca31101d470ee055
+  zh: 66f00dbacc0720df
 /ocean-ocean-bash-local/model-experience/kv-cache-effect:
   en: 40294c1c31b74824
   zh: 788a4799b1d65a8b
 /ocean-ocean-bash-local/known-limitations-and-deferred-work:
-  en: f1f98b9ebab7e6d2
-  zh: 803cc5e021de530f
+  en: 46c338d8fff069c2
+  zh: 9c4ee9f477ef2f4c
 /ocean-ocean-bash-local/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

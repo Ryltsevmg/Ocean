@@ -260,9 +260,9 @@ describe('HoverCard', () => {
   })
 
   it('keeps previews clear of the frame top strip except below an anchor inside it', () => {
-    const prior = document.documentElement.style.getPropertyValue('--dsh-frame-top-clearance')
-    const priority = document.documentElement.style.getPropertyPriority('--dsh-frame-top-clearance')
-    document.documentElement.style.setProperty('--dsh-frame-top-clearance', '100px')
+    const prior = document.documentElement.style.getPropertyValue('--ocean-frame-top-clearance')
+    const priority = document.documentElement.style.getPropertyPriority('--ocean-frame-top-clearance')
+    document.documentElement.style.setProperty('--ocean-frame-top-clearance', '100px')
     try {
       const { wrapper } = mount({ variant: 'preview' })
       wrapper.getBoundingClientRect = () => DOMRect.fromRect({ x: 100, y: 600, width: 600, height: 32 })
@@ -279,8 +279,8 @@ describe('HoverCard', () => {
       fireEvent(window, new Event('resize'))
       expect(card.style.top).toBe('50px')
     } finally {
-      if (prior === '') document.documentElement.style.removeProperty('--dsh-frame-top-clearance')
-      else document.documentElement.style.setProperty('--dsh-frame-top-clearance', prior, priority)
+      if (prior === '') document.documentElement.style.removeProperty('--ocean-frame-top-clearance')
+      else document.documentElement.style.setProperty('--ocean-frame-top-clearance', prior, priority)
     }
   })
 

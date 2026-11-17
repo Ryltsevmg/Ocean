@@ -61,7 +61,7 @@ async function prepareNative(staging: string, product: string, platform: string,
     await mkdir(join(pty, 'build/Release'), { recursive: true })
     await copyFile(addon, join(pty, 'build/Release/pty.node'))
   } else {
-    const destination = join(product, 'dsh-ssh-helper-spawn-helper')
+    const destination = join(product, 'ocean-ssh-helper-spawn-helper')
     await copyFile(join(pty, 'prebuilds', `darwin-${arch}`, 'spawn-helper'), destination)
     await chmod(destination, 0o755)
   }
@@ -123,11 +123,11 @@ export async function buildSshHelper(argv: string[]): Promise<void> {
     return
   }
   if (!values['skip-build']) await compileRuntime(definition.dependencies ?? {})
-  await mkdir(join(root, '.dsh-build'), { recursive: true })
-  const temporary = await mkdtemp(join(root, '.dsh-build/ssh-helper-'))
+  await mkdir(join(root, '.ocean-build'), { recursive: true })
+  const temporary = await mkdtemp(join(root, '.ocean-build/ssh-helper-'))
   try {
     const staging = join(temporary, 'staging')
-    const product = join(temporary, 'dsh-ssh-helper')
+    const product = join(temporary, 'ocean-ssh-helper')
     await mkdir(product)
     try {
       await pnpm('--filter', closureName, 'deploy', '--legacy', '--prod', '--config.allow-unused-patches=true', '--config.node-linker=hoisted', '--config.auto-install-peers=false', '--config.link-workspace-packages=true', '--config.hoist-workspace-packages=false', staging)
@@ -145,7 +145,7 @@ export async function buildSshHelper(argv: string[]): Promise<void> {
     await writeFile(join(staging, 'package.json'), `${JSON.stringify({ ...stagedManifest,
       bin: 'runtime-bootstrap.mjs', pkg: { assets, ignore: ['node_modules/@deepseek-ai/node-addon-system-*/**/*'] },
     }, null, 2)}\n`)
-    const executable = join(product, 'dsh-ssh-helper')
+    const executable = join(product, 'ocean-ssh-helper')
     await pnpm('exec', 'pkg', staging, '--sea', '--targets', target, '--output', executable)
     await chmod(executable, 0o755)
     await verifyNativePayload(product, target)
@@ -164,8 +164,8 @@ export async function buildSshHelper(argv: string[]): Promise<void> {
     await writeFile(join(product, 'manifest.json'), `${JSON.stringify(metadata, null, 2)}\n`)
     await verifyPayload(product)
     await mkdir(output, { recursive: true })
-    const archive = join(output, `dsh-ssh-helper-${definition.version}-${target.slice('node24-'.length)}.tar.gz`)
-    await createTar({ cwd: temporary, file: archive, gzip: true, portable: true }, ['dsh-ssh-helper'])
+    const archive = join(output, `ocean-ssh-helper-${definition.version}-${target.slice('node24-'.length)}.tar.gz`)
+    await createTar({ cwd: temporary, file: archive, gzip: true, portable: true }, ['ocean-ssh-helper'])
     await writeFile(`${archive}.sha256`, `${await fileDigest(archive)}  ${basename(archive)}\n`)
     console.log(`SSH helper archive: ${archive}`)
   } finally {

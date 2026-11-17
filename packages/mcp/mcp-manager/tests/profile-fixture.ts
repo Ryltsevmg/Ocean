@@ -19,7 +19,7 @@ import McpServerManager from '../src/index.ts'
  * @returns The profile and manager entry owned by the test.
  */
 export async function managerProfile(ctx: Context, options: { id?: string; base?: unknown; user?: unknown } = {}) {
-  const home = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-mcp-manager-')))
+  const home = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-mcp-manager-')))
   const contexts: Context[] = []
   onTestFinished(async () => {
     for (const context of contexts) await context.fiber.dispose()
@@ -30,7 +30,7 @@ export async function managerProfile(ctx: Context, options: { id?: string; base?
   const bundle = join(dir, 'node_modules', 'test-mcp-bundle')
   mkdirSync(bundle, { recursive: true })
   writeFileSync(join(home, 'package.json'), '{"name":"test-installation"}\n')
-  writeFileSync(join(bundle, 'package.json'), JSON.stringify({ name: 'test-mcp-bundle', version: '1.0.0', dsh: { bundle: { patch: 'cordis.patch.yml' } } }))
+  writeFileSync(join(bundle, 'package.json'), JSON.stringify({ name: 'test-mcp-bundle', version: '1.0.0', ocean: { bundle: { patch: 'cordis.patch.yml' } } }))
   const id = options.id ?? 'mcp'
   writeFileSync(join(bundle, 'cordis.patch.yml'), JSON.stringify([{ insert: [
     { id, name: 'cordis:mcp-manager', config: options.base ?? {} },

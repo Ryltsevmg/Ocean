@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-client-ui-settings-plugins",
-  "description": "Built-in plugins settings section for the dsh web client: the Settings navigation entry and the tab chrome feature-owned tabs register into",
+  "description": "Built-in plugins settings section for the ocean web client: the Settings navigation entry and the tab chrome feature-owned tabs register into",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
@@ -26,7 +26,7 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-client-locale",

@@ -6,8 +6,8 @@
   en: 4a173bf52227a3b6
   zh: 76bb85595252765c
 /ocean-ocean-shell:
-  en: 59a0eef403679b44
-  zh: 88c538422e8cabb4
+  en: e206095f7d142e6e
+  zh: 3d9b78756666777b
 /ocean-ocean-shell/summary:
   en: bb40932744bc4b80
   zh: 22e2af1327b2f835
@@ -27,11 +27,11 @@
   en: 719b0708bf3cf1cf
   zh: 044f53d543960f42
 /ocean-ocean-shell/use-this-package/requests-and-resolved-specs:
-  en: e104e13a7dae9491
-  zh: 1b219491fabf780b
+  en: 6e77998b9c335cb5
+  zh: d9c6d93b3ef35b91
 /ocean-ocean-shell/use-this-package/choosing-and-composing-an-executor:
-  en: ddcf8a0c7a45e8d3
-  zh: e4ee99e2e27234fe
+  en: bf2cf247fcd3bf60
+  zh: 51aa4f6f02ec3e05
 /ocean-ocean-shell/use-this-package/the-shared-exit-status-contract:
   en: f4125282c1deab36
   zh: 46b8ee789ae68a9a
@@ -39,8 +39,8 @@
   en: d2192b68c2faf92b
   zh: 7678a2fd356d8587
 /ocean-ocean-shell/understand-the-implementation/design-philosophy:
-  en: 5faecee61b8dc100
-  zh: 4cee9cb4e682319d
+  en: 5a5667fe38d14aad
+  zh: f637de0ea5a0b883
 /ocean-ocean-shell/understand-the-implementation/source-map:
   en: 1e9231bae2662059
   zh: 2bac2b8e8fc08eb9
@@ -51,11 +51,11 @@
   en: 63853c610719e1bb
   zh: 09668e6fd34c9161
 /ocean-ocean-shell/further-exploration:
-  en: c85d29d5fcc93943
-  zh: e6987dac67890f15
+  en: 0250ef07804d156e
+  zh: 23a349b84207aeff
 /ocean-ocean-shell/model-experience:
-  en: 7dec7effc0b15288
-  zh: 6ac73faa9ae252ed
+  en: fdfa859655ff9f8c
+  zh: 2a072a5676b09102
 /ocean-ocean-shell/model-experience/kv-cache-effect:
   en: 40294c1c31b74824
   zh: 788a4799b1d65a8b

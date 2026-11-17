@@ -10,40 +10,40 @@ import type { DesktopFileDrag } from '@ocean/ocean-util-file-drag'
 
 /** IPC channel names kept private to the desktop application bundle. */
 export const DESKTOP_IPC = {
-  fileSave: 'dsh-desktop:file-save',
-  clipboardImageRead: 'dsh-desktop:clipboard-image-read',
-  shortcutsInput: 'dsh-desktop:shortcuts-input',
-  shortcutsCloseWindow: 'dsh-desktop:shortcuts-close-window',
-  shortcutsGet: 'dsh-desktop:shortcuts-get',
-  shortcutsEdit: 'dsh-desktop:shortcuts-edit',
-  shortcutsChanged: 'dsh-desktop:shortcuts-changed',
-  shortcutsRecording: 'dsh-desktop:shortcuts-recording',
-  boot: 'dsh-desktop:boot',
-  enterWorkspace: 'dsh-desktop:enter-workspace',
-  onboardingActive: 'dsh-desktop:onboarding-active',
-  onboardingApiKey: 'dsh-desktop:onboarding-api-key',
-  bootFailed: 'dsh-desktop:boot-failed',
-  browserAcquire: 'dsh-desktop:browser-acquire',
-  browserRelease: 'dsh-desktop:browser-release',
-  browserOpenRequested: 'dsh-desktop:browser-open-requested',
-  directoryPick: 'dsh-desktop:directory-pick',
-  fileDragPrepare: 'dsh-desktop:file-drag-prepare',
-  fileDragCancel: 'dsh-desktop:file-drag-cancel',
-  fileDragStart: 'dsh-desktop:file-drag-start',
-  fileDragRelease: 'dsh-desktop:file-drag-release',
-  deviceInfo: 'dsh-desktop:device-info',
-  localeBootstrap: 'dsh-desktop:locale-bootstrap',
-  localeChanged: 'dsh-desktop:locale-changed',
-  updatesChannelGet: 'dsh-desktop:updates-channel-get',
-  updatesChannelSet: 'dsh-desktop:updates-channel-set',
-  updatesChannelChanged: 'dsh-desktop:updates-channel-changed',
-  updatesStatus: 'dsh-desktop:updates-status',
-  updatesOpen: 'dsh-desktop:updates-open',
-  updatesPresentation: 'dsh-desktop:updates-presentation',
-  nativeThemeSet: 'dsh-desktop:native-theme-set',
-  windowFullscreen: 'dsh-desktop:window-fullscreen',
-  windowsAppearance: 'dsh-desktop:windows-appearance',
-  windowsMenu: 'dsh-desktop:windows-menu',
+  fileSave: 'ocean-desktop:file-save',
+  clipboardImageRead: 'ocean-desktop:clipboard-image-read',
+  shortcutsInput: 'ocean-desktop:shortcuts-input',
+  shortcutsCloseWindow: 'ocean-desktop:shortcuts-close-window',
+  shortcutsGet: 'ocean-desktop:shortcuts-get',
+  shortcutsEdit: 'ocean-desktop:shortcuts-edit',
+  shortcutsChanged: 'ocean-desktop:shortcuts-changed',
+  shortcutsRecording: 'ocean-desktop:shortcuts-recording',
+  boot: 'ocean-desktop:boot',
+  enterWorkspace: 'ocean-desktop:enter-workspace',
+  onboardingActive: 'ocean-desktop:onboarding-active',
+  onboardingApiKey: 'ocean-desktop:onboarding-api-key',
+  bootFailed: 'ocean-desktop:boot-failed',
+  browserAcquire: 'ocean-desktop:browser-acquire',
+  browserRelease: 'ocean-desktop:browser-release',
+  browserOpenRequested: 'ocean-desktop:browser-open-requested',
+  directoryPick: 'ocean-desktop:directory-pick',
+  fileDragPrepare: 'ocean-desktop:file-drag-prepare',
+  fileDragCancel: 'ocean-desktop:file-drag-cancel',
+  fileDragStart: 'ocean-desktop:file-drag-start',
+  fileDragRelease: 'ocean-desktop:file-drag-release',
+  deviceInfo: 'ocean-desktop:device-info',
+  localeBootstrap: 'ocean-desktop:locale-bootstrap',
+  localeChanged: 'ocean-desktop:locale-changed',
+  updatesChannelGet: 'ocean-desktop:updates-channel-get',
+  updatesChannelSet: 'ocean-desktop:updates-channel-set',
+  updatesChannelChanged: 'ocean-desktop:updates-channel-changed',
+  updatesStatus: 'ocean-desktop:updates-status',
+  updatesOpen: 'ocean-desktop:updates-open',
+  updatesPresentation: 'ocean-desktop:updates-presentation',
+  nativeThemeSet: 'ocean-desktop:native-theme-set',
+  windowFullscreen: 'ocean-desktop:window-fullscreen',
+  windowsAppearance: 'ocean-desktop:windows-appearance',
+  windowsMenu: 'ocean-desktop:windows-menu',
 } as const
 
 /** Desktop release update state rendered by desktop-owned UI. */
@@ -90,7 +90,7 @@ export interface DesktopUpdatePresentation {
 }
 
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
-export interface DshDesktopProductApi {
+export interface OceanDesktopProductApi {
   readonly fileActions: DesktopFileActions
   readonly protocolVersion: 1
   readonly browser: DesktopBrowserBridge
@@ -120,9 +120,9 @@ export const SCHEME = 'dsh-app'
  */
 export function assertDesktopSender(event: IpcMainInvokeEvent, hostnames: readonly string[]): void {
   const senderFrame = event.senderFrame
-  if (senderFrame === null) throw new Error('dsh desktop: rejected IPC without a sender frame')
+  if (senderFrame === null) throw new Error('ocean desktop: rejected IPC without a sender frame')
   const url = new URL(senderFrame.url)
   if (url.protocol !== `${SCHEME}:` || !hostnames.includes(url.hostname)) {
-    throw new Error('dsh desktop: rejected IPC from an unowned renderer')
+    throw new Error('ocean desktop: rejected IPC from an unowned renderer')
   }
 }

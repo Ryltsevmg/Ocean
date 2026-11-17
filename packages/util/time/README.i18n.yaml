@@ -5,39 +5,39 @@
 /:
   en: e9fc634b58a500a1
   zh: a0b98be02976e0cb
-/dsh-util-time:
-  en: bc299a9b8fe7717f
-  zh: 896661ee0c4edf25
-/dsh-util-time/summary:
+/ocean-util-time:
+  en: 52c46d564da1e8c0
+  zh: 3b4744c092211d0a
+/ocean-util-time/summary:
   en: ba3133430a3f11b7
   zh: 8e3c6c74d1a9b064
-/dsh-util-time/table-of-contents:
+/ocean-util-time/table-of-contents:
   en: d152484eb41ac6b4
   zh: f14f34fce35a8d90
-/dsh-util-time/use-this-package:
+/ocean-util-time/use-this-package:
   en: bbff250eba0f1b89
   zh: 0a618f05cc88ee2b
-/dsh-util-time/use-this-package/when-to-use-it:
-  en: 094e97351a65e8ea
-  zh: 519ff7be1121d9f4
-/dsh-util-time/use-this-package/entry-point:
+/ocean-util-time/use-this-package/when-to-use-it:
+  en: db7dc0c224a4b2d8
+  zh: 7e84fc3746289eb3
+/ocean-util-time/use-this-package/entry-point:
   en: 7ca7ddebcb6af6be
   zh: 4702a29079d6b8a7
-/dsh-util-time/understand-the-implementation:
+/ocean-util-time/understand-the-implementation:
   en: 402cdc78fc0f0dda
   zh: 3ddbee420e1a70a6
-/dsh-util-time/further-exploration:
-  en: 8aa95ebdfd1f323e
-  zh: c6879eac9fa6e087
-/dsh-util-time/model-experience:
-  en: 3ea15a23d9901c72
-  zh: c39eb7d446dd13af
-/dsh-util-time/model-experience/kv-cache-effect:
+/ocean-util-time/further-exploration:
+  en: e9f0a4e7a9a544ec
+  zh: ada790b19bf8f86d
+/ocean-util-time/model-experience:
+  en: 4ad3d3801fc47f0d
+  zh: 89a2d1a7b7cad536
+/ocean-util-time/model-experience/kv-cache-effect:
   en: daf6e45a18c087b0
   zh: e6714f1e65ed55ce
-/dsh-util-time/known-limitations-and-deferred-work:
-  en: 42d708c4ec711514
-  zh: cfa6ecca096baf82
-/dsh-util-time/known-limitations-and-deferred-work/dev-note:
+/ocean-util-time/known-limitations-and-deferred-work:
+  en: 4c1e6f1e74ff5ada
+  zh: fa2ac995eec81a87
+/ocean-util-time/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

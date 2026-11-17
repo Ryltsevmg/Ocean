@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-storage-json` 在配置的根目录下把领域数据存为可读 JSON，并注册为后端 `json`。默认的 `single` 布局为每个单元保存一份完整的 `<unit>.json` 文件；`per-record` 布局为每条记录保存一份带版本戳的文档。两种布局都以原子方式发布每个变更文件，领域层负责安排调用顺序。当运维方需要可检查文件且所选布局适合写入量时选择它；对于更大且频繁更新的单元则选择 SQLite。本后端只面向宿主侧，不贡献提示词、工具或 schema。
+`ocean-storage-json` 在配置的根目录下把领域数据存为可读 JSON，并注册为后端 `json`。默认的 `single` 布局为每个单元保存一份完整的 `<unit>.json` 文件；`per-record` 布局为每条记录保存一份带版本戳的文档。两种布局都以原子方式发布每个变更文件，领域层负责安排调用顺序。当运维方需要可检查文件且所选布局适合写入量时选择它；对于更大且频繁更新的单元则选择 SQLite。本后端只面向宿主侧，不贡献提示词、工具或 schema。
 
 ## 目录
 
@@ -39,7 +39,7 @@ kind: "package-reference"
 - name: '@ocean/ocean-storage'
 - name: '@ocean/ocean-storage-json'
   config:
-    root: /var/lib/dsh/data
+    root: /var/lib/ocean/data
 - name: '@ocean/ocean-storage-domain'
   config:
     backend: json

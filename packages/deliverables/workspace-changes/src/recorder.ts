@@ -267,7 +267,7 @@ export class TurnRecorder {
 
   /** This Session's temporary directory, created on first use. */
   private scratchDir(): Promise<string> {
-    this.scratch ??= mkdtemp(join(this.env.tempRoot, 'dsh-workspace-changes-'))
+    this.scratch ??= mkdtemp(join(this.env.tempRoot, 'ocean-workspace-changes-'))
     return this.scratch
   }
 

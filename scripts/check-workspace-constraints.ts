@@ -10,7 +10,7 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { load as loadYaml } from 'js-yaml'
 import { hasTypertRemoteNavigation } from './publication-payload.ts'
-import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
+import type { OceanBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { detailPath } from '../packages/util/plugin-detail/src/document.ts'
 import { bundlePatchFiles } from '../packages/boot/app-boot/src/profile.ts'
 import {
@@ -82,8 +82,8 @@ export interface PackageManifest {
   devDependencies?: Record<string, string>
   dependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
-  dsh?: {
-    bundle?: DshBundleManifest
+  ocean?: {
+    bundle?: OceanBundleManifest
   }
 }
 
@@ -257,7 +257,7 @@ export function detailDocumentFiles(packageDir: string): readonly string[] {
  * @param detailFiles - entries from {@link detailDocumentFiles}.
  * @returns the icon, deduplicated locale targets, and detail documents followed by runtime, package-asset, and declaration payloads.
  */
-export function expectedDshPackageFiles(manifest: PackageManifest, detailFiles: readonly string[] = []): readonly string[] {
+export function expectedOceanPackageFiles(manifest: PackageManifest, detailFiles: readonly string[] = []): readonly string[] {
   const localeFiles = new Set<string>()
   for (const resource of Object.keys(manifest.exports ?? {})) {
     if (!/^\.\/(?:.+\/)?locale\/[^/]+\.json$/u.test(resource)) continue
@@ -265,7 +265,7 @@ export function expectedDshPackageFiles(manifest: PackageManifest, detailFiles: 
     if (target?.startsWith('./') && target.endsWith('.json')) localeFiles.add(target.slice(2))
   }
   const browserClient = exportDefault(manifest, './client')
-  const bundle = manifest.dsh?.bundle
+  const bundle = manifest.ocean?.bundle
   const bundleFiles = bundle === undefined ? [] : bundlePatchFiles(bundle).map(file => file.replace(/^\.\//, ''))
   const extras = [
     ...bundleFiles,
@@ -378,19 +378,19 @@ function isReleaseMemberDirectory(dir: string): boolean {
 }
 
 /**
- * Require a dsh-family manifest to carry the workspace version.
+ * Require a ocean-family manifest to carry the workspace version.
  *
- * The dsh release sequence publishes packages/ and apps/ members and every
- * private dsh package on one shared version, written by `release:dsh` and
+ * The ocean release sequence publishes packages/ and apps/ members and every
+ * private ocean package on one shared version, written by `release:ocean` and
  * shared with the workspace root. This name test is that boundary: it covers
  * the family wherever the manifest lives, so apps/ members cannot drift with
  * only the release lane noticing.
  * @param manifest - the workspace package manifest.
- * @param expected - the version every dsh-family manifest must carry (the root's).
+ * @param expected - the version every ocean-family manifest must carry (the root's).
  * @returns one violation naming the manifest and the expected version, or
  * undefined when the manifest is compliant or not in the family.
  */
-export function checkDshFamilyVersion(manifest: PackageManifest, expected: string | undefined): string | undefined {
+export function checkOceanFamilyVersion(manifest: PackageManifest, expected: string | undefined): string | undefined {
   const name = manifest.name
   if (name !== '@ocean/ocean' && name?.startsWith('@ocean/ocean-') !== true) return undefined
   if (manifest.version !== expected) {
@@ -400,14 +400,14 @@ export function checkDshFamilyVersion(manifest: PackageManifest, expected: strin
 }
 
 /**
- * Check one workspace manifest against publication and dsh-package policy.
+ * Check one workspace manifest against publication and ocean-package policy.
  * @param workspace - package directory and parsed manifest.
  * @returns path-qualified policy violations.
  */
 export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): string[] {
   const errors: string[] = []
   const label = manifest.name ?? dir
-  const familyVersionError = checkDshFamilyVersion(manifest, repositoryVersion)
+  const familyVersionError = checkOceanFamilyVersion(manifest, repositoryVersion)
   if (familyVersionError !== undefined) errors.push(familyVersionError)
   const isNativePackageDir = dir.startsWith('native/system/packages/')
   const isPublicNativePackage = isNativePackageDir
@@ -434,7 +434,7 @@ export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): st
     //
     // Access is per release sequence, not per scope: the vendored framework and
     // the Landlock packages publish publicly because outside consumers install
-    // them, and the dsh family published publicly with its own sequence on
+    // them, and the ocean family published publicly with its own sequence on
     // 2026-08-13. No publish path passes `--access`; each packed manifest declares
     // it, and this gate requires every release member to be public.
     if (manifest.private === true) {
@@ -507,7 +507,7 @@ export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): st
       && !hasExportPair(manifest, './run-code', './lib/types/run-code.d.ts', './lib/run-code.js')) {
       errors.push(`${label}: exports["./run-code"] must expose lib/types/run-code.d.ts and lib/run-code.js`)
     }
-    const expectedFiles = expectedDshPackageFiles(manifest, detailDocumentFiles(join(root, dir)))
+    const expectedFiles = expectedOceanPackageFiles(manifest, detailDocumentFiles(join(root, dir)))
     if (!sameStringList(manifest.files, expectedFiles)) {
       errors.push(`${label}: package.json files must be ${JSON.stringify(expectedFiles)}`)
     }
@@ -543,8 +543,8 @@ function checkHierarchyShape(): string[] {
 }
 
 function checkRepositoryVersion(): string[] {
-  // The root carries the dsh release family's version, so a prerelease such as
-  // 0.0.1-rc.1 is a valid state between `release:dsh` and its publication.
+  // The root carries the ocean release family's version, so a prerelease such as
+  // 0.0.1-rc.1 is a valid state between `release:ocean` and its publication.
   if (repositoryVersion && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(repositoryVersion)) return []
   return ['package.json: version must be X.Y.Z with an optional prerelease segment']
 }
@@ -553,7 +553,7 @@ function checkRepositoryVersion(): string[] {
 const dependencySections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const
 
 /**
- * Require exact DSH ranges, tilde vendor/native ranges, and the workspace protocol elsewhere.
+ * Require exact OCEAN ranges, tilde vendor/native ranges, and the workspace protocol elsewhere.
  *
  * A hand-written range says nothing about the version the workspace actually
  * carries, and `pnpm pack` leaves it alone: `^0.0.1` published from version

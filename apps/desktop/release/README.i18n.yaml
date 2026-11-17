@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/release/README.md
 /ocean-linux-release-preparation:
-  en: 45fc5f877bfb5e6d
-  zh: 99070a220b54e90d
+  en: 5250a446c68cdf44
+  zh: 431e3a5f8f7822c5
 /ocean-linux-release-preparation/current-implementation:
   en: 7483380c9f8aae18
   zh: 9a11850287962719

@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-theme/README.md
 /:
-  en: e9c14ae3732deb3a
-  zh: fee230def9844d2d
+  en: 1802f6b38b51aed9
+  zh: 6cb350b94b045fcd
 /ocean-ocean-client-ui-theme:
-  en: 39e4b54cac0fbde6
-  zh: 3d1953c6006912d1
+  en: 1cd4000e274163fe
+  zh: 0441dfe3c514fbfb
 /ocean-ocean-client-ui-theme/summary:
-  en: d9832b31c4cb3ca4
-  zh: f2ec42bb5ae66188
+  en: df81dd28efa3fc33
+  zh: ef4e4649a9c83af3
 /ocean-ocean-client-ui-theme/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -27,23 +27,23 @@
   en: 5244fc168d0a03f8
   zh: c7ab12fdf8c6c55b
 /ocean-ocean-client-ui-theme/use-this-package/pre-plugin-palette:
-  en: 18f62cd5e6d32570
-  zh: 728ddd17d7610470
+  en: ecc4f38034942f03
+  zh: 9a3e47734c3bcee8
 /ocean-ocean-client-ui-theme/understand-the-implementation:
-  en: 3eb9b0e3365b2db3
-  zh: c73acc55dd897266
+  en: 1900b789238a1382
+  zh: 311fd9de0ee3dd34
 /ocean-ocean-client-ui-theme/understand-the-implementation/stylesheets:
-  en: 148903d8cd6580f5
-  zh: 7ff2ff90954798b8
+  en: a046c35fdcbaeb5b
+  zh: cbd430273b4ab2f3
 /ocean-ocean-client-ui-theme/understand-the-implementation/scrollbar-rebinding:
-  en: bf76e7c34a331595
-  zh: 5accd0260ef7c61e
+  en: 7aece4b64168e637
+  zh: d873c16615796713
 /ocean-ocean-client-ui-theme/understand-the-implementation/preference-persistence:
-  en: b1f0b0bce5e53bae
-  zh: 26ded298f85834ae
+  en: c79be658f21d950a
+  zh: 2089e7711fa4ced8
 /ocean-ocean-client-ui-theme/further-exploration:
-  en: dd00c8abf223d43c
-  zh: 5ea1ea10007b1d61
+  en: de1044b0e52056aa
+  zh: a91d2c61e86e99e3
 /ocean-ocean-client-ui-theme/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a

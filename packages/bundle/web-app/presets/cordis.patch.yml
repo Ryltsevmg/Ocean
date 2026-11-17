@@ -8,7 +8,7 @@
         id: cordis
         order: 4
         plugins:
-          # The dsh-doc skill owns plugin implementation and authorization guidance.
+          # The ocean-doc skill owns plugin implementation and authorization guidance.
           - id: persona
             name: '@ocean/ocean-persona'
             config:

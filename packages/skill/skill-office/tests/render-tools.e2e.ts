@@ -9,14 +9,14 @@ import { parseSessionLog } from '@ocean/ocean-llm-replay'
 import { expectNoRenderContext, officeCalls, officeImages, officeModelPatches, officeToolPatches } from './fixtures/real-office.ts'
 
 const repo = fileURLToPath(new URL('../../../../', import.meta.url))
-const runtime = process.env.DSH_PRIMARY_RUNTIME
+const runtime = process.env.OCEAN_PRIMARY_RUNTIME
 const python = runtime && join(runtime, 'dependencies/python', process.platform === 'win32' ? 'python.exe' : 'bin/python3')
 
 const launch = {
   binScript: join(repo, 'apps/cli/src/bin.ts'), sourceImport: 'tsx/esm' as const, tsconfigPath: join(repo, 'tsconfig.base.json'),
   configPath: 'office.patch.json', processTimeoutMs: 110_000,
-  env: { DSH_PRIMARY_RUNTIME: runtime, DSH_PERMISSION_MODE: 'danger-full-access', DSH_TELEMETRY_DISABLED: '1',
-    HTTP_PROXY: process.env.DSH_OFFICE_TEST_PROXY, HTTPS_PROXY: process.env.DSH_OFFICE_TEST_PROXY },
+  env: { OCEAN_PRIMARY_RUNTIME: runtime, OCEAN_PERMISSION_MODE: 'danger-full-access', OCEAN_TELEMETRY_DISABLED: '1',
+    HTTP_PROXY: process.env.OCEAN_OFFICE_TEST_PROXY, HTTPS_PROXY: process.env.OCEAN_OFFICE_TEST_PROXY },
 }
 
 async function prepareOffice(cwd: string) {
@@ -40,7 +40,7 @@ async function sessionEvents(cwd: string) {
 it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each([{ format: 'docx', mode: 'native' }, { format: 'pdf', mode: 'native' }, { format: 'docx', mode: 'ptc' }])('renders $format with office_render in $mode mode', async ({ format, mode }) => {
   let original: Buffer | undefined
   await runLoaderSmoke({
-    label: 'Office rendering', tempDirPrefix: 'dsh-office-render-',
+    label: 'Office rendering', tempDirPrefix: 'ocean-office-render-',
     ...launch,
     binArgs: ['--profile', 'headless', '--patch', 'office.patch.json',
       ...mode === 'ptc' ? ['--patch', join(repo, 'apps/cli/config/examples/ptc.yml')] : [],
@@ -71,7 +71,7 @@ it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each([{ format: 'docx', mod
 it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime)('keeps Office skills and the renderer unloaded for an ordinary task', async () => {
   await runLoaderSmoke({
     ...launch,
-    label: 'ordinary task with Office routing', tempDirPrefix: 'dsh-office-unused-',
+    label: 'ordinary task with Office routing', tempDirPrefix: 'ocean-office-unused-',
     binArgs: ['--profile', 'headless', '--patch', 'office.patch.json', 'What is 17 times 23? Reply with just the integer.'],
     prepare: prepareOffice,
     async inspect(cwd) {
@@ -90,7 +90,7 @@ it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime)('exports PDF with office_co
   let original: Buffer | undefined
   await runLoaderSmoke({
     ...launch,
-    label: 'Office PDF export', tempDirPrefix: 'dsh-office-export-',
+    label: 'Office PDF export', tempDirPrefix: 'ocean-office-export-',
     binArgs: ['--profile', 'headless', '--patch', 'office.patch.json',
       'Convert input.docx to result.pdf, preserving input.docx. Do not change the document content. Respond briefly in English.'],
     async prepare(cwd) {

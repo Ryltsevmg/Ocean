@@ -5,7 +5,7 @@ import type { ConversationStoreState } from './contract/views.ts'
 import type { DraftInput, DraftSnapshot } from './contract/draft-editor.ts'
 import { parseStoredDraft } from './draft.ts'
 
-const CONVERSATION_STORE_KEY = 'dsh.conversation'
+const CONVERSATION_STORE_KEY = 'ocean.conversation'
 
 /** Declared write set for the Conversation shell. */
 type ConversationActions = {

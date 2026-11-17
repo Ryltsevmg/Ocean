@@ -17,7 +17,7 @@ import SubagentRuntime from '../src/index.ts'
 import { TestSessionQuery } from './test-session-query.ts'
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-child-directory-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-child-directory-'))
   const origin = join(root, 'origin')
   const first = join(origin, 'first')
   const second = join(origin, 'second')

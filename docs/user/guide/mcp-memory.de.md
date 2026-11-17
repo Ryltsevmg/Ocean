@@ -6,17 +6,17 @@
 [English](mcp-memory.md) | [中文](mcp-memory.zh.md) | [Русский](mcp-memory.ru.md) | [日本語](mcp-memory.ja.md) | [Español](mcp-memory.es.md) | [Français](mcp-memory.fr.md) | Deutsch | [Português](mcp-memory.pt.md) | [한국어](mcp-memory.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Diese drei **standardmäßig deaktivierten Referenzkonfigurationen** verbinden jeweils ein Speichersystem über [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md) mit DSH. Wählen Sie eine Konfiguration oder kopieren Sie denselben generischen MCP-Eintrag für einen anderen Server.
+Diese drei **standardmäßig deaktivierten Referenzkonfigurationen** verbinden jeweils ein Speichersystem über [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md) mit OCEAN. Wählen Sie eine Konfiguration oder kopieren Sie denselben generischen MCP-Eintrag für einen anderen Server.
 
 Diese Konfigurationen von Drittanbietern werden nur als Interoperabilitätsbeispiele zur Verfügung gestellt. Ihre Aufnahme bedeutet nicht die Billigung, Empfehlung, Partnerschaft oder laufende Unterstützung durch das Ocean-Projekt.
 
-<a id="what-dsh-does"></a>
+<a id="what-ocean-does"></a>
 
-## Was DSH tut
+## Was OCEAN tut
 
-DSH liest das ausgewählte Cordis-Overlay, startet den konfigurierten stdio-Befehl oder verbindet sich mit der konfigurierten Streamable-HTTP-URL. DSH ermittelt die MCP-Tools und stellt sie unter `mcp__<serverName>__<tool>` bereit. DSH lädt den Server nicht herunter, initialisiert seine Datenbank nicht, wählt keinen Modell- oder Embedding-Anbieter aus, erstellt kein Cloud-Konto, migriert keine Anbieterdaten und überwacht keinen separaten HTTP-Dienst. Bei stdio startet und stoppt der generische Client den Kindprozess mit dem DSH-Plugin. Bei HTTP muss der Server bereits laufen.
+OCEAN liest das ausgewählte Cordis-Overlay, startet den konfigurierten stdio-Befehl oder verbindet sich mit der konfigurierten Streamable-HTTP-URL. OCEAN ermittelt die MCP-Tools und stellt sie unter `mcp__<serverName>__<tool>` bereit. OCEAN lädt den Server nicht herunter, initialisiert seine Datenbank nicht, wählt keinen Modell- oder Embedding-Anbieter aus, erstellt kein Cloud-Konto, migriert keine Anbieterdaten und überwacht keinen separaten HTTP-Dienst. Bei stdio startet und stoppt der generische Client den Kindprozess mit dem OCEAN-Plugin. Bei HTTP muss der Server bereits laufen.
 
-Vor dem Start des Kindprozesses entfernt die stdio-Verbindung alle `DSH_*`-Variablen sowie Umgebungsvariablen, deren Namen üblicherweise auf Anmeldedaten hinweisen. Der Kindprozess erbt die übrigen Variablen. Jedes Beispiel fügt nur den benötigten Konfigurationswert hinzu. Wenn eine optionale Funktion des Servers ein weiteres Geheimnis benötigt, geben Sie die entsprechende Variable in `config.env` an, ohne den geheimen Wert direkt in YAML einzutragen.
+Vor dem Start des Kindprozesses entfernt die stdio-Verbindung alle `OCEAN_*`-Variablen sowie Umgebungsvariablen, deren Namen üblicherweise auf Anmeldedaten hinweisen. Der Kindprozess erbt die übrigen Variablen. Jedes Beispiel fügt nur den benötigten Konfigurationswert hinzu. Wenn eine optionale Funktion des Servers ein weiteres Geheimnis benötigt, geben Sie die entsprechende Variable in `config.env` an, ohne den geheimen Wert direkt in YAML einzutragen.
 
 <a id="choose-one"></a>
 
@@ -32,15 +32,15 @@ Vor dem Start des Kindprozesses entfernt die stdio-Verbindung alle `DSH_*`-Varia
 
 ## Einen Server aktivieren
 
-Übergeben Sie ein Overlay an DSH:
+Übergeben Sie ein Overlay an OCEAN:
 
 ```sh
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
 ```
 
 Ersetzen Sie den Dateinamen durch `mcp-reference-memory.cordis.yml` oder `engram.cordis.yml`. Der Pfad kann auf eine Kopie an einem beliebigen Ort auf dem Datenträger zeigen. Das ausgelieferte Profil enthält keinen Speicherserver. Ohne `--patch` bleiben alle drei deaktiviert.
 
-Um die Auswahl über mehrere Starts hinweg beizubehalten, übernehmen Sie den einzelnen `insert`-Patch der gewählten Datei in die Benutzer-Patchdatei `$DSH_HOME/profiles/<name>/cordis.patch.yml` für ein Profil oder `$DSH_HOME/cordis.patch.yml` für alle Profile auf dem Rechner. Überschreiben Sie keine vorhandene Datei, da sie bereits andere Benutzer-Patches enthalten kann.
+Um die Auswahl über mehrere Starts hinweg beizubehalten, übernehmen Sie den einzelnen `insert`-Patch der gewählten Datei in die Benutzer-Patchdatei `$OCEAN_HOME/profiles/<name>/cordis.patch.yml` für ein Profil oder `$OCEAN_HOME/cordis.patch.yml` für alle Profile auf dem Rechner. Überschreiben Sie keine vorhandene Datei, da sie bereits andere Benutzer-Patches enthalten kann.
 
 <a id="provider-setup"></a>
 
@@ -50,10 +50,10 @@ Um die Auswahl über mehrere Starts hinweg beizubehalten, übernehmen Sie den ei
 
 ```sh
 npm install --global memorix@1.3.0
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
 ```
 
-Memorix arbeitet im lokalen heuristischen Modus ohne LLM oder Embedding-Dienst. Optionale Anbieter konfigurieren Sie in `~/.memorix/config.toml` von Memorix oder in `memorix.toml` im Projekt. Das Beispiel lässt Memorix das Git-Projekt anhand des DSH-Arbeitsverzeichnisses erkennen und das Standardverzeichnis `~/.memorix/data` verwenden. Setzen Sie vor dem Start von DSH `MEMORIX_DATA_DIR`, um dieses Verzeichnis zu ändern.
+Memorix arbeitet im lokalen heuristischen Modus ohne LLM oder Embedding-Dienst. Optionale Anbieter konfigurieren Sie in `~/.memorix/config.toml` von Memorix oder in `memorix.toml` im Projekt. Das Beispiel lässt Memorix das Git-Projekt anhand des OCEAN-Arbeitsverzeichnisses erkennen und das Standardverzeichnis `~/.memorix/data` verwenden. Setzen Sie vor dem Start von OCEAN `MEMORIX_DATA_DIR`, um dieses Verzeichnis zu ändern.
 
 <a id="mcp-reference-memory"></a>
 
@@ -61,10 +61,10 @@ Memorix arbeitet im lokalen heuristischen Modus ohne LLM oder Embedding-Dienst. 
 
 ```sh
 npm install --global @modelcontextprotocol/server-memory@2026.7.4
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
 ```
 
-Dieser Referenzserver speichert einen lokalen Wissensgraphen. Seine Tools verwalten Entitäten, Beziehungen und Beobachtungen und können Einträge lesen, durchsuchen und öffnen. Ein Modell oder Embedding-Dienst ist dafür nicht erforderlich. Das Beispiel speichert die JSONL-Datei unter `$HOME/.dsh-mcp-reference-memory.jsonl` außerhalb des Verzeichnisses des installierten npm-Pakets. Setzen Sie vor dem Start von DSH `MEMORY_FILE_PATH`, um den Speicherort zu ändern.
+Dieser Referenzserver speichert einen lokalen Wissensgraphen. Seine Tools verwalten Entitäten, Beziehungen und Beobachtungen und können Einträge lesen, durchsuchen und öffnen. Ein Modell oder Embedding-Dienst ist dafür nicht erforderlich. Das Beispiel speichert die JSONL-Datei unter `$HOME/.ocean-mcp-reference-memory.jsonl` außerhalb des Verzeichnisses des installierten npm-Pakets. Setzen Sie vor dem Start von OCEAN `MEMORY_FILE_PATH`, um den Speicherort zu ändern.
 
 Die Suche gleicht Teilzeichenfolgen in Entitätsnamen, Typen und Beobachtungen ab und ignoriert die Groß- und Kleinschreibung. Der Server bietet keine semantische Suche, Embeddings, automatische Zusammenfassungen, Konfliktauflösung oder Regeln zum Vergessen.
 
@@ -74,10 +74,10 @@ Die Suche gleicht Teilzeichenfolgen in Entitätsnamen, Typen und Beobachtungen a
 
 ```sh
 go install github.com/Gentleman-Programming/engram/cmd/engram@v1.20.0
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/engram.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/engram.cordis.yml"
 ```
 
-Engram verwaltet die Speicherung und die Projektauswahl. Es verwendet standardmäßig `~/.engram` und erkennt das Git-Projekt anhand des DSH-Arbeitsverzeichnisses. Mit den Umgebungsvariablen `ENGRAM_DATA_DIR` oder `ENGRAM_PROJECT` können Sie diese Werte überschreiben.
+Engram verwaltet die Speicherung und die Projektauswahl. Es verwendet standardmäßig `~/.engram` und erkennt das Git-Projekt anhand des OCEAN-Arbeitsverzeichnisses. Mit den Umgebungsvariablen `ENGRAM_DATA_DIR` oder `ENGRAM_PROJECT` können Sie diese Werte überschreiben.
 
 <a id="optional-shared-model-instruction"></a>
 
@@ -87,7 +87,7 @@ Fügen Sie diese kurze, herstellerneutrale Anleitung zu Ihren vorhandenen Modell
 
 > Wenn der Benutzer Sie bittet, sich etwas zu merken, rufen Sie ein Tool zum Schreiben in den Speicher auf. Wenn frühere Informationen relevant sein könnten, durchsuchen Sie den Speicher und verwenden Sie die relevanten Ergebnisse.
 
-Diese Anweisung ergänzt die bestehenden Anweisungen. Die Beispiele lassen die im Systemprompt von DSH festgelegte Rolle bestehen.
+Diese Anweisung ergänzt die bestehenden Anweisungen. Die Beispiele lassen die im Systemprompt von OCEAN festgelegte Rolle bestehen.
 
 <a id="verify-write-fresh-session-recall-and-use"></a>
 
@@ -95,11 +95,11 @@ Diese Anweisung ergänzt die bestehenden Anweisungen. Die Beispiele lassen die i
 
 Verwenden Sie einen eindeutigen Wert und halten Sie den Speicherumfang des Anbieters durchweg unverändert:
 
-1. Bitten Sie in DSH-Sitzung A: `Remember that my validation drink is lapsang-<unique suffix>.` Prüfen Sie, ob das Modell das Schreibtool des Anbieters aufgerufen und das Tool Erfolg gemeldet hat.
-2. Erstellen Sie DSH-Sitzung B im selben laufenden Host. Kopieren Sie die Unterhaltung aus Sitzung A nicht. Fragen Sie: `What is my validation drink? Check memory.` Prüfen Sie, ob das Modell das Such- oder Abrufwerkzeug des Anbieters aufgerufen und den Wert zurückgegeben hat.
+1. Bitten Sie in OCEAN-Sitzung A: `Remember that my validation drink is lapsang-<unique suffix>.` Prüfen Sie, ob das Modell das Schreibtool des Anbieters aufgerufen und das Tool Erfolg gemeldet hat.
+2. Erstellen Sie OCEAN-Sitzung B im selben laufenden Host. Kopieren Sie die Unterhaltung aus Sitzung A nicht. Fragen Sie: `What is my validation drink? Check memory.` Prüfen Sie, ob das Modell das Such- oder Abrufwerkzeug des Anbieters aufgerufen und den Wert zurückgegeben hat.
 3. Fragen Sie noch in Sitzung B: `Use that preference to suggest one drink for the meeting.` Bestätigen Sie, dass die Antwort den zurückgerufenen Wert verwendet.
 
-Erstellen Sie eine neue DSH-Sitzung, ohne den Host neu zu starten. Wenn ein MCP-Kindprozess abstürzt, versucht DSH mit zunehmenden Wartezeiten, die Verbindung wiederherzustellen, und synchronisiert danach die Tools erneut. Die Tools bleiben aufgelistet, und Aufrufe schlagen nur während der Unterbrechung fehl. Sind die Wiederverbindungsversuche ausgeschöpft, meldet DSH die Tools ab und wartet auf ein Neuladen oder einen Neustart. Die erste Erkennung erfolgt asynchron. Warten Sie deshalb vor der ersten Testanfrage, bis die `mcp__...`-Tools des Anbieters verfügbar sind.
+Erstellen Sie eine neue OCEAN-Sitzung, ohne den Host neu zu starten. Wenn ein MCP-Kindprozess abstürzt, versucht OCEAN mit zunehmenden Wartezeiten, die Verbindung wiederherzustellen, und synchronisiert danach die Tools erneut. Die Tools bleiben aufgelistet, und Aufrufe schlagen nur während der Unterbrechung fehl. Sind die Wiederverbindungsversuche ausgeschöpft, meldet OCEAN die Tools ab und wartet auf ein Neuladen oder einen Neustart. Die erste Erkennung erfolgt asynchron. Warten Sie deshalb vor der ersten Testanfrage, bis die `mcp__...`-Tools des Anbieters verfügbar sind.
 
 <a id="bring-another-mcp-server"></a>
 

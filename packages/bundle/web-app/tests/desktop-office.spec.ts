@@ -10,7 +10,7 @@ import AgentRegistry from '@ocean/ocean-agent'
 import { loadOverlayPatches } from '@ocean/ocean-app-boot'
 import { provideWorkingDirectoryFixture } from '@ocean/ocean-agent-loop-testkit'
 import LocalFileSystem from '@ocean/ocean-fs-local'
-import { dshHomePath } from '@ocean/ocean-home-paths'
+import { oceanHomePath } from '@ocean/ocean-home-paths'
 import { ToolCallId } from '@ocean/ocean-llm'
 import OfficeKit from '@ocean/ocean-office-kit'
 import SessionProjectionRegistry from '@ocean/ocean-session-projection'
@@ -57,10 +57,10 @@ it('mounts the Office tools in the standard and PTC presets and omits it from th
 })
 
 async function boot(profile: string, primaryRuntime: (root: string) => string | undefined, mounted: readonly string[] = ROWS) {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-desktop-office-rows-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'ocean-desktop-office-rows-')))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
-  vi.stubEnv('DSH_HOME', join(root, 'home'))
-  vi.stubEnv('DSH_PRIMARY_RUNTIME', primaryRuntime(root))
+  vi.stubEnv('OCEAN_HOME', join(root, 'home'))
+  vi.stubEnv('OCEAN_PRIMARY_RUNTIME', primaryRuntime(root))
   const nodePath = join(root, 'primary-runtime', 'dependencies', 'node', 'bin', process.platform === 'win32' ? 'node.exe' : 'node')
   await mkdir(dirname(nodePath), { recursive: true })
   await writeFile(nodePath, '')
@@ -72,7 +72,7 @@ async function boot(profile: string, primaryRuntime: (root: string) => string | 
     name: profile, dir: '/profile', patchPath: '/profile/cordis.patch.yml', installAnchor: join(root, 'package.json'),
     cwd: workspace, home: '/home', startedBundles: [], overlays: [], telemetryDisabledEnv: undefined,
   })
-  ctx.provide('dshHomePath', dshHomePath)
+  ctx.provide('oceanHomePath', oceanHomePath)
   provideWorkingDirectoryFixture(ctx, workspace)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(SessionProjectionRegistry)
@@ -119,7 +119,7 @@ it('mounts packaged Desktop skills with the primary runtime Python beside the Of
   const { ctx, root } = await boot('desktop', root => join(root, 'primary-runtime'))
   expect(ctx.loader.resolve('skill-office').fiber?.effectiveConfig).toStrictEqual({ pythonEnvironment: 'workspace-dependencies' })
   expect(ctx.loader.resolve('workspace-dependencies').fiber?.effectiveConfig).toEqual({
-    source: join(root, 'primary-runtime'), root: join(root, 'home', 'dsh-runtimes', 'dsh-primary-runtime'),
+    source: join(root, 'primary-runtime'), root: join(root, 'home', 'ocean-runtimes', 'ocean-primary-runtime'),
   })
   expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(names)
   expect((await ctx.skills.get('office-docx'))?.resourceBase).toEqual({ kind: 'directory', path: join(assets, 'office-docx').split(sep).join('/') })

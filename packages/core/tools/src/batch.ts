@@ -8,7 +8,7 @@
  * Abort records synthetic error results for skipped calls so replay stays
  * valid. A terminal scheduler failure rejects after draining; the owning step
  * records conservative recovery results before closing.
- * @module dsh-tools/batch
+ * @module ocean-tools/batch
  */
 
 import { ToolBatchExecutionError } from './executor.ts'

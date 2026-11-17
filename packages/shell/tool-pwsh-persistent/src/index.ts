@@ -65,8 +65,8 @@ function maybeTruncate(content: string, maxOutputChars: number, incomplete = fal
 function markers(): CommandMarkers {
   const nonce = randomUUID()
   return {
-    start: `__DSH_PERSISTENT_PWSH_START_${nonce}__`,
-    end: `__DSH_PERSISTENT_PWSH_END_${nonce}:`,
+    start: `__OCEAN_PERSISTENT_PWSH_START_${nonce}__`,
+    end: `__OCEAN_PERSISTENT_PWSH_END_${nonce}:`,
   }
 }
 

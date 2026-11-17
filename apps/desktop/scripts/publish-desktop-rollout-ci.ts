@@ -49,11 +49,11 @@ export async function prepareDesktopRolloutCi(env: NodeJS.ProcessEnv) {
     || source.qualification !== (source.target === 'win-x64' ? 'signed' : 'notarized')) {
     throw new Error('desktop rollout: repository or release qualification mismatch')
   }
-  const config = await readDesktopPublishConfig(env.DSH_PACKAGING_CONFIG_DIR!, source.preset)
+  const config = await readDesktopPublishConfig(env.OCEAN_PACKAGING_CONFIG_DIR!, source.preset)
   const environment = source.preset === 'test'
-    ? { DSH_DESKTOP_AUTO_UPDATE_ENV: 'test', DOWNLOAD_TEST_ORIGIN: config.origin,
+    ? { OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'test', DOWNLOAD_TEST_ORIGIN: config.origin,
       DOWNLOAD_TEST_RELEASE_ID: source.testReleaseId ?? '', DOWNLOAD_TEST_COS_BUCKET: config.bucket }
-    : { DSH_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: config.origin, DOWNLOAD_PROD_COS_BUCKET: config.bucket }
+    : { OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: config.origin, DOWNLOAD_PROD_COS_BUCKET: config.bucket }
   const plan = await prepareDesktopRollout(retainedDesktopPath(root, route.runId, route.attempt), manifest, environment)
   const destination = `${config.bucket}/${plan.upload.publicUrl}${source.channel}`
   const recordsRoot = join(dirname(root), 'upload-records')

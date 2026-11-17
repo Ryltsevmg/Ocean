@@ -136,12 +136,12 @@ describe('web e2e: CJK-adjacent Markdown strong emphasis', () => {
       }
       const restoreFont = await page.evaluateHandle(() => {
         const style = document.body.style
-        const before = style.getPropertyValue('--dsh-content-font-size')
-        const priority = style.getPropertyPriority('--dsh-content-font-size')
-        style.setProperty('--dsh-content-font-size', '18px')
+        const before = style.getPropertyValue('--ocean-content-font-size')
+        const priority = style.getPropertyPriority('--ocean-content-font-size')
+        style.setProperty('--ocean-content-font-size', '18px')
         return () => {
-          if (before) style.setProperty('--dsh-content-font-size', before, priority)
-          else style.removeProperty('--dsh-content-font-size')
+          if (before) style.setProperty('--ocean-content-font-size', before, priority)
+          else style.removeProperty('--ocean-content-font-size')
         }
       })
       try {

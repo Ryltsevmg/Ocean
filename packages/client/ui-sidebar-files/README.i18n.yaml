@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-sidebar-files/README.md
 /:
-  en: d7dbdeee1744fac0
-  zh: 35dc07a9e797f855
+  en: f95e74453d493f87
+  zh: aed0bae7e024e042
 /ocean-ocean-client-ui-sidebar-files:
-  en: d585f1ebf7a7f204
-  zh: 64fa0e80ac87a044
+  en: 691595422176c78e
+  zh: 612da80becb96e51
 /ocean-ocean-client-ui-sidebar-files/summary:
   en: 46067f0415ea2e76
   zh: f0b48804ad460a05
@@ -15,14 +15,14 @@
   en: 81cb6e051699a7b4
   zh: 566d0278acae69fa
 /ocean-ocean-client-ui-sidebar-files/what-it-registers:
-  en: 5430fa3047478df7
-  zh: e37e5217d050eabf
+  en: 260758f272bc1f6c
+  zh: a36bab5a5e518363
 /ocean-ocean-client-ui-sidebar-files/the-navigator:
-  en: 3424600b15bde2d2
-  zh: 2cf1c99ffef2ad50
+  en: b3b9f2954cead2d9
+  zh: a65aa34e89f96349
 /ocean-ocean-client-ui-sidebar-files/the-tree:
-  en: 0c0cfdd5a3c2b65e
-  zh: 5968034cdc833d78
+  en: c4c618e69a6e55dd
+  zh: 9956b2797abf065c
 /ocean-ocean-client-ui-sidebar-files/search:
   en: 0bca180f476f8710
   zh: 0fe8bffc9becb9e0

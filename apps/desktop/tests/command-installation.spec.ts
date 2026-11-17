@@ -39,16 +39,16 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 let compiled: string
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-command-link-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-command-link-'))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const launcher = join(root, 'desktop-launcher')
   await writeFile(launcher, 'desktop\n', { mode: 0o755 })
-  return { root, options: { destination: join(root, 'dsh'), launcher, linkHelper: join(compiled, 'link-entry') } }
+  return { root, options: { destination: join(root, 'ocean'), launcher, linkHelper: join(compiled, 'link-entry') } }
 }
 
 describe.skipIf(process.platform === 'win32')('macOS command entry ownership', () => {
   beforeAll(async () => {
-    compiled = await mkdtemp(join(tmpdir(), 'dsh-command-control-'))
+    compiled = await mkdtemp(join(tmpdir(), 'ocean-command-control-'))
     if (process.platform === 'darwin') prepareCommandLink(compiled, process.arch === 'arm64' ? 'arm64' : 'x64', '13.0')
   })
   afterAll(async () => { if (compiled !== undefined) await rm(compiled, { recursive: true, force: true }) })

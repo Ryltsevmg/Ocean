@@ -325,7 +325,7 @@ describe('page Markdown actions', () => {
     expect(copied).toBeUndefined()
     fireEvent.click(button)
     expect(fetchMock).toHaveBeenCalledOnce()
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/en/guide/quickstart.md?dsh-raw=1')
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/en/guide/quickstart.md?ocean-raw=1')
     expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal)
     await nextTick()
     expect(button).toHaveProperty('disabled', false)
@@ -473,7 +473,7 @@ describe('page Markdown actions', () => {
       expect(getByRole(host, 'status').textContent).toBe('')
       fireEvent.click(getByRole(host, 'button', { name: change === 'route' ? 'Copy page' : '复制页面' }))
       await waitFor(() => { expect(getByRole(host, 'status').textContent).toBe(change === 'route' ? 'Markdown copied.' : '已复制 Markdown。') })
-      expect(fetchMock.mock.calls[1]?.[0]).toBe(change === 'route' ? '/en/reference/index.md?dsh-raw=1' : '/guide/quickstart.md?dsh-raw=1')
+      expect(fetchMock.mock.calls[1]?.[0]).toBe(change === 'route' ? '/en/reference/index.md?ocean-raw=1' : '/guide/quickstart.md?ocean-raw=1')
     }
   })
 })

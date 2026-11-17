@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "deepseek-harness-runtime-bin"
 version = "0.0.0.dev0"
-description = "Bundled dsh CLI runtime for the Ocean Python SDK"
+description = "Bundled ocean CLI runtime for the Ocean Python SDK"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -18,9 +18,10 @@ Issues = "https://github.com/deepseek-ai/deepseek-harness/issues"
 Source = "https://github.com/deepseek-ai/deepseek-harness"
 
 [project.scripts]
+ocean = "deepseek_harness_runtime:main"
 dsh = "deepseek_harness_runtime:main"
 
-# Include the injected dsh executable and sidecars; exclude the dev-only node closure.
+# Include the injected ocean executable and sidecars; exclude the dev-only node closure.
 [tool.hatch.build]
 artifacts = [
   "src/deepseek_harness_runtime/runtime/deepseek-harness-sdk-runtime-*",

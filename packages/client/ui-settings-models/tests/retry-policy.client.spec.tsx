@@ -12,7 +12,7 @@ import { settingsSchema } from './settings-schema.client.ts'
 
 afterEach(cleanup)
 
-// The `retryPolicy` schema both adapters embed (`RetryPolicySchema` in dsh-llm).
+// The `retryPolicy` schema both adapters embed (`RetryPolicySchema` in ocean-llm).
 const backoff = Schema.object({
   initialDelayMs: Schema.number().min(Number.MIN_VALUE).max(2_147_483_647).default(500),
   maxDelayMs: Schema.number().min(Number.MIN_VALUE).max(2_147_483_647).default(10_000),

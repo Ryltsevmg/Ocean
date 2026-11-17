@@ -216,7 +216,7 @@ interface World {
  * and its model stream held.
  */
 async function sendFromOpenedGroup(browser: Browser, id: string, answerParagraphs: number): Promise<World> {
-  const replayDir = await mkdtemp(join(tmpdir(), 'dsh-open-fold-'))
+  const replayDir = await mkdtemp(join(tmpdir(), 'ocean-open-fold-'))
   await writeFile(join(replayDir, 'replay.override.json'), JSON.stringify([reply()]))
   const scaffold = await launchWebScaffold({
     replayFixture: join(replayDir, 'override-only.jsonl'),

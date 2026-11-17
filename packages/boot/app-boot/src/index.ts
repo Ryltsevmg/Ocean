@@ -1,7 +1,7 @@
 /**
- * Shared boot glue for `dsh` profiles, including the CLI packaged by the Python runtime wheel: load the gitignored
+ * Shared boot glue for `ocean` profiles, including the CLI packaged by the Python runtime wheel: load the gitignored
  * `.env`, install the fail-loud Loader guards, resolve the config path (snapshot-aware), load the
- * optional user patch layers from the Harness home (`~/.dsh`), expose its path resolver to
+ * optional user patch layers from the Harness home (`~/.ocean`), expose its path resolver to
  * config expressions, and drive the Cordis Loader against a leaf `cordis.yml` until the tree settles.
  * @module @ocean/ocean-app-boot
  */
@@ -17,11 +17,11 @@ import { Context, type Fiber, type FiberState } from '@deepseek-ai/cordis'
 import Loader, { type Entry, type EntryGroup, type EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import Include, { applyEntryPatches, entryListSchema, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import Group from '@deepseek-ai/cordis-plugin-group'
-import { dshHomePath, resolveDshHome } from '@ocean/ocean-home-paths'
+import { oceanHomePath, resolveOceanHome } from '@ocean/ocean-home-paths'
 import { createLaunchEnvironmentSnapshot, type LaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
 export { readBundlePatches, readProfilePatches, resolveTelemetryPatch, type ProfileContext, type ProfilePnpmInvocation } from './profile-context.ts'
 export { sanitizeProfile } from './profile-sanitize.ts'
-export { getDshRuntimeVersion, evaluatePluginCompatibility, pluginCompatibilityWarning, type PluginCompatibility } from './plugin-compatibility.ts'
+export { getOceanRuntimeVersion, evaluatePluginCompatibility, pluginCompatibilityWarning, type PluginCompatibility } from './plugin-compatibility.ts'
 export {
   PROFILE_COMPATIBILITY_FILENAME, readProfileCompatibility, readProfileVersionExemptions,
   setProfileVersionExemption, validatePluginVersionExemption, type ProfileCompatibility,
@@ -43,7 +43,9 @@ export {
 declare module '@deepseek-ai/cordis' {
   interface Context {
     /** Harness-home path resolver available to Loader `!!js` config expressions. */
-    dshHomePath?: typeof dshHomePath
+    oceanHomePath?: typeof oceanHomePath
+    /** Legacy Loader expression name for installed profile patches. */
+    dshHomePath?: typeof oceanHomePath
   }
 
   interface Events {
@@ -94,7 +96,7 @@ export { ResolutionRestartRequired } from './profile-resolution/resolver.ts'
  * Resolve the config to boot. Replay swaps a `cordis.yml` basename for
  * `cordis.snapshot.yml` in the same directory; every other mode keeps the path.
  * @param configPath - the requested config path (absolute, or relative to `cwd`).
- * @param snapshotMode - the bin's `$DSH_SNAPSHOT` value; only `'replay'` swaps the
+ * @param snapshotMode - the bin's `$OCEAN_SNAPSHOT` value; only `'replay'` swaps the
  *   basename.
  * @param cwd - the base a relative `configPath` resolves against.
  * @returns the absolute path of the config to boot.
@@ -155,7 +157,7 @@ const BOOTSTRAP_NAMES = new Set([
 ])
 
 /** Name prefixes no discovered file may set. */
-const BOOTSTRAP_PREFIXES = ['DSH_', 'XDG_', 'DYLD_', 'BASH_FUNC_']
+const BOOTSTRAP_PREFIXES = ['OCEAN_', 'DSH_', 'XDG_', 'DYLD_', 'BASH_FUNC_']
 
 /** Proxy names the Harness-home `.env` may set in any letter case: proxy clients read both spellings. */
 const HOME_LAYER_PROXY_NAMES = new Set(['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY'])
@@ -170,7 +172,7 @@ const HOME_LAYER_ENDPOINT_NAMES = new Set(['DEEPSEEK_BASE_URL', 'DEEPSEEK_SEARCH
  * Whether the Harness-home `.env` alone may set a bootstrap-only name. Each such name chooses where requests go: a
  * proxy for every request, a DeepSeek endpoint for the model or search requests that carry the user's credential.
  * The invoking directory's file arrives with a clone and keeps refusing them. The home file is the user's own, and
- * the profile patches beside it can already set these endpoints as plugin `baseURL` fields; `DSH_HOME` is itself
+ * the profile patches beside it can already set these endpoints as plugin `baseURL` fields; `OCEAN_HOME` is itself
  * bootstrap-only, so no `.env` can relocate this exemption. The CA and TLS names in the same group stay refused
  * everywhere: they change what is trusted, not where traffic goes.
  * @param name - the variable name as the file spells it.
@@ -257,11 +259,20 @@ export function loadLayeredEnv(
   binName: string, cwd: string = process.cwd(),
   warn: (line: string) => void = line => void process.stderr.write(line),
 ): LaunchEnvironmentSnapshot {
-  const home = resolveDshHome()
   const inherited = { ...process.env } as Record<string, string>
+  // Preserve inherited launcher settings during the name transition; explicit Ocean values win.
+  for (const [name, value] of Object.entries(inherited)) {
+    if (!name.startsWith('DSH_')) continue
+    const current = 'OCEAN_' + name.slice(4)
+    if (inherited[current] === undefined) inherited[current] = value
+  }
+  const home = resolveOceanHome(undefined, inherited)
   // Parse both layers first: a rejection must not leave one file applied.
   const project = readEnvLayer(binName, cwd, warn, home)
   const user = home === resolve(cwd) ? undefined : readEnvLayer(binName, home, warn, home)
+  for (const [name, value] of Object.entries(inherited)) {
+    if (process.env[name] === undefined) process.env[name] = value
+  }
   // Apply the checked values without replacing a higher-ranked name.
   for (const layer of [project, user]) {
     if (layer === undefined) continue
@@ -750,7 +761,7 @@ function groupedDump(
  * @param patches - initial app and user patches, applied in order.
  * @param bareModuleBaseUrl - optional installed-host base for bare package
  * names; relative names continue to resolve beside the configuration file.
- * @param binName - diagnostic prefix for a profile plugin denied by compatibility policy; defaults to `dsh`.
+ * @param binName - diagnostic prefix for a profile plugin denied by compatibility policy; defaults to `ocean`.
  * @returns the created root Include entry, or `undefined` when a surface
  * disposed the whole tree (taking the Loader service with it) while the
  * entry creation was in flight.
@@ -760,7 +771,7 @@ export async function mountRootInclude(
   absoluteConfigPath: string,
   patches: readonly PatchOptions[] = [],
   bareModuleBaseUrl?: string,
-  binName = 'dsh',
+  binName = 'ocean',
 ): Promise<Entry | undefined> {
   ctx.loader.builtins.include = bareModuleBaseUrl === undefined
     ? Include
@@ -957,7 +968,7 @@ const FIBER_FAILED = 3 as FiberState.FAILED
 const FIBER_DISPOSED = 4 as FiberState.DISPOSED
 
 /**
- * Entry ids whose presence defines a usable DSH application.
+ * Entry ids whose presence defines a usable OCEAN application.
  *
  * The list is global rather than profile metadata. Missing or disabled ids do
  * not affect startup; an enabled listed entry must activate. The list covers
@@ -1155,7 +1166,7 @@ function startupDiagnostic(binName: string, failures: readonly InactiveEntry[], 
 }
 
 /**
- * Apply DSH startup policy to a settled Loader tree.
+ * Apply OCEAN startup policy to a settled Loader tree.
  *
  * Inactive entries from the global required list reject startup. Other
  * inactive entries join that failure diagnostic, or produce one warning when
@@ -1240,7 +1251,8 @@ export async function boot(
   let stage = 'host preparation failed'
   try {
     ctx.baseUrl = pathToFileURL(dirname(absoluteConfigPath)).href + '/'
-    ctx.provide('dshHomePath', dshHomePath)
+    ctx.provide('oceanHomePath', oceanHomePath)
+    ctx.provide('dshHomePath', oceanHomePath)
     await ctx.plugin(Loader)
     await prepare?.(ctx)
     stage = 'plugin tree failed to load'

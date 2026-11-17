@@ -42,7 +42,7 @@ afterEach(async () => {
 })
 
 async function harness(withPersistence = true) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-projection-discovery-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-projection-discovery-'))
   roots.push(root)
   const ctx = new Context()
   contexts.push(ctx)

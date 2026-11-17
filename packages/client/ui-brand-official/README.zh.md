@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-在客户端组合中挂载本插件，即可占据 `sidebar.brand.mark` 与 `sidebar.brand.name`。标志使用 `FishLogo`；名称使用设置了 `includeMark={false}` 的 `BrandWordmark`，避免重复显示独立 slot 中的标志。文字标志显示“Ocean”。本包不接受图形配置，也不读取 `DSH_CLIENT_BUILD_PROFILE`。
+在客户端组合中挂载本插件，即可占据 `sidebar.brand.mark` 与 `sidebar.brand.name`。标志使用 `FishLogo`；名称使用设置了 `includeMark={false}` 的 `BrandWordmark`，避免重复显示独立 slot 中的标志。文字标志显示“Ocean”。本包不接受图形配置，也不读取 `OCEAN_CLIENT_BUILD_PROFILE`。
 
 需要其他身份标识时，不组合本包，而是为侧栏 slot 组合另一个包。本包不占据会话首屏标志 slot 或 `conversation.hero.frame`。
 

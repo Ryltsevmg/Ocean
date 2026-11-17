@@ -6,20 +6,20 @@
   en: 6440e0efb151c0fa
   zh: d767308eb95b9d3f
 /ocean-ocean-mcp-client:
-  en: ba7193ae5d5db169
-  zh: 0e6cdc1277d32d76
+  en: c3cf50f362dfe5c7
+  zh: 2ef5d5c115931a04
 /ocean-ocean-mcp-client/summary:
-  en: 428cc4078a9d5b53
-  zh: 49b867131f518c0f
+  en: 3ee53ce1a24e0c2a
+  zh: cf639010a15e7dac
 /ocean-ocean-mcp-client/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-mcp-client/use-this-package:
-  en: e230e5c21b582758
-  zh: ef750cb6392f9a84
+  en: d24d6fe883e6cc9b
+  zh: 20f15c41350ef068
 /ocean-ocean-mcp-client/use-this-package/minimal-configuration:
-  en: 4a203e09cef6bc5e
-  zh: a37e2d5ca5b46fb8
+  en: 01ff8030ab612d6f
+  zh: 5c90eff668a4619c
 /ocean-ocean-mcp-client/use-this-package/tool-naming-and-coexistence:
   en: 75ae9745d5b04796
   zh: 8ae5b8ca6e73296e
@@ -30,8 +30,8 @@
   en: 213d2d67088beccc
   zh: 1e3ff5454c937f11
 /ocean-ocean-mcp-client/use-this-package/runtime-templates-and-credentials:
-  en: 255e8f48e5981b52
-  zh: 7b4ad77794c6b7fc
+  en: 2b0166970e8dc7b5
+  zh: ef12c37401e59f5f
 /ocean-ocean-mcp-client/understand-the-implementation:
   en: d33ddd080880b3f5
   zh: 64328f5239c26752
@@ -42,17 +42,17 @@
   en: c8d4cb5bccd3c542
   zh: 4a352e95d786215b
 /ocean-ocean-mcp-client/understand-the-implementation/lifecycle-and-sync:
-  en: 1793a89464c70cec
-  zh: fcf7b9c2eb343ce3
+  en: 8c5161be78d0853e
+  zh: 439bd38d74905d27
 /ocean-ocean-mcp-client/understand-the-implementation/tool-execution-internals:
   en: bb161208cc002746
   zh: 3ab0588ca71effe5
 /ocean-ocean-mcp-client/understand-the-implementation/environment-scrubbing-stdio:
-  en: fef482a6f8cc789f
-  zh: 08f4c594ec83b4a1
+  en: 8f89e4c56c9de7b8
+  zh: d90afedfb21df09d
 /ocean-ocean-mcp-client/further-exploration:
-  en: 8d7fb81834a9a46d
-  zh: d4c135356fa7dce6
+  en: a4d6502156d3b6f9
+  zh: c2d0e71a4d9672c6
 /ocean-ocean-mcp-client/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -63,8 +63,8 @@
   en: 866a129e71634e0e
   zh: b27e4b22a07c2f26
 /ocean-ocean-mcp-client/model-experience/discovered-mcp-tools/token-effect:
-  en: ac85a6a5130c6440
-  zh: 9a31229f5355432b
+  en: db6f70b8f23c5248
+  zh: b01c4075862396d4
 /ocean-ocean-mcp-client/model-experience/discovered-mcp-tools/kv-cache-effect:
   en: dae97512f6d61027
   zh: 5e6103fab15ab42d
@@ -93,8 +93,8 @@
   en: 189198f7ace2a991
   zh: 00948145a803d614
 /ocean-ocean-mcp-client/known-limitations-and-deferred-work:
-  en: b9328b9c1ca68299
-  zh: 8d1b2f1c94108857
+  en: f72d489109a70973
+  zh: adb686966f2fcf15
 /ocean-ocean-mcp-client/known-limitations-and-deferred-work/dev-note:
-  en: ceba98fccdbc26f3
-  zh: 852bb92be406ce4e
+  en: dd8e7cb383894f9d
+  zh: 66449a113d9e0f71

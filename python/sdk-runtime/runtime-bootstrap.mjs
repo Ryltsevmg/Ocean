@@ -14,8 +14,8 @@ let downloads
 let cache
 if (existsSync(join(resourceDirectory, 'downloads.json'))) {
   downloads = JSON.parse(await readFile(join(resourceDirectory, 'downloads.json'), 'utf8'))
-  const root = process.env.DSH_RESOURCE_CACHE ?? join(homedir(), '.cache', 'deepseek-harness', 'resources')
-  if (!isAbsolute(root)) throw new Error('DSH_RESOURCE_CACHE must be an absolute directory')
+  const root = process.env.OCEAN_RESOURCE_CACHE ?? join(homedir(), '.cache', 'deepseek-harness', 'resources')
+  if (!isAbsolute(root)) throw new Error('OCEAN_RESOURCE_CACHE must be an absolute directory')
   if (!/^[a-f0-9]{64}$/u.test(downloads.identity)) throw new Error('runtime download manifest has an invalid cache identity')
   cache = join(root, downloads.identity)
 }
@@ -57,9 +57,9 @@ async function downloadResource(kind) {
   return kind === 'primary' ? join(destination, 'primary-runtime') : destination
 }
 
-const office = process.env.DSH_OFFICE_SIDECAR ?? (cache !== undefined && existsSync(join(cache, 'office', 'complete')) ? join(cache, 'office') : undefined)
+const office = process.env.OCEAN_OFFICE_SIDECAR ?? (cache !== undefined && existsSync(join(cache, 'office', 'complete')) ? join(cache, 'office') : undefined)
 if (office !== undefined) {
-  if (!isAbsolute(office)) throw new Error('DSH_OFFICE_SIDECAR must be an absolute directory')
+  if (!isAbsolute(office)) throw new Error('OCEAN_OFFICE_SIDECAR must be an absolute directory')
   const parentURL = pathToFileURL(join(office, 'package.json')).href
   registerHooks({
     resolve(specifier, context, nextResolve) {
@@ -69,32 +69,32 @@ if (office !== undefined) {
   })
 }
 
-const selectorName = 'DSH_SUBPROCESS_RUNNER'
+const selectorName = 'OCEAN_SUBPROCESS_RUNNER'
 const selection = process.env[selectorName]
 const aclRunner = process.platform === 'win32'
   ? fileURLToPath(import.meta.resolve('@ocean/ocean-sandbox-windows-acl/runner'))
   : undefined
 
-const resource = process.env.DSH_RUNTIME_DOWNLOAD
+const resource = process.env.OCEAN_RUNTIME_DOWNLOAD
 if (resource !== undefined) {
-  Reflect.deleteProperty(process.env, 'DSH_RUNTIME_DOWNLOAD')
-  if (resource !== 'office' && resource !== 'primary') throw new Error('DSH_RUNTIME_DOWNLOAD must select office or primary')
+  Reflect.deleteProperty(process.env, 'OCEAN_RUNTIME_DOWNLOAD')
+  if (resource !== 'office' && resource !== 'primary') throw new Error('OCEAN_RUNTIME_DOWNLOAD must select office or primary')
   const path = await downloadResource(resource)
   console.log(JSON.stringify(path))
 } else if (aclRunner !== undefined && process.argv[2] === aclRunner) {
   process.argv.splice(1, 1)
   await import('@ocean/ocean-sandbox-windows-acl/runner')
-} else if (process.env.DSH_PTC_RUNTIME_NODE === '1') {
-  Reflect.deleteProperty(process.env, 'DSH_PTC_RUNTIME_NODE')
+} else if (process.env.OCEAN_PTC_RUNTIME_NODE === '1') {
+  Reflect.deleteProperty(process.env, 'OCEAN_PTC_RUNTIME_NODE')
   await import('@ocean/ocean-ptc-runtime-node/process')
 } else if (selection === undefined) {
-  // A DSH_PRIMARY_RUNTIME set or inherited from the environment, including the empty opt-out, takes precedence over the
+  // A OCEAN_PRIMARY_RUNTIME set or inherited from the environment, including the empty opt-out, takes precedence over the
   // downloaded cache.
   if (cache !== undefined && existsSync(join(cache, 'primary', 'complete'))) {
-    process.env.DSH_PRIMARY_RUNTIME ??= join(cache, 'primary', 'primary-runtime')
+    process.env.OCEAN_PRIMARY_RUNTIME ??= join(cache, 'primary', 'primary-runtime')
   }
   let packageManager
-  const primary = process.env.DSH_PRIMARY_RUNTIME
+  const primary = process.env.OCEAN_PRIMARY_RUNTIME
   if (primary !== undefined && primary !== '') {
     const { resolvePrimaryRuntime } = await import('@ocean/ocean-tool-workspace-dependencies')
     const { node, pnpm } = await resolvePrimaryRuntime(primary)

@@ -34,7 +34,7 @@ const move = (path: string, destination: string, before = 'old') =>
   `*** Update File: ${path}\n*** Move to: ${destination}\n@@\n-${before}\n+moved`
 
 async function boot(environment: string) {
-  const cwd = await realpath(await scratchDir('dsh-patch-review-', cleanups))
+  const cwd = await realpath(await scratchDir('ocean-patch-review-', cleanups))
   const ctx = new Context()
   cleanups.push(() => ctx.fiber.dispose())
   await ctx.plugin(SessionStore)

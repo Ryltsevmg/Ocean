@@ -4,7 +4,7 @@
  * registry. The fake executor makes every seam outcome scriptable — output
  * text, truncation, timeout, abort, nonzero exits, background handles — so
  * these tests verify the schema, argument validation, workdir derivation,
- * managed `DSH_*` collection, abort translation, canonical result projection,
+ * managed `OCEAN_*` collection, abort translation, canonical result projection,
  * sandbox denial rendering with the escalation surface, rendering,
  * background job wiring, and the UI presenters. Real-pwsh behavior
  * is pinned separately in integration.spec.ts.
@@ -79,7 +79,7 @@ class FakeBash extends ShellExecutor {
       ...request.signal ? { signal: request.signal } : {},
       ...request.stdin !== undefined ? { stdin: request.stdin } : {},
       ...request.env !== undefined ? { env: request.env } : {},
-      ...request.dshEnv !== undefined ? { dshEnv: request.dshEnv } : {},
+      ...request.oceanEnv !== undefined ? { oceanEnv: request.oceanEnv } : {},
       sandboxPolicy: request.sandboxPolicy,
     }
   }
@@ -148,7 +148,7 @@ function killableProcess(): ShellProcess {
   return proc
 }
 
-async function setup(toolConfig: Partial<ToolPwsh.Config> = {}, dshHome?: string) {
+async function setup(toolConfig: Partial<ToolPwsh.Config> = {}, oceanHome?: string) {
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx)
   await ctx.plugin(SystemPrompt)
@@ -156,7 +156,7 @@ async function setup(toolConfig: Partial<ToolPwsh.Config> = {}, dshHome?: string
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(AgentRegistry)
-  await ctx.plugin(BashEnvPlugin, dshHome === undefined ? {} : { dshHome })
+  await ctx.plugin(BashEnvPlugin, oceanHome === undefined ? {} : { oceanHome })
   await ctx.plugin(FakeBash)
   await ctx.plugin(ToolPwsh, toolConfig)
   const bash = ctx.shell as FakeBash
@@ -164,7 +164,7 @@ async function setup(toolConfig: Partial<ToolPwsh.Config> = {}, dshHome?: string
 }
 
 /** Full harness: the generic job runtime + its controller, then the pwsh tool. */
-async function setupWithJobs(toolConfig: Partial<ToolPwsh.Config> = {}, dshHome?: string) {
+async function setupWithJobs(toolConfig: Partial<ToolPwsh.Config> = {}, oceanHome?: string) {
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx)
   await ctx.plugin(SystemPrompt)
@@ -174,7 +174,7 @@ async function setupWithJobs(toolConfig: Partial<ToolPwsh.Config> = {}, dshHome?
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(LocalJobRegistry)
   await ctx.plugin(ToolJobs)
-  await ctx.plugin(BashEnvPlugin, dshHome === undefined ? {} : { dshHome })
+  await ctx.plugin(BashEnvPlugin, oceanHome === undefined ? {} : { oceanHome })
   await ctx.plugin(FakeBash)
   await ctx.plugin(ToolPwsh, toolConfig)
   const bash = ctx.shell as FakeBash
@@ -205,7 +205,7 @@ class ConfiningFakeBash extends ShellExecutor {
       onExpiry: request.onExpiry ?? 'kill',
       stdoutMaxBytes: request.stdoutMaxBytes ?? 64_000,
       ...request.signal ? { signal: request.signal } : {},
-      ...request.dshEnv !== undefined ? { dshEnv: request.dshEnv } : {},
+      ...request.oceanEnv !== undefined ? { oceanEnv: request.oceanEnv } : {},
       sandboxPolicy: request.sandboxPolicy,
     }
   }
@@ -445,10 +445,10 @@ describe('argument validation', () => {
 })
 
 describe('execution through the bash seam', () => {
-  it('forwards command, session cwd, timeout, and managed DSH_* environment', async () => {
-    const dshHome = mkdtempSync(join(tmpdir(), 'dsh-tool-pwsh-home-'))
-    tempDirs.push(dshHome)
-    const { ctx, bash } = await setup({}, dshHome)
+  it('forwards command, session cwd, timeout, and managed OCEAN_* environment', async () => {
+    const oceanHome = mkdtempSync(join(tmpdir(), 'ocean-tool-pwsh-home-'))
+    tempDirs.push(oceanHome)
+    const { ctx, bash } = await setup({}, oceanHome)
     bash.handler = () => runResult('hi\n')
     const agent = await registerFakeAgent(ctx, 'session-1')
     Object.assign(agent.session.header, { cwd: '/sessions/s1' })
@@ -462,11 +462,11 @@ describe('execution through the bash seam', () => {
     expect(request?.command).toBe('Write-Output hi')
     expect(request?.workdir).toBe('/sessions/s1')
     expect(request?.timeoutMs).toBe(1234)
-    expect(request?.dshEnv).toEqual({
-      DSH_HOME: dshHome,
-      DSH_NODE_EXECUTABLE: process.execPath,
-      DSH_SHELL: '1',
-      DSH_SESSION_ID: 'session-1',
+    expect(request?.oceanEnv).toEqual({
+      OCEAN_HOME: oceanHome,
+      OCEAN_NODE_EXECUTABLE: process.execPath,
+      OCEAN_SHELL: '1',
+      OCEAN_SESSION_ID: 'session-1',
     })
     expect(bash.specs[0]?.workdir).toBe('/sessions/s1')
   })
@@ -487,11 +487,11 @@ describe('execution through the bash seam', () => {
     bash.handler = () => runResult('ok\n')
     await call(ctx, 'pwsh', { command: 'Write-Output ok', description: 'ok' })
     expect(bash.requests[0]).not.toHaveProperty('workdir')
-    const dshEnv = bash.requests[0]?.dshEnv
-    expect(dshEnv).toBeDefined()
-    expect(dshEnv?.['DSH_SHELL']).toBe('1')
-    expect(dshEnv?.['DSH_HOME']).toEqual(expect.any(String))
-    expect(dshEnv).not.toHaveProperty('DSH_SESSION_ID')
+    const oceanEnv = bash.requests[0]?.oceanEnv
+    expect(oceanEnv).toBeDefined()
+    expect(oceanEnv?.['OCEAN_SHELL']).toBe('1')
+    expect(oceanEnv?.['OCEAN_HOME']).toEqual(expect.any(String))
+    expect(oceanEnv).not.toHaveProperty('OCEAN_SESSION_ID')
   })
 
   it('forwards exec.signal into the resolved request', async () => {
@@ -599,7 +599,7 @@ describe('execution through the bash seam', () => {
 describe('per-call sandbox policy resolution', () => {
   it('stamps the CALLING SESSION\'s resolved policy onto the request (session cwd, not the server launch dir)', async () => {
     const { ctx, bash } = await setupSandboxed()
-    const sessionCwd = mkdtempSync(join(tmpdir(), 'dsh-tool-pwsh-policy-'))
+    const sessionCwd = mkdtempSync(join(tmpdir(), 'ocean-tool-pwsh-policy-'))
     tempDirs.push(sessionCwd)
     const agent = await registerFakeAgent(ctx, 'policy-session')
     Object.assign(agent.session.header, { cwd: sessionCwd })
@@ -1260,7 +1260,7 @@ describe('resolved launch directory metadata', () => {
     { background: true, workdir: 'relative' },
   ])('records the executor directory for background=$background and workdir=$workdir', async ({ background, workdir }) => {
     const { ctx, bash } = await setupWithJobs()
-    const directory = mkdtempSync(join(tmpdir(), 'dsh-pwsh-cwd-meta-'))
+    const directory = mkdtempSync(join(tmpdir(), 'ocean-pwsh-cwd-meta-'))
     bash.handler = () => runResult('metadata-ok')
     bash.backgroundHandler = () => fakeProcess('metadata-ok')
     const current = join(directory, 'current')

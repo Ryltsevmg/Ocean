@@ -15,10 +15,10 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url))
 const builtBin = join(repoRoot, 'apps/cli/lib/bin.js')
 const builtArtifactsExist = existsSync(builtBin)
-if (process.env.DSH_EXAMPLE_MODE === 'lib' && !builtArtifactsExist) {
-  throw new Error('dsh config-schema acceptance requires built CLI artifacts in lib mode; run pnpm run build first')
+if (process.env.OCEAN_EXAMPLE_MODE === 'lib' && !builtArtifactsExist) {
+  throw new Error('ocean config-schema acceptance requires built CLI artifacts in lib mode; run pnpm run build first')
 }
-const packageName = 'dsh-schema-acceptance-fixture'
+const packageName = 'ocean-schema-acceptance-fixture'
 const profileName = 'schema-acceptance'
 const processTimeoutMs = 90_000
 const schemaImport = "import Schema from '@deepseek-ai/schemastery'"
@@ -26,7 +26,7 @@ const forbiddenApply = `
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 export function apply() {
-  writeFileSync(join(process.env.DSH_HOME, 'apply-ran'), 'unexpected')
+  writeFileSync(join(process.env.OCEAN_HOME, 'apply-ran'), 'unexpected')
   throw new Error('PLUGIN_APPLY_EXECUTED')
 }
 `
@@ -38,7 +38,7 @@ interface Fixture {
 }
 
 async function createFixture(modules: Record<string, string>, patches: string): Promise<Fixture> {
-  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-schema-acceptance-')))
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-schema-acceptance-')))
   onTestFinished(() => rm(root, { recursive: true, force: true, maxRetries: 3 }))
   const home = join(root, 'home')
   const profile = join(home, 'profiles', profileName)
@@ -50,17 +50,17 @@ async function createFixture(modules: Record<string, string>, patches: string): 
     type: 'module',
     exports: Object.fromEntries(Object.keys(modules).map(name => [`./${name}`, `./${name}.mjs`])),
     peerDependencies: { '@deepseek-ai/schemastery': '*' },
-    dsh: { bundle: { patch: './cordis.patch.yml' } },
+    ocean: { bundle: { patch: './cordis.patch.yml' } },
   }))
   for (const [name, source] of Object.entries(modules)) {
     await writeFile(join(moduleDir, `${name}.mjs`), `${source}\n`)
   }
   await writeFile(join(moduleDir, 'cordis.patch.yml'), patches)
   await writeFile(join(profile, 'package.json'), JSON.stringify({
-    name: 'dsh-profile-schema-acceptance',
+    name: 'ocean-profile-schema-acceptance',
     private: true,
     dependencies: { [packageName]: '1.0.0' },
-    dsh: { profile: { bundles: [packageName] } },
+    ocean: { profile: { bundles: [packageName] } },
   }))
   await writeFile(join(profile, 'cordis.patch.yml'), '[]\n')
   return { root, home, profile }
@@ -90,13 +90,13 @@ async function dump(
   const env = Object.fromEntries(Object.entries(process.env).filter(
     (entry): entry is [string, string] => entry[1] !== undefined
       && !/KEY|SECRET|TOKEN|PASSWORD/i.test(entry[0])
-      && !/^(DSH_|NODE_OPTIONS$|NODE_PATH$)/i.test(entry[0]),
+      && !/^(OCEAN_|NODE_OPTIONS$|NODE_PATH$)/i.test(entry[0]),
   ))
   const result = await execa(process.execPath, [
     builtBin, '--profile', profileName, format, ...args,
   ], {
     cwd: fixture.root,
-    env: { ...env, DSH_HOME: fixture.home, DSH_TELEMETRY_DISABLED: '1' },
+    env: { ...env, OCEAN_HOME: fixture.home, OCEAN_TELEMETRY_DISABLED: '1' },
     extendEnv: false,
     input: '',
     timeout: processTimeoutMs,
@@ -133,7 +133,7 @@ export default class ClassPlugin {
   constructor() { throw new Error('PLUGIN_CONSTRUCTOR_EXECUTED') }
 }`
 
-describe.skipIf(!builtArtifactsExist)('dsh --dump-config-schema assembled output', () => {
+describe.skipIf(!builtArtifactsExist)('ocean --dump-config-schema assembled output', () => {
   it('prints native namespace and class schemas without applying plugins or evaluating !!js', async () => {
     const fixture = await createFixture({
       namespace: namespaceModule,
@@ -306,9 +306,9 @@ describe.skipIf(!builtArtifactsExist)('dsh --dump-config-schema assembled output
       { level: 'error', path: '/2', message: 'fixture module import failed' },
     ])
     expect(result.stderr.split('\n')).toEqual([
-      'dsh: error: [/0] Config is not a native Schemastery schema',
-      'dsh: error: [/1] fixture lazy schema failed',
-      'dsh: error: [/2] fixture module import failed',
+      'ocean: error: [/0] Config is not a native Schemastery schema',
+      'ocean: error: [/1] fixture lazy schema failed',
+      'ocean: error: [/2] fixture module import failed',
     ])
   })
 
@@ -317,11 +317,11 @@ describe.skipIf(!builtArtifactsExist)('dsh --dump-config-schema assembled output
     - id: schema-retained
       name: ${packageName}/absent
 `)
-    const missingBundle = 'dsh-schema-acceptance-missing-bundle'
+    const missingBundle = 'ocean-schema-acceptance-missing-bundle'
     await writeFile(join(fixture.profile, 'package.json'), JSON.stringify({
       private: true,
       dependencies: { [packageName]: '1.0.0' },
-      dsh: { profile: { bundles: [packageName, missingBundle] } },
+      ocean: { profile: { bundles: [packageName, missingBundle] } },
     }))
     const result = await dump(fixture)
     expect(result.exitCode, result.stderr).toBe(1)
@@ -344,7 +344,7 @@ describe.skipIf(!builtArtifactsExist)('dsh --dump-config-schema assembled output
     await writeFile(overlay, '- id: missing\n  disabled: true\n')
     const schema = await dump(fixture, ['--patch', overlay])
     expect(schema.exitCode).toBe(0)
-    expect(schema.stderr).toBe('dsh: warning: patch: entry "missing" not found')
+    expect(schema.stderr).toBe('ocean: warning: patch: entry "missing" not found')
     expect(parseSchema(schema.stdout)['x-cordis'].diagnostics).toEqual([{ level: 'warning', message: 'patch: entry "missing" not found' }])
     const config = await dump(fixture, ['--patch', overlay], '--dump-config')
     expect(config.exitCode).toBe(0)

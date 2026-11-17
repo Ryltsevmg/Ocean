@@ -8,7 +8,7 @@ import ts from 'typescript'
 import { applyEntryPatches, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { bundlePatchPaths, composeEntries, loadOverlayPatches } from '../packages/boot/app-boot/src/index.ts'
-import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
+import type { OceanBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { assertNever } from '../packages/util/values/src/index.ts'
 import { isAgentPresetEntry, isCordisGroupEntry, loadCordisYaml } from './cordis-yaml.ts'
 import { PRODUCT_PACKAGE_POLICY, type ProductPackagePolicy } from './product-package-policy.ts'
@@ -24,7 +24,7 @@ const DYNAMIC_MOUNTS: Readonly<Record<string, readonly string[]>> = {
 interface Package {
   directory: string
   name: string
-  bundle?: DshBundleManifest
+  bundle?: OceanBundleManifest
   client: boolean
   generatedRemote: boolean
 }
@@ -78,15 +78,15 @@ export function verifyProductUse(
     const manifest = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as {
       name: string
       exports?: Record<string, unknown>
-      dsh?: { bundle?: DshBundleManifest; client?: unknown }
+      ocean?: { bundle?: OceanBundleManifest; client?: unknown }
     }
     if (typeof manifest.name !== 'string' || manifest.name === '') throw new Error(`${path}: missing package name`)
     if (packages.has(manifest.name)) throw new Error(`${path}: duplicate package name ${manifest.name}`)
     const remote = manifest.exports?.['./remote']
-    const pkg: Package = { directory: dirname(path), name: manifest.name, client: manifest.dsh?.client !== undefined,
+    const pkg: Package = { directory: dirname(path), name: manifest.name, client: manifest.ocean?.client !== undefined,
       generatedRemote: isRecord(remote) && remote.default === './lib/typert.remote-client.js'
         && remote.types === './lib/typert.remote-client.d.ts',
-      ...(manifest.dsh?.bundle === undefined ? {} : { bundle: manifest.dsh.bundle }) }
+      ...(manifest.ocean?.bundle === undefined ? {} : { bundle: manifest.ocean.bundle }) }
     packages.set(pkg.name, pkg)
     directories.set(resolve(root, pkg.directory), pkg)
   }
@@ -195,7 +195,7 @@ export function verifyProductUse(
   for (const name of PROFILES) if (!isRecord(templates[name])) failures.push(`${PROFILE_SOURCE}: missing shipped ${name} profile`)
   const layers = (names: readonly string[], reach: Reachability): PatchOptions[][] => names.flatMap((name) => {
     const pkg = packages.get(name)
-    if (pkg?.bundle === undefined) { failures.push(`${PROFILE_SOURCE}: ${name} must declare dsh.bundle.patch`); return [] }
+    if (pkg?.bundle === undefined) { failures.push(`${PROFILE_SOURCE}: ${name} must declare ocean.bundle.patch`); return [] }
     reach.packages.add(pkg.directory)
     return [bundlePatchPaths(resolve(root, pkg.directory), pkg.bundle).flatMap((path) => {
       configs.add(path)

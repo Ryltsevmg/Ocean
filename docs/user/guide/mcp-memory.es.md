@@ -6,17 +6,17 @@
 [English](mcp-memory.md) | [中文](mcp-memory.zh.md) | [Русский](mcp-memory.ru.md) | [日本語](mcp-memory.ja.md) | Español | [Français](mcp-memory.fr.md) | [Deutsch](mcp-memory.de.md) | [Português](mcp-memory.pt.md) | [한국어](mcp-memory.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Estas tres **configuraciones de referencia desactivadas por defecto** conectan un sistema de memoria a DSH mediante [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md). Elige una o copia la misma entrada MCP genérica para otro servidor.
+Estas tres **configuraciones de referencia desactivadas por defecto** conectan un sistema de memoria a OCEAN mediante [`@ocean/ocean-mcp-client`](../../../packages/mcp/mcp-client/README.md). Elige una o copia la misma entrada MCP genérica para otro servidor.
 
 Estas configuraciones de terceros se ofrecen únicamente como ejemplos de interoperabilidad. Su inclusión no implica respaldo, recomendación, colaboración ni soporte continuo por parte del proyecto Ocean.
 
-<a id="what-dsh-does"></a>
+<a id="what-ocean-does"></a>
 
-## Qué hace DSH
+## Qué hace OCEAN
 
-DSH procesa el archivo de configuración adicional de Cordis que elegiste, inicia un comando stdio configurado o se conecta a una URL Streamable HTTP configurada, descubre las herramientas MCP y las expone como `mcp__<serverName>__<tool>`. DSH **no** descarga el servidor, inicializa su base de datos, elige su proveedor de modelos o embeddings, crea una cuenta en la nube, migra datos del proveedor ni supervisa un servicio HTTP independiente. Para stdio, el cliente genérico inicia y detiene el proceso hijo con el ciclo de vida del plugin DSH; para HTTP, el servicio externo debe estar ya en ejecución.
+OCEAN procesa el archivo de configuración adicional de Cordis que elegiste, inicia un comando stdio configurado o se conecta a una URL Streamable HTTP configurada, descubre las herramientas MCP y las expone como `mcp__<serverName>__<tool>`. OCEAN **no** descarga el servidor, inicializa su base de datos, elige su proveedor de modelos o embeddings, crea una cuenta en la nube, migra datos del proveedor ni supervisa un servicio HTTP independiente. Para stdio, el cliente genérico inicia y detiene el proceso hijo con el ciclo de vida del plugin OCEAN; para HTTP, el servicio externo debe estar ya en ejecución.
 
-El puente stdio elimina deliberadamente las variables del entorno cuyos nombres suelen identificar credenciales y todas las variables `DSH_*` antes de iniciar un proceso hijo; el resto se hereda. Cada ejemplo añade solo la configuración mínima que necesita. Si una función opcional del servidor necesita otro secreto, añade esa variable a `config.env` de la entrada en lugar de incluir el secreto directamente en YAML.
+El puente stdio elimina deliberadamente las variables del entorno cuyos nombres suelen identificar credenciales y todas las variables `OCEAN_*` antes de iniciar un proceso hijo; el resto se hereda. Cada ejemplo añade solo la configuración mínima que necesita. Si una función opcional del servidor necesita otro secreto, añade esa variable a `config.env` de la entrada en lugar de incluir el secreto directamente en YAML.
 
 <a id="choose-one"></a>
 
@@ -32,15 +32,15 @@ El puente stdio elimina deliberadamente las variables del entorno cuyos nombres 
 
 ## Activar un sistema
 
-Pasa el archivo de configuración a DSH.
+Pasa el archivo de configuración a OCEAN.
 
 ```sh
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
 ```
 
 Sustituye el nombre del archivo por `mcp-reference-memory.cordis.yml` o `engram.cordis.yml`. La ruta puede apuntar a una copia del archivo en cualquier lugar del disco. La composición distribuida no incluye ningún servidor de memoria, por lo que omitir `--patch` mantiene los tres desactivados.
 
-Para conservar la selección entre ejecuciones, integra el único parche `insert` del archivo elegido en una capa de parches de usuario: `$DSH_HOME/profiles/<name>/cordis.patch.yml` para un perfil, o `$DSH_HOME/cordis.patch.yml` para todos los perfiles del equipo. No sobrescribas un archivo existente: puede contener otros parches del usuario.
+Para conservar la selección entre ejecuciones, integra el único parche `insert` del archivo elegido en una capa de parches de usuario: `$OCEAN_HOME/profiles/<name>/cordis.patch.yml` para un perfil, o `$OCEAN_HOME/cordis.patch.yml` para todos los perfiles del equipo. No sobrescribas un archivo existente: puede contener otros parches del usuario.
 
 <a id="provider-setup"></a>
 
@@ -50,19 +50,19 @@ Para conservar la selección entre ejecuciones, integra el único parche `insert
 
 ```sh
 npm install --global memorix@1.3.0
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
 ```
 
-Memorix funciona en modo heurístico local sin un LLM ni un servicio de embeddings. Configura los proveedores opcionales en su propio `~/.memorix/config.toml` o en el `memorix.toml` del proyecto. El ejemplo conserva la identidad del proyecto Git que Memorix obtiene del directorio de trabajo de DSH y usa la ubicación predeterminada `~/.memorix/data` de Memorix. Define `MEMORIX_DATA_DIR` antes de iniciar DSH para cambiarla.
+Memorix funciona en modo heurístico local sin un LLM ni un servicio de embeddings. Configura los proveedores opcionales en su propio `~/.memorix/config.toml` o en el `memorix.toml` del proyecto. El ejemplo conserva la identidad del proyecto Git que Memorix obtiene del directorio de trabajo de OCEAN y usa la ubicación predeterminada `~/.memorix/data` de Memorix. Define `MEMORIX_DATA_DIR` antes de iniciar OCEAN para cambiarla.
 
 ### MCP Reference Memory
 
 ```sh
 npm install --global @modelcontextprotocol/server-memory@2026.7.4
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
 ```
 
-Este servidor de referencia guarda un grafo de conocimiento local y expone herramientas de entidades, relaciones, observaciones, lectura, búsqueda y apertura. No necesita un modelo ni un servicio de embeddings. El ejemplo guarda su JSONL en `$HOME/.dsh-mcp-reference-memory.jsonl` en lugar del directorio del paquete npm instalado. Define `MEMORY_FILE_PATH` antes de iniciar DSH para cambiarlo.
+Este servidor de referencia guarda un grafo de conocimiento local y expone herramientas de entidades, relaciones, observaciones, lectura, búsqueda y apertura. No necesita un modelo ni un servicio de embeddings. El ejemplo guarda su JSONL en `$HOME/.ocean-mcp-reference-memory.jsonl` en lugar del directorio del paquete npm instalado. Define `MEMORY_FILE_PATH` antes de iniciar OCEAN para cambiarlo.
 
 La búsqueda compara subcadenas sin distinguir mayúsculas y minúsculas en los nombres, tipos y observaciones de las entidades; no es una recuperación semántica. El servidor no añade embeddings, resúmenes automáticos, resolución de conflictos ni una política de olvido.
 
@@ -70,10 +70,10 @@ La búsqueda compara subcadenas sin distinguir mayúsculas y minúsculas en los 
 
 ```sh
 go install github.com/Gentleman-Programming/engram/cmd/engram@v1.20.0
-dsh web --patch "$PWD/apps/cli/config/examples/mcp-memory/engram.cordis.yml"
+ocean web --patch "$PWD/apps/cli/config/examples/mcp-memory/engram.cordis.yml"
 ```
 
-Engram gestiona el almacenamiento y la selección del proyecto: usa `~/.engram` por defecto, detecta el proyecto Git a partir del directorio de trabajo de DSH y admite `ENGRAM_DATA_DIR` o `ENGRAM_PROJECT` como variables del entorno para cambiar esos valores.
+Engram gestiona el almacenamiento y la selección del proyecto: usa `~/.engram` por defecto, detecta el proyecto Git a partir del directorio de trabajo de OCEAN y admite `ENGRAM_DATA_DIR` o `ENGRAM_PROJECT` como variables del entorno para cambiar esos valores.
 
 <a id="optional-shared-model-instruction"></a>
 
@@ -83,7 +83,7 @@ Añade esta instrucción breve e independiente del proveedor a tus instrucciones
 
 > Cuando el usuario te pida recordar algo, llama a una herramienta de escritura de memoria. Cuando la información histórica pueda ser relevante, busca en la memoria y utiliza los resultados pertinentes.
 
-Es solo una indicación adicional. Los ejemplos no sustituyen la personalidad definida en el prompt del sistema de DSH.
+Es solo una indicación adicional. Los ejemplos no sustituyen la personalidad definida en el prompt del sistema de OCEAN.
 
 <a id="verify-write-fresh-session-recall-and-use"></a>
 
@@ -91,11 +91,11 @@ Es solo una indicación adicional. Los ejemplos no sustituyen la personalidad de
 
 Usa un valor único y mantén el mismo ámbito de almacenamiento del proveedor durante toda la prueba:
 
-1. En la sesión A de DSH, pide: `Remember that my validation drink is lapsang-<unique suffix>.` Confirma que el modelo llamó a la herramienta de escritura del proveedor y que esta devolvió un resultado satisfactorio.
-2. Crea la sesión B de DSH en el mismo Host en ejecución. No copies la conversación de la sesión A. Pregunta: `What is my validation drink? Check memory.` Confirma que el modelo llamó a la herramienta de búsqueda o recuperación del proveedor y devolvió el valor.
+1. En la sesión A de OCEAN, pide: `Remember that my validation drink is lapsang-<unique suffix>.` Confirma que el modelo llamó a la herramienta de escritura del proveedor y que esta devolvió un resultado satisfactorio.
+2. Crea la sesión B de OCEAN en el mismo Host en ejecución. No copies la conversación de la sesión A. Pregunta: `What is my validation drink? Check memory.` Confirma que el modelo llamó a la herramienta de búsqueda o recuperación del proveedor y devolvió el valor.
 3. En la misma sesión B, pide: `Use that preference to suggest one drink for the meeting.` Confirma que la respuesta utiliza el valor recuperado.
 
-Se necesita una sesión DSH nueva, pero no reiniciar el Host. Si un proceso MCP hijo falla, se activa la reconexión automática con espera progresiva y una resincronización de herramientas; las herramientas siguen listadas y las llamadas solo fallan durante la interrupción. Al agotarse el límite de reintentos de conexión, las herramientas se desregistran y la reconexión se detiene hasta que recargues o reinicies. El descubrimiento inicial es asíncrono: espera a que aparezcan las herramientas `mcp__...` del proveedor antes de enviar el primer mensaje de validación.
+Se necesita una sesión OCEAN nueva, pero no reiniciar el Host. Si un proceso MCP hijo falla, se activa la reconexión automática con espera progresiva y una resincronización de herramientas; las herramientas siguen listadas y las llamadas solo fallan durante la interrupción. Al agotarse el límite de reintentos de conexión, las herramientas se desregistran y la reconexión se detiene hasta que recargues o reinicies. El descubrimiento inicial es asíncrono: espera a que aparezcan las herramientas `mcp__...` del proveedor antes de enviar el primer mensaje de validación.
 
 <a id="bring-another-mcp-server"></a>
 

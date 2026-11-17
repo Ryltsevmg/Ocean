@@ -6,74 +6,74 @@
   en: 0d36989eb614345d
   zh: a0a1a18c07621393
 /ocean-chat-desktop:
-  en: 28d56d124b84dc29
-  zh: 98a5db39017aa7cb
+  en: 7f03c87d2b2a8f18
+  zh: 54dba7d4fa25c90d
 /ocean-chat-desktop/summary:
   en: 7bc8bf30de693222
   zh: e85993d8852b6cab
 /ocean-chat-desktop/table-of-contents:
-  en: 127ea90553cb6af7
-  zh: 7b1c5aec8558c684
+  en: 5537b5eb2aad2629
+  zh: 8edc061bc75a3ce5
 /ocean-chat-desktop/application-overview:
-  en: 93b77d6d34f6e3c3
-  zh: a71a3cc6688e8ce3
+  en: 292f07c00d801660
+  zh: 97e6727322052ee3
 /ocean-chat-desktop/terminal-command:
-  en: 5f2d25a1d8472647
-  zh: 2acb5c5d7d1917e2
+  en: 641c23d1a5346750
+  zh: 6908767567a154b9
 /ocean-chat-desktop/closing-the-window-and-quitting:
-  en: 27538644f95626c5
-  zh: 7176d6bc8518daba
+  en: 9a17d9cc5eda03ea
+  zh: 9472eb02d105c7ef
 /ocean-chat-desktop/key-technical-decisions:
-  en: 92897ec82138649e
-  zh: 68a0456612881e45
+  en: 2721b16eb8efc560
+  zh: 2f5e50a93e20a657
 /ocean-chat-desktop/key-technical-decisions/bundled-workspace-dependencies:
-  en: 3cea7effb46a5580
-  zh: a894a5f97ca870d2
+  en: 853a7d99dc8d94d5
+  zh: 2d84c3f8fabbcba2
 /ocean-chat-desktop/bundled-command-runtime:
-  en: a0c449a835d5fef7
-  zh: e49470d07eb1ff85
+  en: 95412271501d9274
+  zh: 518f45b127e58322
 /ocean-chat-desktop/installation-ownership:
-  en: a8bcb3c69b3e1f46
-  zh: 72afc533f5cc7ff0
+  en: f152ec825f7c6c8e
+  zh: dd47ebff870fd39a
 /ocean-chat-desktop/installation-ownership/runtime-and-plugin-activation:
-  en: 895b2e6940cb831d
-  zh: 4815e709be9edd1b
+  en: a2e6971a10f03f7a
+  zh: 00d8c933d146ae42
 /ocean-chat-desktop/installation-ownership/host-environment:
-  en: 98cf848762482d48
-  zh: 74f9100a39ec8c2f
+  en: 7cc37261f2abbd0a
+  zh: c85ce709a15a99ef
 /ocean-chat-desktop/develop:
-  en: 1c45c693b2371327
-  zh: 10f501b2156cbd62
+  en: 0eaa8c0a87e9d280
+  zh: c7ea3ac224a228c6
 /ocean-chat-desktop/develop/startup-onboarding:
-  en: 189b118962fe839d
-  zh: 6c36b9122d63be1c
+  en: ec3146520568f191
+  zh: 89f03adbad0036c2
 /ocean-chat-desktop/develop/retained-welcome-window-appearance:
   en: f2b211b9b8966283
   zh: 619f598d74df0d9c
 /ocean-chat-desktop/package:
-  en: 03c8abb4fbfc0345
-  zh: 952c5a17b1b8c6ff
+  en: 98d8b475fd089f7e
+  zh: 4754da8894db3701
 /ocean-chat-desktop/windows-installer-interface:
-  en: f1302ed4a3ab58bb
-  zh: cb53b9b349815028
+  en: 0bdb1f99afd34e96
+  zh: 4f63208663a70418
 /ocean-chat-desktop/updates:
-  en: 8b0b9efeb83727ef
-  zh: 5ee95de48ceab392
+  en: 4f82509a6b286c6e
+  zh: 414f4986beac553c
 /ocean-chat-desktop/updates/local-desktop-settings:
-  en: 892a5a2d74776dce
-  zh: 5ff72c6fb2dfbfd1
+  en: 30f08b92cd7b2211
+  zh: 48e95c1b6786d2fb
 /ocean-chat-desktop/updates/mandatory-update-policy:
-  en: 182a9c6705213e13
-  zh: 681762f83490f4c6
+  en: 78e1188b3bd3e88b
+  zh: 4a367e5429d48f62
 /ocean-chat-desktop/updates/local-updater-qualification:
-  en: 2ee83720cb9510c0
-  zh: 686752847724ad6a
+  en: 249110091734b61c
+  zh: 83c69a67b1d2d04f
 /ocean-chat-desktop/low-level-development-overrides:
-  en: 8264b135871e8978
-  zh: 0939aafb1b2961fc
+  en: 746a76dc7e5e1888
+  zh: aa1d28445afd141c
 /ocean-chat-desktop/known-limitations:
-  en: 9cb0845c95a27157
-  zh: b880c98e73142826
+  en: e14deacd3fca2260
+  zh: 1aa13aff0f524fc6
 /ocean-chat-desktop/dev-note:
   en: b5f95137422b927a
   zh: 4781e3a7ea037901
@@ -81,11 +81,11 @@
   en: 56b04e2c846e496d
   zh: 7ae1219511f0f0f8
 /ocean-chat-desktop/local-linux-archives:
-  en: 4a379dae0b5c5ab2
-  zh: df0e8ee1d054da58
+  en: 785763e40008150a
+  zh: c518a3aadb0f9379
 /ocean-chat-desktop/workspace-first-startup:
   en: ec0d4811c2c8cd2e
   zh: d18b2c68caa3ffd8
 /ocean-chat-desktop/workspace-first-startup/linux-native-host-runtime:
-  en: 844c932eef86b529
-  zh: f3b090eff74c3ab8
+  en: d5e5c6cb00e1ce19
+  zh: 78456d1bfd17519b

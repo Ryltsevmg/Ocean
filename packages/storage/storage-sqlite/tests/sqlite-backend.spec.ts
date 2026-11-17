@@ -25,7 +25,7 @@ afterEach(async () => {
 })
 
 async function freshDbPath(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-storage-sqlite-'))
+  const dir = await mkdtemp(join(tmpdir(), 'ocean-storage-sqlite-'))
   dirs.push(dir)
   return join(dir, 'storage.db')
 }
@@ -435,7 +435,7 @@ describe('sqlite backend specifics', () => {
 
   it('propagates filesystem errors other than an existing database file', async () => {
     if (process.platform === 'win32') return
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-storage-sqlite-'))
+    const dir = await mkdtemp(join(tmpdir(), 'ocean-storage-sqlite-'))
     dirs.push(dir)
     await chmod(dir, 0o500)
     const backend = backendAt(join(dir, 'storage.db'))

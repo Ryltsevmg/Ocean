@@ -11,8 +11,8 @@
 | 位置 | 命名方式 | 示例 |
 |---|---|---|
 | HTTP 字段名 | 小写 kebab-case；HTTP 匹配仍不区分大小写 | `user-agent`, `x-deepseek-harness-session-id` |
-| DeepSeek 请求正文扩展字段 | 使用保留 `dsh_` 前缀的 snake case | `dsh_plugin_packages`, `dsh_session_log` |
-| DSH 持有的嵌套 JSON 成员 | Camel case | `afterSeq`, `throughSeq`, `sessionId` |
+| DeepSeek 请求正文扩展字段 | 使用保留 `ocean_` 前缀的 snake case | `dsh_plugin_packages`, `dsh_session_log` |
+| OCEAN 持有的嵌套 JSON 成员 | Camel case | `afterSeq`, `throughSeq`, `sessionId` |
 | 带标签的值 | 使用 kebab-case 字符串；持久事件采用 `domain/action` | `session-log-deepseek/delivery-accepted` |
 
 每个正文扩展独立持有自身的 `version`。版本仅适用于包含该字段的对象；不同字段的版本之间不存在兼容或排序关系。JSON 成员顺序不属于协议。
@@ -23,7 +23,7 @@
 
 | 标头 | 出现条件 | 值 |
 |---|---|---|
-| `user-agent` | 每个提供方 HTTP 请求，包括 Files API 操作 | 采用 `product/version (+url)` 形式的应用身份，其后追加命名所启动 profile 的 `dsh-profile/<profile>`，`tchar` 以外的字节及 `%` 做百分号编码（例如 `dsh-profile/desktop`、`dsh-profile/web`、`dsh-profile/sdk`）；默认产品为 `deepseek-harness` |
+| `user-agent` | 每个提供方 HTTP 请求，包括 Files API 操作 | 采用 `product/version (+url)` 形式的应用身份，其后追加命名所启动 profile 的 `ocean-profile/<profile>`，`tchar` 以外的字节及 `%` 做百分号编码（例如 `ocean-profile/desktop`、`ocean-profile/web`、`ocean-profile/sdk`）；默认产品为 `deepseek-harness` |
 | `x-deepseek-harness-user-id` | 每个已授权的模型请求 | 已解析 Harness home 的稳定匿名 UUID |
 | `x-deepseek-harness-session-id` | 携带会话 id 的模型请求 | 确切的请求 `sessionId` 字符串 |
 | `x-deepseek-harness-compact` | 用途为 `compaction` 的模型请求 | 字面字符串 `1` |

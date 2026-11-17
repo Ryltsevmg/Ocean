@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-[Web bundle](../../bundle/web-app/README.zh.md)和 [SDK bundle](../../bundle/sdk-app/README.zh.md)在 Desktop、普通 `dsh web` 和 SDK 中随 `office-kit` 挂载此插件；Web bundle 中由 `standard` 和 `ptc` Agent 预设包含它，`minimal` 预设不包含。加载任一配置的 [Office 技能](../../skill/skill-office/README.zh.md)后，三个工具从模型的下一步起全部激活，无论技能由模型调用 `skill`、PTC 嵌套调用，还是用户以 `/office` 等方式直接调用。加载失败或加载其他技能不会激活工具。激活前调用返回 `UNKNOWN_TOOL`。
+[Web bundle](../../bundle/web-app/README.zh.md)和 [SDK bundle](../../bundle/sdk-app/README.zh.md)在 Desktop、普通 `ocean web` 和 SDK 中随 `office-kit` 挂载此插件；Web bundle 中由 `standard` 和 `ptc` Agent 预设包含它，`minimal` 预设不包含。加载任一配置的 [Office 技能](../../skill/skill-office/README.zh.md)后，三个工具从模型的下一步起全部激活，无论技能由模型调用 `skill`、PTC 嵌套调用，还是用户以 `/office` 等方式直接调用。加载失败或加载其他技能不会激活工具。激活前调用返回 `UNKNOWN_TOOL`。
 
 激活只匹配 `activationSkills` 中列出的技能名，因此须同时挂载 [`@ocean/ocean-skill-office`](../../skill/skill-office/README.zh.md)，或其他注册了同名技能的 provider；否则三个工具永远不会出现。
 

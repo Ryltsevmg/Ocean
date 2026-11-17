@@ -6,11 +6,11 @@
   en: 356614b4af1ad375
   zh: f76a068b5f056574
 /ocean-ocean-session-telemetry-otel:
-  en: 9171f4a035f1c9c8
-  zh: 8c14aa701f9de10b
+  en: b28da2c9817a98d4
+  zh: e9f03f14e730d072
 /ocean-ocean-session-telemetry-otel/summary:
-  en: 828903209ef34983
-  zh: 8eac63f1e8df15d8
+  en: 673a71bd09661e42
+  zh: 80e9384315dc032b
 /ocean-ocean-session-telemetry-otel/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,14 +18,14 @@
   en: 9b82f2819ddaa3f4
   zh: b6ad90b11e7e0ef7
 /ocean-ocean-session-telemetry-otel/use-this-package/modes:
-  en: bc7e598148a7f8c3
-  zh: 0209c6aa258ec134
+  en: a18e42be3ee1b8b9
+  zh: 6b0eb5d5ce6b2dde
 /ocean-ocean-session-telemetry-otel/use-this-package/minimal-configuration:
   en: 11845fd50dc0a494
   zh: ee990bfca3621bd3
 /ocean-ocean-session-telemetry-otel/use-this-package/what-leaves-the-machine:
-  en: 2a5ddd227e400455
-  zh: 74b7bd9b9161b054
+  en: cbfa6eeab42de995
+  zh: 983eb02d729e0f2b
 /ocean-ocean-session-telemetry-otel/use-this-package/failures-and-shutdown:
   en: a66831cb9de57e04
   zh: 3ada28bb868e0932
@@ -45,8 +45,8 @@
   en: a42e9e081fb93bee
   zh: b8e817c2455278b9
 /ocean-ocean-session-telemetry-otel/further-exploration:
-  en: 55d274786f59c076
-  zh: c6fd5c1f51182ebe
+  en: 519138c1ec08be52
+  zh: 3ddce4ad54af6572
 /ocean-ocean-session-telemetry-otel/model-experience:
   en: a5a1c890ddacd9a9
   zh: 019c0d113e141853
@@ -54,8 +54,8 @@
   en: 7593cf5d0d2cedd6
   zh: f57cc48a1b5cbfa9
 /ocean-ocean-session-telemetry-otel/known-limitations-and-deferred-work:
-  en: 5d0b88f8256bd782
-  zh: 36b8d64645ed6c2e
+  en: a35ee0f94ca2d70e
+  zh: 6eeaedaa39fd8428
 /ocean-ocean-session-telemetry-otel/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

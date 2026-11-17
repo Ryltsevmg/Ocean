@@ -6,26 +6,26 @@
   en: c9eac4288ae5293a
   zh: fb718ad3c2da3e49
 /ocean-ocean-lsp-stdio:
-  en: 4e3f76ea28e7e82a
-  zh: 73ab4a25aa643a32
+  en: 1686cc08bd758288
+  zh: e045f03fc32994f2
 /ocean-ocean-lsp-stdio/summary:
-  en: 9bb3631289433c95
-  zh: 4b30c9a4aa5186b8
+  en: ca3102f26118b952
+  zh: faeaaf91927c9d3a
 /ocean-ocean-lsp-stdio/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-lsp-stdio/use-this-package:
-  en: c632954ac645e57e
-  zh: 646525beedbdb97c
+  en: 73ffdc1d0629419b
+  zh: 59892081d0e8c22d
 /ocean-ocean-lsp-stdio/use-this-package/minimal-configuration:
-  en: 33dd975d61064ea2
-  zh: c33f704b6ea07719
+  en: fd108638d62887a9
+  zh: c4c054913c918cef
 /ocean-ocean-lsp-stdio/use-this-package/what-a-query-does:
   en: 41363baf8fdba020
   zh: d1a6193b1aa813ba
 /ocean-ocean-lsp-stdio/use-this-package/observable-success-and-failures:
-  en: 9b947af73dbe2305
-  zh: e40b163f476deaf9
+  en: acd0bc70b52e5e67
+  zh: c4b1e14754262267
 /ocean-ocean-lsp-stdio/use-this-package/security-boundary:
   en: f1f7fef771bcaa6d
   zh: f11dcf771a6fecfc
@@ -42,14 +42,14 @@
   en: 0f9bac88ad9448b8
   zh: f5d3a2e61a596003
 /ocean-ocean-lsp-stdio/further-exploration:
-  en: 2b280b85054f6b9f
-  zh: 6e609d42db7da87c
+  en: e2340ae83a2ed7eb
+  zh: 89ff3635bc0ea8a5
 /ocean-ocean-lsp-stdio/model-experience:
-  en: b366d0dfbfeb2d91
-  zh: 72a7a8d957b13eb4
+  en: 20050b9a93720910
+  zh: 041236acfd12bc72
 /ocean-ocean-lsp-stdio/model-experience/kv-cache-effect:
-  en: 64354484a5367fbc
-  zh: aec3e5c7933389b6
+  en: 3cbc6dc0e22e9d97
+  zh: e09a3608d35cf296
 /ocean-ocean-lsp-stdio/known-limitations-and-deferred-work:
   en: dc4fc5797b3b2d38
   zh: f04e4159ce280218

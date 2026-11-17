@@ -55,7 +55,7 @@ function validationHeader(value: unknown): unknown {
   const header = { ...value as Record<string, unknown> }
   if (header.version === 0 && !Object.hasOwn(header, 'delegationDepth')) header.delegationDepth = 0
   if (typeof header.cwd === 'string' && /^\{\{cwd\}\}(?:\/|$)/.test(header.cwd)) {
-    header.cwd = header.cwd.replace('{{cwd}}', '/dsh-snapshot-cwd')
+    header.cwd = header.cwd.replace('{{cwd}}', '/ocean-snapshot-cwd')
   }
   return header
 }

@@ -221,7 +221,7 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(join(scaffold.workspaceCwd, 'first.txt'))
     expect(await file.evaluate(element => element === document.activeElement)).toBe(true)
     await page.evaluate(() => {
-      document.documentElement.style.setProperty('--dsh-frame-overlay-top', '100px')
+      document.documentElement.style.setProperty('--ocean-frame-overlay-top', '100px')
       const frames: number[] = []
       const observer = new MutationObserver(() => {
         for (const menu of document.querySelectorAll('[role="menu"]')) frames.push(menu.querySelectorAll('[role="menuitem"]').length)
@@ -249,7 +249,7 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
       const observed = (window as Window & { menuObservation?: { frames: number[]; observer: MutationObserver } }).menuObservation
       if (observed === undefined) throw new Error('Menu observer not installed')
       observed.observer.disconnect()
-      document.documentElement.style.removeProperty('--dsh-frame-overlay-top')
+      document.documentElement.style.removeProperty('--ocean-frame-overlay-top')
       return observed.frames
     })
     expect(counts.length).toBeGreaterThan(0)
@@ -417,7 +417,7 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
       const destinations = { download: join(scaffold.workspaceCwd, 'downloaded.gif'), saveAs: join(scaffold.workspaceCwd, 'saved.txt') }
       await native.addInitScript(({ platform, destinations }) => {
         Object.defineProperty(navigator, 'platform', { value: platform })
-        Object.defineProperty(globalThis, 'dshDesktop', { value: { protocolVersion: 1, fileActions: {
+        Object.defineProperty(globalThis, 'oceanDesktop', { value: { protocolVersion: 1, fileActions: {
           save: async ({ mode }: { mode: 'download' | 'saveAs' }) => ({ status: 'saved', path: destinations[mode] }),
         } } })
       }, { platform, destinations })

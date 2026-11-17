@@ -38,14 +38,14 @@ export async function extractHelper(archive: string, directory: string): Promise
   for (const entry of entries) {
     const path = entry.path.replace(/\/$/, '')
     if (!['File', 'Directory'].includes(entry.type) || path.split('/').some(part => part === '..' || part === '.' || part === '')
-      || path.includes('\\') || !path.startsWith('dsh-ssh-helper') || (path !== 'dsh-ssh-helper' && !path.startsWith('dsh-ssh-helper/')) || seen.has(path)) {
+      || path.includes('\\') || !path.startsWith('ocean-ssh-helper') || (path !== 'ocean-ssh-helper' && !path.startsWith('ocean-ssh-helper/')) || seen.has(path)) {
       throw new Error(`Invalid SSH helper archive entry: ${entry.path} (${entry.type})`)
     }
     seen.add(path)
   }
-  if (!seen.has('dsh-ssh-helper/manifest.json')) throw new Error('SSH helper archive has no manifest.json')
+  if (!seen.has('ocean-ssh-helper/manifest.json')) throw new Error('SSH helper archive has no manifest.json')
   await extract({ file: archive, cwd: directory, strict: true })
-  return join(directory, 'dsh-ssh-helper')
+  return join(directory, 'ocean-ssh-helper')
 }
 
 /**
@@ -110,7 +110,7 @@ export async function verifySshHelper(argv: string[]): Promise<void> {
   const archive = resolve(values.archive)
   const checksum = (await readFile(`${archive}.sha256`, 'utf8')).split(/\s/)[0]
   if (await fileDigest(archive) !== checksum) throw new Error('SSH helper archive checksum mismatch')
-  const temporary = await realpath(await mkdtemp(join(homedir(), '.dsh-helper-check-')))
+  const temporary = await realpath(await mkdtemp(join(homedir(), '.ocean-helper-check-')))
   try {
     const installed = await extractHelper(archive, temporary)
     const manifest = await verifyPayload(installed)
@@ -129,12 +129,12 @@ export async function verifySshHelper(argv: string[]): Promise<void> {
       await chmod(join(bin, 'bwrap'), 0o755)
       path = `${bin}:${path}`
     }
-    const executable = join(installed, 'dsh-ssh-helper')
+    const executable = join(installed, 'ocean-ssh-helper')
     const helperHash = await fileDigest(executable)
     const environment = {
-      HOME: home, PATH: process.env.PATH, DSH_HOME: join(home, 'dsh'),
-      TSX_TSCONFIG_PATH: join(root, 'tsconfig.base.json'), DSH_TELEMETRY_DISABLED: '1',
-      ...(values.backend === undefined ? {} : { DSH_EXPECT_SANDBOX_RUNNER: values.backend }),
+      HOME: home, PATH: process.env.PATH, OCEAN_HOME: join(home, 'ocean'),
+      TSX_TSCONFIG_PATH: join(root, 'tsconfig.base.json'), OCEAN_TELEMETRY_DISABLED: '1',
+      ...(values.backend === undefined ? {} : { OCEAN_EXPECT_SANDBOX_RUNNER: values.backend }),
     }
     const runs = await Promise.allSettled([0, 1].map(async (index) => {
       const cwd = join(workspace, String(index))

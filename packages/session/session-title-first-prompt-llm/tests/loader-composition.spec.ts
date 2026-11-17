@@ -51,7 +51,7 @@ async function loadComposition(
   entries: readonly string[] = [],
   entryModules: ReadonlyMap<string, unknown> = new Map(),
 ): Promise<Context> {
-  root = await mkdtemp(join(tmpdir(), 'dsh-title-loader-'))
+  root = await mkdtemp(join(tmpdir(), 'ocean-title-loader-'))
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [
     "- name: '@ocean/ocean-llm'",

@@ -2,14 +2,14 @@
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
 import { credentialRef } from '@ocean/ocean-credentials'
-import { createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY } from '@ocean/ocean-launch-environment'
+import { createLaunchEnvironmentSnapshot, OCEAN_LAUNCH_ENVIRONMENT_KEY } from '@ocean/ocean-launch-environment'
 import { deepSeekApiKeyConfigured, rejectDeepSeekAccountToken, resolveDeepSeekAccountToken, resolveDeepSeekApiKey } from '../src/credential.ts'
 
 const ref = credentialRef('TEST_DEEPSEEK_KEY')
 
 function context(value?: string): Context {
   const ctx = new Context()
-  ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([
+  ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([
     { source: 'process', values: value === undefined ? {} : { [ref]: value } },
   ]))
   return ctx

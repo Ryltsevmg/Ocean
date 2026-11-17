@@ -6,7 +6,7 @@
 [English](index.md) | [中文](index.zh.md) | [Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | Français | [Deutsch](index.de.md) | [Português](index.pt.md) | [한국어](index.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Lancez l’interface web en suivant le [README principal](../../development.md). La commande affiche son URL. Suivez ce guide une fois le serveur démarré. Le processus `dsh` utilise par défaut le répertoire depuis lequel vous l’avez lancé. Au premier lancement de l’interface web, aucun espace de travail n’est sélectionné.
+Lancez l’interface web en suivant le [README principal](../../development.md). La commande affiche son URL. Suivez ce guide une fois le serveur démarré. Le processus `ocean` utilise par défaut le répertoire depuis lequel vous l’avez lancé. Au premier lancement de l’interface web, aucun espace de travail n’est sélectionné.
 
 <a id="configure-a-model"></a>
 
@@ -18,7 +18,7 @@ Ouvrez **Paramètres → Modèles** et choisissez un fournisseur de modèles. Le
 
 ## Choisir un espace de travail
 
-Cliquez sur **Choisir un espace de travail**, ajoutez le répertoire du projet depuis lequel vous avez lancé `dsh`, puis sélectionnez-le. La zone de saisie de la session reste indisponible jusqu’à ce que vous ayez sélectionné un espace de travail.
+Cliquez sur **Choisir un espace de travail**, ajoutez le répertoire du projet depuis lequel vous avez lancé `ocean`, puis sélectionnez-le. La zone de saisie de la session reste indisponible jusqu’à ce que vous ayez sélectionné un espace de travail.
 
 <a id="run-a-task"></a>
 

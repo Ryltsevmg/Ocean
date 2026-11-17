@@ -9,7 +9,7 @@ import { runtimeFixture } from './runtime-fixture.ts'
 
 const roots: string[] = []
 function temporaryRoot(): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-desktop-test-'))
   roots.push(root)
   return root
 }
@@ -17,26 +17,26 @@ function seedPlugin(manager: DesktopProjectManager): void {
   const path = join(manager.paths.profile, 'package.json')
   const manifest = JSON.parse(readFileSync(path, 'utf8')) as {
     dependencies: Record<string, string>
-    dsh: { profile: { bundles: string[] } }
+    ocean: { profile: { bundles: string[] } }
   }
   manifest.dependencies.plugin = '1.0.0'
-  manifest.dsh.profile.bundles.push('plugin')
+  manifest.ocean.profile.bundles.push('plugin')
   writeFileSync(path, JSON.stringify(manifest))
   const directory = join(manager.paths.profile, 'node_modules/plugin')
   mkdirSync(directory, { recursive: true })
-  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name: 'plugin', version: '1.0.0', dsh: { bundle: { patch: 'bundle.yml' } } }))
+  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name: 'plugin', version: '1.0.0', ocean: { bundle: { patch: 'bundle.yml' } } }))
   writeFileSync(join(directory, 'bundle.yml'), '[]\n')
 }
 function plugins(manager: DesktopProjectManager) {
-  return readProfilePlugins({ binName: 'dsh', profileDir: manager.paths.profile,
-    installAnchor: join(manager.runtime.dsh, 'node_modules/@ocean/ocean/package.json') }).dependencies
+  return readProfilePlugins({ binName: 'ocean', profileDir: manager.paths.profile,
+    installAnchor: join(manager.runtime.ocean, 'node_modules/@ocean/ocean/package.json') }).dependencies
     .map(({ name, version, enabled }) => ({ name, version, enabled }))
 }
 function setup(): { root: string; manager: DesktopProjectManager } {
   const root = temporaryRoot()
-  const dsh = join(root, 'resources', 'dsh')
-  runtimeFixture(dsh)
-  return { root, manager: new DesktopProjectManager(resolveDesktopPaths(join(root, '.dsh')), { dsh }) }
+  const ocean = join(root, 'resources', 'ocean')
+  runtimeFixture(ocean)
+  return { root, manager: new DesktopProjectManager(resolveDesktopPaths(join(root, '.ocean')), { ocean }) }
 }
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
@@ -95,8 +95,8 @@ describe('desktop external plugin profile', () => {
     unlinkSync(patch)
     await manager.disableAllPlugins()
     expect((JSON.parse(readFileSync(join(manager.paths.profile, 'package.json'), 'utf8')) as {
-      dsh: { profile: { bundles: string[] } }
-    }).dsh.profile.bundles).not.toContain('plugin')
+      ocean: { profile: { bundles: string[] } }
+    }).ocean.profile.bundles).not.toContain('plugin')
     expect(existsSync(join(manager.paths.profile, 'node_modules/plugin/package.json'))).toBe(true)
     await expect(manager.applyRelease()).resolves.toBeUndefined()
   })
@@ -107,7 +107,7 @@ describe('desktop external plugin profile', () => {
     seedPlugin(manager)
     const patch = join(manager.paths.profile, 'cordis.patch.yml')
     writeFileSync(patch, ': broken')
-    const uninitialized = new DesktopProjectManager(manager.paths, { ...manager.runtime, dsh: 'missing-runtime' })
+    const uninitialized = new DesktopProjectManager(manager.paths, { ...manager.runtime, ocean: 'missing-runtime' })
     const backupPath = await uninitialized.disableAllPlugins()
     expect(existsSync(patch)).toBe(false)
     const backups = readdirSync(manager.paths.profile).filter(name => name.startsWith('cordis.patch.yml.bak-'))
@@ -117,11 +117,11 @@ describe('desktop external plugin profile', () => {
     expect(existsSync(join(manager.paths.profile, 'node_modules/plugin/package.json'))).toBe(true)
     const manifest = JSON.parse(readFileSync(join(manager.paths.profile, 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>
-      dsh: { profile: { bundles: string[] } }
+      ocean: { profile: { bundles: string[] } }
     }
     expect(manifest.dependencies.plugin).toBe('1.0.0')
-    expect(manifest.dsh.profile.bundles).not.toContain('plugin')
-    expect(manifest.dsh.profile.bundles).toContain('@ocean/ocean-web-app')
+    expect(manifest.ocean.profile.bundles).not.toContain('plugin')
+    expect(manifest.ocean.profile.bundles).toContain('@ocean/ocean-web-app')
     await manager.applyRelease()
     expect(readFileSync(patch, 'utf8')).toContain('[]')
   })
@@ -170,7 +170,7 @@ describe('desktop external plugin profile', () => {
 
   it('reports damaged application metadata as a reinstall failure', async () => {
     const { manager } = setup()
-    writeFileSync(join(manager.runtime.dsh, 'desktop-runtime.json'), '{broken')
+    writeFileSync(join(manager.runtime.ocean, 'desktop-runtime.json'), '{broken')
     await expect(manager.applyRelease()).rejects.toThrow()
   })
 
@@ -197,16 +197,16 @@ describe('desktop external plugin profile', () => {
   it.skipIf(process.platform !== 'win32')('reuses the profile when the launch path changes only Windows letter casing', async () => {
     const { manager } = setup()
     await manager.applyRelease()
-    const relaunched = new DesktopProjectManager(manager.paths, { ...manager.runtime, dsh: manager.runtime.dsh.toUpperCase() })
+    const relaunched = new DesktopProjectManager(manager.paths, { ...manager.runtime, ocean: manager.runtime.ocean.toUpperCase() })
     await expect(relaunched.applyRelease()).resolves.toBeUndefined()
   })
 
   it.each(['changed', 'same-size', 'extra', 'missing'])('starts and reuses a profile without checking %s runtime bytes', async (operation) => {
     const { manager } = setup()
-    if (operation === 'changed') writeFileSync(join(manager.runtime.dsh, 'package.json'), '{}')
-    if (operation === 'same-size') writeFileSync(join(manager.runtime.dsh, 'package.json'), '{"type":"Module"}\n')
-    if (operation === 'extra') writeFileSync(join(manager.runtime.dsh, 'extra'), '')
-    if (operation === 'missing') unlinkSync(join(manager.runtime.dsh, 'package.json'))
+    if (operation === 'changed') writeFileSync(join(manager.runtime.ocean, 'package.json'), '{}')
+    if (operation === 'same-size') writeFileSync(join(manager.runtime.ocean, 'package.json'), '{"type":"Module"}\n')
+    if (operation === 'extra') writeFileSync(join(manager.runtime.ocean, 'extra'), '')
+    if (operation === 'missing') unlinkSync(join(manager.runtime.ocean, 'package.json'))
     await expect(manager.applyRelease()).resolves.toBeUndefined()
     const relaunched = new DesktopProjectManager(manager.paths, manager.runtime)
     await expect(relaunched.applyRelease()).resolves.toBeUndefined()
@@ -218,9 +218,9 @@ describe('desktop external plugin profile', () => {
     await manager.applyRelease()
     seedPlugin(manager)
     writeFileSync(join(manager.paths.profile, 'cordis.patch.yml'), '[]\n')
-    const nextRoot = join(root, 'relocated', 'dsh')
+    const nextRoot = join(root, 'relocated', 'ocean')
     runtimeFixture(nextRoot, '1.1.0')
-    const next = new DesktopProjectManager(manager.paths, { ...manager.runtime, dsh: nextRoot })
+    const next = new DesktopProjectManager(manager.paths, { ...manager.runtime, ocean: nextRoot })
     await expect(next.applyRelease()).resolves.toBeUndefined()
     expect(plugins(next)).toEqual(plugins(manager))
     expect(readFileSync(join(manager.paths.profile, 'cordis.patch.yml'), 'utf8')).toBe('[]\n')
@@ -231,9 +231,9 @@ describe('desktop external plugin profile', () => {
     const { root, manager } = setup()
     await manager.applyRelease()
     seedPlugin(manager)
-    const dsh = join(root, 'new-node')
-    runtimeFixture(dsh, '1.1.0', '24.18.0')
-    const next = new DesktopProjectManager(manager.paths, { ...manager.runtime, dsh })
+    const ocean = join(root, 'new-node')
+    runtimeFixture(ocean, '1.1.0', '24.18.0')
+    const next = new DesktopProjectManager(manager.paths, { ...manager.runtime, ocean })
     await next.applyRelease()
     expect(plugins(next)).toEqual([{ name: 'plugin', version: '1.0.0', enabled: true }])
   })
@@ -242,9 +242,9 @@ describe('desktop external plugin profile', () => {
     const { root, manager } = setup()
     await manager.applyRelease()
     seedPlugin(manager)
-    const dsh = join(root, 'next-major')
-    runtimeFixture(dsh, '2.0.0')
-    const next = new DesktopProjectManager(manager.paths, { ...manager.runtime, dsh })
+    const ocean = join(root, 'next-major')
+    runtimeFixture(ocean, '2.0.0')
+    const next = new DesktopProjectManager(manager.paths, { ...manager.runtime, ocean })
     await expect(next.applyRelease()).resolves.toBeUndefined()
     await next.disableAllPlugins()
     expect(plugins(next)).toEqual([{ name: 'plugin', version: '1.0.0', enabled: false }])
@@ -311,21 +311,21 @@ describe.each(['applyRelease', 'disableAllPlugins'] as const)('desktop profile l
 })
 
 describe('desktop link-backend projections', () => {
-  it('removes .dsh-module-fallback projections when preparing a launch', async () => {
+  it('removes .ocean-module-fallback projections when preparing a launch', async () => {
     const { manager } = setup()
     await manager.applyRelease()
     const profile = manager.paths.profile
     const target = join(profile, 'node_modules', 'my-bundle', 'node_modules', 'bridge')
     mkdirSync(target, { recursive: true })
     writeFileSync(join(target, 'package.json'), JSON.stringify({ name: 'bridge', version: '1.0.0' }))
-    const owned = join(profile, '.dsh-module-fallback', 'node_modules', 'bridge')
+    const owned = join(profile, '.ocean-module-fallback', 'node_modules', 'bridge')
     mkdirSync(dirname(owned), { recursive: true })
     symlinkSync(target, owned, process.platform === 'win32' ? 'junction' : 'dir')
     symlinkSync(owned, join(profile, 'node_modules', 'bridge'), process.platform === 'win32' ? 'junction' : 'dir')
 
     await manager.applyRelease()
 
-    expect(existsSync(join(profile, '.dsh-module-fallback'))).toBe(false)
+    expect(existsSync(join(profile, '.ocean-module-fallback'))).toBe(false)
     expect(lstatSync(join(profile, 'node_modules', 'bridge'), { throwIfNoEntry: false })).toBeUndefined()
     expect(existsSync(join(target, 'package.json'))).toBe(true)
   })

@@ -15,7 +15,7 @@ afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) awai
 const PROMPT_MARKER = 'READY>'
 
 async function shell(path: string, rc = '', envFile = '') {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-shell-activity-test-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-shell-activity-test-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
   await writeFile(join(home, '.zshenv'), envFile)
   await writeFile(join(home, '.zshrc'), `PROMPT='${PROMPT_MARKER} '\n${rc}\n`)

@@ -59,9 +59,9 @@ describe('replayPromptEvidence', () => {
       .toEqual({ promptSeen: true, promptTail: CONTROLLED_PROMPT, promptTextSeen: true })
     expect(replayPromptEvidence([{ prompt: true, promptTail: '' }, { prompt: false, promptTail: `${CONTROLLED_PROMPT}Write-Output` }]))
       .toEqual({ promptSeen: true, promptTail: `${CONTROLLED_PROMPT}\0`, promptTextSeen: false })
-    expect(replayPromptEvidence([{ prompt: true, promptTail: '' }, { prompt: false, promptTail: 'dsh' }]))
-      .toEqual({ promptSeen: true, promptTail: 'dsh', promptTextSeen: false })
-    expect(replayPromptEvidence([{ prompt: false, promptTail: undefined }, { prompt: false, promptTail: 'dsh> ' }]))
+    expect(replayPromptEvidence([{ prompt: true, promptTail: '' }, { prompt: false, promptTail: 'ocean' }]))
+      .toEqual({ promptSeen: true, promptTail: 'ocean', promptTextSeen: false })
+    expect(replayPromptEvidence([{ prompt: false, promptTail: undefined }, { prompt: false, promptTail: 'ocean> ' }]))
       .toEqual({ promptSeen: false, promptTail: '', promptTextSeen: false })
     // A later marker restarts the tail, as the session's onData does.
     expect(replayPromptEvidence([
@@ -111,7 +111,7 @@ describe('ReadinessTimeline', () => {
     expect(windowA).toMatch(/^#1 a \(from \+\d+ ms\) → stdin_read after \d+ ms\n/)
     expect(windowA).toContain('write s0 7 units (input)')
     expect(windowA).toContain('write s0 6 units (reply)')
-    expect(windowA).toContain('replayed evidence at settle: promptSeen=true promptTail="dsh> " promptTextSeen=true')
+    expect(windowA).toContain('replayed evidence at settle: promptSeen=true promptTail="ocean> " promptTextSeen=true')
     expect(windowA).not.toContain('b-output')
     expect(windowB).toMatch(/^#2 b \(from \+\d+ ms\) → rejected after \d+ ms\n/)
     expect(windowB).toContain('polls 1')

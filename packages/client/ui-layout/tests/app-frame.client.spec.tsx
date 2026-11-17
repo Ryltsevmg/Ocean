@@ -104,7 +104,7 @@ function mountFrame(windowWidth = frameWidth, content?: AppFrameProps['renderSlo
       useContextMenu={contextMenuHook()} useResource={useResource}
       useWorkspaces={sel => sel(workspaceState)}
       {...allowAllAccess}
-      t={key => key === 'brand.localBuild' ? 'DSH Local Build' : key}
+      t={key => key === 'brand.localBuild' ? 'OCEAN Local Build' : key}
     />
   )
   const utils = render(element())
@@ -154,7 +154,7 @@ beforeEach(() => {
   observers = []
   animationFrames = new Map()
   nextFrame = 1
-  vi.stubEnv('DSH_CLIENT_TITLE', undefined)
+  vi.stubEnv('OCEAN_CLIENT_TITLE', undefined)
   vi.stubGlobal('ResizeObserver', ResizeObserverStub)
   foldedLandscape = createSnapshotStore(false)
   vi.stubGlobal('matchMedia', () => ({ matches: false }))
@@ -192,11 +192,11 @@ afterEach(() => {
 describe('AppFrame', () => {
   it('localizes the product title without a configured build title', () => {
     mountFrame()
-    expect(document.title).toBe('DSH Local Build')
+    expect(document.title).toBe('OCEAN Local Build')
   })
 
   it('follows the selected durable Session title', () => {
-    vi.stubEnv('DSH_CLIENT_TITLE', 'Product')
+    vi.stubEnv('OCEAN_CLIENT_TITLE', 'Product')
     selectedSessionTitle = 'First'
     const { rerenderFrame } = mountFrame()
     expect(document.title).toBe('First — Product')
@@ -293,7 +293,7 @@ describe('AppFrame', () => {
       expect(instance.getSnapshot().layoutInfo).toBe(layoutInfo)
       expect(tracks(frame)).toEqual([285, 0])
       expect(selectedSession).toBe(sessionId)
-      expect(document.title).toBe(panelId === null ? 'Session title — DSH Local Build' : 'DSH Local Build')
+      expect(document.title).toBe(panelId === null ? 'Session title — OCEAN Local Build' : 'OCEAN Local Build')
     }
   })
 })

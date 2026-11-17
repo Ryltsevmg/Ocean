@@ -25,10 +25,10 @@ export async function runSshHelperRuntime(): Promise<void> {
     },
   })
 
-  const selection = process.env.DSH_SUBPROCESS_RUNNER
-  Reflect.deleteProperty(process.env, 'DSH_SUBPROCESS_RUNNER')
-  if (process.env.DSH_PTC_RUNTIME_NODE === '1') {
-    Reflect.deleteProperty(process.env, 'DSH_PTC_RUNTIME_NODE')
+  const selection = process.env.OCEAN_SUBPROCESS_RUNNER
+  Reflect.deleteProperty(process.env, 'OCEAN_SUBPROCESS_RUNNER')
+  if (process.env.OCEAN_PTC_RUNTIME_NODE === '1') {
+    Reflect.deleteProperty(process.env, 'OCEAN_PTC_RUNTIME_NODE')
     await import('@ocean/ocean-ptc-runtime-node/process')
   } else if (selection !== undefined) {
     const { runSelectedSubprocessRunner } = await import('@ocean/ocean-subprocess-local/runner')

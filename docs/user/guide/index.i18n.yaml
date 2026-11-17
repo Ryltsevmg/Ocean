@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/guide/index.md
 /use-the-web-ui:
-  en: 9507d46928249424
-  zh: 686f5947e92b999d
+  en: b178e3c5bd3082fa
+  zh: 6f11ca9267a44bcd
 /use-the-web-ui/configure-a-model:
-  en: ad2f8df03b05e756
-  zh: 08b4ad99b4170860
+  en: 49e723980bd9651a
+  zh: c57de3b60750f10f
 /use-the-web-ui/choose-a-workspace:
-  en: ed78cd0a583896ae
-  zh: d713d7a4b5f34e42
+  en: 964cfdab893c87c0
+  zh: aeaaf08eda7401f7
 /use-the-web-ui/run-a-task:
   en: e1cb5a05bf6e109d
   zh: 8b181b0fecbc0517
 /use-the-web-ui/continue:
-  en: 32c1bfc4a1ea1fd7
-  zh: 96c74ffaee663979
+  en: 24ec9a1564a9e0dd
+  zh: ea64de71f4afee09

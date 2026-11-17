@@ -2,7 +2,7 @@
     - id: office-kit
       name: '@ocean/ocean-office-kit'
       config:
-        outputDirectory: !!js dshHomePath('office-kit', 'outputs')
+        outputDirectory: !!js oceanHomePath('office-kit', 'outputs')
 
     - id: tool-office
       name: '@ocean/ocean-tool-office'

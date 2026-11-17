@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Browsers reach the web GUI over HTTP through `dsh-host-webserver`: a `node:http` server — `node:https` once `tls` names a certificate and key — where other plugins register named routes, upgrade routes, index startup inputs, and one fallback. It serves no files — the `/api` bridge, plugin bundles, the HMR event stream, and the SPA dist belong to the plugins that register them. Route matching is fixed: exact over the whole table, then longest prefix, then the fallback. It serves browsers only; Electron loads dist over `file://` and carries fetch over an IPC bridge.
+Browsers reach the web GUI over HTTP through `ocean-host-webserver`: a `node:http` server — `node:https` once `tls` names a certificate and key — where other plugins register named routes, upgrade routes, index startup inputs, and one fallback. It serves no files — the `/api` bridge, plugin bundles, the HMR event stream, and the SPA dist belong to the plugins that register them. Route matching is fixed: exact over the whole table, then longest prefix, then the fallback. It serves browsers only; Electron loads dist over `file://` and carries fetch over an IPC bridge.
 
 ## Table of Contents
 
@@ -50,8 +50,8 @@ Set `compression: 'gzip'` to wrap eligible socket-backed responses without chang
     host: 127.0.0.1
     port: 3000
     tls:
-      certFile: /etc/dsh/tls/cert.pem
-      keyFile: /etc/dsh/tls/key.pem
+      certFile: /etc/ocean/tls/cert.pem
+      keyFile: /etc/ocean/tls/key.pem
 ```
 
 `ctx.webServer.protocol` reads `'http:'` or `'https:'` for the bound listener, so a plugin that keys request policy — a session cookie's `Secure` flag, an origin check — on the transport reads one configuration-derived value instead of inspecting sockets or trusting forwarded headers. Clients still verify the certificate you supplied: this carrier ships no trust store, no HTTP-to-HTTPS redirect, and no HSTS header.
@@ -129,7 +129,7 @@ None; this package neither assembles nor sends a provider request.
 These limits define where the server is intentionally minimal. They are current package constraints, not a task backlog.
 
 - **No certificate lifecycle** — `tls` serves the PEM files present at activation: the carrier never provisions, renews, or watches them, and it applies Node's default TLS policy. Replacing a certificate takes a reload.
-- **No server-wide authentication or origin policy** — route owners such as `dsh-client-connection` enforce their own request policy. Binding a non-loopback address still exposes unprotected routes and static assets to that network.
+- **No server-wide authentication or origin policy** — route owners such as `ocean-client-connection` enforce their own request policy. Binding a non-loopback address still exposes unprotected routes and static assets to that network.
 - **Socket options are fixed** — config selects the bind host and port, while backlog and other socket settings remain internal until a deployment needs them.
 
 <a id="dev-note"></a>

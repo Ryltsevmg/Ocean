@@ -29,7 +29,7 @@ async function setup(root: string, task?: ScheduleTask) {
 }
 
 it.each([true, false])('persists same-ID daily edits of a version-1 task with saved history=%s without Session activation', async (withHistory) => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-update-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-update-'))
   roots.push(root)
   const sessionId = SessionId('cold-original')
   const id = ScheduleId('daily-stable-id')
@@ -90,7 +90,7 @@ it.each([true, false])('persists same-ID daily edits of a version-1 task with sa
 })
 
 it('keeps stored IANA alias spelling and a pinned millisecond target byte-identical on a daily no-op', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-update-alias-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-update-alias-'))
   roots.push(root)
   const id = ScheduleId('alias')
   const sessionId = SessionId('alias-session')

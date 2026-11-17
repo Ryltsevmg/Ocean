@@ -401,8 +401,8 @@ export interface SearchLimits {
 ```ts config-catalog
 /** Local attachment backend configuration. */
 export interface Config {
-  /** Explicit harness home; omitted follows `DSH_HOME`, then `~/.dsh`. */
-  dshHome?: string
+  /** Explicit harness home; omitted follows `OCEAN_HOME`, then `~/.ocean`. */
+  oceanHome?: string
   /** Maximum encoded bytes accepted for one submitted image. Default: 50 MiB. */
   maxImageBytes?: number
   /** Maximum image count accepted in one submitted message. Default: 20. */
@@ -861,8 +861,8 @@ export interface Config {
 export interface Config {
   /** Credentials document path; defaults to `.credentials.yaml` under the harness home. */
   path?: string
-  /** Harness home used when `path` is omitted; defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
+  /** Harness home used when `path` is omitted; defaults to `$OCEAN_HOME` or `~/.ocean`. */
+  oceanHome?: string
   /** Watch the document and hot-publish external edits; defaults to true. */
   watch?: boolean
   /** Watcher write-settle window in milliseconds; defaults to 100. */
@@ -1561,14 +1561,14 @@ export type PiAiThinkingTokenBudgetField = NonNullable<OpenAICompletionsCompat['
 - `source`: [`packages/test-support/llm-replay/src/index.ts:1115`](../packages/test-support/llm-replay/src/index.ts)
 
 ```ts config-catalog
-/** Plugin config: the {@link ReplayConfig} inputs, each defaulting to its `DSH_SNAPSHOT_*` env var in `apply`. */
+/** Plugin config: the {@link ReplayConfig} inputs, each defaulting to its `OCEAN_SNAPSHOT_*` env var in `apply`. */
 export interface Config {
-  /** Override the fixture path; defaults to `$DSH_SNAPSHOT_FILE`. */
+  /** Override the fixture path; defaults to `$OCEAN_SNAPSHOT_FILE`. */
   file?: string
-  /** Override the sidecar path; defaults to `$DSH_SNAPSHOT_OVERRIDE`. */
+  /** Override the sidecar path; defaults to `$OCEAN_SNAPSHOT_OVERRIDE`. */
   overrideFile?: string
   /**
-   * Override the child-log paths; defaults to `$DSH_SNAPSHOT_CHILD_FILES` (a
+   * Override the child-log paths; defaults to `$OCEAN_SNAPSHOT_CHILD_FILES` (a
    * path-separator-delimited list). Each is a recorded subagent session log for
    * a nested-agent scenario; absent/empty for a single-session scenario.
    */
@@ -1881,7 +1881,7 @@ export interface Config {
   outputRetentionMs: number
   /** Maximum bytes across retained converted and recalculated files; the oldest leave first. */
   maxOutputStoreBytes: number
-  /** Conversion deadline in milliseconds; excludes the DSH queue. */
+  /** Conversion deadline in milliseconds; excludes the OCEAN queue. */
   timeoutMs: number
   /** Maximum authorized source bytes. */
   maxInputBytes: number
@@ -2006,7 +2006,7 @@ export interface PlanModeConfig {
 ```ts config-catalog
 /** The pnpm executable, registries, and limits for diagnostics, lookups and connection checks. */
 export interface Config {
-  /** The pnpm executable name or path; resolved through `PATH` like the `dsh plugin` command. */
+  /** The pnpm executable name or path; resolved through `PATH` like the `ocean plugin` command. */
   pnpmCommand?: string
   /** Maximum retained package-operation diagnostic bytes. */
   outputBytes?: number
@@ -2625,8 +2625,8 @@ export interface Config extends SessionTitleLlmConfig {
 ```ts config-catalog
 /** Plugin config (all optional — the built-in facts resolve without defaults). */
 export interface Config {
-  /** Ocean home directory exposed as `DSH_HOME`; defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
+  /** Ocean home directory exposed as `OCEAN_HOME`; defaults to `$OCEAN_HOME` or `~/.ocean`. */
+  oceanHome?: string
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-shell-env -->
@@ -2662,9 +2662,9 @@ export interface Config {
   providerName?: string
   /** Whether project and user roots are included around custom roots. */
   includeDefaultRoots?: boolean
-  /** Ocean config root. Defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
-  /** Shared agent config root. Defaults to `$DSH_AGENTS_HOME` or `~/.agents`. */
+  /** Ocean config root. Defaults to `$OCEAN_HOME` or `~/.ocean`. */
+  oceanHome?: string
+  /** Shared agent config root. Defaults to `$OCEAN_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
   /** Additional skill roots scanned after project roots and before user roots. */
   customSkillDirs?: string[]
@@ -2680,7 +2680,7 @@ export interface Config {
   watchMaxProjects?: number
   /** Whether watched symbolic links follow their target files. */
   watchFollowSymlinks?: boolean
-  /** Bundled skill root; defaults to `$DSH_BUNDLED_SKILL_DIR` when default roots are included, otherwise mounts none. */
+  /** Bundled skill root; defaults to `$OCEAN_BUNDLED_SKILL_DIR` when default roots are included, otherwise mounts none. */
   bundledSkillDir?: string
 }
 ```
@@ -3035,27 +3035,44 @@ export type CodexPermissionMode =
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-subagent-codex -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-subagent-dsh-sdk -->
-<a id="oceanocean-subagent-dsh-sdk"></a>
+<!-- BEGIN GENERATED config-catalog:@ocean/ocean-subagent-fork-in-process -->
+<a id="oceanocean-subagent-fork-in-process"></a>
 
-## `@ocean/ocean-subagent-dsh-sdk`
+## `@ocean/ocean-subagent-fork-in-process`
 
 - `inject`: `subagents`
-- `source`: [`packages/subagent/subagent-dsh-sdk/src/index.ts:34`](../packages/subagent/subagent-dsh-sdk/src/index.ts)
+- `source`: [`packages/subagent/subagent-fork-in-process/src/index.ts:29`](../packages/subagent/subagent-fork-in-process/src/index.ts)
+
+```ts config-catalog
+/** Config: the registry name to register the provider under. */
+export interface Config {
+  /** Provider name on `ctx.subagents` (default `fork`). */
+  providerName: string
+}
+```
+<!-- END GENERATED config-catalog:@ocean/ocean-subagent-fork-in-process -->
+
+<!-- BEGIN GENERATED config-catalog:@ocean/ocean-subagent-ocean-sdk -->
+<a id="oceanocean-subagent-ocean-sdk"></a>
+
+## `@ocean/ocean-subagent-ocean-sdk`
+
+- `inject`: `subagents`
+- `source`: [`packages/subagent/subagent-ocean-sdk/src/index.ts:34`](../packages/subagent/subagent-ocean-sdk/src/index.ts)
 
 ```ts config-catalog
 /** Config: how to spawn and drive the child SDK runtime process. */
 export interface Config {
-  /** Provider name on `ctx.subagents` (default `dsh-sdk`). */
+  /** Provider name on `ctx.subagents` (default `ocean-sdk`). */
   providerName: string
-  /** Explicit dsh CLI module, resolved and checked at plugin load; omission uses the SDK dependency. */
-  dshBin?: string
+  /** Explicit ocean CLI module, resolved and checked at plugin load; omission uses the SDK dependency. */
+  oceanBin?: string
   /** Named child profile (default `sdk`). */
   profile: string
   /** Ordered per-launch profile patch files, resolved and checked at plugin load. */
   patches: string[]
   /** Absolute isolated Harness home for every nested child process. */
-  dshHome: string
+  oceanHome: string
   /** Provider route the child runtime initializes with (default `deepseek-official`). */
   provider: string
   /** Model the child runtime initializes with (default `deepseek-v4-flash`). */
@@ -3081,24 +3098,7 @@ export interface Config {
   disposeGraceMs?: number
 }
 ```
-<!-- END GENERATED config-catalog:@ocean/ocean-subagent-dsh-sdk -->
-
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-subagent-fork-in-process -->
-<a id="oceanocean-subagent-fork-in-process"></a>
-
-## `@ocean/ocean-subagent-fork-in-process`
-
-- `inject`: `subagents`
-- `source`: [`packages/subagent/subagent-fork-in-process/src/index.ts:29`](../packages/subagent/subagent-fork-in-process/src/index.ts)
-
-```ts config-catalog
-/** Config: the registry name to register the provider under. */
-export interface Config {
-  /** Provider name on `ctx.subagents` (default `fork`). */
-  providerName: string
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-subagent-fork-in-process -->
+<!-- END GENERATED config-catalog:@ocean/ocean-subagent-ocean-sdk -->
 
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-subagent-spawn-in-process -->
 <a id="oceanocean-subagent-spawn-in-process"></a>
@@ -3795,7 +3795,7 @@ export interface Config {
   /**
    * Expose `run_in_background` (default true); disabled calls are also
    * rejected. A background run needs a live `ctx.jobs` registry with a
-   * controller serving the caller (`dsh-jobs-local` plus `dsh-tool-jobs` in
+   * controller serving the caller (`ocean-jobs-local` plus `ocean-tool-jobs` in
    * the shipped composition); without one the call fails with the missing
    * piece named.
    */
@@ -3920,13 +3920,13 @@ export interface Config {
   /** Print the URL line on activation; a non-interactive layer can turn it off. */
   printUrl: boolean
   /**
-   * Register the `DSH_WEB_URL` bash variable naming this GUI. A one-shot
+   * Register the `OCEAN_WEB_URL` bash variable naming this GUI. A one-shot
    * non-interactive layer can turn it off when its user is not in the GUI.
    */
   surfaceContext: boolean
   /**
    * Canonical HTTP(S) root to advertise in the printed and opened URL,
-   * `DSH_WEB_URL`, and `webApp.getAdvertisedUrl()`, which supplies the Web GUI
+   * `OCEAN_WEB_URL`, and `webApp.getAdvertisedUrl()`, which supplies the Web GUI
    * URL in agent runtime context, e.g. `https://app.example/ui/`, normalized to end in `/`. Configures no routing
    * or authentication; see [public deployments](../README.md#public-deployments).
    * Absent or YAML `null` advertises the bind-address URL.

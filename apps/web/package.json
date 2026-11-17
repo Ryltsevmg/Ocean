@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-web-frontend",
-  "description": "Web application entry: vite build over the @ocean/ocean-client-web shell library; dist/ served by apps/cli's dsh web",
+  "description": "Web application entry: vite build over the @ocean/ocean-client-web shell library; dist/ served by apps/cli's ocean web",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"

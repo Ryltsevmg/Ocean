@@ -29,7 +29,7 @@ export interface AppIdentity {
   version: string
   /** Repository home URL of the app, used as the `User-Agent` comment. */
   url: string
-  /** RFC 9110 product token appended after the comment, such as `dsh-profile/web`. */
+  /** RFC 9110 product token appended after the comment, such as `ocean-profile/web`. */
   suffix?: string | undefined
 }
 
@@ -40,19 +40,19 @@ const PRODUCT = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+(?:\/[!#$%&'*+.^_`|~0-9A-Za-z-]+)?$
  * Read the launching application's `User-Agent` suffix on each use, so a launcher may set it after this module loads.
  * It is a process environment value rather than plugin `Config` because {@link attributionHeaders} runs without a
  * plugin context.
- * @returns the validated `DSH_USER_AGENT_SUFFIX`, or undefined when unset or empty.
+ * @returns the validated `OCEAN_USER_AGENT_SUFFIX`, or undefined when unset or empty.
  * @throws Error when the value is not an RFC 9110 product token.
  */
 function launchSuffix(): string | undefined {
-  const value = process.env.DSH_USER_AGENT_SUFFIX
+  const value = process.env.OCEAN_USER_AGENT_SUFFIX
   if (value === undefined || value === '') return undefined
-  if (!PRODUCT.test(value)) throw new Error(`DSH_USER_AGENT_SUFFIX must be an RFC 9110 product token; got ${JSON.stringify(value)}`)
+  if (!PRODUCT.test(value)) throw new Error(`OCEAN_USER_AGENT_SUFFIX must be an RFC 9110 product token; got ${JSON.stringify(value)}`)
   return value
 }
 
 /**
  * The harness's own identity: the default every adapter sends. Its `suffix`
- * reads `DSH_USER_AGENT_SUFFIX`. Deployments
+ * reads `OCEAN_USER_AGENT_SUFFIX`. Deployments
  * that need a white-label identity pass their own {@link AppIdentity} to
  * {@link attributionHeaders} — omission falls back to this default; nothing
  * can suppress attribution entirely.

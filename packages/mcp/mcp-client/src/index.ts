@@ -145,7 +145,7 @@ type ConfigInput = StdioConfigInput | StreamableHttpConfigInput
 
 /**
  * Reconnect-policy section schema, exported so a manager composing mcp-client
- * instances (`dsh-mcp-manager`) validates the same fields, defaults, and
+ * instances (`ocean-mcp-manager`) validates the same fields, defaults, and
  * bounds without restating them.
  */
 export const ReconnectSchema: z<ReconnectConfig> = z.object({

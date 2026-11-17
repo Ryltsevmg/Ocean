@@ -111,7 +111,7 @@ interface HostPathBridge {
 
 /** The shell-installed bridge, when this document runs inside the Desktop application. */
 function hostPathBridge(): HostPathBridge | undefined {
-  return (globalThis as { __DSH_HOST_PATHS__?: HostPathBridge }).__DSH_HOST_PATHS__
+  return (globalThis as { __OCEAN_HOST_PATHS__?: HostPathBridge }).__OCEAN_HOST_PATHS__
 }
 
 interface WorkspaceNavigation {

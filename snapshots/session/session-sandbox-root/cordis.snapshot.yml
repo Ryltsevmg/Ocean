@@ -13,7 +13,7 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js oceanHomePath('sessions')
     compression: none
 
 - id: agent-instructions
@@ -43,7 +43,7 @@
 - id: sandbox-policy
   name: '@ocean/ocean-sandbox-policy'
   config:
-    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    mode: !!js process.env.OCEAN_PERMISSION_MODE ?? 'workspace-write'
     workspaceRoot: /tmp
 
 - id: headless-runner

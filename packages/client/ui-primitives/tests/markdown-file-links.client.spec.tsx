@@ -64,7 +64,7 @@ describe('Markdown file links', () => {
   })
 
   it.each([
-    ['D:\\dsh\\toc-agent\\.deploy\\notes.md', 'D:\\dsh\\toc-agent\\.deploy\\notes.md', undefined],
+    ['D:\\ocean\\toc-agent\\.deploy\\notes.md', 'D:\\ocean\\toc-agent\\.deploy\\notes.md', undefined],
     ['<D:\\My Files\\.config\\a_b.md>', 'D:\\My Files\\.config\\a_b.md', undefined],
     ['D:\\.deploy\\notes.md#L4', 'D:\\.deploy\\notes.md', { line: 4 }],
     ['D:/repo\\.github\\ci.yml', 'D:/repo\\.github\\ci.yml', undefined],

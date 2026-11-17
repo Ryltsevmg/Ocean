@@ -6,4 +6,4 @@ recording: authored
 header:
   class: skill
 workspace:
-  setup: dsh-doc-resources
+  setup: ocean-doc-resources

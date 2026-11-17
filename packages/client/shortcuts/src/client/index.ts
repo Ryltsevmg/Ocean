@@ -42,13 +42,13 @@ export default class ShortcutsService extends Service implements Shortcuts {
   constructor(ctx: Context) {
     const environment = detectEnvironment(document, navigator)
     const keyboard = environment.runtime === 'desktop'
-      ? (window as Window & { dshDesktop?: { keyboard?: DesktopKeyboardApi } }).dshDesktop?.keyboard : undefined
+      ? (window as Window & { oceanDesktop?: { keyboard?: DesktopKeyboardApi } }).oceanDesktop?.keyboard : undefined
     if (environment.runtime === 'desktop' && keyboard === undefined) throw new Error('Desktop keyboard bridge unavailable')
     super(ctx, 'shortcuts')
     this.keyboard = keyboard
     this.runtime = environment.runtime
     this.platform = environment.platform
-    const config = Config((globalThis as { __DSH_SHORTCUTS_CONFIG__?: unknown }).__DSH_SHORTCUTS_CONFIG__ ?? {})
+    const config = Config((globalThis as { __OCEAN_SHORTCUTS_CONFIG__?: unknown }).__OCEAN_SHORTCUTS_CONFIG__ ?? {})
     this.stopSequenceMs = config.stopSequenceMs
     this.registry = new ShortcutRegistry(this.runtime, this.platform, initialShortcutConfig())
     this.catalog = this.registry.catalog

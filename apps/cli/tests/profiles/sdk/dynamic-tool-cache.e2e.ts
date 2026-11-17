@@ -10,7 +10,7 @@ import type { SessionEvent } from '@ocean/ocean-session'
 import { describe, expect, it, onTestFinished } from 'vitest'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/dynamic-tool-cache.mjs', import.meta.url))
-const dshBin = fileURLToPath(new URL('../../../lib/bin.js', import.meta.url))
+const oceanBin = fileURLToPath(new URL('../../../lib/bin.js', import.meta.url))
 const sampleTool = 'cache_sample'
 const sampleLabelGuidance = 'Place each generated sample label on its own line.'
 // Provider cache blocks may leave a short uncached suffix of an unchanged request.
@@ -73,7 +73,7 @@ function registryChanges(previous: ObservedRequest, request: ObservedRequest): {
 
 describe.skipIf(!process.env.DEEPSEEK_API_KEY)('SDK native tool updates with real DeepSeek', () => {
   it.each([false, true])('keeps the preceding conversation cached after a tool addition (prompt update: %s)', async (updatePrompt) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-sdk-tool-cache-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-sdk-tool-cache-'))
     onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
     const sampleLabel = `CACHE_SAMPLE_${randomUUID()}`
     const evidencePath = join(root, 'requests.jsonl')
@@ -90,9 +90,9 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY)('SDK native tool updates with rea
       { insert: [{ id: 'sdk-dynamic-tool-cache-fixture', name: fixturePath, config: { evidencePath, callsPath, sampleLabel, updatePrompt } }] },
     ]))
     const harness = new DeepSeekHarness({
-      dshBin, profile: 'sdk', patches: [patch], dshHome: join(root, 'home'),
+      oceanBin, profile: 'sdk', patches: [patch], oceanHome: join(root, 'home'),
       cwd: root, processCwd: root, provider: 'deepseek-official', model: 'deepseek-flash',
-      env: { ...process.env, DSH_TELEMETRY_DISABLED: '1', DSH_PERMISSION_MODE: 'danger-full-access' },
+      env: { ...process.env, OCEAN_TELEMETRY_DISABLED: '1', OCEAN_PERMISSION_MODE: 'danger-full-access' },
       initializeTimeoutMs: 30_000,
     })
     onTestFinished(async () => { await harness.close() })

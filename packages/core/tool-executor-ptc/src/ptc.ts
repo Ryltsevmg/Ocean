@@ -84,7 +84,7 @@ const RUN_CODE_FLAVORS = {
 export function requirePtcRuntime(ctx: Context): SupportedPtcRuntime {
   const runtime = ctx.get('ptcRuntime')
   if (runtime === undefined) {
-    throw new Error('dsh-tools: mode "ptc" requires a PTC runtime — load a ctx.ptcRuntime implementation (e.g. @ocean/ocean-ptc-runtime-node) or load @ocean/ocean-tool-executor-native')
+    throw new Error('ocean-tools: mode "ptc" requires a PTC runtime — load a ctx.ptcRuntime implementation (e.g. @ocean/ocean-ptc-runtime-node) or load @ocean/ocean-tool-executor-native')
   }
   return requireRuntimeLanguage(runtime)
 }
@@ -93,7 +93,7 @@ export function requirePtcRuntime(ctx: Context): SupportedPtcRuntime {
 function requireRuntimeLanguage(runtime: PtcRuntime): SupportedPtcRuntime {
   if (!Object.hasOwn(RUN_CODE_FLAVORS, runtime.language)) {
     const known = Object.keys(RUN_CODE_FLAVORS).map(name => JSON.stringify(name)).join(', ')
-    throw new Error(`dsh-tools: no SDK renderer registered for runtime language ${JSON.stringify(runtime.language)} (known: ${known})`)
+    throw new Error(`ocean-tools: no SDK renderer registered for runtime language ${JSON.stringify(runtime.language)} (known: ${known})`)
   }
   return runtime as SupportedPtcRuntime
 }
@@ -288,14 +288,14 @@ function renderRunOutput(
 async function resolveWorkingDirectory(ctx: Context, exec: ToolRunContext): Promise<string | undefined> {
   if (exec.agent === undefined) return undefined
   const directories = ctx.get('workingDirectory')
-  if (directories === undefined) throw new Error('dsh-tools: run_code with an Agent requires workingDirectory')
+  if (directories === undefined) throw new Error('ocean-tools: run_code with an Agent requires workingDirectory')
   return directories.ensure(exec.agent, exec.signal)
 }
 
 /** Resolve standing authority for a runtime that enforces file policy. */
 function resolveSandboxPolicy(ctx: Context, exec: ToolRunContext): SandboxExecutionPolicy {
   const policy = ctx.get('sandboxPolicy')
-  if (policy === undefined) throw new Error('dsh-tools: confined PTC runtime requires sandboxPolicy')
+  if (policy === undefined) throw new Error('ocean-tools: confined PTC runtime requires sandboxPolicy')
   return policy.resolve(exec.agent === undefined ? {} : { session: exec.agent.session })
 }
 

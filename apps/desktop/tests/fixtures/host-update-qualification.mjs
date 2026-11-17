@@ -18,8 +18,8 @@ const observed = []
 const { runProfile } = await import(pathToFileURL(require.resolve('@ocean/ocean/profile-boot')).href)
 const { loadLayeredEnv, loadProfileDirectory } = await import(pathToFileURL(require.resolve('@ocean/ocean-app-boot')).href)
 const installAnchor = require.resolve('@ocean/ocean/package.json')
-const running = await runProfile({ environment: loadLayeredEnv('dsh'), profile: 'desktop',
-  resolvedProfile: { profile: loadProfileDirectory('dsh', project, installAnchor), installAnchor },
+const running = await runProfile({ environment: loadLayeredEnv('ocean'), profile: 'desktop',
+  resolvedProfile: { profile: loadProfileDirectory('ocean', project, installAnchor), installAnchor },
   patchFiles: [], args: ['--no-open', '--port', '0'] })
 const host = { updateTasks: installDesktopUpdateTaskControl(running.ctx), dispose: () => running.shutdown.shutdown(0) }
 const applicationUrl = running.ctx.connection.authenticatedUrl(`http://127.0.0.1:${running.ctx.webServer.port}`)

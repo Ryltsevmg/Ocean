@@ -144,7 +144,7 @@ describe('tierExternalDeps', () => {
 
 describe('virtualManifest', () => {
   it('resolves a manifest from an ordinary prefix-matching store directory', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-notices-prefix-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-notices-prefix-'))
     try {
       const name = '@scope/pkg'
       const version = '1.0.0'
@@ -160,7 +160,7 @@ describe('virtualManifest', () => {
   })
 
   it('falls back to a content scan when pnpm 11 truncates the store directory name', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-notices-truncated-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-notices-truncated-'))
     try {
       const name = '@scope/pkg'
       const version = '2.0.0'
@@ -178,7 +178,7 @@ describe('virtualManifest', () => {
   })
 
   it('selects the requested version when the store retains historical copies', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-notices-version-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-notices-version-'))
     try {
       const name = '@scope/pkg'
       const store = join(root, 'store')
@@ -196,7 +196,7 @@ describe('virtualManifest', () => {
   })
 
   it('returns undefined when neither the prefix nor the content scan finds the package', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-notices-miss-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-notices-miss-'))
     try {
       const store = join(root, 'store')
       const other = join(store, 'other-pkg@1.0.0', 'node_modules', 'other-pkg')

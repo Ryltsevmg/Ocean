@@ -31,7 +31,7 @@ afterEach(async () => {
 })
 /** Create a root whose earlier Host store, one whole-unit file, holds the given tasks or bytes. */
 async function rootWith(tasks: Record<string, unknown>, bytes?: string) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-recovery-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-recovery-'))
   roots.push(root)
   const path = join(root, 'schedule.json')
   if (bytes !== undefined || Object.keys(tasks).length > 0) {

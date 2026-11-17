@@ -1,5 +1,5 @@
-# The dsh-web-app bundle patch: the browser surface over the dsh-base layer.
-# Applied after dsh-base's insert; rows here override base rows by id, with
+# The ocean-web-app bundle patch: the browser surface over the ocean-base layer.
+# Applied after ocean-base's insert; rows here override base rows by id, with
 # the profile's own cordis.patch.yml and any --patch overlays still to come.
 #
 # A patch replaces the targeted row's whole `config`, so each row below
@@ -10,7 +10,7 @@
 # Loader resolves their expressions only after it exists. The web-runtime row
 # validates the advertised public URL; Connection reads invocation authorities
 # directly from `webStartup`.
-# `dsh --profile web --help` provides no `webStartup`, so no server binds.
+# `ocean --profile web --help` provides no `webStartup`, so no server binds.
 
 # ── surface-specific values the base deliberately omits ─────────────────────
 
@@ -31,8 +31,8 @@
 
 # ── web-only host rows, the transport layer, and the browser roster ─────────
 
-# `dsh.client` rows are the browser roster the modules node half scans into
-# window.__DSH_BOOT__; the modules row is simultaneously a host row.
+# `ocean.client` rows are the browser roster the modules node half scans into
+# window.__OCEAN_BOOT__; the modules row is simultaneously a host row.
 - insert:
     # Bundled account UI; optional capabilities remain disabled by Ocean policy.
     - id: ocean-codex-subscription
@@ -40,22 +40,22 @@
 
     - id: desktop-product-telemetry
       name: '@ocean/ocean-host-product-telemetry-otel'
-      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.DSH_PRODUCT_ANALYTICS_OTLP_URL?.trim()"
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.OCEAN_PRODUCT_ANALYTICS_OTLP_URL?.trim()"
       config:
         scheduledDelayMillis: 30000
         timeoutMillis: 15000
         exportTimeoutMillis: 20000
         shutdownTimeoutMillis: 2000
         serviceName: ocean-chat-desktop
-        serviceVersion: !!js process.env.DSH_CLIENT_VERSION
-        endpoint: !!js process.env.DSH_PRODUCT_ANALYTICS_OTLP_URL
+        serviceVersion: !!js process.env.OCEAN_CLIENT_VERSION
+        endpoint: !!js process.env.OCEAN_PRODUCT_ANALYTICS_OTLP_URL
 
     - id: product-analytics
       name: '@ocean/ocean-client-product-analytics'
-      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.DSH_PRODUCT_ANALYTICS_OTLP_URL?.trim()"
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.OCEAN_PRODUCT_ANALYTICS_OTLP_URL?.trim()"
       config:
         enabled: false
-        appVersion: !!js process.env.DSH_CLIENT_VERSION
+        appVersion: !!js process.env.OCEAN_CLIENT_VERSION
 
     # Host-owned authorization sampled at Agent creation. The Plugins page
     # edits this settings namespace independently of the selected preset.
@@ -196,7 +196,7 @@
         compressionThresholdBytes: 1024
 
     # Web glue owned by this bundle: resolves the built frontend dist (an
-    # assembly fact of dsh-web-app, never user config), mounts the
+    # assembly fact of ocean-web-app, never user config), mounts the
     # frontend-static fallback owner, registers the bash runtime variable,
     # prints the URL line, and opens the canonical URL after the full Loader
     # tree settles and the required-entry audit passes. Invocation-only values
@@ -226,9 +226,9 @@
     - id: client-hmr
       name: '@ocean/ocean-client-hmr'
 
-    # ── browser plugin roster (dsh.client rows; node halves are layer-2 hosts) ──
+    # ── browser plugin roster (ocean.client rows; node halves are layer-2 hosts) ──
 
-    # Dual-face: the node half scans this tree, composes window.__DSH_BOOT__,
+    # Dual-face: the node half scans this tree, composes window.__OCEAN_BOOT__,
     # and serves /plugins/<id>/client.js; the browser half is the module table
     # the shell kernel constructs before cordis exists (adopted as a plugin
     # entry by the kernel, never fetched).
@@ -295,24 +295,24 @@
     - id: office-kit
       name: '@ocean/ocean-office-kit'
       config:
-        outputDirectory: !!js dshHomePath('office-kit', 'outputs')
+        outputDirectory: !!js oceanHomePath('office-kit', 'outputs')
 
     # Every profile uses the packaged Office skills. Desktop supplies their Python
-    # environment through the primary runtime named by DSH_PRIMARY_RUNTIME and
+    # environment through the primary runtime named by OCEAN_PRIMARY_RUNTIME and
     # selects `workspace-dependencies`. A Desktop profile launched without a
     # nonempty value disables workspace-dependencies and, like the other
     # profiles, selects `user` to direct the model to the user's Python.
     - id: workspace-dependencies
       name: '@ocean/ocean-tool-workspace-dependencies'
-      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.DSH_PRIMARY_RUNTIME"
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.OCEAN_PRIMARY_RUNTIME"
       config:
-        source: !!js process.env.DSH_PRIMARY_RUNTIME
-        root: !!js dshHomePath('dsh-runtimes', 'dsh-primary-runtime')
+        source: !!js process.env.OCEAN_PRIMARY_RUNTIME
+        root: !!js oceanHomePath('ocean-runtimes', 'ocean-primary-runtime')
 
     - id: skill-office
       name: '@ocean/ocean-skill-office'
       config:
-        pythonEnvironment: !!js "ctx.get('profileContext')?.name === 'desktop' && process.env.DSH_PRIMARY_RUNTIME ? 'workspace-dependencies' : 'user'"
+        pythonEnvironment: !!js "ctx.get('profileContext')?.name === 'desktop' && process.env.OCEAN_PRIMARY_RUNTIME ? 'workspace-dependencies' : 'user'"
 
     # The right Sidebar's document tab: bounded file reads with selectable
     # Markdown, code, HTML, PDF, Office, and plain-text renderers.
@@ -510,7 +510,7 @@
 # the composition.
 
 # `shell-env` STAYS in the host plane: `apps/cli/src/web.ts` injects it to
-# publish `DSH_WEB_URL`/`DSH_WEB_MODE`, and a host row that injects a service is
+# publish `OCEAN_WEB_URL`/`OCEAN_WEB_MODE`, and a host row that injects a service is
 # the criterion for host-plane ownership — injection resolves before any session
 # exists, so there is no agent to key by. Behind a preset realm those variables
 # would never reach the model's shell at all.
@@ -615,7 +615,7 @@
 
 # The preset selection registry. The shipped preset declarations follow as
 # separate patch files under `presets/`, listed after this file in
-# `package.json` `dsh.bundle.patch`.
+# `package.json` `ocean.bundle.patch`.
 - insert:
     - id: agent-preset-registry
       name: '@ocean/ocean-agent-preset-registry'

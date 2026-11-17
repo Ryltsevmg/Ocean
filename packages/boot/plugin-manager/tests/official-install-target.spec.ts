@@ -18,7 +18,7 @@ function fixture() {
   writeFileSync(anchor, JSON.stringify({ name: '@ocean/ocean', version, dependencies: { '@ocean/ocean-app-boot': 'workspace:*' } }))
   const directory = join(root, 'packages', 'relocated', 'native-provider')
   mkdirSync(join(directory, 'lib'), { recursive: true })
-  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name, version, main: 'lib/index.js', dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name, version, main: 'lib/index.js', ocean: { bundle: { patch: './cordis.patch.yml' } } }))
   writeFileSync(join(directory, 'lib', 'index.js'), 'export function apply() {}\n')
   writeFileSync(join(directory, 'cordis.patch.yml'), '[]\n')
   return { root, anchor, directory }
@@ -70,12 +70,12 @@ it.each(['missing', 'duplicate'])('refuses a %s workspace package without offeri
 })
 
 it.each([
-  { version: '0.1.0' }, { private: true }, { dsh: {} },
+  { version: '0.1.0' }, { private: true }, { ocean: {} },
 ])('refuses a workspace package with invalid release or bundle metadata: %j', (changes) => {
   const { anchor, directory } = fixture()
   const file = join(directory, 'package.json')
   writeFileSync(file, JSON.stringify({ ...JSON.parse(readFileSync(file, 'utf8')), ...changes }))
-  expect(() => officialBundleInstallTarget(name, anchor, version)).toThrow('must declare a public bundle at DSH version')
+  expect(() => officialBundleInstallTarget(name, anchor, version)).toThrow('must declare a public bundle at OCEAN version')
 })
 
 it.each(['missing-main', 'missing-output', 'directory-output'])('refuses an unbuilt workspace package: %s', (kind) => {

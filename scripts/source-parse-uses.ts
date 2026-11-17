@@ -133,7 +133,7 @@ export function collectSourceFileUses(
 /**
  * Read browser-module declarations from workspace manifests.
  * @param root - Absolute repository root.
- * @returns Declarations and malformed dsh.client fields.
+ * @returns Declarations and malformed ocean.client fields.
  */
 export function collectSourcePackageUses(path: string, source: string): Set<string> {
   const sourceFile = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true)

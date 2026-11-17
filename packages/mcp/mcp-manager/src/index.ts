@@ -1,5 +1,5 @@
 /**
- * MCP server manager (`ctx.mcpManager`): one fleet of `dsh-mcp-client`
+ * MCP server manager (`ctx.mcpManager`): one fleet of `ocean-mcp-client`
  * instances built from two sources. Volatile `Config.servers` holds configured
  * entries, which Settings exposes under the owning Loader entry id with profile
  * inheritance and revision checks; plugins contribute registered entries for

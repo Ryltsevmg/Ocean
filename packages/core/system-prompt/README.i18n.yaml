@@ -6,26 +6,26 @@
   en: 51d99b2500db958f
   zh: 91f2b113ba7989fd
 /ocean-ocean-system-prompt:
-  en: 8d401a8ced894929
-  zh: 23a42d13a9f2c5cb
+  en: cdfcb8d84550ca00
+  zh: 260d2d396d7ba986
 /ocean-ocean-system-prompt/summary:
-  en: f5cce6867daddbab
-  zh: 4a1a47623c198207
+  en: 1a140498e4f35d33
+  zh: 2d6535bd1c1227aa
 /ocean-ocean-system-prompt/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-system-prompt/use-this-package:
-  en: 7bea567207cd7e00
-  zh: ffc050b05f07ba7f
+  en: 21bf695e881191fc
+  zh: 21414e18dfea3f05
 /ocean-ocean-system-prompt/use-this-package/configure-the-prompt:
-  en: 09a07aebe12e3f34
-  zh: 1b61e9b6e35c6c09
+  en: e23ea07bb1898954
+  zh: af87550ff21c868e
 /ocean-ocean-system-prompt/use-this-package/contribute-a-prompt-section:
   en: ef415fcd9e1cf8bb
   zh: 6ad4df288f91bdb1
 /ocean-ocean-system-prompt/use-this-package/contribute-a-prompt-variable:
-  en: b3e4c9b4ced59488
-  zh: d80c791e72bd5821
+  en: 48f08024498581ca
+  zh: 5053d0b705ce6dbf
 /ocean-ocean-system-prompt/use-this-package/contribute-tool-schemas:
   en: 009ef267dac2f270
   zh: e79c24bff5cd836f
@@ -48,8 +48,8 @@
   en: 1100ab1dfe961631
   zh: c510275c893951b4
 /ocean-ocean-system-prompt/further-exploration:
-  en: 67817718f406a8c8
-  zh: bf7994abaaadd1e3
+  en: 27f03b124204df6b
+  zh: 19483574dbdb72af
 /ocean-ocean-system-prompt/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -66,14 +66,14 @@
   en: 29722e212137deaa
   zh: 92cd0f1a16b10315
 /ocean-ocean-system-prompt/model-experience/system-prompt/kv-cache-effect:
-  en: 52fa5a522891ec6b
-  zh: 5c5c18359aaaf3db
+  en: 57ae835697117f51
+  zh: 8049d183a7c4cccc
 /ocean-ocean-system-prompt/model-experience/tool-schemas:
   en: 3039bc5e7a796b21
   zh: 6b7a9eaf69c9ea53
 /ocean-ocean-system-prompt/model-experience/tool-schemas/what-the-model-sees:
-  en: 6358bf1e89098010
-  zh: 99fa8ffef79bb870
+  en: 4d50379aca44a02f
+  zh: 5210686d342e4234
 /ocean-ocean-system-prompt/model-experience/tool-schemas/token-effect:
   en: f3a7d374c55e1720
   zh: 0ee48af678cb875f

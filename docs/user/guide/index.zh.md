@@ -6,7 +6,7 @@
 [Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | [Français](index.fr.md) | [Deutsch](index.de.md) | [Português](index.pt.md) | [한국어](index.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-请先按照[根目录 README](../../development.zh.md) 中的说明启动 Web UI；命令会打印其访问地址。本指南从服务器已经运行的状态开始。`dsh` 进程会把启动时所在的目录作为默认文件系统位置；全新的 Web UI 则不会选中任何工作区，你需要添加一个工作区。
+请先按照[根目录 README](../../development.zh.md) 中的说明启动 Web UI；命令会打印其访问地址。本指南从服务器已经运行的状态开始。`ocean` 进程会把启动时所在的目录作为默认文件系统位置；全新的 Web UI 则不会选中任何工作区，你需要添加一个工作区。
 
 ## 配置模型
 
@@ -14,7 +14,7 @@
 
 ## 选择工作区
 
-点击**选择工作区**，添加启动 `dsh` 时所在的项目目录，然后选中它。选中工作区前，会话输入框不可用。
+点击**选择工作区**，添加启动 `ocean` 时所在的项目目录，然后选中它。选中工作区前，会话输入框不可用。
 
 ## 运行任务
 

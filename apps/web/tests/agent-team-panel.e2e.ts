@@ -673,7 +673,7 @@ describe('web e2e: agent teamwork panel', () => {
         clientWidth: scroller.clientWidth, clientHeight: scroller.clientHeight, scrollHeight: scroller.scrollHeight,
         overflowing: scroller.scrollHeight > scroller.clientHeight,
         gutter: scrollStyle.scrollbarGutter, marginRight: scrollStyle.marginRight,
-        trackMargin: scrollStyle.getPropertyValue('--dsh-scrollbar-track-margin').trim(),
+        trackMargin: scrollStyle.getPropertyValue('--ocean-scrollbar-track-margin').trim(),
         taskLeft: taskBounds.left, taskRight: taskBounds.right,
         trackLeft: scrollBounds.right - scrollbarWidth, trackRight: scrollBounds.right, panelRight: bounds.right,
         arrowsBeforeTrack: [...element.querySelectorAll('[data-team-task] button svg')]

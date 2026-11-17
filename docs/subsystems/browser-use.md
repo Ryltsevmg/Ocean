@@ -2,17 +2,17 @@
 
 English | [中文](browser-use.zh.md)
 
-Browser use lets a model inspect and operate web pages through a configured provider. DSH owns the task loop; the provider supplies browser operations and keeps browser state across turns of one live Session.
+Browser use lets a model inspect and operate web pages through a configured provider. OCEAN owns the task loop; the provider supplies browser operations and keeps browser state across turns of one live Session.
 
 ## Provider registration
 
-Mount [`dsh-browser-use`](../../packages/browser-use/browser-use/README.md) and one provider in the same composition. The shared service registers only a name and rejects any second provider, including another instance with the same name. It has no common browser-operation methods, browser resources, or model-controlled selector, and adds no model-visible content of its own.
+Mount [`ocean-browser-use`](../../packages/browser-use/browser-use/README.md) and one provider in the same composition. The shared service registers only a name and rejects any second provider, including another instance with the same name. It has no common browser-operation methods, browser resources, or model-controlled selector, and adds no model-visible content of its own.
 
-Configuration selects the provider; the model cannot switch providers at runtime. A provider owns its tools, result rendering, image support, configuration, and browser resources, and enforces Session isolation for the browsers it holds. Provider tools use the normal DSH execution pipeline and Session log.
+Configuration selects the provider; the model cannot switch providers at runtime. A provider owns its tools, result rendering, image support, configuration, and browser resources, and enforces Session isolation for the browsers it holds. Provider tools use the normal OCEAN execution pipeline and Session log.
 
 ## Lifetime
 
-A provider retains its registration while it stops admitting tool calls, closes its resources, and awaits owned work; `ctx.browserUse.providerName` reports that name until release. A plugin that fails startup disposes its attempted registration. Cancellation cannot undo a browser action already delivered, and separate DSH processes stay outside one provider's reservation.
+A provider retains its registration while it stops admitting tool calls, closes its resources, and awaits owned work; `ctx.browserUse.providerName` reports that name until release. A plugin that fails startup disposes its attempted registration. Cancellation cannot undo a browser action already delivered, and separate OCEAN processes stay outside one provider's reservation.
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 

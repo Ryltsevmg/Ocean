@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-agent-tool-presentation",
-  "description": "Deprecated tool presentation selector; use dsh-tool-executor-native or dsh-tool-executor-ptc directly",
+  "description": "Deprecated tool presentation selector; use ocean-tool-executor-native or ocean-tool-executor-ptc directly",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"

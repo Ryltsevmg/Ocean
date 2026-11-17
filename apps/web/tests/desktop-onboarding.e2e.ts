@@ -49,7 +49,7 @@ describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () =>
     walletBalance = '0E-16'
     bonusBalance = '0'
     screenshots = undefined
-    root = await mkdtemp(join(tmpdir(), 'dsh-desktop-onboarding-'))
+    root = await mkdtemp(join(tmpdir(), 'ocean-desktop-onboarding-'))
     server = createServer((request, response) => {
       if (request.url === '/api/v0/users/notifications/list') {
         bonusReads++
@@ -57,7 +57,7 @@ describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () =>
         response.end(JSON.stringify({ code: 0, data: { biz_code: 0, biz_data: { next_poll_after: 600, notifications: bonusOffered ? [{
           id: '88888888-8888-4888-8888-888888888888', type: 'account.bonus_granted',
           created_at: new Date().toISOString(), title: '赠金已到账', actions: [],
-          display_until: new Date(Date.now() + 86_400_000).toISOString(), body: '已赠送您 5.00 元 DSH 体验赠金。',
+          display_until: new Date(Date.now() + 86_400_000).toISOString(), body: '已赠送您 5.00 元 OCEAN 体验赠金。',
         }] : [] } } }))
         return
       }
@@ -112,12 +112,12 @@ describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () =>
     const welcome = connectDesktopWelcome(scaffold.baseUrl, await authenticateWebHost(scaffold.authenticatedUrl))
     await opened.exposeFunction('__onboardingHasApiKey', async () => (await welcome.read()).hasApiKey)
     await opened.addInitScript(() => {
-      Object.defineProperty(globalThis, 'dshOnboarding', { value: {
+      Object.defineProperty(globalThis, 'oceanOnboarding', { value: {
         hasApiKey: () => (globalThis as typeof globalThis & { __onboardingHasApiKey(): Promise<boolean> }).__onboardingHasApiKey(),
         setActive: () => {},
       } })
-      Object.defineProperty(globalThis, 'dshDesktop', { value: { protocolVersion: 1 } })
-      Object.defineProperty(globalThis, 'dshPlatform', { value: {
+      Object.defineProperty(globalThis, 'oceanDesktop', { value: { protocolVersion: 1 } })
+      Object.defineProperty(globalThis, 'oceanPlatform', { value: {
         open: async () => {}, setBounds: async () => {}, close: async () => {},
       } })
     })
@@ -463,7 +463,7 @@ describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () =>
       if (!reopen) await page.getByRole('button', { name: '开始设置', exact: true }).click()
       await expect.poll(() => bonusReads).toBeGreaterThan(readsBefore)
       await page.getByRole('heading', { name: '准备可用额度', exact: true }).waitFor()
-      expect(await page.getByText('已赠送您 5.00 元 DSH 体验赠金。', { exact: true }).count()).toBe(0)
+      expect(await page.getByText('已赠送您 5.00 元 OCEAN 体验赠金。', { exact: true }).count()).toBe(0)
       expect(bonusAcks).toBe(0)
       observations.push(`${reopen ? 'reopened' : 'initial'}.onboarding notice=false acks=${bonusAcks}`)
       if (!reopen) {
@@ -476,7 +476,7 @@ describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () =>
     await page.getByRole('button', { name: '跳过', exact: true }).click()
     await page.getByRole('dialog').getByRole('button', { name: '进入应用', exact: true }).click()
     await page.locator('[data-desktop-onboarding]').waitFor({ state: 'detached' })
-    const notice = page.getByText('已赠送您 5.00 元 DSH 体验赠金。', { exact: true })
+    const notice = page.getByText('已赠送您 5.00 元 OCEAN 体验赠金。', { exact: true })
     await notice.waitFor({ state: 'visible' })
     await expect.poll(() => bonusAcks).toBe(1)
     observations.push(`workspace.notice=${await notice.innerText()} acks=${bonusAcks}`)

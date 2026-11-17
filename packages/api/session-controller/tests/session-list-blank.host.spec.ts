@@ -100,7 +100,7 @@ describe('summary blank = conversation not started', () => {
  * the Session Controller observes the published Session.
  */
 async function resumeHarness(): Promise<{ ctx: Context; remote: TestSessionRemote; cwd: string }> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-list-blank-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-list-blank-'))
   ownedRoots.add(root)
   const ctx = new Context()
   ownedContexts.add(ctx)

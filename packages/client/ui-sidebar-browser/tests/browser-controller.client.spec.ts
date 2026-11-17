@@ -10,7 +10,7 @@ import { createSnapshotStore } from '@ocean/ocean-client-store'
 import { emptyBrowserFrame, type BrowserFrameState } from '../src/client/browser/BrowserFrame.ts'
 
 const TAB = 'tab' as TabId
-const APP = 'https://dsh.example'
+const APP = 'https://ocean.example'
 const lifetimes = new Set<AbortController>()
 const disposables: { dispose(): Promise<void> }[] = []
 const hosts: HTMLElement[] = []

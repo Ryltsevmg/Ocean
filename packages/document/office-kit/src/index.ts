@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import type { WorkspaceFileScope, WorkspaceFileStat } from '@ocean/ocean-api-workspace-files'
 import type {} from '@ocean/ocean-fs'
 import type {} from '@ocean/ocean-session'
-import { dshHomePath } from '@ocean/ocean-home-paths'
+import { oceanHomePath } from '@ocean/ocean-home-paths'
 import { brandString } from '@ocean/ocean-brand'
 import { resolveKitModule } from './locate.ts'
 import { Remote, RemoteError, TypertRemoteService } from '@ocean/ocean-typert-protocol'
@@ -58,7 +58,7 @@ export interface Config {
   outputRetentionMs: number
   /** Maximum bytes across retained converted and recalculated files; the oldest leave first. */
   maxOutputStoreBytes: number
-  /** Conversion deadline in milliseconds; excludes the DSH queue. */
+  /** Conversion deadline in milliseconds; excludes the OCEAN queue. */
   timeoutMs: number
   /** Maximum authorized source bytes. */
   maxInputBytes: number
@@ -92,7 +92,7 @@ export const Config: z<Partial<Config>, Config> = z.object({
   maxCachedEntries: z.natural().min(1).max(Number.MAX_SAFE_INTEGER).default(8),
   maxCachedBytes: z.natural().min(1).max(Number.MAX_SAFE_INTEGER).default(134217728),
   maxSourceEntries: z.natural().min(1).max(Number.MAX_SAFE_INTEGER).default(64),
-  outputDirectory: z.string().min(1).default(dshHomePath('office-kit', 'outputs')),
+  outputDirectory: z.string().min(1).default(oceanHomePath('office-kit', 'outputs')),
   outputRetentionMs: z.natural().min(1).max(2_147_483_647).default(24 * 60 * 60 * 1000),
   maxOutputStoreBytes: z.natural().min(1).max(Number.MAX_SAFE_INTEGER).default(512 * 1024 * 1024),
   timeoutMs: z.natural().min(1).max(2_147_483_647).default(60_000),
@@ -384,7 +384,7 @@ export class OfficeKit extends TypertRemoteService {
       }
       const converter = await slot.converter
       signal.throwIfAborted()
-      directory = await mkdtemp(join(tmpdir(), 'dsh-office-kit-'))
+      directory = await mkdtemp(join(tmpdir(), 'ocean-office-kit-'))
       const inputPath = join(directory, `source.${request.extension}`)
       await writeFile(inputPath, bytes, { flag: 'wx', mode: 0o600, signal })
       signal.throwIfAborted()

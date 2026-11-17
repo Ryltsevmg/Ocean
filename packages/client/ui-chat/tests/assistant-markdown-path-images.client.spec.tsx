@@ -18,7 +18,7 @@ function textBlock(text: string): AssistantBlock {
 }
 
 const BASE = 'http://127.0.0.1:3080/'
-const MOUNTED_BASE = 'http://127.0.0.1:3080/tools/dsh/'
+const MOUNTED_BASE = 'http://127.0.0.1:3080/tools/ocean/'
 
 describe('localPathMediaUrl', () => {
   it('maps an absolute POSIX path to the file route of the document, root or mount', () => {
@@ -29,7 +29,7 @@ describe('localPathMediaUrl', () => {
       [MOUNTED_BASE, MOUNTED_BASE],
       ['dsh-app://app/', 'dsh-app://app/'],
       ['dsh-app://app/index.html', 'dsh-app://app/'],
-      ['http://127.0.0.1:3080/tools/dsh/index.html', MOUNTED_BASE],
+      ['http://127.0.0.1:3080/tools/ocean/index.html', MOUNTED_BASE],
     ]) {
       expect(localPathMediaUrl(base!, '/tmp/graph.png')).toBe(`${root!}api/file?path=${path}`)
     }

@@ -466,7 +466,7 @@ export class LocalSandboxProvider extends SandboxProvider {
     if (existing !== undefined) return existing
     let tempDir: string
     try {
-      tempDir = mkdtempSync(join(tmpdir(), 'dsh-'))
+      tempDir = mkdtempSync(join(tmpdir(), 'ocean-'))
     } catch (error) {
       throw aclPreparationFailure('private temp directory creation', error)
     }

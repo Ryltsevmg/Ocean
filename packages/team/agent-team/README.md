@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-agent-team` adds a durable shared task board to an existing subagent tree. Members use standard subagent tools to discover and contact one another. Team adds compare-and-set task ownership. Mount `dsh-tool-agent-team` for task tools. Members share one checkout.
+`ocean-agent-team` adds a durable shared task board to an existing subagent tree. Members use standard subagent tools to discover and contact one another. Team adds compare-and-set task ownership. Mount `ocean-tool-agent-team` for task tools. Members share one checkout.
 
 ## Table of Contents
 
@@ -56,7 +56,7 @@ For example, ask the model to start a subagent to review the diff and track its 
 | `maxTasks` | `256` | Maximum non-deleted tasks on the board |
 | `defaultEnabled` | `false` | Save Team mode on for new roots without an existing selection |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#oceanocean-agent-team) is the exhaustive source for every accepted field and its JSDoc. A row that sets `maxMembers`, `maxMessageBytes`, or `disposalTimeoutMs` does not activate, and dsh names the key in its startup warning; the [upgrade guide](../../../docs/upgrade-guide/v0.2.1-rc.2/agent-team-subagents/guide.md) lists the replacements.
+The generated [configuration catalog](../../../docs/config-catalog.md#oceanocean-agent-team) is the exhaustive source for every accepted field and its JSDoc. A row that sets `maxMembers`, `maxMessageBytes`, or `disposalTimeoutMs` does not activate, and ocean names the key in its startup warning; the [upgrade guide](../../../docs/upgrade-guide/v0.2.1-rc.2/agent-team-subagents/guide.md) lists the replacements.
 
 ### Teammates
 

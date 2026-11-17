@@ -324,7 +324,7 @@ describe('web e2e: plugin manager', () => {
   it('aligns the first-read skeleton with the loaded plugin cards', async () => {
     const facts: string[] = []
     let aria = ''
-    const shots = MODE === 'refresh' ? await mkdtemp(join(tmpdir(), 'dsh-plugin-loading-')) : undefined
+    const shots = MODE === 'refresh' ? await mkdtemp(join(tmpdir(), 'ocean-plugin-loading-')) : undefined
     for (const width of [1680, 1000]) {
       const context = await browser.newContext({ viewport: { width, height: 1000 }, locale: ZH_BROWSER_LOCALE })
       const release = Promise.withResolvers<undefined>()
@@ -675,8 +675,8 @@ describe('web e2e: plugin manager', () => {
       }), MODE)
     await toggle.click()
     await expect.poll(async () => (JSON.parse(await homeFile('profiles', 'scaffold', 'package.json')) as {
-      dsh: { profile: { bundles: string[] } }
-    }).dsh.profile.bundles, { timeout: 10_000 }).toEqual(SCAFFOLD_BUNDLES)
+      ocean: { profile: { bundles: string[] } }
+    }).ocean.profile.bundles, { timeout: 10_000 }).toEqual(SCAFFOLD_BUNDLES)
     await expect.poll(() => panel.getByText(/cannot resolve profile bundle/).count(), { timeout: 10_000 }).toBe(0)
     expect((await scaffold.ctx.pluginManager.listBundles()).some(row => row.name === '@fixture/missing-bundle')).toBe(false)
     expect(tripwire.pageErrors).toEqual([])
@@ -1150,11 +1150,11 @@ describe('web e2e: plugin manager', () => {
     await dialog.getByRole('button', { name: '插件安装引导和示例' }).click()
     // The guide carries the package-name example only; the former template strings keep their replacement reminder.
     await expect.poll(() => dialog.getByRole('listitem').count()).toBe(1)
-    await dialog.getByRole('button', { name: '填入示例 dsh-plugin-whale-pet' }).click()
-    expect(await field.inputValue()).toBe('dsh-plugin-whale-pet')
+    await dialog.getByRole('button', { name: '填入示例 ocean-plugin-whale-pet' }).click()
+    expect(await field.inputValue()).toBe('ocean-plugin-whale-pet')
     expect(await dialog.getByRole('status').count()).toBe(0)
     for (const [example, hint] of [
-      ['https://github.com/author/dsh-plugin', '请替换为实际的 Git 仓库地址'],
+      ['https://github.com/author/ocean-plugin', '请替换为实际的 Git 仓库地址'],
       ['/Users/name/my-plugin', '请替换为本机插件目录的实际路径'],
     ] as const) {
       await field.fill(example)
@@ -1194,8 +1194,8 @@ describe('web e2e: plugin manager', () => {
     await toggle.click()
 
     const bundles = async () => (JSON.parse(await homeFile('profiles', 'scaffold', 'package.json')) as {
-      dsh: { profile: { bundles: string[] } }
-    }).dsh.profile.bundles
+      ocean: { profile: { bundles: string[] } }
+    }).ocean.profile.bundles
     await expect.poll(bundles, { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toEqual([...SCAFFOLD_BUNDLES, '@fixture/bundle'])
     // A live profile: the row mounts once the whole tree recomposed, the switch is on, and nothing waits for a restart.
     await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).toBe(2)
@@ -1254,7 +1254,7 @@ describe('web e2e: startup-applied plugin management', () => {
       const mounted = () => [...scaffold.ctx.loader.entries()].find(entry => entry.options.id === 'fixture-row')
       const bundles = async () => {
         const text = await readFile(join(scaffold.harnessHome, 'profiles', 'scaffold', 'package.json'), 'utf8')
-        return (JSON.parse(text) as { dsh: { profile: { bundles: string[] } } }).dsh.profile.bundles
+        return (JSON.parse(text) as { ocean: { profile: { bundles: string[] } } }).ocean.profile.bundles
       }
       expect(mounted()?.fiber?.state).toBeUndefined()
       await toggle.click()

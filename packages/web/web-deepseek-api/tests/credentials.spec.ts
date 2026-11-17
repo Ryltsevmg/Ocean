@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { credentialRef } from '@ocean/ocean-credentials'
 import LocalCredentialProvider from '@ocean/ocean-credentials-local'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
+import { OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
 import WebRuntime from '@ocean/ocean-web'
 import * as webApiPlugin from '@ocean/ocean-web-deepseek-api'
 
@@ -26,7 +26,7 @@ function captureAuthorization(): () => (string | null)[] {
  * @param environment - launch-environment variables.
  */
 async function mount(ctx: Context, config: Record<string, unknown>, environment: Record<string, string>): Promise<void> {
-  ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: environment }]))
+  ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: environment }]))
   await ctx.plugin(WebRuntime, { searchProvider: 'deepseek-search-api' })
   await ctx.plugin(webApiPlugin, config)
 }
@@ -36,7 +36,7 @@ afterEach(() => { vi.unstubAllGlobals() })
 describe('web-deepseek-api API-key resolution', () => {
   it('resolves the referenced credential for each request, so a stored or rotated key needs no restart', async () => {
     const authorization = captureAuthorization()
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-web-deepseek-api-credentials-'))
+    const dir = await mkdtemp(join(tmpdir(), 'ocean-web-deepseek-api-credentials-'))
     const ctx = new Context()
     try {
       await ctx.plugin(LocalCredentialProvider, { path: join(dir, '.credentials.yaml'), watch: false })

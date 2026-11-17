@@ -188,7 +188,7 @@ function shellCall(name: string, args: Record<string, unknown>): ShellCall | nul
   // sandbox mode, which only the Host knows, and a rejected call settles as an
   // error result on the generic body.
   if (description === undefined) {
-    // Standard dsh-tool-bash and dsh-tool-pwsh schemas require `description`;
+    // Standard ocean-tool-bash and ocean-tool-pwsh schemas require `description`;
     // persistent shell providers omit it. Their parameter roots stay open, so
     // unrelated fields do not change their running-card behavior.
     return { command, description: undefined, workdir: undefined, persistent: true, background: false }

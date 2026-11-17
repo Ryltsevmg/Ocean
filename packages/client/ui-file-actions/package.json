@@ -29,7 +29,7 @@
       "types": "./lib/types/types.d.ts"
     }
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-client-locale",

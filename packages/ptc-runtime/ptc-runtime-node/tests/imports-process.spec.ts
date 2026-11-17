@@ -13,7 +13,7 @@ it('reports a missing VM startup flag before accepting a Script handler', () => 
 })
 
 async function customBootstrap(asyncDecisions = false) {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-ptc-import-runner-'))
+  const directory = await mkdtemp(join(tmpdir(), 'ocean-ptc-import-runner-'))
   onTestFinished(async () => { await rm(directory, { recursive: true, force: true }) })
   const bootstrapPath = join(directory, 'runner.mjs')
   const subprocess = dirname(fileURLToPath(import.meta.resolve('@ocean/ocean-subprocess/package.json')))

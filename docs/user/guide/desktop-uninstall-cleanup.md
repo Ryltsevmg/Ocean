@@ -10,7 +10,7 @@ Use this guide to uninstall Ocean Desktop on macOS, Windows, or Linux. Local dat
 
 ## 1. Uninstall the app
 
-Finish any commands using Desktop's bundled CLI. If you installed the `dsh` command through Desktop, first select **Manage dsh Command… → Remove** in the application menu. This removes Desktop's command registration without uninstalling independent CLI programs.
+Finish any commands using Desktop's bundled CLI. If you installed the `ocean` command through Desktop, first select **Manage ocean Command… → Remove** in the application menu. This removes Desktop's command registration without uninstalling independent CLI programs.
 
 Quit Ocean, then uninstall it using your platform's procedure:
 
@@ -20,18 +20,18 @@ Quit Ocean, then uninstall it using your platform's procedure:
 
 ## 2. Inspect local data before cleanup
 
-Deleting local data can permanently remove sessions, credentials, settings, plugins, caches, and shared CLI state. Back up anything you want to keep. Do not delete a directory solely because its name resembles Ocean or DSH.
+Deleting local data can permanently remove sessions, credentials, settings, plugins, caches, and shared CLI state. Back up anything you want to keep. Do not delete a directory solely because its name resembles Ocean or OCEAN.
 
-The current default Ocean home is `~/.ocean`, or `.ocean` under the Windows user profile. `DSH_HOME` can select another location; inspect the setting used to launch Desktop, which may differ from the current terminal. The commands below only print candidate locations and delete nothing. They do not discover Electron's actual `userData` directory or all installation-specific caches.
+The current default Ocean home is `~/.ocean`, or `.ocean` under the Windows user profile. `OCEAN_HOME` can select another location; inspect the setting used to launch Desktop, which may differ from the current terminal. The commands below only print candidate locations and delete nothing. They do not discover Electron's actual `userData` directory or all installation-specific caches.
 
 ::: code-group
 
 ```sh [macOS]
 : "${HOME:?HOME must be set}"
 printf '%s\n' \
-  "Ocean home candidate: ${DSH_HOME:-$HOME/.ocean}" \
+  "Ocean home candidate: ${OCEAN_HOME:-$HOME/.ocean}" \
   "Updater cache candidate: $HOME/Library/Caches/@oceanocean-desktop-updater"
-# Previous-release ~/.dsh and donor-era appId caches require separate ownership checks.
+# Previous-release ~/.ocean and donor-era appId caches require separate ownership checks.
 ```
 
 ```powershell [Windows]
@@ -39,28 +39,28 @@ $ErrorActionPreference = 'Stop'
 if (-not $env:USERPROFILE -or -not $env:LOCALAPPDATA) {
     throw 'USERPROFILE and LOCALAPPDATA must be set.'
 }
-$oceanHome = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $env:USERPROFILE '.ocean' }
+$oceanHome = if ($env:OCEAN_HOME) { $env:OCEAN_HOME } else { Join-Path $env:USERPROFILE '.ocean' }
 "Ocean home candidate: $oceanHome"
 "Updater cache candidate: $(Join-Path $env:LOCALAPPDATA '@oceanocean-desktop-updater')"
-# Previous-release .dsh and @deepseek-ai data are NOT removed.
+# Previous-release .ocean and @deepseek-ai data are NOT removed.
 # Inspect them separately; delete only data you recognize and no longer need.
 ```
 
 ```sh [Linux]
 : "${HOME:?HOME must be set}"
 printf '%s\n' \
-  "Ocean home candidate: ${DSH_HOME:-$HOME/.ocean}" \
+  "Ocean home candidate: ${OCEAN_HOME:-$HOME/.ocean}" \
   "Updater cache candidate: ${XDG_CACHE_HOME:-$HOME/.cache}/@oceanocean-desktop-updater"
-# Previous-release ~/.dsh requires a separate ownership check.
+# Previous-release ~/.ocean requires a separate ownership check.
 ```
 
 :::
 
 The updater cache name is derived from the Desktop package name, not the product title. These candidates use the current `@ocean/ocean-desktop` package; another build can differ. On Windows, the [uninstaller](../../../apps/desktop/installer/uninstall.nsh) checks product-name and package-name application-data directories and the updater cache, but preserves the Ocean home; updates and retained-data reinstalls can preserve application data too.
 
-Find the actual Electron data and log directories for your installation before removing them; the [diagnostics reference](../../../apps/desktop/docs/diagnostics/README.md#report-contents) describes log locations. macOS preference, ShipIt, HTTP storage, and system-cache names depend on the installed bundle identifier. Packaging requires an explicit `DSH_DESKTOP_APP_ID`; `com.deepseek.dsh` is not a universal Ocean identifier. Do not run a wildcard cleanup for that identifier unless you have independently identified those files as leftovers from your previous installation.
+Find the actual Electron data and log directories for your installation before removing them; the [diagnostics reference](../../../apps/desktop/docs/diagnostics/README.md#report-contents) describes log locations. macOS preference, ShipIt, HTTP storage, and system-cache names depend on the installed bundle identifier. Packaging requires an explicit `OCEAN_DESKTOP_APP_ID`; `com.deepseek.ocean` is not a universal Ocean identifier. Do not run a wildcard cleanup for that identifier unless you have independently identified those files as leftovers from your previous installation.
 
-`~/.dsh` was a previous default, not the current default. Delete it, previous `@deepseek-ai` application data, or donor-era identifier caches only if you recognize those leftovers and no other installation needs them. Development and test directories require their own checks.
+`~/.ocean` was a previous default, not the current default. Delete it, previous `@deepseek-ai` application data, or donor-era identifier caches only if you recognize those leftovers and no other installation needs them. Development and test directories require their own checks.
 
 ## 3. Remove verified data and check
 

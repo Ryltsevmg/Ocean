@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-在提供 subagent、沙箱策略和 [Node PTC 运行时](../../ptc-runtime/ptc-runtime-node/README.zh.md)的组合中挂载本引擎。它为 `dsh-tool-workflow` 提供工作流执行。引擎在加载时拒绝非 TypeScript 的 PTC 提供方。
+在提供 subagent、沙箱策略和 [Node PTC 运行时](../../ptc-runtime/ptc-runtime-node/README.zh.md)的组合中挂载本引擎。它为 `ocean-tool-workflow` 提供工作流执行。引擎在加载时拒绝非 TypeScript 的 PTC 提供方。
 
 ### 最小配置
 

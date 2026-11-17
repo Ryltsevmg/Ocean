@@ -8,7 +8,7 @@ import type { Config } from '../src/index.ts'
 import { mountRuntime } from './setup.ts'
 
 async function setup(config: Config = {}, initialization?: string) {
-  const cwd = await mkdtemp(join(tmpdir(), 'dsh-ptc-initialization-'))
+  const cwd = await mkdtemp(join(tmpdir(), 'ocean-ptc-initialization-'))
   const ctx = new Context()
   onTestFinished(async () => { await ctx.fiber.dispose(); await rm(cwd, { recursive: true, force: true }) })
   const { runtime } = await mountRuntime(ctx, { executionMode: 'persistent-in-memory', replScoped: false, ...config })

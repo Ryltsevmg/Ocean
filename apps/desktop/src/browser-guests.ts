@@ -17,7 +17,7 @@ export class DesktopBrowserGuests {
   private readonly partitions = new Map<string, string>()
   private readonly leases = new Map<DesktopBrowserLeaseId, GuestLease>()
 
-  /** @param hostUrl - current authenticated DSH Host, which guests cannot request. */
+  /** @param hostUrl - current authenticated OCEAN Host, which guests cannot request. */
   constructor(private readonly hostUrl: () => string | undefined) {}
 
   /**
@@ -32,7 +32,7 @@ export class DesktopBrowserGuests {
     }
     let partition = this.partitions.get(workspace)
     if (partition === undefined) {
-      partition = `dsh-sidebar-browser-${randomUUID()}`
+      partition = `ocean-sidebar-browser-${randomUUID()}`
       this.configureSession(session.fromPartition(partition))
       this.partitions.set(workspace, partition)
     }

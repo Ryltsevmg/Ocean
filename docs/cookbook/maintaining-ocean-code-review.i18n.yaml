@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for maintaining-ocean-code-review.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/cookbook/maintaining-ocean-code-review.md
+/maintaining-the-ocean-code-review-skill:
+  en: dc36b89064e4e4f3
+  zh: bdf1b6b03bcc92e3
+/maintaining-the-ocean-code-review-skill/what-the-maintainer-receives:
+  en: d26394777c3f7947
+  zh: 86d2a6d3a0ed2ab6
+/maintaining-the-ocean-code-review-skill/what-the-operator-does-with-a-candidate-diff:
+  en: 54f4cbe00c6a82f0
+  zh: b6c2990975d064d7
+/maintaining-the-ocean-code-review-skill/when-a-run-produces-no-candidate:
+  en: feb6d261939d6c19
+  zh: 044d8238cd6537d3
+/maintaining-the-ocean-code-review-skill/interruptions-and-handoff:
+  en: 1ff357810547cf78
+  zh: 61c9f6e48a193eae
+/maintaining-the-ocean-code-review-skill/where-the-operator-s-private-setup-lives:
+  en: 70a2b923df9f563e
+  zh: a0748fa40cef811c

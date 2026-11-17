@@ -16,7 +16,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 })
 
 async function fixture() {
-  const root = await fs.mkdtemp(join(tmpdir(), 'dsh-cordis-resolve-'))
+  const root = await fs.mkdtemp(join(tmpdir(), 'ocean-cordis-resolve-'))
   onTestFinished(() => fs.rm(root, { recursive: true, force: true }))
   await fs.writeFile(join(root, 'package.json'), JSON.stringify({
     name: 'fixture-app', type: 'module',

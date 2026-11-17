@@ -20,7 +20,7 @@ const SNAPSHOT_DIR = fileURLToPath(new URL('./expected/bonus-notice', import.met
 const OVERLAY_TEMPLATE = fileURLToPath(new URL('./fixtures/bonus-notice/cordis.patch.yml', import.meta.url))
 const MODE = webSnapshotMode()
 
-const TOKEN = 'dsh_bonus_notice_test'
+const TOKEN = 'ocean_bonus_notice_test'
 const ACCOUNT_ID = 'bonus-user'
 const ORDER_FIRST = 'notice-first'
 const ORDER_LATER = 'notice-later'
@@ -91,8 +91,8 @@ async function mockPlatform() {
   const grant = (orderId: string, amount: string, extraCopy = ''): void => {
     const value = {
       orderId, amount,
-      zh_CN: `已赠送您 ${amount} 元 DSH 体验赠金。${extraCopy}`,
-      en_US: `You received a CNY ${amount} DSH trial credit.${extraCopy}`,
+      zh_CN: `已赠送您 ${amount} 元 OCEAN 体验赠金。${extraCopy}`,
+      en_US: `You received a CNY ${amount} OCEAN trial credit.${extraCopy}`,
     }
     unnotified.unshift(value)
     contents.set(orderId, value)
@@ -271,13 +271,13 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const opened = await context.newPage()
     tripwires.push(watchConsole(opened))
     await opened.addInitScript(() => {
-      Object.defineProperty(globalThis, 'dshDesktop', { value: { protocolVersion: 1 } })
+      Object.defineProperty(globalThis, 'oceanDesktop', { value: { protocolVersion: 1 } })
       // The embedded Platform view is a native child window owned by the Desktop shell.
       // The double answers immediately and records the calls, so the scenario observes
       // which page was opened and that returning destroyed the view.
       const calls: string[] = []
       Object.defineProperty(globalThis, '__bonusPlatformCalls', { value: calls })
-      Object.defineProperty(globalThis, 'dshPlatform', {
+      Object.defineProperty(globalThis, 'oceanPlatform', {
         value: {
           open: (page: string) => { calls.push(`open:${page}`); return Promise.resolve() },
           setBounds: () => Promise.resolve(),
@@ -291,7 +291,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
   beforeAll(async () => {
     platform = await mockPlatform()
     platform.grant(ORDER_FIRST, '5.00')
-    root = await mkdtemp(join(tmpdir(), 'dsh-bonus-notice-'))
+    root = await mkdtemp(join(tmpdir(), 'ocean-bonus-notice-'))
     const home = join(root, 'home')
     await mkdir(home, { recursive: true })
     // A stored grant bound to the double's origin starts the account credential-stored
@@ -318,9 +318,9 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
   })
 
   it('acknowledges a notice shown under settings, refreshes once per entry, and localizes the request', async () => {
-    const zhFirst = '已赠送您 5.00 元 DSH 体验赠金。'
-    const zhLater = '已赠送您 8.00 元 DSH 体验赠金。'
-    const enBonus = 'You received a CNY 9.00 DSH trial credit.'
+    const zhFirst = '已赠送您 5.00 元 OCEAN 体验赠金。'
+    const zhLater = '已赠送您 8.00 元 OCEAN 体验赠金。'
+    const enBonus = 'You received a CNY 9.00 OCEAN trial credit.'
     const observations: string[] = []
     const page = await openDesktopPage('zh-CN')
     onTestFailed(() => saveFailureShot(page, 'web-e2e-bonus-notice'))
@@ -473,7 +473,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
 
     // Returning from the native top-up view refreshes balance and notice once each, without
     // holding the panel open.
-    const zhTopUp = '已赠送您 11.00 元 DSH 体验赠金。'
+    const zhTopUp = '已赠送您 11.00 元 OCEAN 体验赠金。'
     const topUpGetsBefore = platform.gets.length
     const topUpSummariesBefore = platform.summaries.length
     await openSettings(page, 'zh')
@@ -523,7 +523,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     expect(await noticeCards(page).count()).toBe(0)
 
     // A failed event leaves the card intact and is not retried in the background.
-    const zhFailedEvent = '已赠送您 6.00 元 DSH 体验赠金。'
+    const zhFailedEvent = '已赠送您 6.00 元 OCEAN 体验赠金。'
     platform.grant(ORDER_FAILED_EVENT, '6.00')
     platform.failNextAcks(ORDER_FAILED_EVENT, 1)
     await openSettings(page, 'zh')
@@ -547,7 +547,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
 
     // Display follows each response: the double keeps serving an acknowledged order, which
     // is what makes a second display of the same order observable.
-    const zhRepeat = '已赠送您 7.00 元 DSH 体验赠金。'
+    const zhRepeat = '已赠送您 7.00 元 OCEAN 体验赠金。'
     const storedBeforeShown = await storageKeys()
     platform.setKeepUnnotified(true)
     platform.grant(ORDER_REPEAT, '7.00')
@@ -629,7 +629,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const webPage = await browser.newPage({ viewport: { width: 1440, height: 960 }, locale: 'zh-CN' })
     tripwires.push(watchConsole(webPage))
     await webPage.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-    const webNotice = await shownNotice(webPage, '已赠送您 4.00 元 DSH 体验赠金。')
+    const webNotice = await shownNotice(webPage, '已赠送您 4.00 元 OCEAN 体验赠金。')
     await expect.poll(() => platform.acks.filter(item => item.orderId === ORDER_WEB).length).toBe(1)
     observations.push(`web.notice=${webNotice} acks=1`)
     await webPage.close()
@@ -753,7 +753,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const refreshPage = await openDesktopPage('zh-CN')
     await refreshPage.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
     const refreshCards = noticeCards(refreshPage)
-    await shownNotice(refreshPage, '已赠送您 31.00 元 DSH 体验赠金。')
+    await shownNotice(refreshPage, '已赠送您 31.00 元 OCEAN 体验赠金。')
     await expect.poll(() => platform.acks.length).toBe(refreshAckStart + 1)
     const firstNode = await refreshCards.first().elementHandle()
     platform.grant('b3333333-3333-4333-8333-333333333333', '33.00')
@@ -838,7 +838,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const pollPage = await openDesktopPage('en-US')
     await pollPage.clock.install()
     await pollPage.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-    await shownNotice(pollPage, 'You received a CNY 41.00 DSH trial credit.')
+    await shownNotice(pollPage, 'You received a CNY 41.00 OCEAN trial credit.')
     await expect.poll(() => platform.acks.at(-1)?.orderId).toBe(pollFirst)
     const pollCards = noticeCards(pollPage)
     const retainedNode = await pollCards.first().elementHandle()

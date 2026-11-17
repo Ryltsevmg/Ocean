@@ -18,16 +18,16 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: var(--dsh-sidebar-label-gap);
+  gap: var(--ocean-sidebar-label-gap);
   width: auto;
   height: 36px;
   margin: 0;
-  padding: 0 calc(var(--dsh-sidebar-row-padding) - var(--dsh-sidebar-paint-inset));
+  padding: 0 calc(var(--ocean-sidebar-row-padding) - var(--ocean-sidebar-paint-inset));
   box-sizing: border-box;
   border: none;
   border-radius: var(--dsw-radius-md);
   background: transparent;
-  border-inline: var(--dsh-sidebar-paint-inset) solid transparent;
+  border-inline: var(--ocean-sidebar-paint-inset) solid transparent;
   background-clip: padding-box;
   cursor: pointer;
   overflow: hidden;
@@ -76,7 +76,7 @@
 /* The full-viewport overlay blocks background clicks above the painted mask too. */
 .mask {
   position: absolute;
-  inset: var(--dsh-frame-chrome-top, 0px) 0 0;
+  inset: var(--ocean-frame-chrome-top, 0px) 0 0;
   background: var(--dsw-alias-bg-mask-1);
   backdrop-filter: var(--dsw-mask-blur);
 }
@@ -97,7 +97,7 @@
     'title header'
     'nav options';
   width: 1030px;
-  height: min(740px, calc(100vh - 2 * max(24px, var(--dsh-frame-overlay-top, 24px))));
+  height: min(740px, calc(100vh - 2 * max(24px, var(--ocean-frame-overlay-top, 24px))));
   max-width: calc(100vw - 48px);
   border-radius: var(--dsw-radius-panel);
   overflow: hidden;
@@ -108,8 +108,8 @@
      elevation choice sits with the surface; the custom properties inherit
      down to whichever descendant scrolls (see ui-theme
      styles/scrollbar.css for the rebinding contract). */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --ocean-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --ocean-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
 .panel:focus {

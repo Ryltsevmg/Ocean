@@ -51,7 +51,7 @@ function editFile(root: string, path: string, edit: (source: string) => string):
 }
 
 function fixture(): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-remote-metadata-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-remote-metadata-'))
   roots.push(root)
   cpSync(resolve(import.meta.dirname, 'fixtures/remote-model'), root, { recursive: true })
   editFile(root, 'packages/remote/src/index.ts', source => source.replace('  @Remote\n', `  /**

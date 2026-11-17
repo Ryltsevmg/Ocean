@@ -11,8 +11,8 @@ The adapter sends the additions to its resolved `baseURL`, including a configure
 | Location | Naming | Examples |
 |---|---|---|
 | HTTP field names | Lowercase kebab-case; HTTP matching remains case-insensitive | `user-agent`, `x-deepseek-harness-session-id` |
-| DeepSeek request-body extension fields | Snake case with the reserved `dsh_` prefix | `dsh_plugin_packages`, `dsh_session_log` |
-| DSH-owned nested JSON members | Camel case | `afterSeq`, `throughSeq`, `sessionId` |
+| DeepSeek request-body extension fields | Snake case with the reserved `ocean_` prefix | `dsh_plugin_packages`, `dsh_session_log` |
+| OCEAN-owned nested JSON members | Camel case | `afterSeq`, `throughSeq`, `sessionId` |
 | Tagged values | Kebab-case strings; durable events use `domain/action` | `session-log-deepseek/delivery-accepted` |
 
 Each body extension owns its `version` independently. A version applies only to the object that contains it; no compatibility or ordering relationship exists between versions of different fields. JSON member order is not part of the protocol.
@@ -23,7 +23,7 @@ The [`DeepSeekLlmApiExtensionRegistry`](../packages/llm/deepseek-llm-api-extensi
 
 | Header | Presence | Value |
 |---|---|---|
-| `user-agent` | Every provider HTTP request, including Files API operations | Application identity in `product/version (+url)` form, followed by `dsh-profile/<profile>` naming the booted profile, percent-encoded outside `tchar` and for `%` (for example `dsh-profile/desktop`, `dsh-profile/web`, `dsh-profile/sdk`); the default product is `deepseek-harness` |
+| `user-agent` | Every provider HTTP request, including Files API operations | Application identity in `product/version (+url)` form, followed by `ocean-profile/<profile>` naming the booted profile, percent-encoded outside `tchar` and for `%` (for example `ocean-profile/desktop`, `ocean-profile/web`, `ocean-profile/sdk`); the default product is `deepseek-harness` |
 | `x-deepseek-harness-user-id` | Every authorized model request | The stable anonymous UUID for the resolved Harness home |
 | `x-deepseek-harness-session-id` | Model requests carrying a Session id | The exact request `sessionId` string |
 | `x-deepseek-harness-compact` | Model requests whose purpose is `compaction` | The literal string `1` |

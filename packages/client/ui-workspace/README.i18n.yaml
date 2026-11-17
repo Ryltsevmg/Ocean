@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-workspace/README.md
 /:
-  en: 7c0f613105d4008a
-  zh: c36c0cdff7e77576
+  en: 72e018a74b6bd574
+  zh: c9a70af52cf85f26
 /ocean-ocean-client-ui-workspace:
-  en: ff8c75f12f3bbcbb
-  zh: 07b6cb2d6fc253ba
+  en: e137bbe466d5df2b
+  zh: 0c5c97ddbbbd833c
 /ocean-ocean-client-ui-workspace/summary:
   en: 1a76ace6a18e3ab5
   zh: b274d1e98e133851
@@ -27,14 +27,14 @@
   en: 148f2ab562fecc09
   zh: 9ba7c07999705b31
 /ocean-ocean-client-ui-workspace/use-this-package/managing-sessions:
-  en: 29b6b357fc6be99a
-  zh: 182996efed35029c
+  en: 281436dcc6b5649a
+  zh: bd82fab6338a0eeb
 /ocean-ocean-client-ui-workspace/use-this-package/pending-interactions:
   en: 9fb88260380bf093
   zh: 3bace2b96ecd4a82
 /ocean-ocean-client-ui-workspace/use-this-package/active-schedule-markers:
-  en: 249d9552d8bef805
-  zh: 405b1c636cba8e0b
+  en: 41ce51e7af8b9a24
+  zh: ea85acc9bca6f793
 /ocean-ocean-client-ui-workspace/understand-the-implementation:
   en: 7c04d62e64a78801
   zh: 1a6eecf41c2e60c7
@@ -42,8 +42,8 @@
   en: 868904dbfb5713f8
   zh: 35d3c285ed770885
 /ocean-ocean-client-ui-workspace/understand-the-implementation/session-row-actions:
-  en: 511408e373ff8c70
-  zh: 7ae3b396171821a4
+  en: 62060b48a9c7b586
+  zh: b0c8c0861c059bad
 /ocean-ocean-client-ui-workspace/understand-the-implementation/session-row-actions/packaged-client-plugin:
   en: 36934671b80b11ae
   zh: 8e0aea6162e35e77
@@ -51,14 +51,14 @@
   en: dd11a2beec5359d4
   zh: 438abfdaf2003925
 /ocean-ocean-client-ui-workspace/understand-the-implementation/view-state:
-  en: dcf2a7d1c9b0d7ab
-  zh: ed55345f218f0735
+  en: 0400d19d50930941
+  zh: 34af317053a13fed
 /ocean-ocean-client-ui-workspace/understand-the-implementation/hover-cards:
   en: 8bcb7bd90d7c5773
   zh: 17663be926a099d2
 /ocean-ocean-client-ui-workspace/further-exploration:
-  en: cb0b5c3c3caa27f5
-  zh: e854ce9c897d1b64
+  en: e9088982b233ecc8
+  zh: 43103704394d12b0
 /ocean-ocean-client-ui-workspace/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a

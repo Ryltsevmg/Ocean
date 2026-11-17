@@ -4,7 +4,7 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig({
   entry: { 'image-read.perf': 'image-read.perf.ts' },
-  outDir: '../.dsh-build/image-read',
+  outDir: '../.ocean-build/image-read',
   format: 'esm',
   platform: 'node',
   target: 'es2024',

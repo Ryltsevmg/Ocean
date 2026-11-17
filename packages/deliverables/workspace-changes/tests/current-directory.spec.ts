@@ -20,7 +20,7 @@ afterEach(async () => {
 })
 
 it.each(['write', 'edit', 'str_replace_editor'] as const)('captures the resolved %s target before mutation, without a repository', async (name) => {
-  const origin = await realpath(await mkdtemp(join(tmpdir(), 'dsh-workspace-directory-')))
+  const origin = await realpath(await mkdtemp(join(tmpdir(), 'ocean-workspace-directory-')))
   cleanups.push(() => rm(origin, { recursive: true, force: true }))
   const current = join(origin, 'current')
   await mkdir(current)

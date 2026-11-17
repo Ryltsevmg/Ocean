@@ -19,12 +19,12 @@ const built = ['lib/index.js', 'lib/process.js'].every(file => existsSync(join(p
 
 describe.skipIf(!built)('built lib real load path (plain node)', () => {
   it.each(['process', 'persistent-process'])('loads a copied %s bundle before rejecting a missing control channel', async (entry) => {
-    const directory = await mkdtemp(join(tmpdir(), 'dsh-standalone-worker-'))
+    const directory = await mkdtemp(join(tmpdir(), 'ocean-standalone-worker-'))
     onTestFinished(async () => { await rm(directory, { recursive: true, force: true }) })
     const path = join(directory, 'worker.mjs')
     await copyFile(join(pkgDir, `lib/${entry}.js`), path)
     const result = await execa(process.execPath, ['--experimental-vm-modules', path, '100000'], {
-      cwd: directory, env: { DSH_SUBPROCESS_CONTROL: '' }, stdin: 'ignore',
+      cwd: directory, env: { OCEAN_SUBPROCESS_CONTROL: '' }, stdin: 'ignore',
       timeout: 55_000, killSignal: 'SIGKILL', reject: false,
     })
     expect(result.timedOut).toBe(false)

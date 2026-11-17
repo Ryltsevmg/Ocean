@@ -2,7 +2,7 @@
 
 English | [中文](commands.zh.md)
 
-The human-command registry service from [`dsh-commands`](../../packages/interaction/commands). Interactive adapters use it to discover and directly execute plugin-owned commands for an exact agent without creating a model message. The [package README](../../packages/interaction/commands/README.md) owns dispatch, lifecycle, composition, and limitations.
+The human-command registry service from [`ocean-commands`](../../packages/interaction/commands). Interactive adapters use it to discover and directly execute plugin-owned commands for an exact agent without creating a model message. The [package README](../../packages/interaction/commands/README.md) owns dispatch, lifecycle, composition, and limitations.
 
 Source: [`packages/interaction/commands/src/index.ts`](../../packages/interaction/commands/src/index.ts)
 

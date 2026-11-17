@@ -1,7 +1,7 @@
 /**
- * Integration: the real fetch backend (`dsh-web-fetch-http`) + a real search provider
- * (`dsh-web-deepseek-api`) + the real seam (`dsh-web`) + the model tool (`dsh-tool-web`) + the
- * tool-call timeout policy (`dsh-tool-call-timeout-policy`), exercised through `executeToolFixture()` —
+ * Integration: the real fetch backend (`ocean-web-fetch-http`) + a real search provider
+ * (`ocean-web-deepseek-api`) + the real seam (`ocean-web`) + the model tool (`ocean-tool-web`) + the
+ * tool-call timeout policy (`ocean-tool-call-timeout-policy`), exercised through `executeToolFixture()` —
  * nothing bypasses the tool registry. Fetch verifies world effects against loopback HTTP; search uses the real
  * DeepSeek Search API provider with only its network boundary stubbed.
  */
@@ -13,7 +13,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { AddressInfo } from 'node:net'
 import { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@ocean/ocean-agent'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
+import { OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
 import { ToolCallId } from '@ocean/ocean-llm'
 import { createScope } from '@ocean/ocean-scope'
 import { SessionId } from '@ocean/ocean-session'
@@ -53,7 +53,7 @@ beforeEach(async () => {
     fetchProvider: WebFetchLocal.LOCAL_FETCH_PROVIDER_ID,
   })
   await ctx.plugin(WebFetchLocal, {})
-  ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'search-key' } }]))
+  ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'search-key' } }]))
   await ctx.plugin(WebDeepSeekApi, { searchBaseURL: SEARCH_API_BASE, sendOriginalQuestion: false })
   // The shipped deployment shape: the tool-call budget is declared by tool-web
   // config (default 30s, attached as ToolDefinition.timeoutMs) and enforced by
@@ -179,7 +179,7 @@ describe('tool-call timeout returns TOOL_TIMEOUT (deadline wins over a slow fetc
   it('returns a structured TOOL_TIMEOUT (not the provider WEB_FETCH_TIMEOUT) when the tool-call budget wins', async () => {
     const out = await call('web_fetch', { url: slowBase }, tctx)
     expect(out.isError).toBe(true)
-    // The outer tool-call deadline won: TOOL_TIMEOUT, owned by dsh-tool-call-timeout-policy,
+    // The outer tool-call deadline won: TOOL_TIMEOUT, owned by ocean-tool-call-timeout-policy,
     // NOT the provider's own WEB_FETCH_TIMEOUT (its 30s backstop never fired).
     expect(out.error?.info?.code).toBe('TOOL_TIMEOUT')
     const text = out.content.map(b => (b.type === 'text' ? b.text : '')).join('')

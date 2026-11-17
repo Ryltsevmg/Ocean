@@ -51,7 +51,7 @@ function waitForLine(
   })
 }
 
-describe('Python SDK dsh profile keyless smoke', () => {
+describe('Python SDK ocean profile keyless smoke', () => {
   it.each([
     { label: 'reports max-token turns with the default mapping config', envValue: undefined, editorEnabled: false },
     { label: 'reports max-token turns with mapping enabled through env', envValue: 'true', editorEnabled: false },
@@ -67,7 +67,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
     const unreadEdit = 'unreadEdit' in scenario && scenario.unreadEdit
     const patchEnabled = 'patchEnabled' in scenario && scenario.patchEnabled
 
-    const root = await mkdtemp(join(tmpdir(), 'dsh-python-sdk-runtime-smoke-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-python-sdk-runtime-smoke-'))
     const unreadFile = join(root, 'notes.txt')
     if (unreadEdit) await writeFile(unreadFile, 'alpha\n')
     const editorPatch = join(root, 'editor.patch.yml')
@@ -113,13 +113,13 @@ describe('Python SDK dsh profile keyless smoke', () => {
       cwd: repoRoot,
       env: {
         ...launch.env,
-        DSH_HOME: join(root, '.dsh'),
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_TELEMETRY_DISABLED: '1',
-        DSH_TOOLS_MODE: ptc ? 'native' : 'ptc',
+        OCEAN_HOME: join(root, '.ocean'),
+        OCEAN_PERMISSION_MODE: 'danger-full-access',
+        OCEAN_TELEMETRY_DISABLED: '1',
+        OCEAN_TOOLS_MODE: ptc ? 'native' : 'ptc',
         DEEPSEEK_API_KEY: 'keyless-smoke-no-call',
         DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
-        ...(envValue === undefined ? {} : { DSH_MAX_TOKENS_AS_SUCCESS: envValue }),
+        ...(envValue === undefined ? {} : { OCEAN_MAX_TOKENS_AS_SUCCESS: envValue }),
       },
       timeout: 35_000,
       killSignal: 'SIGKILL',
@@ -219,7 +219,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
       expect(shutdown).toMatchObject({ jsonrpc: '2.0', id: 3, result: {} })
       const exit = await child
       expect(exit.exitCode, `signal=${String(exit.signal)}; stderr=${stderr}`).toBe(0)
-      const sessionsRoot = join(root, '.dsh', 'sessions')
+      const sessionsRoot = join(root, '.ocean', 'sessions')
       const files = await readdir(sessionsRoot, { recursive: true })
       // Session logs are JSONL across one zstd frame per batch, header frame
       // first. Decompress frames explicitly: a single call over concatenated
@@ -261,7 +261,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
     { label: 'offloads an over-budget image and continues with sdk-minimal', editorEnabled: false, imageEnabled: true, optOut: false, offloadEnabled: true },
     { label: 'retains the previous tools through the documented opt-out patch', editorEnabled: false, imageEnabled: false, optOut: true, offloadEnabled: false },
   ])('$label', async ({ editorEnabled, imageEnabled, optOut, offloadEnabled }) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-python-sdk-minimal-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-python-sdk-minimal-'))
     onTestFinished(() => rm(root, { recursive: true, force: true }))
     const editorPatch = join(root, 'editor.patch.yml')
     if (editorEnabled) {
@@ -335,8 +335,8 @@ describe('Python SDK dsh profile keyless smoke', () => {
       cwd: repoRoot,
       env: {
         ...launch.env,
-        DSH_HOME: join(root, '.dsh'),
-        DSH_SYSTEM_PROMPT: 'Minimal allowlist prompt.',
+        OCEAN_HOME: join(root, '.ocean'),
+        OCEAN_SYSTEM_PROMPT: 'Minimal allowlist prompt.',
         DEEPSEEK_API_KEY: 'keyless-smoke-no-call',
         DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
       },
@@ -381,9 +381,9 @@ describe('Python SDK dsh profile keyless smoke', () => {
       })
 
       const profile = JSON.parse(
-        await readFile(join(root, '.dsh', 'profiles', 'sdk-minimal', 'package.json'), 'utf8'),
-      ) as { dsh?: { profile?: { bundles?: string[] } } }
-      expect(profile.dsh?.profile).toEqual({
+        await readFile(join(root, '.ocean', 'profiles', 'sdk-minimal', 'package.json'), 'utf8'),
+      ) as { ocean?: { profile?: { bundles?: string[] } } }
+      expect(profile.ocean?.profile).toEqual({
         bundles: ['@ocean/ocean-sdk-minimal'],
       })
       expect(modelRequests[0]?.tools).toEqual(expect.any(Array))
@@ -412,7 +412,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
             { type: 'image', source: { type: 'file', file_id: 'file-minimal-image' } },
           ]))
         }
-        const stored = await readdir(join(root, '.dsh', 'attachments', 'v1', 'objects'), { recursive: true })
+        const stored = await readdir(join(root, '.ocean', 'attachments', 'v1', 'objects'), { recursive: true })
         expect(stored.some(file => /[a-f0-9]{64}$/u.test(file))).toBe(true)
       }
       if (editorEnabled) {
@@ -447,8 +447,8 @@ describe('Python SDK dsh profile keyless smoke', () => {
   }, 40_000)
 
   it.each([false, true])('exits after startup failure with stdin open (logs blocked: %s)', async (blocked) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-sdk-startup-exit-'))
-    const home = join(root, '.dsh')
+    const root = await mkdtemp(join(tmpdir(), 'ocean-sdk-startup-exit-'))
+    const home = join(root, '.ocean')
     const patch = join(root, 'failure.yml')
     await mkdir(home)
     if (blocked) await writeFile(join(home, 'logs'), 'blocked')
@@ -457,7 +457,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
       ...launch.args, '--profile', 'sdk', '--patch', patch,
     ], {
       cwd: repoRoot,
-      env: { ...launch.env, DSH_HOME: home, DSH_TELEMETRY_DISABLED: '1', DEEPSEEK_API_KEY: 'keyless-no-call' },
+      env: { ...launch.env, OCEAN_HOME: home, OCEAN_TELEMETRY_DISABLED: '1', DEEPSEEK_API_KEY: 'keyless-no-call' },
       stdin: 'pipe',
       stripFinalNewline: false,
       timeout: 25_000,
@@ -488,7 +488,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
   }, 30_000)
 
   it('rejects an invalid max-token success env value', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-python-sdk-runtime-invalid-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-python-sdk-runtime-invalid-'))
     try {
       const { exitCode, stdout, stderr } = await execa(launch.command, [
         ...launch.args,
@@ -498,9 +498,9 @@ describe('Python SDK dsh profile keyless smoke', () => {
         cwd: repoRoot,
         env: {
           ...launch.env,
-          DSH_HOME: join(root, '.dsh'),
+          OCEAN_HOME: join(root, '.ocean'),
           DEEPSEEK_API_KEY: 'keyless-smoke-no-call',
-          DSH_MAX_TOKENS_AS_SUCCESS: 'sometimes',
+          OCEAN_MAX_TOKENS_AS_SUCCESS: 'sometimes',
         },
         stdin: 'ignore',
         timeout: 25_000,
@@ -579,8 +579,8 @@ it.each(['unset', 'empty', 'full', 'python-only', 'python-only-patched', 'wrong-
   const officeLaunch = resolveExampleLaunch({
     srcBin: fileURLToPath(new URL('../../../src/bin.ts', import.meta.url)), mode: 'lib',
     configArgs: ['--profile', 'sdk', '--patch', cliPatch],
-    env: { DSH_HOME: home, DSH_PRIMARY_RUNTIME: mode === 'unset' ? undefined : mode === 'empty' ? '' : source + '/',
-      DSH_PERMISSION_MODE: 'danger-full-access', DSH_TELEMETRY_DISABLED: '1',
+    env: { OCEAN_HOME: home, OCEAN_PRIMARY_RUNTIME: mode === 'unset' ? undefined : mode === 'empty' ? '' : source + '/',
+      OCEAN_PERMISSION_MODE: 'danger-full-access', OCEAN_TELEMETRY_DISABLED: '1',
       DEEPSEEK_API_KEY: 'local-fixture', DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}` },
   })
   const child = execa(officeLaunch.command, officeLaunch.args, { cwd: repoRoot, env: officeLaunch.env, timeout: 60_000, reject: false })
@@ -655,5 +655,5 @@ it.each(['unset', 'empty', 'full', 'python-only', 'python-only-patched', 'wrong-
   expect(exit.timedOut).toBe(false)
   expect(exit.signal).toBeUndefined()
   expect(exit.exitCode, stderr).toBe(0)
-  await expect(readFile(join(home, 'dsh-runtimes', 'dsh-primary-runtime', 'runtime.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+  await expect(readFile(join(home, 'ocean-runtimes', 'ocean-primary-runtime', 'runtime.json'))).rejects.toMatchObject({ code: 'ENOENT' })
 })

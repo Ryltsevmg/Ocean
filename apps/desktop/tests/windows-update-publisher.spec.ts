@@ -37,7 +37,7 @@ const builderRequire = createRequire(require.resolve('app-builder-lib/package.js
 const { parseDn } = builderRequire('builder-util-runtime') as { parseDn: (value: string) => Map<string, string> }
 
 async function withCertificate(subject: unknown, action: (file: string, signTool: string) => Promise<void>): Promise<void> {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-update-publisher-'))
+  const directory = await mkdtemp(join(tmpdir(), 'ocean-update-publisher-'))
   try {
     const certificate = join(directory, 'publisher.cer')
     const signTool = join(directory, 'signtool.exe')
@@ -52,11 +52,11 @@ async function withCertificate(subject: unknown, action: (file: string, signTool
 
 describe('Windows update publisher', () => {
   beforeAll(() => {
-    vi.stubEnv('DSH_DESKTOP_APP_ID', 'com.example.publisher-test')
-    vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN', 'https://policy.example.com')
-    vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }))
-    vi.stubEnv('DSH_DESKTOP_TARGET_PLATFORM', 'win32')
-    vi.stubEnv('DSH_DESKTOP_UNSIGNED', '1')
+    vi.stubEnv('OCEAN_DESKTOP_APP_ID', 'com.example.publisher-test')
+    vi.stubEnv('OCEAN_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN', 'https://policy.example.com')
+    vi.stubEnv('OCEAN_DESKTOP_MANDATORY_UPDATE_CONFIG', JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }))
+    vi.stubEnv('OCEAN_DESKTOP_TARGET_PLATFORM', 'win32')
+    vi.stubEnv('OCEAN_DESKTOP_UNSIGNED', '1')
   })
   afterAll(() => vi.unstubAllEnvs())
 
@@ -82,15 +82,15 @@ describe('Windows update publisher', () => {
     const { createElectronBuilderConfig } = await import('../electron-builder.config.mjs')
     await withCertificate({ CN: 'Publisher', O: 'Company', C: 'CN' }, async (file, signTool) => {
       const config = createElectronBuilderConfig({
-        DSH_DESKTOP_APP_ID: 'com.example.publisher-test',
-        DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
-        DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
-        ...(explicitTarget ? { DSH_DESKTOP_TARGET_PLATFORM: 'win32' } : {}),
-        DSH_DESKTOP_WINDOWS_CER_FILE: file,
-        DSH_DESKTOP_WINDOWS_SIGNTOOL: signTool,
-        DSH_DESKTOP_WINDOWS_KEY_CONTAINER: 'test-container',
-        DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'test-pin',
-        DSH_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example',
+        OCEAN_DESKTOP_APP_ID: 'com.example.publisher-test',
+        OCEAN_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
+        OCEAN_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
+        ...(explicitTarget ? { OCEAN_DESKTOP_TARGET_PLATFORM: 'win32' } : {}),
+        OCEAN_DESKTOP_WINDOWS_CER_FILE: file,
+        OCEAN_DESKTOP_WINDOWS_SIGNTOOL: signTool,
+        OCEAN_DESKTOP_WINDOWS_KEY_CONTAINER: 'test-container',
+        OCEAN_DESKTOP_WINDOWS_TOKEN_PIN: 'test-pin',
+        OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example',
       }, 'win32', 'x64')
       expect(config.win.forceCodeSigning).toBe(true)
       expect(config.artifactName).toBe('ocean-chat-${version}-${os}-${arch}.${ext}')

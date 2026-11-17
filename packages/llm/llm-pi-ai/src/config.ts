@@ -10,7 +10,7 @@
  * catalog diagnostics beside serviceable models; writes validate every changed
  * provider before persistence. Self-contained profile constraints apply to both.
  *
- * @module dsh-llm-pi-ai/config
+ * @module ocean-llm-pi-ai/config
  */
 import type { Volatile } from '@deepseek-ai/cordis'
 
@@ -411,7 +411,7 @@ function rejectRemovedFields(provider: string, source: PiAiProviderProfile): voi
   if ('maxRetries' in legacy || 'maxRetryDelayMs' in legacy) {
     throw new Error(
       `llm-pi-ai: provider "${provider}" sets maxRetries or maxRetryDelayMs, which were removed;`
-      + ' compose agent recovery with dsh-llm-retry',
+      + ' compose agent recovery with ocean-llm-retry',
     )
   }
 }

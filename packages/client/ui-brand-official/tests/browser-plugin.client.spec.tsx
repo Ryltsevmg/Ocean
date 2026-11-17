@@ -46,7 +46,7 @@ describe('official browser-brand plugin', () => {
   })
 
   it('fills full Ocean branding in local builds too, without a build badge', async () => {
-    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'local')
+    vi.stubEnv('OCEAN_CLIENT_BUILD_PROFILE', 'local')
     const subject = await bench()
     await subject.ctx.plugin({ inject: [...inject], apply }).await()
     expect(subject.slots.entries('sidebar.brand.mark')).toHaveLength(1)
@@ -55,7 +55,7 @@ describe('official browser-brand plugin', () => {
   })
 
   it('fills declarations before or after apply and removes every occupant on teardown', async () => {
-    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'official')
+    vi.stubEnv('OCEAN_CLIENT_BUILD_PROFILE', 'official')
     const before = await bench()
     const fiber = before.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
@@ -79,14 +79,14 @@ describe('official browser-brand plugin', () => {
   })
 
   it('leaves the conversation hero on its declaring fallback even in official builds', async () => {
-    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'official')
+    vi.stubEnv('OCEAN_CLIENT_BUILD_PROFILE', 'official')
     const subject = await bench()
     await subject.ctx.plugin({ inject: [...inject], apply }).await()
     expect(subject.slots.entries(HERO_HOLE)).toHaveLength(0)
   })
 
   it('does not mount the upstream whale decoration', async () => {
-    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'official')
+    vi.stubEnv('OCEAN_CLIENT_BUILD_PROFILE', 'official')
     const subject = await bench()
     await subject.ctx.plugin({ inject: [...inject], apply }).await()
     expect(subject.slots.entries('conversation.hero.frame')).toHaveLength(0)

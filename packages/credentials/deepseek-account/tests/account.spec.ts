@@ -36,7 +36,7 @@ async function fixture(
   desktopPlatform: 'darwin' | 'win32' | null = null,
   balanceTimeoutMs = 30_000,
 ) {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-account-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-account-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
   let init: Record<string, string> = {}
   const cancellations: Array<Record<string, string>> = []
@@ -342,11 +342,11 @@ it.each([
 
 it('preserves Platform business client_type in the completion URL', async () => {
   const f = await fixture()
-  f.exchangeResponse({ authorized_url: `${f.origin}/dsh/authorized?client_type=DSH` })
+  f.exchangeResponse({ authorized_url: `${f.origin}/dsh/authorized?client_type=OCEAN` })
   await f.account.startSignIn(clientMetadata(), f.callbackOrigin, 'web')
   await f.wait('waiting-browser')
   const response = await fetch(f.callback(), { redirect: 'manual' })
-  expect(response.headers.get('location')).toBe(`${f.origin}/dsh/authorized?client_type=DSH&login_source=web`)
+  expect(response.headers.get('location')).toBe(`${f.origin}/dsh/authorized?client_type=OCEAN&login_source=web`)
 })
 
 it.each([undefined, 'https://other.example/dsh/authorized', '/dsh/authorized'])('rejects an invalid exchange completion URL %s before storing a token', async (authorizedUrl) => {

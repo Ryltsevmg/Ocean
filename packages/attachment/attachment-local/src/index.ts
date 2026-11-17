@@ -1,4 +1,4 @@
-/** Local durable attachment backend rooted below `DSH_HOME`. @module @ocean/ocean-attachment-local */
+/** Local durable attachment backend rooted below `OCEAN_HOME`. @module @ocean/ocean-attachment-local */
 
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
@@ -15,7 +15,7 @@ import type {
   SaveImageAttachment,
   StoredImageAttachment,
 } from '@ocean/ocean-attachment'
-import { dshCachePath, resolveDshHome } from '@ocean/ocean-home-paths'
+import { oceanCachePath, resolveOceanHome } from '@ocean/ocean-home-paths'
 import type { NormalizationPolicy } from './normalization.ts'
 import { CompressionLimiter, compressionFailure } from './compression-limiter.ts'
 import { commitPreparedImageFile, normalizedImagePath, prepareImageFile, readImageFile, validateImageFile } from './store.ts'
@@ -63,8 +63,8 @@ export const MAX_IMAGE_COMPRESSION_CONCURRENCY = 8
 
 /** Local attachment backend configuration. */
 export interface Config {
-  /** Explicit harness home; omitted follows `DSH_HOME`, then `~/.dsh`. */
-  dshHome?: string
+  /** Explicit harness home; omitted follows `OCEAN_HOME`, then `~/.ocean`. */
+  oceanHome?: string
   /** Maximum encoded bytes accepted for one submitted image. Default: 50 MiB. */
   maxImageBytes?: number
   /** Maximum image count accepted in one submitted message. Default: 20. */
@@ -150,7 +150,7 @@ class SharedRequest<T> {
 /** Persistent content-addressed local attachment store. */
 export class LocalAttachmentStore extends AttachmentStore {
   static Config: z<Config> = z.object({
-    dshHome: z.string(),
+    oceanHome: z.string(),
     maxImageBytes: z.number().step(1).min(1).default(DEFAULT_MAX_IMAGE_BYTES),
     maxImagesPerMessage: z.number().step(1).min(1).default(DEFAULT_MAX_IMAGES_PER_MESSAGE),
     maxMessageImageBytes: z.number().step(1).min(1).default(DEFAULT_MAX_MESSAGE_IMAGE_BYTES),
@@ -176,9 +176,9 @@ export class LocalAttachmentStore extends AttachmentStore {
 
   constructor(ctx: Context, config: Config) {
     super(ctx)
-    const dshHome = resolveDshHome(config.dshHome)
-    this.root = join(dshHome, 'attachments', 'v1')
-    this.cacheRoot = dshCachePath({ dshHome }, 'attachments')
+    const oceanHome = resolveOceanHome(config.oceanHome)
+    this.root = join(oceanHome, 'attachments', 'v1')
+    this.cacheRoot = oceanCachePath({ oceanHome }, 'attachments')
     this.imageLimits = Object.freeze({
       maxImageBytes: config.maxImageBytes ?? DEFAULT_MAX_IMAGE_BYTES,
       maxImagesPerMessage: config.maxImagesPerMessage ?? DEFAULT_MAX_IMAGES_PER_MESSAGE,

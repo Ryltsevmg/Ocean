@@ -29,9 +29,9 @@ import css from './Rows.module.css'
 
 /** Sidebar-owned layout values needed by row copies mounted outside the sidebar. */
 const DRAG_PREVIEW_PROPERTIES = [
-  '--dsh-sidebar-row-padding',
-  '--dsh-sidebar-label-gap',
-  '--dsh-sidebar-paint-inset',
+  '--ocean-sidebar-row-padding',
+  '--ocean-sidebar-label-gap',
+  '--ocean-sidebar-paint-inset',
 ] as const
 
 /** The standard locale seat, prop-passed from the browser root. */

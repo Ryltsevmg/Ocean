@@ -1,6 +1,6 @@
 /**
  * Generic-job adaptation for pwsh process handles — the shell-agnostic twin
- * of `dsh-tool-bash`'s background adaptation: the terminal
+ * of `ocean-tool-bash`'s background adaptation: the terminal
  * outcome the registry records and the pull sources it pumps.
  *
  * @module @ocean/ocean-tool-pwsh/background
@@ -21,7 +21,7 @@ export interface ProcessJobHooks extends JobHooks {
   failure(): { error: unknown } | undefined
 }
 
-/* jscpd:ignore-start -- deliberate twin of dsh-tool-bash/background.ts. */
+/* jscpd:ignore-start -- deliberate twin of ocean-tool-bash/background.ts. */
 
 /**
  * Sandbox facts worth the terminal detail: a runner that never ran the

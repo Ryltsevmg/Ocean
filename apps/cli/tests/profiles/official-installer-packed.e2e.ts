@@ -8,7 +8,7 @@ import { execa } from 'execa'
 import yaml from 'js-yaml'
 import { expect, it, onTestFinished } from 'vitest'
 import type { BundleInfo, ChangeResult } from '@ocean/ocean-plugin-manager'
-import { getDshRuntimeVersion } from '../../../../packages/boot/app-boot/src/plugin-compatibility.ts'
+import { getOceanRuntimeVersion } from '../../../../packages/boot/app-boot/src/plugin-compatibility.ts'
 import { generateOfficialBundleCatalog } from '../../../../scripts/gen-official-bundle-catalog.ts'
 import {
   REGISTRY_MANIFEST_FILE,
@@ -78,7 +78,7 @@ it.skipIf(!built)('installs the exported registry\'s local closure and switches 
 }, async () => {
   // The product under test is a real source-independent installation that ships neither provider, so both stay
   // available to the Official catalog and only the local registry can supply them.
-  const fixture = await createPackedInstallation('dsh-official-packed-', [])
+  const fixture = await createPackedInstallation('ocean-official-packed-', [])
   const { temporary, installation, home, profile, environment } = fixture
 
   // The registry packs and serves the catalog's own local dependency closure; no checkout link or file: override
@@ -96,7 +96,7 @@ it.skipIf(!built)('installs the exported registry\'s local closure and switches 
   for (const name of packages) expect(artifacts.find(artifact => artifact.name === name), name).toMatchObject({ version })
   await writeRegistryManifest(join(runDirectory, REGISTRY_MANIFEST_FILE), createRegistryManifest({
     buildId: 'packed-e2e',
-    source: sourceEvidence(root, getDshRuntimeVersion()),
+    source: sourceEvidence(root, getOceanRuntimeVersion()),
     entries,
     workspaceNames: selection.workspaceNames,
     artifacts,
@@ -107,7 +107,7 @@ it.skipIf(!built)('installs the exported registry\'s local closure and switches 
   onTestFinished(() => registry.close())
 
   await writeFile(join(profile, 'package.json'), JSON.stringify({ name: 'packed-official-profile', private: true, dependencies: {},
-    dsh: { profile: { bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'] } },
+    ocean: { profile: { bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'] } },
   }))
   // Only the settings a real profile gets. No override, ignore list, or scoped .npmrc may route a package around the
   // registry, so every dependency of the packed bundles is answered by this run or by its fixed upstream redirect.

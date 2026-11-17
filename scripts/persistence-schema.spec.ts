@@ -19,7 +19,7 @@ function put(root: string, file: string, source: string): void {
 }
 
 function fixture(payload: string, options: { surface?: string; event?: string } = {}): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-persistence-schema-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-persistence-schema-'))
   roots.push(root)
   put(root, 'tsconfig.host.json', JSON.stringify({ compilerOptions: {
     target: 'es2024', module: 'esnext', moduleResolution: 'bundler', strict: true, skipLibCheck: true,

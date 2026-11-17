@@ -39,7 +39,7 @@ class CompactionAdapter extends LlmAdapter {
 }
 
 it('retains required cwd in the first request after proactive compaction with optional context disabled', async () => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-compaction-admission-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'ocean-compaction-admission-')))
   const ctx = new Context()
   try {
     await mountAgentLoopTestDependencies(ctx, {

@@ -53,7 +53,7 @@ afterEach(async () => {
   }))
   await Promise.all(hosts.splice(0).map(host => host.ctx.fiber.dispose()))
   for (const root of roots.splice(0)) {
-    if (!isAbsolute(root) || dirname(root) !== resolve(tmpdir()) || !basename(root).startsWith('dsh-operator-connect-')) {
+    if (!isAbsolute(root) || dirname(root) !== resolve(tmpdir()) || !basename(root).startsWith('ocean-operator-connect-')) {
       throw new Error(`refusing unexpected fixture cleanup path: ${root}`)
     }
     await rm(root, { recursive: true, force: true })
@@ -203,7 +203,7 @@ describe('operator connect through Loader composition', () => {
 })
 
 async function boot(): Promise<Host> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-operator-connect-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-operator-connect-'))
   roots.push(root)
   const distIndex = join(root, 'index.html')
   await writeFile(distIndex, '<head></head><body>operator fixture</body>')

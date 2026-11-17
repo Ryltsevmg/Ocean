@@ -191,9 +191,9 @@ const siteIdentity = {
  * stay behind a query only Firefox answers.
  */
 const siteStyle = `
-.dsh-lockup { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.dsh-wordmark { display: inline-block; font-size: 20px; font-weight: 600; line-height: 22px; white-space: nowrap; color: var(--vp-c-text-1); }
-.dsh-tag {
+.ocean-lockup { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ocean-wordmark { display: inline-block; font-size: 20px; font-weight: 600; line-height: 22px; white-space: nowrap; color: var(--vp-c-text-1); }
+.ocean-tag {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--vp-c-brand-soft);
@@ -251,7 +251,7 @@ const scrollbarScript = `
  * @returns Markup placed beside the navigation-bar home link.
  */
 function siteTitle(previewTag: string): string {
-  return `<span class="dsh-lockup"><span class="dsh-wordmark">Ocean</span><span class="dsh-tag">${previewTag}</span></span>`
+  return `<span class="ocean-lockup"><span class="ocean-wordmark">Ocean</span><span class="ocean-tag">${previewTag}</span></span>`
 }
 
 export default withMermaid({

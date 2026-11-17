@@ -550,7 +550,7 @@ it('opens and dismisses risk details without answering the approval', () => {
   const onAllow = vi.fn(async () => {}), onReject = vi.fn(async () => {})
   const props = {
     requestKey: 'risk-approval', title: 'Control this app?',
-    warning: { label: 'Risks', title: 'Computer use risks', detail: 'Background control.\n\nAccount restrictions.\n\nStop in DSH.' },
+    warning: { label: 'Risks', title: 'Computer use risks', detail: 'Background control.\n\nAccount restrictions.\n\nStop in OCEAN.' },
     canAnswer: () => true, onAllow, onReject, renderSlot: () => null, t: (key: string) => key,
   } as FactoryComponentPropsOf<'conversation.approval.card'>
   const view = render(<ApprovalCard {...props} />)

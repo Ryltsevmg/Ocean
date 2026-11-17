@@ -9,16 +9,16 @@ afterAll(() => vi.unstubAllEnvs())
 
 const source: DesktopRetainedSource = {
   repository: 'owner/repo', runId: '20', attempt: '3', commit: 'a'.repeat(40), workflowCommit: 'b'.repeat(40),
-  sourceRef: 'dsh-v1.0.0', channel: 'stable', runnerName: 'windows-publisher', target: 'win-x64',
+  sourceRef: 'ocean-v1.0.0', channel: 'stable', runnerName: 'windows-publisher', target: 'win-x64',
   preset: 'production', productVersion: '1.0.0', version: '1.0.0', testReleaseId: null, qualification: 'signed',
 }
 const plan: DesktopUploadPlan = {
   environment: 'production', target: 'win-x64', version: '1.0.0', bucket: 'production-1234567890',
-  publicUrl: 'https://download.example.com/dsh-desk/feeds/win-x64/', secretIdEnvName: 'SECRET_ID', secretKeyEnvName: 'SECRET_KEY',
+  publicUrl: 'https://download.example.com/ocean-desk/feeds/win-x64/', secretIdEnvName: 'SECRET_ID', secretKeyEnvName: 'SECRET_KEY',
   artifacts: [
-    { path: '/not-read/installer.exe', filename: 'ocean-chat-1.0.0-win-x64.exe', key: 'dsh-desk/bin/win-x64/stable/ocean-chat-1.0.0-win-x64.exe',
+    { path: '/not-read/installer.exe', filename: 'ocean-chat-1.0.0-win-x64.exe', key: 'ocean-desk/bin/win-x64/stable/ocean-chat-1.0.0-win-x64.exe',
       contents: 'installer bytes', contentType: 'application/octet-stream', channelMetadata: false },
-    { path: '/not-read/stable.yml', filename: 'stable.yml', key: 'dsh-desk/feeds/win-x64/stable.yml',
+    { path: '/not-read/stable.yml', filename: 'stable.yml', key: 'ocean-desk/feeds/win-x64/stable.yml',
       contents: 'version: 1.0.0\n', contentType: 'application/yaml', channelMetadata: true },
   ],
 }
@@ -27,7 +27,7 @@ it('shows production destinations and tag after approval with upload-byte finger
   const summary = await desktopPublicationSummary(source, plan, 'c'.repeat(64), false)
   await expect(summary).toMatchFileSnapshot('./expected/publication-production.md')
   expect(summary).toContain('/stable/ocean-chat-1.0.0-win-x64.exe')
-  expect(summary).toContain('https&#58;//download.example.com/dsh-desk/feeds/win-x64/stable.yml')
+  expect(summary).toContain('https&#58;//download.example.com/ocean-desk/feeds/win-x64/stable.yml')
   expect(summary).toContain(createHash('sha256').update('version: 1.0.0\n').digest('hex'))
   expect(summary).not.toContain('测试 release ID |')
   expect(summary).not.toContain('SECRET_KEY')
@@ -51,7 +51,7 @@ it('fails instead of rendering success when an upload file cannot be read', asyn
 it('shows the fixed website replacement before production approval only when selected', async () => {
   const summary = await desktopPublicationSummary(source, plan, 'c'.repeat(64), true)
   await expect(summary).toMatchFileSnapshot('./expected/publication-production-website.md')
-  expect(summary).toContain('updates.ocean.example/desktop/dsh-latest-windows-x64.exe')
+  expect(summary).toContain('updates.ocean.example/desktop/ocean-latest-windows-x64.exe')
   expect(summary).toContain('无防降级保护')
   expect(await desktopPublicationSummary(source, plan, 'c'.repeat(64), false)).not.toContain('官网固定安装包')
   expect(await desktopPublicationSummary({ ...source, preset: 'test', testReleaseId: 'a'.repeat(32) },

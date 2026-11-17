@@ -6,8 +6,8 @@
   en: c6db6e2344a91be8
   zh: 4febc8331d506a22
 /ocean-ocean-tool-subagent:
-  en: 4aad69d60f7e8518
-  zh: d59f3d7244a3b973
+  en: fedfea391c0e5bee
+  zh: 5e030ce7ecd8defc
 /ocean-ocean-tool-subagent/summary:
   en: 5167763e0cf03963
   zh: b73dc896a972c1f8
@@ -18,17 +18,17 @@
   en: 93f1701f5209ecb5
   zh: 6310fd012400aead
 /ocean-ocean-tool-subagent/use-this-package/minimal-configuration:
-  en: 789b6956887f1710
-  zh: b2cd205b59716c39
+  en: 7c92651c4db6d5a3
+  zh: ba8a9d3d12e8f24f
 /ocean-ocean-tool-subagent/use-this-package/managed-delegation:
-  en: 31e50585cfd7e747
-  zh: 643d9a9e3643cf55
+  en: bb73f7af66aece93
+  zh: 0a0f589b7db8cb7d
 /ocean-ocean-tool-subagent/use-this-package/selecting-a-child-preset:
-  en: e28a206c65151ec0
-  zh: 1372242076549ca4
+  en: ff516717f40430e3
+  zh: 3766b2c02b01bda7
 /ocean-ocean-tool-subagent/use-this-package/selecting-a-child-llm:
-  en: fb47e667c543dfc6
-  zh: fa450e808dd5dc7f
+  en: 4942df3f9c51faed
+  zh: 5cd3e5abf00a25fb
 /ocean-ocean-tool-subagent/understand-the-implementation:
   en: 6ce5f749256a7e6c
   zh: a4f2adb04a70d9cf
@@ -48,8 +48,8 @@
   en: 181b32db8839119a
   zh: a9e8625b236d6fc4
 /ocean-ocean-tool-subagent/further-exploration:
-  en: d6ccc1dea25e4618
-  zh: b30ad9a6bec55307
+  en: 3531485f248ac000
+  zh: d70f3420a1684b8c
 /ocean-ocean-tool-subagent/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -57,8 +57,8 @@
   en: e4c7376d4f29dbd5
   zh: 6b7a9eaf69c9ea53
 /ocean-ocean-tool-subagent/model-experience/tool-schema/what-the-model-sees:
-  en: 58d6abf2aed33746
-  zh: 8449bdc1cc94a671
+  en: 3d98826cc05b8cc4
+  zh: a9fa93ef7a0659c3
 /ocean-ocean-tool-subagent/model-experience/tool-schema/token-effect:
   en: b36081ab5c06241f
   zh: 1e784317ee1fb381
@@ -81,8 +81,8 @@
   en: cf78b9dd5596495f
   zh: bd44560f8c2435e8
 /ocean-ocean-tool-subagent/model-experience/system-prompt/what-the-model-sees:
-  en: c02f6b82a7756d03
-  zh: 60ed316d16e34ddf
+  en: 98040da7679b7ef6
+  zh: 9650dd6eca59fc32
 /ocean-ocean-tool-subagent/model-experience/system-prompt/what-the-model-sees/tool-guidance-section:
   en: 82b3cd08b3961c98
   zh: bdc2a34bcea16cac

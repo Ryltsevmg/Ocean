@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-使用 `dsh-tool-fs-search` 为模型提供本地工作区中的 `glob` 文件发现与 `grep` 内容搜索。搜索无需在宿主上安装 `rg`，也无需文件系统提供方；结果相对于工作目录，并包含隐藏与忽略文件但排除 VCS 元数据。可配置上限约束内联输出；挂载可选 spill 存储后，达到上限的结果仍可完整恢复。若需读取、写入或编辑文件，请选择同级 `dsh-tool-fs` 包。
+使用 `ocean-tool-fs-search` 为模型提供本地工作区中的 `glob` 文件发现与 `grep` 内容搜索。搜索无需在宿主上安装 `rg`，也无需文件系统提供方；结果相对于工作目录，并包含隐藏与忽略文件但排除 VCS 元数据。可配置上限约束内联输出；挂载可选 spill 存储后，达到上限的结果仍可完整恢复。若需读取、写入或编辑文件，请选择同级 `ocean-tool-fs` 包。
 
 ## 目录
 
@@ -119,9 +119,9 @@ Node 部署在受支持的 macOS、Linux 与 Windows 目标上获得 `@vscode/ri
 cd packages/fs/tool-fs-search
 node --input-type=module <<'JS'
 import { build } from 'tsdown';
-await build({ config: false, tsconfig: false, dts: false, entry: 'tests/glob-native.perf.ts', outDir: 'tests/.dsh-build', clean: false, deps: { neverBundle: [/^[^./]/] } });
+await build({ config: false, tsconfig: false, dts: false, entry: 'tests/glob-native.perf.ts', outDir: 'tests/.ocean-build', clean: false, deps: { neverBundle: [/^[^./]/] } });
 JS
-node tests/.dsh-build/glob-native.perf.mjs
+node tests/.ocean-build/glob-native.perf.mjs
 ```
 
 诊断脚本创建 20,000 个无关文件和六个匹配文件，然后通过 Native executor 测量五次 `ctx.tools.execute()` 调用，使用真实 Agent、工作目录服务和本地 subprocess 后端。输出包括原始耗时、中位数，以及完整值、文本和展示元数据的哈希。`--plugin <built-module>` 选择其他搜索包版本；`--workspace <directory>` 显式选择只读的现有工作区，替代合成目录。计时排除初始化、模型生成、UI 和 Session 持久化；不设耗时阈值。

@@ -17,7 +17,7 @@ interface CollectionReport {
 }
 
 async function fixture<T>(body: (directory: string) => Promise<T>): Promise<T> {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-installed-update-'))
+  const directory = await mkdtemp(join(tmpdir(), 'ocean-installed-update-'))
   try { return await body(directory) }
   finally { await rm(directory, { recursive: true, force: true }) }
 }
@@ -46,7 +46,7 @@ describe('installed-update qualification materials', () => {
       expect(first.feedKey).not.toBe(next.feedKey)
       expect(first.origin).toBe('https://qualification.ocean.example')
       expect(first.environment).toBe('test')
-      expect(first.feedKey).toBe(`dsh-desk/feeds/qualification/${first.id}/win-x64/nightly.yml`)
+      expect(first.feedKey).toBe(`ocean-desk/feeds/qualification/${first.id}/win-x64/nightly.yml`)
       expect(JSON.parse(await readFile(join(first.root, 'run.json'), 'utf8'))).toEqual(first)
       expect(await readdir(first.root)).toEqual(['run.json'])
     })
@@ -179,7 +179,7 @@ describe('installed-update qualification materials', () => {
   it('collects exact validated journal bytes in independent snapshots without copying other files or declaring acceptance', async () => {
     await fixture(async (directory) => {
       const run = await createInstalledUpdateRun(directory, versions, source)
-      const journals = join(directory, 'dsh-update-qualification', run.id, 'journals')
+      const journals = join(directory, 'ocean-update-qualification', run.id, 'journals')
       const original = new DesktopUpdateJournal(journals, versions[0])
       failedDownload(original)
       await writeFile(join(journals, '.env'), 'private-value')
@@ -211,7 +211,7 @@ describe('installed-update qualification materials', () => {
       const run = await createInstalledUpdateRun(directory, versions, source)
       const manifest = join(run.root, 'run.json')
       await expect(collectInstalledUpdateJournals(manifest, directory)).rejects.toThrow('matching installed-app')
-      const journals = join(directory, 'dsh-update-qualification', run.id, 'journals')
+      const journals = join(directory, 'ocean-update-qualification', run.id, 'journals')
       await mkdir(journals, { recursive: true })
       await writeFile(join(journals, `1-${randomUUID()}.jsonl`), 'private-value\n')
       await expect(collectInstalledUpdateJournals(manifest, journals)).rejects.not.toThrow('private-value')
@@ -222,7 +222,7 @@ describe('installed-update qualification materials', () => {
   it.each(['file', 'snapshot'])('rejects an oversized %s before collecting bytes', async (variant) => {
     await fixture(async (directory) => {
       const run = await createInstalledUpdateRun(directory, versions, source)
-      const journals = join(directory, 'dsh-update-qualification', run.id, 'journals')
+      const journals = join(directory, 'ocean-update-qualification', run.id, 'journals')
       await mkdir(journals, { recursive: true })
       const record = JSON.stringify({ schemaVersion: 1, sequence: 0, pid: 1, time: '2026-09-14T00:00:00.000Z',
         version: versions[0], event: 'started' })
@@ -238,7 +238,7 @@ describe('installed-update qualification materials', () => {
   it('runs the documented source CLI and retains an incomplete report instead of claiming operator acceptance', async () => {
     await fixture(async (directory) => {
       const run = await createInstalledUpdateRun(directory, versions, source)
-      const journals = join(directory, 'dsh-update-qualification', run.id, 'journals')
+      const journals = join(directory, 'ocean-update-qualification', run.id, 'journals')
       new DesktopUpdateJournal(journals, versions[0]).action('workspace-ready')
       // This test owns the documented source-script entry, not a built application or Cordis profile.
       const result = await promisify(execFile)(process.execPath, ['--import', 'tsx', 'apps/desktop/scripts/prepare-installed-update.ts',
@@ -256,9 +256,9 @@ describe('installed-update qualification materials', () => {
 
 
 describe('explicit Ocean qualification destination', () => {
-  const destination = { DSH_DESKTOP_AUTO_UPDATE_ENV: 'test', DOWNLOAD_TEST_ORIGIN: 'https://qualification.ocean.example', DOWNLOAD_TEST_COS_BUCKET: 'ocean-qualification-1234567890' }
+  const destination = { OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'test', DOWNLOAD_TEST_ORIGIN: 'https://qualification.ocean.example', DOWNLOAD_TEST_COS_BUCKET: 'ocean-qualification-1234567890' }
   it.each([
-    {}, { ...destination, DSH_DESKTOP_AUTO_UPDATE_ENV: 'production' },
+    {}, { ...destination, OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production' },
     { ...destination, DOWNLOAD_TEST_ORIGIN: 'http://qualification.ocean.example' },
     { ...destination, DOWNLOAD_TEST_ORIGIN: 'https://secret@example.com' },
     { ...destination, DOWNLOAD_TEST_ORIGIN: 'https://example.com/path' },

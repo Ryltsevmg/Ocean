@@ -8,12 +8,12 @@ LoadLanguageFile "${NSISDIR}\Contrib\Language files\English.nlf"
 LangString decompressionFailed ${LANG_ENGLISH} "Payload extraction failed"
 
 !macro installApplicationFiles
-  !insertmacro dshExtractPayload "${PAYLOAD_FILE}"
+  !insertmacro oceanExtractPayload "${PAYLOAD_FILE}"
 !macroend
 !ifdef SOURCE_DLL
   LoadLanguageFile "${NSISDIR}\Contrib\Language files\SimpChinese.nlf"
   !include "..\..\installer\strings.nsh"
-  !define DSH_INSTALLER_LOG_DIR "${REPORT_DIR}"
+  !define OCEAN_INSTALLER_LOG_DIR "${REPORT_DIR}"
   !include "..\..\scripts\installer.nsh"
 !else
   !include "..\..\scripts\installer-directories.nsh"
@@ -29,45 +29,45 @@ Section
     File "/oname=$PLUGINSDIR\window-frame.dll" "${SOURCE_DLL}"
   !endif
   StrCpy $INSTDIR "${TARGET_DIR}"
-  !insertmacro dshStageApplication
+  !insertmacro oceanStageApplication
   !ifdef RESTORE_CONFLICT
-    Rename $dshFinalDirectory $dshOldDirectory
-    StrCpy $dshOldMoved "1"
-    CreateDirectory $dshFinalDirectory
-    FileOpen $0 "$dshFinalDirectory\unrelated.txt" w
+    Rename $oceanFinalDirectory $oceanOldDirectory
+    StrCpy $oceanOldMoved "1"
+    CreateDirectory $oceanFinalDirectory
+    FileOpen $0 "$oceanFinalDirectory\unrelated.txt" w
     FileWrite $0 "unrelated file"
     FileClose $0
-    StrCpy $dshDirectorySource $dshNewDirectory
-    StrCpy $dshDirectoryDestination $dshFinalDirectory
-    !insertmacro dshDirectoryOperation "$dshDirectorySource" "$dshDirectoryDestination" $dshDirectoryError "promote"
-    Call dshRollbackDirectories
-    !insertmacro dshReportDirectoryFailure
-    Rename $dshFinalDirectory "${TARGET_DIR}.conflict"
-    Call dshCleanupDirectories
+    StrCpy $oceanDirectorySource $oceanNewDirectory
+    StrCpy $oceanDirectoryDestination $oceanFinalDirectory
+    !insertmacro oceanDirectoryOperation "$oceanDirectorySource" "$oceanDirectoryDestination" $oceanDirectoryError "promote"
+    Call oceanRollbackDirectories
+    !insertmacro oceanReportDirectoryFailure
+    Rename $oceanFinalDirectory "${TARGET_DIR}.conflict"
+    Call oceanCleanupDirectories
     SetErrorLevel 2
     Quit
   !endif
   !ifdef CANCELLED
     SetErrorLevel 2
-    Call dshCleanupDirectories
+    Call oceanCleanupDirectories
     Quit
   !endif
   !ifdef MISSING_STAGE
     ; A missing source makes the second rename fail after the old directory moved.
-    RMDir /r "\\?\$dshNewDirectory"
+    RMDir /r "\\?\$oceanNewDirectory"
   !endif
   !ifdef LOCKED_STAGE
-    System::Call 'kernel32::CreateFileW(w "$dshNewDirectory\asset.txt", i 0x80000000, i 1, p 0, i 3, i 0, p 0) p.r9'
+    System::Call 'kernel32::CreateFileW(w "$oceanNewDirectory\asset.txt", i 0x80000000, i 1, p 0, i 3, i 0, p 0) p.r9'
   !endif
-  Call dshPromoteDirectories
+  Call oceanPromoteDirectories
   IfErrors failed
-  !insertmacro dshFinishDirectories
+  !insertmacro oceanFinishDirectories
   SetErrorLevel 0
   Quit
   failed:
   !ifdef LOCKED_STAGE
     System::Call 'kernel32::CloseHandle(p r9)'
-    Call dshCleanupDirectories
+    Call oceanCleanupDirectories
   !endif
   SetErrorLevel 2
   Quit

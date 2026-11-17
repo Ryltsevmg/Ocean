@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/boot/cmdline/README.md
 /:
-  en: 29e1bbea853a5634
-  zh: ef6bc8af7a8ae1dc
+  en: f65f2873b529677d
+  zh: aa9c7268cf959872
 /ocean-ocean-cmdline:
-  en: 3d1233b0c9066a51
-  zh: 64933e5d4d530fa1
+  en: 0b5b54a17d963bc3
+  zh: 804915837cb7afd9
 /ocean-ocean-cmdline/summary:
-  en: cd0cc4458af8f563
-  zh: b2cba42fcf5c810b
+  en: 85c5f3868e955fa9
+  zh: 942c4f7879afce7b
 /ocean-ocean-cmdline/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,11 +18,11 @@
   en: ad6f55231a2cb77d
   zh: 9039fa43deeaa458
 /ocean-ocean-cmdline/use-this-package/the-launcher-values:
-  en: 67d2ceaa6b4dd429
-  zh: 632d9396ba760eee
+  en: 9faa35e479c56922
+  zh: cae6917fd9db4b49
 /ocean-ocean-cmdline/use-this-package/parsing-your-flags:
-  en: e88383d7638cb933
-  zh: 0d0608be857be763
+  en: f8b03131e56bf1c1
+  zh: 535f98d8de315c74
 /ocean-ocean-cmdline/use-this-package/how-flags-beat-config-values:
   en: 301e1dc64b9ffdce
   zh: d2fbd70267fe7bda
@@ -42,8 +42,8 @@
   en: a5f51481ca8e8751
   zh: c512261b9a3bca74
 /ocean-ocean-cmdline/further-exploration:
-  en: 6ea3c827c59aff4c
-  zh: 2977b4cfa7f73942
+  en: 653a1421cbe8fae3
+  zh: 756c27b31ed615b4
 /ocean-ocean-cmdline/model-experience:
   en: f9f5061b618b962a
   zh: 75c6de06b1d981a0

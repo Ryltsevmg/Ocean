@@ -50,7 +50,7 @@ describe.skipIf(MODE === 'record')('web e2e: recorded collapse timing', () => {
     prompt = prompts[0]!
     const continuation = deriveReplayScript(parseSeedFixture(fixture).events).at(-1)
     expect(continuation?.kind).toBe('chunks')
-    replayDir = await mkdtemp(join(tmpdir(), 'dsh-collapse-timing-replay-'))
+    replayDir = await mkdtemp(join(tmpdir(), 'ocean-collapse-timing-replay-'))
     const replayOverride = join(replayDir, 'replay.override.json')
     // Reuse the recorded final reasoning and answer without repeating historical tool-call ids.
     await writeFile(replayOverride, JSON.stringify([continuation]))

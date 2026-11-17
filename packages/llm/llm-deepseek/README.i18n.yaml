@@ -6,29 +6,29 @@
   en: c6924d7c0d7c82ff
   zh: 95fbf06db428f532
 /ocean-ocean-llm-deepseek:
-  en: 4cc938b594fb8586
-  zh: 59de809cd51685cc
+  en: 21a2c984f9c529cd
+  zh: baba24bc9f730f38
 /ocean-ocean-llm-deepseek/summary:
-  en: a8871f9ce192ac6a
-  zh: 7d642e993f4ca71c
+  en: 28584ba4fa9bfc6b
+  zh: 761fe3d8a8db09d1
 /ocean-ocean-llm-deepseek/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-llm-deepseek/use-this-package:
-  en: fe27b41cb85cd031
-  zh: 52d833f0909d94f1
+  en: 119b899edc43ee00
+  zh: 87e004c928326249
 /ocean-ocean-llm-deepseek/use-this-package/when-to-choose-it:
-  en: 6850d08bc091ad23
-  zh: 2906e6cf1dfed6ce
+  en: c31fa562edba7cea
+  zh: 6af5a961899f2c4c
 /ocean-ocean-llm-deepseek/use-this-package/minimal-configuration:
-  en: ec4d7564b06cc677
-  zh: 211871d5eb8bccbb
+  en: c6fa03a05e324ab8
+  zh: 74fbfed24d1a8418
 /ocean-ocean-llm-deepseek/use-this-package/endpoint-and-wire-format:
-  en: 2a634ead5b47fe97
-  zh: 46f199ee79a8c5dc
+  en: 4105758f8a4f310b
+  zh: 8a047021e4179210
 /ocean-ocean-llm-deepseek/use-this-package/account-credentials:
-  en: d3f232309f4963ef
-  zh: 2e0ccd028de26f3e
+  en: 9d65ab66f27aad3d
+  zh: b035ec1d63ac09dd
 /ocean-ocean-llm-deepseek/use-this-package/streaming-with-thinking-and-images:
   en: 81bf213499f015ba
   zh: e9107ef322213e56
@@ -39,8 +39,8 @@
   en: f13f24b504dcfb50
   zh: 69b0ed9e2adf3394
 /ocean-ocean-llm-deepseek/use-this-package/failures-and-recovery:
-  en: 63b17e204a764a7d
-  zh: dafcd75c80796d35
+  en: d120f71ae8767e93
+  zh: d8be1bcb8b3e4604
 /ocean-ocean-llm-deepseek/understand-the-implementation:
   en: 1598ac8a8bb9b6bf
   zh: fdd089c5ae7722cd
@@ -54,8 +54,8 @@
   en: 9477d8af3d762450
   zh: 52a2967518509f94
 /ocean-ocean-llm-deepseek/further-exploration:
-  en: bcaf03cb1671f8ff
-  zh: cf36a6e9d2c05c67
+  en: 8796394923e31936
+  zh: 32f8ae54022e154a
 /ocean-ocean-llm-deepseek/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -63,11 +63,11 @@
   en: 1dc50052999253c6
   zh: 7abf968fc18bffcd
 /ocean-ocean-llm-deepseek/model-experience/deepseek-request/what-the-model-sees:
-  en: fd508ab91893e9dc
-  zh: c653e55a47353d08
+  en: e407269d9eec496f
+  zh: fd4fef940c2f2170
 /ocean-ocean-llm-deepseek/model-experience/deepseek-request/token-effect:
-  en: 67f4bfa42cbee911
-  zh: 5e9dc9bc07253686
+  en: 23ce45dc3ed97736
+  zh: 13282474277e35fc
 /ocean-ocean-llm-deepseek/model-experience/deepseek-request/kv-cache-effect:
   en: 87ac92776176ee15
   zh: bb49edf3a68dda07
@@ -84,8 +84,8 @@
   en: ddfbea043596878d
   zh: 4fbf5864a684c053
 /ocean-ocean-llm-deepseek/known-limitations-and-deferred-work:
-  en: 05fe57d81d8d8202
-  zh: 61e85a6f610842dd
+  en: 4b0fbdd0b333ff6b
+  zh: e4206f57682dafe3
 /ocean-ocean-llm-deepseek/known-limitations-and-deferred-work/dev-note:
-  en: 267aab8281b59242
-  zh: 491b454fe920a17e
+  en: 362552aa47cd06d8
+  zh: c60d239ba8507192

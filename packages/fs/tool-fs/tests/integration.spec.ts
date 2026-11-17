@@ -61,9 +61,9 @@ afterEach(async () => {
 // --------------------------------------------------------------------------
 // GUARDED deployment: the policy gate plugin is loaded (shipped compositions leave it disabled).
 // --------------------------------------------------------------------------
-describe('guarded deployment (with dsh-fs-observation-policy)', () => {
+describe('guarded deployment (with ocean-fs-observation-policy)', () => {
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'dsh-tool-fs-'))
+    dir = await mkdtemp(join(tmpdir(), 'ocean-tool-fs-'))
     ctx = new Context()
     provideWorkingDirectoryFixture(ctx)
     await ctx.plugin(SystemPrompt)
@@ -336,9 +336,9 @@ describe('guarded deployment (with dsh-fs-observation-policy)', () => {
 // --------------------------------------------------------------------------
 // BARE deployment: the tool suite WITHOUT the policy gate, as the shipped compositions run.
 // --------------------------------------------------------------------------
-describe('bare provider (no dsh-fs-observation-policy)', () => {
+describe('bare provider (no ocean-fs-observation-policy)', () => {
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'dsh-tool-fs-bare-'))
+    dir = await mkdtemp(join(tmpdir(), 'ocean-tool-fs-bare-'))
     ctx = new Context()
     provideWorkingDirectoryFixture(ctx)
     await ctx.plugin(SystemPrompt)
@@ -424,12 +424,12 @@ describe('bare provider (no dsh-fs-observation-policy)', () => {
 
 // Per-session cwd: a relative file_path resolves against the calling session's workspace
 // (`exec.agent.session.header.cwd`), not the backend's config.cwd, so the
-// caller-selected session workspace wins, matching dsh-tool-bash.
+// caller-selected session workspace wins, matching ocean-tool-bash.
 describe('per-session cwd', () => {
   let sessionDir: string
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'dsh-tool-fs-cfg-'))
-    sessionDir = await mkdtemp(join(tmpdir(), 'dsh-tool-fs-session-'))
+    dir = await mkdtemp(join(tmpdir(), 'ocean-tool-fs-cfg-'))
+    sessionDir = await mkdtemp(join(tmpdir(), 'ocean-tool-fs-session-'))
     ctx = new Context()
     provideWorkingDirectoryFixture(ctx)
     await ctx.plugin(SystemPrompt)
@@ -476,7 +476,7 @@ describe('per-session cwd', () => {
 // --------------------------------------------------------------------------
 describe('signal, concurrency, and the fs/observed contract', () => {
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'dsh-tool-fs-'))
+    dir = await mkdtemp(join(tmpdir(), 'ocean-tool-fs-'))
     ctx = new Context()
     provideWorkingDirectoryFixture(ctx)
     await ctx.plugin(SystemPrompt)
@@ -589,7 +589,7 @@ describe('signal, concurrency, and the fs/observed contract', () => {
 
 describe('current working directory', () => {
   it('routes subsequent files to the new directory while keeping the original permission root', async () => {
-    dir = await mkdtemp(join(tmpdir(), 'dsh-tool-fs-current-'))
+    dir = await mkdtemp(join(tmpdir(), 'ocean-tool-fs-current-'))
     const next = join(dir, 'next')
     await mkdir(next)
     await writeFile(join(dir, 'note.txt'), 'original')

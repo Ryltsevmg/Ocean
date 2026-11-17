@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-agent-team` 为现有 subagent（子智能体）树添加持久化共享任务板。成员使用标准 subagent 工具发现和联系彼此。Team 提供比较并交换的任务归属更新。挂载 `dsh-tool-agent-team` 可提供任务工具。成员共享同一检出目录。
+`ocean-agent-team` 为现有 subagent（子智能体）树添加持久化共享任务板。成员使用标准 subagent 工具发现和联系彼此。Team 提供比较并交换的任务归属更新。挂载 `ocean-tool-agent-team` 可提供任务工具。成员共享同一检出目录。
 
 ## 目录
 
@@ -56,7 +56,7 @@ kind: "package-reference"
 | `maxTasks` | `256` | 任务板上最多的未删除任务数 |
 | `defaultEnabled` | `false` | 为没有已有选择的新根会话保存 Team 模式开启状态 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#oceanocean-agent-team)是每个受支持字段及其 JSDoc 的穷尽式真源。设置 `maxMembers`、`maxMessageBytes` 或 `disposalTimeoutMs` 的配置行不会激活，dsh 会在启动警告中指出该键；[升级指南](../../../docs/upgrade-guide/v0.2.1-rc.2/agent-team-subagents/guide.zh.md)列出替代方式。
+生成的[配置目录](../../../docs/config-catalog.zh.md#oceanocean-agent-team)是每个受支持字段及其 JSDoc 的穷尽式真源。设置 `maxMembers`、`maxMessageBytes` 或 `disposalTimeoutMs` 的配置行不会激活，ocean 会在启动警告中指出该键；[升级指南](../../../docs/upgrade-guide/v0.2.1-rc.2/agent-team-subagents/guide.zh.md)列出替代方式。
 
 ### Teammate
 
