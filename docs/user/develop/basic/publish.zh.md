@@ -111,13 +111,13 @@ dsh plugin --profile demo add ./hello-plugin
 <a id="install-a-built-tarball"></a>
 ### 安装构建好的 tarball
 
-`pnpm pack` 生成的 `.tgz` 包含打包那一刻的包内容：安装它运行的是这份打包快照，而上面通过链接安装的 checkout 会继续跟随磁盘上的文件。按绝对路径安装该压缩包：
+`pnpm pack` 生成的 `.tgz` 包含打包那一刻的包内容：安装它运行的是这份打包快照，而上面通过链接安装的 checkout 会继续跟随磁盘上的文件。按绝对路径安装该压缩包；`/path/to/dsh-hello-plugin-0.1.0.tgz` 只是示例，请替换为你自己构建出的压缩包的实际绝对路径：
 
 ```sh
 dsh plugin --profile demo add /path/to/dsh-hello-plugin-0.1.0.tgz
 ```
 
-profile 会把该压缩包记为 `file:` 依赖，并像其他安装一样把组合包加入 `dsh.profile.bundles`，因此下面验证与移除命令同样适用。
+profile 会把该压缩包记为 `file:` 依赖，并像其他安装一样把组合包加入 `dsh.profile.bundles`，因此下面验证与移除命令同样适用。如果源码在打包之后发生了改动，且该包需要构建，就重新执行构建，再次运行 `pnpm pack`，然后安装新的压缩包。
 
 先不启动、只验证该层，再启动：
 

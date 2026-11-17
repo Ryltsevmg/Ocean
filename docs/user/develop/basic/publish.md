@@ -111,13 +111,13 @@ Linking a broad checkout does not apply peer interception to the running install
 <a id="install-a-built-tarball"></a>
 ### Install a built tarball
 
-`pnpm pack` writes the package into a `.tgz` archive as it stands at pack time. The archive contains that packaged snapshot: installing it runs the copy it holds, while the linked checkout above keeps following the files on disk. Install the archive by absolute path:
+`pnpm pack` writes the package into a `.tgz` archive as it stands at pack time. The archive contains that packaged snapshot: installing it runs the copy it holds, while the linked checkout above keeps following the files on disk. Install the archive by absolute path; `/path/to/dsh-hello-plugin-0.1.0.tgz` is an example — replace it with the absolute path to your own built archive:
 
 ```sh
 dsh plugin --profile demo add /path/to/dsh-hello-plugin-0.1.0.tgz
 ```
 
-The profile records the archive as a `file:` dependency and adds the bundle to `dsh.profile.bundles` like any other install, so the verification and removal commands below apply unchanged.
+The profile records the archive as a `file:` dependency and adds the bundle to `dsh.profile.bundles` like any other install, so the verification and removal commands below apply unchanged. If the sources changed after packing, run the package's build again when one is needed, then re-run `pnpm pack` before installing the new archive.
 
 Verify the layer without booting, then boot:
 
