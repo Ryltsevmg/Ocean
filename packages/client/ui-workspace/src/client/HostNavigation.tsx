@@ -1,6 +1,6 @@
 /** Current Host and pending input across independent Desktop connections. */
 import { useState } from 'react'
-import { IconGlobeOutlineRegular, Menu, MenuItemButton, Tooltip } from '@ocean/ocean-client-ui-primitives'
+import { IconChevronDownOutlineRegular, IconGlobeOutlineRegular, Menu, MenuItemButton, Tooltip } from '@ocean/ocean-client-ui-primitives'
 import type { HostEntry, HostNavigationProps } from './hosts.ts'
 import css from './HostNavigation.module.css'
 
@@ -30,9 +30,11 @@ export function HostNavigation({ wide, useHosts, select, retry, t }: HostNavigat
   const trigger = <Tooltip label={description} disabled={wide}>
     <button type="button" className={css.trigger} aria-label={description} title={wide ? label : undefined}
       aria-haspopup="menu" aria-expanded={open} disabled={state.busy} onClick={() => { setOpen(value => !value) }}>
-      <IconGlobeOutlineRegular size={18} />
+      <IconGlobeOutlineRegular size={16} />
       {wide && <span className={css.title}>{label}</span>}
       {waiting > 0 && <span className={css.badge}>{waiting}</span>}
+      {wide && selection !== undefined && selection.entries.length > 1 &&
+        <IconChevronDownOutlineRegular className={css.chevron} size={12} aria-hidden="true" />}
     </button>
   </Tooltip>
   return <div className={css.root} data-wide={wide || undefined}>

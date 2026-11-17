@@ -1,7 +1,7 @@
 .root {
   flex: none;
   min-width: 0;
-  margin: 4px 8px;
+  margin: 2px 0 0;
 }
 
 .anchor { width: 100%; }
@@ -14,16 +14,24 @@
   gap: 8px;
   width: 100%;
   min-height: 36px;
-  padding: 8px;
+  padding: 0;
   border: 0;
   border-radius: var(--dsw-radius-md);
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   font: inherit;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.root[data-wide] .trigger { justify-content: flex-start; }
+.root[data-wide] .trigger {
+  justify-content: flex-start;
+  padding: 6px calc(var(--ocean-sidebar-row-padding) - var(--ocean-sidebar-paint-inset));
+  border-inline: var(--ocean-sidebar-paint-inset) solid transparent;
+  background-clip: padding-box;
+}
+.root:not([data-wide]) .trigger { width: 36px; }
+.chevron { margin-inline-start: auto; }
 .trigger > svg { flex: none; }
 .trigger:focus-visible, .retry:focus-visible {
   outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));

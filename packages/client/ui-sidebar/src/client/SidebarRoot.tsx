@@ -312,8 +312,6 @@ export function SidebarRoot({
         </Tooltip>
       )}
 
-      {renderSlot('sidebar.hosts', { wide })}
-
       <div className={css.scrollRegion}>
         <div
           ref={scrollHandoff.bindViewportRef}
@@ -339,7 +337,7 @@ export function SidebarRoot({
         <Toast key={copiedToast} tone="success" text={t('version.copied')} onDone={() => { setCopiedToast(null) }} />
       )}
 
-      {/* Footer actions stack above Settings in both sidebar widths. */}
+      {/* Footer actions, Settings and the Host selector stay below the scroll region. */}
       <div className={css.footArea}>
         <div className={css.footerActions}>
           {renderSlot('sidebar.footer.action', { wide })}
@@ -347,6 +345,7 @@ export function SidebarRoot({
         <div className={css.settingsArea}>
           {renderSlot('sidebar.settings', { wide })}
         </div>
+        {renderSlot('sidebar.hosts', { wide })}
       </div>
     </div>
   )
