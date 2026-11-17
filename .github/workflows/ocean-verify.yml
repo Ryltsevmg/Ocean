@@ -63,6 +63,8 @@ jobs:
         run: npm install --global pnpm@11.28.5
       - name: Install locked dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare and probe the Linux sandbox
+        run: bash scripts/prepare-ci-bubblewrap.sh
       - name: Require PowerShell coverage support
         run: pwsh -NoLogo -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion'
       - name: Build runtime artifacts for process fixtures
@@ -94,6 +96,8 @@ jobs:
         run: npm install --global pnpm@11.28.5
       - name: Install locked dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare and probe the Linux sandbox
+        run: bash scripts/prepare-ci-bubblewrap.sh
       - name: Build artifacts and check types
         run: pnpm run build --serial
       - name: Test assembled CLI expectations
