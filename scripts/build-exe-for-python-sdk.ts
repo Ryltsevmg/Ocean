@@ -1,5 +1,5 @@
 /**
- * Build the dsh executables and development Node carrier for the Python runtime wheel. This script
+ * Build the ocean executables and development Node carrier for the Python runtime wheel. This script
  * owns the fixed `@yao-pkg/pkg --sea` route, deploy flags, and artifact layout.
  * The staged closure is symlink-free, and whole-tree assets cover Cordis's
  * runtime imports that pkg cannot discover statically.
@@ -23,7 +23,7 @@ import primaryLock from './primary-runtime/lock.json' with { type: 'json' }
 const root = resolve(import.meta.dirname, '..')
 
 /** The closure manifest whose dependencies define the executable. */
-const DEPLOY_ROOT_PACKAGE = 'dsh-python-runtime-closure'
+const DEPLOY_ROOT_PACKAGE = 'ocean-python-runtime-closure'
 /** The sole executable entry inside the deployed closure. */
 const ENTRY_BIN = 'runtime-bootstrap.mjs'
 /** Python-visible executable basename. */

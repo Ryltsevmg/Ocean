@@ -14,9 +14,9 @@ const state = vi.hoisted(() => ({
 }))
 
 vi.mock('../scripts/desktop-package-environment.mjs', () => ({ loadDesktopPackageEnvironment: () => ({
-  DSH_DESKTOP_AUTO_UPDATE_ENV: state.settings, DOWNLOAD_TEST_ORIGIN: 'https://qualification.ocean.example',
+  OCEAN_DESKTOP_AUTO_UPDATE_ENV: state.settings, DOWNLOAD_TEST_ORIGIN: 'https://qualification.ocean.example',
   DOWNLOAD_TEST_COS_BUCKET: 'ocean-qualification-1234567890', DOWNLOAD_TEST_COS_SECRET_ID: 'fixture-id',
-  DOWNLOAD_TEST_COS_SECRET_KEY: 'fixture-key', DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'fixture-pin-not-for-sdk',
+  DOWNLOAD_TEST_COS_SECRET_KEY: 'fixture-key', OCEAN_DESKTOP_WINDOWS_TOKEN_PIN: 'fixture-pin-not-for-sdk',
 }) }))
 
 vi.mock('../scripts/desktop-cos.ts', async (original) => {
@@ -44,7 +44,7 @@ afterEach(async () => {
 })
 
 const BUCKET = 'ocean-qualification-1234567890'
-const key = `dsh-desk/bin/qualification/${'a'.repeat(24)}/win-x64/package.exe`
+const key = `ocean-desk/bin/qualification/${'a'.repeat(24)}/win-x64/package.exe`
 
 /** Store whose SDK client sends every request to a fresh loopback origin. */
 async function store(responder: CosLoopbackResponder) {
@@ -89,7 +89,7 @@ describe('qualification COS transport with real SDK serialization over a loopbac
 
   it('streams a file-backed object with its declared length', async () => {
     const { store: cos, loopback } = await store((_request, response) => { answer(response, 200) })
-    const root = await mkdtemp(join(tmpdir(), 'dsh-cos-file-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-cos-file-'))
     roots.push(root)
     const path = join(root, 'package.exe')
     await writeFile(path, 'file bytes')
@@ -183,7 +183,7 @@ describe('qualification COS transport with real SDK serialization over a loopbac
     expect(fetch).toHaveBeenCalledWith(url, expect.objectContaining({ redirect: 'error', cache: 'no-store' }))
     await expect(cos.publicRead(`${url}?fresh=1`)).rejects.toThrow('exact test public URL')
     await expect(cos.publicRead(url.replace('qualification', 'production'))).rejects.toThrow('exact test public URL')
-    await expect(cos.read('dsh-desk/feeds/nightly.yml')).rejects.toThrow('qualification namespace')
+    await expect(cos.read('ocean-desk/feeds/nightly.yml')).rejects.toThrow('qualification namespace')
   })
 
   it('refuses production settings without creating a request', async () => {

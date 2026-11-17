@@ -3,35 +3,35 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/architecture.md
 /ocean-architecture:
-  en: e30e1600312ec51c
-  zh: 24c5ce8150c05906
+  en: 5fd03896799facf1
+  zh: ff71b78f975903c7
 /ocean-architecture/cordis:
-  en: 7d13efd20d263a34
-  zh: cd540f701eb6256f
+  en: f643f7b057413d19
+  zh: 9085e89dc5a12da6
 /ocean-architecture/profiles-and-bundles:
-  en: 187058e8111cb706
-  zh: c26a742ebef6b502
+  en: d939c39c3740fec4
+  zh: bd28e96794d57fa3
 /ocean-architecture/application-launch:
-  en: d41bffb77f953fc6
-  zh: f0dfeeef017b8cde
+  en: 9c2931c53d138d59
+  zh: d91238ebdd1e47d1
 /ocean-architecture/desktop-application:
-  en: b9eeb18645121a8b
-  zh: 70d87a12c43e042a
+  en: 2fd41cf9f6d4ded1
+  zh: 5414fbdd4ae47f7a
 /ocean-architecture/core-packages:
-  en: 20ef882e44b06a10
-  zh: c10c3934ed5570e9
+  en: b4c84e9aeba933b2
+  zh: 05f54050392f6107
 /ocean-architecture/events:
-  en: ce17fde85eb384e1
-  zh: ba8a7a9c6900458b
+  en: 0390673ef07b09c9
+  zh: 0485c441f7ea2be1
 /ocean-architecture/turn-flow:
-  en: 1d496f1893bdbb8d
-  zh: f16d162a803fc791
+  en: 0c78df99b5ecad56
+  zh: db0234f0692d8bb1
 /ocean-architecture/session-log:
-  en: e452f43f7869ac28
-  zh: cc6427c77bad380f
+  en: 9bc07d03f7508822
+  zh: cac290c717cdba92
 /ocean-architecture/capability-seams:
-  en: 86e345bd1ee35800
-  zh: 02afd9c468063f64
+  en: e7452ca943892b7c
+  zh: abb9c74380bbbf5d
 /ocean-architecture/where-new-behavior-goes:
-  en: c9e340c0a3ffa1d5
-  zh: 8ee32b0dc57cfadd
+  en: cd3f66b8562de968
+  zh: 618bfe77635a74d2

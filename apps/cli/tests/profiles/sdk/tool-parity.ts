@@ -9,9 +9,13 @@ interface Exception {
 
 /** Intentional product differences; obsolete entries fail alongside undeclared differences. */
 export const toolParityExceptions: Record<ToolMode, readonly Exception[]> = {
-  standard: [{ tool: 'list_subagent_models', side: 'desktop',
+  standard: [{ tool: 'codex_subscription_preferences', side: 'desktop',
+    reason: 'The bundled Codex subscription UI is installed only in Web/Desktop profiles.' },
+  { tool: 'list_subagent_models', side: 'desktop',
     reason: 'Desktop enables subagent model discovery; SDK delegation inherits the caller model by default.' }],
   ptc: [
+    { tool: 'codex_subscription_preferences', side: 'desktop',
+      reason: 'The bundled Codex subscription UI is installed only in Web/Desktop profiles.' },
     { tool: 'list_subagent_models', side: 'desktop',
       reason: 'Desktop enables subagent model discovery; SDK delegation inherits the caller model by default.' },
     { tool: 'plugin_manager', side: 'sdk',

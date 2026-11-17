@@ -65,7 +65,7 @@ async function fixture(test: TestContext) {
     let inventory: Inventory
     if (side === 'sdk') {
       const harness = new DeepSeekHarness({
-        cwd, processCwd: cwd, dshHome: join(cwd, 'home'), env, model: 'deepseek-v4-pro',
+        cwd, processCwd: cwd, oceanHome: join(cwd, 'home'), env, model: 'deepseek-v4-pro',
         patches: [...mode === 'ptc' ? [join(repo, 'apps/cli/config/examples/ptc.yml')] : [], patch],
       })
       const abort = (): void => { void harness.close() }
@@ -82,7 +82,7 @@ async function fixture(test: TestContext) {
     } else {
       const child = execa(process.execPath, [join(repo, 'apps/cli/lib/bin.js'), '--profile', 'web',
         '--patch', patch, '--host', '127.0.0.1', '--port', '0', '--no-open'], {
-        cwd, env: { ...env, DSH_HOME: join(cwd, 'home') }, extendEnv: false,
+        cwd, env: { ...env, OCEAN_HOME: join(cwd, 'home') }, extendEnv: false,
         ipc: true, stdin: 'ignore', reject: false, cancelSignal: test.signal, forceKillAfterDelay: 10_000,
       })
       let stdout = ''
@@ -90,7 +90,7 @@ async function fixture(test: TestContext) {
       const ready = Promise.withResolvers<true>()
       child.stdout.on('data', (chunk: Buffer) => {
         stdout += chunk.toString()
-        if (stdout.includes('dsh web: http://')) ready.resolve(true)
+        if (stdout.includes('ocean web: http://')) ready.resolve(true)
       })
       child.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString() })
       void child.then((result) => { ready.reject(new Error(`Web exited: ${result.exitCode}\n${stderr}`)) })

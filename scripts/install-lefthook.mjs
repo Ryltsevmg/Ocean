@@ -13,19 +13,22 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { dirname, isAbsolute, join, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, resolve } from 'node:path'
 import lefthookPackage from 'lefthook/package.json' with { type: 'json' }
 
 const MINIMUM_GIT = [2, 26, 0]
-const HOOKS_DIRECTORY = 'dsh-hooks'
-const OWNERSHIP_MARKER = '.dsh-lefthook-owned'
+const HOOKS_DIRECTORY = 'ocean-hooks'
+const OWNERSHIP_MARKER = '.ocean-lefthook-owned'
+const LEGACY_HOOKS_DIRECTORY = 'dsh-hooks'
+const LEGACY_OWNERSHIP_MARKER = '.dsh-lefthook-owned'
 const OWNERSHIP_MARKER_VERSION = 1
 const OWNERSHIP_MARKER_OWNER = 'deepseek-harness worktree-local lefthook hooks'
+// Both launcher generations must serialize installation in the same repository.
 const INSTALL_LOCK = 'dsh-lefthook-install.lock'
 const INSTALL_LOCK_TIMEOUT_MS = 30_000
 const INSTALL_LOCK_INITIALIZATION_TIMEOUT_MS = 5_000
 const INSTALL_LOCK_POLL_MS = 50
-const ALLOW_HOOKS_PATH_OVERRIDE = 'DSH_LEFTHOOK_ALLOW_HOOKS_PATH_OVERRIDE'
+const ALLOW_HOOKS_PATH_OVERRIDE = 'OCEAN_LEFTHOOK_ALLOW_HOOKS_PATH_OVERRIDE'
 const REPOSITORY_EXTENSION_PATTERN = '^extensions\\.'
 function errorCode(error) {
   return typeof error === 'object' && error !== null && 'code' in error
@@ -391,14 +394,14 @@ async function acquireInstallLock(commonDirectory) {
   const deadline = Date.now() + INSTALL_LOCK_TIMEOUT_MS
   const ownedRecord = `${String(process.pid)} ${randomUUID()}\n`
   let initializingLock
-  let observeBarrier = process.env.DSH_TEST_LEFTHOOK_LOCK_OBSERVE_BARRIER
+  let observeBarrier = process.env.OCEAN_TEST_LEFTHOOK_LOCK_OBSERVE_BARRIER
   while (true) {
     try {
       const lockHandle = await accessInstallLock(() => openSync(lockPath, 'wx', 0o600), deadline)
       let ownedStat
       try {
         ownedStat = fstatSync(lockHandle)
-        const publicationBarrier = process.env.DSH_TEST_LEFTHOOK_LOCK_PUBLISH_BARRIER
+        const publicationBarrier = process.env.OCEAN_TEST_LEFTHOOK_LOCK_PUBLISH_BARRIER
         if (publicationBarrier !== undefined) await waitForLockTestBarrier(publicationBarrier)
         writeFileSync(lockHandle, ownedRecord)
       } finally {
@@ -497,7 +500,9 @@ function parseOwnershipMarker(content) {
 }
 
 function inspectOwnedHooksDirectory(hooksPath) {
-  const markerPath = join(hooksPath, OWNERSHIP_MARKER)
+  const markerName = basename(hooksPath) === LEGACY_HOOKS_DIRECTORY
+    ? LEGACY_OWNERSHIP_MARKER : OWNERSHIP_MARKER
+  const markerPath = join(hooksPath, markerName)
   if (!existsSync(hooksPath)) return undefined
   const hooksStat = lstatSync(hooksPath)
   if (!hooksStat.isDirectory() || hooksStat.isSymbolicLink()) {
@@ -514,7 +519,7 @@ function inspectOwnedHooksDirectory(hooksPath) {
     throw new Error(`refusing to overwrite hooks directory with an invalid ownership marker: ${hooksPath}`)
   }
   for (const name of readdirSync(hooksPath)) {
-    if (name === OWNERSHIP_MARKER) continue
+    if (name === markerName) continue
     const entryPath = join(hooksPath, name)
     const entryStat = lstatSync(entryPath)
     if (!entryStat.isFile() || entryStat.isSymbolicLink() || entryStat.nlink !== 1) {
@@ -529,7 +534,9 @@ function inspectOwnedHooksDirectory(hooksPath) {
 function isRegisteredOwnedHooksPath(commonDirectory, hooksPath) {
   const normalizedHooksPath = normalizedPath(hooksPath)
   const isRegistered = registeredWorktreeConfigPaths(commonDirectory).some(
-    configPath => normalizedPath(join(dirname(configPath), HOOKS_DIRECTORY)) === normalizedHooksPath,
+    configPath => [HOOKS_DIRECTORY, LEGACY_HOOKS_DIRECTORY].some(
+      name => normalizedPath(join(dirname(configPath), name)) === normalizedHooksPath,
+    ),
   )
   if (!isRegistered) return false
   return inspectOwnedHooksDirectory(hooksPath)?.hooksPath === hooksPath

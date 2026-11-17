@@ -64,7 +64,7 @@ function $appendParagraphs(text: string): void {
 const HISTORY_MERGE_DELAY_MS = 1000
 
 /** Editor update that removes submitted content while retaining any newer draft suffix. */
-export const DRAFT_SUBMITTED_TAG = 'dsh-draft-submitted'
+export const DRAFT_SUBMITTED_TAG = 'ocean-draft-submitted'
 
 /** One model-owned editor; registration and disposal remain with its model. */
 export class DraftEditorRuntime {
@@ -83,7 +83,7 @@ export class DraftEditorRuntime {
   /** @param deps - model callbacks used by editor listeners and transforms. */
   constructor(private readonly deps: DraftEditorRuntimeDeps) {
     this.editor = createEditor({
-      namespace: 'dsh-composer',
+      namespace: 'ocean-composer',
       nodes: [ReferenceChipNode, CommandChipNode, TextRefNode, QuoteNode],
       onError: (error) => { throw error },
     })

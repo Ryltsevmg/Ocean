@@ -44,7 +44,7 @@ class ReplyAdapter extends LlmAdapter {
 
 /** Schedule service beside a production AgentLoop with one idle Agent that answers through {@link ReplyAdapter}. */
 async function setup() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-notice-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-notice-'))
   roots.push(root)
   const ctx = new Context()
   contexts.push(ctx)

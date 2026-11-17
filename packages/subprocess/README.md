@@ -35,7 +35,7 @@ The service keeps process lifetime across consumer reloads; consumers own what a
 <a id="related-documentation"></a>
 ## Related documentation
 
-- [Subprocess subsystem](../../docs/subsystems/subprocess.md) — spawn specs, output readers, outcomes, and the managed `DSH_*` environment.
+- [Subprocess subsystem](../../docs/subsystems/subprocess.md) — spawn specs, output readers, outcomes, and the managed `OCEAN_*` environment.
 
 -----
 

@@ -32,7 +32,7 @@ export function installIconSprite(ctx: Context, icons: IconReplacements | undefi
   if (typeof document === 'undefined') return
   const sprite = document.createElementNS(SVG_NS, 'svg')
   sprite.setAttribute('aria-hidden', 'true')
-  sprite.setAttribute('data-dsh-icon-sprite', '')
+  sprite.setAttribute('data-ocean-icon-sprite', '')
   sprite.style.cssText = 'position: absolute; width: 0; height: 0; overflow: hidden'
   const rendered = new Map<string, SVGSymbolElement>()
   const markups = new Map<string, string>()

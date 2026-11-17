@@ -15,11 +15,11 @@ import { expectDefaultOutputsUntouched } from './default-outputs.ts'
 const home = await vi.hoisted(async () => {
   const { mkdtemp } = await import('node:fs/promises')
   const { tmpdir } = await import('node:os')
-  return mkdtemp(`${tmpdir()}/dsh-office-kit-home-`)
+  return mkdtemp(`${tmpdir()}/ocean-office-kit-home-`)
 })
 vi.mock('@ocean/ocean-home-paths', async (original) => {
   const path = await import('node:path')
-  return { ...await original<typeof import('@ocean/ocean-home-paths')>(), dshHomePath: (...segments: string[]) => path.join(home, ...segments) }
+  return { ...await original<typeof import('@ocean/ocean-home-paths')>(), oceanHomePath: (...segments: string[]) => path.join(home, ...segments) }
 })
 expectDefaultOutputsUntouched(home)
 
@@ -42,7 +42,7 @@ let render: ReturnType<typeof vi.fn<OfficeKit['convert']>>
 let outputDirectory: string
 
 beforeEach(async () => {
-  outputDirectory = await mkdtemp(join(tmpdir(), 'dsh-office-kit-outputs-'))
+  outputDirectory = await mkdtemp(join(tmpdir(), 'ocean-office-kit-outputs-'))
   ctx = new Context()
   read = vi.fn<FileSystem['readBytes']>().mockResolvedValue(rawSource.data)
   fileInfo = vi.fn<FileSystem['stat']>().mockResolvedValue(sourceInfo)

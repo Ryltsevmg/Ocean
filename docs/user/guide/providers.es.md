@@ -16,7 +16,7 @@ Abre **Ajustes → Modelos**. La tarjeta de DeepSeek tiene un solo campo para la
 
 ![The Models page: the DeepSeek card, with Add model provider below it](providers-models-page.png)
 
-Las claves son de solo escritura. Después de guardar, la página recibe un descriptor con el valor oculto. Nunca recibe el secreto en claro. La clave se guarda en `$DSH_HOME/.credentials.yaml` y los ajustes solo conservan la referencia a esa credencial.
+Las claves son de solo escritura. Después de guardar, la página recibe un descriptor con el valor oculto. Nunca recibe el secreto en claro. La clave se guarda en `$OCEAN_HOME/.credentials.yaml` y los ajustes solo conservan la referencia a esa credencial.
 
 Con una clave guardada y el endpoint predeterminado, DeepSeek usa la lista que publica su API. La carga cuando se necesitan los modelos por primera vez y la actualiza en segundo plano aproximadamente cada diez minutos mientras están en uso. Si no puede cargarla, usa los modelos integrados. Editar **Modelos** en **Configuración personalizada** hace que se use tu lista en lugar de la publicada. **Restaurar valores predeterminados** vuelve a usar y cargar la lista publicada. En ese modo, la tarjeta sigue mostrando los modelos integrados y los nuevos modelos publicados aparecen solo en el selector. La [referencia del proveedor con clave de API](../../../packages/llm/llm-deepseek-api-key/README.md) documenta las reglas de listado, alternativas y requisitos de acceso.
 
@@ -24,7 +24,7 @@ Con una clave guardada y el endpoint predeterminado, DeepSeek usa la lista que p
 
 ## Añadir un proveedor de terceros
 
-Elige **Añadir proveedor de modelos**. La tarjeta se abre en **Proveedor externo de modelos**. Selecciona un proveedor incluido en DSH, como `anthropic`, `openai`, `moonshotai` para Kimi o `zai` para GLM. Introduce su clave de API y guarda. El catálogo instalado proporciona el endpoint, el protocolo y la lista de modelos.
+Elige **Añadir proveedor de modelos**. La tarjeta se abre en **Proveedor externo de modelos**. Selecciona un proveedor incluido en OCEAN, como `anthropic`, `openai`, `moonshotai` para Kimi o `zai` para GLM. Introduce su clave de API y guarda. El catálogo instalado proporciona el endpoint, el protocolo y la lista de modelos.
 
 El botón **?** explica qué prioridad tienen las credenciales guardadas y qué variables de entorno se usan como alternativa. Deja la clave en blanco para usar una credencial guardada o probar las variables indicadas. Un aviso verde indica que se detectó una variable. Uno amarillo indica que no se detectó ninguna. En ese caso introduce una clave de API o configura la variable indicada. Si el estado no se pudo consultar, el aviso indica que no está confirmado. La detección no valida la credencial ni prueba la conexión. La comprobación no incluye archivos que gestiona el proveedor, como perfiles de AWS o credenciales predeterminadas de aplicaciones de Google. Los proveedores sin autenticación nativa por clave, como `openai-codex`, solo muestran un campo de clave si el perfil especifica una referencia a una credencial.
 
@@ -64,12 +64,12 @@ Si el modelo predeterminado guardado pertenece a un proveedor eliminado, el cuad
 
 ## Configuración avanzada
 
-El catálogo de configuración del plugin [generado](../../config-catalog.md) lista cada campo soportado y predeterminado para cada plugin; [`dsh-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) es la sección proveedor esta página configura. Las referencias [`dsh-llm-pi-ai`](../../../packages/llm/llm-pi-ai/README.md) y [`dsh-llm-deepseek`](../../../packages/llm/llm-deepseek/README.md) poseen configuración directa `cordis.patch.yml` , resolución de catálogos, controles de razonamiento, credenciales y errores de adaptador.
+El catálogo de configuración del plugin [generado](../../config-catalog.md) lista cada campo soportado y predeterminado para cada plugin; [`ocean-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) es la sección proveedor esta página configura. Las referencias [`ocean-llm-pi-ai`](../../../packages/llm/llm-pi-ai/README.md) y [`ocean-llm-deepseek`](../../../packages/llm/llm-deepseek/README.md) poseen configuración directa `cordis.patch.yml` , resolución de catálogos, controles de razonamiento, credenciales y errores de adaptador.
 
 ::: tip Ajustes adicionales
-La página Modelos muestra la clave de API, el nombre visible, la URL base y el protocolo de API del proveedor, así como el ID, el nombre visible, la ventana de contexto, el máximo de tokens de salida y los tipos de entrada de cada modelo. En los proveedores con API de modelos personalizada también permite configurar los niveles de razonamiento. Para configurar esos niveles en proveedores integrados, las opciones de compatibilidad de solicitudes, las cabeceras, los tiempos de espera y la política de reintentos, edita `$DSH_HOME/profiles/<profile>/cordis.patch.yml`, el mismo archivo que modifica la página. Si el navegador se ejecuta en el mismo equipo que el servidor, también puedes abrirlo con **Abrir archivo de configuración** en la cabecera de Ajustes. Los adaptadores vuelven a leerlo en la siguiente solicitud, sin reiniciar. Las secciones siguientes describen las opciones más habituales de las pasarelas.
+La página Modelos muestra la clave de API, el nombre visible, la URL base y el protocolo de API del proveedor, así como el ID, el nombre visible, la ventana de contexto, el máximo de tokens de salida y los tipos de entrada de cada modelo. En los proveedores con API de modelos personalizada también permite configurar los niveles de razonamiento. Para configurar esos niveles en proveedores integrados, las opciones de compatibilidad de solicitudes, las cabeceras, los tiempos de espera y la política de reintentos, edita `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`, el mismo archivo que modifica la página. Si el navegador se ejecuta en el mismo equipo que el servidor, también puedes abrirlo con **Abrir archivo de configuración** en la cabecera de Ajustes. Los adaptadores vuelven a leerlo en la siguiente solicitud, sin reiniciar. Las secciones siguientes describen las opciones más habituales de las pasarelas.
 
-Al iniciar la interfaz web con `dsh web`, `<profile>` es `web` y la ruta es `$DSH_HOME/profiles/web/cordis.patch.yml`. Si inicias un perfil personalizado, usa el nombre seleccionado al arrancar.
+Al iniciar la interfaz web con `ocean web`, `<profile>` es `web` y la ruta es `$OCEAN_HOME/profiles/web/cordis.patch.yml`. Si inicias un perfil personalizado, usa el nombre seleccionado al arrancar.
 :::
 
 <a id="image-input"></a>
@@ -78,7 +78,7 @@ Al iniciar la interfaz web con `dsh web`, `<profile>` es `web` y la ruta es `$DS
 
 En **Ajustes → Modelos**, edita el proveedor, abre **Configuración personalizada** y despliega **Opciones del modelo**. **Tipos de entrada** aparece debajo de los campos de capacidad. Selecciona **Imagen** si el modelo admite imágenes y guarda. **Texto** aparece seleccionado inicialmente en un modelo personalizado nuevo que no hereda la capacidad de imagen. Debe quedar al menos un tipo seleccionado. Para un modelo que solo acepte imágenes, selecciona **Imagen** antes de desmarcar **Texto**.
 
-Las casillas de verificación guardan `input` para los modelos pi-ai y `inputModalities` para el adaptador directo DeepSeek. También puedes editar el modelo en `$DSH_HOME/profiles/<profile>/cordis.patch.yml`; por ejemplo, este proveedor pi-ai personalizado declara un modelo solo de texto y un modelo de visión:
+Las casillas de verificación guardan `input` para los modelos pi-ai y `inputModalities` para el adaptador directo DeepSeek. También puedes editar el modelo en `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`; por ejemplo, este proveedor pi-ai personalizado declara un modelo solo de texto y un modelo de visión:
 
 Los ejemplos usan campos de configuración de un parche de perfil. Cordis reemplaza toda la configuración de la entrada al aplicar una modificación. Conserva los demás proveedores y campos cuando edites una modificación existente.
 
@@ -138,7 +138,7 @@ Estos campos declaran qué entradas admite el endpoint, sin comprobarlo. Si decl
 
 ### Modelos de cuenta de DeepSeek
 
-Cuando inicias sesión en una cuenta de DeepSeek, los modelos se obtienen del servicio de cuentas y la página Modelos no ofrece un editor para ellos. Para ajustar un modelo, usa `modelOverrides` en `$DSH_HOME/profiles/<profile>/cordis.patch.yml`. Los campos coinciden con los de una entrada de DeepSeek en `models`. Los campos que omitas conservan los valores del listado.
+Cuando inicias sesión en una cuenta de DeepSeek, los modelos se obtienen del servicio de cuentas y la página Modelos no ofrece un editor para ellos. Para ajustar un modelo, usa `modelOverrides` en `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`. Los campos coinciden con los de una entrada de DeepSeek en `models`. Los campos que omitas conservan los valores del listado.
 
 ```yaml
 - id: llm-deepseek-account
@@ -159,7 +159,7 @@ El selector de modelos ofrece un menú **Esfuerzo** si el modelo declara niveles
 
 Para declarar niveles en una API de modelos personalizada, edita el proveedor en **Ajustes → Modelos**, abre **Configuración personalizada**, despliega **Opciones del modelo** y activa **Niveles de razonamiento**. Los niveles iniciales son desactivado, bajo, medio y alto. Cada fila vincula un nivel con el **Valor API** que se envía, que por defecto coincide con el nombre del nivel. Cámbialo si la documentación de la API del proveedor especifica otro valor. Añade o elimina filas según lo que admite el endpoint, conserva al menos un nivel además de desactivado y guarda. Desactivar la opción elimina la declaración.
 
-La página escribe `reasoningEfforts` en `$DSH_HOME/profiles/<profile>/cordis.patch.yml`, donde también se pueden declarar los niveles directamente:
+La página escribe `reasoningEfforts` en `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`, donde también se pueden declarar los niveles directamente:
 
 ```yaml
 - id: llm-pi-ai
@@ -207,7 +207,7 @@ Si la pasarela de un modelo de proveedor integrado no admite razonamiento, desac
 
 Una pasarela con una dirección accesible y una clave válida puede rechazar todas las solicitudes. pi-ai usa la URL del endpoint para decidir el rol del mensaje del sistema, el campo del límite de salida y cómo se envía el nivel de razonamiento. Si no reconoce la URL, envía la solicitud como si fuera a OpenAI. La mayoría de las pasarelas compatibles con OpenAI rechazan alguna opción que OpenAI acepta.
 
-Hay dos causas frecuentes. Para un modelo que declara razonamiento, pi-ai envía el mensaje del sistema con `role: "developer"`, que muchas pasarelas rechazan. También envía el límite de salida en `max_completion_tokens`, que rechazan los servidores que solo conocen `max_tokens`. El formulario carece de esos campos. Configúralos en la ruta de `$DSH_HOME/profiles/<profile>/cordis.patch.yml`.
+Hay dos causas frecuentes. Para un modelo que declara razonamiento, pi-ai envía el mensaje del sistema con `role: "developer"`, que muchas pasarelas rechazan. También envía el límite de salida en `max_completion_tokens`, que rechazan los servidores que solo conocen `max_tokens`. El formulario carece de esos campos. Configúralos en la ruta de `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`.
 
 ```yaml
 - id: llm-pi-ai
@@ -238,7 +238,7 @@ Si el modelo y la ruta dejan un campo sin definir, se usa el valor del catálogo
 
 Cada opción pertenece a los protocolos que la definen. Si una opción válida para un valor de `api` se rechaza en otro, el mensaje indica qué admite ese protocolo. Al igual que `input`, estas opciones describen lo que el endpoint admite sin comprobarlo. Configurar una opción innecesaria cambia la solicitud que se envía.
 
-La [referencia de configuración generada de `dsh-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) enumera en `PiAiCompatProfile` todas las opciones, sus valores y los protocolos compatibles. La referencia se genera a partir del código del adaptador.
+La [referencia de configuración generada de `ocean-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) enumera en `PiAiCompatProfile` todas las opciones, sus valores y los protocolos compatibles. La referencia se genera a partir del código del adaptador.
 
 <a id="troubleshooting"></a>
 

@@ -118,8 +118,8 @@ function fakeOfficeKit() {
 let dir: string
 let home: string
 beforeEach(async () => {
-  dir = await realpath(await mkdtemp(join(tmpdir(), 'dsh-tool-office-')))
-  home = await mkdtemp(join(tmpdir(), 'dsh-tool-office-home-'))
+  dir = await realpath(await mkdtemp(join(tmpdir(), 'ocean-tool-office-')))
+  home = await mkdtemp(join(tmpdir(), 'ocean-tool-office-home-'))
   await writeFile(join(dir, 'deck.pptx'), 'pptx bytes')
   await writeFile(join(dir, 'book.xlsx'), 'xlsx bytes')
   await writeFile(join(dir, 'report.docx'), 'docx bytes')
@@ -149,7 +149,7 @@ async function setup(options: SetupOptions = {}) {
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(LocalFileSystem, { cwd: dir })
   if (options.attachments !== false) {
-    await ctx.plugin(LocalAttachmentStore, { dshHome: home, ...typeof options.attachments === 'object' ? options.attachments : {} })
+    await ctx.plugin(LocalAttachmentStore, { oceanHome: home, ...typeof options.attachments === 'object' ? options.attachments : {} })
   }
   if (options.llm !== false) {
     await ctx.plugin(LlmRuntime)
@@ -591,7 +591,7 @@ describe('arguments and paths', () => {
   })
 
   it('reads an input outside the workspace as the read tool does', async () => {
-    const outside = await realpath(await mkdtemp(join(tmpdir(), 'dsh-tool-office-outside-')))
+    const outside = await realpath(await mkdtemp(join(tmpdir(), 'ocean-tool-office-outside-')))
     onTestFinished(() => rm(outside, { recursive: true, force: true }))
     await writeFile(join(outside, 'shared.docx'), 'docx bytes')
     const { ctx, kit } = await setup()

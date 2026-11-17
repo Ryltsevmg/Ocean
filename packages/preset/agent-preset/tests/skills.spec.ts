@@ -1,7 +1,7 @@
 /**
- * The shipped dsh-doc skill: it is the package's only skill, renders below the pruner threshold, and
+ * The shipped ocean-doc skill: it is the package's only skill, renders below the pruner threshold, and
  * names exactly the files it ships; its templates parse and show their detail documents, and it never
- * bans reading DSH sources. The Web preset e2e measures whole-reference reads.
+ * bans reading OCEAN sources. The Web preset e2e measures whole-reference reads.
  */
 import { execFileSync, spawnSync } from 'node:child_process'
 import { cpSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -42,8 +42,8 @@ function markdownFiles(dir: string): string[] {
     .map(file => join(dir, file))
 }
 
-describe('the shipped dsh-doc skill', () => {
-  const skill = join(skills, 'dsh-doc')
+describe('the shipped ocean-doc skill', () => {
+  const skill = join(skills, 'ocean-doc')
   const templates = join(skill, 'templates')
   const repositorySkills = fileURLToPath(new URL('../../../../.agents/skills/', import.meta.url))
 
@@ -57,15 +57,15 @@ describe('the shipped dsh-doc skill', () => {
 
   it('is the only skill the package skill root exposes', async (test) => {
     const ctx = await loadRoot(skills, test)
-    expect((await ctx.skills.list()).map(entry => entry.name)).toEqual(['dsh-doc'])
-    expect((await ctx.skills.get('dsh-doc'))?.content).toBe(body('dsh-doc').trim())
+    expect((await ctx.skills.list()).map(entry => entry.name)).toEqual(['ocean-doc'])
+    expect((await ctx.skills.get('ocean-doc'))?.content).toBe(body('ocean-doc').trim())
   })
 
-  it('leaves repository skills without a second dsh-doc and wraps the packaged tool-design reference', async (test) => {
+  it('leaves repository skills without a second ocean-doc and wraps the packaged tool-design reference', async (test) => {
     const ctx = await loadRoot(repositorySkills, test)
     const repository = (await ctx.skills.list()).map(entry => entry.name)
-    expect(repository).not.toContain('dsh-doc')
-    expect(repository).toEqual(expect.arrayContaining(['dsh-doc-writing', 'agent-experience']))
+    expect(repository).not.toContain('ocean-doc')
+    expect(repository).toEqual(expect.arrayContaining(['ocean-doc-writing', 'agent-experience']))
     const wrapper = join(repositorySkills, 'agent-experience', 'SKILL.md')
     expect(lstatSync(wrapper).isFile()).toBe(true)
     const link = /\]\(([^)]+tool-design\.md)\)/u.exec(readFileSync(wrapper, 'utf8'))?.[1]
@@ -74,10 +74,10 @@ describe('the shipped dsh-doc skill', () => {
 
   it('renders below the pruner threshold and lists exactly the files it ships', () => {
     const rendered = renderSkillContent({
-      name: 'dsh-doc', provider: 'filesystem', resourceBase: { kind: 'directory', path: skill }, content: body('dsh-doc'),
+      name: 'ocean-doc', provider: 'filesystem', resourceBase: { kind: 'directory', path: skill }, content: body('ocean-doc'),
     })
     expect(codePointLength(rendered)).toBeLessThan(PRUNER_THRESHOLD_CHARS)
-    const referenced = new Set([...body('dsh-doc').matchAll(/`((?:references|templates)\/[^`]+)`/g)].map(match => match[1] ?? match[0]))
+    const referenced = new Set([...body('ocean-doc').matchAll(/`((?:references|templates)\/[^`]+)`/g)].map(match => match[1] ?? match[0]))
     const shipped = readdirSync(skill, { recursive: true, encoding: 'utf8' })
       .filter(file => file !== 'SKILL.md' && statSync(join(skill, file)).isFile())
       .map(file => file.split(sep).join('/'))
@@ -88,8 +88,8 @@ describe('the shipped dsh-doc skill', () => {
   it('ship templates whose manifest, patch, and JavaScript parse', () => {
     for (const name of readdirSync(templates)) {
       const dir = join(templates, name)
-      const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { dsh: { bundle: { patch: string } } }
-      const patch = yaml.load(readFileSync(join(dir, manifest.dsh.bundle.patch), 'utf8'), { schema: entryListSchema })
+      const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { ocean: { bundle: { patch: string } } }
+      const patch = yaml.load(readFileSync(join(dir, manifest.ocean.bundle.patch), 'utf8'), { schema: entryListSchema })
       expect(Array.isArray(patch)).toBe(true)
       for (const file of readdirSync(dir).filter(entry => entry.endsWith('.js'))) {
         execFileSync(process.execPath, ['--check', join(dir, file)])
@@ -103,11 +103,11 @@ describe('the shipped dsh-doc skill', () => {
       const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
         exports: Record<string, string> & { './icon': string }
         files: string[]
-        dsh: { bundle: { patch: string } }
+        ocean: { bundle: { patch: string } }
       }
       expect(manifest).not.toHaveProperty('icon')
       expect(manifest.files).toContain('docs')
-      const runtimeFiles = [manifest.dsh.bundle.patch, manifest.exports['.'], manifest.exports['./client']]
+      const runtimeFiles = [manifest.ocean.bundle.patch, manifest.exports['.'], manifest.exports['./client']]
         .filter((file): file is string => file !== undefined).map(file => file.replace(/^\.\//u, ''))
       for (const file of runtimeFiles) expect(manifest.files, file).toContain(file)
       expect(manifest.exports['./locale/*.json']).toBe('./locale/*.json')
@@ -128,17 +128,17 @@ describe('the shipped dsh-doc skill', () => {
         details.push(locale.meta.detail)
       }
       const resources = new Set([...Object.values(manifest.exports).filter(file => !file.includes('*')),
-        ...locales, ...details, manifest.dsh.bundle.patch])
+        ...locales, ...details, manifest.ocean.bundle.patch])
       for (const resource of resources) {
         const file = resource.replace(/^\.\//u, '')
-        expect(body('dsh-doc'), file).toContain(`\`templates/${name}/${file.startsWith('locale/') ? 'locale' : file}\``)
+        expect(body('ocean-doc'), file).toContain(`\`templates/${name}/${file.startsWith('locale/') ? 'locale' : file}\``)
         expect(statSync(join(dir, file)).isFile(), file).toBe(true)
       }
     }
   })
 
   it('publishes template metadata through the same package check as CI', (test) => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-template-meta-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-template-meta-'))
     test.onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     for (const name of readdirSync(templates)) {
       const destination = join(root, 'packages', 'templates', name)
@@ -162,7 +162,7 @@ describe('the shipped dsh-doc skill', () => {
     } finally { window.close() }
   })
 
-  it.for(readdirSync(join(skills, 'dsh-doc', 'templates')))('shows one packaged SVG in the %s template detail document', async (name, test) => {
+  it.for(readdirSync(join(skills, 'ocean-doc', 'templates')))('shows one packaged SVG in the %s template detail document', async (name, test) => {
     const dir = join(templates, name)
     const files = localFiles(dir, '1.0.0')
     const locale = JSON.parse(readFileSync(join(dir, 'locale', 'en.json'), 'utf8')) as { meta: { detail: string } }
@@ -211,7 +211,7 @@ describe('the shipped dsh-doc skill', () => {
 
   // The POSIX example runs through bash; the PowerShell form has its own test below.
   it.skipIf(process.platform === 'win32')('documents shell commands that locate a package and list upgrade index sections', (test) => {
-    const install = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-doc-commands-')))
+    const install = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-doc-commands-')))
     test.onTestFinished(() => { rmSync(install, { recursive: true, force: true }) })
     const pkg = join(install, 'node_modules', '@ocean', 'ocean-tool-bash')
     mkdirSync(pkg, { recursive: true })
@@ -229,7 +229,7 @@ describe('the shipped dsh-doc skill', () => {
       const command = /```sh\n\s*(.+)\n\s*```/u.exec(readFileSync(join(skill, 'references', file), 'utf8'))?.[1]
       expect(command, file).toBeDefined()
       return execFileSync('bash', ['-c', command ?? ''], {
-        cwd, encoding: 'utf8', env: { ...process.env, DSH_PROFILE: 'web', DSH_INSTALL_DIR: install, DSH_NODE_EXECUTABLE: process.execPath },
+        cwd, encoding: 'utf8', env: { ...process.env, OCEAN_PROFILE: 'web', OCEAN_INSTALL_DIR: install, OCEAN_NODE_EXECUTABLE: process.execPath },
       })
     }
     const located = run('locate-docs.md').trim()
@@ -241,7 +241,7 @@ describe('the shipped dsh-doc skill', () => {
 
   // Desktop's real Electron and archive run in apps/desktop/tests/installed-docs-asar.built.e2e.ts.
   it.skipIf(spawnSync('pwsh', ['-NoProfile', '-Command', 'exit 0']).status !== 0)('documents a PowerShell process form that waits for the runtime', (test) => {
-    const install = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-doc-pwsh-')))
+    const install = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-doc-pwsh-')))
     test.onTestFinished(() => { rmSync(install, { recursive: true, force: true }) })
     const pkg = join(install, 'node_modules', '@ocean', 'ocean-tool-bash')
     mkdirSync(pkg, { recursive: true })
@@ -249,7 +249,7 @@ describe('the shipped dsh-doc skill', () => {
     const command = /```powershell\n([\s\S]+?)\n```/u.exec(readFileSync(join(skill, 'references', 'locate-docs.md'), 'utf8'))?.[1]
     expect(command).toBeDefined()
     const run = (script: string) => spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-Command', script], {
-      encoding: 'utf8', env: { ...process.env, DSH_INSTALL_DIR: install, DSH_NODE_EXECUTABLE: process.execPath },
+      encoding: 'utf8', env: { ...process.env, OCEAN_INSTALL_DIR: install, OCEAN_NODE_EXECUTABLE: process.execPath },
     })
     const found = run(command ?? '')
     expect(found.status, found.stderr).toBe(0)
@@ -261,10 +261,10 @@ describe('the shipped dsh-doc skill', () => {
     expect(missing.stderr).toContain('@ocean/ocean-missing')
   })
 
-  it('never forbid reading DSH package sources and never route skill files through the shell', () => {
+  it('never forbid reading OCEAN package sources and never route skill files through the shell', () => {
     for (const file of markdownFiles(skill)) {
       const text = readFileSync(file, 'utf8')
-      expect(text, file).not.toMatch(/do not read (DSH |package |DSH package )?sources/i)
+      expect(text, file).not.toMatch(/do not read (OCEAN |package |OCEAN package )?sources/i)
       // Desktop ships the skill directory inside app.asar, which only the Host process can open.
       expect(text, file).not.toMatch(/`(cat|cp|ls) /)
     }

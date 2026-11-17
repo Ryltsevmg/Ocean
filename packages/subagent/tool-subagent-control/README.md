@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-tool-subagent-control` lets agents discover and message their subagent tree by name, interrupt descendants, and wait for their own next-step inbox. By default, one plugin instance registers all four tools; members inherit the same definitions and ordering.
+`ocean-tool-subagent-control` lets agents discover and message their subagent tree by name, interrupt descendants, and wait for their own next-step inbox. By default, one plugin instance registers all four tools; members inherit the same definitions and ordering.
 
 ## Table of Contents
 
@@ -99,7 +99,7 @@ The execution signal owns work only until inbox acceptance. Accepted messages ca
 Read these pages when the package-level contract is not enough; they move from the tool schemas to the continuation service behind them.
 
 - [Subagent subsystem](../../../docs/subsystems/subagent.md) — continuable children, activations, inbox, interrupt, and follow-up authority.
-- [dsh-tool-subagent](../tool-subagent/README.md) — the delegation tool that starts continuable children.
+- [ocean-tool-subagent](../tool-subagent/README.md) — the delegation tool that starts continuable children.
 - [Generated tool catalog](../../../docs/tool-catalog.md#oceanocean-tool-subagent-control) — the tool schemas.
 
 -----

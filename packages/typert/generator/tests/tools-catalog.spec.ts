@@ -24,7 +24,7 @@ describe('model-driven tool package generation', () => {
       packages: ['@ocean/ocean-tools', '@ocean/ocean-tool-executor-ptc'],
     }).analyze()
     const host = workspace.faces.find(candidate => candidate.face === 'host')
-    if (host === undefined) throw new Error('dsh-tools has no analyzed host face')
+    if (host === undefined) throw new Error('ocean-tools has no analyzed host face')
     const root = mkdtempSync(join(import.meta.dirname, '.generated-tools-'))
     temporaryRoots.push(root)
     const ctx = new Context()

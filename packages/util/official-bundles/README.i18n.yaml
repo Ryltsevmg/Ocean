@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/util/official-bundles/README.md
 /:
-  en: 6ef5705aaf6fee34
-  zh: e587b9572fc644bf
+  en: 56a78d37ea0c3408
+  zh: 6fba1b1de25ee05e
 /ocean-ocean-official-bundles:
-  en: 8cd7b67e8a273ae5
-  zh: 748cb1c7e1c2ad7e
+  en: 0fc505fa297beeaf
+  zh: 9adc6d1ce7d6423d
 /ocean-ocean-official-bundles/summary:
-  en: 6a25e030f6c392ef
-  zh: d0af68b0f9852f32
+  en: 3d1eb608c1bac4c4
+  zh: 8e42db226652aebb
 /ocean-ocean-official-bundles/table-of-contents:
   en: 80b31a934611cb4a
   zh: 05f3f7f9cb2fd881
@@ -18,17 +18,17 @@
   en: 1cb89d16a6de115c
   zh: 75925ae7a16278ad
 /ocean-ocean-official-bundles/use-this-package/profile-templates:
-  en: 60ef21314c76c3ec
-  zh: f769091957235e12
+  en: 1000ef184d4cbd12
+  zh: 380455af14de485a
 /ocean-ocean-official-bundles/use-this-package/optional-and-retired-bundles:
-  en: 3950fb871fac9277
-  zh: ed21f217bc8cb9d1
+  en: c62bfb3d778c61b0
+  zh: 69b48fb4760c861a
 /ocean-ocean-official-bundles/use-this-package/plugin-manager-lists:
-  en: fac76eaf81667d46
-  zh: cd524472e7c2c3d1
+  en: 2e7e5756d9988f9f
+  zh: a8a4376726e027cb
 /ocean-ocean-official-bundles/use-this-package/on-demand-bundles:
-  en: 6ba39ba5bfefec79
-  zh: 788a71b5b6f75404
+  en: 8c1e65d214a3b6b2
+  zh: 89af842e05c3d88c
 /ocean-ocean-official-bundles/understand-the-implementation:
   en: 3fb2b58db529d8be
   zh: 46064459a23d458d
@@ -36,11 +36,11 @@
   en: 428fee35f3af62ae
   zh: b3ccf99d9e7d627b
 /ocean-ocean-official-bundles/further-exploration:
-  en: 69d1fe2e37ad9419
-  zh: d6358dd0ce7a5bdf
+  en: 9206d84c3e74bc82
+  zh: 912fe469a62138f2
 /ocean-ocean-official-bundles/known-limitations-and-deferred-work:
-  en: 6631976cc7404166
-  zh: edb2094b17bc4009
+  en: f3c451f806adf599
+  zh: d95d050c47133805
 /ocean-ocean-official-bundles/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

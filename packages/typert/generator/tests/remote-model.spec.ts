@@ -771,11 +771,11 @@ export interface RemainingSchema {
     const root = copyFixture()
     const manifestPath = join(root, 'packages/remote/package.json')
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      dsh?: { client?: object }
+      ocean?: { client?: object }
       exports: Record<string, unknown>
       files: string[]
     }
-    manifest.dsh = { client: {} }
+    manifest.ocean = { client: {} }
     manifest.exports['./client'] = './src/client.ts'
     manifest.exports['./client/typert'] = {
       types: './lib/typert.client.d.ts',
@@ -1022,7 +1022,7 @@ function remotePackage(root: string): {
 }
 
 function copyFixture(sourceRoot = fixtureRoot): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-typert-remote-model-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-typert-remote-model-'))
   cpSync(sourceRoot, root, { recursive: true })
   temporaryRoots.push(root)
   return root

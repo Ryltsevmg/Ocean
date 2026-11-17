@@ -43,7 +43,7 @@ async function fixture(body: (context: {
   journals: string
   store: Store
 }) => Promise<void>): Promise<void> {
-  const parent = await mkdtemp(join(tmpdir(), 'dsh-publication-'))
+  const parent = await mkdtemp(join(tmpdir(), 'ocean-publication-'))
   try {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     const run = await createInstalledUpdateRun(parent, ['0.1.6-nightly.20260914.1', '0.1.6-nightly.20260914.2'],
@@ -68,7 +68,7 @@ async function fixture(body: (context: {
       await writeFile(join(check, 'inputs.json'), JSON.stringify({ manifestSha512: await installedUpdateFileHash(manifest), distribution }))
       receipts.push(receipt)
     }
-    const journals = join(parent, 'dsh-update-qualification', run.id, 'journals')
+    const journals = join(parent, 'ocean-update-qualification', run.id, 'journals')
     await mkdir(journals, { recursive: true })
     const time = new Date(Date.now() - 60_000).toISOString()
     await writeFile(join(journals, '1-00000000-0000-0000-0000-000000000000.jsonl'), ['started', 'workspace-ready']

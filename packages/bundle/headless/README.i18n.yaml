@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/bundle/headless/README.md
 /:
-  en: 68ff17b596cbc6aa
-  zh: 8c6f3d309403ba81
+  en: 67735b4a4ee2f948
+  zh: fc48304d86ac7689
 /ocean-ocean-headless:
-  en: a5306c3d0952752a
-  zh: 051421e6c5a2f4d7
+  en: ef20053fb5d28932
+  zh: aac1f338812fe0b6
 /ocean-ocean-headless/summary:
-  en: 2c31f2cf129ed020
-  zh: 2b34e3640b011475
+  en: 0608201b85b2b500
+  zh: d99e36ac5e3d0cd0
 /ocean-ocean-headless/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,44 +18,44 @@
   en: 4447012f4c84100d
   zh: faf579ae9f04c096
 /ocean-ocean-headless/use-this-package/running-a-one-shot-task:
-  en: 5ef4f18c46c9663b
-  zh: 5cf164127cd0f997
+  en: 268f93dfefcf4dac
+  zh: 607b08b4f477d133
 /ocean-ocean-headless/use-this-package/credentials:
-  en: bf02dd1c6888da25
-  zh: 83dca9600cd7e8ff
+  en: 2c249540473fec9b
+  zh: 288bfa3868f4b294
 /ocean-ocean-headless/use-this-package/choosing-the-session-identity:
   en: 85120c2d6db2cac4
   zh: bac532df6c84e755
 /ocean-ocean-headless/use-this-package/supervising-implementation-tasks:
-  en: b10dee3026e8d999
-  zh: 63eda004e228a48a
+  en: d8dfb492c0c2571b
+  zh: 4e17e5b98269f73f
 /ocean-ocean-headless/use-this-package/machine-readable-output:
-  en: 0cadb19665ebc9d0
-  zh: 738ed8ead4ea4756
+  en: 31f3b2ee015328c2
+  zh: e0bd08daf95de930
 /ocean-ocean-headless/use-this-package/when-to-use-it:
-  en: 5262b93dcef0d489
-  zh: 1638965b2aabcd38
+  en: c41b44e2d5d394e8
+  zh: 9bdeebd40cb8a45f
 /ocean-ocean-headless/use-this-package/help-and-task-errors:
-  en: ecd381558cf7b0e7
-  zh: a351efbf4a1a2ac5
+  en: c9243f19ab965957
+  zh: fc6f8d8a21781d1b
 /ocean-ocean-headless/understand-the-implementation:
   en: be1b73a6d0ee3902
   zh: bdba099685d68b27
 /ocean-ocean-headless/understand-the-implementation/run-flow:
-  en: fdef19c52550fdf8
-  zh: c4bab4fb6972cf10
+  en: 3771e5b9d7ef2edc
+  zh: ec19a5a80ef706d6
 /ocean-ocean-headless/understand-the-implementation/patch-surface-over-base:
-  en: e192267973792ad1
-  zh: ef78428a68dff9e4
+  en: 954863678ee0cbcc
+  zh: 2f363506b8c5e64d
 /ocean-ocean-headless/understand-the-implementation/exit-mapping:
-  en: c2466d3d8a26177a
-  zh: b75743bfa2e7723a
+  en: 9cf3f7a2deee02d3
+  zh: 04bf25283bcffc37
 /ocean-ocean-headless/understand-the-implementation/source-map:
-  en: fbda2df5fd109682
-  zh: 3a92aec4d9dfd9c8
+  en: 91e60672d849ccfa
+  zh: 72d0931c051df2f1
 /ocean-ocean-headless/further-exploration:
-  en: b977169bcb94c46f
-  zh: 37c65a4c4b4df947
+  en: 640e64d23a495fc3
+  zh: 9254d8625a3aaa0e
 /ocean-ocean-headless/model-experience:
   en: c5a0991833f64dd7
   zh: 46f9feb255778f11
@@ -63,8 +63,8 @@
   en: 0b0f74b412c7c6d8
   zh: 6e8f918d0c4bf342
 /ocean-ocean-headless/known-limitations-and-deferred-work:
-  en: 94d8c7731c1435c3
-  zh: d0ddc9dd4e030b3f
+  en: 053ea99cf2702e06
+  zh: 042d5af757f2bae6
 /ocean-ocean-headless/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

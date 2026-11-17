@@ -17,7 +17,7 @@ function expectRoundTrip(file: string, text: string, scoped: string, lines: numb
 }
 
 it('lists the complete eligible corpus when tracked paths exceed one MiB', () => {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-rescope-paths-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-rescope-paths-'))
   // A Git hook or `git rebase -x` exports these; inherited, they would point the fixture at the caller's repository.
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
     !['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE'].includes(key.toUpperCase())))

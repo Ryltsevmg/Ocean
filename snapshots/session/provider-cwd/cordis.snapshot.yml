@@ -14,7 +14,7 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js oceanHomePath('sessions')
     compression: none
 
 - id: sandbox
@@ -52,4 +52,4 @@
     - id: provider-cwd-fs
       name: '../../../packages/bundle/headless/tests/fixtures/provider-cwd.ts'
       config:
-        root: !!js process.env.DSH_SNAPSHOT_PROVIDER_CWD
+        root: !!js process.env.OCEAN_SNAPSHOT_PROVIDER_CWD

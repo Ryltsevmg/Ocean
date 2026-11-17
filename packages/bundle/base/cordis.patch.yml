@@ -1,4 +1,4 @@
-# The dsh-base bundle patch: the shared core of each base-backed profile, applied as
+# The ocean-base bundle patch: the shared core of each base-backed profile, applied as
 # ONE insert over the empty profile root. Later bundle patches and the user's
 # profile cordis.patch.yml address these rows by id, with the last write
 # winning per row.
@@ -110,7 +110,7 @@
       name: '@ocean/ocean-settings'
       disabled: !!js "!ctx.get('profileContext')"
 
-    # Credential sources: managed `$DSH_HOME/.credentials.yaml`, then inherited
+    # Credential sources: managed `$OCEAN_HOME/.credentials.yaml`, then inherited
     # environment, project `.env`, and user `.env` fallbacks.
     # Adapters resolve references per request; the Models page writes only the
     # managed document, which is never materialized into the process environment.
@@ -138,7 +138,7 @@
     - id: session-persistence-jsonl
       name: '@ocean/ocean-session-persistence-jsonl'
       config:
-        root: !!js dshHomePath('sessions')
+        root: !!js oceanHomePath('sessions')
 
     # Durable image bytes live outside the append-only session log. Messages
     # keep content-addressed references that this shared backend resolves for
@@ -182,7 +182,7 @@
     - id: storage-json
       name: '@ocean/ocean-storage-json'
       config:
-        root: !!js dshHomePath('storages')
+        root: !!js oceanHomePath('storages')
 
     - id: storage-domain
       name: '@ocean/ocean-storage-domain'
@@ -204,10 +204,10 @@
 
     # OTel releases a Session-log prefix only after explicit user feedback,
     # regardless of model provider. Ordinary activity never triggers capture.
-    # DSH_TELEMETRY_OTLP_URL overrides the production endpoint. A non-empty
-    # DSH_TELEMETRY_DISABLED — any value, including '0'/'false' — opts the
+    # OCEAN_TELEMETRY_OTLP_URL overrides the production endpoint. A non-empty
+    # OCEAN_TELEMETRY_DISABLED — any value, including '0'/'false' — opts the
     # process out (the launchers patch the row disabled; config cannot disable
-    # a row). Exports carry the harness home's anonymous user id ($DSH_HOME/.anonymous-user-id,
+    # a row). Exports carry the harness home's anonymous user id ($OCEAN_HOME/.anonymous-user-id,
     # random UUID; delete the file to reset the identity) as the Resource's
     # user.id. Byte-bounded batching may turn an authorized prefix into
     # several HTTP requests. Requests run serially; each has its own 1s
@@ -219,11 +219,11 @@
       name: '@ocean/ocean-session-telemetry-otel'
       disabled: true # Ocean does not submit session feedback to the upstream service.
       config:
-        mode: !!js process.env.DSH_TELEMETRY_MODE || 'FEEDBACK_ONLY'
+        mode: !!js process.env.OCEAN_TELEMETRY_MODE || 'FEEDBACK_ONLY'
         shutdownTimeoutMillis: 3000
         maxRequestBytes: 4000000
         exporter:
-          url: !!js process.env.DSH_TELEMETRY_OTLP_URL ?? 'https://dsh-otel-collector.deepseeksvc.com/v1/logs'
+          url: !!js process.env.OCEAN_TELEMETRY_OTLP_URL ?? 'https://ocean-otel-collector.deepseeksvc.com/v1/logs'
           compression: gzip
           timeoutMillis: 1000
         processor:
@@ -244,7 +244,7 @@
     - id: sandbox-policy
       name: '@ocean/ocean-sandbox-policy'
       config:
-        mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+        mode: !!js process.env.OCEAN_PERMISSION_MODE ?? 'workspace-write'
         workspaceRoot: !!js process.cwd()
 
     - id: bash-sandbox
@@ -260,7 +260,7 @@
     - id: approval
       name: '@ocean/ocean-user-approval'
       config:
-        policy: !!js "(process.env.DSH_PERMISSION_MODE ?? 'workspace-write') === 'danger-full-access' ? 'never' : 'ask'"
+        policy: !!js "(process.env.OCEAN_PERMISSION_MODE ?? 'workspace-write') === 'danger-full-access' ? 'never' : 'ask'"
 
     - id: permission
       name: '@ocean/ocean-permission-presets'

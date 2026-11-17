@@ -7,7 +7,7 @@ it('loads a legacy projection plugin, reads Session state, and warns once for it
   const driver = fileURLToPath(new URL('./fixtures/driver.ts', import.meta.url))
   const { stdout } = await runLoaderSmoke({
     label: 'legacy projection registration',
-    tempDirPrefix: 'dsh-projection-compatibility-',
+    tempDirPrefix: 'ocean-projection-compatibility-',
     binScript: driver,
     libBinScript: driver,
     configPath: fileURLToPath(new URL('./fixtures/cordis.yml', import.meta.url)),

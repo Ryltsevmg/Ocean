@@ -38,7 +38,7 @@ afterEach(async () => {
 
 /** Real preset mounts, Agent lifecycle, and persistence with a scripted model. */
 async function setup(script: ConstructorParameters<typeof MockAdapter>[0] = [textResponse('done'), textResponse('continued'), textResponse('done again')]) {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-continuation-presets-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-continuation-presets-'))
   roots.push(root)
   const ctx = new Context()
   contexts.push(ctx)

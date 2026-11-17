@@ -15,7 +15,7 @@ import { onTestFinished } from 'vitest'
  */
 export async function mountLocalActivations(ctx: Context): Promise<void> {
   await mountWorkingDirectoryFixture(ctx)
-  const root = await mkdtemp(join(tmpdir(), 'dsh-local-activation-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-local-activation-'))
   onTestFinished(async () => {
     await ctx.fiber.dispose()
     await rm(root, { recursive: true, force: true })

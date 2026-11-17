@@ -262,7 +262,7 @@ export class BrowserAuth {
    */
   authorizeIndex(req: ConnectionIndexRequest, res: ConnectionIndexResponse, secure = false): boolean {
     /* v8 ignore next -- node:http always supplies url on server requests. */
-    const url = new URL(req.url ?? '/', 'http://dsh.invalid')
+    const url = new URL(req.url ?? '/', 'http://ocean.invalid')
     const tokens = url.searchParams.getAll(TOKEN_QUERY)
     if (tokens.length > 0) {
       const authority = requestAudience(req.headers, secure)
@@ -317,7 +317,7 @@ export class BrowserAuth {
     secure: boolean,
     publish: (interactions: ConnectionInteractions) => PeerId,
   ): void {
-    const url = new URL(req.url ?? '/', 'http://dsh.invalid')
+    const url = new URL(req.url ?? '/', 'http://ocean.invalid')
     const declarations = url.searchParams.getAll('interactions')
     const interactions = declarations[0] ?? 'none'
     if (declarations.length > 1 || (interactions !== 'answer' && interactions !== 'none')) {
@@ -389,6 +389,6 @@ export class BrowserAuth {
     })
     res.end(req.method === 'HEAD'
       ? undefined
-      : 'dsh web authentication required; reopen the URL printed by dsh web.\n')
+      : 'ocean web authentication required; reopen the URL printed by ocean web.\n')
   }
 }

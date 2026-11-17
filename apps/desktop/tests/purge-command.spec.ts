@@ -27,7 +27,7 @@ it('forwards the documented pnpm purge command through both package scripts to t
   await writeFile(join(directory, 'pnpm-workspace.yaml'), 'packages:\n  - apps/desktop\n')
   await writeFile(join(directory, 'apps/desktop/package.json'), JSON.stringify({ name: desktop.name, type: 'module', scripts: { 'purge:latest': desktop.scripts['purge:latest'] } }))
   await mkdir(join(directory, 'node_modules'))
-  for (const dependency of ['.bin', 'pnpm', 'tsx', 'semver']) {
+  for (const dependency of ['.bin', '.pnpm', 'pnpm', 'tsx', 'semver']) {
     await symlink(join(root, 'node_modules', dependency), join(directory, 'node_modules', dependency), 'junction')
   }
   await copyFile(join(root, 'apps/desktop/scripts/upload-target.ts'), join(scripts, 'upload-target.ts'))
@@ -36,7 +36,7 @@ it('forwards the documented pnpm purge command through both package scripts to t
   }
   // Only command forwarding and parsing are under test; all external work fails closed.
   const stubs = {
-    'desktop-package-environment.mjs': "export const loadDesktopPackageEnvironment = () => ({ DSH_DESKTOP_AUTO_UPDATE_ENV: 'production' })",
+    'desktop-package-environment.mjs': "export const loadDesktopPackageEnvironment = () => ({ OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production' })",
     'desktop-cos.ts': "export const createDesktopCos = () => { throw new Error('unexpected COS') }",
     'desktop-upload-plan.ts': "export const createDesktopUploadPlan = () => { throw new Error('unexpected installer read') }",
     'desktop-upload-run.ts': "export const uploadDesktopRelease = () => { throw new Error('unexpected upload') }",
@@ -53,7 +53,7 @@ it('forwards the documented pnpm purge command through both package scripts to t
   }
   await Promise.all(Object.entries(stubs).map(([name, contents]) => writeFile(join(scripts, name), contents)))
   const env = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
-    !/KEY|SECRET|TOKEN|PASSWORD|^NODE_OPTIONS$|^DSH_|^DOWNLOAD_|^PACKAGE_/iu.test(name)))
+    !/KEY|SECRET|TOKEN|PASSWORD|^NODE_OPTIONS$|^OCEAN_|^DSH_|^DOWNLOAD_|^PACKAGE_/iu.test(name)))
   const args = [join(root, 'node_modules/pnpm/bin/pnpm.mjs'), 'run', 'purge:latest', 'mac-arm64']
   const result = await execute(process.execPath, args, { cwd: directory, env, timeout: 30_000 }).catch((error: unknown) => {
     expect(error).not.toMatchObject({ killed: true })

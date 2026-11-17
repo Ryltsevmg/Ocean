@@ -74,7 +74,7 @@ describe('headless terminal failures', () => {
     const result = await test.run(json)
     expect(failures).toHaveLength(1)
     expect(result.code).toBe(1)
-    expect(result.err).toBe(`dsh: summary ${failedEvent} unavailable\n`)
+    expect(result.err).toBe(`ocean: summary ${failedEvent} unavailable\n`)
     if (json) {
       const events = result.out.trim().split('\n').map(line => JSON.parse(line) as { type: string; message?: string })
       expect(events.at(-1)).toEqual({ type: 'error', message: `summary ${failedEvent} unavailable` })
@@ -101,7 +101,7 @@ describe('headless terminal failures', () => {
 
     await expect(test.run()).resolves.toEqual(recover
       ? { code: 0, out: 'summary\n', err: '' }
-      : { code: 1, out: 'waiting\n', err: 'dsh: UNKNOWN: summary hook failed\n' })
+      : { code: 1, out: 'waiting\n', err: 'ocean: UNKNOWN: summary hook failed\n' })
   })
 
   it.each(['turn/start', 'turn/end'] as const)('accepts a recovered summary after a missing %s', async (failedEvent) => {

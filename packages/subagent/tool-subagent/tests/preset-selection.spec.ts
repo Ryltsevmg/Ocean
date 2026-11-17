@@ -33,7 +33,7 @@ afterEach(async () => {
 })
 
 async function mountSpawn(ctx: Context, providerName: string): Promise<void> {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-tool-preset-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-tool-preset-'))
   roots.push(root)
   await ctx.plugin(JsonlSessionPersistence, { root })
   await ctx.plugin(SubagentSpawn, { providerName })

@@ -46,14 +46,14 @@ async function setup(config: Config = {}, internals: LocalSandboxProvider['inter
  * `sandbox-windows-acl/lib/runner.js`.
  */
 function absentRunnerEntry(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-absent-acl-entry-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ocean-absent-acl-entry-'))
   tempDirs.push(dir)
   return join(dir, 'runner.js')
 }
 
 /** Write an executable fake `landlock-run` that answers `--probe` with `report`. */
 function fakeLauncher(report = 'landlock: fully enforced'): string {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-fake-landlock-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ocean-fake-landlock-'))
   tempDirs.push(dir)
   const launcher = join(dir, 'landlock-run')
   writeFileSync(launcher, `#!/bin/sh\nif [ "$1" = "--probe" ]; then echo "${report}"; exit 0; fi\nexit ${LAUNCHER_FAILURE_EXIT}\n`, { mode: 0o755 })
@@ -62,7 +62,7 @@ function fakeLauncher(report = 'landlock: fully enforced'): string {
 
 /** Write an executable fake `sandbox-exec` that exits `status` for any invocation. */
 function fakeSeatbeltExec(status: number): string {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-fake-seatbelt-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ocean-fake-seatbelt-'))
   tempDirs.push(dir)
   const exec = join(dir, 'sandbox-exec')
   writeFileSync(exec, `#!/bin/sh\nexit ${status}\n`, { mode: 0o755 })
@@ -95,8 +95,8 @@ describe('profile dialects', () => {
   })
 
   it('bwrap workspace-write binds each explicit extra root beside the workspace', () => {
-    const ws = mkdtempSync(join(tmpdir(), 'dsh-ws-'))
-    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-extra-')))
+    const ws = mkdtempSync(join(tmpdir(), 'ocean-ws-'))
+    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-extra-')))
     tempDirs.push(ws, extra)
     const realWs = realpathSync.native(ws)
     const realExtra = realpathSync.native(extra)
@@ -107,8 +107,8 @@ describe('profile dialects', () => {
   })
 
   it('landlock workspace-write adds each explicit extra root to the writable list', () => {
-    const ws = mkdtempSync(join(tmpdir(), 'dsh-ws-'))
-    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-extra-')))
+    const ws = mkdtempSync(join(tmpdir(), 'ocean-ws-'))
+    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-extra-')))
     tempDirs.push(ws, extra)
     expect(landlockProfileArgs({ mode: 'workspace-write', workspaceRoot: ws, additionalWritableRoots: [extra] })).toEqual([
       '--ro', '/', '--rw', '/dev/null', '--rw', '/tmp', '--rw', realpathSync.native(ws), '--rw', realpathSync.native(extra),
@@ -138,8 +138,8 @@ describe('profile dialects', () => {
   })
 
   it('seatbelt workspace-write grants every explicit extra root', () => {
-    const ws = mkdtempSync(join(tmpdir(), 'dsh-ws-'))
-    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-extra-')))
+    const ws = mkdtempSync(join(tmpdir(), 'ocean-ws-'))
+    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-extra-')))
     tempDirs.push(ws, extra)
     const profile = seatbeltProfileArgs({
       mode: 'workspace-write',
@@ -366,7 +366,7 @@ describe('the default landlock probe (launcher CLI contract)', () => {
   })
 
   it('reads a failing launcher as unusable: the chain ends and fails closed', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-fake-landlock-'))
+    const dir = mkdtempSync(join(tmpdir(), 'ocean-fake-landlock-'))
     tempDirs.push(dir)
     const launcher = join(dir, 'landlock-run')
     writeFileSync(launcher, `#!/bin/sh\nexit ${LAUNCHER_FAILURE_EXIT}\n`, { mode: 0o755 })
@@ -388,7 +388,7 @@ describe('probeTimeoutMs config', () => {
     // keep a wide margin from the launcher's 1s runtime so a loaded host (where
     // spawnSync blocks the worker and fork/exec latency inflates wall-clock)
     // cannot flip either verdict; the vitest timeout clears the patient budget.
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-slow-landlock-'))
+    const dir = mkdtempSync(join(tmpdir(), 'ocean-slow-landlock-'))
     tempDirs.push(dir)
     const launcher = join(dir, 'landlock-run')
     writeFileSync(launcher, '#!/bin/sh\nsleep 1\necho "landlock: fully enforced"\nexit 0\n', { mode: 0o755 })
@@ -436,7 +436,7 @@ describe('the windows-acl probe (runner invocation contract)', () => {
       probeWindowsAcl: () => true,
       windowsAclRunnerArgs: ['node', 'windows-acl-runner.js'],
     })
-    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-extra-acl-')))
+    const extra = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-extra-acl-')))
     tempDirs.push(extra)
     const file = join(extra, 'file.txt')
     writeFileSync(file, 'file')
@@ -504,7 +504,7 @@ describe('the windows-acl probe (runner invocation contract)', () => {
   })
 
   it('loads the full source runner independently of cwd and ambient tsconfig', async () => {
-    const cwd = mkdtempSync(join(tmpdir(), 'dsh-acl-source-cwd-'))
+    const cwd = mkdtempSync(join(tmpdir(), 'ocean-acl-source-cwd-'))
     tempDirs.push(cwd)
     writeFileSync(join(cwd, 'tsconfig.json'), '{ invalid workspace configuration')
     const { sandbox } = await setup({}, {
@@ -536,7 +536,7 @@ describe('the windows-acl probe (runner invocation contract)', () => {
   })
 
   it('prefers the built lib/runner.js entry when the resolved file exists', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-fake-acl-entry-'))
+    const dir = mkdtempSync(join(tmpdir(), 'ocean-fake-acl-entry-'))
     tempDirs.push(dir)
     const builtEntry = join(dir, 'runner.js')
     writeFileSync(builtEntry, '')

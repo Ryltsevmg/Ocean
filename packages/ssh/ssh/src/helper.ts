@@ -58,7 +58,7 @@ export async function runSshHelper(transport: HelperTransport): Promise<void> {
   transport.signal.throwIfAborted()
   const runtime = await services()
   const { ctx } = runtime
-  const root = await mkdtemp('/tmp/dsh-ssh-')
+  const root = await mkdtemp('/tmp/ocean-ssh-')
   const processes = new RemoteProcesses(ctx, root, SSH_MAX_PROCESS_HANDLES, 30_000)
   const lifetime = new AbortController()
   const iterators = new Map<SshTextStreamId, { iterator: AsyncIterator<string>; controller: AbortController }>()

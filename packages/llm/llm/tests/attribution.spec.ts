@@ -4,7 +4,7 @@ import { APP_IDENTITY, attributionHeaders, userAgent } from '@ocean/ocean-llm'
 import type { AppIdentity } from '@ocean/ocean-llm'
 
 // The default identity must not depend on the developer's exported suffix.
-beforeEach(() => { vi.stubEnv('DSH_USER_AGENT_SUFFIX', undefined) })
+beforeEach(() => { vi.stubEnv('OCEAN_USER_AGENT_SUFFIX', undefined) })
 afterEach(() => { vi.unstubAllEnvs() })
 
 const manifest = createRequire(import.meta.url)('../package.json') as { version: string }
@@ -42,26 +42,26 @@ describe('userAgent', () => {
   })
 
   it('appends the identity suffix after the comment', () => {
-    expect(userAgent({ ...forkIdentity, suffix: 'dsh-profile/web' })).toBe('fork-agent/9.9.9 (+https://example.com/fork-agent) dsh-profile/web')
+    expect(userAgent({ ...forkIdentity, suffix: 'ocean-profile/web' })).toBe('fork-agent/9.9.9 (+https://example.com/fork-agent) ocean-profile/web')
   })
 })
 
-describe('DSH_USER_AGENT_SUFFIX', () => {
+describe('OCEAN_USER_AGENT_SUFFIX', () => {
   it('appends the launch suffix to the default User-Agent when read', () => {
-    vi.stubEnv('DSH_USER_AGENT_SUFFIX', 'dsh-profile/my%20web')
-    expect(APP_IDENTITY.suffix).toBe('dsh-profile/my%20web')
-    expect(userAgent()).toBe(`ocean/${manifest.version} (+https://github.com/Ryltsevmg/Ocean) dsh-profile/my%20web`)
+    vi.stubEnv('OCEAN_USER_AGENT_SUFFIX', 'ocean-profile/my%20web')
+    expect(APP_IDENTITY.suffix).toBe('ocean-profile/my%20web')
+    expect(userAgent()).toBe(`ocean/${manifest.version} (+https://github.com/Ryltsevmg/Ocean) ocean-profile/my%20web`)
   })
 
   it.each(['', undefined])('omits the suffix when it is %j', (value) => {
-    vi.stubEnv('DSH_USER_AGENT_SUFFIX', value)
+    vi.stubEnv('OCEAN_USER_AGENT_SUFFIX', value)
     expect(APP_IDENTITY.suffix).toBeUndefined()
     expect(userAgent()).toBe(`ocean/${manifest.version} (+https://github.com/Ryltsevmg/Ocean)`)
   })
 
-  it.each(['dsh-profile/my web', 'dsh-profile/web\r\nx-injected: 1', 'dsh-profile/(web)', 'dsh-profile/a/b'])('rejects %j', (value) => {
-    vi.stubEnv('DSH_USER_AGENT_SUFFIX', value)
-    expect(() => userAgent()).toThrow('DSH_USER_AGENT_SUFFIX must be an RFC 9110 product token')
+  it.each(['ocean-profile/my web', 'ocean-profile/web\r\nx-injected: 1', 'ocean-profile/(web)', 'ocean-profile/a/b'])('rejects %j', (value) => {
+    vi.stubEnv('OCEAN_USER_AGENT_SUFFIX', value)
+    expect(() => userAgent()).toThrow('OCEAN_USER_AGENT_SUFFIX must be an RFC 9110 product token')
   })
 })
 

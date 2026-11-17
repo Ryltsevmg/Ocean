@@ -1,9 +1,9 @@
 /** Explicit exceptions and Host packages for the published dependency policy. */
 
-/** Packages treated as Client/Host packages without declaring `dsh.client`. */
+/** Packages treated as Client/Host packages without declaring `ocean.client`. */
 const CLIENT_FACE_INCLUDE: readonly string[] = []
 
-/** Packages exempted from automatic Client/Host treatment despite declaring `dsh.client`. */
+/** Packages exempted from automatic Client/Host treatment despite declaring `ocean.client`. */
 const CLIENT_FACE_EXCLUDE: readonly string[] = [
   '@ocean/ocean-api-session-controller',
   '@ocean/ocean-api-workspace-controller',
@@ -104,6 +104,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Whether a package manifest declares a dynamically loaded Client entry. */
-export function hasClientDeclaration(dshField: unknown): boolean {
-  return isRecord(dshField) && Object.hasOwn(dshField, 'client')
+export function hasClientDeclaration(oceanField: unknown): boolean {
+  return isRecord(oceanField) && Object.hasOwn(oceanField, 'client')
 }

@@ -4,7 +4,7 @@
 #   pnpm run verify-translation-pairing --write docs/module-graph.md
 /:
   en: 6b06a1af5ffbdefb
-  zh: d519629aac88df35
+  zh: 3718d990c23682de
 /shared-instance-dependency-graph:
   en: df2a98f603ce66f7
-  zh: 6c2971ff7e4e263c
+  zh: f3ce4a688030df25

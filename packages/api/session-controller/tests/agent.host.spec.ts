@@ -255,7 +255,7 @@ describe('ApiSession creation', () => {
 
   it('surfaces directory creation failure', async () => {
     const { agents } = await harness()
-    const parent = mkdtempSync(join(tmpdir(), 'dsh-session-controller-file-'))
+    const parent = mkdtempSync(join(tmpdir(), 'ocean-session-controller-file-'))
     tempDirs.push(parent)
     const file = join(parent, 'file')
     writeFileSync(file, 'not a directory')

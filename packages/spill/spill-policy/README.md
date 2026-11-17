@@ -113,7 +113,7 @@ Recovery or pricing failures preserve the input and log the reason. Negative, fr
 Read these pages when the package-level contract is not enough.
 
 - [Spill storage service](../spill/README.md) — the `saveText` contract behind the policy's replacement.
-- [dsh-spill-local](../spill-local/README.md) — the local backend that stores the spilled text.
+- [ocean-spill-local](../spill-local/README.md) — the local backend that stores the spilled text.
 - [Token meter](../../llm/token-meter/README.md) — shared text estimates and route image accounting.
 
 -----

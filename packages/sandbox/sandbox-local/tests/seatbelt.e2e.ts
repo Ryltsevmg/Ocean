@@ -13,7 +13,7 @@ import { checkExtraWrites, checkRedirectedRoot } from './extra-roots.ts'
 /**
  * Keyless backend integration through `confine()` and a real macOS Seatbelt process, with Linux
  * rungs forced off. Tests assert world effects and that the kernel denial matches the advertised
- * dialect; consumer coverage lives in dsh-bash-sandbox. Skips off macOS or when the profile probe
+ * dialect; consumer coverage lives in ocean-bash-sandbox. Skips off macOS or when the profile probe
  * fails. HOME-based workspaces avoid Seatbelt's wholesale temp-directory grants, so
  * workspace-write proves the workspace-root grant itself.
  */
@@ -37,7 +37,7 @@ afterEach(async () => {
 })
 
 async function tempDir(base: string): Promise<string> {
-  const dir = await mkdtemp(join(base, 'dsh-seatbelt-e2e-'))
+  const dir = await mkdtemp(join(base, 'ocean-seatbelt-e2e-'))
   tempDirs.push(dir)
   return dir
 }
@@ -134,10 +134,10 @@ describe.skipIf(!seatbeltUsable)('sandbox-local: real Seatbelt confinement throu
       : join(await tempDir(homedir()), 'linked')
     const gitEnv = {
       ...process.env,
-      GIT_AUTHOR_NAME: 'DSH Test',
-      GIT_AUTHOR_EMAIL: 'dsh-test@example.invalid',
-      GIT_COMMITTER_NAME: 'DSH Test',
-      GIT_COMMITTER_EMAIL: 'dsh-test@example.invalid',
+      GIT_AUTHOR_NAME: 'OCEAN Test',
+      GIT_AUTHOR_EMAIL: 'ocean-test@example.invalid',
+      GIT_COMMITTER_NAME: 'OCEAN Test',
+      GIT_COMMITTER_EMAIL: 'ocean-test@example.invalid',
       GIT_CONFIG_GLOBAL: '/dev/null',
       GIT_CONFIG_SYSTEM: '/dev/null',
     }

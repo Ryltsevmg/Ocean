@@ -223,7 +223,7 @@ describe.skipIf(process.platform === 'win32')('SSH helper wire and lifecycle bou
   })
 
   it('validates explicit physical writable roots over the wire without granting aliases', async () => {
-    const base = await realpath(await mkdtemp(join(homedir(), '.dsh-ssh-policy-')))
+    const base = await realpath(await mkdtemp(join(homedir(), '.ocean-ssh-policy-')))
     onTestFinished(() => rm(base, { recursive: true, force: true }))
     const test = await createHelperHarness()
     onTestFinished(() => test.close())

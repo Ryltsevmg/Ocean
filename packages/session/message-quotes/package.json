@@ -52,7 +52,7 @@
     "@ocean/ocean-client-test-runtime": "workspace:*",
     "@ocean/ocean-session": "workspace:*"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-api-session-controller",

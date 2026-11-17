@@ -43,7 +43,7 @@ export class DragFiles {
 
   private async write(bytes: Uint8Array, name: string): Promise<FileDragHandle> {
     let directory: string
-    try { directory = await mkdtemp(join(this.temporaryDirectory, 'dsh-file-drag-')) }
+    try { directory = await mkdtemp(join(this.temporaryDirectory, 'ocean-file-drag-')) }
     catch (error) { this.stagedBytes -= bytes.byteLength; throw error }
     const handle = randomUUID() as FileDragHandle
     const file: DragFile = { directory, path: join(directory, name), bytes: bytes.byteLength, used: false, ready: false }

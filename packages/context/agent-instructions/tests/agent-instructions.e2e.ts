@@ -31,7 +31,7 @@ afterEach(async () => {
 })
 
 async function harness(): Promise<{ ctx: Context; agent: Agent }> {
-  workdir = await mkdtemp(join(tmpdir(), 'dsh-workspace-context-e2e-'))
+  workdir = await mkdtemp(join(tmpdir(), 'ocean-workspace-context-e2e-'))
   await mkdir(join(workdir, '.git'), { recursive: true })
   await writeFile(join(workdir, 'AGENTS.md'), `If the user asks for the workspace context handshake, reply with exactly this string and nothing else: ${PROBE}.\n`)
   ctx = new Context()
@@ -41,9 +41,9 @@ async function harness(): Promise<{ ctx: Context; agent: Agent }> {
   })
   await ctx.plugin(LocalFileSystem, { cwd: '/' })
   await ctx.plugin(ToolFs)
-  // Keep the developer's real ~/.dsh and ~/.agents out of the model-visible baseline.
-  vi.stubEnv('DSH_HOME', join(workdir, 'absent-dsh'))
-  vi.stubEnv('DSH_AGENTS_HOME', join(workdir, 'absent-agents'))
+  // Keep the developer's real ~/.ocean and ~/.agents out of the model-visible baseline.
+  vi.stubEnv('OCEAN_HOME', join(workdir, 'absent-ocean'))
+  vi.stubEnv('OCEAN_AGENTS_HOME', join(workdir, 'absent-agents'))
   await ctx.plugin(AgentInstructions, { maxBytes: 65536 })
   await ctx.plugin(AgentLoop, { agents: [] })
   await ctx.plugin(LlmDeepSeek, { models: [{ id: 'deepseek-v4-flash' }] })

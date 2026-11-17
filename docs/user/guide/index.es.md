@@ -6,7 +6,7 @@
 [English](index.md) | [中文](index.zh.md) | [Русский](index.ru.md) | [日本語](index.ja.md) | Español | [Français](index.fr.md) | [Deutsch](index.de.md) | [Português](index.pt.md) | [한국어](index.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Inicia la interfaz web siguiendo el [guía de desarrollo](../../development.md); el comando muestra su URL. Esta guía comienza cuando ese servidor ya está en marcha. El proceso `dsh` usa el directorio desde el que lo inicias como ubicación predeterminada del sistema de archivos. La primera vez que abras la interfaz web, añade y selecciona un espacio de trabajo.
+Inicia la interfaz web siguiendo el [guía de desarrollo](../../development.md); el comando muestra su URL. Esta guía comienza cuando ese servidor ya está en marcha. El proceso `ocean` usa el directorio desde el que lo inicias como ubicación predeterminada del sistema de archivos. La primera vez que abras la interfaz web, añade y selecciona un espacio de trabajo.
 
 <a id="configure-a-model"></a>
 
@@ -18,7 +18,7 @@ Abre **Ajustes → Modelos** y elige un proveedor de modelos; la [guía de confi
 
 ## Elegir un espacio de trabajo
 
-Pulsa **Elegir espacio de trabajo**, añade el directorio del proyecto desde el que iniciaste `dsh` y selecciónalo. El editor de mensajes de la sesión permanece deshabilitado hasta que elijas un espacio de trabajo.
+Pulsa **Elegir espacio de trabajo**, añade el directorio del proyecto desde el que iniciaste `ocean` y selecciónalo. El editor de mensajes de la sesión permanece deshabilitado hasta que elijas un espacio de trabajo.
 
 <a id="run-a-task"></a>
 

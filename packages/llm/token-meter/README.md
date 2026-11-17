@@ -117,7 +117,7 @@ Each `measure()` call synchronizes the fold to the current durable tail, then re
 Read these pages when the package-level contract is not enough. They move from the measurement service to the compaction consumer and the shared types.
 
 - [Token meter subsystem](../../../docs/subsystems/token-meter.md) — the measurement semantics behind `ctx.tokenMeter`.
-- [dsh-llm service](../llm/README.md) — the model-call service whose capacity metadata `resolveModelInfo()` serves.
+- [ocean-llm service](../llm/README.md) — the model-call service whose capacity metadata `resolveModelInfo()` serves.
 - [Compaction capability](../../../docs/subsystems/compaction.md) — the pressure-sensitive consumer that reads `measure()`.
 - [LLM streaming subsystem](../../../docs/subsystems/llm-streaming.md) — the message and block types this service prices.
 

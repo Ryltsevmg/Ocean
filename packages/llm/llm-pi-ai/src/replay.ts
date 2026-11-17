@@ -5,7 +5,7 @@
  * module stores only the provider-native metadata needed to reconstruct a
  * pi-ai assistant message on a later request.
  *
- * @module dsh-llm-pi-ai/replay
+ * @module ocean-llm-pi-ai/replay
  */
 
 import { LlmError } from '@ocean/ocean-llm'
@@ -180,7 +180,7 @@ function foreignAssistant(message: HarnessAssistantMessage): AssistantMessage {
     content,
     // Deliberately never equals a catalog API: absent replay state is foreign
     // even if source names the same provider/model as this request.
-    api: 'dsh-foreign',
+    api: 'ocean-foreign',
     provider: source.provider,
     model: source.model,
     usage: emptyPiUsage(),

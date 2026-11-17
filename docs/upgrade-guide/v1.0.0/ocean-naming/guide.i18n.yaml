@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v1.0.0/ocean-naming/guide.md
+/:
+  en: 5a14b02f6f75547b
+  zh: 71a647fe189edc64
+/ocean-names:
+  en: 144ee552ef730fd8
+  zh: b84c13d488e6d804
+/ocean-names/change:
+  en: 710a0d616db9b305
+  zh: a9335d1564adcf39
+/ocean-names/migration:
+  en: d7e6694ffb9107be
+  zh: 8cdaaaac2772b050

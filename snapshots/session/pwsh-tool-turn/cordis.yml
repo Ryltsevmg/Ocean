@@ -28,8 +28,8 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
-    compression: !!js 'process.env.DSH_SNAPSHOT === undefined ? ''zstd'' : ''none'''
+    root: !!js oceanHomePath('sessions')
+    compression: !!js 'process.env.OCEAN_SNAPSHOT === undefined ? ''zstd'' : ''none'''
 
 - id: agent-instructions
   name: '@ocean/ocean-agent-instructions'

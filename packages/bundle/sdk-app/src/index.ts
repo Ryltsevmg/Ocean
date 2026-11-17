@@ -37,12 +37,12 @@ export const Config: z<Config> = z.object({
  */
 function sdkCommand(profile: string): Command {
   return new Command()
-    .name(`dsh --profile ${profile}`)
+    .name(`ocean --profile ${profile}`)
     .description('Serve Ocean SDK clients over stdio JSON-RPC.')
     .helpOption('-h, --help', 'show this help')
     .addHelpText('after', `
 Example:
-  dsh --profile ${profile}     serve one SDK runtime until its client disconnects
+  ocean --profile ${profile}     serve one SDK runtime until its client disconnects
 `)
 }
 

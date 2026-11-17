@@ -3,20 +3,20 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/session-telemetry.md
 /sessiontelemetrybackend:
-  en: b82e4db22a4d58aa
-  zh: 439181fa2c27542d
+  en: 1768df2f8a0064c2
+  zh: 932738e1603dd70f
 /sessiontelemetrybackend/the-logical-record:
-  en: 9695489076496a76
-  zh: 457c54698bc38c2f
+  en: 66b429d8bf3b532b
+  zh: 7cb7ad109f536ae8
 /sessiontelemetrybackend/the-sharing-disclosure:
-  en: d74b6cd7635d230a
-  zh: 3beb7dbf28d83aa6
+  en: 3868a13cc97660d7
+  zh: 7aa9f2f55ef1f737
 /sessiontelemetrybackend/capture-policy:
-  en: 5a52371437ac4261
-  zh: 00fdd38d2e08346e
+  en: 92851355c9bae791
+  zh: 3bcfec5750030b32
 /sessiontelemetrybackend/the-backend-contract:
   en: 6d4467aeab2822be
   zh: 6a874e8014c34683
 /sessiontelemetrybackend/the-redact-waterfall-session-telemetry-record:
-  en: 15bd0919a8d4cea0
-  zh: 1ddaa1e8d84db66b
+  en: 24150f972af79183
+  zh: f26a26bd091a8d9e

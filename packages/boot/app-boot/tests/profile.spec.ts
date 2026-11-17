@@ -1,5 +1,5 @@
 /**
- * Profile machinery of `dsh-app-boot`: directory resolution and init,
+ * Profile machinery of `ocean-app-boot`: directory resolution and init,
  * manifest round-trips, two-anchor bundle resolution, patch-layer loading,
  * empty-root composition, and runtime package resolution.
  */
@@ -15,7 +15,7 @@ import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest'
 import {
   composeEntries,
   createRuntimeResolution,
-  getDshRuntimeVersion,
+  getOceanRuntimeVersion,
   initProfile,
   loadProfile,
   loadProfileDirectory,
@@ -40,7 +40,7 @@ afterAll(() => {
 })
 
 const tmp = (): string => {
-  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-profile-')))
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-profile-')))
   tempRoots.push(dir)
   return dir
 }
@@ -48,7 +48,7 @@ const tmp = (): string => {
 /** Stage a fake installed app: package.json with deps and a node_modules holding bundles. */
 function stageInstallation(
   bundles: Record<string, { patch?: string; deps?: Record<string, string>; platforms?: string[] }>,
-  appName = 'dsh-app',
+  appName = 'ocean-app',
 ): string {
   const root = tmp()
   const appDir = join(root, 'app')
@@ -64,7 +64,7 @@ function stageInstallation(
       type: 'module',
       main: './index.js',
       dependencies: spec.deps ?? {},
-      ...spec.patch === undefined ? {} : { dsh: { bundle: { patch: './cordis.patch.yml', ...spec.platforms === undefined ? {} : { platforms: spec.platforms } } } },
+      ...spec.patch === undefined ? {} : { ocean: { bundle: { patch: './cordis.patch.yml', ...spec.platforms === undefined ? {} : { platforms: spec.platforms } } } },
     }))
     writeFileSync(join(dir, 'index.js'), `export const packageName = ${JSON.stringify(name)}\n`)
     if (spec.patch !== undefined) writeFileSync(join(dir, 'cordis.patch.yml'), spec.patch)
@@ -231,22 +231,33 @@ describe('initProfile', () => {
     const dir = resolveProfileDir('tui', home)
     initProfile(dir, ['@ocean/ocean-base'])
     const manifest = readProfileManifest('t', dir)
-    expect(manifest.dsh?.profile?.bundles).toEqual(['@ocean/ocean-base'])
+    expect(manifest.ocean?.profile?.bundles).toEqual(['@ocean/ocean-base'])
     expect(readFileSync(join(dir, PROFILE_PATCH_FILENAME), 'utf8')).toContain('[]')
     expect(readFileSync(join(dir, 'pnpm-workspace.yaml'), 'utf8')).toContain('nodeLinker: hoisted')
     // Re-init keeps user edits.
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), '- id: x\n  config: {}\n')
     initProfile(dir, ['other'])
-    expect(readProfileManifest('t', dir).dsh?.profile?.bundles).toEqual(['@ocean/ocean-base'])
+    expect(readProfileManifest('t', dir).ocean?.profile?.bundles).toEqual(['@ocean/ocean-base'])
     expect(readFileSync(join(dir, PROFILE_PATCH_FILENAME), 'utf8')).toContain('- id: x')
   })
 })
 
 describe('manifest round-trip', () => {
+  it('reads legacy profile metadata without rewriting it and prefers explicit Ocean metadata', () => {
+    const dir = tmp()
+    writeProfileManifest(dir, { dsh: { profile: { bundles: ['legacy-bundle'] } } })
+    const before = readFileSync(join(dir, 'package.json'), 'utf8')
+    expect(readProfileManifest('t', dir).ocean?.profile?.bundles).toEqual(['legacy-bundle'])
+    expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
+    writeProfileManifest(dir, {
+      dsh: { profile: { bundles: ['legacy-bundle'] } }, ocean: { profile: { bundles: ['current-bundle'] } },
+    })
+    expect(readProfileManifest('t', dir).ocean?.profile?.bundles).toEqual(['current-bundle'])
+  })
   it('writes and reads back, and fails loud on a broken manifest', () => {
     const dir = tmp()
-    writeProfileManifest(dir, { name: 'p', dsh: { profile: { bundles: ['a'] } } })
-    expect(readProfileManifest('t', dir).dsh?.profile?.bundles).toEqual(['a'])
+    writeProfileManifest(dir, { name: 'p', ocean: { profile: { bundles: ['a'] } } })
+    expect(readProfileManifest('t', dir).ocean?.profile?.bundles).toEqual(['a'])
     writeFileSync(join(dir, 'package.json'), '[]')
     expect(() => readProfileManifest('t', dir)).toThrow('must hold a JSON object')
     expect(() => readProfileManifest('t', join(dir, 'nope'))).toThrow('failed to read profile manifest')
@@ -279,7 +290,7 @@ describe('resolveBundleDir', () => {
       name: 'sealed-bundle',
       version: '0.0.0',
       exports: { '.': './index.js' },
-      dsh: { bundle: { patch: './cordis.patch.yml' } },
+      ocean: { bundle: { patch: './cordis.patch.yml' } },
     }))
     writeFileSync(join(dir, 'index.js'), '')
     writeFileSync(join(dir, 'cordis.patch.yml'), '[]\n')
@@ -298,7 +309,7 @@ describe('loadProfile', () => {
     expect(profile.layers.map(layer => layer.packageName)).toEqual(['bundle-a'])
   })
 
-  it('resolves each dsh.profile.bundles entry to its patch layer in order, plus the user layer', () => {
+  it('resolves each ocean.profile.bundles entry to its patch layer in order, plus the user layer', () => {
     const anchor = stageInstallation({
       'bundle-a': { patch: '- insert:\n    - id: a\n      name: pkg-a\n' },
       'bundle-b': { patch: '- id: a\n  config:\n    v: 2\n' },
@@ -315,7 +326,7 @@ describe('loadProfile', () => {
       profile.patches,
     ])
     expect(entries).toEqual([{ id: 'a', name: 'pkg-a', config: { v: 3 } }])
-    // A hand-made profile without the user layer file or dsh section: empty layers, no throw.
+    // A hand-made profile without the user layer file or ocean section: empty layers, no throw.
     rmSync(join(dir, PROFILE_PATCH_FILENAME))
     expect(loadProfile('t', 'demo', anchor, home).patches).toEqual([])
     writeProfileManifest(dir, { name: 'bare' })
@@ -323,18 +334,18 @@ describe('loadProfile', () => {
     expect(bare.layers).toEqual([])
   })
 
-  it('applies a dsh.bundle.patch list in order, anchoring inserted paths beside each file', () => {
+  it('applies an ocean.bundle.patch list in order, anchoring inserted paths beside each file', () => {
     const anchor = stageInstallation({ 'multi': { patch: '[]\n' }, 'broken': { patch: '[]\n' } })
     const bundleDir = join(anchor, '..', 'node_modules', 'multi')
     mkdirSync(join(bundleDir, 'layers'), { recursive: true })
     writeFileSync(join(bundleDir, 'package.json'), JSON.stringify({
       name: 'multi', version: '0.0.0', type: 'module', main: './index.js',
-      dsh: { bundle: { patch: ['./first.patch.yml', './layers/second.patch.yml'] } },
+      ocean: { bundle: { patch: ['./first.patch.yml', './layers/second.patch.yml'] } },
     }))
     writeFileSync(join(bundleDir, 'first.patch.yml'), '- insert:\n    - id: a\n      name: ./local.js\n      config: { v: 1 }\n')
     writeFileSync(join(bundleDir, 'layers', 'second.patch.yml'), '- id: a\n  config: { v: 2 }\n- insert:\n    - id: b\n      name: ./local.js\n')
     const brokenManifest = join(anchor, '..', 'node_modules', 'broken', 'package.json')
-    writeFileSync(brokenManifest, JSON.stringify({ name: 'broken', version: '0.0.0', dsh: { bundle: { patch: [1] } } }))
+    writeFileSync(brokenManifest, JSON.stringify({ name: 'broken', version: '0.0.0', ocean: { bundle: { patch: [1] } } }))
     const home = tmp()
     const dir = resolveProfileDir('demo', home)
     initProfile(dir, ['multi', 'broken'])
@@ -350,7 +361,7 @@ describe('loadProfile', () => {
       { id: 'b', name: pathToFileURL(join(bundleDir, 'layers', 'local.js')).href },
     ])
     expect(profile.skippedBundles).toEqual([
-      { packageName: 'broken', reason: 'Error: dsh.bundle.patch must be a file path or a list of file paths' },
+      { packageName: 'broken', reason: 'Error: ocean.bundle.patch must be a file path or a list of file paths' },
     ])
   })
 
@@ -360,7 +371,7 @@ describe('loadProfile', () => {
     expect(() => loadProfile('t', 'custom', anchor, home))
       .toThrow('profile "custom" does not exist')
     loadProfile('t', 'web', anchor, home)
-    expect(readProfileManifest('t', resolveProfileDir('web', home)).dsh?.profile?.bundles)
+    expect(readProfileManifest('t', resolveProfileDir('web', home)).ocean?.profile?.bundles)
       .toEqual([...PROFILE_TEMPLATES.web?.bundles ?? []])
   })
 
@@ -379,7 +390,7 @@ describe('loadProfile', () => {
     const retiredManifest = readProfileManifest('t', stock)
     writeProfileManifest(stock, retiredManifest)
     loadProfile('t', 'headless', anchor, home)
-    expect(readProfileManifest('t', stock).dsh?.profile).toEqual({
+    expect(readProfileManifest('t', stock).ocean?.profile).toEqual({
       bundles: ['@ocean/ocean-base', '@ocean/ocean-headless'],
     })
 
@@ -389,7 +400,7 @@ describe('loadProfile', () => {
       '@ocean/ocean-base', '@ocean/ocean-web-app', '@ocean/ocean-headless', 'custom-bundle',
     ])
     loadProfile('t', 'headless', anchor, customHome)
-    expect(readProfileManifest('t', custom).dsh?.profile?.bundles).toEqual([
+    expect(readProfileManifest('t', custom).ocean?.profile?.bundles).toEqual([
       '@ocean/ocean-base', '@ocean/ocean-web-app', '@ocean/ocean-headless', 'custom-bundle',
     ])
   })
@@ -407,7 +418,7 @@ describe('loadProfile', () => {
     expect(profile.layers.map(layer => layer.packageName)).toEqual(['@ocean/ocean-base', 'custom-bundle'])
     expect(readProfileManifest('t', dir)).toMatchObject({
       dependencies: { 'custom-bundle': '^1.0.0' },
-      dsh: { profile: { bundles: ['@ocean/ocean-base', 'custom-bundle'] } },
+      ocean: { profile: { bundles: ['@ocean/ocean-base', 'custom-bundle'] } },
     })
   })
 
@@ -447,7 +458,7 @@ describe('loadProfile', () => {
       const resolution = await createRuntimeResolution({ installAnchor: anchor, profile, home })
       const unavailable = failure === 'missing package' || failure === 'invalid manifest'
       expect(resolution.entries.map(entry => entry.name))
-        .toEqual(['dsh-app', 'before', ...unavailable ? [] : ['broken'], 'after'])
+        .toEqual(['ocean-app', 'before', ...unavailable ? [] : ['broken'], 'after'])
       mkdirSync(bundleDir, { recursive: true })
       writeFileSync(manifestPath, original)
       writeFileSync(patchPath, '[]\n')
@@ -456,7 +467,7 @@ describe('loadProfile', () => {
     },
   )
 
-  it('skips a bundle whose own dsh peers are incompatible until the profile exempts that exact pair', () => {
+  it('skips a bundle whose own ocean peers are incompatible until the profile exempts that exact pair', () => {
     const anchor = stageInstallation({
       guarded: { patch: '- insert: [{ id: a, name: pkg-a }]\n' },
       kept: { patch: '- insert: [{ id: b, name: pkg-b }]\n' },
@@ -467,13 +478,13 @@ describe('loadProfile', () => {
     }))
     const dir = resolveProfileDir('demo', tmp())
     initProfile(dir, ['guarded', 'kept'])
-    const denied = loadProfileDirectory('dsh', dir, anchor)
+    const denied = loadProfileDirectory('ocean', dir, anchor)
     expect(denied.layers.map(layer => layer.packageName)).toEqual(['kept'])
     expect(denied.skippedBundles).toEqual([{ packageName: 'guarded', reason: expect.stringContaining(
-      `Error: Plugin guarded@0.0.0 is incompatible with dsh ${getDshRuntimeVersion()}`,
+      `Error: Plugin guarded@0.0.0 is incompatible with ocean ${getOceanRuntimeVersion()}`,
     ) as string }])
-    writeFileSync(join(dir, PROFILE_COMPATIBILITY_FILENAME), JSON.stringify({ 'guarded@0.0.0': [getDshRuntimeVersion()] }))
-    expect(loadProfileDirectory('dsh', dir, anchor).layers.map(layer => layer.packageName)).toEqual(['guarded', 'kept'])
+    writeFileSync(join(dir, PROFILE_COMPATIBILITY_FILENAME), JSON.stringify({ 'guarded@0.0.0': [getOceanRuntimeVersion()] }))
+    expect(loadProfileDirectory('ocean', dir, anchor).layers.map(layer => layer.packageName)).toEqual(['guarded', 'kept'])
   })
 
   it('still rejects invalid profile manifests and user patches', () => {
@@ -518,7 +529,7 @@ describe('createRuntimeResolution', () => {
     writeFileSync(join(modules, 'dep-of-a', 'package.json'), JSON.stringify({ name: 'dep-of-a', version: '0.0.0' }))
     const home = tmp()
     const resolution = await createRuntimeResolution({ installAnchor: anchor, home })
-    expect(resolution.entries.map(entry => entry.name)).toEqual(['dsh-app', 'bundle-a', 'plain-lib', 'dep-of-a'])
+    expect(resolution.entries.map(entry => entry.name)).toEqual(['ocean-app', 'bundle-a', 'plain-lib', 'dep-of-a'])
     expect(resolution.entries.find(entry => entry.name === 'dep-of-a')?.packageDir).toBe(join(modules, 'dep-of-a'))
     expect(existsSync(join(home, 'profiles', 'node_modules'))).toBe(false)
     await expect(createRuntimeResolution({ installAnchor: anchor, home })).resolves.toEqual(resolution)

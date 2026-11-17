@@ -24,7 +24,7 @@ declare module '@ocean/ocean-session/types' {
      * was still blank. Log-only: it records the composition later turns ran
      * under, so a resumed or forked session rebuilds the same one instead of
      * the header's creation-time value. Subagent restoration reads this saved
-     * selection independently of its creator (`dsh-subagent` README,
+     * selection independently of its creator (`ocean-subagent` README,
      * "Restoring child composition").
      */
     'agent-preset/selected': { agentPreset: string }

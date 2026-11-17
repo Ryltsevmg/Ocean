@@ -45,7 +45,7 @@ afterEach(async () => {
 })
 
 async function tempDir(base: string): Promise<string> {
-  const dir = await mkdtemp(join(base, 'dsh-seatbelt-e2e-'))
+  const dir = await mkdtemp(join(base, 'ocean-seatbelt-e2e-'))
   tempDirs.push(dir)
   return dir
 }
@@ -97,8 +97,8 @@ describe.skipIf(!seatbeltUsable)('bash-sandbox: real Seatbelt confinement throug
     const insideProbe = join(workdir, 'hook-ran.txt')
     const outsideProbe = join(outside, 'escaped.txt')
     await writeFile(hook, [
-      'printf hook > "$DSH_BASH_ENV_INSIDE"',
-      'printf escaped > "$DSH_BASH_ENV_OUTSIDE"',
+      'printf hook > "$OCEAN_BASH_ENV_INSIDE"',
+      'printf escaped > "$OCEAN_BASH_ENV_OUTSIDE"',
       '',
     ].join('\n'))
     const bash = await sandboxedBash(workdir, 'workspace-write')
@@ -106,9 +106,9 @@ describe.skipIf(!seatbeltUsable)('bash-sandbox: real Seatbelt confinement throug
     await run(bash, bash.resolve({
       command: 'true',
       env: { BASH_ENV: hook },
-      dshEnv: {
-        DSH_BASH_ENV_INSIDE: insideProbe,
-        DSH_BASH_ENV_OUTSIDE: outsideProbe,
+      oceanEnv: {
+        OCEAN_BASH_ENV_INSIDE: insideProbe,
+        OCEAN_BASH_ENV_OUTSIDE: outsideProbe,
       },
     }))
 

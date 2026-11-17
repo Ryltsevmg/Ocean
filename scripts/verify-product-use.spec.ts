@@ -35,7 +35,7 @@ function profiles(root: string, optional: string[] = [], onDemand: string[] = []
 }
 
 function fixture(): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-product-use-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-product-use-'))
   roots.push(root)
   write(root, 'tsconfig.base.json', { compilerOptions: { moduleResolution: 'bundler', paths: {} } })
   pkg(root, 'apps/cli', '@ocean/ocean')
@@ -45,7 +45,7 @@ function fixture(): string {
   write(root, 'apps/desktop/src/main.ts', 'export {}\n')
   write(root, 'apps/web/src/main.ts', 'export {}\n')
   write(root, 'apps/web/index.html', '<script type="module" src="/src/main.ts"></script>')
-  pkg(root, 'packages/bundle/base', base, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
+  pkg(root, 'packages/bundle/base', base, { ocean: { bundle: { patch: './cordis.patch.yml' } } })
   pkg(root, 'packages/core/core', core)
   write(root, patch, [{ insert: [{ id: 'core', name: core }] }])
   profiles(root)
@@ -140,7 +140,7 @@ describe('product package use', () => {
 
   it.each(['acp', 'headless', 'sdk', 'sdk-minimal'])('composes the %s profile independently', (name) => {
     const root = fixture()
-    pkg(root, candidateDir, candidate, { dsh: { bundle: { patch: './feature.patch.yml' } } })
+    pkg(root, candidateDir, candidate, { ocean: { bundle: { patch: './feature.patch.yml' } } })
     write(root, `${candidateDir}/feature.patch.yml`, [{ insert: [{ name: candidate }] }])
     const source = readFileSync(join(root, profile), 'utf8')
     write(root, profile, source.replace(`"${name}":{"bundles":["${base}"]}`, `"${name}":{"bundles":["${base}","${candidate}"]}`))
@@ -207,7 +207,7 @@ describe('product package use', () => {
   it.each(['shipped', 'on-demand'])('keeps %s optional selection and its runtime closure separate from default use', (delivery) => {
     const root = fixture()
     const bundle = '@ocean/ocean-feature'
-    pkg(root, 'packages/subagent/feature', bundle, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
+    pkg(root, 'packages/subagent/feature', bundle, { ocean: { bundle: { patch: './cordis.patch.yml' } } })
     pkg(root, candidateDir, candidate)
     pkg(root, 'packages/core/indirect', '@ocean/ocean-indirect')
     write(root, `${candidateDir}/src/index.ts`, "import '@ocean/ocean-indirect'")
@@ -222,7 +222,7 @@ describe('product package use', () => {
   it.each(['shipped', 'on-demand'])('does not count a %s optional patch whose target is absent', (delivery) => {
     const root = fixture()
     const bundle = '@ocean/ocean-feature'
-    pkg(root, 'packages/subagent/feature', bundle, { dsh: { bundle: { patch: './cordis.patch.yml' } } })
+    pkg(root, 'packages/subagent/feature', bundle, { ocean: { bundle: { patch: './cordis.patch.yml' } } })
     pkg(root, candidateDir, candidate)
     write(root, 'packages/subagent/feature/cordis.patch.yml', [{ id: 'absent', insert: [{ name: candidate }] }])
     profiles(root, delivery === 'shipped' ? [bundle] : [], delivery === 'on-demand' ? [bundle] : [])
@@ -249,7 +249,7 @@ describe('product package use', () => {
     const root = fixture()
     pkg(root, candidateDir, candidate)
     profiles(root, [], [candidate])
-    expect(failures(root, declarations())).toContain(`${candidate} must declare dsh.bundle.patch`)
+    expect(failures(root, declarations())).toContain(`${candidate} must declare ocean.bundle.patch`)
   })
 
   it('rejects a missing workspace source mapping instead of consulting built exports', () => {
@@ -271,7 +271,7 @@ describe('product package use', () => {
     const root = fixture()
     const picker = '@ocean/ocean-host-directory-picker-auto'
     pkg(root, 'packages/host/directory-picker-auto', picker)
-    pkg(root, candidateDir, candidate, { dsh: { client: { platform: 'web' } } })
+    pkg(root, candidateDir, candidate, { ocean: { client: { platform: 'web' } } })
     pkg(root, 'packages/client/indirect', '@ocean/ocean-client-indirect')
     write(root, `${candidateDir}/src/client.ts`, "import '@ocean/ocean-client-indirect'")
     write(root, 'packages/host/directory-picker-auto/src/index.ts',

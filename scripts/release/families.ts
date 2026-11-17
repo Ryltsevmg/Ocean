@@ -1,7 +1,7 @@
 /**
  * The three independent publish sequences this repository releases from
  * (`packages/` + `apps/`, `vendor/`, and `native/`) and the two this module
- * owns: `dsh` and `vendor`. Each family carries its own version baseline, tag
+ * owns: `ocean` and `vendor`. Each family carries its own version baseline, tag
  * naming, and publish set, so releasing one never republishes another.
  *
  * The family dimension lives here only. A new sequence adds a subclass and a
@@ -343,13 +343,13 @@ export abstract class ReleaseFamily {
 }
 
 /** Release packages and apps: one shared version across the whole family. */
-class DshFamily extends ReleaseFamily {
-  readonly id = 'dsh'
+class OceanFamily extends ReleaseFamily {
+  readonly id = 'ocean'
   readonly patterns = [
     'packages/*/*/package.json',
     'apps/*/package.json',
   ] as const
-  readonly tagPrefix = 'dsh-v'
+  readonly tagPrefix = 'ocean-v'
 
   /** Require current artifacts from a complete official client build. */
   override verifyBuildArtifacts(root: string): void {
@@ -364,13 +364,13 @@ class DshFamily extends ReleaseFamily {
     const versions = new Set(members.map(member => member.version))
     if (versions.size !== 1) {
       const detail = members.map(member => `${member.directory}: ${member.version}`).join('\n')
-      throw new Error(`dsh release members must share one version:\n${detail}`)
+      throw new Error(`ocean release members must share one version:\n${detail}`)
     }
   }
 
   /**
    * The single family prefix: every member shares one version, so one tag names it.
-   * @returns `dsh-v`.
+   * @returns `ocean-v`.
    */
   tagPrefixFor(): string {
     return this.tagPrefix
@@ -410,7 +410,7 @@ class DshFamily extends ReleaseFamily {
     return member.name === '@ocean/ocean' ? ON_DEMAND_BUNDLES : []
   }
 
-  /** Require the packed DSH runtime graph to stay on the shared exact release version. */
+  /** Require the packed OCEAN runtime graph to stay on the shared exact release version. */
   override validatePackedManifest(member: ReleaseMember, manifest: Readonly<Record<string, unknown>>): void {
     super.validatePackedManifest(member, manifest)
     for (const section of ['dependencies', 'optionalDependencies', 'peerDependencies']) {
@@ -475,7 +475,7 @@ class VendorFamily extends ReleaseFamily {
 
 /** Every release family this module owns, in workflow order. */
 function releaseFamilies(): readonly ReleaseFamily[] {
-  return [new DshFamily(), new VendorFamily()]
+  return [new OceanFamily(), new VendorFamily()]
 }
 
 /**

@@ -25,7 +25,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
     await barrier.afterStat?.(args[0], result.isFile())
     return result
   }, rename: async (...args: Parameters<typeof actual.rename>) => {
-    if (barrier.failReceipt && String(args[1]).endsWith('.dsh-desktop-command.json')) {
+    if (barrier.failReceipt && String(args[1]).endsWith('.ocean-desktop-command.json')) {
       throw Object.assign(new Error('No space for receipt'), { code: 'ENOSPC' })
     }
     await actual.rename(...args)
@@ -39,16 +39,16 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 let compiled: string
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-command-link-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-command-link-'))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const launcher = join(root, 'desktop-launcher')
   await writeFile(launcher, 'desktop\n', { mode: 0o755 })
-  return { root, options: { destination: join(root, 'dsh'), launcher, linkHelper: join(compiled, 'link-entry') } }
+  return { root, options: { destination: join(root, 'ocean'), launcher, linkHelper: join(compiled, 'link-entry') } }
 }
 
 describe.skipIf(process.platform === 'win32')('macOS command entry ownership', () => {
   beforeAll(async () => {
-    compiled = await mkdtemp(join(tmpdir(), 'dsh-command-control-'))
+    compiled = await mkdtemp(join(tmpdir(), 'ocean-command-control-'))
     if (process.platform === 'darwin') prepareCommandLink(compiled, process.arch === 'arm64' ? 'arm64' : 'x64', '13.0')
   })
   afterAll(async () => { if (compiled !== undefined) await rm(compiled, { recursive: true, force: true }) })
@@ -61,6 +61,22 @@ describe.skipIf(process.platform === 'win32')('macOS command entry ownership', (
     await removeFileCommand(f.options, installed.fingerprint)
     await expect(lstat(f.options.destination)).rejects.toMatchObject({ code: 'ENOENT' })
     expect(await readFile(f.options.launcher, 'utf8')).toBe('desktop\n')
+  })
+
+  it('keeps legacy command ownership and backups separate from Ocean', async () => {
+    const f = await fixture()
+    const legacy = { ...f.options, destination: join(f.root, 'dsh') }
+    await writeFile(legacy.destination, 'original dsh\n', { mode: 0o755 })
+    const old = await installFileCommand(legacy, (await inspectFileCommand(legacy)).fingerprint)
+    const receipt = await readFile(join(f.root, '.dsh-desktop-command.json'), 'utf8')
+    const installed = await installFileCommand(f.options, (await inspectFileCommand(f.options)).fingerprint)
+    expect(installed.backup).toBeUndefined()
+    await removeFileCommand(f.options, installed.fingerprint)
+    await expect(lstat(f.options.destination)).rejects.toMatchObject({ code: 'ENOENT' })
+    expect(await readFile(join(f.root, '.dsh-desktop-command.json'), 'utf8')).toBe(receipt)
+    expect(await readlink(legacy.destination)).toBe(legacy.launcher)
+    await removeFileCommand(legacy, old.fingerprint)
+    expect(await readFile(legacy.destination, 'utf8')).toBe('original dsh\n')
   })
 
   it('preserves the raw target of an existing relative npm link and restores it', async () => {
@@ -113,7 +129,7 @@ describe.skipIf(process.platform === 'win32')('macOS command entry ownership', (
   it.each(['install', 'remove'] as const)('preserves a replacement arriving during %s after the approved entry was read', async (operation) => {
     const f = await fixture()
     const installed = await installFileCommand(f.options, (await inspectFileCommand(f.options)).fingerprint)
-    const receipt = join(f.root, '.dsh-desktop-command.json')
+    const receipt = join(f.root, '.ocean-desktop-command.json')
     const originalReceipt = await readFile(receipt, 'utf8')
     barrier.afterRead = async (path) => {
       if (path !== receipt) return
@@ -184,7 +200,7 @@ describe.skipIf(process.platform === 'win32')('macOS command entry ownership', (
     const f = await fixture()
     const installed = await installFileCommand(f.options, (await inspectFileCommand(f.options)).fingerprint)
     barrier.beforeUnlink = (path) => {
-      if (path !== join(f.root, '.dsh-desktop-command.json')) return
+      if (path !== join(f.root, '.ocean-desktop-command.json')) return
       barrier.afterStat = async () => { throw Object.assign(new Error('Restoration denied'), { code: 'EPERM' }) }
       throw Object.assign(new Error('Receipt removal denied'), { code: 'EACCES' })
     }
@@ -205,7 +221,7 @@ describe.skipIf(process.platform === 'win32')('macOS command entry ownership', (
     await symlink('previous-command', f.options.destination)
     const installed = await installFileCommand(f.options, (await inspectFileCommand(f.options)).fingerprint)
     barrier.beforeUnlink = (path) => {
-      if (path === join(f.root, '.dsh-desktop-command.json')) throw Object.assign(new Error('Receipt removal denied'), { code: 'EACCES' })
+      if (path === join(f.root, '.ocean-desktop-command.json')) throw Object.assign(new Error('Receipt removal denied'), { code: 'EACCES' })
     }
     onTestFinished(() => { barrier.beforeUnlink = undefined })
     await expect(removeFileCommand(f.options, installed.fingerprint)).rejects.toMatchObject({ code: 'EACCES' })
@@ -245,7 +261,7 @@ describe.skipIf(process.platform === 'win32')('macOS command entry ownership', (
 
   it('rejects linked receipts and backup paths outside the command directory', async () => {
     const f = await fixture()
-    const receipt = join(f.root, '.dsh-desktop-command.json')
+    const receipt = join(f.root, '.ocean-desktop-command.json')
     await symlink(f.options.launcher, receipt)
     await expect(inspectFileCommand(f.options)).rejects.toMatchObject({ code: 'EOWNERSHIP' })
     await unlink(receipt)

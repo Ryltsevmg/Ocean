@@ -25,7 +25,7 @@ export function writePackage(modules: string, name: string, fields: Record<strin
 /**
  * Seal a minimal release containing Host entry files and a shared Cordis package.
  * @param root - New runtime directory.
- * @param version - Shell and dsh version.
+ * @param version - Shell and ocean version.
  * @param nodeVersion - Bundled Node version recorded in resource metadata.
  * @returns Sealed runtime metadata.
  */
@@ -36,7 +36,7 @@ export function runtimeFixture(root: string, version = '1.0.0', nodeVersion = '2
     const path = writePackage(join(root, 'node_modules'), name, {
       version,
       ...(name === '@ocean/ocean' ? { dependencies: Object.fromEntries(names.slice(1).map(dependency => [dependency, version])) } : {}),
-      ...(bundle ? { dsh: { bundle: { patch: './bundle.yml' } } } : {}),
+      ...(bundle ? { ocean: { bundle: { patch: './bundle.yml' } } } : {}),
     })
     if (bundle) writeFileSync(join(path, 'bundle.yml'), '[]\n')
   }

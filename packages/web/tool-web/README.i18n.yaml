@@ -6,11 +6,11 @@
   en: 168a71c4ccff0f74
   zh: ea4a9a476e3a5aec
 /ocean-ocean-tool-web:
-  en: 3dc787f95af43299
-  zh: f136e5c1abc0ee2d
+  en: b8bd86d55744dc32
+  zh: 63d8ca97a90a9f48
 /ocean-ocean-tool-web/summary:
-  en: 348972eec4647ede
-  zh: 482c342858fc949e
+  en: 9e214bcf40a8b728
+  zh: 2c9ab40f3777195f
 /ocean-ocean-tool-web/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -21,8 +21,8 @@
   en: b476ed2e08c158e1
   zh: 17ddc6ee8123cbb4
 /ocean-ocean-tool-web/use-this-package/minimal-configuration:
-  en: 68b9153e4a103eeb
-  zh: bb49e8fd81b8581a
+  en: 52fca198c901df83
+  zh: 8586035c3dfd74d1
 /ocean-ocean-tool-web/use-this-package/using-web-search:
   en: 6bc6e7c3bdb13862
   zh: e4fc9b4921467368
@@ -33,8 +33,8 @@
   en: d542f546c78c40f5
   zh: 3589d1b27a326a8a
 /ocean-ocean-tool-web/use-this-package/search-and-fetch-readiness:
-  en: d6affa753dce742a
-  zh: 74ac25a77f8eb034
+  en: f26d32c46f86a7d0
+  zh: 2d88d180fc419740
 /ocean-ocean-tool-web/use-this-package/failures-and-recovery:
   en: 19581f8f8947611b
   zh: 8eca83f619382659
@@ -60,8 +60,8 @@
   en: 3ecc07b408e6045e
   zh: 19eed773277be7be
 /ocean-ocean-tool-web/further-exploration:
-  en: 4f6a01edd839d522
-  zh: 2be50de29f9d53f8
+  en: a234e62c622cbc23
+  zh: 96f1cc66c96f5532
 /ocean-ocean-tool-web/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -90,8 +90,8 @@
   en: 3039bc5e7a796b21
   zh: 6b7a9eaf69c9ea53
 /ocean-ocean-tool-web/model-experience/tool-schemas/what-the-model-sees:
-  en: d59a2861b4cc9818
-  zh: 4d74c854d63ccbd3
+  en: 9c32eefeeffee523
+  zh: 84a182ba78744847
 /ocean-ocean-tool-web/model-experience/tool-schemas/token-effect:
   en: bb21ae48e420c8d8
   zh: 7acd2a1798de0e80
@@ -159,8 +159,8 @@
   en: f5d5f97a153f7c70
   zh: f681f89596f500f5
 /ocean-ocean-tool-web/known-limitations-and-deferred-work:
-  en: dacc146f5223936f
-  zh: fae60d9b5206f76c
+  en: 40970236736252a6
+  zh: 47207ea051aface7
 /ocean-ocean-tool-web/known-limitations-and-deferred-work/dev-note:
   en: 64ee46559b704be8
   zh: 29e47b77c4e476e1

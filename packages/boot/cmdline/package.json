@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-cmdline",
-  "description": "Immutable command-line handoff from a dsh launcher to any app plugin that injects cmdlineArgs",
+  "description": "Immutable command-line handoff from a ocean launcher to any app plugin that injects cmdlineArgs",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"

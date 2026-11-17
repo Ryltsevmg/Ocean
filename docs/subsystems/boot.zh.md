@@ -167,7 +167,7 @@ Manage profile files and apply their declared reload lifecycle.
 
 /** Grant or revoke one exact plugin/runtime exemption and reevaluate live plugins.
  * @param packageVersion Exact manifest package name followed by @ and its version; never an installation spec or alias.
- * @param runtimeVersion Exact current DSH version for grants; revocation may name a previous runtime.
+ * @param runtimeVersion Exact current OCEAN version for grants; revocation may name a previous runtime.
  * @param enabled Whether to grant rather than revoke the exemption.
  * @param acceptRisk Required true for grants after the user accepts possible crashes and data loss.
  * @returns Saved and runtime outcomes. Startup-only profiles require restart.
@@ -200,18 +200,18 @@ Manage profile files and apply their declared reload lifecycle.
 @Remote async inspect(spec: string, options?: InspectOptions, signal?: AbortSignal): Promise<PluginSpecInspection>
 
 /** Read the published versions newer than an installed registry package's version, from the first registry that answers.
- * Official bundles follow the DSH version and are not listed.
+ * Official bundles follow the OCEAN version and are not listed.
  * @param name Installed profile dependency name.
  * @param options The registry asked first; absent, the one the package was installed from in this process, else the configured one.
  * @param signal Ends the lookups early.
  * @returns At most `versionListLimit` newer versions, newest first, with their tags, deprecation, bundle declaration,
- * and DSH compatibility, and the registry that answered; or why no list could be read, with every registry asked.
+ * and OCEAN compatibility, and the registry that answered; or why no list could be read, with every registry asked.
  */
 @Remote async listVersions(name: string, options?: ListVersionsOptions, signal?: AbortSignal): Promise<PluginVersionList>
 
 /**
  * Replace an installed bundle with a newer version. A registry copy updates to `name@version`, checked on the registry
- * first: it must exist, declare a bundle, and accept the running DSH version, or nothing changes. A Git copy updates
+ * first: it must exist, declare a bundle, and accept the running OCEAN version, or nothing changes. A Git copy updates
  * to the Git spec `options.spec` names, which must pin a full commit of the repository directory the copy came from;
  * with HMR, a network failure or timeout reaching its repository stops the update before anything changes. pnpm reads
  * a Git package only while installing it, so its bundle and compatibility are checked then. Either target
@@ -244,7 +244,7 @@ Manage profile files and apply their declared reload lifecycle.
 @Remote setBundleEnabled(name: string, enabled: boolean): Promise<ChangeResult>
 
 /**
- * Install a package using the same pnpm implementation as dsh plugin. GitHub
+ * Install a package using the same pnpm implementation as ocean plugin. GitHub
  * repositories get a connection check bounded by githubConnectionTimeoutMs before pnpm starts;
  * only network failures or timeouts stop installation, and a stop streams the check's diagnostic
  * as the installation's install-log run under its request id, while pnpm owns authentication and transport fallback. An
@@ -273,7 +273,7 @@ Manage profile files and apply their declared reload lifecycle.
  */
 @Remote async cancelInstall(requestId: PluginInstallRequestId): Promise<PluginInstallCancellation>
 
-/** Unload and remove a profile-owned bundle dependency through dsh plugin's pnpm path; a selected name no
+/** Unload and remove a profile-owned bundle dependency through ocean plugin's pnpm path; a selected name no
  * dependency holds is only deselected.
  * @param name Installed dependency or selected bundle name.
  * @returns Removal diagnostics and the remaining profile state.

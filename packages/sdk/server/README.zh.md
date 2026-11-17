@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-sdk-jsonrpc-server` 通过 stdio 服务 SDK 协议格式（wire format），使进程外客户端能够驱动 harness agent（智能体）：它为每个 `sessionId` 打开一个会话、把用户提示词排入队列，并把每个会话事件与 agent 状态转换流式发回客户端。把它作为 `jsonrpc` 插件挂载到 Loader 组合中；外围插件树提供其余一切——agent、模型适配器、持久化与工具。Stdout 只承载 JSON-RPC 帧，因此部署不得组合 stdout logger。它通过 dispose（资源释放）根运行时并以 0 退出应答 `shutdown`；EOF 与信号退出归 app bin 负责。
+`ocean-sdk-jsonrpc-server` 通过 stdio 服务 SDK 协议格式（wire format），使进程外客户端能够驱动 harness agent（智能体）：它为每个 `sessionId` 打开一个会话、把用户提示词排入队列，并把每个会话事件与 agent 状态转换流式发回客户端。把它作为 `jsonrpc` 插件挂载到 Loader 组合中；外围插件树提供其余一切——agent、模型适配器、持久化与工具。Stdout 只承载 JSON-RPC 帧，因此部署不得组合 stdout logger。它通过 dispose（资源释放）根运行时并以 0 退出应答 `shutdown`；EOF 与信号退出归 app bin 负责。
 
 ## 目录
 
@@ -39,7 +39,7 @@ kind: "package-reference"
 
 `session/query` 是高层 SDK `run()` 发送字符串和内容块数组时使用的协议入口。普通输入保留内容块，使用既有的提示词队列。完整 SDK 识别裸 `/compact`、带非空 preset 的 `/permission <preset>`、`/plan [off|message]` 和 `/goal [objective|clear|edit objective|pause|resume]`，这些命令按官方定义 ID 识别。裸 `/permission` 或 `/权限`、`/compact extra` 以及 `/model` 等其余输入仍是普通提示词。命令缺失时也保留提示词路径；选中的 handler 失败后绝不回退。未知 preset 是原生命令错误。随已识别命令提交的编码图片块经过原生附件接纳。`session/prompt` 保留为低层排队输入入口，不经过原生 slash command 路由。
 
-Host 与桌面适配器共用 `dsh-commands/builtin` 的定义身份及中英文别名解析。`/压缩`、`/权限`、`/计划` 和 `/目标` 跟随重命名后的官方定义，执行使用当前注册名。精确名称优先，但无关的同名定义不是 SDK 内置命令，仍作为普通提示词。其他内置能力仍不属于 SDK 命令集合。
+Host 与桌面适配器共用 `ocean-commands/builtin` 的定义身份及中英文别名解析。`/压缩`、`/权限`、`/计划` 和 `/目标` 跟随重命名后的官方定义，执行使用当前注册名。精确名称优先，但无关的同名定义不是 SDK 内置命令，仍作为普通提示词。其他内置能力仍不属于 SDK 命令集合。
 
 第一个文本块提供完整命令行；编码图片可位于它之前或之后。该行匹配到受支持命令时，它必须是唯一的文本块，其余块必须为编码图片。额外文本块、持久图片引用及其他内容类型会在执行或入队前返回 JSON-RPC 错误，不回退为普通提示词。普通提示词保留全部内容块及其顺序。空数组和只包含空白文本的数组会被拒绝；允许仅图片输入。
 
@@ -98,7 +98,7 @@ Stdout 只承载 JSON-RPC 帧，客户端可以逐字节解析；诊断信息应
 
 ### 设计理念
 
-本插件是轻量的展示适配器：[`HarnessSdkJsonRpcServer`](src/server.ts) 负责协议方法与通知，传输与具名协议类型来自 `dsh-sdk-protocol`，与客户端 SDK 共享。它订阅会话、agent 与 subagent 生命周期事件，并把它们作为协议通知转发；只有当服务在生命周期建立快照时记录的 `local` 标志为 true 时才转发 subagent 完成事件——提供方名称、子级 id 与持久化谱系均不能证明本地性。 `subagent.started` 与 `subagent.finished` 的 `parentSessionId` 都标识持久化的直接创建者，即使创建者已退出；Team 根仅决定运行时事件的分发作用域。 started 通知要求 `origin: subagent` 和直接创建者 ID；普通 fork（包括保留父 ID 的历史会话）不产生此通知。
+本插件是轻量的展示适配器：[`HarnessSdkJsonRpcServer`](src/server.ts) 负责协议方法与通知，传输与具名协议类型来自 `ocean-sdk-protocol`，与客户端 SDK 共享。它订阅会话、agent 与 subagent 生命周期事件，并把它们作为协议通知转发；只有当服务在生命周期建立快照时记录的 `local` 标志为 true 时才转发 subagent 完成事件——提供方名称、子级 id 与持久化谱系均不能证明本地性。 `subagent.started` 与 `subagent.finished` 的 `parentSessionId` 都标识持久化的直接创建者，即使创建者已退出；Team 根仅决定运行时事件的分发作用域。 started 通知要求 `origin: subagent` 和直接创建者 ID；普通 fork（包括保留父 ID 的历史会话）不产生此通知。
 
 ### 源码地图
 
@@ -127,7 +127,7 @@ Stdout 只承载 JSON-RPC 帧，客户端可以逐字节解析；诊断信息应
 
 - [SDK 协议格式](../protocol/README.zh.md) — 本插件服务的协议方法与载荷结构。
 - [TypeScript SDK 客户端](../client/README.zh.md) — 驱动本插件的客户端。
-- [SDK 应用组合包](../../bundle/sdk-app/README.zh.md) — 启动本插件的 `dsh --profile sdk` 应用。
+- [SDK 应用组合包](../../bundle/sdk-app/README.zh.md) — 启动本插件的 `ocean --profile sdk` 应用。
 - [Python SDK](../../../python/README.zh.md) — 驱动同一服务器的 Python 客户端。
 
 -----

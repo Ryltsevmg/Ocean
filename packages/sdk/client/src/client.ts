@@ -1,12 +1,12 @@
 /**
- * Low-level JSON-RPC client for a Ocean SDK runtime subprocess.
+ * Low-level JSON-RPC client for an Ocean SDK runtime subprocess.
  * {@link HarnessClient} owns the child process: it spawns the runtime, speaks
  * the `@ocean/ocean-sdk-protocol` wire over the child's stdio, fans
  * server notifications out to subscriptions, and tears the child down to
  * quiescence through a private EOF → SIGTERM → SIGKILL ladder. The design
  * twin is the Python SDK's `HarnessClient` (`python/sdk`); both drive the
  * same runtime protocol. This client runs OUTSIDE any harness context, so it
- * spawns directly rather than through the `dsh-subprocess` service — the
+ * spawns directly rather than through the `ocean-subprocess` service — the
  * seam's documented exception for SDK-managed transports.
  *
  * @module @ocean/ocean-sdk-client/client
@@ -27,7 +27,7 @@ import {
 } from '@ocean/ocean-sdk-protocol'
 import { SessionId, SessionSeq } from '@ocean/ocean-session'
 import { disposeRuntimeProcess } from './dispose.ts'
-import { resolveDshLaunch, type RuntimeProcessOptions } from './launch.ts'
+import { resolveOceanLaunch, type RuntimeProcessOptions } from './launch.ts'
 import type { HarnessClientOptions, HarnessNotification, NotificationFilter } from './types.ts'
 
 /** Retained stderr lines used to diagnose an unexpected runtime death. */
@@ -188,7 +188,7 @@ class NotificationSubscriptionImpl implements NotificationSubscription {
  * runtime is closed.
  */
 export class HarnessClient {
-  /** Original public dsh launch and timeout options for this client. */
+  /** Original public ocean launch and timeout options for this client. */
   readonly options: HarnessClientOptions
   private readonly runtime: RuntimeProcessOptions
   private child: ChildProcess | undefined
@@ -205,11 +205,11 @@ export class HarnessClient {
   private userQuestionHandler: HarnessClientOptions['onUserQuestion']
   private requestHandler: ((method: string, params: Record<string, unknown>) => Promise<unknown>) | undefined
 
-  /** @param options - dsh profile, patch, home, process, environment, and timeout options. */
+  /** @param options - ocean profile, patch, home, process, environment, and timeout options. */
   constructor(options?: HarnessClientOptions)
   constructor(options: HarnessClientOptions = {}, runtime?: RuntimeProcessOptions) {
     this.options = options
-    this.runtime = runtime ?? resolveDshLaunch(options)
+    this.runtime = runtime ?? resolveOceanLaunch(options)
   }
 
   /**

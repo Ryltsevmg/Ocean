@@ -31,7 +31,7 @@ The acp group provides one package: a server that lets programs and automation r
 <a id="related-documentation"></a>
 ## Related documentation
 
-- [dsh-subagent-acp](../subagent/subagent-acp/README.md) — the out-of-process ACP client that spawns and drives this server.
+- [ocean-subagent-acp](../subagent/subagent-acp/README.md) — the out-of-process ACP client that spawns and drives this server.
 - Multiplex concurrent ACP sessions over one connection — per-session isolation, ownership, and teardown decisions.
 
 <a id="dev-note"></a>

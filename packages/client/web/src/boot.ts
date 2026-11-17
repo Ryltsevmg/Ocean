@@ -7,7 +7,7 @@
  */
 import { Context } from '@deepseek-ai/cordis'
 import type {
-  BootManifest, ClientModuleCreateOptions, ClientModuleSystem, DshWindow,
+  BootManifest, ClientModuleCreateOptions, ClientModuleSystem, OceanWindow,
 } from '@ocean/ocean-client-modules/client'
 import { bootClient } from './boot-client.ts'
 import { BootPage } from './boot-page.ts'
@@ -56,8 +56,8 @@ export class AppWebEntry {
       // next microtask; an asynchronous bootstrap resolves it after its last
       // row, or rejects it into the failure rendering below. An absent global
       // means no bootstrap owns the document and there is nothing to wait for.
-      await (globalThis as { __DSH_BOOT_READY__?: { promise: Promise<void> } }).__DSH_BOOT_READY__?.promise
-      const win = globalThis as DshWindow
+      await (globalThis as { __OCEAN_BOOT_READY__?: { promise: Promise<void> } }).__OCEAN_BOOT_READY__?.promise
+      const win = globalThis as OceanWindow
       const moduleLoader = win.__ModuleLoader__
       if (moduleLoader === undefined) {
         throw new Error('web boot: window.__ModuleLoader__ bootstrap facade is missing')
@@ -68,10 +68,10 @@ export class AppWebEntry {
       // this structural slice reads two optional members without adding a
       // package edge.
       const transport = (globalThis as {
-        __DSH_TRANSPORT__?: Pick<ClientModuleCreateOptions, 'loadBundle' | 'resolveAsset'>
-      }).__DSH_TRANSPORT__
+        __OCEAN_TRANSPORT__?: Pick<ClientModuleCreateOptions, 'loadBundle' | 'resolveAsset'>
+      }).__OCEAN_TRANSPORT__
       this.modules = moduleLoader.create({
-        boot: win.__DSH_BOOT__,
+        boot: win.__OCEAN_BOOT__,
         staticModules: getStaticModules(),
         ...transport?.loadBundle === undefined ? {} : { loadBundle: transport.loadBundle },
         ...transport?.resolveAsset === undefined ? {} : { resolveAsset: transport.resolveAsset },

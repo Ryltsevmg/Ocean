@@ -23,23 +23,23 @@ vi.mock('node:fs/promises', async importOriginal => ({
 describe('installer preparation preserves application dependencies', () => {
   it.each(['win32', 'darwin'] as const)('rejects a missing production policy before signing on %s', async (platform) => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
-    expect(() => createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.example.installer',
-      DSH_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example',
-      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://test.example.com',
-    }, platform, 'x64')).toThrow('DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN')
+    expect(() => createElectronBuilderConfig({ OCEAN_DESKTOP_APP_ID: 'com.example.installer',
+      OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://test.example.com',
+    }, platform, 'x64')).toThrow('OCEAN_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN')
   })
   it.each(['win32', 'darwin'] as const)('preserves installer metadata and dependency ownership on %s', async (platform) => {
     execute.mockClear()
     write.mockClear()
     const env = {
-      DSH_DESKTOP_APP_ID: 'com.example.installer',
-      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
-      DSH_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
-      DSH_DESKTOP_TARGET_PLATFORM: platform,
-      DSH_DESKTOP_TARGET_ARCH: 'x64',
-      DSH_DESKTOP_UNSIGNED: platform === 'win32' ? '1' : '0',
-      DSH_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)',
-      DSH_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234',
+      OCEAN_DESKTOP_APP_ID: 'com.example.installer',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
+      OCEAN_DESKTOP_TARGET_PLATFORM: platform,
+      OCEAN_DESKTOP_TARGET_ARCH: 'x64',
+      OCEAN_DESKTOP_UNSIGNED: platform === 'win32' ? '1' : '0',
+      OCEAN_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)',
+      OCEAN_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234',
       APPLE_KEYCHAIN_PROFILE: 'installer-test',
       DOWNLOAD_TEST_ORIGIN: 'https://desktop-updates.example.com', DOWNLOAD_TEST_RELEASE_ID: '0123456789abcdef0123456789abcdef',
     }
@@ -95,12 +95,12 @@ describe('installer preparation preserves application dependencies', () => {
   it('names unsigned Windows artifacts so they cannot pass for release builds', async () => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     const config = createElectronBuilderConfig({
-      DSH_DESKTOP_APP_ID: 'com.example.installer',
-      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
-      DSH_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
-      DSH_DESKTOP_TARGET_PLATFORM: 'win32',
-      DSH_DESKTOP_TARGET_ARCH: 'x64',
-      DSH_DESKTOP_UNSIGNED: '1',
+      OCEAN_DESKTOP_APP_ID: 'com.example.installer',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
+      OCEAN_DESKTOP_TARGET_PLATFORM: 'win32',
+      OCEAN_DESKTOP_TARGET_ARCH: 'x64',
+      OCEAN_DESKTOP_UNSIGNED: '1',
     }, 'win32', 'x64')
     expect(config.artifactName).toBe('ocean-chat-${version}-${os}-${arch}-unsigned.${ext}')
   })
@@ -116,12 +116,12 @@ describe('installer preparation preserves application dependencies', () => {
     expect(referenced.size).toBeGreaterThan(0)
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     const config = createElectronBuilderConfig({
-      DSH_DESKTOP_APP_ID: 'com.example.installer',
-      DSH_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example',
-      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://test-updates.ocean.example',
-      DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
-      DSH_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)',
-      DSH_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234',
+      OCEAN_DESKTOP_APP_ID: 'com.example.installer',
+      OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://test-updates.ocean.example',
+      OCEAN_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
+      OCEAN_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)',
+      OCEAN_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234',
       APPLE_KEYCHAIN_PROFILE: 'installer-test',
     }, 'darwin', 'arm64')
     const packaged = new Set(config.files.filter((entry): entry is string => typeof entry === 'string'))

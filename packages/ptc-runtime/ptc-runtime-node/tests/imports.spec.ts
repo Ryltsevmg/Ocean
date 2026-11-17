@@ -34,7 +34,7 @@ function evaluator(format: PtcProgramFormat, handler?: ProgramImportHandler) {
 }
 
 async function temporaryDirectory() {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-ptc-imports-'))
+  const directory = await mkdtemp(join(tmpdir(), 'ocean-ptc-imports-'))
   onTestFinished(async () => { await rm(directory, { recursive: true, force: true }) })
   return realpath(directory)
 }

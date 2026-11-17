@@ -112,7 +112,7 @@ async function compactAndContinue(path: 'sdk' | 'native', cwd: string) {
 }
 
 it('preserves native compact model inputs and turn boundaries through the SDK command entry', async () => {
-  const cwd = await mkdtemp(join(tmpdir(), 'dsh-sdk-compact-parity-'))
+  const cwd = await mkdtemp(join(tmpdir(), 'ocean-sdk-compact-parity-'))
   try {
     const native = await compactAndContinue('native', cwd)
     const sdk = await compactAndContinue('sdk', cwd)

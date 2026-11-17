@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { installThemeStyles } from '../src/client/styles.ts'
 
 const PLUGIN_ID = '@ocean/ocean-client-ui-theme'
-const HAIRLINE_WIDTH = '--dsh-hairline-width'
+const HAIRLINE_WIDTH = '--ocean-hairline-width'
 const contexts = new Set<Context>()
 let previousWidth: string
 let previousPriority: string

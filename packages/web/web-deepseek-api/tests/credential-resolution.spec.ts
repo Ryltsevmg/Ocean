@@ -8,7 +8,7 @@ import { Context, FiberState } from '@deepseek-ai/cordis'
 import AgentRegistry from '@ocean/ocean-agent'
 import type { Agent } from '@ocean/ocean-agent'
 import type { DeepSeekAccount } from '@ocean/ocean-deepseek-account'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
+import { OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
 import SessionStore, { SessionId } from '@ocean/ocean-session'
 import SessionProjectionRegistry from '@ocean/ocean-session-projection'
 import WebRuntime from '@ocean/ocean-web'
@@ -80,7 +80,7 @@ async function mount(setup: Setup): Promise<{ ctx: Context; sent: () => Sent[] }
   vi.stubGlobal('fetch', fetchMock)
   const ctx = new Context()
   mounted.push(ctx)
-  ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: setup.environment ?? {} }]))
+  ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: setup.environment ?? {} }]))
   if (setup.account !== undefined) ctx.provide('deepseekAccount', setup.account as DeepSeekAccount)
   if (setup.credentials !== undefined) ctx.provide('credentials', setup.credentials as never)
   if (setup.routes !== undefined) provideRoutes(ctx, setup.routes)

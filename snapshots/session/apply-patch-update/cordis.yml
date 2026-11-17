@@ -17,8 +17,8 @@
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
-    compression: !!js 'process.env.DSH_SNAPSHOT === undefined ? ''zstd'' : ''none'''
+    root: !!js oceanHomePath('sessions')
+    compression: !!js 'process.env.OCEAN_SNAPSHOT === undefined ? ''zstd'' : ''none'''
 
 - id: agent-instructions
   name: '@ocean/ocean-agent-instructions'
@@ -66,11 +66,11 @@
 - id: spill-local
   name: '@ocean/ocean-spill-local'
   config:
-    root: !!js process.env.DSH_SNAPSHOT_SPILL_ROOT ?? './.spill'
+    root: !!js process.env.OCEAN_SNAPSHOT_SPILL_ROOT ?? './.spill'
 
 - insert:
     - id: snapshot-spill-locators
       name: ../../../scripts/snapshot-spill-locators.ts
       config:
-        root: !!js process.env.DSH_SNAPSHOT_SPILL_ROOT
-        locatorRoot: !!js process.env.DSH_SNAPSHOT_SPILL_LOCATOR_ROOT
+        root: !!js process.env.OCEAN_SNAPSHOT_SPILL_ROOT
+        locatorRoot: !!js process.env.OCEAN_SNAPSHOT_SPILL_LOCATOR_ROOT

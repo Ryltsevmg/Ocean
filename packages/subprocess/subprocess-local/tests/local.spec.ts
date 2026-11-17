@@ -252,9 +252,9 @@ describe('LocalSubprocessRuntime', () => {
       .rejects.toThrow('is a relative path')
     await expect(ctx.subprocess.resolveExecutable('node_modules/.bin/server'))
       .rejects.toThrow('is a relative path')
-    await expect(ctx.subprocess.resolveExecutable('dsh-command-that-does-not-exist', { PATH: '' }))
+    await expect(ctx.subprocess.resolveExecutable('ocean-command-that-does-not-exist', { PATH: '' }))
       .rejects.toThrow('was not found on PATH')
-    await expect(ctx.subprocess.resolveExecutable('/dsh-absolute-command-that-does-not-exist'))
+    await expect(ctx.subprocess.resolveExecutable('/ocean-absolute-command-that-does-not-exist'))
       .rejects.toThrow('is not an executable file')
     await expect(ctx.subprocess.resolveExecutable(process.cwd()))
       .rejects.toThrow('is not an executable file')
@@ -920,7 +920,7 @@ describe('LocalSubprocessRuntime', () => {
   })
 
   it('logs one error through the plugin logger when a spill cannot be written and keeps the tail', async () => {
-    const removedDir = mkdtempSync(join(tmpdir(), 'dsh-subprocess-removed-'))
+    const removedDir = mkdtempSync(join(tmpdir(), 'ocean-subprocess-removed-'))
     rmSync(removedDir, { recursive: true, force: true })
     const ctx = new Context()
     const logged = vi.spyOn(ctx.logger, 'error').mockImplementation(() => {})
@@ -1005,7 +1005,7 @@ describe('LocalSubprocessRuntime', () => {
       .mockReturnValueOnce(true)
       .mockReturnValueOnce(false)
     const probeWindowsJob = vi.fn(() => true)
-    const prepareManagedProcessBinding = vi.fn(() => ({ spillDir: '/tmp/dsh-test-spill' }))
+    const prepareManagedProcessBinding = vi.fn(() => ({ spillDir: '/tmp/ocean-test-spill' }))
     const handles = [true, false, false, false].map((failFirstWait) => {
       let waits = 0
       return {
@@ -1149,7 +1149,7 @@ describe('LocalSubprocessRuntime', () => {
     }))
     vi.doMock('../src/output.ts', async importOriginal => ({
       ...await importOriginal<typeof import('../src/output.ts')>(),
-      prepareManagedProcessBinding: vi.fn(() => ({ spillDir: '/tmp/dsh-test-spill' })),
+      prepareManagedProcessBinding: vi.fn(() => ({ spillDir: '/tmp/ocean-test-spill' })),
     }))
     let fiber: { dispose(): Promise<void> } | undefined
     try {
@@ -1343,7 +1343,7 @@ describe('LocalSubprocessRuntime', () => {
   it('disposal tolerates a handle whose spawn already failed', async () => {
     const ctx = new Context()
     const fiber = await ctx.plugin(LocalSubprocessRuntime)
-    const handle = ctx.subprocess.spawn(spec('true', { cwd: '/nonexistent-dir-dsh-subprocess-test' }))
+    const handle = ctx.subprocess.spawn(spec('true', { cwd: '/nonexistent-dir-ocean-subprocess-test' }))
     await expect(handle.done).rejects.toThrow()
     await fiber.dispose()
   })
@@ -1358,7 +1358,7 @@ describe('LocalSubprocessRuntime', () => {
     // that stops the bootstrap first settles as the requested termination —
     // the recorded failure only outranks the stop when it was published before
     // the stop landed.
-    const handle = ctx.subprocess.spawn(spec('true', { cwd: '/nonexistent-dir-dsh-subprocess-test' }))
+    const handle = ctx.subprocess.spawn(spec('true', { cwd: '/nonexistent-dir-ocean-subprocess-test' }))
     await fiber.dispose()
     const settlement = await handle.done.then(
       outcome => ({ kind: 'stopped' as const, outcome }),

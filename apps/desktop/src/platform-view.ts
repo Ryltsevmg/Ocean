@@ -102,7 +102,7 @@ export class DesktopPlatformView {
       owner.webContents.removeListener('destroyed', closeOwnedView)
       owner.removeListener('closed', closeOwnedView)
     }
-    const partition = account.userId === null ? `dsh-platform-${randomUUID()}`
+    const partition = account.userId === null ? `ocean-platform-${randomUUID()}`
       : `persist:dsh-platform-${createHash('sha256').update(JSON.stringify([account.origin, account.userId])).digest('hex')}`
     const browserSession = session.fromPartition(partition)
     // Sanitize persisted authentication even after an unclean previous process exit.
@@ -142,7 +142,7 @@ export class DesktopPlatformView {
     })
     const view = new WebContentsView({ webPreferences: {
       session: browserSession, preload: this.preload, sandbox: true, contextIsolation: true,
-      additionalArguments: [`--dsh-platform-origin=${account.origin}`],
+      additionalArguments: [`--ocean-platform-origin=${account.origin}`],
       nodeIntegration: false, webSecurity: true,
     } })
     this.view = view

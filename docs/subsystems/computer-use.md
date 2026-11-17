@@ -2,19 +2,19 @@
 
 English | [中文](computer-use.zh.md)
 
-Computer use lets a model observe and operate the local desktop through a configured provider. DSH owns the task loop; the provider supplies desktop operations and the tools that expose them.
+Computer use lets a model observe and operate the local desktop through a configured provider. OCEAN owns the task loop; the provider supplies desktop operations and the tools that expose them.
 
 ## Provider registration
 
-Mount [`dsh-computer-use`](../../packages/computer-use/computer-use/README.md) and one provider in the same composition. The shared service registers only a name and rejects any second provider, including another instance with the same name. It has no common desktop-operation methods or model-controlled selector, and adds no model-visible content of its own.
+Mount [`ocean-computer-use`](../../packages/computer-use/computer-use/README.md) and one provider in the same composition. The shared service registers only a name and rejects any second provider, including another instance with the same name. It has no common desktop-operation methods or model-controlled selector, and adds no model-visible content of its own.
 
-Configuration selects the provider; the model cannot switch providers at runtime. A provider owns its tool catalog, desktop operations, configuration, permission handling, and platform requirements. Provider tools use the normal DSH execution pipeline and Session log.
+Configuration selects the provider; the model cannot switch providers at runtime. A provider owns its tool catalog, desktop operations, configuration, permission handling, and platform requirements. Provider tools use the normal OCEAN execution pipeline and Session log.
 
 ## Lifetime and desktop sharing
 
 A provider retains its registration while it stops admitting tool calls, closes its resources, and awaits owned work; `ctx.computerUse.providerName` reports that name until release. A plugin that fails startup disposes its attempted registration.
 
-One registered provider does not reserve a desktop for a Session. Callers coordinate complete observe, act, and verify workflows across Sessions and separate DSH processes. A cancelled call cannot undo input that the desktop already received.
+One registered provider does not reserve a desktop for a Session. Callers coordinate complete observe, act, and verify workflows across Sessions and separate OCEAN processes. A cancelled call cannot undo input that the desktop already received.
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 

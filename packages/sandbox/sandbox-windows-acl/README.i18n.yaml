@@ -6,11 +6,11 @@
   en: 14d3fdd57b94c86f
   zh: abcd3b4f9dd908fa
 /ocean-ocean-sandbox-windows-acl:
-  en: 72f16e826d5328b2
-  zh: a5107bec4c53b4a3
+  en: 2c6aeff457e14696
+  zh: ce7d54686b6af3b7
 /ocean-ocean-sandbox-windows-acl/summary:
-  en: 777921135c23ee55
-  zh: 7c726cc63995d443
+  en: 98ebf0fdbb981643
+  zh: 7e7b40c1031619d7
 /ocean-ocean-sandbox-windows-acl/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -27,38 +27,38 @@
   en: 289e65bddf20dd79
   zh: 7ff72ed64c4b4d1c
 /ocean-ocean-sandbox-windows-acl/use-this-package/failures-and-recovery:
-  en: 66f0a90147e3b1f1
-  zh: c62a954751d2094f
+  en: 2b5e01f12944c0af
+  zh: 8d3e631eb660f0c7
 /ocean-ocean-sandbox-windows-acl/understand-the-implementation:
   en: c2cde86c85c2c619
   zh: a29a114e591f9d3f
 /ocean-ocean-sandbox-windows-acl/understand-the-implementation/mechanism:
-  en: a37ea37f2d527693
-  zh: 749b5a263d0e1534
+  en: 79275dd8171f9e58
+  zh: 91c14f1b933edb77
 /ocean-ocean-sandbox-windows-acl/understand-the-implementation/modes-and-token-lists:
   en: 9c8d9af84f9abd99
   zh: 1c82b355aa5f210f
 /ocean-ocean-sandbox-windows-acl/understand-the-implementation/the-confinement-runner:
-  en: 0847de0e53e50061
-  zh: 90fa3dcaf080c3be
+  en: 08f0d9bde299cbea
+  zh: 095cc6ea5010b723
 /ocean-ocean-sandbox-windows-acl/understand-the-implementation/verified-boundaries:
-  en: ad02570eae90037f
-  zh: fd78c2318de18dda
+  en: 4ea2b27f99824a98
+  zh: 49f03bb6e2c722b5
 /ocean-ocean-sandbox-windows-acl/understand-the-implementation/header-verification-and-source-map:
-  en: c31e9915c15ea556
-  zh: a3ca628afc21f5c7
+  en: 42dd455e4b253aea
+  zh: b3a3e3b4c39ef87c
 /ocean-ocean-sandbox-windows-acl/further-exploration:
-  en: c9938fced7d512bb
-  zh: e8adb06189ac68be
+  en: 1aff7c2c7a306201
+  zh: c2e20d81f46612a6
 /ocean-ocean-sandbox-windows-acl/model-experience:
-  en: bbb19594a2c2e4d4
-  zh: 075a65d9b9182aad
+  en: 0eaa640306b3a208
+  zh: 853e80cb17749a4e
 /ocean-ocean-sandbox-windows-acl/model-experience/kv-cache-effect:
   en: 817eb1b7de13872e
   zh: 06fe175e41e7459b
 /ocean-ocean-sandbox-windows-acl/known-limitations-and-deferred-work:
-  en: 046831a864786b2a
-  zh: 4a261fbab3396ea4
+  en: 41ce106f4ea5746e
+  zh: cc3ff5d5b0988657
 /ocean-ocean-sandbox-windows-acl/known-limitations-and-deferred-work/dev-note:
   en: 620ffac670e74f75
   zh: 34ec391f8636389f

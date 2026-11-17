@@ -32,7 +32,7 @@ const input = (text: string) => createUserMessage({ content: [{ type: 'text' as 
 
 async function harness() {
   const ctx = new Context()
-  const root = await mkdtemp(join(tmpdir(), 'dsh-input-atomicity-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-input-atomicity-'))
   const fixture: { ctx: Context; agent?: Agent; root: string } = { ctx, root }
   fixtures.push(fixture)
   await ctx.plugin(LlmRuntime)

@@ -26,7 +26,7 @@ vi.mock('node:fs', async (importOriginal) => {
     ...actual,
     readFileSync: ((path: Parameters<typeof actual.readFileSync>[0], ...rest: unknown[]) => {
       if (syncRefused.has(String(path))) {
-        throw Object.assign(new Error(`synchronous read refused for ${String(path)}`), { code: 'ERR_DSH_VFS_DEFERRED' })
+        throw Object.assign(new Error(`synchronous read refused for ${String(path)}`), { code: 'ERR_OCEAN_VFS_DEFERRED' })
       }
       return (actual.readFileSync as (...args: unknown[]) => unknown)(path, ...rest)
     }) as typeof actual.readFileSync,
@@ -115,7 +115,7 @@ it.each([false, true])('tracks the Web carrier lifetime when server-first is %s'
 it('publishes this package version and the build commit as the Host release in every composed graph', async () => {
   const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
   const mount = async (commit: string | undefined) => {
-    vi.stubEnv('DSH_CLIENT_COMMIT_HASH', commit)
+    vi.stubEnv('OCEAN_CLIENT_COMMIT_HASH', commit)
     const ctx = new Context()
     contexts.push({ ctx })
     ctx.provide('loader', { entries: () => [] })
@@ -125,7 +125,7 @@ it('publishes this package version and the build commit as the Host release in e
   }
   const graph = await mount('abc1234')
   expect(graph.release).toEqual({ version, commit: 'abc1234' })
-  expect(bootInjections(graph).at(-1)).toEqual({ kind: 'global', name: '__DSH_BOOT__', value: graph })
+  expect(bootInjections(graph).at(-1)).toEqual({ kind: 'global', name: '__OCEAN_BOOT__', value: graph })
   expect(modulesClient.parseBootManifest(graph).release).toEqual({ version, commit: 'abc1234' })
   expect((await mount(undefined)).release).toEqual({ version })
 })
@@ -133,9 +133,9 @@ it('publishes this package version and the build commit as the Host release in e
 /** Create a resolvable package whose client export points at the returned path. */
 function writePackage(
   packageName: string,
-  metadata: Record<string, unknown> = { dsh: { client: { platform: 'web' } } },
+  metadata: Record<string, unknown> = { ocean: { client: { platform: 'web' } } },
 ): string {
-  root ??= realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-modules-')))
+  root ??= realpathSync(mkdtempSync(join(tmpdir(), 'ocean-client-modules-')))
   const pkgRoot = join(root, 'node_modules', ...packageName.split('/'))
   const clientPath = join(pkgRoot, 'lib', 'client.js')
   mkdirSync(pkgRoot, { recursive: true })
@@ -152,7 +152,7 @@ function writePackage(
 
 /** Create a built package with the supplied client declaration. */
 function writeBuiltPackage(packageName: string, client: Record<string, unknown>): void {
-  const clientPath = writePackage(packageName, { dsh: { client: { platform: 'web', ...client } } })
+  const clientPath = writePackage(packageName, { ocean: { client: { platform: 'web', ...client } } })
   mkdirSync(dirname(clientPath), { recursive: true })
   writeFileSync(clientPath, 'module.exports = {}\n')
 }
@@ -261,7 +261,7 @@ describe('HTML bootstrap facade', () => {
       `<link rel="preload" as="script" href="${APPLICATION_URL.replaceAll('&', '&amp;')}">`,
     )
     const bootstrapAt = html.indexOf(`<script src="${BOOTSTRAP_URL.replaceAll('&', '&amp;')}"></script>`)
-    const graphAt = html.indexOf('globalThis["__DSH_BOOT__"] = ')
+    const graphAt = html.indexOf('globalThis["__OCEAN_BOOT__"] = ')
     const entryAt = html.indexOf('<script type="module" src="/index.js"></script>')
     expect([facadeAt, applicationAt, bootstrapAt, graphAt, entryAt]).toEqual([...new Set([
       facadeAt, applicationAt, bootstrapAt, graphAt, entryAt,
@@ -638,10 +638,10 @@ describe('client bundle activation', () => {
     expect(service.graph().entries.map(entry => entry.id)).toEqual([packageName])
   })
 
-  it('allows sibling dsh roles', () => {
+  it('allows sibling ocean roles', () => {
     const currentName = '@fixture/current-client-field'
     const clientPath = writePackage(currentName, {
-      dsh: {
+      ocean: {
         bundle: { patch: './cordis.patch.yml' },
         client: { platform: 'web' },
         profile: { bundles: [] },
@@ -1151,7 +1151,7 @@ describe('client bundle activation', () => {
   it('loads a renamed browser export at the logical URL without exposing Node bundles as chunks', async () => {
     const packageName = '@fixture/dual-client'
     const legacyPath = writePackage(packageName, {
-      dsh: { client: { platform: 'web' } },
+      ocean: { client: { platform: 'web' } },
       exports: {
         './client': {
           types: './lib/types/client/index.d.ts',
@@ -1321,7 +1321,7 @@ describe('shared module declarations', () => {
     const packageName = '@fixture/external-not-array'
     writeBuiltPackage(packageName, { external: 'react' })
     expect(() => construct([packageName]))
-      .toThrow(`client-modules: ${packageName} dsh.client.external must be a string array`)
+      .toThrow(`client-modules: ${packageName} ocean.client.external must be a string array`)
   })
 })
 
@@ -1397,7 +1397,7 @@ describe('package manifest refresh', () => {
   }
   const clientManifest = (client: Record<string, unknown>, clientExport = './lib/client.js'): Record<string, unknown> => ({
     exports: { './client': clientExport, './package.json': './package.json' },
-    dsh: { client: { platform: 'web', ...client } },
+    ocean: { client: { platform: 'web', ...client } },
   })
 
   it('publishes a reinstalled declaration when its Loader entry restarts, and nothing for an unchanged restart', async () => {

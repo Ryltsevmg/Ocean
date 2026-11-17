@@ -97,7 +97,7 @@ describe('web e2e: assistant IconActions wait for the turn to end', () => {
     }
     let overridePath: string | undefined
     if (buildOverride !== undefined) {
-      sidecarDir = await mkdtemp(join(tmpdir(), 'dsh-web-e2e-sidecar-'))
+      sidecarDir = await mkdtemp(join(tmpdir(), 'ocean-web-e2e-sidecar-'))
       overridePath = join(sidecarDir, 'replay.override.json')
       await writeFile(overridePath, JSON.stringify(buildOverride(sidecarDir)))
     }

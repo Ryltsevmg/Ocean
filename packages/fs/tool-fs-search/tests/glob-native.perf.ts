@@ -31,7 +31,7 @@ async function measure(): Promise<void> {
     ? ToolFsSearch
     : await import(pathToFileURL(resolve(values.plugin)).href) as typeof ToolFsSearch
   const temporary = values.workspace === undefined
-  const root = values.workspace === undefined ? await mkdtemp(join(tmpdir(), 'dsh-native-glob-perf-')) : resolve(values.workspace)
+  const root = values.workspace === undefined ? await mkdtemp(join(tmpdir(), 'ocean-native-glob-perf-')) : resolve(values.workspace)
   const ctx = new Context()
   try {
     if (temporary) {

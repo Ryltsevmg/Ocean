@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-使用 `dsh-fs-local` 可在宿主上读取、列出、监听、写入、编辑、打补丁、删除和移动文件。相对路径使用可配置的基准目录；绝对路径和父目录遍历不受限制。别名共享身份。可选防护拒绝陈旧版本，文本发布保留权限。移动还可应用 hunk，并分别报告已发布目标与源删除。需要约束变更时使用 `fs-sandbox`。
+使用 `ocean-fs-local` 可在宿主上读取、列出、监听、写入、编辑、打补丁、删除和移动文件。相对路径使用可配置的基准目录；绝对路径和父目录遍历不受限制。别名共享身份。可选防护拒绝陈旧版本，文本发布保留权限。移动还可应用 hunk，并分别报告已发布目标与源删除。需要约束变更时使用 `fs-sandbox`。
 
 ## 目录
 
@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-当组合需要由真实宿主文件系统支撑的 `ctx.fs`、且可以接受进程本地实现时，挂载此后端。常用路径是显式的：加载后端、给出基准目录，然后面向模型的工具（`dsh-tool-fs`）或你自己的插件即可读取、写入和编辑文件。
+当组合需要由真实宿主文件系统支撑的 `ctx.fs`、且可以接受进程本地实现时，挂载此后端。常用路径是显式的：加载后端、给出基准目录，然后面向模型的工具（`ocean-tool-fs`）或你自己的插件即可读取、写入和编辑文件。
 
 ### 何时选择
 
@@ -52,7 +52,7 @@ kind: "package-reference"
 
 完整或流式读取普通 UTF-8 文件、读取有界字节，并列出一层目录。写入、字面量编辑、补丁和删除按目标串行化。移动按字典序锁定两端。`patchText` 在调用 `applyHunks` 前检查版本；`deleteFile` 只删除普通文件。源缺失使用 `FS_STALE_VERSION`，hunk 不匹配使用 `FS_PATCH_MISMATCH`，移动两端相同使用 `FS_SAME_TARGET`。
 
-补丁与移动的文本在内存中规范化为 LF，写回时还原源文件的行尾风格；结果文本使用 LF。删除基线和被覆盖目标的基线遵循 `diffBasisMaxBytes`。移动在暂存目标前检查取消，随后完成两个效果；源删除失败返回已发布目标及 `sourceDeleted: false`。原子写入失败时，目录或临时目录创建被拒绝映射为 `FS_PERMISSION_DENIED`，其他 Node I/O 错误映射为 `FS_IO_ERROR`。解析、元数据、读取与目录列表失败经由 `dsh-fs` 的 `fsErrorFromErrno` 分类，因此每个 errno 都变为 `FsError` 错误码；不带 errno 码的抛出值属于缺陷，原样传播。
+补丁与移动的文本在内存中规范化为 LF，写回时还原源文件的行尾风格；结果文本使用 LF。删除基线和被覆盖目标的基线遵循 `diffBasisMaxBytes`。移动在暂存目标前检查取消，随后完成两个效果；源删除失败返回已发布目标及 `sourceDeleted: false`。原子写入失败时，目录或临时目录创建被拒绝映射为 `FS_PERMISSION_DENIED`，其他 Node I/O 错误映射为 `FS_IO_ERROR`。解析、元数据、读取与目录列表失败经由 `ocean-fs` 的 `fsErrorFromErrno` 分类，因此每个 errno 都变为 `FsError` 错误码；不带 errno 码的抛出值属于缺陷，原样传播。
 
 读取、列出与变更操作的失败是携带稳定错误码的类型化 `FsError`——`FS_NOT_FOUND`、`FS_NOT_TEXT`（二进制内容）、`FS_STALE_VERSION`（自观察以来已变化）、`FS_EDIT_NOT_FOUND` 或 `FS_AMBIGUOUS_EDIT`（无唯一字面量匹配）等——因此调用方依据错误码分支，绝不解析消息文本。编辑遇到缺失目标时，无论是否提供版本防护，都报告 `FS_STALE_VERSION`。
 
@@ -106,7 +106,7 @@ Chokidar 通过 OS 事件观察单个文件或目录的直接子项，不使用�
 当包级约定不够用时阅读以下页面。它们从约定逐步进入相邻的后端、工具与策略。
 
 - [文件系统子系统](../../../docs/subsystems/filesystem.zh.md)——穷尽式提供方约定、策略事件与错误分类体系。
-- [dsh-fs](../fs/README.zh.md)——本后端实现的 `ctx.fs` 约定。
+- [ocean-fs](../fs/README.zh.md)——本后端实现的 `ctx.fs` 约定。
 - [fs-sandbox](../fs-sandbox/README.zh.md)——扩展本后端的沙箱强制后端。
 - [tool-fs](../tool-fs/README.zh.md)——消费 `ctx.fs` 的面向模型工具。
 - [fs-observation-policy](../fs-observation-policy/README.zh.md)——通过 `fs/*` 事件防护变更的策略插件。
@@ -117,7 +117,7 @@ Chokidar 通过 OS 事件观察单个文件或目录的直接子项，不使用�
 <a id="model-experience"></a>
 ## 模型体验
 
-通过 `dsh-tool-fs` 间接产生影响；该消费方把本提供方带行窗口的 UTF-8 内容、变更确认与提供方消息原文渲染为有保留上限的结果，而版本、原子写入机制与目录元数据仍属内部细节。
+通过 `ocean-tool-fs` 间接产生影响；该消费方把本提供方带行窗口的 UTF-8 内容、变更确认与提供方消息原文渲染为有保留上限的结果，而版本、原子写入机制与目录元数据仍属内部细节。
 
 #### KV Cache 影响
 

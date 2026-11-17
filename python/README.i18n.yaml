@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write python/README.md
 /ocean-python-sdk:
-  en: 770a0de3ff511a0d
-  zh: 64c5bfd25ce2de71
+  en: c7da6ac1f058fce0
+  zh: 9b513651235d44a1
 /ocean-python-sdk/packages:
-  en: 485e9978ed4f6dee
-  zh: fccda14b1b84cecf
+  en: 89be0b768a56a39a
+  zh: 00ad04d18481995a
 /ocean-python-sdk/behavior:
-  en: 48d1ed17f4c4993e
-  zh: 5fbec37171b75517
+  en: 3c2f8887b14ccdd2
+  zh: 62368a6f7b75816b
 /ocean-python-sdk/contributor-workflows:
-  en: 292b8aab762f515a
-  zh: 93da3d5c6af97d70
+  en: e6a6f84a80e0ef9d
+  zh: c11c66c468ba006a

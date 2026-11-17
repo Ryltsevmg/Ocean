@@ -26,7 +26,7 @@ afterEach(async () => {
 })
 
 async function store(task: unknown, version = 1) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-evolution-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-evolution-'))
   roots.push(root)
   const file = join(root, 'schedule.json')
   const bytes = JSON.stringify({ unit: { name: 'schedule', version }, global: null, tables: { tasks: { [id]: task } } }, null, 2)

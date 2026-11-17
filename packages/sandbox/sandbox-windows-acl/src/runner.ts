@@ -154,7 +154,7 @@ async function main(): Promise<number> {
         privateTempSid = tempWriteSid(privateTempDir)
         if (parsed.tempWriteSid !== privateTempSid) fail('--temp-write-sid does not match --temp')
       } else {
-        ownedTempDir = mkdtempSync(join(parsed.temp, 'dsh-'))
+        ownedTempDir = mkdtempSync(join(parsed.temp, 'ocean-'))
         privateTempDir = ownedTempDir
         privateTempSid = tempWriteSid(privateTempDir)
       }

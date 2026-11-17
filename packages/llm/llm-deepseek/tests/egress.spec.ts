@@ -42,8 +42,8 @@ import * as LlmDeepSeek from '@ocean/ocean-llm-deepseek-api-key'
 
 let home: string
 beforeAll(() => {
-  home = mkdtempSync(join(tmpdir(), 'dsh-deepseek-egress-'))
-  vi.stubEnv('DSH_HOME', home)
+  home = mkdtempSync(join(tmpdir(), 'ocean-deepseek-egress-'))
+  vi.stubEnv('OCEAN_HOME', home)
   vi.stubEnv('DEEPSEEK_API_KEY', 'probe-key')
 })
 afterAll(() => {

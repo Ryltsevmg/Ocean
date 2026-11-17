@@ -190,7 +190,7 @@ async function launchScrollWorld(options: ScrollWorldOptions): Promise<ScrollWor
   let page: Page | undefined
   try {
     if (options.replay !== undefined) {
-      replayDir = await mkdtemp(join(tmpdir(), 'dsh-chat-scroll-replay-'))
+      replayDir = await mkdtemp(join(tmpdir(), 'ocean-chat-scroll-replay-'))
       const replayOverride = join(replayDir, 'replay.override.json')
       await writeFile(replayOverride, JSON.stringify(options.replay))
       scaffold = await launchWebScaffold({
@@ -767,7 +767,7 @@ describe('web e2e: long Chat scroll contract', () => {
           let raceApplied = false
           let closingHeight: number | undefined
           const markGrowth = (): void => { ordinaryGrowth = true }
-          host.addEventListener('dsh-test-fold-growth', markGrowth)
+          host.addEventListener('ocean-test-fold-growth', markGrowth)
           const stepPosition = (): number | null => {
             if (visibleStep === undefined || !visibleStep.isConnected || visibleStep.closest('[hidden]') !== null) return null
             const rect = visibleStep.getBoundingClientRect()
@@ -813,9 +813,9 @@ describe('web e2e: long Chat scroll contract', () => {
               composerTop: host.querySelector<HTMLElement>('[data-composer-seat]')!.getBoundingClientRect().top })
           }
           const tick = (): void => { sample(); frame = requestAnimationFrame(tick) }
-          host.addEventListener('dsh-test-fold-stop', () => {
+          host.addEventListener('ocean-test-fold-stop', () => {
             cancelAnimationFrame(frame); sample()
-            host.removeEventListener('dsh-test-fold-growth', markGrowth)
+            host.removeEventListener('ocean-test-fold-growth', markGrowth)
             host.removeAttribute('data-fold-race-applied')
             host.removeAttribute('data-fold-probe-ready'); resolveTrace(samples)
           }, { once: true })
@@ -866,7 +866,7 @@ describe('web e2e: long Chat scroll contract', () => {
               requestAnimationFrame(check)
             })
           })
-          await page.locator('[data-conversation-scroll]').evaluate(host => host.dispatchEvent(new Event('dsh-test-fold-growth')))
+          await page.locator('[data-conversation-scroll]').evaluate(host => host.dispatchEvent(new Event('ocean-test-fold-growth')))
           promptGate.resolve(undefined)
           await maintenance
           release()
@@ -878,7 +878,7 @@ describe('web e2e: long Chat scroll contract', () => {
           promptGate.resolve(undefined)
           await maintenance
           release()
-          await page.locator('[data-conversation-scroll]').evaluate(host => host.dispatchEvent(new Event('dsh-test-fold-stop')))
+          await page.locator('[data-conversation-scroll]').evaluate(host => host.dispatchEvent(new Event('ocean-test-fold-stop')))
           samples = await trace
           finishGate.resolve(undefined)
           holdFinish()
@@ -1138,7 +1138,7 @@ describe('web e2e: long Chat scroll contract', () => {
           const finish = (): void => {
             cancelAnimationFrame(frame)
             window.clearTimeout(timer)
-            document.removeEventListener('dsh-test-return-stop', finish)
+            document.removeEventListener('ocean-test-return-stop', finish)
             document.documentElement.dataset.returnProbe = 'done'
             resolve(samples)
           }
@@ -1174,7 +1174,7 @@ describe('web e2e: long Chat scroll contract', () => {
           }
           // A zero-delay task samples after this frame's animation callbacks, including native scrolling.
           const tick = (): void => { timer = window.setTimeout(sample, 0) }
-          document.addEventListener('dsh-test-return-stop', finish, { once: true })
+          document.addEventListener('ocean-test-return-stop', finish, { once: true })
           document.documentElement.dataset.returnProbe = 'ready'
           frame = requestAnimationFrame(tick)
         }), { marker, identity: 'CHAT_SCROLL_RETURN_A_' })
@@ -1183,7 +1183,7 @@ describe('web e2e: long Chat scroll contract', () => {
           await result.click()
           await page.locator('html[data-return-probe="done"]').waitFor({ timeout: 15_000 })
         } finally {
-          await page.evaluate(() => { document.dispatchEvent(new Event('dsh-test-return-stop')) })
+          await page.evaluate(() => { document.dispatchEvent(new Event('ocean-test-return-stop')) })
           await trace
           await page.evaluate(() => { delete document.documentElement.dataset.returnProbe })
         }
@@ -1334,7 +1334,7 @@ describe('web e2e: long Chat scroll contract', () => {
           for (const contentWidth of [901, 900, 899, 901]) {
             await frame.evaluate((element, { clearance, contentWidth }) => {
               element.style.width = `${contentWidth + 2 * (clearance + 16)}px`
-              element.style.setProperty('--dsh-composer-side-clearance', `${clearance}px`)
+              element.style.setProperty('--ocean-composer-side-clearance', `${clearance}px`)
             }, { clearance, contentWidth })
             await expect.poll(() => rail.isVisible()).toBe(contentWidth > 900)
           }

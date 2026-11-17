@@ -6,26 +6,26 @@
   en: 706845526cca8ee3
   zh: 8807cb31259da85a
 /ocean-ocean-mcp-manager:
-  en: c781b9d09c940242
-  zh: 0d0efb5a47ea70fa
+  en: 9ba03d18cad916c9
+  zh: 87f8bebd161677a3
 /ocean-ocean-mcp-manager/summary:
-  en: d2b26c63ca0e837b
-  zh: ea377b20252a0fbe
+  en: d90f6b90f3873d31
+  zh: 0bdbf5be44277016
 /ocean-ocean-mcp-manager/table-of-contents:
   en: d152484eb41ac6b4
   zh: f14f34fce35a8d90
 /ocean-ocean-mcp-manager/use-this-package:
-  en: f36f5244cd0b34f9
-  zh: a9df08b327869f1d
+  en: 9d3f0c58fc630587
+  zh: 53114085d22c6fac
 /ocean-ocean-mcp-manager/use-this-package/when-to-choose-it:
-  en: 5a005b1ef5f53881
-  zh: d8bae243d10b2da5
+  en: fbdd087eeb95b74b
+  zh: 1c5aa62aeb1e1417
 /ocean-ocean-mcp-manager/use-this-package/minimal-configuration:
-  en: fd747997be8e2af4
-  zh: acffeba069382f40
+  en: f1d3f368bba48fdf
+  zh: a80e28e448ae7762
 /ocean-ocean-mcp-manager/use-this-package/managing-configured-servers:
-  en: 765209b5639c4be2
-  zh: 48211813d2d25afc
+  en: da3ad7a721d6a504
+  zh: 53355121987f15e3
 /ocean-ocean-mcp-manager/use-this-package/registering-a-server-from-a-plugin:
   en: 313bcb35b12be8e1
   zh: a85f75db6b138547
@@ -33,8 +33,8 @@
   en: 1aab15d93a450282
   zh: 2c3a04ab964db576
 /ocean-ocean-mcp-manager/use-this-package/remote-operations:
-  en: 38be117d2c122c61
-  zh: 3a0bffa9a708fdc4
+  en: dc467c6ad19b4fea
+  zh: 1596279290eb238f
 /ocean-ocean-mcp-manager/understand-the-implementation:
   en: 8a74186fa5bfe79d
   zh: c7c952876ca2992b
@@ -48,11 +48,11 @@
   en: 22a062b31ef64262
   zh: db244dae206d56fc
 /ocean-ocean-mcp-manager/further-exploration:
-  en: f2ae795d9433f490
-  zh: 329b5cd15d3adc9b
+  en: c86603385494e38a
+  zh: 6fb61684f610fb70
 /ocean-ocean-mcp-manager/model-experience:
-  en: 622033747c4c0066
-  zh: 821213fd61a98105
+  en: 7811680f4e9a2f35
+  zh: 181f0863d3116e68
 /ocean-ocean-mcp-manager/model-experience/kv-cache-effect:
   en: 7a8d0bf11425040b
   zh: b39181f89ba4fbe8

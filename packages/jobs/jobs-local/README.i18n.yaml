@@ -6,23 +6,23 @@
   en: 0abe764a4bc3e3db
   zh: 280ff3a1c1a8bc5c
 /ocean-ocean-jobs-local:
-  en: a2e2b63c2bb76583
-  zh: e43e7d3ca621e68a
+  en: 6a18c4af4d3e5151
+  zh: 9f432bc8fdec4e57
 /ocean-ocean-jobs-local/summary:
-  en: b76227a7ed290b11
-  zh: 866fd04f48303a89
+  en: b8c6c0bb9e425113
+  zh: 9d6b8ce73d6d1706
 /ocean-ocean-jobs-local/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-jobs-local/use-this-package:
-  en: e0e242161dda0c28
-  zh: 30c058b5a3d1cc56
+  en: fa2f8480c2ca14e6
+  zh: 08c77fb8257aaaf6
 /ocean-ocean-jobs-local/use-this-package/when-to-choose-it:
   en: 17479310883edc0a
   zh: f1cea41c704dabe2
 /ocean-ocean-jobs-local/use-this-package/minimal-configuration:
-  en: 561b8c6d82f88f68
-  zh: f5a7fdeb7f887b32
+  en: 538825dd191dede8
+  zh: c6cf97f7b408c8e0
 /ocean-ocean-jobs-local/use-this-package/what-each-owner-gets:
   en: 9ab66aa770694092
   zh: 38de930bcfbc132c
@@ -30,11 +30,11 @@
   en: 91dd372f742dcdb8
   zh: 58eeee0254d33cd1
 /ocean-ocean-jobs-local/use-this-package/session-timing-records:
-  en: ae926795d8aaa88f
-  zh: 0e6ec0265eefccf7
+  en: e7e12ca8c0d1b9d7
+  zh: 707514635bff6692
 /ocean-ocean-jobs-local/use-this-package/what-can-go-wrong:
-  en: 5600eb21a76970ee
-  zh: 66bf8fab3f380115
+  en: 4e50b1e2b8a48d83
+  zh: 1e90e93540be2904
 /ocean-ocean-jobs-local/understand-the-implementation:
   en: f782557ca8da3138
   zh: e8f0082b9692cacc
@@ -48,17 +48,17 @@
   en: 2c53e11a60965985
   zh: 63adc1628c71e62e
 /ocean-ocean-jobs-local/understand-the-implementation/admission-and-settlement:
-  en: b9634939c81b46cb
-  zh: a18f90caf7c61e87
+  en: fc5066857ff37b3a
+  zh: d486a055149ecdbd
 /ocean-ocean-jobs-local/understand-the-implementation/teardown:
   en: 49e8bd5e2c1f6ffd
   zh: ad3e1aa712fd59b3
 /ocean-ocean-jobs-local/further-exploration:
-  en: c15a7d5917bfe6cf
-  zh: e355df4fc3aa3ebb
+  en: c1e735180df44485
+  zh: b7fe250d11f1030e
 /ocean-ocean-jobs-local/model-experience:
-  en: 873ef364fc8d6f2f
-  zh: 4d0bb38a9c9639c0
+  en: 68a3235908d98422
+  zh: 414943a11f1dd1e6
 /ocean-ocean-jobs-local/model-experience/kv-cache-effect:
   en: e290ccc9b3c92c08
   zh: d75d48f485447a74

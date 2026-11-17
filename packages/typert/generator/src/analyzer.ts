@@ -2937,9 +2937,9 @@ function hasPackageSurface(model: PackageModel): boolean {
 }
 
 function isDualFacePackage(manifest: Record<string, unknown>): boolean {
-  const dsh = manifest.dsh
-  const client = dsh !== null && typeof dsh === 'object'
-    ? (dsh as Record<string, unknown>).client
+  const ocean = manifest.ocean
+  const client = ocean !== null && typeof ocean === 'object'
+    ? (ocean as Record<string, unknown>).client
     : undefined
   return client !== null
     && typeof client === 'object'
@@ -3202,7 +3202,7 @@ function stringLiteralValue(node: ts.Node | undefined): string | undefined {
 }
 
 function isRemoteSegment(value: string): boolean {
-  // Generation bootstraps workspace artifacts before dsh-typert-protocol is built,
+  // Generation bootstraps workspace artifacts before ocean-typert-protocol is built,
   // so this extraction-only copy must mirror isTypertRemoteSegment().
   return value !== '.' && value !== '..' && /^[A-Za-z0-9_$.-]+$/.test(value)
 }

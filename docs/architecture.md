@@ -6,32 +6,32 @@ Read this before changing anything under `packages/`. It assumes you know Cordis
 
 ## Cordis
 
-[Cordis](cordis-primer.md) plugins contribute services, typed events, and reversible effects to dsh's shared context. Every product component—including model adapters, tool registries, session logs, and agent loops—is a configuration-replaceable plugin.
+[Cordis](cordis-primer.md) plugins contribute services, typed events, and reversible effects to ocean's shared context. Every product component—including model adapters, tool registries, session logs, and agent loops—is a configuration-replaceable plugin.
 
-Extend dsh by mounting plugins, not patching a privileged core. Registrations unwind when their plugin unloads.
+Extend ocean by mounting plugins, not patching a privileged core. Registrations unwind when their plugin unloads.
 
 ## Profiles and bundles
 
-A running `dsh` is a plugin tree composed at boot from ordered layers.
+A running `ocean` is a plugin tree composed at boot from ordered layers.
 
 A **profile** is a named composition in the Harness home: ordered bundles, installed out-of-tree plugins, and user `cordis.patch.yml`. Templates include `web`, `headless`, `sdk`, `sdk-minimal`, and `acp`.
 
 A **bundle** distributes Cordis config rows and their code; higher layers can patch its entries.
 
-Their `package.json` declarations use `dsh.profile` to list profile bundles and `dsh.bundle` to locate a bundle's patch file.
+Their `package.json` declarations use `ocean.profile` to list profile bundles and `ocean.bundle` to locate a bundle's patch file.
 
-[`dsh-base`](../packages/bundle/base/README.md) is the shared first layer of the `web`, `headless`, `sdk`, and `acp` profiles: model adapters, tools, persistence, sandbox and approval policy, settings, credentials, telemetry. [`dsh-web-app`](../packages/bundle/web-app/README.md) adds the browser application, [`dsh-headless`](../packages/bundle/headless/README.md) adds a one-shot runner with no server, [`dsh-sdk-app`](../packages/bundle/sdk-app/README.md) adds the SDK JSON-RPC server, and [`dsh-acp-app`](../packages/bundle/acp-app/README.md) adds the automation-only ACP server. [`dsh-sdk-minimal`](../packages/bundle/sdk-minimal/README.md) is the deliberate exception: one bundle owns its complete explicit SDK tree and does not apply `dsh-base`.
+[`ocean-base`](../packages/bundle/base/README.md) is the shared first layer of the `web`, `headless`, `sdk`, and `acp` profiles: model adapters, tools, persistence, sandbox and approval policy, settings, credentials, telemetry. [`ocean-web-app`](../packages/bundle/web-app/README.md) adds the browser application, [`ocean-headless`](../packages/bundle/headless/README.md) adds a one-shot runner with no server, [`ocean-sdk-app`](../packages/bundle/sdk-app/README.md) adds the SDK JSON-RPC server, and [`ocean-acp-app`](../packages/bundle/acp-app/README.md) adds the automation-only ACP server. [`ocean-sdk-minimal`](../packages/bundle/sdk-minimal/README.md) is the deliberate exception: one bundle owns its complete explicit SDK tree and does not apply `ocean-base`.
 
 Layers apply to an empty entry list: the profile's ordered bundles, its `cordis.patch.yml`, the home patch, then `--patch` overlays. A patch targets a row by id and replaces its whole config, or inserts new rows. A `preset` patch applies these operations inside that declaration’s `config.plugins`, with the same layer precedence.
 
-YAML controls HMR: base enables config-only `dsh-hmr`; headless, SDK and ACP disable it; `sdk-minimal` omits it. Profile patches override these defaults. HMR coordinates watching and reloads; the launcher provides profile data and readiness.
+YAML controls HMR: base enables config-only `ocean-hmr`; headless, SDK and ACP disable it; `sdk-minimal` omits it. Profile patches override these defaults. HMR coordinates watching and reloads; the launcher provides profile data and readiness.
 
 Base includes [Plugin Manager](../packages/boot/plugin-manager/README.md) for Web and agents.
 
 To see the tree your machine boots:
 
 ```sh
-dsh --profile web --dump-config
+ocean --profile web --dump-config
 ```
 
 Any row it prints can be replaced by a patch of your own.
@@ -40,15 +40,15 @@ Composition mechanics are in [app-boot](../packages/boot/app-boot/README.md#prof
 
 ## Application launch
 
-Supported Node applications launch through named `dsh` profiles. The shipped profiles are `web`, `headless`, `sdk`, `sdk-minimal`, and `acp`, selected with `dsh --profile <name>` or `dsh <name>`. `plugin` names the management command; a profile with that name requires `--profile plugin`. The TypeScript SDK resolves its same-version `dsh` dependency and selects `sdk`; custom plugin composition remains a profile plus ordered patch files, not another executable or inline application tree. `sdk-minimal` is a repository-owned standalone bundle behind the same launcher, not a caller-supplied Cordis tree.
+Supported Node applications launch through named `ocean` profiles. The shipped profiles are `web`, `headless`, `sdk`, `sdk-minimal`, and `acp`, selected with `ocean --profile <name>` or `ocean <name>`. `plugin` names the management command; a profile with that name requires `--profile plugin`. The TypeScript SDK resolves its same-version `ocean` dependency and selects `sdk`; custom plugin composition remains a profile plus ordered patch files, not another executable or inline application tree. `sdk-minimal` is a repository-owned standalone bundle behind the same launcher, not a caller-supplied Cordis tree.
 
-Vendored CLIs, build-only and test-only executables, and direct in-process plugin mounting are not Harness application launchers. [`verify-application-entrypoints`](../scripts/verify-application-entrypoints.ts) keeps every package bin, executable source, root demo, and the root `start:web` and `dev:web` scripts in an explicit class and rejects a Node application path that bypasses `dsh`.
+Vendored CLIs, build-only and test-only executables, and direct in-process plugin mounting are not Harness application launchers. [`verify-application-entrypoints`](../scripts/verify-application-entrypoints.ts) keeps every package bin, executable source, root demo, and the root `start:web` and `dev:web` scripts in an explicit class and rejects a Node application path that bypasses `ocean`.
 
-The Python SDK follows the same application architecture. Its runtime wheel packages the normal `dsh` CLI as `deepseek-harness-sdk-runtime-<platform>-<arch>`, and the client launches `dsh --profile sdk` with an explicit Harness home by default. The minimal example selects the shipped `sdk-minimal` profile. Python exposes profile selection and ordered patch files rather than a complete Cordis tree; persistent external plugins are installed through `dsh plugin`. The removed private direct-config carrier has no compatibility bin or fallback parser.
+The Python SDK follows the same application architecture. Its runtime wheel packages the normal `ocean` CLI as `deepseek-harness-sdk-runtime-<platform>-<arch>`, and the client launches `ocean --profile sdk` with an explicit Harness home by default. The minimal example selects the shipped `sdk-minimal` profile. Python exposes profile selection and ordered patch files rather than a complete Cordis tree; persistent external plugins are installed through `ocean plugin`. The removed private direct-config carrier has no compatibility bin or fallback parser.
 
 ## Desktop application
 
-The [Electron desktop application](../apps/desktop/README.md) ships its exact dsh production runtime in signed resources and owns the reserved `$DSH_HOME/profiles/desktop`. Shared helpers initialize profile files, reconcile bundles, and resolve installation and bundle dependencies without replacing pnpm-owned packages. Desktop and npm CLI share product data but keep packages, activation, and lockfiles separate. Desktop’s bundled CLI manages its initialized plugins.
+The [Electron desktop application](../apps/desktop/README.md) ships its exact ocean production runtime in signed resources and owns the reserved `$OCEAN_HOME/profiles/desktop`. Shared helpers initialize profile files, reconcile bundles, and resolve installation and bundle dependencies without replacing pnpm-owned packages. Desktop and npm CLI share product data but keep packages, activation, and lockfiles separate. Desktop’s bundled CLI manages its initialized plugins.
 
 Electron starts the private Desktop Host in Electron Node mode. The Host invokes the shared CLI profile runner and complete Web application. The window immediately loads packaged Web assets and waits for boot injections before activating client plugins in the same document. Web owns RPC and streams; the desktop carrier connects the local page to the authenticated Host. Node IPC carries boot injections, readiness, fatal errors, and shutdown. Desktop listens on an OS-assigned port by default; profile configuration can override it. Shell-owned UI runs plugin transactions through bundled pnpm with normal user and profile configuration.
 
@@ -131,7 +131,7 @@ Session consumers know only the current logical format. Header-only `stat` and `
 
 **Model-visible means logged.** Every model request must be reconstructable from the log. New model-visible inputs require session events. Plugins changing existing message content register [pure message projections](subsystems/session.md#plugin-owned-message-projections); detached readers supply the same definitions explicitly. Tool changes are capability-independent; [Session tool history](../packages/core/session/README.md) supplies provider declarations.
 
-**Projection seam.** `dsh-session-projection` owns `ctx.sessionProjections`: registered units fold committed events; carriers read selected client views through `snapshot()`. Domain services await registration, retain private handles, and expose business methods ([registration lifecycle](../packages/session/session-projection/README.md)). `AgentRegistry` exposes turn and step state through `turnBoundaryOf(session)`. `AgentLoop` owns `modelSelection` and inbox state ([loop lifecycle](../packages/core/agent-loop/README.md)).
+**Projection seam.** `ocean-session-projection` owns `ctx.sessionProjections`: registered units fold committed events; carriers read selected client views through `snapshot()`. Domain services await registration, retain private handles, and expose business methods ([registration lifecycle](../packages/session/session-projection/README.md)). `AgentRegistry` exposes turn and step state through `turnBoundaryOf(session)`. `AgentLoop` owns `modelSelection` and inbox state ([loop lifecycle](../packages/core/agent-loop/README.md)).
 
 [Working directories](subsystems/working-directory.md) supply user context and execution paths without changing original project identity, sandbox write roots, or existing process directories.
 

@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-mcp-client` 让模型使用外部 MCP（Model Context Protocol）服务器的工具与资源。每台服务器配置一条记录；其工具使用 `mcp__github__create_issue` 这样的名称。默认不启用任何服务器。随附 profile 已提供[共享资源发现与读取](../mcp-resources/README.zh.md)。调用方作用域为空时，不添加 MCP 工具或提示词文本。服务器指令作为字面文本加入已记录的系统提示词；MCP 提示词模板不受支持。缓慢或崩溃的服务器可能延迟启动，或让调用失败直至恢复。
+`ocean-mcp-client` 让模型使用外部 MCP（Model Context Protocol）服务器的工具与资源。每台服务器配置一条记录；其工具使用 `mcp__github__create_issue` 这样的名称。默认不启用任何服务器。随附 profile 已提供[共享资源发现与读取](../mcp-resources/README.zh.md)。调用方作用域为空时，不添加 MCP 工具或提示词文本。服务器指令作为字面文本加入已记录的系统提示词；MCP 提示词模板不受支持。缓慢或崩溃的服务器可能延迟启动，或让调用失败直至恢复。
 
 ## 目录
 
@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-当模型需要像调用原生工具一样调用外部 MCP 服务器时，添加 `dsh-mcp-client`。为每台服务器指定唯一名称和传输方式。官方 SDK 优先选择可用的 2026-07-28 协议，并回退到支持的旧版协议。本地程序使用 stdio，远端服务使用 Streamable HTTP；stdio 协商会先启动临时探测进程，再启动实际服务进程。
+当模型需要像调用原生工具一样调用外部 MCP 服务器时，添加 `ocean-mcp-client`。为每台服务器指定唯一名称和传输方式。官方 SDK 优先选择可用的 2026-07-28 协议，并回退到支持的旧版协议。本地程序使用 stdio，远端服务使用 Streamable HTTP；stdio 协商会先启动临时探测进程，再启动实际服务进程。
 
 
 Streamable HTTP 重定向仅限配置端点的同源地址，但 SDK 允许一个例外：两个 URL 均使用默认端口时，同一主机名的 HTTP 可升级为 HTTPS。其他跨源重定向及 HTTPS 降级会在转发请求头或请求体之前被拒绝。同源 307/308 重定向保留原请求；会改变方法的 POST 重定向也会被拒绝。服务器迁移后，请确认最终端点并显式更新 `url`，不要依赖跨源重定向。TLS 验证保持启用。
@@ -149,7 +149,7 @@ Streamable HTTP 重定向仅限配置端点的同源地址，但 SDK 允许一�
 
 `apply` 解析重连策略、在当前注册作用域内预留 `serverName`、启动监督器，并等待初始连接加发现完成。独立 agent（智能体）作用域可以复用相同 namespace，因为其工具与传输彼此隔离；同一作用域内重复会在加载时失败。监督器把所有同步——初始、通知与重连——串行到同一条队列，因此两次同步绝不会交错执行各自的先 dispose 后注册交换。dispose 会取消待执行的重连、关闭协商中的传输或已绑定的客户端、等待进行中的尝试与排队同步完全停稳，然后注销当前世代。
 
-组合实例的管理器（如 `dsh-mcp-manager`）通过 `connectionStatusOf(fiber)` 观察单个实例。同一 Fiber 重载后句柄保持不变，dispose 后仍保留最终连接与清理结果；最终 dispose 会移除观察者。状态观察者可以在重载时销毁 Fiber；清理仍覆盖该轮连接尝试。`probeServer(ctx, config, options)` 测试服务器，不预留名称或注册工具。其 `timeoutMs` 共同约束模板解析、连接与列表查询，独立于运行时的 `startupTimeoutMs`；清理使用 `closeTimeoutMs`，并单独报告 `closeConfirmed`。传输关闭已确认时仍可能存在 `cleanupError`；关闭未确认或清理失败都会阻止替换。
+组合实例的管理器（如 `ocean-mcp-manager`）通过 `connectionStatusOf(fiber)` 观察单个实例。同一 Fiber 重载后句柄保持不变，dispose 后仍保留最终连接与清理结果；最终 dispose 会移除观察者。状态观察者可以在重载时销毁 Fiber；清理仍覆盖该轮连接尝试。`probeServer(ctx, config, options)` 测试服务器，不预留名称或注册工具。其 `timeoutMs` 共同约束模板解析、连接与列表查询，独立于运行时的 `startupTimeoutMs`；清理使用 `closeTimeoutMs`，并单独报告 `closeConfirmed`。传输关闭已确认时仍可能存在 `cleanupError`；关闭未确认或清理失败都会阻止替换。
 
 SDK 通过旧版通知或现代协议订阅接收工具列表变化。监督器将每次重新同步排队并重新发布已连接的工具数；获取失败时保留之前的注册代，注册冲突则回滚本次尝试并关闭连接，再按重连策略处理。每次故障共享一个尝试预算：连续失败达到 `maxAttempts` 后注销工具并停止重连；连接持续超过 `maxDelayMs` 则重置预算。
 
@@ -161,7 +161,7 @@ SDK 通过旧版通知或现代协议订阅接收工具列表变化。监督器�
 
 ### 环境清洗（stdio）
 
-子进程环境以子进程 seam 的 `scrubbedParentEnv()` 为基座——删除匹配 `/KEY|PASSWORD|SECRET|TOKEN/i` 的环境名称与所有 `DSH_*` 名称——再在其上合并配置的 `env`，因此显式覆盖得以保留。实际 spawn 由 MCP SDK 负责；本包共享清洗定义，而非 spawn 路径。
+子进程环境以子进程 seam 的 `scrubbedParentEnv()` 为基座——删除匹配 `/KEY|PASSWORD|SECRET|TOKEN/i` 的环境名称与所有 `OCEAN_*` 名称——再在其上合并配置的 `env`，因此显式覆盖得以保留。实际 spawn 由 MCP SDK 负责；本包共享清洗定义，而非 spawn 路径。
 
 </details>
 
@@ -247,7 +247,7 @@ SDK 通过旧版通知或现代协议订阅接收工具列表变化。监督器�
 本开发备注是维护者的工作上下文：开放设计问题与尚未决定的探索方向。它明确不具权威性——已交付行为、限制与既定理由以上文和包代码为准。
 
 - 公开名称算法是由测试固定的 v1 约定；发布后更改会破坏会话历史与权限规则。
-- 由 DSH 拥有的通知驱动重同步预算是开放的探索方向；配置后的 `startupTimeoutMs` 约束启动尝试，SDK 的 60 秒默认值约束重同步请求。
+- 由 OCEAN 拥有的通知驱动重同步预算是开放的探索方向；配置后的 `startupTimeoutMs` 约束启动尝试，SDK 的 60 秒默认值约束重同步请求。
 - MCP 提示词模板需要独立的用户选择和模板调用机制。
 - 固定的 MCP SDK 仍在演化；上游破坏性变更需要更新桥接。
 

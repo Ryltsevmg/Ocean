@@ -6,26 +6,26 @@
   en: 2d1caa2e6179218a
   zh: 0b51a5dbda727ffa
 /ocean-ocean-bash-sandbox:
-  en: b5c81872ab775695
-  zh: 677b843c0ca49047
+  en: 84945ce1c12d4393
+  zh: 59f363ad37a8227e
 /ocean-ocean-bash-sandbox/summary:
-  en: 37a0fcab18f972c0
-  zh: f7b4222e646e7050
+  en: 32385fcddf89c6ce
+  zh: de036c9d3cc669dc
 /ocean-ocean-bash-sandbox/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-bash-sandbox/use-this-package:
-  en: bd59d09bee36362c
-  zh: 7086c8268e7517d5
+  en: 793dc20d63ab7dfd
+  zh: fc488bed86818d05
 /ocean-ocean-bash-sandbox/use-this-package/when-to-choose-it:
-  en: af387f23325c1435
-  zh: 7a160aca5edd657e
+  en: c9517b2c320d1b72
+  zh: 7b4d13a58f972465
 /ocean-ocean-bash-sandbox/use-this-package/modes-and-file-effects:
   en: bc096fe6f8eb54cd
   zh: 1a3e3122ca40b0e5
 /ocean-ocean-bash-sandbox/use-this-package/minimal-configuration:
-  en: 66dd42fb2b16a407
-  zh: 4a41a05b368a4e9b
+  en: 23c9584343f7dc51
+  zh: e45c9c44d70fd44d
 /ocean-ocean-bash-sandbox/use-this-package/denials-are-result-facts:
   en: a10127c3fb2869ef
   zh: 17908b572ddb5507
@@ -36,8 +36,8 @@
   en: 05e2abe4a25886fd
   zh: 9240b331c45ac81e
 /ocean-ocean-bash-sandbox/understand-the-implementation/design-concept:
-  en: e1b1ac62e94ce535
-  zh: 5fa7a0353fbf777d
+  en: f345f893779ecac9
+  zh: 8dfc32d7c9cafe58
 /ocean-ocean-bash-sandbox/understand-the-implementation/source-map:
   en: 8963005b41bfc3c6
   zh: 7df1436563c10a19
@@ -48,8 +48,8 @@
   en: 0b6c6d7e216e1d23
   zh: 15f94cfccf4fa242
 /ocean-ocean-bash-sandbox/further-exploration:
-  en: 0e4585dbb92a0290
-  zh: 4f08980a15991c4c
+  en: c672e10429c6e619
+  zh: 41a7719e95bedff9
 /ocean-ocean-bash-sandbox/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -57,11 +57,11 @@
   en: 8e3df84fdcaeee60
   zh: 25ad519340c6c232
 /ocean-ocean-bash-sandbox/model-experience/bash-tool-schema-indirectly/what-the-model-sees:
-  en: 864f260de958ecec
-  zh: a98e94a90a08f874
+  en: 0b964deef2134ce5
+  zh: e5d22efe296d79ee
 /ocean-ocean-bash-sandbox/model-experience/bash-tool-schema-indirectly/token-effect:
-  en: 2278530f1f9e93b2
-  zh: 86e2a20746ce3f3c
+  en: 00893a3c761cd136
+  zh: 7a616e2e43cef502
 /ocean-ocean-bash-sandbox/model-experience/bash-tool-schema-indirectly/kv-cache-effect:
   en: d25d46a61dc2b0c1
   zh: e1deea6d70be4691

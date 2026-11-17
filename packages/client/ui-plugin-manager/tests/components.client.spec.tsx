@@ -36,7 +36,7 @@ const t = translate(en)
 
 function pkg(overrides: Partial<PackageView> = {}): PackageView {
   return {
-    name: 'dsh-better-sidebar',
+    name: 'ocean-better-sidebar',
     official: overrides.optional === true,
     availability: overrides.installed === false ? 'installation' : 'profile',
     version: '0.16.0',
@@ -50,10 +50,10 @@ function pkg(overrides: Partial<PackageView> = {}): PackageView {
 }
 
 function row(overrides: Partial<PackageRow> = {}): PackageRow {
-  return { entryId: 'include:sidebar' as PluginEntryId, rowId: 'sidebar', moduleName: 'dsh-better-sidebar', enabled: true, phase: 'active', ...overrides }
+  return { entryId: 'include:sidebar' as PluginEntryId, rowId: 'sidebar', moduleName: 'ocean-better-sidebar', enabled: true, phase: 'active', ...overrides }
 }
 
-const INCOMPATIBLE = { name: 'dsh-late', version: '2.0.0', runtimeVersion: '0.1.0', requirements: { '@ocean/ocean': '^0.2.0', '@ocean/ocean-core': '^0.2.0' } }
+const INCOMPATIBLE = { name: 'ocean-late', version: '2.0.0', runtimeVersion: '0.1.0', requirements: { '@ocean/ocean': '^0.2.0', '@ocean/ocean-core': '^0.2.0' } }
 /** The English sentence an incompatibility of {@link INCOMPATIBLE}, optionally renamed, reads as. */
 const incompatibleText = (name = INCOMPATIBLE.name): string => en.reasonIncompatibleVersion
   .replace('{plugin}', `${name}@2.0.0`).replace('{runtime}', '0.1.0').replace('{requirements}', '@ocean/ocean ^0.2.0, @ocean/ocean-core ^0.2.0')
@@ -149,7 +149,7 @@ function renderTab(
     loadDetail: vi.fn(),
     retryDetail: vi.fn(),
     detailImage: vi.fn((name: string, document: string, destination: string, _fromNpm: boolean) =>
-      `https://dsh.example/api/plugin-manager/detail-file?bundle=${name}&document=${document}&path=${destination}`),
+      `https://ocean.example/api/plugin-manager/detail-file?bundle=${name}&document=${document}&path=${destination}`),
   }
   const unusedStandardHook = (): never => { throw new Error('Plugin manager fixture does not provide global state') }
   const standard = {
@@ -234,9 +234,9 @@ describe('PluginManagerPage', () => {
         const tab = owner as PluginTabProps
         return (
           <>
-            <button type="button" onClick={() => { tab.install({ spec: 'dsh-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' }) }}>Extras install</button>
-            <button type="button" onClick={() => { tab.update({ packageName: 'dsh-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' }) }}>Extras update</button>
-            <button type="button" onClick={() => { tab.openPackage('dsh-better-sidebar') }}>Extras open</button>
+            <button type="button" onClick={() => { tab.install({ spec: 'ocean-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' }) }}>Extras install</button>
+            <button type="button" onClick={() => { tab.update({ packageName: 'ocean-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' }) }}>Extras update</button>
+            <button type="button" onClick={() => { tab.openPackage('ocean-better-sidebar') }}>Extras open</button>
           </>
         )
       },
@@ -254,12 +254,12 @@ describe('PluginManagerPage', () => {
     expect(document.querySelector('[data-plugin-group="bundles"]')).toBeNull()
     expect(screen.queryByRole('button', { name: en.refresh })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Extras install' }))
-    expect(actions.installFrom).toHaveBeenCalledWith({ spec: 'dsh-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' })
+    expect(actions.installFrom).toHaveBeenCalledWith({ spec: 'ocean-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' })
     fireEvent.click(screen.getByRole('button', { name: 'Extras update' }))
-    expect(actions.openGitUpdate).toHaveBeenCalledWith({ packageName: 'dsh-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' })
+    expect(actions.openGitUpdate).toHaveBeenCalledWith({ packageName: 'ocean-a', version: '1.1.0', spec: 'git+https://git.example/o/a.git#bbbbbbb' })
     fireEvent.click(screen.getByRole('button', { name: 'Extras open' }))
-    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'package', name: 'dsh-better-sidebar', returnTab: 'extras' } })
-    expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).not.toBeNull()
+    expect(navigation.getSnapshot()).toEqual({ tab: 'installed', view: { kind: 'package', name: 'ocean-better-sidebar', returnTab: 'extras' } })
+    expect(document.querySelector('[data-plugin-detail="ocean-better-sidebar"]')).not.toBeNull()
     // A detail page hides the tabs; its back button returns to the tab that opened it.
     expect(screen.queryByRole('tablist')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
@@ -281,7 +281,7 @@ describe('PluginManagerPage', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
     expect(screen.getByRole('tabpanel', { name: 'Extras' })).toBeTruthy()
     // Enable now publishes the new bundle's mark; the mark scrolls to a visible card and selects no page.
-    set({ highlight: 'dsh-better-sidebar' })
+    set({ highlight: 'ocean-better-sidebar' })
     expect(navigation.getSnapshot().tab).toBe('extras')
     expect(screen.getByRole('tabpanel', { name: 'Extras' })).toBeTruthy()
   })
@@ -332,18 +332,18 @@ describe('PluginManagerPage', () => {
   })
 
   it('keeps the opening tab through a row page opened from a bundle page', () => {
-    const { navigation, setTabs } = renderTab({ packages: [pkg({ rows: [row()] })] }, { rows: new Set(['dsh-better-sidebar#sidebar']) }, {
+    const { navigation, setTabs } = renderTab({ packages: [pkg({ rows: [row()] })] }, { rows: new Set(['ocean-better-sidebar#sidebar']) }, {
       'plugins.tab:extras': (_view, owner) => (
-        <button type="button" onClick={() => { (owner as PluginTabProps).openPackage('dsh-better-sidebar') }}>Extras open</button>
+        <button type="button" onClick={() => { (owner as PluginTabProps).openPackage('ocean-better-sidebar') }}>Extras open</button>
       ),
-      'plugins.row.config:dsh-better-sidebar#sidebar': view => view === 'summary' ? 'Config summary' : <form aria-label="row settings" />,
+      'plugins.row.config:ocean-better-sidebar#sidebar': view => view === 'summary' ? 'Config summary' : <form aria-label="row settings" />,
     }, {}, [{ id: 'extras', label: 'Extras' }])
     fireEvent.click(screen.getByRole('tab', { name: 'Extras' }))
     fireEvent.click(screen.getByRole('button', { name: 'Extras open' }))
-    fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'dsh-better-sidebar') }))
-    expect(navigation.getSnapshot().view).toEqual({ kind: 'row', name: 'dsh-better-sidebar', rowId: 'sidebar', returnTab: 'extras' })
-    fireEvent.click(screen.getByRole('button', { name: en.backToPackage.replace('{name}', 'dsh-better-sidebar') }))
-    expect(navigation.getSnapshot().view).toEqual({ kind: 'package', name: 'dsh-better-sidebar', returnTab: 'extras' })
+    fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'ocean-better-sidebar') }))
+    expect(navigation.getSnapshot().view).toEqual({ kind: 'row', name: 'ocean-better-sidebar', rowId: 'sidebar', returnTab: 'extras' })
+    fireEvent.click(screen.getByRole('button', { name: en.backToPackage.replace('{name}', 'ocean-better-sidebar') }))
+    expect(navigation.getSnapshot().view).toEqual({ kind: 'package', name: 'ocean-better-sidebar', returnTab: 'extras' })
     fireEvent.click(screen.getByRole('button', { name: en.backToList }))
     expect(navigation.getSnapshot()).toEqual({ tab: 'extras', view: { kind: 'list' } })
     // A calling tab that left the ledger while the page was open falls back to Installed.
@@ -355,22 +355,22 @@ describe('PluginManagerPage', () => {
   })
 
   it('shows a confirmed version by name above its spec, as a check and a refusal with retry, without the spec form or another registry', () => {
-    const confirmed: InstallState = { ...IDLE_INSTALL, open: true, spec: 'dsh-a@1.0.0', confirmed: { title: 'Alpha', version: '1.0.0' }, registries: REGISTRIES }
+    const confirmed: InstallState = { ...IDLE_INSTALL, open: true, spec: 'ocean-a@1.0.0', confirmed: { title: 'Alpha', version: '1.0.0' }, registries: REGISTRIES }
     const { actions, set } = renderTab({ install: { ...confirmed, phase: 'checking' } })
     const dialog = screen.getByRole('dialog', { name: en.installConfirmedTitle })
     expect([...dialog.querySelectorAll('[data-install-subject] p')].map(line => line.textContent))
-      .toEqual(['Alpha', en.installVersion.replace('{version}', '1.0.0'), 'dsh-a@1.0.0'])
+      .toEqual(['Alpha', en.installVersion.replace('{version}', '1.0.0'), 'ocean-a@1.0.0'])
     expect(screen.getByRole('status').textContent).toBe(en.installChecking)
     expect(screen.queryByRole('textbox')).toBeNull()
     expect(screen.queryByRole('button', { name: en.retry })).toBeNull()
-    set({ install: { ...confirmed, inputError: { problem: 'not-found', reason: 'dsh-a' } } })
+    set({ install: { ...confirmed, inputError: { problem: 'not-found', reason: 'ocean-a' } } })
     expect(screen.getByRole('dialog', { name: en.installConfirmedRefused })).toBeTruthy()
-    expect(screen.getByRole('alert').textContent).toBe(en.installProblemNotFound.replace('{reason}', 'dsh-a'))
+    expect(screen.getByRole('alert').textContent).toBe(en.installProblemNotFound.replace('{reason}', 'ocean-a'))
     fireEvent.click(screen.getByRole('button', { name: en.retry }))
     expect(actions.runInstall).toHaveBeenCalledOnce()
     set({ install: { ...confirmed, inputError: { problem: 'network', reason: 'r', registries: [null, MIRROR] } } })
     expect(screen.getByRole('alert').textContent).toMatch(/^No registry could be reached/)
-    set({ install: { ...confirmed, registries: null, inputError: { problem: 'not-found', reason: 'dsh-a' } } })
+    set({ install: { ...confirmed, registries: null, inputError: { problem: 'not-found', reason: 'ocean-a' } } })
     expect(screen.getByRole('alert')).toBeTruthy()
     set({ install: confirmed })
     expect(screen.queryByRole('alert')).toBeNull()
@@ -381,7 +381,7 @@ describe('PluginManagerPage', () => {
     expect(actions.closeInstall).toHaveBeenCalled()
     set({
       install: {
-        ...confirmed, phase: 'failed', subject: { spec: 'dsh-a@1.0.0', status: 'accepted', kind: 'registry', bundle: true, registry: null },
+        ...confirmed, phase: 'failed', subject: { spec: 'ocean-a@1.0.0', status: 'accepted', kind: 'registry', bundle: true, registry: null },
         failure: { reason: 'failed', kind: 'network', failedAt: 'registry' },
       },
     })
@@ -403,7 +403,7 @@ describe('PluginManagerPage', () => {
     set({
       install: {
         ...confirmed, phase: 'running', requestId: 'r' as never,
-        subject: { spec: 'dsh-a@1.0.0', status: 'accepted', kind: 'registry', bundle: true, registry: null },
+        subject: { spec: 'ocean-a@1.0.0', status: 'accepted', kind: 'registry', bundle: true, registry: null },
       },
     })
     fireEvent.click(screen.getByRole('button', { name: en.cancel }))
@@ -494,73 +494,73 @@ describe('PluginManagerPage', () => {
 
   it('opens the requested bundle after its inventory arrives and falls back when it is absent', () => {
     const b = renderTab({ status: 'loading' })
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-better-sidebar' }) })
     b.set({ status: 'ready', packages: [pkg()] })
-    expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-detail="ocean-better-sidebar"]')).not.toBeNull()
     act(() => { b.navigation.actions.setView({ kind: 'package', name: 'missing' }) })
     expect(document.querySelector('[data-plugin-detail]')).toBeNull()
-    expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-package="ocean-better-sidebar"]')).not.toBeNull()
   })
 
   it('shows a bundle\'s detail document first among its sections, and its failures with a retry', () => {
     const b = renderTab({ packages: [pkg()] })
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
-    expect(b.actions.loadDetail).toHaveBeenCalledWith('dsh-better-sidebar', '0.16.0', 'en', false)
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-better-sidebar' }) })
+    expect(b.actions.loadDetail).toHaveBeenCalledWith('ocean-better-sidebar', '0.16.0', 'en', false)
     expect(screen.getByRole('status', { name: en.detailLoading })).toBeTruthy()
-    const key = bundleDetailKey('dsh-better-sidebar', '0.16.0', 'en')
+    const key = bundleDetailKey('ocean-better-sidebar', '0.16.0', 'en')
     b.setDetails({ [key]: { status: 'ready', detail: { status: 'found', origin: 'locale', path: 'guide/DETAIL.md', markdown: '# Sidebar\n\n![shot](img/a.png)' } } })
-    const sections = [...document.querySelectorAll('[data-plugin-detail="dsh-better-sidebar"] section')]
+    const sections = [...document.querySelectorAll('[data-plugin-detail="ocean-better-sidebar"] section')]
     const order = sections.map(section => section.hasAttribute('data-detail-document') ? 'detail' : section.hasAttribute('data-plugin-source') ? 'source' : 'other')
     expect(order[0]).toBe('detail')
     expect(order).toContain('source')
     expect(screen.getByRole('heading', { name: 'Sidebar' })).toBeTruthy()
     expect(screen.getByRole('img', { name: 'shot' }).getAttribute('src'))
-      .toBe('https://dsh.example/api/plugin-manager/detail-file?bundle=dsh-better-sidebar&document=guide/DETAIL.md&path=img/a.png')
+      .toBe('https://ocean.example/api/plugin-manager/detail-file?bundle=ocean-better-sidebar&document=guide/DETAIL.md&path=img/a.png')
     const failures = [['too-large', en.detailTooLarge], ['network', en.detailNetwork], ['denied', en.detailFailed], ['invalid', en.detailInvalid], ['other', en.detailFailed]] as const
     for (const [failure, text] of failures) {
       b.setDetails({ [key]: { status: 'error', failure } })
       expect(screen.getByRole('alert').textContent).toBe(text)
     }
     fireEvent.click(screen.getByRole('button', { name: en.retry }))
-    expect(b.actions.retryDetail).toHaveBeenCalledWith('dsh-better-sidebar', '0.16.0', 'en', false)
+    expect(b.actions.retryDetail).toHaveBeenCalledWith('ocean-better-sidebar', '0.16.0', 'en', false)
     b.setDetails({ [key]: { status: 'ready', detail: { status: 'none' } } })
     expect(document.querySelector('[data-detail-document]')).toBeNull()
     // A read the controller forgot, after a profile change, starts again.
     b.setDetails({})
-    expect(b.actions.loadDetail).toHaveBeenLastCalledWith('dsh-better-sidebar', '0.16.0', 'en', false)
+    expect(b.actions.loadDetail).toHaveBeenLastCalledWith('ocean-better-sidebar', '0.16.0', 'en', false)
   })
 
   it('says where a bundle comes from: the spec that installs it, or built in, with its version', () => {
     const b = renderTab({ packages: [
-      pkg({ source: 'github:someone/dsh-better-sidebar' }),
-      { name: 'dsh-official', installed: false, official: true, availability: 'installation', optional: true, removable: false, enabled: false, rows: [] },
-      { name: 'dsh-shadowed', installed: true, official: false, availability: 'profile', optional: false, removable: false, enabled: true, rows: [] },
-      { name: 'dsh-missing', installed: false, official: false, availability: 'missing', optional: false, removable: true, enabled: true, error: { code: 'unknown-plugin' }, rows: [] },
+      pkg({ source: 'github:someone/ocean-better-sidebar' }),
+      { name: 'ocean-official', installed: false, official: true, availability: 'installation', optional: true, removable: false, enabled: false, rows: [] },
+      { name: 'ocean-shadowed', installed: true, official: false, availability: 'profile', optional: false, removable: false, enabled: true, rows: [] },
+      { name: 'ocean-missing', installed: false, official: false, availability: 'missing', optional: false, removable: true, enabled: true, error: { code: 'unknown-plugin' }, rows: [] },
     ] })
     const facts = (): string[] => [...document.querySelectorAll('[data-plugin-source] dt, [data-plugin-source] dd')].map(node => node.textContent)
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-better-sidebar' }) })
     expect(within(document.querySelector('[data-plugin-source]') as HTMLElement).getByRole('heading').textContent).toBe(en.sourceTitle)
-    expect(facts()).toEqual([en.sourceSpec, 'github:someone/dsh-better-sidebar', en.sourceVersion, '0.16.0'])
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-official' }) })
+    expect(facts()).toEqual([en.sourceSpec, 'github:someone/ocean-better-sidebar', en.sourceVersion, '0.16.0'])
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-official' }) })
     expect(facts()).toEqual([en.sourceSpec, en.sourceBuiltIn])
     // A profile dependency the installation also supplies loads the installation's copy.
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-shadowed' }) })
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-shadowed' }) })
     expect(facts()).toEqual([en.sourceSpec, en.sourceBuiltIn])
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-missing' }) })
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-missing' }) })
     expect(facts()).toEqual([en.sourceSpec, en.sourceNotInstalled])
     // A bundle whose files are not installed is read from the npm file CDNs.
-    expect(b.actions.loadDetail).toHaveBeenLastCalledWith('dsh-missing', undefined, 'en', true)
+    expect(b.actions.loadDetail).toHaveBeenLastCalledWith('ocean-missing', undefined, 'en', true)
   })
 
   it('preserves the requested bundle through StrictMode effect replay and page remounts', () => {
     const b = renderTab({ packages: [pkg()] })
     b.unmount()
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-better-sidebar' }) })
     const view = render(<StrictMode><PluginManagerPage {...b.props} /></StrictMode>)
-    expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-detail="ocean-better-sidebar"]')).not.toBeNull()
     view.unmount()
     render(<PluginManagerPage {...b.props} />)
-    expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-detail="ocean-better-sidebar"]')).not.toBeNull()
   })
 
   it('asks the store once mounted and renders the loading, unavailable, error, and empty states', () => {
@@ -598,16 +598,16 @@ describe('PluginManagerPage', () => {
     expect(document.querySelector('[data-plugin-panel]')?.getAttribute('aria-busy')).toBe('false')
     fireEvent.click(screen.getByRole('button', { name: en.refresh }))
     expect(actions.refresh).toHaveBeenCalledTimes(1)
-    set({ busy: ['dsh-better-sidebar'] })
+    set({ busy: ['ocean-better-sidebar'] })
     expect(screen.queryByRole('status', { name: en.loading })).toBeNull()
-    expect(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') })).toBeTruthy()
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') })).toHaveProperty('disabled', true)
+    expect(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') })).toHaveProperty('disabled', true)
   })
 
   it('shows refresh progress on the disabled button while preserving cards, then restores it without a toast', () => {
     const { actions, set } = renderTab({ packages: [pkg()] })
     const refresh = screen.getByRole('button', { name: en.refresh })
-    const detailName = en.openDetail.replace('{name}', 'dsh-better-sidebar')
+    const detailName = en.openDetail.replace('{name}', 'ocean-better-sidebar')
     const card = screen.getByRole('button', { name: detailName })
     expect(refresh).toHaveProperty('disabled', false)
     expect(refresh.getAttribute('title')).toBeNull()
@@ -633,7 +633,7 @@ describe('PluginManagerPage', () => {
 
   it.each(['list', 'detail'] as const)('keeps cached %s content with one localized refresh toast and no inline retry', (view) => {
     const { set, setLanguage } = renderTab({ packages: [pkg()] })
-    if (view === 'detail') fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+    if (view === 'detail') fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
     const content = document.querySelector(view === 'detail' ? '[data-plugin-detail]' : '[data-plugin-package]')
     for (const dict of [en, zh]) {
       setLanguage(dict)
@@ -685,7 +685,7 @@ describe('PluginManagerPage', () => {
       if (navigation === 'after') hidePage()
       expect(document.querySelector('[data-plugin-panel]')).toBeNull()
       expect(screen.getByRole('alert')).toBe(toast)
-      expect(toast.style.getPropertyValue('--dsh-toast-hold')).toBe('3000ms')
+      expect(toast.style.getPropertyValue('--ocean-toast-hold')).toBe('3000ms')
       act(() => { vi.advanceTimersByTime(3_999) })
       expect(actions.dismissNotice).not.toHaveBeenCalled()
       act(() => { vi.advanceTimersByTime(1) })
@@ -718,7 +718,7 @@ describe('PluginManagerPage', () => {
 
   it('keeps the read failure and its retry visible while a detail page is open', () => {
     const { actions, set } = renderTab({ packages: [pkg()] })
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
     expect(screen.queryByRole('alert')).toBeNull()
     set({ status: 'error' })
     expect(screen.getByRole('alert').querySelector('[data-state="error"]')).not.toBeNull()
@@ -732,35 +732,35 @@ describe('PluginManagerPage', () => {
     const { actions } = renderTab({
       packages: [
         pkg({ meta: { description: { en: 'A sidebar.' } } }),
-        pkg({ name: 'dsh-broken', enabled: false, error: { code: 'not-bundle' } }),
+        pkg({ name: 'ocean-broken', enabled: false, error: { code: 'not-bundle' } }),
         pkg({ name: '@ocean/ocean-web-app', installed: false, removable: false }),
-        pkg({ name: 'dsh-protected', readOnlyReason: 'management-required' }),
-        pkg({ name: '@acme/dsh-tool', enabled: false }),
+        pkg({ name: 'ocean-protected', readOnlyReason: 'management-required' }),
+        pkg({ name: '@acme/ocean-tool', enabled: false }),
         // Selected by the profile but not a bundle: its layer is skipped, so it reads as not running.
-        pkg({ name: 'dsh-selected', installed: false, error: { code: 'not-bundle' } }),
+        pkg({ name: 'ocean-selected', installed: false, error: { code: 'not-bundle' } }),
         pkg({ name: '@acme/new-official', installed: false, optional: true, removable: false, enabled: false }),
       ],
-      busy: ['dsh-protected'],
+      busy: ['ocean-protected'],
     })
     const cards = screen.getAllByRole('listitem')
     // Offered extensions precede installed bundles.
     expect(cards.map(card => card.getAttribute('data-plugin-package'))).toEqual([
-      '@acme/new-official', 'dsh-better-sidebar', 'dsh-broken', 'dsh-protected', '@acme/dsh-tool', 'dsh-selected',
+      '@acme/new-official', 'ocean-better-sidebar', 'ocean-broken', 'ocean-protected', '@acme/ocean-tool', 'ocean-selected',
     ])
     expect(cards.map(card => card.getAttribute('data-plugin-status'))).toEqual(['disabled', 'running', 'problem', 'running', 'disabled', 'not-running'])
     // Group titles have no counts.
     expect(screen.getByRole('heading', { name: en.bundlesTitle })).toBeTruthy()
     expect(screen.getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
     expect(document.querySelector('[data-plugin-count]')).toBeNull()
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', '@acme/dsh-tool') })).toHaveProperty('disabled', false)
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', '@acme/ocean-tool') })).toHaveProperty('disabled', false)
     expect(screen.getByText('A sidebar.')).toBeTruthy()
     expect(screen.getAllByText(en.statusProblem)).toHaveLength(1)
     expect(screen.getAllByText(en.statusNotRunning)).toHaveLength(1)
     // The switch acts on the bundle; a bundle the Host cannot read stays off, a protected one stays as it is.
-    fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') }))
-    expect(actions.setEnabled).toHaveBeenCalledWith('dsh-better-sidebar', false)
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-broken') })).toHaveProperty('disabled', true)
-    const locked = screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-protected') })
+    fireEvent.click(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') }))
+    expect(actions.setEnabled).toHaveBeenCalledWith('ocean-better-sidebar', false)
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-broken') })).toHaveProperty('disabled', true)
+    const locked = screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-protected') })
     expect(locked).toHaveProperty('disabled', true)
     expect(locked.getAttribute('title')).toBe(en.reasonManagementRequired)
   })
@@ -776,13 +776,13 @@ describe('PluginManagerPage', () => {
           '@ocean/ocean-acp-app',
           '@ocean/ocean-sdk-minimal',
         ].map(name => pkg({ name })),
-        pkg({ name: '@acme/dsh-base', readOnlyReason: 'management-required' }),
-        pkg({ name: 'dsh-better-sidebar' }),
+        pkg({ name: '@acme/ocean-base', readOnlyReason: 'management-required' }),
+        pkg({ name: 'ocean-better-sidebar' }),
         pkg({ name: '@acme/new-official', installed: false, optional: true, removable: false }),
       ],
     })
     expect(screen.getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package'))).toEqual([
-      '@acme/new-official', '@acme/dsh-base', 'dsh-better-sidebar',
+      '@acme/new-official', '@acme/ocean-base', 'ocean-better-sidebar',
     ])
     expect(document.querySelector('[data-plugin-count]')).toBeNull()
   })
@@ -808,7 +808,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('keeps a shipped bundle out of both lists until one of its declared rows runs', () => {
-    const hidden = '@acme/dsh-lab-pack'
+    const hidden = '@acme/ocean-lab-pack'
     const shown = '@acme/new-official'
     const offer = (rows: readonly PackageRow[]): PackageView => pkg({
       name: hidden, official: true, installed: false, optional: true, removable: false, enabled: false, listedByDefault: false, rows,
@@ -849,7 +849,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('does not open a default-hidden bundle by id while its card is hidden', () => {
-    const hidden = '@acme/dsh-lab-pack'
+    const hidden = '@acme/ocean-lab-pack'
     const b = renderTab({
       packages: [pkg({
         name: hidden, official: true, installed: false, optional: true, removable: false, enabled: false,
@@ -874,37 +874,37 @@ describe('PluginManagerPage', () => {
 
   it('offers uninstall for a selected bundle that no dependency holds', () => {
     const { actions } = renderTab({
-      packages: [pkg({ name: 'dsh-retired', installed: false, removable: true, error: { code: 'operation-error', diagnostic: 'cannot resolve' } })],
+      packages: [pkg({ name: 'ocean-retired', installed: false, removable: true, error: { code: 'operation-error', diagnostic: 'cannot resolve' } })],
     })
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-retired') }))
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-retired') }))
     const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
-    fireEvent.click(within(detail).getByRole('button', { name: en.uninstallLabel.replace('{name}', 'dsh-retired') }))
-    expect(actions.uninstall).toHaveBeenCalledExactlyOnceWith('dsh-retired')
+    fireEvent.click(within(detail).getByRole('button', { name: en.uninstallLabel.replace('{name}', 'ocean-retired') }))
+    expect(actions.uninstall).toHaveBeenCalledExactlyOnceWith('ocean-retired')
   })
 
   it('opens an official bundle\'s page with no uninstall and switches it on', () => {
     const title = 'Team tools'
     const { actions } = renderTab({
-      packages: [pkg({ name: '@acme/dsh-team-pack', meta: { title }, installed: false, optional: true, removable: false, enabled: false })],
+      packages: [pkg({ name: '@acme/ocean-team-pack', meta: { title }, installed: false, optional: true, removable: false, enabled: false })],
     })
     fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', title) }))
     const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
     expect(within(detail).queryByRole('button', { name: en.uninstallLabel.replace('{name}', title) })).toBeNull()
     fireEvent.click(within(detail).getByRole('switch', { name: en.enableToggle.replace('{name}', title) }))
-    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('@acme/dsh-team-pack', true)
+    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('@acme/ocean-team-pack', true)
   })
 
   it('keeps the persisted selection while marking a failed component as a problem', () => {
     const diagnostic = 'component failed to start'
-    renderTab({ packages: [pkg({ name: 'dsh-native-helper', enabled: true, rows: [row({ phase: 'failed', diagnostic })] })] })
-    expect(document.querySelector('[data-plugin-package="dsh-native-helper"]')?.getAttribute('data-plugin-status')).toBe('problem')
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-native-helper') }).getAttribute('aria-checked')).toBe('true')
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-native-helper') }))
+    renderTab({ packages: [pkg({ name: 'ocean-native-helper', enabled: true, rows: [row({ phase: 'failed', diagnostic })] })] })
+    expect(document.querySelector('[data-plugin-package="ocean-native-helper"]')?.getAttribute('data-plugin-status')).toBe('problem')
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-native-helper') }).getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-native-helper') }))
     expect(screen.getByText(`${en.reasonLabel}: ${diagnostic}`)).toBeTruthy()
   })
 
   it.each([en, zh])('marks a selected bundle the Host skipped as not running with its reason, keeping its switch on', (dict) => {
-    const name = 'dsh-late'
+    const name = 'ocean-late'
     const { actions, setLanguage } = renderTab({ packages: [pkg({ name, error: { code: 'incompatible-version', incompatible: [INCOMPATIBLE] } })] })
     setLanguage(dict)
     const card = document.querySelector(`[data-plugin-package="${name}"]`) as HTMLElement
@@ -921,14 +921,14 @@ describe('PluginManagerPage', () => {
 
   it('keeps a selected bundle whose rows run as a problem when the Host reports an error beside them', () => {
     renderTab({ packages: [pkg({ error: { code: 'unsupported-platform' }, rows: [row()] })] })
-    const card = document.querySelector('[data-plugin-package="dsh-better-sidebar"]') as HTMLElement
+    const card = document.querySelector('[data-plugin-package="ocean-better-sidebar"]') as HTMLElement
     expect(card.getAttribute('data-plugin-status')).toBe('problem')
     expect(within(card).getByText(en.statusProblem)).toBeTruthy()
   })
 
   it('keeps a selected bundle running when only its metadata carries a diagnostic', () => {
-    const name = 'dsh-better-sidebar'
-    const error = 'dsh.bundle.listedByDefault must be a boolean'
+    const name = 'ocean-better-sidebar'
+    const error = 'ocean.bundle.listedByDefault must be a boolean'
     renderTab({ packages: [pkg({ meta: { error }, rows: [row()] })] })
     const card = document.querySelector(`[data-plugin-package="${name}"]`) as HTMLElement
     expect(card.getAttribute('data-plugin-status')).toBe('running')
@@ -940,7 +940,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('lists the rows of a skipped layer whose patch the Host read, none of them live', () => {
-    const name = 'dsh-late'
+    const name = 'ocean-late'
     renderTab({ packages: [pkg({ name, error: { code: 'unsupported-platform' }, rows: [{ rowId: 'late', moduleName: name, enabled: false, phase: null }] })] })
     fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', name) }))
     const detail = document.querySelector(`[data-plugin-detail="${name}"]`) as HTMLElement
@@ -949,9 +949,9 @@ describe('PluginManagerPage', () => {
   })
 
   it.each([
-    '@acme/dsh-cloud-tools',
-    '@acme/dsh-fixture-input',
-    '@acme/dsh-local-tools',
+    '@acme/ocean-cloud-tools',
+    '@acme/ocean-fixture-input',
+    '@acme/ocean-local-tools',
   ])('localizes Host metadata for %s across cards, details, switches, and uninstall confirmation', (name) => {
     const meta = {
       title: { en: 'Installed tools', zh: '已安装工具' },
@@ -995,7 +995,7 @@ describe('PluginManagerPage', () => {
     const icon = 'data:image/svg+xml;base64,PHN2Zy8+'
     const updatedIcon = 'data:image/png;base64,cG5n'
     const bundle = pkg({ meta: { icon }, rows: [row({ meta: { icon } }), row({ entryId: 'plain' as PluginEntryId, rowId: 'plain', moduleName: 'plain' })] })
-    const { set } = renderTab({ packages: [bundle] }, { rows: new Set(['dsh-better-sidebar#sidebar']) })
+    const { set } = renderTab({ packages: [bundle] }, { rows: new Set(['ocean-better-sidebar#sidebar']) })
     const image = () => document.querySelector<HTMLImageElement>('[data-plugin-package] img, [data-plugin-detail] img')!
     expect(image().getAttribute('src')).toBe(icon)
     expect(image().getAttribute('alt')).toBe('')
@@ -1007,7 +1007,7 @@ describe('PluginManagerPage', () => {
     expect(image().getAttribute('src')).toBe(updatedIcon)
     set({ packages: [bundle] })
     expect(image().getAttribute('src')).toBe(icon)
-    fireEvent.click(screen.getByRole('button', { name: 'View dsh-better-sidebar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'View ocean-better-sidebar' }))
     expect(image().getAttribute('src')).toBe(icon)
     const rowImage = document.querySelector<HTMLImageElement>('[data-plugin-row] img')!
     expect(rowImage.getAttribute('src')).toBe(icon)
@@ -1017,7 +1017,7 @@ describe('PluginManagerPage', () => {
     fireEvent.error(rowImage)
     expect(document.querySelector('[data-plugin-row] img')).toBeNull()
     expect(document.querySelector('[data-plugin-row] svg')).not.toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Configure dsh-better-sidebar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Configure ocean-better-sidebar' }))
     const detailImage = document.querySelector<HTMLImageElement>('[data-plugin-row-detail] img')!
     expect(detailImage.getAttribute('src')).toBe(icon)
     expect(detailImage.width).toBe(36)
@@ -1030,16 +1030,16 @@ describe('PluginManagerPage', () => {
     })
     expect(screen.getByText(en.metadataError.replace('{error}', error))).toBeTruthy()
     expect(screen.queryByText('Legacy description.')).toBeNull()
-    const enable = screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') })
+    const enable = screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') })
     expect(enable).toHaveProperty('disabled', false)
     fireEvent.click(enable)
-    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('dsh-better-sidebar', true)
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+    expect(actions.setEnabled).toHaveBeenCalledExactlyOnceWith('ocean-better-sidebar', true)
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
     expect(screen.getByText(en.metadataError.replace('{error}', error))).toBeTruthy()
-    const uninstall = screen.getByRole('button', { name: en.uninstallLabel.replace('{name}', 'dsh-better-sidebar') })
+    const uninstall = screen.getByRole('button', { name: en.uninstallLabel.replace('{name}', 'ocean-better-sidebar') })
     expect(uninstall).toHaveProperty('disabled', false)
     fireEvent.click(uninstall)
-    expect(actions.uninstall).toHaveBeenCalledExactlyOnceWith('dsh-better-sidebar')
+    expect(actions.uninstall).toHaveBeenCalledExactlyOnceWith('ocean-better-sidebar')
 
     setLanguage(zh)
     expect(screen.getByText(zh.metadataError.replace('{error}', error))).toBeTruthy()
@@ -1059,8 +1059,8 @@ describe('PluginManagerPage', () => {
   }>([
     {
       field: 'title',
-      meta: { title: { en: '@acme/dsh-sidebar', zh: '侧栏套件' }, description: 'Package description.' },
-      englishTitle: '@acme/dsh-sidebar', chineseTitle: '侧栏套件',
+      meta: { title: { en: '@acme/ocean-sidebar', zh: '侧栏套件' }, description: 'Package description.' },
+      englishTitle: '@acme/ocean-sidebar', chineseTitle: '侧栏套件',
       englishDescription: 'Package description.', chineseDescription: 'Package description.',
     },
     {
@@ -1069,7 +1069,7 @@ describe('PluginManagerPage', () => {
       englishTitle: 'English title', chineseTitle: 'English title', chineseDescription: '中文套件说明。',
     },
   ])('resolves bundle $field independently and hides empty descriptions on cards and details', ({ meta, englishTitle, chineseTitle, englishDescription, chineseDescription }) => {
-    const { setLanguage } = renderTab({ packages: [pkg({ name: '@acme/dsh-sidebar', meta })] })
+    const { setLanguage } = renderTab({ packages: [pkg({ name: '@acme/ocean-sidebar', meta })] })
     const languages = [
       { dict: en, title: englishTitle, description: englishDescription },
       { dict: zh, title: chineseTitle, description: chineseDescription },
@@ -1102,49 +1102,49 @@ describe('PluginManagerPage', () => {
 
   it('resolves row fields independently from bundle metadata and preserves subpath specifiers', () => {
     const rows = [
-      row({ moduleName: '@acme/dsh-sidebar/navigation', meta: { description: { en: 'Navigation description.' } } }),
+      row({ moduleName: '@acme/ocean-sidebar/navigation', meta: { description: { en: 'Navigation description.' } } }),
       row({
-        rowId: 'theme', entryId: 'include:theme' as PluginEntryId, moduleName: '@acme/dsh-theme/client',
-        meta: { title: { en: '@acme/dsh-theme', zh: '主题插件' }, description: { en: '', zh: '中文主题说明。' } },
+        rowId: 'theme', entryId: 'include:theme' as PluginEntryId, moduleName: '@acme/ocean-theme/client',
+        meta: { title: { en: '@acme/ocean-theme', zh: '主题插件' }, description: { en: '', zh: '中文主题说明。' } },
       }),
     ]
     const { actions, setLanguage } = renderTab(
       { packages: [pkg({ meta: { title: 'Bundle title', description: 'Bundle description.' }, rows })] },
-      { rows: new Set(['dsh-better-sidebar#theme']) },
-      { 'plugins.row.config:dsh-better-sidebar#theme': view => view === 'page' ? <form aria-label="theme settings" /> : null },
+      { rows: new Set(['ocean-better-sidebar#theme']) },
+      { 'plugins.row.config:ocean-better-sidebar#theme': view => view === 'page' ? <form aria-label="theme settings" /> : null },
     )
     fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'Bundle title') }))
-    expect(screen.getByRole('switch', { name: en.partToggle.replace('{name}', '@acme/dsh-sidebar/navigation') })).toBeTruthy()
-    expect(screen.getByRole('switch', { name: en.partToggle.replace('{name}', '@acme/dsh-theme') })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: en.partToggle.replace('{name}', '@acme/ocean-sidebar/navigation') })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: en.partToggle.replace('{name}', '@acme/ocean-theme') })).toBeTruthy()
     expect(screen.queryByText('中文主题说明。')).toBeNull()
     setLanguage(zh)
     const navigation = document.querySelector('[data-plugin-row="include:sidebar"]') as HTMLElement
     expect(within(navigation).getByText('Navigation description.')).toBeTruthy()
     expect(within(navigation).queryByText('Bundle title')).toBeNull()
     expect(within(navigation).queryByText('Bundle description.')).toBeNull()
-    fireEvent.click(within(navigation).getByRole('switch', { name: zh.partToggle.replace('{name}', '@acme/dsh-sidebar/navigation') }))
+    fireEvent.click(within(navigation).getByRole('switch', { name: zh.partToggle.replace('{name}', '@acme/ocean-sidebar/navigation') }))
     expect(actions.setRowEnabled).toHaveBeenCalledExactlyOnceWith('include:sidebar', false)
     expect(screen.getByText('中文主题说明。')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: zh.configureRow.replace('{name}', '主题插件') }))
-    expect(document.querySelector('[data-plugin-row-detail]')?.getAttribute('data-plugin-row-detail')).toBe('dsh-better-sidebar#theme')
+    expect(document.querySelector('[data-plugin-row-detail]')?.getAttribute('data-plugin-row-detail')).toBe('ocean-better-sidebar#theme')
     expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('主题插件')
     expect(screen.getByText('中文主题说明。')).toBeTruthy()
     setLanguage(en)
-    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('@acme/dsh-theme')
-    expect(screen.getByText('@acme/dsh-theme/client')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('@acme/ocean-theme')
+    expect(screen.getByText('@acme/ocean-theme/client')).toBeTruthy()
     expect(screen.getByText('theme')).toBeTruthy()
     expect(screen.queryByText('中文主题说明。')).toBeNull()
     expect(screen.getByRole('form', { name: 'theme settings' })).toBeTruthy()
   })
 
   it('shows a row id only once when it is the localized title in lists and configuration pages', () => {
-    const moduleName = '@acme/dsh-sidebar/navigation'
+    const moduleName = '@acme/ocean-sidebar/navigation'
     const { setLanguage } = renderTab(
       { packages: [pkg({ rows: [row({ moduleName, meta: { title: { en: 'Sidebar component', zh: 'sidebar' } } })] })] },
-      { rows: new Set(['dsh-better-sidebar#sidebar']) },
-      { 'plugins.row.config:dsh-better-sidebar#sidebar': view => view === 'page' ? <form aria-label="sidebar settings" /> : null },
+      { rows: new Set(['ocean-better-sidebar#sidebar']) },
+      { 'plugins.row.config:ocean-better-sidebar#sidebar': view => view === 'page' ? <form aria-label="sidebar settings" /> : null },
     )
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
     const listed = document.querySelector('[data-plugin-row="include:sidebar"]') as HTMLElement
     expect(within(listed).getByText('Sidebar component')).toBeTruthy()
     expect(within(listed).getByText('sidebar', { selector: 'code' })).toBeTruthy()
@@ -1154,7 +1154,7 @@ describe('PluginManagerPage', () => {
     expect(within(listed).getByText(moduleName, { selector: 'code' })).toBeTruthy()
 
     fireEvent.click(within(listed).getByRole('button', { name: zh.configureRow.replace('{name}', 'sidebar') }))
-    const detail = document.querySelector('[data-plugin-row-detail="dsh-better-sidebar#sidebar"]') as HTMLElement
+    const detail = document.querySelector('[data-plugin-row-detail="ocean-better-sidebar#sidebar"]') as HTMLElement
     expect(within(detail).getByRole('heading', { level: 3 }).textContent).toBe('sidebar')
     expect(within(detail).getAllByText('sidebar')).toHaveLength(1)
     expect(within(detail).queryByText('sidebar', { selector: 'code' })).toBeNull()
@@ -1168,7 +1168,7 @@ describe('PluginManagerPage', () => {
   it('translates row text, searches current copy and technical identities, and keeps configuration keys unchanged', () => {
     const error = 'locale/zh.json: invalid description'
     const localized = row({
-      moduleName: '@acme/dsh-sidebar-widget',
+      moduleName: '@acme/ocean-sidebar-widget',
       meta: {
         title: { en: 'Sidebar component', zh: '导航组件' },
         description: { en: 'Sidebar navigation', zh: '侧边导航' },
@@ -1180,19 +1180,19 @@ describe('PluginManagerPage', () => {
     }))]
     const { actions, setLanguage } = renderTab(
       { packages: [pkg({ meta: { title: { en: 'Personal tools', zh: '个人工具' } }, rows })] },
-      { rows: new Set(['dsh-better-sidebar#sidebar']) },
-      { 'plugins.row.config:dsh-better-sidebar#sidebar': view => view === 'summary' ? 'Config summary' : <form aria-label="row settings" /> },
+      { rows: new Set(['ocean-better-sidebar#sidebar']) },
+      { 'plugins.row.config:ocean-better-sidebar#sidebar': view => view === 'summary' ? 'Config summary' : <form aria-label="row settings" /> },
     )
     fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'Personal tools') }))
     setLanguage(zh)
     const search = screen.getByRole('searchbox', { name: zh.partsFilter })
-    for (const query of ['导航组件', '侧边导航', 'sidebar', '@acme/dsh-sidebar-widget']) {
+    for (const query of ['导航组件', '侧边导航', 'sidebar', '@acme/ocean-sidebar-widget']) {
       fireEvent.change(search, { target: { value: query } })
       expect(document.querySelectorAll('[data-plugin-row]')).toHaveLength(1)
       expect(screen.getByRole('button', { name: zh.configureRow.replace('{name}', '导航组件') })).toBeTruthy()
     }
     expect(screen.getByText('sidebar')).toBeTruthy()
-    expect(screen.getByText('@acme/dsh-sidebar-widget')).toBeTruthy()
+    expect(screen.getByText('@acme/ocean-sidebar-widget')).toBeTruthy()
     expect(screen.getByText('侧边导航')).toBeTruthy()
     expect(screen.getByText(zh.metadataError.replace('{error}', error))).toBeTruthy()
     const toggle = screen.getByRole('switch', { name: zh.partToggle.replace('{name}', '导航组件') })
@@ -1205,7 +1205,7 @@ describe('PluginManagerPage', () => {
     setLanguage(en)
     expect(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'Sidebar component') })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'Sidebar component') }))
-    expect(document.querySelector('[data-plugin-row-detail]')?.getAttribute('data-plugin-row-detail')).toBe('dsh-better-sidebar#sidebar')
+    expect(document.querySelector('[data-plugin-row-detail]')?.getAttribute('data-plugin-row-detail')).toBe('ocean-better-sidebar#sidebar')
     expect(screen.getByRole('form', { name: 'row settings' })).toBeTruthy()
     expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Sidebar component')
     expect(screen.getByText('Sidebar navigation')).toBeTruthy()
@@ -1214,7 +1214,7 @@ describe('PluginManagerPage', () => {
     expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('导航组件')
     expect(screen.getByText('侧边导航')).toBeTruthy()
     expect(screen.getByText('sidebar')).toBeTruthy()
-    expect(screen.getByText('@acme/dsh-sidebar-widget')).toBeTruthy()
+    expect(screen.getByText('@acme/ocean-sidebar-widget')).toBeTruthy()
     expect(screen.getByText(zh.metadataError.replace('{error}', error))).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: zh.backToPackage.replace('{name}', '个人工具') }))
     expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('个人工具')
@@ -1223,20 +1223,20 @@ describe('PluginManagerPage', () => {
   describe('configuration pages', () => {
     const bodies: SlotBodies = {
       'plugins.item:bash': view => view === 'summary' ? 'Limits every command.' : <form aria-label="bash form" />,
-      'plugins.bundle.config:dsh-better-sidebar': view => view === 'page' ? <form aria-label="sidebar form" /> : null,
-      'plugins.row.config:dsh-better-sidebar#sidebar': view => view === 'summary' ? 'The sidebar row.' : <form aria-label="row form" />,
+      'plugins.bundle.config:ocean-better-sidebar': view => view === 'page' ? <form aria-label="sidebar form" /> : null,
+      'plugins.row.config:ocean-better-sidebar#sidebar': view => view === 'summary' ? 'The sidebar row.' : <form aria-label="row form" />,
     }
 
     it('keeps configuration and installed plugins on the main list and shows eligible official plugins on the secondary page', () => {
-      const team = '@acme/dsh-team-pack'
+      const team = '@acme/ocean-team-pack'
       renderTab(
         { packages: [
-          pkg({ name: '@acme/dsh-team-pack', official: true, enabled: false }),
+          pkg({ name: '@acme/ocean-team-pack', official: true, enabled: false }),
           pkg({ name: '@ocean/ocean-subagent-claude-code', official: true, availability: 'missing', installed: false, enabled: false }),
           pkg({ name: '@ocean/ocean-subagent-codex', official: true, enabled: false }),
           pkg({ name: '@ocean/ocean-headless', official: true, enabled: false }),
-          pkg({ name: '@acme/dsh-lab-a', installed: false, optional: true, enabled: false, listedByDefault: false }),
-          pkg({ name: '@acme/dsh-lab-b', installed: false, optional: true, enabled: false, listedByDefault: false }),
+          pkg({ name: '@acme/ocean-lab-a', installed: false, optional: true, enabled: false, listedByDefault: false }),
+          pkg({ name: '@acme/ocean-lab-b', installed: false, optional: true, enabled: false, listedByDefault: false }),
           pkg({ name: '@acme/new-official', official: true }),
           pkg(),
         ] },
@@ -1252,7 +1252,7 @@ describe('PluginManagerPage', () => {
       expect(within(extensions).getByRole('heading', { name: en.extensionsTitle })).toBeTruthy()
       expect(within(extensions).getByRole('button', { name: en.moreAction }).textContent).toBe(en.moreAction)
       expect(within(extensions).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
-        .toEqual(['@acme/dsh-team-pack', '@acme/new-official'])
+        .toEqual(['@acme/ocean-team-pack', '@acme/new-official'])
       expect(document.querySelector('[data-plugin-count]')).toBeNull()
       expect(within(basic).getByText('Limits every command.')).toBeTruthy()
       expect(within(basic).queryByRole('switch', { name: en.enableToggle.replace('{name}', 'Shell') })).toBeNull()
@@ -1267,13 +1267,13 @@ describe('PluginManagerPage', () => {
       const more = document.querySelector('[data-plugin-group="more"]') as HTMLElement
       expect(within(more).getAllByRole('listitem').map(card => card.getAttribute('data-plugin-package')))
         .toEqual([team, '@acme/new-official', '@ocean/ocean-subagent-codex', '@ocean/ocean-subagent-claude-code'])
-      expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')).toBeNull()
+      expect(document.querySelector('[data-plugin-package="ocean-better-sidebar"]')).toBeNull()
       fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', team) }))
       fireEvent.click(screen.getByRole('button', { name: en.backToPackage.replace('{name}', en.moreTitle) }))
       expect(screen.getByRole('heading', { name: en.moreTitle, level: 1 })).toBeTruthy()
       fireEvent.click(screen.getByRole('button', { name: en.backToList }))
       expect(document.querySelector('[data-plugin-group="more"]')).toBeNull()
-      expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')).not.toBeNull()
+      expect(document.querySelector('[data-plugin-package="ocean-better-sidebar"]')).not.toBeNull()
       fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'Shell') }))
       const detail = document.querySelector('[data-plugin-item-detail="bash"]') as HTMLElement
       expect(within(detail).getByRole('heading', { level: 3 }).textContent).toBe('Shell')
@@ -1285,8 +1285,8 @@ describe('PluginManagerPage', () => {
     })
 
     it.each([
-      '@acme/dsh-lab-pack',
-      '@acme/dsh-field-notes',
+      '@acme/ocean-lab-pack',
+      '@acme/ocean-field-notes',
       '@acme/shipped-exploration',
     ])('omits %s from default lists while retaining explicit profile selections and installations', (name) => {
       const entry = pkg({ name, installed: false, optional: true, removable: false, enabled: false, listedByDefault: false })
@@ -1316,7 +1316,7 @@ describe('PluginManagerPage', () => {
     })
 
     it.each([en, zh])('hides an unsupported bundle by default and retains installed or selected entries for management', (dict) => {
-      const name = '@acme/dsh-native-pack'
+      const name = '@acme/ocean-native-pack'
       const entry = pkg({ name, installed: false, enabled: false, optional: true, listedByDefault: false,
         error: { code: 'unsupported-platform' } })
       const other = pkg({ name: '@ocean/ocean-subagent-codex', installed: false, optional: true, enabled: false })
@@ -1445,29 +1445,29 @@ describe('PluginManagerPage', () => {
     })
 
     it('renders a bundle\'s own configuration on its page, and no configure control on a row without one', () => {
-      renderTab({ packages: [pkg({ rows: [row()] })] }, { bundles: new Set(['dsh-better-sidebar']) }, bodies)
-      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+      renderTab({ packages: [pkg({ rows: [row()] })] }, { bundles: new Set(['ocean-better-sidebar']) }, bodies)
+      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
       const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
       expect(within(detail).getByRole('form', { name: 'sidebar form' })).toBeTruthy()
-      expect(within(detail).queryByRole('button', { name: en.configureRow.replace('{name}', 'dsh-better-sidebar') })).toBeNull()
+      expect(within(detail).queryByRole('button', { name: en.configureRow.replace('{name}', 'ocean-better-sidebar') })).toBeNull()
     })
 
     it.each([false, true])('opens row configuration and returns to the bundle and originating list, from secondary page: %s', (fromMore) => {
-      const theme = row({ rowId: 'theme', moduleName: 'dsh-better-sidebar/theme', entryId: 'include:theme' as PluginEntryId })
-      renderTab({ packages: [pkg({ official: fromMore, rows: [row(), theme] })] }, { rows: new Set(['dsh-better-sidebar#sidebar']) }, bodies)
+      const theme = row({ rowId: 'theme', moduleName: 'ocean-better-sidebar/theme', entryId: 'include:theme' as PluginEntryId })
+      renderTab({ packages: [pkg({ official: fromMore, rows: [row(), theme] })] }, { rows: new Set(['ocean-better-sidebar#sidebar']) }, bodies)
       if (fromMore) fireEvent.click(screen.getByRole('button', { name: en.moreAction }))
-      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
-      expect(screen.queryByRole('button', { name: en.configureRow.replace('{name}', 'dsh-better-sidebar/theme') })).toBeNull()
-      fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'dsh-better-sidebar') }))
-      const page = document.querySelector('[data-plugin-row-detail="dsh-better-sidebar#sidebar"]') as HTMLElement
-      expect(within(page).getByRole('heading', { level: 3 }).textContent).toBe('dsh-better-sidebar')
-      expect(within(page).getByText('dsh-better-sidebar', { selector: 'code' })).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
+      expect(screen.queryByRole('button', { name: en.configureRow.replace('{name}', 'ocean-better-sidebar/theme') })).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'ocean-better-sidebar') }))
+      const page = document.querySelector('[data-plugin-row-detail="ocean-better-sidebar#sidebar"]') as HTMLElement
+      expect(within(page).getByRole('heading', { level: 3 }).textContent).toBe('ocean-better-sidebar')
+      expect(within(page).getByText('ocean-better-sidebar', { selector: 'code' })).toBeTruthy()
       expect(within(page).getByText('sidebar', { selector: 'code' })).toBeTruthy()
       expect(within(page).getByText('The sidebar row.')).toBeTruthy()
       expect(within(page).getByRole('form', { name: 'row form' })).toBeTruthy()
-      fireEvent.click(within(page).getByRole('button', { name: en.backToPackage.replace('{name}', 'dsh-better-sidebar') }))
+      fireEvent.click(within(page).getByRole('button', { name: en.backToPackage.replace('{name}', 'ocean-better-sidebar') }))
       expect(document.querySelector('[data-plugin-row-detail]')).toBeNull()
-      expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).toBeTruthy()
+      expect(document.querySelector('[data-plugin-detail="ocean-better-sidebar"]')).toBeTruthy()
       fireEvent.click(screen.getByRole('button', { name: fromMore ? en.backToPackage.replace('{name}', en.moreTitle) : en.backToList }))
       expect(screen.getByRole('heading', { name: fromMore ? en.moreTitle : en.title, level: 1 })).toBeTruthy()
     })
@@ -1485,7 +1485,7 @@ describe('PluginManagerPage', () => {
     }
     const bodies: SlotBodies = {
       'plugins.item:bash': view => view === 'summary' ? 'Limits every command.' : <form aria-label="bash form" />,
-      'plugins.row.config:dsh-better-sidebar#sidebar': view => view === 'summary' ? 'The sidebar row.' : <form aria-label="row form" />,
+      'plugins.row.config:ocean-better-sidebar#sidebar': view => view === 'summary' ? 'The sidebar row.' : <form aria-label="row form" />,
       'plugins.detail.actions:': (_view, owner) => <button type="button">{`act ${label(owner)}`}</button>,
       'plugins.detail.badge:': (_view, owner) => <span>{`badge ${label(owner)}`}</span>,
       'plugins.detail.section:': (_view, owner) => <section aria-label={`section ${label(owner)}`} />,
@@ -1494,35 +1494,35 @@ describe('PluginManagerPage', () => {
     it('renders the contributed actions, badges, and sections on each page, told what the page is about', () => {
       renderTab(
         { packages: [pkg({ rows: [row()] })] },
-        { items: [{ id: 'bash', label: 'Shell' }], rows: new Set(['dsh-better-sidebar#sidebar']) },
+        { items: [{ id: 'bash', label: 'Shell' }], rows: new Set(['ocean-better-sidebar#sidebar']) },
         bodies,
       )
       // The cards carry none of it.
       expect(screen.queryByRole('button', { name: /^act / })).toBeNull()
 
-      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
       const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
-      const act = within(detail).getByRole('button', { name: 'act bundle dsh-better-sidebar' })
-      expect(within(detail).getByText('badge bundle dsh-better-sidebar')).toBeTruthy()
-      const section = within(detail).getByRole('region', { name: 'section bundle dsh-better-sidebar' })
+      const act = within(detail).getByRole('button', { name: 'act bundle ocean-better-sidebar' })
+      expect(within(detail).getByText('badge bundle ocean-better-sidebar')).toBeTruthy()
+      const section = within(detail).getByRole('region', { name: 'section bundle ocean-better-sidebar' })
       // The contributed actions come before the page's own switch; the sections after the rows.
-      const toggle = within(detail).getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') })
+      const toggle = within(detail).getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') })
       expect(act.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
       const rows = detail.querySelector('[data-plugin-rows]') as HTMLElement
       expect(rows.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
       // A contribution sees the bundle's facts, not the page's own state.
       expect(subjects.at(-1)).toEqual({
         kind: 'bundle',
-        pkg: { name: 'dsh-better-sidebar', version: '0.16.0', installed: true, official: false, availability: 'profile', enabled: true, rows: [{ rowId: 'sidebar', moduleName: 'dsh-better-sidebar', enabled: true }] },
+        pkg: { name: 'ocean-better-sidebar', version: '0.16.0', installed: true, official: false, availability: 'profile', enabled: true, rows: [{ rowId: 'sidebar', moduleName: 'ocean-better-sidebar', enabled: true }] },
       })
 
-      fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'dsh-better-sidebar') }))
+      fireEvent.click(screen.getByRole('button', { name: en.configureRow.replace('{name}', 'ocean-better-sidebar') }))
       const page = document.querySelector('[data-plugin-row-detail]') as HTMLElement
-      expect(within(page).getByRole('button', { name: 'act row dsh-better-sidebar#sidebar' })).toBeTruthy()
-      expect(within(page).getByText('badge row dsh-better-sidebar#sidebar')).toBeTruthy()
-      expect(within(page).getByRole('region', { name: 'section row dsh-better-sidebar#sidebar' })).toBeTruthy()
-      expect(subjects.at(-1)).toMatchObject({ kind: 'row', row: { rowId: 'sidebar', moduleName: 'dsh-better-sidebar', enabled: true } })
-      fireEvent.click(within(page).getByRole('button', { name: en.backToPackage.replace('{name}', 'dsh-better-sidebar') }))
+      expect(within(page).getByRole('button', { name: 'act row ocean-better-sidebar#sidebar' })).toBeTruthy()
+      expect(within(page).getByText('badge row ocean-better-sidebar#sidebar')).toBeTruthy()
+      expect(within(page).getByRole('region', { name: 'section row ocean-better-sidebar#sidebar' })).toBeTruthy()
+      expect(subjects.at(-1)).toMatchObject({ kind: 'row', row: { rowId: 'sidebar', moduleName: 'ocean-better-sidebar', enabled: true } })
+      fireEvent.click(within(page).getByRole('button', { name: en.backToPackage.replace('{name}', 'ocean-better-sidebar') }))
       fireEvent.click(screen.getByRole('button', { name: en.backToList }))
 
       fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'Shell') }))
@@ -1534,15 +1534,15 @@ describe('PluginManagerPage', () => {
     })
 
     it('leaves the version out of a bundle the Host reports none for', () => {
-      const unversioned: PackageView = { name: 'dsh-better-sidebar', installed: true, official: false, availability: 'profile', optional: false, removable: true, enabled: true, rows: [] }
+      const unversioned: PackageView = { name: 'ocean-better-sidebar', installed: true, official: false, availability: 'profile', optional: false, removable: true, enabled: true, rows: [] }
       renderTab({ packages: [unversioned] }, {}, bodies)
-      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
-      expect(subjects.at(-1)).toEqual({ kind: 'bundle', pkg: { name: 'dsh-better-sidebar', installed: true, official: false, availability: 'profile', enabled: true, rows: [] } })
+      fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
+      expect(subjects.at(-1)).toEqual({ kind: 'bundle', pkg: { name: 'ocean-better-sidebar', installed: true, official: false, availability: 'profile', enabled: true, rows: [] } })
     })
   })
 
   it('preserves the full package name and description for a third-party scope', () => {
-    const name = '@acme/dsh-agent-team-profile'
+    const name = '@acme/ocean-agent-team-profile'
     const { setLanguage } = renderTab({ packages: [pkg({ name, meta: { description: { en: 'Third-party description.' } } })] })
     setLanguage(zh)
     fireEvent.click(screen.getByRole('button', { name: zh.openDetail.replace('{name}', name) }))
@@ -1560,9 +1560,9 @@ describe('PluginManagerPage', () => {
     expect(screen.getByPlaceholderText(placeholder)).toBeTruthy()
     expect(screen.getByText(locale.installUpgradeNotice)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: locale.installGuideToggle }))
-    expect(screen.getByText('dsh-plugin-whale-pet')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: locale.installGuideFillAria.replace('{example}', 'dsh-plugin-whale-pet') }))
-    expect(actions.editInstallSpec).toHaveBeenCalledExactlyOnceWith('dsh-plugin-whale-pet')
+    expect(screen.getByText('ocean-plugin-whale-pet')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: locale.installGuideFillAria.replace('{example}', 'ocean-plugin-whale-pet') }))
+    expect(actions.editInstallSpec).toHaveBeenCalledExactlyOnceWith('ocean-plugin-whale-pet')
   })
 
   it.each([
@@ -1601,15 +1601,15 @@ describe('PluginManagerPage', () => {
     const { actions, set } = renderTab({
       packages: [pkg({
         meta: { description: { en: 'A sidebar.' } },
-        rows: [row(), row({ rowId: 'theme', moduleName: 'dsh-better-sidebar/theme', entryId: 'include:theme' as PluginEntryId, enabled: false, phase: null })],
+        rows: [row(), row({ rowId: 'theme', moduleName: 'ocean-better-sidebar/theme', entryId: 'include:theme' as PluginEntryId, enabled: false, phase: null })],
       })],
     })
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
-    const detail = document.querySelector('[data-plugin-detail="dsh-better-sidebar"]') as HTMLElement
-    expect(within(detail).getByRole('heading', { level: 3 }).textContent).toBe('dsh-better-sidebar')
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
+    const detail = document.querySelector('[data-plugin-detail="ocean-better-sidebar"]') as HTMLElement
+    expect(within(detail).getByRole('heading', { level: 3 }).textContent).toBe('ocean-better-sidebar')
     // The version sits beside the name as a tag; the crumb only leads back.
     expect(within(detail).getByText('v0.16.0')).toBeTruthy()
-    expect(document.querySelector('[data-plugin-name]')?.textContent).toBe('dsh-better-sidebar')
+    expect(document.querySelector('[data-plugin-name]')?.textContent).toBe('ocean-better-sidebar')
     expect(within(detail).getByRole('button', { name: en.backToList }).textContent).toBe(en.crumbRoot)
     expect(within(detail).getByText('A sidebar.')).toBeTruthy()
     // The rows, in order, with their state and their module.
@@ -1617,13 +1617,13 @@ describe('PluginManagerPage', () => {
     expect(rows.map(item => item.getAttribute('data-plugin-row'))).toEqual(['include:sidebar', 'include:theme'])
     expect(rows[1]?.getAttribute('data-state')).toBe('off')
     expect(within(detail).getByText(en.partsCountTotal.replace('{count}', '2'), { exact: false })).toBeTruthy()
-    expect(within(detail).getByRole('switch', { name: en.partToggle.replace('{name}', 'dsh-better-sidebar/theme') })).toBeTruthy()
+    expect(within(detail).getByRole('switch', { name: en.partToggle.replace('{name}', 'ocean-better-sidebar/theme') })).toBeTruthy()
     expect(within(detail).getByText(en.rowPhaseActive)).toBeTruthy()
     expect(within(detail).getByText(en.partOff)).toBeTruthy()
-    fireEvent.click(within(detail).getByRole('button', { name: en.uninstallLabel.replace('{name}', 'dsh-better-sidebar') }))
-    expect(actions.uninstall).toHaveBeenCalledWith('dsh-better-sidebar')
-    fireEvent.click(within(detail).getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') }))
-    expect(actions.setEnabled).toHaveBeenCalledWith('dsh-better-sidebar', false)
+    fireEvent.click(within(detail).getByRole('button', { name: en.uninstallLabel.replace('{name}', 'ocean-better-sidebar') }))
+    expect(actions.uninstall).toHaveBeenCalledWith('ocean-better-sidebar')
+    fireEvent.click(within(detail).getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') }))
+    expect(actions.setEnabled).toHaveBeenCalledWith('ocean-better-sidebar', false)
     // A bundle without rows says so.
     set({ packages: [pkg()] })
     expect(within(detail).getByText(en.partsEmpty)).toBeTruthy()
@@ -1631,7 +1631,7 @@ describe('PluginManagerPage', () => {
     set({ packages: [pkg({ error: { code: 'operation-error', diagnostic: 'unreadable' }, readOnlyReason: 'management-required' })] })
     expect(within(detail).getByText(`${en.reasonLabel}: unreadable`)).toBeTruthy()
     expect(within(detail).getByText(en.reasonManagementRequired)).toBeTruthy()
-    expect(within(detail).getByRole('button', { name: en.uninstallLabel.replace('{name}', 'dsh-better-sidebar') })).toHaveProperty('disabled', true)
+    expect(within(detail).getByRole('button', { name: en.uninstallLabel.replace('{name}', 'ocean-better-sidebar') })).toHaveProperty('disabled', true)
     set({ packages: [pkg({ error: { code: 'not-bundle' } })] })
     expect(within(detail).getByText(`${en.reasonLabel}: ${en.reasonNotBundle}`)).toBeTruthy()
     // The Host skipped this selected bundle's layer without reading its patch: it is not running, and its rows are unknown.
@@ -1649,13 +1649,13 @@ describe('PluginManagerPage', () => {
     expect(document.querySelector('[data-plugin-detail]')).toBeNull()
     set({ packages: [pkg({ enabled: false, error: { code: 'unsupported-platform' } })] })
     expect(screen.getByText(en.reasonUnsupportedPlatform)).toBeTruthy()
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') })).toHaveProperty('disabled', true)
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') })).toHaveProperty('disabled', true)
     set({ packages: [pkg({ enabled: true, error: { code: 'unsupported-platform' } })] })
-    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'dsh-better-sidebar') })).toHaveProperty('disabled', false)
+    expect(screen.getByRole('switch', { name: en.enableToggle.replace('{name}', 'ocean-better-sidebar') })).toHaveProperty('disabled', false)
     // A bundle that leaves the list drops back to the cards.
     const { version: _version, ...unversioned } = pkg()
     set({ packages: [unversioned] })
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
     expect(screen.queryByText('No description.')).toBeNull()
     expect(screen.queryByText(en.versionTag.replace('{version}', '0.16.0'))).toBeNull()
     set({ packages: [] })
@@ -1678,10 +1678,10 @@ describe('PluginManagerPage', () => {
       return { ...unmounted, enabled: false, phase: null }
     })
     const { actions, set } = renderTab({ packages: [pkg({ rows })], busy: [rowKey('include:row-5')] })
-    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'dsh-better-sidebar') }))
+    fireEvent.click(screen.getByRole('button', { name: en.openDetail.replace('{name}', 'ocean-better-sidebar') }))
     const detail = document.querySelector('[data-plugin-detail]') as HTMLElement
     const toggle = (id: string): HTMLElement => within(detail.querySelector<HTMLElement>(`[data-plugin-row="${id}"]`)!)
-      .getByRole('switch', { name: en.partToggle.replace('{name}', 'dsh-better-sidebar') })
+      .getByRole('switch', { name: en.partToggle.replace('{name}', 'ocean-better-sidebar') })
     expect(within(detail).getByText(`${en.partsCountTotal.replace('{count}', '12')} · ${en.partsCountRunning.replace('{count}', '8')} · ${en.partsCountOff.replace('{count}', '1')} · ${en.partsCountFailed.replace('{count}', '1')}`)).toBeTruthy()
     fireEvent.click(toggle('include:row-0'))
     expect(actions.setRowEnabled).toHaveBeenCalledWith('include:row-0', false)
@@ -1708,7 +1708,7 @@ describe('PluginManagerPage', () => {
     fireEvent.change(filter, { target: { value: '' } })
     // A bundle that is off shows its rows without switches.
     set({ packages: [pkg({ enabled: false, rows: rows.slice(0, 2).map(item => ({ ...item, enabled: false, phase: null })) })] })
-    expect(within(detail).queryByRole('switch', { name: en.partToggle.replace('{name}', 'dsh-better-sidebar') })).toBeNull()
+    expect(within(detail).queryByRole('switch', { name: en.partToggle.replace('{name}', 'ocean-better-sidebar') })).toBeNull()
     expect(within(detail).getAllByText(en.partOff)).toHaveLength(2)
     // A row without a fiber, on a bundle that is on, reads idle.
     set({ packages: [pkg({ rows: [row({ phase: null })] })] })
@@ -1720,7 +1720,7 @@ describe('PluginManagerPage', () => {
     afterEach(() => { cleanup(); vi.useRealTimers() })
     const inputName = input === 'package' ? en.installSpecLabel : en.registryCustom
     const open: InstallState = {
-      ...IDLE_INSTALL, open: true, spec: 'dsh-new', registryOpen: true,
+      ...IDLE_INSTALL, open: true, spec: 'ocean-new', registryOpen: true,
       registry: { kind: 'custom', url: 'https://npm.corp.example/' },
     }
     const enter = (field: HTMLElement) => {
@@ -1790,7 +1790,7 @@ describe('PluginManagerPage', () => {
     ])('leaves $signal Enter to the IME and installs on the next ordinary Enter', ({ isComposing, keyCode }) => {
       const { actions } = renderTab({
         install: {
-          ...IDLE_INSTALL, open: true, spec: 'dsh-new', registryOpen: input === 'custom registry',
+          ...IDLE_INSTALL, open: true, spec: 'ocean-new', registryOpen: input === 'custom registry',
           registry: { kind: 'custom', url: 'https://npm.corp.example/' },
         },
       })
@@ -1815,17 +1815,17 @@ describe('PluginManagerPage', () => {
     const install = () => screen.getByRole('button', { name: en.installRun })
     expect(install()).toHaveProperty('disabled', true)
     const field = screen.getByRole('textbox', { name: en.installSpecLabel })
-    fireEvent.change(field, { target: { value: 'dsh-x' } })
-    expect(actions.editInstallSpec).toHaveBeenCalledWith('dsh-x')
+    fireEvent.change(field, { target: { value: 'ocean-x' } })
+    expect(actions.editInstallSpec).toHaveBeenCalledWith('ocean-x')
     expect(document.querySelector('[data-terminal]')).toBeNull()
     expect(screen.queryByRole('checkbox')).toBeNull()
 
-    set({ install: { ...IDLE_INSTALL, open: true, spec: ' dsh-x ' } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: ' ocean-x ' } })
     fireEvent.keyDown(screen.getByRole('textbox', { name: en.installSpecLabel }), { key: 'Enter' })
     fireEvent.click(install())
     expect(actions.runInstall).toHaveBeenCalledTimes(2)
     // The check keeps the field and the button inert.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'checking' } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'checking' } })
     expect(screen.getByRole('textbox', { name: en.installSpecLabel })).toHaveProperty('disabled', true)
     const checking = screen.getByRole('button', { name: en.installChecking })
     expect(checking).toHaveProperty('disabled', true)
@@ -1845,24 +1845,24 @@ describe('PluginManagerPage', () => {
       ['unknown', en.installProblemUnknown.replace('{reason}', 'r')],
     ]
     for (const [problem, sentence] of problems) {
-      set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', inputError: { problem: problem as never, reason: 'r' } } })
+      set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', inputError: { problem: problem as never, reason: 'r' } } })
       expect(screen.getByRole('alert').textContent).toBe(sentence)
       expect(screen.getByRole('textbox', { name: en.installSpecLabel }).getAttribute('aria-invalid')).toBe('true')
     }
     // A check no registry answered names them all.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', inputError: { problem: 'network', reason: 'r', registries: [null, MIRROR] } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', inputError: { problem: 'network', reason: 'r', registries: [null, MIRROR] } } })
     expect(screen.getByRole('alert').textContent).toBe(en.installProblemNetworkAll.replace('{registries}', `${en.registryDefault}, ${en.registryNpmmirror}`))
     fireEvent.click(screen.getByRole('button', { name: en.close }))
     expect(actions.closeInstall).toHaveBeenCalledTimes(1)
   })
 
   it('shows the subject while installing, folds the pnpm output behind the details, and stops through the Host', () => {
-    const subject = { spec: 'dsh-x', status: 'accepted', kind: 'registry', name: 'dsh-x', version: '1.4.2', description: 'A sidebar.', bundle: true, registry: null } as const
-    const run = { jobId: 'j1', command: 'pnpm add dsh-x', cwd: '/home/u/.dsh/profiles/web', output: 'Progress: resolved \x1b[96m1\x1b[39m\n' }
-    const { actions, set } = renderTab({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'running', subject, runs: [run] } })
+    const subject = { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', version: '1.4.2', description: 'A sidebar.', bundle: true, registry: null } as const
+    const run = { jobId: 'j1', command: 'pnpm add ocean-x', cwd: '/home/u/.ocean/profiles/web', output: 'Progress: resolved \x1b[96m1\x1b[39m\n' }
+    const { actions, set } = renderTab({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'running', subject, runs: [run] } })
     expect(screen.getByRole('status').textContent).toBe(en.installingTitle)
     expect(screen.getByRole('status').parentElement?.querySelector('[data-state="ongoing"]')).not.toBeNull()
-    expect(screen.getByText('dsh-x')).toBeTruthy()
+    expect(screen.getByText('ocean-x')).toBeTruthy()
     expect(screen.getByText('A sidebar.')).toBeTruthy()
     expect(screen.getByText(en.installVersion.replace('{version}', '1.4.2'))).toBeTruthy()
     expect(screen.queryByRole('textbox')).toBeNull()
@@ -1872,23 +1872,23 @@ describe('PluginManagerPage', () => {
     expect(details.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(details)
     expect(actions.toggleInstallDetails).toHaveBeenCalledTimes(1)
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'running', subject, runs: [run], detailsOpen: true } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'running', subject, runs: [run], detailsOpen: true } })
     expect(screen.getByRole('button', { name: en.installDetailsHide }).getAttribute('aria-expanded')).toBe('true')
-    expect(screen.getByText(en.installLocation.replace('{dir}', '/home/u/.dsh/profiles/web'))).toBeTruthy()
+    expect(screen.getByText(en.installLocation.replace('{dir}', '/home/u/.ocean/profiles/web'))).toBeTruthy()
     // The run streams as a terminal: its command line, its coloured output so far, the running label.
-    expect(screen.getByText('pnpm add dsh-x')).toBeTruthy()
+    expect(screen.getByText('pnpm add ocean-x')).toBeTruthy()
     const terminal = document.querySelector('[data-terminal]') as HTMLElement
     expect(terminal.hasAttribute('data-running')).toBe(true)
     expect(within(terminal).getByText('1').getAttribute('style')).toContain('--dsw-static-blue-500')
     expect(within(terminal).getByText(en.terminalRunning)).toBeTruthy()
     // A long log folds its middle behind an expand control, so the dialog keeps its height while pnpm talks.
     const lines = Array.from({ length: 15 }, (_line, index) => `line ${String(index + 1)}`).join('\n')
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'running', subject, detailsOpen: true, runs: [{ ...run, output: `${lines}\n` }] } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'running', subject, detailsOpen: true, runs: [{ ...run, output: `${lines}\n` }] } })
     expect(screen.queryByText('line 8')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.terminalExpandAria.replace('{n}', '3') }))
     expect(screen.getByText('line 8')).toBeTruthy()
     // Before the first chunk there is no location to name, and a running install claims no output yet.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'running', subject, detailsOpen: true } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'running', subject, detailsOpen: true } })
     expect(screen.queryByText(en.installDetailsNoOutput)).toBeNull()
     // Cancel and the back control each ask the Host to stop the run; the close control asks too, and closes once the Host confirms.
     fireEvent.click(screen.getByRole('button', { name: en.installCancel }))
@@ -1933,34 +1933,34 @@ describe('PluginManagerPage', () => {
   })
 
   it('offers to enable what a finished install added, and says when it waits for a restart', () => {
-    const subject = { spec: '/plugins/dsh-x', status: 'accepted', kind: 'path', name: 'dsh-x', bundle: true, registry: null } as const
+    const subject = { spec: '/plugins/ocean-x', status: 'accepted', kind: 'path', name: 'ocean-x', bundle: true, registry: null } as const
     const { actions, set } = renderTab({
       install: {
         ...IDLE_INSTALL,
         open: true,
-        spec: '/plugins/dsh-x',
+        spec: '/plugins/ocean-x',
         phase: 'done',
         subject,
-        runs: [{ jobId: 'j1', command: 'pnpm add /plugins/dsh-x', cwd: '/p', output: 'Done in 1s\n', exitCode: 0 }],
-        installed: 'dsh-x',
+        runs: [{ jobId: 'j1', command: 'pnpm add /plugins/ocean-x', cwd: '/p', output: 'Done in 1s\n', exitCode: 0 }],
+        installed: 'ocean-x',
       },
     })
     expect(screen.getByText(en.installedTitle)).toBeTruthy()
     expect(screen.getByText(en.installedTitle).parentElement?.querySelector('[data-state="done"]')).not.toBeNull()
     // A path without a description reads by its kind.
-    expect(screen.getByText('dsh-x')).toBeTruthy()
+    expect(screen.getByText('ocean-x')).toBeTruthy()
     expect(screen.getByText(en.installSubjectPath)).toBeTruthy()
     expect(screen.queryByText(en.installDoneRestart)).toBeNull()
     // No way back to the spec from here; enabling is the one action.
     expect(screen.queryByRole('button', { name: en.installEditAria })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.installEnableNow }))
     expect(actions.enableInstalled).toHaveBeenCalledTimes(1)
-    set({ install: { ...IDLE_INSTALL, open: true, spec: '/plugins/dsh-x', phase: 'done', subject, installed: 'dsh-x', restartRequired: true, restartReason: 'host-module', enabling: true } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: '/plugins/ocean-x', phase: 'done', subject, installed: 'ocean-x', restartRequired: true, restartReason: 'host-module', enabling: true } })
     expect(screen.getByRole('button', { name: en.installEnableNow })).toHaveProperty('disabled', true)
     expect(screen.getByText(en.installDoneRestart.replace('{reason}', en.restartReasonHostModule))).toBeTruthy()
 
     // A run that named no bundle leaves only Done.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'done', subject: { spec: 'dsh-x', status: 'accepted', kind: 'registry', name: 'dsh-x', bundle: true, registry: null } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'done', subject: { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', bundle: true, registry: null } } })
     expect(screen.getByText(en.installDoneNothing)).toBeTruthy()
     expect(screen.queryByRole('button', { name: en.installEnableNow })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.installClose }))
@@ -1983,10 +1983,10 @@ describe('PluginManagerPage', () => {
   })
 
   it('asks to allow the scripts a blocked install left pending, retries with them, and says what was allowed', () => {
-    const subject = { spec: 'dsh-x', status: 'accepted', kind: 'registry', name: 'dsh-x', bundle: true, registry: null } as const
+    const subject = { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', bundle: true, registry: null } as const
     const { actions, set } = renderTab({
       install: {
-        ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject,
+        ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject,
         failure: { reason: 'ERR', kind: 'build-blocked', pendingBuilds: ['native', '@scope/other'] },
       },
     })
@@ -2000,20 +2000,20 @@ describe('PluginManagerPage', () => {
     fireEvent.click(within(group).getByRole('button', { name: en.installApproveAndRetry }))
     expect(actions.approveBuildsAndRetry).toHaveBeenCalledTimes(1)
     // Without the pending names the failure reads as the manual instruction, and plain retry is back.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject, failure: { reason: 'ERR', kind: 'build-blocked' } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject, failure: { reason: 'ERR', kind: 'build-blocked' } } })
     expect(screen.getByText(en.installFailureBuildBlockedManual)).toBeTruthy()
     expect(screen.queryByRole('group', { name: en.installApprovalTitle })).toBeNull()
     expect(screen.getByRole('button', { name: en.installRetry })).toBeTruthy()
     // The installed screen says which scripts were allowed.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'done', subject, installed: 'dsh-x', approvedBuilds: ['native'] } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'done', subject, installed: 'ocean-x', approvedBuilds: ['native'] } })
     expect(screen.getByText(en.installDoneApproved.replace('{names}', 'native'))).toBeTruthy()
   })
 
   it('names the exact spec when pnpm installed another version than the one inspected', () => {
-    const subject = { spec: 'dsh-x', status: 'accepted', kind: 'registry', name: 'dsh-x', version: '1.4.2', bundle: true, registry: null } as const
+    const subject = { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', version: '1.4.2', bundle: true, registry: null } as const
     const other = en.installDoneOtherVersion
-      .replace('{installed}', '1.4.1').replaceAll('{version}', '1.4.2').replace('{exact}', 'dsh-x@1.4.2')
-    const done = { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'done', installed: 'dsh-x' } as const
+      .replace('{installed}', '1.4.1').replaceAll('{version}', '1.4.2').replace('{exact}', 'ocean-x@1.4.2')
+    const done = { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'done', installed: 'ocean-x' } as const
     const { set } = renderTab({ install: { ...done, subject, installedVersion: '1.4.1' } })
     expect(screen.getByText(other)).toBeTruthy()
     // The subject card shows the version pnpm installed.
@@ -2092,10 +2092,10 @@ describe('PluginManagerPage', () => {
   })
 
   it('names an enable-stage failure and points the details at the complete Host log', () => {
-    const subject = { spec: 'dsh-x', status: 'accepted', kind: 'registry', name: 'dsh-x', bundle: true, registry: null } as const
-    const logPath = '/home/u/.dsh/profiles/web/plugin-manager/runs/install.log'
+    const subject = { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', bundle: true, registry: null } as const
+    const logPath = '/home/u/.ocean/profiles/web/plugin-manager/runs/install.log'
     const enabling: InstallState = {
-      ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject, detailsOpen: true, logPath,
+      ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject, detailsOpen: true, logPath,
       failure: { reason: 'activation refused', stage: 'enable', enabled: true },
     }
     const { set } = renderTab({ install: enabling })
@@ -2283,7 +2283,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('focuses an invalid custom address when submission opens its registry menu', () => {
-    const open = { ...IDLE_INSTALL, open: true, spec: 'dsh-new', registry: { kind: 'custom' as const, url: 'invalid' } }
+    const open = { ...IDLE_INSTALL, open: true, spec: 'ocean-new', registry: { kind: 'custom' as const, url: 'invalid' } }
     const { actions, set } = renderTab({ install: open })
     fireEvent.click(screen.getByRole('button', { name: en.installRun }))
     expect(actions.runInstall).toHaveBeenCalledOnce()
@@ -2341,7 +2341,7 @@ describe('PluginManagerPage', () => {
     // Enter in the field installs, once there is a spec.
     fireEvent.keyDown(field, { key: 'Enter' })
     expect(actions.runInstall).not.toHaveBeenCalled()
-    set({ install: { ...open, spec: 'dsh-x', registryOpen: true, registry: { kind: 'custom', url: 'https://npm.corp/' } } })
+    set({ install: { ...open, spec: 'ocean-x', registryOpen: true, registry: { kind: 'custom', url: 'https://npm.corp/' } } })
     fireEvent.keyDown(screen.getByRole('textbox', { name: en.registryCustom }), { key: 'Enter' })
     expect(actions.runInstall).toHaveBeenCalledTimes(1)
     // A remembered registry that does not parse as a URL reads as written.
@@ -2371,14 +2371,14 @@ describe('PluginManagerPage', () => {
   })
 
   it('names the registry each attempt asks while installing, badges each run, and says when every registry failed', () => {
-    const subject = { spec: 'dsh-x', status: 'accepted', kind: 'registry', name: 'dsh-x', bundle: true, registry: null } as const
+    const subject = { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', bundle: true, registry: null } as const
     const runs = [
-      { jobId: 'j1', command: 'pnpm add dsh-x', cwd: '/p', output: 'ERR\n', exitCode: 1 },
-      { jobId: 'j2', command: `pnpm add dsh-x --registry=${MIRROR}`, cwd: '/p', output: 'Progress\n' },
+      { jobId: 'j1', command: 'pnpm add ocean-x', cwd: '/p', output: 'ERR\n', exitCode: 1 },
+      { jobId: 'j2', command: `pnpm add ocean-x --registry=${MIRROR}`, cwd: '/p', output: 'Progress\n' },
     ]
     const { actions, set } = renderTab({
       install: {
-        ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'running', subject, runs, detailsOpen: true, attempts: { registries: [null, MIRROR], total: 2 },
+        ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'running', subject, runs, detailsOpen: true, attempts: { registries: [null, MIRROR], total: 2 },
       },
     })
     expect(screen.getByRole('status').textContent).toBe(en.installingTitle)
@@ -2387,13 +2387,13 @@ describe('PluginManagerPage', () => {
     expect(screen.getByText(en.installAttemptBadge.replace('{index}', '1').replace('{registry}', en.registryDefault))).toBeTruthy()
     expect(screen.getByText(en.installAttemptBadge.replace('{index}', '2').replace('{registry}', en.registryNpmmirror))).toBeTruthy()
     // The first attempt says nothing about a registry before it; a single run carries no badge.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'running', subject, runs: [runs[0] as never], detailsOpen: true, attempts: { registries: [null], total: 2 } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'running', subject, runs: [runs[0] as never], detailsOpen: true, attempts: { registries: [null], total: 2 } } })
     expect(screen.queryByText(en.installAttemptBadge.replace('{index}', '1').replace('{registry}', en.registryDefault))).toBeNull()
     expect(screen.getByRole('status').parentElement?.textContent).toBe(en.installingTitle)
     // Every registry failed: the failure names them all, and the registries can be changed from here.
     set({
       install: {
-        ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject, runs,
+        ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject, runs,
         attempts: { registries: [null, MIRROR], total: 2 }, failure: { reason: 'ERR', kind: 'network', failedAt: 'registry' },
       },
     })
@@ -2401,13 +2401,13 @@ describe('PluginManagerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: en.installChangeRegistry }))
     expect(actions.changeRegistry).toHaveBeenCalledTimes(1)
     // One registry that failed reads as the plain network failure; a stale copy on it still offers another registry.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject, attempts: { registries: [null], total: 1 }, failure: { reason: 'ERR', kind: 'network', failedAt: 'registry' } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject, attempts: { registries: [null], total: 1 }, failure: { reason: 'ERR', kind: 'network', failedAt: 'registry' } } })
     expect(screen.getByText(en.installFailureNetwork)).toBeTruthy()
     expect(screen.getByRole('button', { name: en.installChangeRegistry })).toBeTruthy()
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject, attempts: { registries: [null], total: 1 }, failure: { reason: 'ERR', kind: 'not-found', failedAt: 'registry' } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject, attempts: { registries: [null], total: 1 }, failure: { reason: 'ERR', kind: 'not-found', failedAt: 'registry' } } })
     expect(screen.getByRole('button', { name: en.installChangeRegistry })).toBeTruthy()
     // A failure the Host laid at neither offers no other registry.
-    set({ install: { ...IDLE_INSTALL, open: true, spec: 'dsh-x', phase: 'failed', subject, attempts: { registries: [null], total: 1 }, failure: { reason: 'ERR', kind: 'disk-full' } } })
+    set({ install: { ...IDLE_INSTALL, open: true, spec: 'ocean-x', phase: 'failed', subject, attempts: { registries: [null], total: 1 }, failure: { reason: 'ERR', kind: 'disk-full' } } })
     expect(screen.queryByRole('button', { name: en.installChangeRegistry })).toBeNull()
   })
 
@@ -2423,14 +2423,14 @@ describe('PluginManagerPage', () => {
       expect(scrollIntoView).not.toHaveBeenCalled()
       act(() => { vi.advanceTimersByTime(2_400) })
       expect(actions.clearHighlight).toHaveBeenCalledTimes(1)
-      set({ highlight: 'dsh-better-sidebar' })
+      set({ highlight: 'ocean-better-sidebar' })
       expect(screen.getByRole('heading', { name: en.title, level: 1 })).toBeTruthy()
-      expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')?.hasAttribute('data-plugin-highlight')).toBe(true)
+      expect(document.querySelector('[data-plugin-package="ocean-better-sidebar"]')?.hasAttribute('data-plugin-highlight')).toBe(true)
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' })
       act(() => { vi.advanceTimersByTime(2_400) })
       expect(actions.clearHighlight).toHaveBeenCalledTimes(2)
       set({ highlight: null })
-      expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')?.hasAttribute('data-plugin-highlight')).toBe(false)
+      expect(document.querySelector('[data-plugin-package="ocean-better-sidebar"]')?.hasAttribute('data-plugin-highlight')).toBe(false)
     } finally {
       if (descriptor === undefined) delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView
       else Object.defineProperty(Element.prototype, 'scrollIntoView', descriptor)
@@ -2483,14 +2483,14 @@ describe('PluginManagerPage', () => {
     act(() => { b.navigation.actions.setView({ kind: 'item', id: 'bash' }) })
     const draft = screen.getByRole('textbox', { name: 'Draft setting' })
     fireEvent.change(draft, { target: { value: 'unsaved change' } })
-    b.set({ highlight: 'dsh-better-sidebar' })
+    b.set({ highlight: 'ocean-better-sidebar' })
     expect(screen.getByRole('textbox', { name: 'Draft setting' })).toBe(draft)
     expect(draft).toHaveProperty('value', 'unsaved change')
 
     b.hidePage()
-    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
+    act(() => { b.navigation.actions.setView({ kind: 'package', name: 'ocean-better-sidebar' }) })
     b.showPage()
-    expect(document.querySelector('[data-plugin-detail="dsh-better-sidebar"]')).not.toBeNull()
+    expect(document.querySelector('[data-plugin-detail="ocean-better-sidebar"]')).not.toBeNull()
   })
 
   it('marks a card without a scrollIntoView to call', () => {
@@ -2499,8 +2499,8 @@ describe('PluginManagerPage', () => {
     delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView
     try {
       const { set } = renderTab({ packages: [pkg()] })
-      set({ highlight: 'dsh-better-sidebar' })
-      expect(document.querySelector('[data-plugin-package="dsh-better-sidebar"]')?.hasAttribute('data-plugin-highlight')).toBe(true)
+      set({ highlight: 'ocean-better-sidebar' })
+      expect(document.querySelector('[data-plugin-package="ocean-better-sidebar"]')?.hasAttribute('data-plugin-highlight')).toBe(true)
     } finally {
       if (descriptor !== undefined) Object.defineProperty(Element.prototype, 'scrollIntoView', descriptor)
       vi.useRealTimers()
@@ -2509,17 +2509,17 @@ describe('PluginManagerPage', () => {
 
   it('confirms an uninstall by the package\'s title and runs the action through it', () => {
     const { actions, set } = renderTab({
-      packages: [pkg(), pkg({ name: 'dsh-other' })],
-      confirm: { action: 'uninstall', packageName: 'dsh-better-sidebar' },
+      packages: [pkg(), pkg({ name: 'ocean-other' })],
+      confirm: { action: 'uninstall', packageName: 'ocean-better-sidebar' },
     })
-    expect(screen.getByRole('dialog', { name: en.confirmUninstallTitle.replace('{name}', 'dsh-better-sidebar') })).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: en.confirmUninstallTitle.replace('{name}', 'ocean-better-sidebar') })).toBeTruthy()
     expect(screen.getByText(en.confirmUninstallDescription)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: en.cancel }))
     expect(actions.cancelConfirm).toHaveBeenCalledTimes(1)
-    set({ confirm: { action: 'uninstall', packageName: 'dsh-other' } })
-    expect(screen.getByRole('dialog', { name: en.confirmUninstallTitle.replace('{name}', 'dsh-other') })).toBeTruthy()
+    set({ confirm: { action: 'uninstall', packageName: 'ocean-other' } })
+    expect(screen.getByRole('dialog', { name: en.confirmUninstallTitle.replace('{name}', 'ocean-other') })).toBeTruthy()
     set({ packages: [] })
-    expect(screen.getByRole('dialog', { name: en.confirmUninstallTitle.replace('{name}', 'dsh-other') })).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: en.confirmUninstallTitle.replace('{name}', 'ocean-other') })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: en.confirmUninstall }))
     expect(actions.confirm).toHaveBeenCalledTimes(1)
   })
@@ -2607,8 +2607,8 @@ describe('PluginManagerPage', () => {
 })
 
 it.each([false, true])('shows progress only for the changing bundle and clears it when settled (enabled=%s)', (enabled) => {
-  const name = 'dsh-better-sidebar'
-  const { set, setLanguage, actions } = renderTab({ packages: [pkg({ enabled }), pkg({ name: 'dsh-other' })] })
+  const name = 'ocean-better-sidebar'
+  const { set, setLanguage, actions } = renderTab({ packages: [pkg({ enabled }), pkg({ name: 'ocean-other' })] })
   const toggle = screen.getByRole('switch', { name: `Enable ${name}` })
   const status = within(toggle.parentElement!).getByRole('status')
   expect(status.textContent).toBe('')
@@ -2623,7 +2623,7 @@ it.each([false, true])('shows progress only for the changing bundle and clears i
   expect(toggle).toHaveProperty('disabled', true)
   fireEvent.click(toggle)
   expect(actions.setEnabled).toHaveBeenCalledOnce()
-  expect(screen.getByRole('switch', { name: '启用 dsh-other' })).toHaveProperty('disabled', false)
+  expect(screen.getByRole('switch', { name: '启用 ocean-other' })).toHaveProperty('disabled', false)
   set({ busy: [] })
   expect(within(toggle.parentElement!).getByRole('status')).toBe(status)
   expect(status.textContent).toBe('')
@@ -2631,7 +2631,7 @@ it.each([false, true])('shows progress only for the changing bundle and clears i
 })
 
 it.each([false, true])('opens activation guidance details and returns to the originating list (from More: %s)', (fromMore) => {
-  const name = fromMore ? '@ocean/ocean-subagent-codex' : 'dsh-better-sidebar'
+  const name = fromMore ? '@ocean/ocean-subagent-codex' : 'ocean-better-sidebar'
   const bundle = pkg({ name, official: fromMore })
   const { set, actions } = renderTab({ packages: [{ ...bundle, enabled: false }] }, { bundles: new Set([name]) }, {
     [`plugins.bundle.activation:${name}`]: (_view, owner) => <button onClick={(owner as PluginActivationOwnerProps).onOpenDetails}>Go to setup</button>,
@@ -2656,7 +2656,7 @@ it.each([false, true])('opens activation guidance details and returns to the ori
 })
 
 it('dismisses activation guidance until the user enables the bundle again', () => {
-  const name = 'dsh-better-sidebar'
+  const name = 'ocean-better-sidebar'
   const { set } = renderTab({ packages: [pkg({ enabled: false })] }, {}, {
     [`plugins.bundle.activation:${name}`]: (_view, owner) => <button onClick={(owner as PluginActivationOwnerProps).onDismiss}>Later</button>,
   })
@@ -2673,7 +2673,7 @@ it('dismisses activation guidance until the user enables the bundle again', () =
 })
 
 it('keeps activation guidance with the Installed list when a contributed tab enables the bundle', () => {
-  const name = 'dsh-better-sidebar'
+  const name = 'ocean-better-sidebar'
   const subject = { spec: `${name}@0.16.0`, status: 'accepted', kind: 'registry', name, bundle: true, registry: null } as const
   const { set } = renderTab({
     install: { ...IDLE_INSTALL, open: true, phase: 'done', subject, installed: name },
@@ -2812,7 +2812,7 @@ describe('on-demand Official bundles', () => {
 })
 
 it('uses the same activation guidance from a package detail switch', () => {
-  const name = 'dsh-better-sidebar'
+  const name = 'ocean-better-sidebar'
   const { set, actions } = renderTab({ packages: [pkg({ enabled: false })] }, { bundles: new Set([name]) }, {
     [`plugins.bundle.activation:${name}`]: (_view, owner) => <button onClick={(owner as PluginActivationOwnerProps).onDismiss}>Finish setup</button>,
     [`plugins.bundle.config:${name}`]: () => <div>Bundle setup</div>,
@@ -2834,7 +2834,7 @@ it('uses the same activation guidance from a package detail switch', () => {
 
 
 it('keeps bundle configuration mounted while its operation is pending', () => {
-  const name = 'dsh-better-sidebar'
+  const name = 'ocean-better-sidebar'
   const { set } = renderTab({ packages: [pkg()] }, { bundles: new Set([name]) }, {
     [`plugins.bundle.config:${name}`]: () => <div data-testid="bundle-config">Configuration</div>,
   })
@@ -2850,7 +2850,7 @@ it('keeps bundle configuration mounted while its operation is pending', () => {
 
 describe('registry versions and updates', () => {
   const MIRROR = 'https://registry.npmmirror.com/'
-  const updatable = (): PackageView => pkg({ update: 'registry', version: '0.16.0', source: 'dsh-better-sidebar@0.16.0' })
+  const updatable = (): PackageView => pkg({ update: 'registry', version: '0.16.0', source: 'ocean-better-sidebar@0.16.0' })
   const runtime = '0.8.3'
   const listed = (versions: PluginVersion[], attempts: RegistryAttempt[] = [{ registry: null }]): VersionCheck => ({
     phase: 'done', checkedAt: 0,
@@ -2859,11 +2859,11 @@ describe('registry versions and updates', () => {
   const v = (version: string, more: Partial<PluginVersion> = {}): PluginVersion => ({
     version, tags: [], prerelease: false, bundle: true, ...more,
   })
-  const incompatible = (version: string) => ({ name: 'dsh-better-sidebar', version, runtimeVersion: runtime, requirements: { '@ocean/ocean': '>=0.9.0' } })
+  const incompatible = (version: string) => ({ name: 'ocean-better-sidebar', version, runtimeVersion: runtime, requirements: { '@ocean/ocean': '>=0.9.0' } })
   const detail = (): HTMLElement => document.querySelector('[data-plugin-detail]') as HTMLElement
   const section = (): HTMLElement => document.querySelector('[data-plugin-versions]') as HTMLElement
   const open = (navigation: ReturnType<typeof renderTab>['navigation']) => {
-    act(() => { navigation.actions.setView({ kind: 'package', name: 'dsh-better-sidebar' }) })
+    act(() => { navigation.actions.setView({ kind: 'package', name: 'ocean-better-sidebar' }) })
   }
 
   it('checks once on opening, offers the newest installable version, and lists newer versions when unfolded', () => {
@@ -2875,15 +2875,15 @@ describe('registry versions and updates', () => {
       v('1.3.1', { bundle: false }),
     ]
     const check = listed(versions, [{ registry: null, problem: 'network', reason: 'ETIMEDOUT' }, { registry: MIRROR }])
-    const { actions, navigation } = renderTab({ packages: [updatable()], versions: { 'dsh-better-sidebar': check } })
+    const { actions, navigation } = renderTab({ packages: [updatable()], versions: { 'ocean-better-sidebar': check } })
     expect(screen.getByText(en.statusUpdateAvailable)).toBeTruthy()
     open(navigation)
-    expect(actions.ensureVersions).toHaveBeenCalledWith('dsh-better-sidebar')
+    expect(actions.ensureVersions).toHaveBeenCalledWith('ocean-better-sidebar')
     expect(actions.ensureVersions).toHaveBeenCalledOnce()
     expect(within(section()).getByText('Update to 1.4.0 available')).toBeTruthy()
     expect(within(section()).getByText('Published 2026-09-28')).toBeTruthy()
     fireEvent.click(within(detail()).getAllByRole('button', { name: 'Update to 1.4.0' })[0]!)
-    expect(actions.openUpdate).toHaveBeenCalledWith('dsh-better-sidebar', '1.4.0')
+    expect(actions.openUpdate).toHaveBeenCalledWith('ocean-better-sidebar', '1.4.0')
     const summary = within(section()).getByRole('button', { name: /Update to 1\.4\.0 available/ })
     expect(summary.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(summary)
@@ -2897,14 +2897,14 @@ describe('registry versions and updates', () => {
     expect(within(row('1.3.2')).getByText('use 1.4.0')).toBeTruthy()
     expect(within(row('0.16.0')).getByText(en.versionsInstalledTag)).toBeTruthy()
     fireEvent.click(within(row('1.3.2')).getByRole('button', { name: 'Update to 1.3.2' }))
-    expect(actions.openUpdate).toHaveBeenLastCalledWith('dsh-better-sidebar', '1.3.2')
+    expect(actions.openUpdate).toHaveBeenLastCalledWith('ocean-better-sidebar', '1.3.2')
     // The registry that answered, marked as a fallback after the first one failed.
     expect(within(section()).getByText(en.registryNpmmirror)).toBeTruthy()
     expect(within(section()).getByText(en.versionsFallbackTag)).toBeTruthy()
     fireEvent.click(within(section()).getByRole('checkbox', { name: en.versionsShowPrerelease }))
     expect(row('2.1.0-beta.1')).toBeTruthy()
     fireEvent.click(within(section()).getByRole('button', { name: en.versionsRecheck }))
-    expect(actions.checkVersions).toHaveBeenCalledWith('dsh-better-sidebar')
+    expect(actions.checkVersions).toHaveBeenCalledWith('ocean-better-sidebar')
     fireEvent.click(summary)
     expect(row('1.4.0')).toBeNull()
   })
@@ -2915,7 +2915,7 @@ describe('registry versions and updates', () => {
     ['blocked', listed([v('2.0.0', { incompatible: incompatible('2.0.0') })]), en.versionsBlocked],
     ['not installable', listed([v('1.0.0', { deprecated: 'old' })]), en.versionsNoneInstallable],
   ] as const)('summarizes a %s check', (_name, check, title) => {
-    const { navigation } = renderTab({ packages: [updatable()], versions: { 'dsh-better-sidebar': check } })
+    const { navigation } = renderTab({ packages: [updatable()], versions: { 'ocean-better-sidebar': check } })
     open(navigation)
     expect(within(section()).getByText(title)).toBeTruthy()
     expect(within(detail()).queryByRole('button', { name: /^Update to / })).toBeNull()
@@ -2928,7 +2928,7 @@ describe('registry versions and updates', () => {
       { registry: MIRROR, problem: 'network', reason: 'getaddrinfo ENOTFOUND registry.npmmirror.com' },
     ]
     const { actions, navigation } = renderTab({ packages: [updatable()], versions: {
-      'dsh-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'network', reason: 'down', attempts } },
+      'ocean-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'network', reason: 'down', attempts } },
     } })
     open(navigation)
     expect(within(section()).getByText(en.versionsFailedNetwork)).toBeTruthy()
@@ -2938,23 +2938,23 @@ describe('registry versions and updates', () => {
     expect(within(section()).getByText('getaddrinfo ENOTFOUND registry.npmmirror.com')).toBeTruthy()
     expect(within(section()).getByText(en.versionsPrimaryTag)).toBeTruthy()
     fireEvent.click(within(section()).getByRole('button', { name: en.retry }))
-    expect(actions.checkVersions).toHaveBeenCalledWith('dsh-better-sidebar')
+    expect(actions.checkVersions).toHaveBeenCalledWith('ocean-better-sidebar')
   })
 
   it('reports a check the transport lost by its words, and lists a single registry\'s answer without a fallback mark', () => {
     const { navigation, set } = renderTab({ packages: [updatable()], versions: {
-      'dsh-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'unknown', reason: 'socket closed', attempts: [] } },
+      'ocean-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'unknown', reason: 'socket closed', attempts: [] } },
     } })
     open(navigation)
     expect(within(section()).getByText(en.versionsFailedOther)).toBeTruthy()
     expect(within(section()).getByText('socket closed')).toBeTruthy()
     expect(within(section()).queryByRole('button', { name: en.versionsDetails })).toBeNull()
     // A refused list can name a registry that answered before a later lookup failed.
-    set({ versions: { 'dsh-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'unknown', reason: 'boom', attempts: [{ registry: null }] } } } })
+    set({ versions: { 'ocean-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'unknown', reason: 'boom', attempts: [{ registry: null }] } } } })
     fireEvent.click(within(section()).getByRole('button', { name: en.versionsDetails }))
     expect(within(section()).getByText(en.registryDefault)).toBeTruthy()
     expect(within(section()).queryByText(en.versionsProblemUnknown)).toBeNull()
-    set({ versions: { 'dsh-better-sidebar': { ...listed([v('0.17.0')]), list: { ...(listed([v('0.17.0')]) as Extract<VersionCheck, { phase: 'done' }>).list, omitted: 3 } } as VersionCheck } })
+    set({ versions: { 'ocean-better-sidebar': { ...listed([v('0.17.0')]), list: { ...(listed([v('0.17.0')]) as Extract<VersionCheck, { phase: 'done' }>).list, omitted: 3 } } as VersionCheck } })
     expect(within(section()).queryByText(/^Published/)).toBeNull()
     // The section stays unfolded across the new answer.
     expect(within(section()).getByRole('button', { name: /Update to 0\.17\.0 available/ }).getAttribute('aria-expanded')).toBe('true')
@@ -2964,7 +2964,7 @@ describe('registry versions and updates', () => {
   })
 
   it.each([
-    ['linked', pkg({ source: 'link:/dev/dsh-better-sidebar' })],
+    ['linked', pkg({ source: 'link:/dev/ocean-better-sidebar' })],
     ['Git', pkg({ update: 'git', version: '0.16.0', source: 'git+https://git.example/o/plugins.git#aaaaaaa' })],
   ])('shows no Versions section for a %s package', (_name, linked) => {
     const { actions, navigation } = renderTab({ packages: [linked] })
@@ -2974,22 +2974,22 @@ describe('registry versions and updates', () => {
   })
 
   it('says in the toolbar what the version checks found', () => {
-    const { set } = renderTab({ packages: [updatable(), pkg({ name: 'dsh-linked' })] })
-    set({ versions: { 'dsh-better-sidebar': { phase: 'checking' } } })
+    const { set } = renderTab({ packages: [updatable(), pkg({ name: 'ocean-linked' })] })
+    set({ versions: { 'ocean-better-sidebar': { phase: 'checking' } } })
     expect(screen.queryByText(en.updatesNone)).toBeNull()
-    set({ versions: { 'dsh-better-sidebar': listed([v('1.0.0')]) } })
+    set({ versions: { 'ocean-better-sidebar': listed([v('1.0.0')]) } })
     expect(screen.getByText('Updates available: 1')).toBeTruthy()
-    set({ versions: { 'dsh-better-sidebar': listed([]) } })
+    set({ versions: { 'ocean-better-sidebar': listed([]) } })
     expect(screen.getByText(en.updatesNone)).toBeTruthy()
-    set({ versions: { 'dsh-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'unknown', reason: 'x', attempts: [] } } } })
+    set({ versions: { 'ocean-better-sidebar': { phase: 'done', checkedAt: 0, list: { status: 'refused', problem: 'unknown', reason: 'x', attempts: [] } } } })
     expect(screen.getByText(en.updatesFailed)).toBeTruthy()
   })
 
   const base: UpdateState = {
-    packageName: 'dsh-better-sidebar', from: '1.3.0', to: '1.4.0', source: { kind: 'registry', registry: MIRROR }, phase: 'confirm', steps: [], result: null, outputOpen: false,
+    packageName: 'ocean-better-sidebar', from: '1.3.0', to: '1.4.0', source: { kind: 'registry', registry: MIRROR }, phase: 'confirm', steps: [], result: null, outputOpen: false,
   }
   const change = (application: ChangeResult['application'], more: Partial<ChangeResult> = {}): ChangeResult => ({
-    changed: true, application, stage: 'install', target: 'dsh-better-sidebar', ...more,
+    changed: true, application, stage: 'install', target: 'ocean-better-sidebar', ...more,
   })
   const dialog = (): HTMLElement => screen.getByRole('dialog')
 
@@ -3014,7 +3014,7 @@ describe('registry versions and updates', () => {
 
   it('names a package that left the list by its package name', () => {
     renderTab({ packages: [], update: base })
-    expect(within(dialog()).getByText(en.updateTitle.replace('{name}', 'dsh-better-sidebar'))).toBeTruthy()
+    expect(within(dialog()).getByText(en.updateTitle.replace('{name}', 'ocean-better-sidebar'))).toBeTruthy()
   })
 
   it('follows the running steps and keeps the dialog open', () => {

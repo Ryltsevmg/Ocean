@@ -3,7 +3,7 @@
  * @module @ocean/ocean-official-bundles
  */
 
-import type { DshBundleManifest, PluginLocalizedMeta } from '@ocean/ocean-package-manifest'
+import type { OceanBundleManifest, PluginLocalizedMeta } from '@ocean/ocean-package-manifest'
 
 export {
   DEFAULT_PROFILE_BUNDLES, INSTALLATION_OWNED_PROFILE_TUPLES, ON_DEMAND_BUNDLES, OPTIONAL_BUNDLES, PROFILE_TEMPLATES,
@@ -16,7 +16,7 @@ export interface OfficialBundleCatalogEntry {
   /** Exact npm package name accepted by the existing bundle installer. */
   readonly packageName: string
   /** Package-owned Host platform declaration, available before installation. */
-  readonly platforms?: DshBundleManifest['platforms']
+  readonly platforms?: OceanBundleManifest['platforms']
   /** Package-owned localized text and a self-contained icon, embedded without provider code. */
   readonly meta: Required<Pick<PluginLocalizedMeta, 'title' | 'description' | 'icon'>>
 }

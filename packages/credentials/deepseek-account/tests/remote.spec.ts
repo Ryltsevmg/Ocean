@@ -15,7 +15,7 @@ const cleanups: Array<() => Promise<unknown>> = []
 afterEach(async () => { while (cleanups.length) await cleanups.pop()!() })
 
 async function fixture() {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-account-remote-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-account-remote-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
   const ctx = new Context()
   cleanups.push(() => ctx.fiber.dispose())

@@ -43,7 +43,7 @@ describe.skipIf(webSnapshotMode() === 'record')('web e2e: PTC answered question'
   const events: SessionEvent[] = []
 
   beforeAll(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'dsh-question-ptc-'))
+    directory = await mkdtemp(join(tmpdir(), 'ocean-question-ptc-'))
     const replayOverride = join(directory, 'replay.override.json')
     await writeFile(replayOverride, JSON.stringify(script))
     scaffold = await launchWebScaffold({

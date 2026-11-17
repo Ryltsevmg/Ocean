@@ -28,11 +28,11 @@ export async function prepareDesktopHome(root: string): Promise<{ home: string; 
     if (/KEY|TOKEN|SECRET|PASSWORD/u.test(name)) vi.stubEnv(name, undefined)
   }
   // The production shell supplies the client version that Desktop-only profile rows require.
-  vi.stubEnv('DSH_CLIENT_VERSION', '1.2.3')
+  vi.stubEnv('OCEAN_CLIENT_VERSION', '1.2.3')
   const home = join(root, 'home')
   mkdirSync(home)
-  vi.stubEnv('DSH_HOME', home)
-  vi.stubEnv('DSH_TELEMETRY_MODE', 'DISABLED')
+  vi.stubEnv('OCEAN_HOME', home)
+  vi.stubEnv('OCEAN_TELEMETRY_MODE', 'DISABLED')
   const project = prepareDevelopmentProject({
     projectDir: join(root, 'project'),
     cliDir: join(repository, 'apps/cli'),
@@ -49,6 +49,6 @@ export async function prepareDesktopHome(root: string): Promise<{ home: string; 
     target: 'mac-x64',
   })
   const paths = resolveDesktopPaths(home)
-  await new DesktopProjectManager(paths, { dsh: project }).applyRelease()
+  await new DesktopProjectManager(paths, { ocean: project }).applyRelease()
   return { home, project, paths }
 }

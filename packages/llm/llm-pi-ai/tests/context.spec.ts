@@ -204,7 +204,7 @@ describe('pi-ai request context conversion', () => {
       height: 565,
     }))
     const context = await toPiContext(request([user([{ type: 'image', attachment: named }])]), imageContext(store, {
-      resolveImageAccess: () => ({ readonlyPath: '/tmp/dsh/objects/aa/object' }),
+      resolveImageAccess: () => ({ readonlyPath: '/tmp/ocean/objects/aa/object' }),
     }))
     expect(context.messages[0]).toMatchObject({
       role: 'user',
@@ -213,7 +213,7 @@ describe('pi-ai request context conversion', () => {
         { type: 'image' },
       ],
     })
-    expect(JSON.stringify(context.messages[0])).toContain('/tmp/dsh/objects/aa/object')
+    expect(JSON.stringify(context.messages[0])).toContain('/tmp/ocean/objects/aa/object')
     expect(JSON.stringify(context.messages[0])).toContain('request preview 1130x565px')
   })
 
@@ -376,7 +376,7 @@ describe('pi-ai request context conversion', () => {
 
   it('renders an offloaded occurrence with independently resolved access', async () => {
     const sized: ImageAttachmentRef = { ...ref, bytes: 3 }
-    const access = { readonlyPath: '/tmp/dsh-normalized-image' }
+    const access = { readonlyPath: '/tmp/ocean-normalized-image' }
     const readImageRequest = vi.fn()
 
     const context = await toPiContext(request([

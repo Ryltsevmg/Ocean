@@ -6,11 +6,11 @@
   en: 07482fe1f03de5e9
   zh: 8ec16b9f9ac73b38
 /ocean-ocean-pwsh-local:
-  en: 3da59812d6bc3c32
-  zh: aacb14f4b598bec3
+  en: 14db2a082a4c7d19
+  zh: d7a3f2edff3329b5
 /ocean-ocean-pwsh-local/summary:
-  en: b3d58f4bee09b7ed
-  zh: 31f5ef9ba27a4df0
+  en: 35e3dc6e2af45560
+  zh: 3b954ca52ec00b04
 /ocean-ocean-pwsh-local/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,11 +18,11 @@
   en: f53013bc78e9367f
   zh: cc15b499f6a95080
 /ocean-ocean-pwsh-local/use-this-package/when-to-choose-it:
-  en: 84f220a1eec48f24
-  zh: 72cf0681212efe82
+  en: 3a8b7a1593501e9d
+  zh: 7bfecc847045d7b2
 /ocean-ocean-pwsh-local/use-this-package/minimal-configuration:
-  en: cabcd1654c934c27
-  zh: a875973bdb128b01
+  en: 9674b7a221834b10
+  zh: 0a69ec6e8840e7d6
 /ocean-ocean-pwsh-local/use-this-package/running-commands:
   en: d0efd217ca8ce07d
   zh: 76eda93aa7300f87
@@ -45,14 +45,14 @@
   en: 1cb78cfddb484576
   zh: 94e16b60c9cd458b
 /ocean-ocean-pwsh-local/understand-the-implementation/invariants-and-ownership:
-  en: db6d1d14205d38ed
-  zh: 148b3764daee54e8
+  en: 61c5acc372deeb98
+  zh: 4e98077880861338
 /ocean-ocean-pwsh-local/further-exploration:
-  en: f88bd1a14fe62416
-  zh: a7c4a8c9ce49d374
+  en: 1f733f67f39113ea
+  zh: e6d6e30c487e134a
 /ocean-ocean-pwsh-local/model-experience:
-  en: cb8a0d1c1929e4ea
-  zh: 6b1d5aa2d10c0a01
+  en: cad4af414428a07d
+  zh: c5f015104e7e8d06
 /ocean-ocean-pwsh-local/model-experience/kv-cache-effect:
   en: 40294c1c31b74824
   zh: 788a4799b1d65a8b

@@ -14,7 +14,7 @@ interface ClientObservation {
 }
 
 async function readClientRoster() {
-  const observation = Reflect.get(globalThis, '__dshIsolationObservation') as ClientObservation
+  const observation = Reflect.get(globalThis, '__oceanIsolationObservation') as ClientObservation
   const { ctx, modules } = observation
   if (ctx === undefined || modules === undefined) throw new Error('Real Client registry was not observed')
   await ctx.loader.await()
@@ -50,7 +50,7 @@ it('activates the actual default Client registry', async (test) => {
       page.on('pageerror', error => errors.push(error.message))
       await page.addInitScript(() => {
         const observation: ClientObservation = {}
-        Reflect.set(globalThis, '__dshIsolationObservation', observation)
+        Reflect.set(globalThis, '__oceanIsolationObservation', observation)
         Object.defineProperty(globalThis, '__ModuleLoader__', {
           configurable: true,
           set(target: ClientModuleLoaderTarget) {

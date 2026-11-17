@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, onTestFinished } from 'vitest'
 import {
-  checkDshFamilyVersion,
+  checkOceanFamilyVersion,
   checkWorkspaceManifest,
   checkWorkspaceProtocol,
   detailDocumentFiles,
-  expectedDshPackageFiles,
+  expectedOceanPackageFiles,
   readWorkspaceManifests,
   type WorkspaceManifest,
 } from './check-workspace-constraints.ts'
@@ -28,7 +28,7 @@ describe('workspace dependency ranges', () => {
     'vendor/loader', 'native/system', 'native/system/packages/entry',
   ])('consumer %s', (dir) => {
     it.each(['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const)(
-      'requires exact DSH and tilde vendor/native %s independently of the consumer name',
+      'requires exact OCEAN and tilde vendor/native %s independently of the consumer name',
       (section) => {
         const consumer = (name: string, range: string): WorkspaceManifest => ({
           dir, manifest: { name: 'consumer', [section]: { [name]: range } },
@@ -65,7 +65,7 @@ describe('workspace dependency ranges', () => {
 
 describe('workspace manifest discovery', () => {
   it('checks root, app, runtime, tooling, and newly declared members while honoring exclusions', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-workspace-ranges-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-workspace-ranges-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     const consumers = ['.', 'apps/cli', 'apps/web', 'apps/desktop', 'apps/desktop-host', 'benchmarks', 'website', 'python/sdk-runtime', 'tools/probe']
     writeFileSync(join(root, 'pnpm-workspace.yaml'), [
@@ -86,7 +86,7 @@ describe('workspace manifest discovery', () => {
 
   it.each(['', 'null', '{}', 'packages: []', 'packages: [false]', 'packages: [""]', 'packages: wrong'])(
     'rejects an invalid workspace declaration: %s', (contents) => {
-      const root = mkdtempSync(join(tmpdir(), 'dsh-workspace-ranges-'))
+      const root = mkdtempSync(join(tmpdir(), 'ocean-workspace-ranges-'))
       onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
       writeFileSync(join(root, 'pnpm-workspace.yaml'), contents)
       expect(() => readWorkspaceManifests(root)).toThrow('packages must be a non-empty list of workspace patterns')
@@ -94,42 +94,42 @@ describe('workspace manifest discovery', () => {
   )
 
   it('rejects a declaration that matches no workspace members', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-workspace-ranges-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-workspace-ranges-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     writeFileSync(join(root, 'pnpm-workspace.yaml'), 'packages: [missing/*]')
     expect(() => readWorkspaceManifests(root)).toThrow('packages matched no workspace manifests')
   })
 })
 
-describe('dsh family version coherence', () => {
+describe('ocean family version coherence', () => {
   it('rejects a package carrying a stale shared version', () => {
-    expect(checkDshFamilyVersion(
+    expect(checkOceanFamilyVersion(
       { name: '@ocean/ocean-http-proxy', version: '0.1.2-alpha.5' },
       '0.1.2-rc.1',
     )).toBe('@ocean/ocean-http-proxy: package.json version must match root version 0.1.2-rc.1')
   })
 
   it('rejects the root-named CLI app on a stale shared version', () => {
-    expect(checkDshFamilyVersion(
+    expect(checkOceanFamilyVersion(
       { name: '@ocean/ocean', version: '0.1.2-alpha.5' },
       '0.1.2-rc.1',
     )).toBe('@ocean/ocean: package.json version must match root version 0.1.2-rc.1')
   })
 
   it('accepts a manifest carrying the shared version', () => {
-    expect(checkDshFamilyVersion(
+    expect(checkOceanFamilyVersion(
       { name: '@ocean/ocean-http-proxy', version: '0.1.2-rc.1' },
       '0.1.2-rc.1',
     )).toBeUndefined()
   })
 
   it('leaves other sequences to their own version lines', () => {
-    expect(checkDshFamilyVersion({ name: '@deepseek-ai/cordis', version: '4.0.1' }, '0.1.2-rc.1')).toBeUndefined()
-    expect(checkDshFamilyVersion(
+    expect(checkOceanFamilyVersion({ name: '@deepseek-ai/cordis', version: '4.0.1' }, '0.1.2-rc.1')).toBeUndefined()
+    expect(checkOceanFamilyVersion(
       { name: '@deepseek-ai/node-addon-system', version: '0.1.1' },
       '0.1.2-rc.1',
     )).toBeUndefined()
-    expect(checkDshFamilyVersion({ version: '0.1.2-alpha.5' }, '0.1.2-rc.1')).toBeUndefined()
+    expect(checkOceanFamilyVersion({ version: '0.1.2-alpha.5' }, '0.1.2-rc.1')).toBeUndefined()
   })
 })
 
@@ -139,15 +139,15 @@ describe('package payload constraints', () => {
     [{ import: './art/icon.svg', default: './art/fallback.svg' }, ['art/icon.svg', 'art/fallback.svg']],
     [['./art/icon.svg', './art/icon.svg'], ['art/icon.svg']],
   ] as const)('includes exported icon targets in the canonical payload: %j', (icon, expected) => {
-    expect(expectedDshPackageFiles({ exports: { './icon': icon } })).toEqual([...expected, 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src'])
+    expect(expectedOceanPackageFiles({ exports: { './icon': icon } })).toEqual([...expected, 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src'])
   })
 
   it.each(['icon.svg', './icon.svg'])('includes and deduplicates manifest icon %s', (icon) => {
-    expect(expectedDshPackageFiles({ icon, exports: { './icon': './icon.svg' } })).toEqual(['icon.svg', 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src'])
+    expect(expectedOceanPackageFiles({ icon, exports: { './icon': './icon.svg' } })).toEqual(['icon.svg', 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src'])
   })
 
   it('includes manifest, root, and subpath icon targets', () => {
-    expect(expectedDshPackageFiles({ icon: './legacy.svg', exports: { './icon': './fallback.svg', './search/icon': './search.svg' } })).toEqual([
+    expect(expectedOceanPackageFiles({ icon: './legacy.svg', exports: { './icon': './fallback.svg', './search/icon': './search.svg' } })).toEqual([
       'legacy.svg', 'fallback.svg', 'search.svg', 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src',
     ])
   })
@@ -168,7 +168,7 @@ describe('package payload constraints', () => {
     { exports: { './locale/*.json': './locale/*.json', './search/locale/*.json': './locale/*.json' }, resources: ['locale/*.json'] },
     { exports: { './search/locale/*.json': './z/*.json', './locale/*.json': './a/*.json' }, resources: ['a/*.json', 'z/*.json'] },
   ])('includes declared locale resources in the canonical payload: $exports', ({ exports, resources }) => {
-    expect(expectedDshPackageFiles({ name: '@ocean/ocean-localized', exports })).toEqual([
+    expect(expectedOceanPackageFiles({ name: '@ocean/ocean-localized', exports })).toEqual([
       ...resources, 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src',
     ])
   })
@@ -209,7 +209,7 @@ describe('package payload constraints', () => {
   })
 
   it('publishes the directory of each locale detail document after the locale resources', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-detail-files-'))
+    const dir = mkdtempSync(join(tmpdir(), 'ocean-detail-files-'))
     onTestFinished(() => { rmSync(dir, { recursive: true, force: true }) })
     mkdirSync(join(dir, 'docs/guide'), { recursive: true })
     mkdirSync(join(dir, 'locale'))
@@ -223,13 +223,13 @@ describe('package payload constraints', () => {
     writeFileSync(join(dir, 'locale/ja.json'), '{')
     const detailFiles = detailDocumentFiles(dir)
     expect(detailFiles).toEqual(['docs'])
-    expect(expectedDshPackageFiles({ exports: { './locale/*.json': './locale/*.json' } }, detailFiles)).toEqual([
+    expect(expectedOceanPackageFiles({ exports: { './locale/*.json': './locale/*.json' } }, detailFiles)).toEqual([
       'locale/*.json', 'docs', 'lib/index.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src',
     ])
   })
 
   it('rejects a detail document that is missing, outside the package, or at the package root', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-detail-invalid-'))
+    const dir = mkdtempSync(join(tmpdir(), 'ocean-detail-invalid-'))
     onTestFinished(() => { rmSync(dir, { recursive: true, force: true }) })
     mkdirSync(join(dir, 'locale'))
     const declare = (detail: unknown): void => {
@@ -249,7 +249,7 @@ describe('package payload constraints', () => {
   })
 
   it('does not infer locale payloads from unrelated or non-JSON exports', () => {
-    expect(expectedDshPackageFiles({
+    expect(expectedOceanPackageFiles({
       exports: {
         './config.json': './config.json',
         './locale/README.md': './locale/README.md',
@@ -281,9 +281,9 @@ describe('package payload constraints', () => {
   })
 
   it('includes a declared profile patch without a package-name allowlist', () => {
-    expect(expectedDshPackageFiles({
+    expect(expectedOceanPackageFiles({
       name: '@ocean/ocean-private-profile',
-      dsh: { bundle: { patch: './cordis.patch.yml' } },
+      ocean: { bundle: { patch: './cordis.patch.yml' } },
     })).toEqual([
       'lib/index.js',
       'cordis.patch.yml',
@@ -292,9 +292,9 @@ describe('package payload constraints', () => {
       'lib/**/*.js.map',
       'src',
     ])
-    expect(expectedDshPackageFiles({
+    expect(expectedOceanPackageFiles({
       name: '@ocean/ocean-private-profile',
-      dsh: { bundle: { patch: ['./cordis.patch.yml', './layers/web.patch.yml'] } },
+      ocean: { bundle: { patch: ['./cordis.patch.yml', './layers/web.patch.yml'] } },
     })).toEqual([
       'lib/index.js',
       'cordis.patch.yml',
@@ -318,7 +318,7 @@ describe('package payload constraints', () => {
     { './assets/*': './lib/assets/*' },
     { './assets/*': { default: './lib/assets/*' } },
   ])('publishes built package assets after the browser Client entries: %j', (assets) => {
-    expect(expectedDshPackageFiles({
+    expect(expectedOceanPackageFiles({
       exports: {
         './client': { types: './lib/types/client/index.d.ts', node: './lib/client.node.js', default: './lib/client.js' },
         './loader': './lib/loader.js',
@@ -336,7 +336,7 @@ describe('package payload constraints', () => {
     { './assets/*': { types: './lib/assets/*' } },
     { './assets/extra': './lib/assets/*' },
   ])('does not publish package assets without the exact asset export target: %j', (assets) => {
-    expect(expectedDshPackageFiles({ exports: { './client': './lib/client.js', ...assets } }))
+    expect(expectedOceanPackageFiles({ exports: { './client': './lib/client.js', ...assets } }))
       .toEqual(['lib/index.js', 'lib/client.js', 'lib/types/**/*.d.ts', 'lib/types/**/*.d.ts.map', 'lib/**/*.js.map', 'src'])
   })
 
@@ -405,7 +405,7 @@ it('requires Node profile configuration and both execution bootstraps in the pub
   const manifest = JSON.parse(readFileSync(new URL(`../${dir}/package.json`, import.meta.url), 'utf8')) as WorkspaceManifest['manifest']
   expect(checkWorkspaceManifest({ dir, manifest })).toEqual([])
   for (const omitted of ['lib/configuration.js', 'lib/process.js', 'lib/persistent-process.js']) {
-    const files = expectedDshPackageFiles(manifest).filter(file => file !== omitted)
+    const files = expectedOceanPackageFiles(manifest).filter(file => file !== omitted)
     expect(checkWorkspaceManifest({ dir, manifest: { ...manifest, files } }))
       .toEqual([expect.stringContaining('package.json files must be')])
   }

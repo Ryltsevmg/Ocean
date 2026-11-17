@@ -40,7 +40,7 @@
     "watch": "tsdown --watch"
   },
   "license": "MIT",
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-api-gateway",

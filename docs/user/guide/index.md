@@ -6,7 +6,7 @@ English | [中文](index.zh.md)
 [Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | [Français](index.fr.md) | [Deutsch](index.de.md) | [Português](index.pt.md) | [한국어](index.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Start the Web UI through the [root README](../../development.md); the command prints its URL. This guide begins after that server is running. The `dsh` process uses its invoking directory as the default filesystem location, but a fresh Web UI has no selected workspace until you add one.
+Start the Web UI through the [root README](../../development.md); the command prints its URL. This guide begins after that server is running. The `ocean` process uses its invoking directory as the default filesystem location, but a fresh Web UI has no selected workspace until you add one.
 
 ## Configure a model
 
@@ -14,7 +14,7 @@ Open **Settings → Models** and choose a model provider; the [model configurati
 
 ## Choose a workspace
 
-Click **Choose workspace**, add the project directory where you started `dsh`, and select it. The session composer remains unavailable until a workspace is selected.
+Click **Choose workspace**, add the project directory where you started `ocean`, and select it. The session composer remains unavailable until a workspace is selected.
 
 ## Run a task
 

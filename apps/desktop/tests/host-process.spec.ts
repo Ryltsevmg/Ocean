@@ -68,7 +68,7 @@ process.on('message', message => {
 `
 
 function projectWithHost(source = HTTP_HOST): string {
-  const project = mkdtempSync(join(tmpdir(), 'dsh-desktop-host-test-'))
+  const project = mkdtempSync(join(tmpdir(), 'ocean-desktop-host-test-'))
   roots.push(project)
   const packageRoot = join(project, 'node_modules', '@ocean', 'ocean-desktop-host')
   mkdirSync(join(packageRoot, 'lib'), { recursive: true })
@@ -282,7 +282,7 @@ ${HTTP_HOST}`)
     const { url } = await host.start()
     await fetch(new URL('/crash', url))
     await expect.poll(() => failure.mock.calls.length).toBe(1)
-    expect(failure).toHaveBeenCalledWith(new Error('dsh desktop host exited with 7: plugin crashed'))
+    expect(failure).toHaveBeenCalledWith(new Error('ocean desktop host exited with 7: plugin crashed'))
   })
 
   it('retains only recent diagnostics from a noisy child', async () => {

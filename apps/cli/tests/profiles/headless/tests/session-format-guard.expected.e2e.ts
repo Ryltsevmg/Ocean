@@ -33,8 +33,8 @@ const tsconfigPath = fileURLToPath(new URL('../../../../../../tsconfig.json', im
 // The resumed-agent fixture in the shared config resumes exactly this id.
 const sessionId = SessionId('workspace-context-resume')
 const fixtureEnv = {
-  DSH_SNAPSHOT_FILE: replayFixture,
-  DSH_LOADER_SMOKE_REQUIRED_ENTRY_ID: 'resumed-agent',
+  OCEAN_SNAPSHOT_FILE: replayFixture,
+  OCEAN_LOADER_SMOKE_REQUIRED_ENTRY_ID: 'resumed-agent',
 }
 
 /** Persist one session with the given header version and events, returning its log path. */
@@ -82,7 +82,7 @@ describe('session format guard through the assembled app', () => {
     let sourceIdentity: { readonly dev: bigint; readonly ino: bigint } | undefined
     await runLoaderSmoke({
       label: 'v0 migration before resume',
-      tempDirPrefix: 'dsh-format-migrate-v0-',
+      tempDirPrefix: 'ocean-format-migrate-v0-',
       binScript,
       libBinScript: binScript,
       configPath,
@@ -122,7 +122,7 @@ describe('session format guard through the assembled app', () => {
     let sessionPath = ''
     const result = await runLoaderSmoke({
       label: 'newer-format resume refusal',
-      tempDirPrefix: 'dsh-format-guard-version-',
+      tempDirPrefix: 'ocean-format-guard-version-',
       binScript,
       libBinScript: binScript,
       configPath,
@@ -149,7 +149,7 @@ describe('session format guard through the assembled app', () => {
     let sourceIdentity: { readonly dev: bigint; readonly ino: bigint } | undefined
     const result = await runLoaderSmoke({
       label: 'unaudited V2 content resume refusal',
-      tempDirPrefix: 'dsh-format-guard-content-',
+      tempDirPrefix: 'ocean-format-guard-content-',
       binScript,
       libBinScript: binScript,
       configPath,
@@ -195,7 +195,7 @@ describe('session format guard through the assembled app', () => {
     let sessionPath = ''
     const result = await runLoaderSmoke({
       label: 'unknown-event resume refusal',
-      tempDirPrefix: 'dsh-format-guard-event-',
+      tempDirPrefix: 'ocean-format-guard-event-',
       binScript,
       libBinScript: binScript,
       configPath,

@@ -5,7 +5,7 @@ import type {} from '@ocean/ocean-agent'
 import type {} from '@ocean/ocean-agent-preset-registry'
 
 export const name = 'parent-agent-preset'
-export const inject = ['agentPresets']
+export const inject = ['agentPresets', 'permissionPresets']
 
 /**
  * Select the root Session's presets before its first model request.
@@ -13,10 +13,11 @@ export const inject = ['agentPresets']
  * @param config - Ordered preset selections; omission selects the parent preset once.
  */
 export function apply(ctx: Context, config: { presets?: string[] } = {}): void {
+  // The permission service's prepended listener pins its facts before fixture preset selections.
   ctx.on('agent/created', async ({ agent }) => {
     if (agent.session.header.parentSession !== undefined) return
     for (const preset of config.presets ?? ['parent']) {
       await ctx.agentPresets.select(agent, preset)
     }
-  }, { prepend: true })
+  })
 }

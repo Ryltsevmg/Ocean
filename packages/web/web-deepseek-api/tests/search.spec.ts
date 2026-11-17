@@ -12,7 +12,7 @@ import {
   type DeepSeekSearchApiOptions,
 } from '@ocean/ocean-web-deepseek-api'
 import * as webApiPlugin from '@ocean/ocean-web-deepseek-api'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
+import { OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@ocean/ocean-launch-environment'
 import { customGuidance } from './guidance.ts'
 
 /** Construct the provider over a fixed options value; production passes a live thunk. */
@@ -217,7 +217,7 @@ describe('Search API triggering question', () => {
       await ctx.plugin(SessionProjectionRegistry)
       await ctx.plugin(AgentRegistry)
       await ctx.plugin(WebRuntime, { searchProvider: 'deepseek-search-api' })
-      ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'ds-key' } }]))
+      ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'ds-key' } }]))
       await ctx.plugin(webApiPlugin, config)
       const messages = [
         userMessage('m1', { kind: 'user' }, [{ type: 'text', text: 'Earlier question' }]),
@@ -251,7 +251,7 @@ describe('Search API configuration and failures', () => {
     const ctx = new Context()
     try {
       await ctx.plugin(WebRuntime, { searchProvider: 'deepseek-search-api' })
-      ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'ds-key' } }]))
+      ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'ds-key' } }]))
       await ctx.plugin(webApiPlugin, {})
       await ctx.web.search({ query: 'q' })
       expect(fetchMock.mock.calls[0]?.[0]).toBe(`${DEEPSEEK_WEB_API_BASE_URL}/search`)
@@ -265,7 +265,7 @@ describe('Search API configuration and failures', () => {
     const ctx = new Context()
     try {
       await ctx.plugin(WebRuntime, { searchProvider: 'deepseek-search-api' })
-      ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'ds-key' } }]))
+      ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: 'ds-key' } }]))
       await ctx.plugin(webApiPlugin, { searchBaseURL: 'not a url' })
       await expect(ctx.web.search({ query: 'q' })).rejects.toMatchObject({ code: 'WEB_PROVIDER_CONFIGURED_UNAVAILABLE' })
       expect(fetchMock).not.toHaveBeenCalled()

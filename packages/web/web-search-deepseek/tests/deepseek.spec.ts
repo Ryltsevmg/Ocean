@@ -9,7 +9,7 @@ import SessionProjectionRegistry from '@ocean/ocean-session-projection'
 import type { Agent } from '@ocean/ocean-agent'
 import { credentialRef } from '@ocean/ocean-credentials'
 import LocalCredentialProvider from '@ocean/ocean-credentials-local'
-import { createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY } from '@ocean/ocean-launch-environment'
+import { createLaunchEnvironmentSnapshot, OCEAN_LAUNCH_ENVIRONMENT_KEY } from '@ocean/ocean-launch-environment'
 import type { DeepSeekAccount } from '@ocean/ocean-deepseek-account'
 import SessionStore, { SessionId } from '@ocean/ocean-session'
 import WebRuntime, { WebError, type WebSearchResult } from '@ocean/ocean-web'
@@ -193,7 +193,7 @@ describe('DeepSeekSearchProvider request mapping', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
     try {
-      ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: value } }]))
+      ctx.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: { DEEPSEEK_API_KEY: value } }]))
       await ctx.plugin(WebRuntime, { searchProvider: DEEPSEEK_PROVIDER_ID })
       await ctx.plugin(deepseekPlugin)
       await expect(ctx.web.search({ query: 'q' })).rejects.toMatchObject({ code: 'WEB_PROVIDER_ERROR' })
@@ -696,7 +696,7 @@ describe('web-search-deepseek plugin registration', () => {
   it('resolves the credential for each search so a stored or rotated key needs no restart', async () => {
     const previous = process.env.DEEPSEEK_API_KEY
     delete process.env.DEEPSEEK_API_KEY
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-web-search-credentials-'))
+    const dir = await mkdtemp(join(tmpdir(), 'ocean-web-search-credentials-'))
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse(searchResponse()))
     vi.stubGlobal('fetch', fetchMock)
     const ctx = new Context()
@@ -883,7 +883,7 @@ describe('web-search-deepseek search readiness', () => {
   })
 
   it('becomes ready once a search key is stored', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-web-search-ready-'))
+    const dir = await mkdtemp(join(tmpdir(), 'ocean-web-search-ready-'))
     try {
       const ctx = await compose({ credentialsDir: dir })
       expect(await ctx.web.searchReady('deepseek-official')).toBe(false)
@@ -956,7 +956,7 @@ describe('web-search-deepseek search readiness', () => {
   })
 
   it('is not ready when the credential store cannot be read', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-web-search-store-'))
+    const dir = await mkdtemp(join(tmpdir(), 'ocean-web-search-store-'))
     try {
       const ctx = await compose({ credentialsDir: dir })
       await ctx.credentials.set(credentialRef('DEEPSEEK_API_KEY'), 'stored-key')

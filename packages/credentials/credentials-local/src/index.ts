@@ -1,12 +1,12 @@
 /**
- * File-backed credentials provider over `$DSH_HOME/.credentials.yaml`, layered
+ * File-backed credentials provider over `$OCEAN_HOME/.credentials.yaml`, layered
  * over the environment in this precedence order:
  *
  * ```text
- * $DSH_HOME/.credentials.yaml        (provider-managed, written by set/unset)
+ * $OCEAN_HOME/.credentials.yaml        (provider-managed, written by set/unset)
  * > inherited process environment    (fallback; this provider never writes it)
  * > <invocation cwd>/.env            (fallback; this provider never writes it)
- * > $DSH_HOME/.env                   (fallback; this provider never writes it)
+ * > $OCEAN_HOME/.env                   (fallback; this provider never writes it)
  * ```
  *
  * The managed store wins because a credential the user explicitly saved in
@@ -41,7 +41,7 @@ import { mkdir, readFile, stat } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { Document, isMap, isScalar, parseDocument, type YAMLError } from 'yaml'
 import { withFileLock, writeFileAtomic } from '@ocean/ocean-atomic-write'
-import { canonicalizeWatchPath, resolveDshHome } from '@ocean/ocean-home-paths'
+import { canonicalizeWatchPath, resolveOceanHome } from '@ocean/ocean-home-paths'
 import { launchEnvironmentOf } from '@ocean/ocean-launch-environment'
 import { CredentialProvider, credentialRef, parseCredentialKey } from '@ocean/ocean-credentials'
 import type {
@@ -63,8 +63,8 @@ export const CREDENTIALS_FILENAME = '.credentials.yaml'
 export interface Config {
   /** Credentials document path; defaults to `.credentials.yaml` under the harness home. */
   path?: string
-  /** Harness home used when `path` is omitted; defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
+  /** Harness home used when `path` is omitted; defaults to `$OCEAN_HOME` or `~/.ocean`. */
+  oceanHome?: string
   /** Watch the document and hot-publish external edits; defaults to true. */
   watch?: boolean
   /** Watcher write-settle window in milliseconds; defaults to 100. */
@@ -86,7 +86,7 @@ interface ResolvedSpec {
  */
 export function resolveSpec(config: Config): ResolvedSpec {
   return {
-    filename: resolve(config.path ?? join(resolveDshHome(config.dshHome), CREDENTIALS_FILENAME)),
+    filename: resolve(config.path ?? join(resolveOceanHome(config.oceanHome), CREDENTIALS_FILENAME)),
     watch: config.watch ?? true,
     debounceMs: config.debounceMs ?? 100,
   }
@@ -104,7 +104,7 @@ const GROUP_OTHER_BITS = 0o077
  * wait is sized by the longest holder it can meet, and refs and records share
  * one file and one lock, so every writer of this document — reference writes
  * and record deletes included — waits this long, not only the mutation that
- * holds it. Like the retry cadence in `dsh-atomic-write`, this is a
+ * holds it. Like the retry cadence in `ocean-atomic-write`, this is a
  * robustness bound of the write protocol rather than a deployment choice: it
  * is sized by what a provider request costs, which no deployment varies.
  */
@@ -526,11 +526,11 @@ function maskCredential(value: string): string {
     : `${chars.slice(0, providerEnd + 5).join('')}${'•'.repeat(hidden)}${chars.slice(-4).join('')}`
 }
 
-/** File-backed credentials provider (`$DSH_HOME/.credentials.yaml`). */
+/** File-backed credentials provider (`$OCEAN_HOME/.credentials.yaml`). */
 export class LocalCredentialProvider extends CredentialProvider {
   static Config: z<Config> = z.object({
     path: z.string(),
-    dshHome: z.string(),
+    oceanHome: z.string(),
     watch: z.boolean().default(true),
     debounceMs: z.number().min(0).default(100),
   })

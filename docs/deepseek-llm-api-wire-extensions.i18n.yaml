@@ -3,26 +3,26 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/deepseek-llm-api-wire-extensions.md
 /official-deepseek-llm-api-wire-extensions:
-  en: d974d7dc2857b7d8
-  zh: 952cc455008f26de
+  en: 53755e7d3b355360
+  zh: 209bb3a9a12c4382
 /official-deepseek-llm-api-wire-extensions/wire-namespaces-and-versioning:
-  en: 1da81051addc4b47
-  zh: 3e8d7cd3f8c1cdba
+  en: d1e1edd4f8255087
+  zh: ee2a4cb505eb2304
 /official-deepseek-llm-api-wire-extensions/request-headers:
-  en: a55fbcd176b7a7a7
-  zh: ed8b10f6e840cc44
+  en: 460651264177267b
+  zh: f989bdab88ad642f
 /official-deepseek-llm-api-wire-extensions/body-extension-transaction:
   en: 48001cfd1281a23b
   zh: d410530ae8aa2823
 /official-deepseek-llm-api-wire-extensions/dsh-plugin-packages:
-  en: 735e1b3415d18ca6
-  zh: 8bc3784f8b498cf3
+  en: 863812fb86f16684
+  zh: 2d4faafde8e0e01d
 /official-deepseek-llm-api-wire-extensions/dsh-session-log:
-  en: ff1a174930922d20
-  zh: 347fab9c55d2cbd5
+  en: 09b02b0f2ec60120
+  zh: 4d103e78c5af8de4
 /official-deepseek-llm-api-wire-extensions/dsh-session-log/wire-session-header:
-  en: ccd8fcd773df21c4
-  zh: 7ea020068ad093ae
+  en: 54ac44d24b590980
+  zh: 55c6c4785edd7a55
 /official-deepseek-llm-api-wire-extensions/dsh-session-log/canonical-event-envelopes:
   en: 008a21df5e314154
   zh: 8855710a37542ec5

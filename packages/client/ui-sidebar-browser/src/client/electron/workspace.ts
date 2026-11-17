@@ -4,7 +4,7 @@ import type { WorkspaceSource } from '@ocean/ocean-api-workspace-controller/clie
 /**
  * Use the Workspace's canonical CWD, not its record id; ungrouped Sessions remain isolated.
  * @param source - authoritative Workspace membership.
- * @param sessionId - owning DSH Session.
+ * @param sessionId - owning OCEAN Session.
  * @param signal - guest initialization lifetime.
  * @returns the storage account for this occurrence.
  */

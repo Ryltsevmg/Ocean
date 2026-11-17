@@ -3,23 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/cli/README.md
 /ocean-ocean:
-  en: d1fefa44df559411
-  zh: 24590c083936df45
+  en: 4aae7e2cc1e80b5e
+  zh: 3f4e630d203fe80c
 /ocean-ocean/entry-modes:
-  en: a1e035a813554366
-  zh: b87053214afe71b6
+  en: d54847dcd0b1ec47
+  zh: 38e375cfa1d371f0
 /ocean-ocean/app-arguments:
-  en: cc03e6b75206661b
-  zh: 99e41f4143198352
+  en: 80fbed622abaa0a9
+  zh: 9584c70bdf43fc42
 /ocean-ocean/profiles:
-  en: 2720cbc685824abe
-  zh: 031a5c01e800a41e
+  en: 7b7d421d056a033e
+  zh: cab6ad2ca9d345a9
 /ocean-ocean/optional-overlays:
-  en: 3a40ddc44e55f79c
-  zh: 8d3949132e1ef93c
+  en: e56c881ad728b569
+  zh: 7ae92268fee3f1ab
 /ocean-ocean/installed-payload:
-  en: 89856d66a600bff8
-  zh: f71186713d72b697
+  en: 80e199b789bb514c
+  zh: 1aa3e0c36925a674
 /ocean-ocean/development:
-  en: 2791168bef4d801a
-  zh: 7dc93bc99679cf78
+  en: b033b96670ae6b28
+  zh: 170c7a99afb7b4d1

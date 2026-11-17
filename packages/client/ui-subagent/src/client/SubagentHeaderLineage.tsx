@@ -537,7 +537,7 @@ function CatalogDropdown(props: CatalogDropdownProps) {
   const countRef = useRef<HTMLSpanElement>(null)
   const activityId = useId()
   const menuRef = useRef<HTMLDivElement>(null)
-  const anchorName = `--dsh-subagents-${activityId.replaceAll(':', '')}`
+  const anchorName = `--ocean-subagents-${activityId.replaceAll(':', '')}`
   const hoverOpenTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   // A click-opened (pinned) menu ignores hover-out; only explicit dismissal closes it.

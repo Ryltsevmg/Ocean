@@ -6,11 +6,11 @@
   en: a11f106978c9dce7
   zh: a11f106978c9dce7
 /session-persistence-event-catalog:
-  en: d55c7d122d966925
-  zh: 4730fb43224a10de
+  en: abf332a0bc81cbd0
+  zh: f0d7617c0b3ccbe4
 /session-persistence-event-catalog/persistence-type-fingerprints:
-  en: cc201ca318a127fb
-  zh: a4bab115f76bb22d
+  en: f9a9b23a204beb1d
+  zh: 3d28bc5a78e5c5fb
 /session-persistence-event-catalog/event-envelope:
   en: 189352d7a3bba620
   zh: 5361f42035034672
@@ -33,8 +33,8 @@
   en: 9d2ec4c4c3664b9f
   zh: 9d2ec4c4c3664b9f
 /session-persistence-event-catalog/events/approval/approval-asked-log-only:
-  en: 505ab9e383babcae
-  zh: f6b29ec434746160
+  en: c8eb11b85bd5b214
+  zh: 38631df879bb5e9c
 /session-persistence-event-catalog/events/approval/approval-decided-log-only:
   en: 1e65aa4c24a595ee
   zh: fe7f527c5e45d6a6
@@ -48,8 +48,8 @@
   en: f330b2521ca12383
   zh: cdc6912a9244677d
 /session-persistence-event-catalog/events/assistant/assistant-message-surface:
-  en: 95916897e677eee6
-  zh: e1ea8b17e5af9f35
+  en: 797d64ab9f91df73
+  zh: 0328763bbb05c16f
 /session-persistence-event-catalog/events/command:
   en: 2cecb5b0ee955732
   zh: 2cecb5b0ee955732
@@ -72,14 +72,14 @@
   en: 5050e06fc9816475
   zh: 06ac4a38fb30c287
 /session-persistence-event-catalog/events/compaction/compaction-summary-log-only:
-  en: ed9405189dc8c5e6
-  zh: f078e8d2cae4d0ca
+  en: 531bd9a00d2a0e37
+  zh: 89995aee549c3a72
 /session-persistence-event-catalog/events/deliverables:
   en: 501dcee7db8f8117
   zh: 501dcee7db8f8117
 /session-persistence-event-catalog/events/deliverables/deliverables-presented-log-only:
-  en: 55a7f405e7897e8a
-  zh: 566943cfd1abbe4a
+  en: 87efbc00f47e7b8b
+  zh: 0d4bf8e5a28cb77c
 /session-persistence-event-catalog/events/developer:
   en: 3344204b1858edb1
   zh: 3344204b1858edb1
@@ -165,8 +165,8 @@
   en: e5b55405bd2b69f5
   zh: e5b55405bd2b69f5
 /session-persistence-event-catalog/events/schedule/schedule-change-log-only:
-  en: 6f7f856e4e6275a9
-  zh: 92b4fa43a0d7305d
+  en: 5a835e341d96cdcf
+  zh: 4603a78e20cd616b
 /session-persistence-event-catalog/events/session:
   en: a1ac8f2660a4f61e
   zh: a1ac8f2660a4f61e
@@ -174,11 +174,11 @@
   en: 20645a60e921f012
   zh: 7141cafe3a0e71d7
 /session-persistence-event-catalog/events/session/session-title-log-only:
-  en: 6c6a27578dff5828
-  zh: 9a5add2bc0df2d0a
+  en: 5c582582eabe86cf
+  zh: 40415aaf6b4bf9e4
 /session-persistence-event-catalog/events/session/session-title-llm-request-log-only:
-  en: 59b02baa2be32ca0
-  zh: 3637c99652ca89cf
+  en: 47e0873bd1ca2c6a
+  zh: 3af7722ef70220ba
 /session-persistence-event-catalog/events/session-log-deepseek:
   en: 7b827672c80aecdd
   zh: 7b827672c80aecdd
@@ -216,32 +216,32 @@
   en: a640800a38b3c874
   zh: a640800a38b3c874
 /session-persistence-event-catalog/events/team/team-member-log-only:
-  en: 4d5eb0eb3d448f62
-  zh: b682e215ae875517
+  en: d58c376c1c2fe303
+  zh: 1ff03482a9f225fc
 /session-persistence-event-catalog/events/team/team-message-delivered-log-only:
-  en: ae3f548b1bbc6ae8
-  zh: 1fc8b5db4d10154f
+  en: 56be002594fe39dd
+  zh: 4c32fdc220d2dc08
 /session-persistence-event-catalog/events/team/team-message-queued-log-only:
-  en: df5f8e4a849e013e
-  zh: de97631b57b1a8ea
+  en: 9810ad698f24fd3d
+  zh: 634b3dd0fd9933bd
 /session-persistence-event-catalog/events/team/team-mode-log-only:
   en: 4ed3c462b2d84149
   zh: d1adcd5c4a806abe
 /session-persistence-event-catalog/events/team/team-task-log-only:
-  en: f66ac682045629e7
-  zh: 52bfb8555b67dd52
+  en: d584a862e9c698b9
+  zh: 40c9a204a0972bb8
 /session-persistence-event-catalog/events/todo:
   en: 308d4bb4b6b96e35
   zh: 308d4bb4b6b96e35
 /session-persistence-event-catalog/events/todo/todo-write-log-only:
-  en: e2526a9e54307a41
-  zh: 9da1a17aaf6abe6c
+  en: 0a363fb6d7b2ade8
+  zh: dda0e9fa7205768a
 /session-persistence-event-catalog/events/tool:
   en: 28a24430609494b2
   zh: 28a24430609494b2
 /session-persistence-event-catalog/events/tool/tool-call-log-only:
-  en: 2edbe249bcd484fc
-  zh: fa838ad8325507b4
+  en: b046c2d3cb24f2e1
+  zh: 49f40dbe02950873
 /session-persistence-event-catalog/events/tool/tool-ptc-dispatch-log-only:
   en: a62b38c00afed655
   zh: 793bef93e856eafa
@@ -270,8 +270,8 @@
   en: d7e8c999a0851a0c
   zh: d7e8c999a0851a0c
 /session-persistence-event-catalog/events/turn/turn-end-log-only:
-  en: 7d5bacee7392ed18
-  zh: 65b8eb8ab9b10ccd
+  en: 307ab8681311f0a9
+  zh: 1278121f870aa2bd
 /session-persistence-event-catalog/events/turn/turn-start-log-only:
   en: 1b5d3369f6178575
   zh: 34550bedca73336a

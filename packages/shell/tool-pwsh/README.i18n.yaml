@@ -6,26 +6,26 @@
   en: 83e748b077469aac
   zh: f858d23ea8c1c6ba
 /ocean-ocean-tool-pwsh:
-  en: 1ba3469403da7c5c
-  zh: 61b6ffcc9e50370b
+  en: f796a46750412ea9
+  zh: 769c28344c5f5e2f
 /ocean-ocean-tool-pwsh/summary:
-  en: c0470c24b1056b6c
-  zh: 8d9fcd643367e1c9
+  en: 5c7edb8b9b4fe270
+  zh: 3dab86b1d4f4b030
 /ocean-ocean-tool-pwsh/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-tool-pwsh/use-this-package:
-  en: 873b8b99a2018ed7
-  zh: c4481ffd20168071
+  en: ff0d0e1f9ba22f37
+  zh: 7dddf9467eddfaa9
 /ocean-ocean-tool-pwsh/use-this-package/when-to-choose-it:
-  en: d274c33ae8a646f8
-  zh: 99e3e64e61735e50
+  en: 0cd06b732309e7a9
+  zh: 55767e155259e04a
 /ocean-ocean-tool-pwsh/use-this-package/minimal-configuration:
-  en: 7afe5166141c590f
-  zh: b841b6f0eef68bc6
+  en: 9b95dc756461b2ba
+  zh: 2cba817d64bf81d2
 /ocean-ocean-tool-pwsh/use-this-package/running-a-command:
-  en: 80195c9b61b29737
-  zh: 0a187f3f52814b90
+  en: c732cde35ba62ca3
+  zh: fbb7375ad4d311ed
 /ocean-ocean-tool-pwsh/use-this-package/foreground-commands-as-jobs:
   en: e2ac7a741c287b92
   zh: a9e95c0a84671f45
@@ -39,17 +39,17 @@
   en: 165313776a851b51
   zh: 828f48807036aff0
 /ocean-ocean-tool-pwsh/understand-the-implementation/design-philosophy:
-  en: 86a8ad5203f7e239
-  zh: 056c0d6d6ca5f36a
+  en: 136973424a75cd4d
+  zh: ce3483b7b116db9b
 /ocean-ocean-tool-pwsh/understand-the-implementation/source-map:
   en: aa2adb29a0f27fcd
   zh: 612829167064acd1
 /ocean-ocean-tool-pwsh/understand-the-implementation/rendering-and-exit-markers:
-  en: facd01af9a403fec
-  zh: 7a943dac19a01c39
+  en: 2c672ead8145627a
+  zh: eac4ebaccefb5060
 /ocean-ocean-tool-pwsh/further-exploration:
-  en: b12c7caf46bcca07
-  zh: 88fc522e9b5ba25c
+  en: 966e2157726f7568
+  zh: 8503b1183e1e478d
 /ocean-ocean-tool-pwsh/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -72,8 +72,8 @@
   en: 3039bc5e7a796b21
   zh: 6b7a9eaf69c9ea53
 /ocean-ocean-tool-pwsh/model-experience/tool-schemas/what-the-model-sees:
-  en: 97a729a5130f12db
-  zh: 3f3a323f196deba3
+  en: c0ad9abc49746a80
+  zh: 502c02aa716cc4fa
 /ocean-ocean-tool-pwsh/model-experience/tool-schemas/token-effect:
   en: 97cce067584eadff
   zh: 54b1f5cd5899e7f3
@@ -117,8 +117,8 @@
   en: f5d5f97a153f7c70
   zh: 31911b4f3506d6c8
 /ocean-ocean-tool-pwsh/known-limitations-and-deferred-work:
-  en: 15bf20354591df32
-  zh: 4064b4ecb97e4825
+  en: 96d5d8185127a0dc
+  zh: f4efd001283868c5
 /ocean-ocean-tool-pwsh/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

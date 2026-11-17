@@ -49,7 +49,7 @@ function sourceName(source: UpdateSource, t: Translate): string {
   return source.spec.replace(/^git\+/i, '').replace(/#.*$/s, '').replace(/^[a-z]+:\/\//i, '').replace(/\.git$/i, '')
 }
 
-/** The DSH requirements an incompatible version states, as one phrase: `engines.dsh` or DSH peer ranges. */
+/** The OCEAN requirements an incompatible version states, as one phrase: `engines.ocean` or OCEAN peer ranges. */
 function peersText(incompatible: IncompatiblePlugin): string {
   return Object.entries(incompatible.requirements).map(([name, range]) => `${name} ${range}`).join(', ')
 }
@@ -129,7 +129,7 @@ function VersionRow({ version, installed, t, busy, onUpdate }: {
     )
   }
   const usable = installable(version)
-  const note = version.incompatible !== undefined ? t('versionsNeedsDsh', { peers: peersText(version.incompatible) })
+  const note = version.incompatible !== undefined ? t('versionsNeedsOcean', { peers: peersText(version.incompatible) })
     : !version.bundle ? t('versionsNotBundle') : version.deprecated
   const date = publishedDate(version)
   return (

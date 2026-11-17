@@ -48,14 +48,14 @@ async function delegationGuidance(ctx: Context, agent?: Agent): Promise<string[]
 }
 
 /**
- * Drives the REAL plugin body: mounts `dsh-tool-subagent` on a real
+ * Drives the REAL plugin body: mounts `ocean-tool-subagent` on a real
  * `ToolRuntime` + `SubagentRuntime`, with a package-local scripted child
  * boundary, and invokes the registered `subagent` tool through
  * `ctx.tools.execute`. Everything downstream of the child boundary is the
  * shipping code path.
  */
 
-describe('dsh-tool-subagent', () => {
+describe('ocean-tool-subagent', () => {
 
   it('rejects configured child agent options at mount when the provider cannot apply them', async () => {
     await expect(setup(
@@ -668,7 +668,7 @@ describe('dsh-tool-subagent', () => {
 
 })
 
-describe('dsh-tool-subagent local activation', () => {
+describe('ocean-tool-subagent local activation', () => {
   const fixtures: { ctx: Context; root: string }[] = []
   afterEach(async () => {
     for (const { ctx, root } of fixtures.splice(0)) {
@@ -680,7 +680,7 @@ describe('dsh-tool-subagent local activation', () => {
   /** Boot the real continuable stack without any model-facing follow-up adapter. */
   async function continuableSetup(modelSelection = false) {
     const ctx = new Context()
-    const root = mkdtempSync(path.join(tmpdir(), 'dsh-tool-subagent-continuable-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'ocean-tool-subagent-continuable-'))
     fixtures.push({ ctx, root })
     await mountAgentLoopTestDependencies(ctx)
     await ctx.plugin(JsonlSessionPersistence, { root })

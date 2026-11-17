@@ -23,8 +23,8 @@ const UI_EXPECTED = fileURLToPath(new URL('../../../snapshots/web/rich-text-quot
 const MODE = webSnapshotMode()
 const SESSION_ID = 'rich-text-quotes-web-e2e'
 const OTHER_ID = 'rich-text-quotes-other'
-const LEGACY_DRAFT_KEY = `dsh.conversation.${SESSION_ID}`
-const CURRENT_DRAFT_KEY = `dsh.conversation.${SESSION_ID}`
+const LEGACY_DRAFT_KEY = `ocean.conversation.${SESSION_ID}`
+const CURRENT_DRAFT_KEY = `ocean.conversation.${SESSION_ID}`
 const LEGACY_DRAFT = JSON.stringify({ draft: 'Imported plain draft', view: 'chat', viewRequest: null })
 const SOURCE_TEXT = 'Durable source phrase selected from an earlier message and preserved as structured quote metadata.'
 const THINKING_TEXT = 'Settled reasoning source'
@@ -293,7 +293,7 @@ describe.skipIf(MODE === 'record')('web e2e: rich-text quotes', () => {
 
   beforeAll(async () => {
     hostClock = pinHostClock()
-    replayDir = await mkdtemp(join(tmpdir(), 'dsh-rich-text-quotes-replay-'))
+    replayDir = await mkdtemp(join(tmpdir(), 'ocean-rich-text-quotes-replay-'))
     const replayOverride = join(replayDir, 'replay.override.json')
     await writeFile(replayOverride, JSON.stringify(REPLAY))
     scaffold = await launchWebScaffold({

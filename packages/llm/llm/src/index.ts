@@ -1069,7 +1069,7 @@ export class LlmRuntime extends TypertRemoteService {
       return undefined
     }
     if (hostPath === undefined) return undefined
-    // Structural face: dsh-llm cannot depend on the filesystem package, and
+    // Structural face: ocean-llm cannot depend on the filesystem package, and
     // only this one mapping method is consumed.
     const fs = this.ctx.get('fs') as { processPathFromHostPath(hostPath: string): string | undefined } | undefined
     return fs?.processPathFromHostPath(hostPath)

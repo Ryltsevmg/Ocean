@@ -86,7 +86,7 @@ kind: "package-reference"
 
 ### 模型可见文本
 
-`sandbox:policy` 贡献说明该模式与具体能力无关的文件操作约定，以及 `workspace-write` 下已记录的会话工作区和显式额外目录。它不枚举已挂载能力；工具插件保留特定于操作的拒绝与升权引导，批准策略单独贡献给同一份快照，计划引导仍由 `dsh-plan-mode` 的系统段落管理。
+`sandbox:policy` 贡献说明该模式与具体能力无关的文件操作约定，以及 `workspace-write` 下已记录的会话工作区和显式额外目录。它不枚举已挂载能力；工具插件保留特定于操作的拒绝与升权引导，批准策略单独贡献给同一份快照，计划引导仍由 `ocean-plan-mode` 的系统段落管理。
 
 ### 源码地图
 
@@ -117,30 +117,30 @@ kind: "package-reference"
 
 #### 模型看到什么
 
-每个 agent 会话的当前运行时上下文快照中都有一项 `sandbox:policy` 贡献。它不枚举已挂载的能力。工具插件继续负责操作与升权引导，批准策略单独贡献给同一份快照，计划引导仍由 `dsh-plan-mode` 的系统段落管理。
+每个 agent 会话的当前运行时上下文快照中都有一项 `sandbox:policy` 贡献。它不枚举已挂载的能力。工具插件继续负责操作与升权引导，批准策略单独贡献给同一份快照，计划引导仍由 `ocean-plan-mode` 的系统段落管理。
 
 ##### 只读
 
 ```markdown
-Current DSH file policy: read-only. Any available operation enforced by the DSH file sandbox cannot modify files in the standing mode. Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns.
+Current OCEAN file policy: read-only. Any available operation enforced by the OCEAN file sandbox cannot modify files in the standing mode. Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns.
 ```
 
 ##### 工作区写入
 
 ```markdown
-Current DSH file policy: workspace-write. Any available operation enforced by the DSH file sandbox may modify files under the session workspace: "<workspace root>". Some platform temporary areas may also be writable.
+Current OCEAN file policy: workspace-write. Any available operation enforced by the OCEAN file sandbox may modify files under the session workspace: "<workspace root>". Some platform temporary areas may also be writable.
 ```
 
 ##### 带额外目录的工作区写入
 
 ```markdown
-Current DSH file policy: workspace-write. Any available operation enforced by the DSH file sandbox may modify files under the session workspace: "<workspace root>". Additional writable directories: ["/repo/.git"]. On Windows, these additional grants apply to file tools only, not sandboxed processes. Some platform temporary areas may also be writable.
+Current OCEAN file policy: workspace-write. Any available operation enforced by the OCEAN file sandbox may modify files under the session workspace: "<workspace root>". Additional writable directories: ["/repo/.git"]. On Windows, these additional grants apply to file tools only, not sandboxed processes. Some platform temporary areas may also be writable.
 ```
 
 ##### 完全访问
 
 ```markdown
-Current DSH file policy: danger-full-access. The DSH file sandbox does not restrict file modifications by available operations.
+Current OCEAN file policy: danger-full-access. The OCEAN file sandbox does not restrict file modifications by available operations.
 ```
 
 #### Token 影响

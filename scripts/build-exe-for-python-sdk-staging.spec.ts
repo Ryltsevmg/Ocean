@@ -32,31 +32,31 @@ async function listSymlinks(directory: string): Promise<string[]> {
 }
 
 it('drops the deploy root link that points back into the payload', async () => {
-  const workspace = await fixture('dsh-python-staging-root-')
+  const workspace = await fixture('ocean-python-staging-root-')
   const project = join(workspace, 'python', 'sdk-runtime')
   const staging = join(project, 'src', 'runtime', 'node')
   await mkdir(join(staging, 'node_modules'), { recursive: true })
-  await writeFile(join(project, 'package.json'), '{"name":"dsh-python-runtime-closure"}\n')
-  await symlink(project, join(staging, 'node_modules', 'dsh-python-runtime-closure'), directoryLinkType)
+  await writeFile(join(project, 'package.json'), '{"name":"ocean-python-runtime-closure"}\n')
+  await symlink(project, join(staging, 'node_modules', 'ocean-python-runtime-closure'), directoryLinkType)
 
   await materializeStagedLinks(staging)
 
-  expect(existsSync(join(staging, 'node_modules', 'dsh-python-runtime-closure'))).toBe(false)
-  await expect(readFile(join(project, 'package.json'), 'utf8')).resolves.toContain('dsh-python-runtime-closure')
+  expect(existsSync(join(staging, 'node_modules', 'ocean-python-runtime-closure'))).toBe(false)
+  await expect(readFile(join(project, 'package.json'), 'utf8')).resolves.toContain('ocean-python-runtime-closure')
 })
 
 it('copies workspace package links as files and removes command shims', async () => {
-  const workspace = await fixture('dsh-python-staging-packages-')
+  const workspace = await fixture('ocean-python-staging-packages-')
   const staging = join(workspace, 'runtime', 'node')
-  const packageDirectory = join(workspace, 'packages', 'dsh-base')
+  const packageDirectory = join(workspace, 'packages', 'ocean-base')
   await mkdir(join(packageDirectory, 'lib'), { recursive: true })
   await writeFile(join(packageDirectory, 'package.json'), '{"name":"@ocean/ocean-base"}\n')
   await writeFile(join(packageDirectory, 'lib', 'index.js'), 'export {}\n')
   await mkdir(join(staging, 'node_modules', '@deepseek-ai'), { recursive: true })
   await mkdir(join(staging, 'node_modules', '.bin'), { recursive: true })
-  await writeFile(join(staging, 'package.json'), '{"name":"dsh-python-runtime-closure"}\n')
+  await writeFile(join(staging, 'package.json'), '{"name":"ocean-python-runtime-closure"}\n')
   await symlink(packageDirectory, join(staging, 'node_modules', '@ocean', 'ocean-base'), directoryLinkType)
-  await symlink(packageDirectory, join(staging, 'node_modules', '.bin', 'dsh'), directoryLinkType)
+  await symlink(packageDirectory, join(staging, 'node_modules', '.bin', 'ocean'), directoryLinkType)
 
   await materializeStagedLinks(staging)
 
@@ -67,7 +67,7 @@ it('copies workspace package links as files and removes command shims', async ()
 })
 
 it.each(['source', 'deployment'])('shares identical workspace packages with %s-relative metadata', async (base) => {
-  const workspace = await fixture('dsh-python-staging-dedupe-')
+  const workspace = await fixture('ocean-python-staging-dedupe-')
   const staging = join(workspace, 'payload')
   const modules = join(staging, 'node_modules')
   const root = join(modules, '@fixture', 'tools')
@@ -101,7 +101,7 @@ it.each(['source', 'deployment'])('shares identical workspace packages with %s-r
 })
 
 it('rejects invalid deployment metadata before removing any package', async () => {
-  const workspace = await fixture('dsh-python-staging-metadata-')
+  const workspace = await fixture('ocean-python-staging-metadata-')
   const staging = join(workspace, 'payload')
   const modules = join(staging, 'node_modules')
   const root = join(modules, 'tools')

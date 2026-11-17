@@ -1,0 +1,85 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/subagent/subagent-ocean-sdk/README.md
+/:
+  en: 9e84582eda1dadb4
+  zh: 92204538a10075b3
+/ocean-ocean-subagent-ocean-sdk:
+  en: 5f2f5c3df2c8bfdf
+  zh: 38388cc1411db71b
+/ocean-ocean-subagent-ocean-sdk/summary:
+  en: 62fa4922c21fa5e8
+  zh: 53cfcc2ba25d7ce9
+/ocean-ocean-subagent-ocean-sdk/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/ocean-ocean-subagent-ocean-sdk/use-this-package:
+  en: a98af5e6babae054
+  zh: 5772b6b2ded02894
+/ocean-ocean-subagent-ocean-sdk/use-this-package/when-to-choose-it:
+  en: f7c47297647b83bc
+  zh: ec3e075a4bf0e550
+/ocean-ocean-subagent-ocean-sdk/use-this-package/configuration:
+  en: bd022e7ff05bd95f
+  zh: 8ee46352aad3c28e
+/ocean-ocean-subagent-ocean-sdk/use-this-package/what-you-get:
+  en: b9ccfa85b40b07eb
+  zh: 4f84e7327b4ff188
+/ocean-ocean-subagent-ocean-sdk/use-this-package/failure-and-recovery:
+  en: 648804abfd447806
+  zh: 9db8e54debe6f807
+/ocean-ocean-subagent-ocean-sdk/understand-the-implementation:
+  en: 34098708408f69de
+  zh: 274a47979d9ee6fe
+/ocean-ocean-subagent-ocean-sdk/understand-the-implementation/design-concept:
+  en: 15425cd3107d76d1
+  zh: 81718e97fe4615d3
+/ocean-ocean-subagent-ocean-sdk/understand-the-implementation/source-map:
+  en: 1bed6c1577997df6
+  zh: 8c99f132377f6ca2
+/ocean-ocean-subagent-ocean-sdk/understand-the-implementation/run-flow:
+  en: 6c50e4e8dc5e0698
+  zh: 9d0011e28341bbde
+/ocean-ocean-subagent-ocean-sdk/understand-the-implementation/stop-reason-mapping:
+  en: e040a57202916f91
+  zh: 196bf38f0f0db310
+/ocean-ocean-subagent-ocean-sdk/understand-the-implementation/process-boundary:
+  en: 82aae1253bbb1b01
+  zh: eda8f885542af88d
+/ocean-ocean-subagent-ocean-sdk/further-exploration:
+  en: 63e997a019849972
+  zh: eb6b70b0fd18c121
+/ocean-ocean-subagent-ocean-sdk/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-subagent-ocean-sdk/model-experience/child-agent-request:
+  en: 05e6180f1498fdf9
+  zh: 2b05d2b97bfa67da
+/ocean-ocean-subagent-ocean-sdk/model-experience/child-agent-request/what-the-model-sees:
+  en: b8e656d956ac5bd2
+  zh: 26fa79357d1ce452
+/ocean-ocean-subagent-ocean-sdk/model-experience/child-agent-request/token-effect:
+  en: c0b78d334d5d0a9c
+  zh: 71d1a375a6ab4109
+/ocean-ocean-subagent-ocean-sdk/model-experience/child-agent-request/kv-cache-effect:
+  en: ab1a7c0bf70e48cd
+  zh: bd699112b4067e95
+/ocean-ocean-subagent-ocean-sdk/model-experience/parent-tool-result-indirectly:
+  en: 75d061c2151624a7
+  zh: 71e58e020b60ff90
+/ocean-ocean-subagent-ocean-sdk/model-experience/parent-tool-result-indirectly/what-the-model-sees:
+  en: ec03e925e463d251
+  zh: 5d9b734cb9958d4e
+/ocean-ocean-subagent-ocean-sdk/model-experience/parent-tool-result-indirectly/token-effect:
+  en: 4fae54e2ff0c4874
+  zh: 1574bfe874f66a1f
+/ocean-ocean-subagent-ocean-sdk/model-experience/parent-tool-result-indirectly/kv-cache-effect:
+  en: f5d5f97a153f7c70
+  zh: 3d6bc05b9eadfbc2
+/ocean-ocean-subagent-ocean-sdk/known-limitations-and-deferred-work:
+  en: a6457c2f76d04edf
+  zh: fb5cca0a9d1a3019
+/ocean-ocean-subagent-ocean-sdk/known-limitations-and-deferred-work/dev-note:
+  en: 04a404ccea615ef3
+  zh: df2d9d901d75f024

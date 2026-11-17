@@ -42,7 +42,7 @@ export function createInstalledUpdateCos(run: Pick<InstalledUpdateRun, 'id' | 'o
   }
   const client = () => createDesktopCos(credentials)
   const keyAllowed = (key: string): void => {
-    if (!/^dsh-desk\/(?:bin|feeds)\/qualification\/[a-f0-9]{24}\/win-x64\/[A-Za-z0-9][A-Za-z0-9._-]*$/u.test(key)
+    if (!/^ocean-desk\/(?:bin|feeds)\/qualification\/[a-f0-9]{24}\/win-x64\/[A-Za-z0-9][A-Za-z0-9._-]*$/u.test(key)
       || key.split('/')[3] !== runId) {
       throw new Error('installed update: COS key must stay in the Windows qualification namespace')
     }

@@ -11,6 +11,8 @@ kind: "package-library"
 
 `@ocean/ocean-home-paths` 让包作者能够解析 Ocean 数据根目录，以及其消费方读取的共享 agent 配置根目录。显式路径优先于环境变量，后者优先于操作系统主目录下的默认值；空白环境变量会被忽略。其公开辅助函数可以在不暴露机器绝对路径的情况下显示根目录，仅展开单独或当前用户的波浪号形式，并规范化最终路径段尚不存在的监听目标。请把它作为库依赖直接使用，不要通过 `cordis.yml` 加载。
 
+当相应的 `OCEAN_*` 变量不存在时，仍接受旧的 `DSH_HOME` 和 `DSH_AGENTS_HOME`。显式 Ocean 值（包括空值）优先，不移动用户目录。
+
 ## 目录
 
 - [使用本包](#use-this-package)
@@ -29,31 +31,31 @@ kind: "package-library"
 ### 解析主目录
 
 ```ts
-import { resolveDshHome, dshHomePath, dshCachePath } from '@ocean/ocean-home-paths'
+import { resolveOceanHome, oceanHomePath, oceanCachePath } from '@ocean/ocean-home-paths'
 
-const home = resolveDshHome()                // configured path, else $DSH_HOME, else ~/.ocean
-const settings = dshHomePath('settings')     // join one child onto the resolved home
-const cache = dshCachePath('models')         // $DSH_HOME/cache/models, default ~/.ocean/cache/models
+const home = resolveOceanHome()                // configured path, else $OCEAN_HOME, else ~/.ocean
+const settings = oceanHomePath('settings')     // join one child onto the resolved home
+const cache = oceanCachePath('models')         // $OCEAN_HOME/cache/models, default ~/.ocean/cache/models
 ```
 
-显式配置的路径优先级最高，然后是 `$DSH_HOME`，最后是默认的 `~/.ocean`。空或仅含空白的 `$DSH_HOME` 视为未设置，因此空白的覆盖值绝不会把主目录解析到当前工作目录。
+显式配置的路径优先级最高，然后是 `$OCEAN_HOME`，最后是默认的 `~/.ocean`。空或仅含空白的 `$OCEAN_HOME` 视为未设置，因此空白的覆盖值绝不会把主目录解析到当前工作目录。
 
-`dshCachePath(...segments)` 从解析出的主目录下的 `cache` 目录派生路径。不传路径段时返回缓存目录本身。传入首个选项对象 `dshCachePath({ dshHome: home }, ...segments)` 可使用显式配置的主目录，遵循相同的优先级与波浪号展开规则。它返回绝对路径，不会创建目录。
+`oceanCachePath(...segments)` 从解析出的主目录下的 `cache` 目录派生路径。不传路径段时返回缓存目录本身。传入首个选项对象 `oceanCachePath({ oceanHome: home }, ...segments)` 可使用显式配置的主目录，遵循相同的优先级与波浪号展开规则。它返回绝对路径，不会创建目录。
 
 ### 解析共享 agents 根目录
 
 ```ts
 import { resolveAgentsHome, agentsHomeDisplay } from '@ocean/ocean-home-paths'
 
-const agents = resolveAgentsHome()   // configured path, else $DSH_AGENTS_HOME, else ~/.agents
-agentsHomeDisplay(agents)            // ~/.agents, or $DSH_AGENTS_HOME for any configured root
+const agents = resolveAgentsHome()   // configured path, else $OCEAN_AGENTS_HOME, else ~/.agents
+agentsHomeDisplay(agents)            // ~/.agents, or $OCEAN_AGENTS_HOME for any configured root
 ```
 
-`resolveAgentsHome` 采用与 `resolveDshHome` 相同的优先级、空白值处理与波浪号展开。该根目录刻意位于 `$DSH_HOME` 之外，因为其他 agent 工具也会共享它：`dsh-agent-instructions` 读取其中的用户全局 `AGENTS.md`，`dsh-skill-filesystem` 扫描其中的 `skills/` 目录。
+`resolveAgentsHome` 采用与 `resolveOceanHome` 相同的优先级、空白值处理与波浪号展开。该根目录刻意位于 `$OCEAN_HOME` 之外，因为其他 agent 工具也会共享它：`ocean-agent-instructions` 读取其中的用户全局 `AGENTS.md`，`ocean-skill-filesystem` 扫描其中的 `skills/` 目录。
 
 ### 展示主目录
 
-面向用户的路径请以符号形式渲染根目录，而不是机器路径：默认主目录显示为 `~/.ocean`，任何已配置的主目录显示为 `$DSH_HOME`，默认共享 agents 根目录显示为 `~/.agents`，任何已配置的共享 agents 根目录显示为 `$DSH_AGENTS_HOME`。两种展示形式都不会泄露机器的绝对路径。
+面向用户的路径请以符号形式渲染根目录，而不是机器路径：默认主目录显示为 `~/.ocean`，任何已配置的主目录显示为 `$OCEAN_HOME`，默认共享 agents 根目录显示为 `~/.agents`，任何已配置的共享 agents 根目录显示为 `$OCEAN_AGENTS_HOME`。两种展示形式都不会泄露机器的绝对路径。
 
 ### 展开用户路径
 
@@ -81,7 +83,7 @@ agentsHomeDisplay(agents)            // ~/.agents, or $DSH_AGENTS_HOME for any c
 
 ### 解析规则
 
-`resolveDshHome` 先读显式覆盖值，然后读 `$DSH_HOME`，最后回退到操作系统主目录拼接 `.ocean`。`resolveAgentsHome` 对 `$DSH_AGENTS_HOME` 与 `~/.agents` 读取同样的三层值。选中的值经过波浪号展开并规范化为绝对路径；`dshHomePath` 用 Node 的平台路径规则拼接子路径段。`dshHomeDisplay` 与 `agentsHomeDisplay` 把解析出的路径与默认根目录比较并返回符号标签，因此已配置的根目录绝不泄露其绝对路径。
+`resolveOceanHome` 先读显式覆盖值，然后读 `$OCEAN_HOME`，最后回退到操作系统主目录拼接 `.ocean`。`resolveAgentsHome` 对 `$OCEAN_AGENTS_HOME` 与 `~/.agents` 读取同样的三层值。选中的值经过波浪号展开并规范化为绝对路径；`oceanHomePath` 用 Node 的平台路径规则拼接子路径段。`oceanHomeDisplay` 与 `agentsHomeDisplay` 把解析出的路径与默认根目录比较并返回符号标签，因此已配置的根目录绝不泄露其绝对路径。
 
 ### 规范化机制
 
@@ -97,7 +99,7 @@ agentsHomeDisplay(agents)            // ~/.agents, or $DSH_AGENTS_HOME for any c
 当你需要启动器或依赖统一主目录根的消费方时，阅读以下页面。
 
 - [boot 包](../../boot/app-boot/README.zh.md)——在任何插件挂载之前解析主目录的启动器。
-- [shell 环境](../../shell/shell-env/README.zh.md)——`DSH_HOME` 如何到达模型 shell 调用。
+- [shell 环境](../../shell/shell-env/README.zh.md)——`OCEAN_HOME` 如何到达模型 shell 调用。
 - [匿名用户 id](../../identity/anonymous-user-id/README.zh.md)——位于解析后主目录下的存储身份文件。
 
 -----

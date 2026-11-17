@@ -76,7 +76,7 @@ describe('web e2e: composer paste routing', () => {
     if (webSnapshotMode() === 'record') throw new Error('composer paste routing is a keyless assembled scenario')
     const selectedBaseFixture = await selectedSessionFixture(BASE_FIXTURE)
     const baseFixture = prepareSessionSnapshotFixtureForComparison(await readFile(selectedBaseFixture, 'utf8'))
-    sidecarRoot = await mkdtemp(join(tmpdir(), 'dsh-web-paste-'))
+    sidecarRoot = await mkdtemp(join(tmpdir(), 'ocean-web-paste-'))
     const childFixturePath = join(sidecarRoot, 'child.jsonl')
     await writeFile(childFixturePath, childFixture(baseFixture, 'recorded-subagent'))
     scaffold = await launchWebScaffold({

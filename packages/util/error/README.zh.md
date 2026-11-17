@@ -9,7 +9,7 @@ kind: "package-library"
 
 ## 概述
 
-`dsh-error` 存放 `HarnessError`，即所有预期 Harness 失败的基类。`HarnessError` 在人类可读的 `message` 与可选的 `cause` 之外，携带稳定、可供机器路由的 `code`，其 `name` 为构造它的类名。工具注册表会把抛出的 `HarnessError` 的 `name` 与 `code` 记录到 `tool/result` 上，使重试策略、UI、回放与数据分析按 code 路由，而不必解析文本。本包没有任何依赖，因此依赖图中位于 `dsh-llm` 之下的包也能继承该基类；`dsh-llm` 会重新导出同一个类。
+`ocean-error` 存放 `HarnessError`，即所有预期 Harness 失败的基类。`HarnessError` 在人类可读的 `message` 与可选的 `cause` 之外，携带稳定、可供机器路由的 `code`，其 `name` 为构造它的类名。工具注册表会把抛出的 `HarnessError` 的 `name` 与 `code` 记录到 `tool/result` 上，使重试策略、UI、回放与数据分析按 code 路由，而不必解析文本。本包没有任何依赖，因此依赖图中位于 `ocean-llm` 之下的包也能继承该基类；`ocean-llm` 会重新导出同一个类。
 
 ## 目录
 
@@ -33,7 +33,7 @@ export class ArchiveError extends HarnessError {}
 throw new ArchiveError('archive entry is missing', 'ARCHIVE_ENTRY_NOT_FOUND')
 ```
 
-打包工具可能重命名类时，在子类构造函数中把 `this.name` 赋为字符串字面量，因为 `name` 会被持久化。可以从 `@ocean/ocean-error` 导入该类，也可以使用 `@ocean/ocean-llm` 的重新导出；两者是同一个类，因此 `instanceof` 判断结果一致。[错误类与 code 指南](../../../.agents/skills/dsh-error-handling/references/error-codes.md)规定了类的选择、命名与 code 约定。
+打包工具可能重命名类时，在子类构造函数中把 `this.name` 赋为字符串字面量，因为 `name` 会被持久化。可以从 `@ocean/ocean-error` 导入该类，也可以使用 `@ocean/ocean-llm` 的重新导出；两者是同一个类，因此 `instanceof` 判断结果一致。[错误类与 code 指南](../../../.agents/skills/ocean-error-handling/references/error-codes.md)规定了类的选择、命名与 code 约定。
 
 -----
 
@@ -51,7 +51,7 @@ throw new ArchiveError('archive entry is missing', 'ARCHIVE_ENTRY_NOT_FOUND')
 
 ### 为什么保持无依赖
 
-`dsh-llm` 依赖 `dsh-attachment`、`dsh-typert-protocol` 等更底层的包，定义在其中的基类无法被这些包继承，否则会形成依赖环。把该类放在没有依赖的包中，所有包都可以继承它
+`ocean-llm` 依赖 `ocean-attachment`、`ocean-typert-protocol` 等更底层的包，定义在其中的基类无法被这些包继承，否则会形成依赖环。把该类放在没有依赖的包中，所有包都可以继承它
 
 </details>
 
@@ -61,7 +61,7 @@ throw new ArchiveError('archive entry is missing', 'ARCHIVE_ENTRY_NOT_FOUND')
 ## 进一步探索
 
 - [工具子系统](../../../docs/subsystems/tools.zh.md) — 注册表如何根据抛出的 `HarnessError` 记录 `ToolErrorInfo`。
-- [错误处理规则](../../../.agents/skills/dsh-error-handling/SKILL.md) — 何时必须抛出 `HarnessError`。
+- [错误处理规则](../../../.agents/skills/ocean-error-handling/SKILL.md) — 何时必须抛出 `HarnessError`。
 
 -----
 

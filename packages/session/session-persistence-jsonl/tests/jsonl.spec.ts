@@ -161,7 +161,7 @@ async function expectCode(promise: Promise<unknown>, codes: readonly string[]): 
 }
 
 async function freshRoot(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-jsonl-'))
+  const dir = await mkdtemp(join(tmpdir(), 'ocean-jsonl-'))
   dirs.push(dir)
   return dir
 }
@@ -336,7 +336,7 @@ afterEach(async () => {
 })
 
 runPersistenceContract('jsonl-none', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-jsonl-'))
+  const dir = await mkdtemp(join(tmpdir(), 'ocean-jsonl-'))
   const instance = async (): Promise<{ persistence: SessionPersistence; dispose: () => Promise<void> }> => {
     const ctx = new Context()
     const fiber = await ctx.plugin(JsonlSessionPersistence, { root: dir, compression: 'none' })
@@ -362,7 +362,7 @@ runPersistenceContract('jsonl-none', async () => {
 })
 
 runLiveWritePathContract('jsonl', LIVE_WRITE_BATCH_MAX_DELAY_MS, async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-jsonl-live-'))
+  const dir = await mkdtemp(join(tmpdir(), 'ocean-jsonl-live-'))
   dirs.push(dir)
   const mount = async (): Promise<Context> => {
     const ctx = new Context()
@@ -2854,7 +2854,7 @@ describe('JsonlSessionPersistence listing concurrency', () => {
   let listingCtx: Context
 
   beforeEach(async () => {
-    listingRoot = await mkdtemp(join(tmpdir(), 'dsh-jsonl-listing-'))
+    listingRoot = await mkdtemp(join(tmpdir(), 'ocean-jsonl-listing-'))
     listingCtx = new Context()
     await listingCtx.plugin(JsonlSessionPersistence, { root: listingRoot, compression: 'none', listConcurrency: 2 })
   })

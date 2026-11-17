@@ -46,7 +46,7 @@ const textOf = (content: readonly ContentBlock[]): string => content.filter(bloc
 const imagesOf = (content: readonly ContentBlock[]): ImageBlock[] => content.filter((block): block is ImageBlock => block.type === 'image')
 
 async function setup(mode: 'native' | 'ptc' = 'native', maxInlineTokens = CAP) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-image-recovery-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-image-recovery-'))
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx, root)
   onTestFinished(async () => {
@@ -56,7 +56,7 @@ async function setup(mode: 'native' | 'ptc' = 'native', maxInlineTokens = CAP) {
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(mode === 'ptc' ? PtcToolExecutor : NativeToolExecutor)
   await ctx.plugin(FileSystem, { cwd: root })
-  await ctx.plugin(LocalAttachments, { dshHome: join(root, 'home') })
+  await ctx.plugin(LocalAttachments, { oceanHome: join(root, 'home') })
   await ctx.plugin(ToolFs)
   await ctx.plugin(LocalSpillStore, { root: join(root, 'spill'), cleanupPeriodDays: 0 })
   await ctx.plugin(SessionProjections)

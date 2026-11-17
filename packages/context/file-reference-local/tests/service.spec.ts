@@ -42,7 +42,7 @@ async function stubAgent(
   id = 'file-reference-agent',
   includeCwd = true,
 ): Promise<{ agent: Agent; dispose: () => Promise<void> }> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-file-reference-service-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-file-reference-service-'))
   roots.push(root)
   await writeFile(join(root, 'README.md'), 'readme')
   const session = ctx.sessions.create(SessionId(id), { meta: includeCwd ? { cwd: root } : {} })
@@ -116,7 +116,7 @@ describe('LocalFileReferenceService', () => {
     const ctx = await harness()
     try {
       const { agent } = await stubAgent(ctx)
-      const nextRoot = await mkdtemp(join(tmpdir(), 'dsh-file-reference-next-'))
+      const nextRoot = await mkdtemp(join(tmpdir(), 'ocean-file-reference-next-'))
       roots.push(nextRoot)
       await writeFile(join(nextRoot, 'NEXT.md'), 'next')
       await ctx.plugin(LocalFileReferenceService)

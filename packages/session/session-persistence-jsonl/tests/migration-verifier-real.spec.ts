@@ -10,7 +10,7 @@ import { compressZstdFrame } from '../src/zstd.ts'
 
 describe('real migration verifier shutdown', () => {
   it.for(['none', 'zstd'] as const)('naturally exits after verifying %s input', async (compression, { signal }) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-verifier-natural-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-verifier-natural-'))
     onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
     const path = join(root, 'staged.jsonl')
     const header = Buffer.from(JSON.stringify({

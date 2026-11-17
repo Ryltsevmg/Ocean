@@ -20,8 +20,8 @@ it.each([['desktop', true], ['web', true], ['desktop', false], ['web', false]] a
   onTestFinished(async () => { const closed = once(server, 'close'); server.close(); server.closeAllConnections(); await closed })
   const address = server.address()
   if (address === null || typeof address === 'string') throw new Error('missing collector address')
-  vi.stubEnv('DSH_CLIENT_VERSION', 'test-version')
-  vi.stubEnv('DSH_PRODUCT_ANALYTICS_OTLP_URL', configured ? `http://127.0.0.1:${address.port}/logs` : '')
+  vi.stubEnv('OCEAN_CLIENT_VERSION', 'test-version')
+  vi.stubEnv('OCEAN_PRODUCT_ANALYTICS_OTLP_URL', configured ? `http://127.0.0.1:${address.port}/logs` : '')
   const ctx = new Context()
   onTestFinished(() => ctx.fiber.dispose())
   ctx.provide('profileContext', {

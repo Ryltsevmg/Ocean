@@ -113,7 +113,7 @@ export function ModelRow(props: ModelRowProps): ReactNode {
             draggable={!disabled}
             onDragStart={(event) => {
               event.dataTransfer.effectAllowed = 'move'
-              event.dataTransfer.setData('application/x-dsh-model-order', String(position))
+              event.dataTransfer.setData('application/x-ocean-model-order', String(position))
               props.order.onStart()
               preview.start(event, event.currentTarget.closest('[data-row-key]') as HTMLElement)
             }}

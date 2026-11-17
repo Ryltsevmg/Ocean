@@ -16,7 +16,7 @@
 
 ![The Models page: the DeepSeek card, with Add model provider below it](providers-models-page.png)
 
-키는 쓰기 전용입니다. 저장 후 페이지에는 민감한 값을 가린 설명만 전달되며, 비밀값 자체는 반환되지 않습니다. 키는 `$DSH_HOME/.credentials.yaml`에 저장되고 설정에는 해당 자격 증명에 대한 참조만 남습니다.
+키는 쓰기 전용입니다. 저장 후 페이지에는 민감한 값을 가린 설명만 전달되며, 비밀값 자체는 반환되지 않습니다. 키는 `$OCEAN_HOME/.credentials.yaml`에 저장되고 설정에는 해당 자격 증명에 대한 참조만 남습니다.
 
 키가 저장되어 있고 기본 엔드포인트를 쓰면 DeepSeek API에서 게시하는 모델 목록을 사용합니다. 모델이 처음 필요할 때 목록을 불러오고, 사용 중에는 약 10분마다 백그라운드에서 갱신합니다. 불러오지 못하면 내장 목록을 사용합니다. **사용자 지정 설정** 아래 **모델**을 편집하면 자체 목록을 사용합니다. **기본값 복원**을 선택하면 게시 목록을 다시 사용하고 목록을 새로 가져옵니다. 게시 목록을 쓰는 동안에도 카드에는 내장 모델이 표시되므로 새로 게시된 모델은 모델 선택 메뉴에만 나타납니다. 목록, 대체 동작, 사용 조건은 [API 키 제공업체 참조 문서](../../../packages/llm/llm-deepseek-api-key/README.md)를 참고하세요.
 
@@ -64,13 +64,13 @@
 
 ## 고급 구성
 
-생성 된 [플러그인 구성 카탈로그](../../config-catalog.md) 목록 모든 지원 필드 및 기본 모든 플러그인; [`dsh-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) 는 공급자 섹션이 페이지 구성입니다. [`dsh-llm-pi-ai`](../../../packages/llm/llm-pi-ai/README.md) 및 [`dsh-llm-deepseek`](../../../packages/llm/llm-deepseek/README.md) 참조 자체 직접 `cordis.patch.yml` 구성, 카탈로그 해상도, 소싱 컨트롤, 자격 증명, 어댑터 오류.
+생성 된 [플러그인 구성 카탈로그](../../config-catalog.md) 목록 모든 지원 필드 및 기본 모든 플러그인; [`ocean-llm-pi-ai`](../../config-catalog.md#oceanocean-llm-pi-ai) 는 공급자 섹션이 페이지 구성입니다. [`ocean-llm-pi-ai`](../../../packages/llm/llm-pi-ai/README.md) 및 [`ocean-llm-deepseek`](../../../packages/llm/llm-deepseek/README.md) 참조 자체 직접 `cordis.patch.yml` 구성, 카탈로그 해상도, 소싱 컨트롤, 자격 증명, 어댑터 오류.
 
 ::: tip 추가 설정
 
-모델 페이지에서 API 키, 표시 이름, 기본 URL, API 프로토콜, 모델별 ID, 표시 이름, 컨텍스트 창, 최대 출력 토큰 수, 입력 유형을 설정할 수 있습니다. 사용자 지정 모델 API 제공업체는 모델의 추론 수준도 설정할 수 있습니다. 내장 제공업체 모델의 추론 수준, 요청 호환성 스위치, 헤더, 시간 제한, 재시도 정책은 페이지가 쓰는 것과 같은 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`에 설정하세요. 파일을 직접 편집하거나, 브라우저와 서버가 같은 컴퓨터에서 실행될 때 설정 화면 상단의 **구성 파일 열기**를 사용하세요. 어댑터는 다음 요청 때 파일을 다시 읽으므로 재시작이 필요 없습니다. 아래에서 대부분의 게이트웨이에 필요한 필드를 다룹니다.
+모델 페이지에서 API 키, 표시 이름, 기본 URL, API 프로토콜, 모델별 ID, 표시 이름, 컨텍스트 창, 최대 출력 토큰 수, 입력 유형을 설정할 수 있습니다. 사용자 지정 모델 API 제공업체는 모델의 추론 수준도 설정할 수 있습니다. 내장 제공업체 모델의 추론 수준, 요청 호환성 스위치, 헤더, 시간 제한, 재시도 정책은 페이지가 쓰는 것과 같은 `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`에 설정하세요. 파일을 직접 편집하거나, 브라우저와 서버가 같은 컴퓨터에서 실행될 때 설정 화면 상단의 **구성 파일 열기**를 사용하세요. 어댑터는 다음 요청 때 파일을 다시 읽으므로 재시작이 필요 없습니다. 아래에서 대부분의 게이트웨이에 필요한 필드를 다룹니다.
 
-표준 Web UI를 `dsh web`으로 시작했다면 `<profile>`은 `web`이고 경로는 `$DSH_HOME/profiles/web/cordis.patch.yml`입니다. 사용자 지정 프로필로 실행했다면 시작할 때 선택한 프로필 이름을 사용하세요.
+표준 Web UI를 `ocean web`으로 시작했다면 `<profile>`은 `web`이고 경로는 `$OCEAN_HOME/profiles/web/cordis.patch.yml`입니다. 사용자 지정 프로필로 실행했다면 시작할 때 선택한 프로필 이름을 사용하세요.
 
 :::
 
@@ -80,7 +80,7 @@
 
 **설정 → 모델**에서 제공업체를 편집하고 **사용자 지정 설정**을 연 뒤 해당 모델의 **모델 옵션**을 펼치세요. 용량 필드 아래에 **입력 유형** 행이 있습니다. 이미지를 받는 모델에는 **이미지**를 선택하고 저장하세요. 이미지 지원을 상속하지 않은 새 사용자 지정 모델에는 **텍스트**가 기본 선택됩니다. 입력 유형을 하나 이상 선택해야 하므로 이미지 전용 모델은 이미지를 먼저 선택한 뒤 텍스트 선택을 해제하세요.
 
-체크박스는 pi-ai 모델의 `input`과 직접 연결하는 DeepSeek 어댑터의 `inputModalities`를 저장합니다. `$DSH_HOME/profiles/<profile>/cordis.patch.yml`에서도 모델을 편집할 수 있습니다. 다음 사용자 지정 pi-ai 제공업체는 텍스트 전용 모델과 이미지 지원 모델을 하나씩 선언합니다.
+체크박스는 pi-ai 모델의 `input`과 직접 연결하는 DeepSeek 어댑터의 `inputModalities`를 저장합니다. `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`에서도 모델을 편집할 수 있습니다. 다음 사용자 지정 pi-ai 제공업체는 텍스트 전용 모델과 이미지 지원 모델을 하나씩 선언합니다.
 
 이 예제는 프로필 패치의 구성 필드를 보여 줍니다. Cordis에서 구성을 덮어쓰면 항목 전체가 바뀝니다. 기존 설정을 편집할 때는 다른 제공업체와 필드를 유지하세요.
 
@@ -140,7 +140,7 @@ pi-ai 설정의 모든 입력 유형 목록에는 유형이 하나 이상 있어
 
 ### DeepSeek 계정 모델
 
-로그인한 DeepSeek 계정은 계정 서비스에서 모델 목록을 가져오므로 모델 페이지에 모델 편집기가 표시되지 않습니다. 개별 모델을 조정하려면 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`에서 `modelOverrides`를 사용하세요. 필드는 DeepSeek의 `models` 항목과 같으며 설정하지 않은 필드는 목록의 값을 유지합니다.
+로그인한 DeepSeek 계정은 계정 서비스에서 모델 목록을 가져오므로 모델 페이지에 모델 편집기가 표시되지 않습니다. 개별 모델을 조정하려면 `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`에서 `modelOverrides`를 사용하세요. 필드는 DeepSeek의 `models` 항목과 같으며 설정하지 않은 필드는 목록의 값을 유지합니다.
 
 ```yaml
 - id: llm-deepseek-account
@@ -161,7 +161,7 @@ pi-ai 설정의 모든 입력 유형 목록에는 유형이 하나 이상 있어
 
 사용자 지정 모델 API 제공업체에서는 **설정 → 모델**에서 제공업체를 편집하고 **사용자 지정 설정**의 **모델 옵션**을 펼쳐 **추론 수준**을 켜세요. 처음에는 off, low, medium, high 행이 표시됩니다. **API 값**은 각 수준에서 실제로 전송하는 값이고 기본값은 수준 이름입니다. 제공업체의 API 문서에서 다른 표기를 요구할 때만 바꾸세요. 엔드포인트가 지원하는 수준에 맞춰 행을 추가하거나 지우고, off 이외의 수준을 하나 이상 남긴 뒤 저장합니다. 스위치를 끄면 선언이 제거됩니다.
 
-모델 페이지는 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`에 `reasoningEfforts`를 저장합니다. 이 파일에서 추론 수준을 직접 선언할 수도 있습니다.
+모델 페이지는 `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`에 `reasoningEfforts`를 저장합니다. 이 파일에서 추론 수준을 직접 선언할 수도 있습니다.
 
 ```yaml
 - id: llm-pi-ai
@@ -209,7 +209,7 @@ pi-ai 설정의 모든 입력 유형 목록에는 유형이 하나 이상 있어
 
 키가 유효하고 주소에 연결할 수 있어도 게이트웨이가 모든 요청을 거부할 수 있습니다. pi-ai는 엔드포인트의 URL을 바탕으로 시스템 프롬프트의 역할, 출력 제한 필드, 추론 수준의 전달 방식을 정합니다. 알 수 없는 주소에는 OpenAI와 같은 형식으로 요청합니다. 대부분의 OpenAI 호환 게이트웨이는 그 형식 일부를 지원하지 않습니다.
 
-주된 차이는 두 가지입니다. 추론을 선언한 모델에는 시스템 프롬프트를 `role: "developer"`로 보내는데, 많은 게이트웨이는 이 역할을 거부합니다. 출력 한도는 `max_completion_tokens`로 보내므로 `max_tokens`만 지원하는 서버에서 거부됩니다. 양식에는 두 항목이 없으므로 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`에서 경로 설정을 수정하세요.
+주된 차이는 두 가지입니다. 추론을 선언한 모델에는 시스템 프롬프트를 `role: "developer"`로 보내는데, 많은 게이트웨이는 이 역할을 거부합니다. 출력 한도는 `max_completion_tokens`로 보내므로 `max_tokens`만 지원하는 서버에서 거부됩니다. 양식에는 두 항목이 없으므로 `$OCEAN_HOME/profiles/<profile>/cordis.patch.yml`에서 경로 설정을 수정하세요.
 
 ```yaml
 - id: llm-pi-ai
@@ -240,7 +240,7 @@ pi-ai 설정의 모든 입력 유형 목록에는 유형이 하나 이상 있어
 
 스위치는 이를 지원하는 프로토콜에만 적용됩니다. 한 `api`에서 유효한 스위치가 다른 프로토콜에서는 거부될 수 있으며 메시지에 해당 프로토콜의 선택지가 나옵니다. 위의 `input`처럼 스위치는 엔드포인트의 지원 여부를 선언하며 실제로 검증하지 않습니다. 게이트웨이에 필요 없는 스위치를 설정하면 요청 내용이 달라집니다.
 
-스위치별 허용 값과 지원 프로토콜은 소스에서 생성되는 [`dsh-llm-pi-ai` 구성 참조](../../config-catalog.md#oceanocean-llm-pi-ai)의 `PiAiCompatProfile`에 나와 있습니다.
+스위치별 허용 값과 지원 프로토콜은 소스에서 생성되는 [`ocean-llm-pi-ai` 구성 참조](../../config-catalog.md#oceanocean-llm-pi-ai)의 `PiAiCompatProfile`에 나와 있습니다.
 
 <a id="troubleshooting"></a>
 

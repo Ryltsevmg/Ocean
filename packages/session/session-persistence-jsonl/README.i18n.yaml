@@ -6,11 +6,11 @@
   en: cc97ed79d262bf09
   zh: 90a141669dc844f3
 /ocean-ocean-session-persistence-jsonl:
-  en: 2998b0e4f9463c4a
-  zh: e5b29d28aef78503
+  en: cea6b9fe67ca8a03
+  zh: 703467936adc48f0
 /ocean-ocean-session-persistence-jsonl/summary:
-  en: 4821bd83813408c7
-  zh: 2e5c721a19f549e7
+  en: ff83b32a0e39272a
+  zh: 61be03404538bea9
 /ocean-ocean-session-persistence-jsonl/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -21,8 +21,8 @@
   en: 37c10302bbbde268
   zh: 3d5c027bac868efd
 /ocean-ocean-session-persistence-jsonl/use-this-package/minimal-configuration:
-  en: 1480ff203ed26e6d
-  zh: 87361bd78a9a297e
+  en: 88560d6fc25da23a
+  zh: 64ee21870e71d5b2
 /ocean-ocean-session-persistence-jsonl/use-this-package/on-disk-layout:
   en: e20cf32540d7c785
   zh: 67e182529e9211ca
@@ -30,8 +30,8 @@
   en: 755abd5a19b310cb
   zh: 9fd06eaeca00dcf7
 /ocean-ocean-session-persistence-jsonl/use-this-package/reading-the-logs:
-  en: b99a76ae93132cf5
-  zh: 3c8d7aa6bb91442e
+  en: fcb464e339caa879
+  zh: 2efa4b16f74a55fc
 /ocean-ocean-session-persistence-jsonl/understand-the-implementation:
   en: a35407bb25671e7e
   zh: 6a00f9510c85adcb
@@ -45,8 +45,8 @@
   en: 2a4fd4bde1da0a1b
   zh: d7a8cbdad7beee09
 /ocean-ocean-session-persistence-jsonl/further-exploration:
-  en: 71c5455455454550
-  zh: f777f156de0f6587
+  en: 193446feae0e8509
+  zh: 21a0d856c7966627
 /ocean-ocean-session-persistence-jsonl/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -63,8 +63,8 @@
   en: 53ce4da7ce68d21c
   zh: 10f40bc354100f77
 /ocean-ocean-session-persistence-jsonl/known-limitations-and-deferred-work:
-  en: c46c91a811abc547
-  zh: 41fb942d4e61e544
+  en: 8eaa78722d38fcff
+  zh: 980c9120309ad63b
 /ocean-ocean-session-persistence-jsonl/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

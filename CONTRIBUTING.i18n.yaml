@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write CONTRIBUTING.md
 /contributing-to-ocean:
-  en: ec8e30d6487a3a67
-  zh: fe245680c1a4f13c
+  en: e98db7959f710f23
+  zh: 4c0d73ffb0db42d7
 /contributing-to-ocean/before-changing-code:
-  en: 23b757f7fe083bda
-  zh: 788102235396398c
+  en: 25f90a040e48f47a
+  zh: c70aa924c926f454
 /contributing-to-ocean/pull-request-checklist:
-  en: f385401977701ddb
-  zh: e45d350964e6e760
+  en: 0cc64596d651560f
+  zh: f3191f4e92465c28
 /contributing-to-ocean/dependencies-and-attribution:
   en: 8b85b2603db0135c
   zh: 0652452b00bd47e4
 /contributing-to-ocean/reporting-problems:
-  en: d0211a682596dfd7
-  zh: c981f6d4776fbf86
+  en: e07e0b7d1194e9af
+  zh: 2b8d477754c324ec

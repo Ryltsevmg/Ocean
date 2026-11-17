@@ -19,7 +19,7 @@ import { onTestFinished } from 'vitest'
 
 /** Mount real Node execution services with a private working directory and awaited cleanup. */
 export async function mountPtcRuntime(ctx: Context, mode: SandboxMode = 'danger-full-access', executionMode: NodeRuntimeConfig['executionMode'] = 'per-call') {
-  const root = await mkdtemp(join(homedir(), '.dsh-workflow-test-'))
+  const root = await mkdtemp(join(homedir(), '.ocean-workflow-test-'))
   onTestFinished(async () => {
     await ctx.fiber.dispose()
     await rm(root, { recursive: true, force: true })

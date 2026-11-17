@@ -40,22 +40,22 @@ describe('Python runtime executable builder CLI', () => {
     const commands = result.stdout.split('\n').filter(line => line.includes('C:\\tools\\pnpm.cjs '))
     expect(commands[0]).toMatch(/ run verify-runtime-closure$/)
     expect(commands[1]?.endsWith(' ' + command)).toBe(true)
-    expect(commands[2]).toContain(' --filter dsh-python-runtime-closure deploy ')
+    expect(commands[2]).toContain(' --filter ocean-python-runtime-closure deploy ')
   })
 
   it('rejects simultaneous build modes before invoking pnpm', () => {
-    const setup = mkdtempSync(join(tmpdir(), 'dsh-python-build-mode-'))
+    const setup = mkdtempSync(join(tmpdir(), 'ocean-python-build-mode-'))
     temporaryDirectories.push(setup)
     const entrypoint = join(setup, 'pnpm.cjs')
     const commands = join(setup, 'commands.jsonl')
     writeFileSync(entrypoint, [
-      "require('node:fs').appendFileSync(process.env.DSH_PYTHON_BUILD_COMMANDS, JSON.stringify(process.argv.slice(2)) + '\\n')",
+      "require('node:fs').appendFileSync(process.env.OCEAN_PYTHON_BUILD_COMMANDS, JSON.stringify(process.argv.slice(2)) + '\\n')",
       'process.exit(31)',
       '',
     ].join('\n'))
 
     const result = run(
-      { npm_execpath: entrypoint, DSH_PYTHON_BUILD_COMMANDS: commands },
+      { npm_execpath: entrypoint, OCEAN_PYTHON_BUILD_COMMANDS: commands },
       '--skip-build',
       '--build-artifacts',
       '--targets=node24-macos-arm64',
@@ -70,19 +70,19 @@ describe('Python runtime executable builder CLI', () => {
   })
 
   it('stops before artifact building or deployment when the closure check fails', () => {
-    const setup = mkdtempSync(join(tmpdir(), 'dsh-python-closure-'))
+    const setup = mkdtempSync(join(tmpdir(), 'ocean-python-closure-'))
     temporaryDirectories.push(setup)
     const entrypoint = join(setup, 'pnpm.cjs')
     const commands = join(setup, 'commands.jsonl')
     writeFileSync(entrypoint, [
-      "require('node:fs').appendFileSync(process.env.DSH_PYTHON_BUILD_COMMANDS, JSON.stringify(process.argv.slice(2)) + '\\n')",
+      "require('node:fs').appendFileSync(process.env.OCEAN_PYTHON_BUILD_COMMANDS, JSON.stringify(process.argv.slice(2)) + '\\n')",
       "if (process.argv.slice(2).join(' ') === 'run verify-runtime-closure') process.exit(31)",
       'process.exit(32)',
       '',
     ].join('\n'))
 
     const result = run(
-      { npm_execpath: entrypoint, DSH_PYTHON_BUILD_COMMANDS: commands },
+      { npm_execpath: entrypoint, OCEAN_PYTHON_BUILD_COMMANDS: commands },
       '--build-artifacts',
       '--targets=node24-macos-arm64',
     )
@@ -132,8 +132,8 @@ describe('Python runtime executable builder CLI', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain(`${process.execPath} C:\\tools\\pnpm.cjs run verify-runtime-closure`)
     expect(result.stdout).not.toMatch(/\[dry-run\] .* run build(?::src)?$/m)
-    expect(result.stdout).toContain(`${process.execPath} C:\\tools\\pnpm.cjs --filter dsh-python-runtime-closure deploy`)
-    const deploy = result.stdout.split('\n').find(line => line.includes(' --filter dsh-python-runtime-closure deploy'))
+    expect(result.stdout).toContain(`${process.execPath} C:\\tools\\pnpm.cjs --filter ocean-python-runtime-closure deploy`)
+    const deploy = result.stdout.split('\n').find(line => line.includes(' --filter ocean-python-runtime-closure deploy'))
     expect(deploy).toContain('--prod --config.allow-unused-patches=true')
     expect(deploy).toContain('--config.hoist-workspace-packages=false')
     expect(deploy).toContain(`--config.pnpmfile=${join(root, 'scripts/python-runtime-deploy.pnpmfile.mjs')}`)
@@ -147,7 +147,7 @@ describe('Python runtime executable builder CLI', () => {
   })
 
   it('resolves the pnpm package behind a Windows command shim', () => {
-    const setup = mkdtempSync(join(tmpdir(), 'dsh-pnpm-home-'))
+    const setup = mkdtempSync(join(tmpdir(), 'ocean-pnpm-home-'))
     temporaryDirectories.push(setup)
     const home = join(setup, 'node_modules', '.bin')
     const entrypoint = join(setup, 'node_modules', 'pnpm', 'bin', 'pnpm.mjs')

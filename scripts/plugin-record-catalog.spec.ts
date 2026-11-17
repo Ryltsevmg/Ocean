@@ -25,7 +25,7 @@ function put(root: string, file: string, source: string): void {
 }
 
 function fixture(files: Record<string, string> = {}): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-plugin-record-catalog-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-plugin-record-catalog-'))
   roots.push(root)
   for (const [file, source] of Object.entries({
     'packages/core/session/package.json': '{"name":"@ocean/ocean-session"}',

@@ -293,7 +293,7 @@ function manifest(path: string, content: Record<string, unknown>): void {
 
 class MatrixFixture {
   // Node keeps resolved paths and modules after cleanup; no fixture may reuse an earlier fixture's path.
-  readonly root = realpathSync.native(mkdtempSync(join(tmpdir(), `dsh-linked-matrix-${++fixtureSequence}-`)))
+  readonly root = realpathSync.native(mkdtempSync(join(tmpdir(), `ocean-linked-matrix-${++fixtureSequence}-`)))
   readonly home = join(this.root, 'home')
   readonly profileDir = join(this.home, 'profiles', 'web')
   readonly workspace = join(this.root, 'work', 'workspace')
@@ -567,7 +567,7 @@ function writeNodeComparison(output: string, selected: readonly MatrixRow[]): vo
   const markdown = [
     '# Node baseline and peer-position reference', '',
     'Native, current, and reference runs use independent fixture paths. Only the reference fixture materializes peer mappings before Node resolves them. Explicit paths and importers outside recorded linked directories use the unmodified native behavior. Assertions compare selected packages, existing file paths, failure codes, and runtime module identity.', '',
-    '| ID | Layout | Package | Runtime | Request | Importer | Explicit paths start | JSON here | node_modules here | Parent JSON | Parent node_modules | Method | Native Node | Current DSH | Peer reference | Matches reference |',
+    '| ID | Layout | Package | Runtime | Request | Importer | Explicit paths start | JSON here | node_modules here | Parent JSON | Parent node_modules | Method | Native Node | Current OCEAN | Peer reference | Matches reference |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...records.map(record => `| ${[record.id, record.layout, record.name, record.inRuntime, record.request, record.importer,
       record.explicitStart, record.startManifest, record.startModules, record.parentManifest, record.parentModules,
@@ -577,7 +577,7 @@ function writeNodeComparison(output: string, selected: readonly MatrixRow[]): vo
 }
 
 afterAll(() => {
-  const parent = process.env.DSH_RESOLUTION_MATRIX_REPORT_DIR
+  const parent = process.env.OCEAN_RESOLUTION_MATRIX_REPORT_DIR
   if (parent === undefined) return
   mkdirSync(parent, { recursive: true })
   const output = mkdtempSync(join(resolve(parent), 'run-'))

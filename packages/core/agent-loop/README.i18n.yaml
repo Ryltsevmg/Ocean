@@ -6,20 +6,20 @@
   en: 5d57c28077cb670a
   zh: 8113ea0248d66a17
 /ocean-ocean-agent-loop:
-  en: 5bf67a79c3df3b76
-  zh: 06626d7f7dfca151
+  en: f815b679d9685f85
+  zh: d653b75a36bea593
 /ocean-ocean-agent-loop/summary:
-  en: b2971780b74fd785
-  zh: 05a3043f49fb646d
+  en: 2b8c8407b7824a57
+  zh: 323e91521f017f59
 /ocean-ocean-agent-loop/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-agent-loop/use-this-package:
-  en: 35a960c0100a6aa4
-  zh: 438e133fb4c24a9e
+  en: b3a26b1bd46ad318
+  zh: 2d178530e7995f91
 /ocean-ocean-agent-loop/use-this-package/configure-declarative-agents:
-  en: 8a8b3b924f52a355
-  zh: 6c7cb1d431cd4572
+  en: 6879b8d43097fee5
+  zh: 1636648b1ae6427f
 /ocean-ocean-agent-loop/use-this-package/create-or-resume-agents-programmatically:
   en: 82ec792637e8e57f
   zh: e32f8ec5ee17afcf
@@ -45,14 +45,14 @@
   en: 3b48a480036bd5df
   zh: 28cea2036b0dccee
 /ocean-ocean-agent-loop/understand-the-implementation/turn-and-step-flow:
-  en: 4bd3c8b4a9ee8cf8
-  zh: 2f4965a3197bed0e
+  en: a634d9105ce6e22a
+  zh: 49cd1237c8d779dc
 /ocean-ocean-agent-loop/understand-the-implementation/failure-and-cancellation:
   en: eea56903c4ff82f5
   zh: c0d5abb5767780ed
 /ocean-ocean-agent-loop/further-exploration:
-  en: 7ac519f8e635acbc
-  zh: 975e514915dc6c9f
+  en: 72fde03dc6c79cd0
+  zh: f12446434f83bc08
 /ocean-ocean-agent-loop/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90

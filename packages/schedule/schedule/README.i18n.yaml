@@ -6,8 +6,8 @@
   en: e969ee395f6b7c28
   zh: f860753b409ba6b3
 /ocean-ocean-schedule:
-  en: d4678143a8a80b8f
-  zh: b2254553689fa22d
+  en: 16d1d94b8335a341
+  zh: 664fdfba1f20db35
 /ocean-ocean-schedule/summary:
   en: 0e2b1edae18118aa
   zh: 97d443780e929856
@@ -15,17 +15,17 @@
   en: d152484eb41ac6b4
   zh: 1db86285abf6c499
 /ocean-ocean-schedule/use-this-package:
-  en: bb1b2e7cdb4acda7
-  zh: 16a87c9090b4a414
+  en: 5d7b17cd5e20646b
+  zh: 0b2e007e83c00795
 /ocean-ocean-schedule/understand-the-implementation:
   en: 2eff756820c6825c
   zh: df7fab103eeb9545
 /ocean-ocean-schedule/understand-the-implementation/configuration-and-management-api:
-  en: 422cc70844beee70
-  zh: 8d25204965d62ebd
+  en: bd250711bfe0406b
+  zh: d9f7736dfc789879
 /ocean-ocean-schedule/understand-the-implementation/storage-format-and-upgrades:
-  en: b82a5f8e27a0adaa
-  zh: 3b7f212b7852ccea
+  en: 3362ee7034d481cd
+  zh: fb34328212cc6af9
 /ocean-ocean-schedule/understand-the-implementation/storage-format-and-upgrades/timing-record-fields:
   en: 93d9eb94a142fc0c
   zh: c997efbe182ab062
@@ -33,14 +33,14 @@
   en: 11bb6b4934f12479
   zh: f84ba5dcd2eee489
 /ocean-ocean-schedule/understand-the-implementation/storage-format-and-upgrades/future-versions:
-  en: 3f70e357501fad06
-  zh: 430d24e125268650
+  en: 378391a6f1389519
+  zh: 2538bfd62dbe670b
 /ocean-ocean-schedule/understand-the-implementation/dispatch-and-lifecycle:
-  en: fdf1d2e347420fab
-  zh: fd7257b8e843fc83
+  en: 8e5975567bb7c86c
+  zh: d1339db9c20521f1
 /ocean-ocean-schedule/further-exploration:
-  en: 5c98e7a8bd720560
-  zh: dc1d41e7762b067a
+  en: d12cb04cdc402a28
+  zh: 8d23d1cc38bc2008
 /ocean-ocean-schedule/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -48,8 +48,8 @@
   en: 097a655a88e2a9f2
   zh: 6612c58808186b1e
 /ocean-ocean-schedule/model-experience/tool-schemas-in-mounted-presets/what-the-model-sees:
-  en: c03f50a4d01ea36e
-  zh: a26b1a5c98c15d7a
+  en: 80d26eeae6db30b3
+  zh: 38e1752a815b8f65
 /ocean-ocean-schedule/model-experience/tool-schemas-in-mounted-presets/token-effect:
   en: ae0eb4d2609d4329
   zh: 4fe0a26e37c272dc
@@ -60,8 +60,8 @@
   en: 2a940dee68296bc7
   zh: 5ad3f71bd69b3c4c
 /ocean-ocean-schedule/model-experience/tool-results-after-management-calls/what-the-model-sees:
-  en: 888f50167c074ba1
-  zh: ddd2643d505c26e0
+  en: 17df7b297fc77bce
+  zh: 20b852f38d082ad0
 /ocean-ocean-schedule/model-experience/tool-results-after-management-calls/token-effect:
   en: b538367888e60b2a
   zh: 04aa3dd1ba691aec

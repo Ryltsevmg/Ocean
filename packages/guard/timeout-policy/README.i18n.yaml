@@ -6,23 +6,23 @@
   en: 7020f47046dc8148
   zh: 191dea4c788f374b
 /ocean-ocean-tool-call-timeout-policy:
-  en: 81adde3596e9ae49
-  zh: 7740bfd9815a9046
+  en: 4782a4d30091c6f5
+  zh: ab71bf1a06159240
 /ocean-ocean-tool-call-timeout-policy/summary:
-  en: 745e3c8642ed9ea9
-  zh: c8cfd6a3b0c3c9bf
+  en: 719f2e47e4f6d4cb
+  zh: 8c88b22cc9896b61
 /ocean-ocean-tool-call-timeout-policy/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-tool-call-timeout-policy/use-this-package:
-  en: 1235dce86c24bdd6
-  zh: d96b544b0b745766
+  en: 6a707374a80ca8d6
+  zh: c2a6b8bb08b0d877
 /ocean-ocean-tool-call-timeout-policy/use-this-package/when-to-choose-it:
   en: 2c6495054dfaf09c
   zh: 7f2d65c3202d75f3
 /ocean-ocean-tool-call-timeout-policy/use-this-package/setting-it-up:
-  en: b61eb8b9f6a11095
-  zh: 36fc6435b94275b3
+  en: 36c9d2d2ba5937ba
+  zh: ba4814ff61ea1e3e
 /ocean-ocean-tool-call-timeout-policy/use-this-package/what-you-get:
   en: 339ff1d6001f3def
   zh: c3e378abc7c58fa4
@@ -30,8 +30,8 @@
   en: 9bdd0f9388915825
   zh: c101ec504869d187
 /ocean-ocean-tool-call-timeout-policy/understand-the-implementation/design-philosophy:
-  en: 57b25d2bd3f9768b
-  zh: b980da8b996816c1
+  en: 7cc57364662c039a
+  zh: 646b88811dd03d2d
 /ocean-ocean-tool-call-timeout-policy/understand-the-implementation/how-a-deadline-is-armed-and-mapped:
   en: 4c2f31d760d5ad4b
   zh: 42e5c42675c32dcc
@@ -42,8 +42,8 @@
   en: 1fa5646d5e9d18eb
   zh: d09dfc46cbc654f4
 /ocean-ocean-tool-call-timeout-policy/further-exploration:
-  en: 2e817ab72003f67e
-  zh: b2b23fdb607f635a
+  en: b125695fee8a1b9b
+  zh: 26ff0c773d9b2a4c
 /ocean-ocean-tool-call-timeout-policy/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90

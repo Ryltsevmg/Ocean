@@ -6,11 +6,11 @@
   en: 61f5eba657b4a7ed
   zh: ae9f9b828ebbfe2b
 /ocean-ocean-acp:
-  en: e91c3432defc34bc
-  zh: 4635d994f799328e
+  en: 066da4d72d6104b2
+  zh: 2f43e4e174e29836
 /ocean-ocean-acp/summary:
-  en: 55947dedd93a6486
-  zh: 54e6ac64255899da
+  en: 2371ba0d53f68267
+  zh: 175f75ca23becfa8
 /ocean-ocean-acp/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,14 +18,14 @@
   en: 014a5573a8c05663
   zh: e45302786655eea5
 /ocean-ocean-acp/use-this-package/when-to-choose-it:
-  en: c3f5f144daf83157
-  zh: a65a64842fd35bef
+  en: 324b3c5d1beb740e
+  zh: a006bd80f9091e16
 /ocean-ocean-acp/use-this-package/minimal-configuration:
-  en: 1a22b3cf8ae7ea0f
-  zh: 12c7fdfe0a21d410
+  en: e384fc60d67654fc
+  zh: 936555a73466f788
 /ocean-ocean-acp/use-this-package/start-a-server:
-  en: 290a86acc4be4c36
-  zh: 6acefd9b0d6b47e3
+  en: 68f0562f690c62b9
+  zh: a42fc6525ab70fc2
 /ocean-ocean-acp/use-this-package/protocol-contract:
   en: 195315c12edf895f
   zh: de307288858a8ece
@@ -33,8 +33,8 @@
   en: ea8afe89dbdd1934
   zh: 6567979f92f34afd
 /ocean-ocean-acp/understand-the-implementation/design-philosophy:
-  en: 457598e7409ae07b
-  zh: fe407daf7cfd01db
+  en: 8410264693d2410a
+  zh: 3d98d2d9cad5c5ce
 /ocean-ocean-acp/understand-the-implementation/source-map:
   en: 9f85ae4ecdb5d022
   zh: dc2b911360768b9e
@@ -45,8 +45,8 @@
   en: 7e2be6a9e211d4d6
   zh: 3ba8482d3231b9d0
 /ocean-ocean-acp/further-exploration:
-  en: 574658ed9879fc89
-  zh: 5ed81eadda5bb6f7
+  en: 096b69d0479fd1a3
+  zh: f4f1ac61cdd9dc9d
 /ocean-ocean-acp/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -75,8 +75,8 @@
   en: 83120763a07c4b72
   zh: 6a1a181dc4da869d
 /ocean-ocean-acp/known-limitations-and-deferred-work:
-  en: da83c6d3b9604f74
-  zh: d93d6f6d418bebdc
+  en: 6b946faa65bab2aa
+  zh: 0f365bd6fbcb73ce
 /ocean-ocean-acp/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

@@ -10,10 +10,10 @@ from time import monotonic
 
 from deepseek_harness import DeepSeekHarness, DeepSeekHarnessConfig
 
-root = Path(mkdtemp(prefix="dsh-shutdown-"))
+root = Path(mkdtemp(prefix="ocean-shutdown-"))
 config = DeepSeekHarnessConfig(
     profile="sdk-minimal",
-    dsh_home=str(root / "home"),
+    ocean_home=str(root / "home"),
     cwd=str(root),
     shutdown_timeout_seconds=1.0,
 )

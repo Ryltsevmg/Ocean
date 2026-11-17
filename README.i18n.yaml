@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write README.md
 /ocean:
-  en: 09459c30fc46b3e4
-  zh: bb9a7d8aa72e1e78
+  en: a30073e091943401
+  zh: 5e81a8cc26287eac
 /ocean/developer-preview:
-  en: 53cd04585972656b
-  zh: 800ae10ff896c652
+  en: 84d884b61da92df4
+  zh: be05246af8348cab
 /ocean/get-started:
-  en: 5fb2446a7e08a9b4
-  zh: a9547e0738bcec46
+  en: 0cba94bc4464d600
+  zh: 67d28def24d84f0e
 /ocean/documentation:
-  en: 207af9428be4eb08
-  zh: 0f6b6bf69cc89592
+  en: 318ba9fbb8aa5d5f
+  zh: 9c33486dad374c70
 /ocean/feedback:
   en: a3ce16c3b53bfbe0
   zh: 0e8268ce03b299f0

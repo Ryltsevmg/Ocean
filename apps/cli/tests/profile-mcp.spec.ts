@@ -13,9 +13,9 @@ const resourcePackage = '@ocean/ocean-mcp-resources'
 
 describe('shipped MCP resource composition', () => {
   it.each(Object.keys(PROFILE_TEMPLATES))('%s carries one shared resource consumer without a server', (name) => {
-    const home = mkdtempSync(join(tmpdir(), 'dsh-profile-mcp-'))
+    const home = mkdtempSync(join(tmpdir(), 'ocean-profile-mcp-'))
     try {
-      const profile = loadProfile('dsh', name, installAnchor, home)
+      const profile = loadProfile('ocean', name, installAnchor, home)
       const warnings: string[] = []
       const rows = composeEntries([
         ...profile.layers.map(layer => layer.patches),
@@ -43,9 +43,9 @@ describe('shipped MCP resource composition', () => {
   })
 
   it.each(Object.keys(PROFILE_TEMPLATES))('%s mounts the server manager only with the Web application', (name) => {
-    const home = mkdtempSync(join(tmpdir(), 'dsh-profile-mcp-'))
+    const home = mkdtempSync(join(tmpdir(), 'ocean-profile-mcp-'))
     try {
-      const profile = loadProfile('dsh', name, installAnchor, home)
+      const profile = loadProfile('ocean', name, installAnchor, home)
       const rows = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches])
       expect(rows.filter(row => row.name === '@ocean/ocean-mcp-manager')).toEqual(name === 'web'
         ? [{ id: 'mcp-manager', name: '@ocean/ocean-mcp-manager', inject: ['credentials'] }]

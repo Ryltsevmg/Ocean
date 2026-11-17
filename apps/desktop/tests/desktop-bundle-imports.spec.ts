@@ -58,11 +58,11 @@ describe('desktop bundle imports', () => {
 })
 
 describe('packaged imports plugin', () => {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-bundle-imports-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-desktop-bundle-imports-'))
   const entries = {
-    static: ['import { app } from "electron";', 'import { resolveDshHome } from "@ocean/ocean-home-paths";', 'export const home = resolveDshHome(app);'],
-    dynamic: ['import { app } from "electron";', 'export const home = () => import("@ocean/ocean-home-paths").then(m => m.resolveDshHome(app));'],
-    require: ['import { app } from "electron";', 'export const home = () => require("@ocean/ocean-home-paths").resolveDshHome(app);'],
+    static: ['import { app } from "electron";', 'import { resolveOceanHome } from "@ocean/ocean-home-paths";', 'export const home = resolveOceanHome(app);'],
+    dynamic: ['import { app } from "electron";', 'export const home = () => import("@ocean/ocean-home-paths").then(m => m.resolveOceanHome(app));'],
+    require: ['import { app } from "electron";', 'export const home = () => require("@ocean/ocean-home-paths").resolveOceanHome(app);'],
     builtin: ['import { contextBridge } from "electron";', 'import { readFileSync } from "node:fs";', 'contextBridge.exposeInMainWorld("x", readFileSync);'],
   } as const
   for (const [name, lines] of Object.entries(entries)) writeFileSync(join(root, `${name}.js`), lines.join('\n'))

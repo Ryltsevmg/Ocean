@@ -6,17 +6,17 @@
 [English](public-deployments.md) | [中文](public-deployments.zh.md) | [Русский](public-deployments.ru.md) | [日本語](public-deployments.ja.md) | Español | [Français](public-deployments.fr.md) | [Deutsch](public-deployments.de.md) | [Português](public-deployments.pt.md) | [한국어](public-deployments.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-`dsh --profile web` sirve la interfaz gráfica en un puerto de la interfaz loopback, por lo que un navegador de otro equipo no puede acceder a ella y el proceso desconoce la dirección que usas. Un proxy inverso delante de ella se encarga de ese tramo externo: el nombre de host público, TLS y el prefijo de ruta que elimina antes de reenviar al servidor. `--public-url` indica a DSH qué dirección usan los navegadores:
+`ocean --profile web` sirve la interfaz gráfica en un puerto de la interfaz loopback, por lo que un navegador de otro equipo no puede acceder a ella y el proceso desconoce la dirección que usas. Un proxy inverso delante de ella se encarga de ese tramo externo: el nombre de host público, TLS y el prefijo de ruta que elimina antes de reenviar al servidor. `--public-url` indica a OCEAN qué dirección usan los navegadores:
 
 ```sh
-dsh --profile web --public-url https://app.example/ui/ --trusted-host app.example
+ocean --profile web --public-url https://app.example/ui/ --trusted-host app.example
 ```
 
 <a id="what---public-url-advertises"></a>
 
 ## Qué anuncia `--public-url`
 
-`--public-url` acepta una raíz `http://` o `https://` con un prefijo de montaje opcional y la normaliza para terminar en `/`. Proporciona la URL que se muestra y se abre al inicio, `DSH_WEB_URL` y la URL de la interfaz web en el contexto de ejecución del agente. El servidor web sigue sirviendo rutas desde la raíz del origen y no conoce el punto de montaje. El campo de configuración `publicUrl` publica el mismo anuncio.
+`--public-url` acepta una raíz `http://` o `https://` con un prefijo de montaje opcional y la normaliza para terminar en `/`. Proporciona la URL que se muestra y se abre al inicio, `OCEAN_WEB_URL` y la URL de la interfaz web en el contexto de ejecución del agente. El servidor web sigue sirviendo rutas desde la raíz del origen y no conoce el punto de montaje. El campo de configuración `publicUrl` publica el mismo anuncio.
 
 <a id="what-the-proxy-must-do"></a>
 
@@ -42,7 +42,7 @@ Ni la URL anunciada ni la comprobación protegen el propio puerto de escucha, as
 
 Termina TLS en el proxy, en el propio servidor o en ambos; `--public-url` sigue siendo un anuncio. Una raíz `http://` visible para el navegador expone el token de inicio sin cifrar. Una raíz `https://` del proxy protege el tramo del navegador al proxy; el cifrado entre el proxy y el servidor depende de la configuración TLS de este último.
 
-Para terminar TLS en el servidor, pasa `--tls-cert` y `--tls-key`, cada uno con una ruta resuelta respecto al directorio de trabajo del proceso: el archivo de certificado contiene la cadena completa y el de clave una clave privada PEM sin cifrar. DSH no obtiene, renueva ni supervisa certificados, y el componente de escucha lee los archivos una sola vez; para cambiarlos, sustitúyelos y recarga el servidor o reinicia el proceso. El inicio falla si falta algún archivo o el par no es válido y nunca recurre a HTTP. El navegador aplica su propio almacén de confianza y sus comprobaciones de nombre, así que el certificado debe cubrir el nombre de host o la dirección IP a la que accedas. El puerto predeterminado sigue siendo 3080. TLS nativo no necesita un proxy, pero los despliegues con proxy y `--public-url` siguen siendo compatibles de forma independiente. Un servidor TLS marca las cookies de sesión como `Secure`; mantén HTTPS en el tramo público hacia el navegador para que este pueda devolverlas.
+Para terminar TLS en el servidor, pasa `--tls-cert` y `--tls-key`, cada uno con una ruta resuelta respecto al directorio de trabajo del proceso: el archivo de certificado contiene la cadena completa y el de clave una clave privada PEM sin cifrar. OCEAN no obtiene, renueva ni supervisa certificados, y el componente de escucha lee los archivos una sola vez; para cambiarlos, sustitúyelos y recarga el servidor o reinicia el proceso. El inicio falla si falta algún archivo o el par no es válido y nunca recurre a HTTP. El navegador aplica su propio almacén de confianza y sus comprobaciones de nombre, así que el certificado debe cubrir el nombre de host o la dirección IP a la que accedas. El puerto predeterminado sigue siendo 3080. TLS nativo no necesita un proxy, pero los despliegues con proxy y `--public-url` siguen siendo compatibles de forma independiente. Un servidor TLS marca las cookies de sesión como `Secure`; mantén HTTPS en el tramo público hacia el navegador para que este pueda devolverlas.
 
 La URL mostrada contiene una credencial del proceso; compártela solo con los usuarios previstos.
 

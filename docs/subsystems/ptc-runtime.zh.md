@@ -2,7 +2,7 @@
 
 [English](ptc-runtime.md) | 中文
 
-PTC 执行[能力 seam](../capability-seams.zh.md)通过 [dsh-ptc-runtime](../../packages/ptc-runtime/ptc-runtime) 提供 `ctx.ptcRuntime`。它针对 Host 绑定运行一个程序，报告输出、失败与适用的沙箱事实。PTC 执行是可选能力，不属于[智能体循环主干](core.zh.md)。
+PTC 执行[能力 seam](../capability-seams.zh.md)通过 [ocean-ptc-runtime](../../packages/ptc-runtime/ptc-runtime) 提供 `ctx.ptcRuntime`。它针对 Host 绑定运行一个程序，报告输出、失败与适用的沙箱事实。PTC 执行是可选能力，不属于[智能体循环主干](core.zh.md)。
 
 源码：[`packages/ptc-runtime/ptc-runtime/src/types.ts`](../../packages/ptc-runtime/ptc-runtime/src/types.ts)
 
@@ -154,7 +154,7 @@ interface PtcBindingNamespace {
    * of `language` — a JS-only spelling like `$tools` is rejected by design,
    * not just by the Python backend. Names that satisfy the identifier rule but
    * name a backend-owned slot (`RESERVED_BINDING_GLOBALS`, e.g. `inspect`, `console`, `Image`,
-   * `__dsh_main__`) are also refused everywhere; see its declaration for the
+   * `__ocean_main__`) are also refused everywhere; see its declaration for the
    * exact set and why each entry is reserved.
    */
   global: string

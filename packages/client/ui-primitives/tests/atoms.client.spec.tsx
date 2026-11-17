@@ -61,9 +61,9 @@ it('retains automatic focus styling while typing and restores it for keyboard na
   const button = screen.getByRole('button')
   focusWithoutRing(button)
   fireEvent.keyDown(button, { key: 'a' })
-  expect(button.hasAttribute('data-dsh-automatic-focus')).toBe(true)
+  expect(button.hasAttribute('data-ocean-automatic-focus')).toBe(true)
   fireEvent.keyDown(button, { key: 'ArrowDown' })
-  expect(button.hasAttribute('data-dsh-automatic-focus')).toBe(false)
+  expect(button.hasAttribute('data-ocean-automatic-focus')).toBe(false)
 })
 
 describe('Button', () => {
@@ -402,9 +402,9 @@ describe('Menu', () => {
     // autoFocus parks the keyboard on the first row; Tab settles it like Enter.
     const alpha = screen.getByRole('menuitem', { name: 'Alpha' })
     expect(document.activeElement).toBe(alpha)
-    expect(alpha.getAttribute('data-dsh-automatic-focus')).toBe('')
+    expect(alpha.getAttribute('data-ocean-automatic-focus')).toBe('')
     expect(fireEvent.keyDown(alpha, { key: 'Tab' })).toBe(false)
-    expect(alpha.getAttribute('data-dsh-automatic-focus')).toBeNull()
+    expect(alpha.getAttribute('data-ocean-automatic-focus')).toBeNull()
     expect(onSelect).toHaveBeenCalledExactlyOnceWith('a')
 
     // Shift+Tab leaves like Escape: closed, with the trigger taking the keyboard.
@@ -730,7 +730,7 @@ describe('Menu', () => {
       expect(menu.style.positionAnchor).toBe(name)
       expect(menu.style.left).toBe('')
       expect(menu.style.top).toBe('')
-      expect(menu.style.getPropertyValue('--dsh-anchored-max-height')).toBe('')
+      expect(menu.style.getPropertyValue('--ocean-anchored-max-height')).toBe('')
       expect(geometry).not.toHaveBeenCalled()
       expect(add).not.toHaveBeenCalled()
       view.unmount()

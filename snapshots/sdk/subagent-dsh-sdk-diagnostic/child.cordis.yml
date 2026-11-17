@@ -11,11 +11,11 @@
 - id: system-prompt
   name: '@ocean/ocean-system-prompt'
   config:
-    personaPrefix: 'Return the scripted DSH SDK failure.'
+    personaPrefix: 'Return the scripted OCEAN SDK failure.'
 
 - insert:
     - id: child-mock-llm
-      name: '../../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/child-mock-llm.ts'
+      name: '../../../packages/subagent/subagent-ocean-sdk/tests/fixtures/loader/child-mock-llm.ts'
 
 # Preserve the explicitly selected pre-desktop recorded compositions.
 # New SDK default-context scenarios do not apply this patch.

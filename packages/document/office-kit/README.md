@@ -50,7 +50,7 @@ Browsers request PDFs through the `officeKit.render` Remote method with a Sessio
 | `timeoutMs` | `60000` | Conversion deadline after a converter is acquired. |
 | `maxInputBytes` | `52428800` | Maximum source bytes. |
 | `maxOutputBytes` | `104857600` | Maximum complete PDF, converted, or recalculated file bytes. |
-| `outputDirectory` | `$DSH_HOME/office-kit/outputs` | Absolute directory for converted and recalculated files. |
+| `outputDirectory` | `$OCEAN_HOME/office-kit/outputs` | Absolute directory for converted and recalculated files. |
 | `outputRetentionMs` | `86400000` | Milliseconds an output is kept. |
 | `maxOutputStoreBytes` | `536870912` | Maximum bytes across retained outputs. |
 | `maxImageResolution` | `192` | Image resolution in DPI of PDF exports; overrides the kit default of `144`. `renderImages()` uses each request's `dpi` instead. |

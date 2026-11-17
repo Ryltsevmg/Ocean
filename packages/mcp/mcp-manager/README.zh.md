@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-mcp-manager` 管理一组实时 MCP 服务器，来源有两个：其 profile 条目 `config.servers` 中的条目（也可通过 Settings 编辑），以及已安装插件在自身生命周期内注册的条目。管理器为每个启用的条目挂载一个 `dsh-mcp-client` 实例，并随任一来源变化实时增加、重建、停用与移除实例。`ctx.mcpManager` 汇总每台服务器的连接状态，`restart` 恢复重连预算耗尽的服务器，`probe` 在不触碰活动实例的情况下测试一个条目，`watch` 向 Remote 客户端推送服务器列表。`${credential:REF}` 模板让密钥不进入条目；mcp-client 在各实例内部处理凭据轮换。
+`ocean-mcp-manager` 管理一组实时 MCP 服务器，来源有两个：其 profile 条目 `config.servers` 中的条目（也可通过 Settings 编辑），以及已安装插件在自身生命周期内注册的条目。管理器为每个启用的条目挂载一个 `ocean-mcp-client` 实例，并随任一来源变化实时增加、重建、停用与移除实例。`ctx.mcpManager` 汇总每台服务器的连接状态，`restart` 恢复重连预算耗尽的服务器，`probe` 在不触碰活动实例的情况下测试一个条目，`watch` 向 Remote 客户端推送服务器列表。`${credential:REF}` 模板让密钥不进入条目；mcp-client 在各实例内部处理凭据轮换。
 
 ## 目录
 
@@ -25,11 +25,11 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-每个宿主挂载一次管理器。Web 与 Desktop profile 将它作为 [`dsh-web-app`](../../bundle/web-app/README.zh.md) 的 `mcp-manager` 行挂载。其 volatile `config.servers` 存放配置条目；Settings 以所属条目 id 作为命名空间（下例为 `mcp`）。凭据模板经凭据提供方解析，因此只要条目可能使用模板，就为该行加上 `inject: [credentials]`。
+每个宿主挂载一次管理器。Web 与 Desktop profile 将它作为 [`ocean-web-app`](../../bundle/web-app/README.zh.md) 的 `mcp-manager` 行挂载。其 volatile `config.servers` 存放配置条目；Settings 以所属条目 id 作为命名空间（下例为 `mcp`）。凭据模板经凭据提供方解析，因此只要条目可能使用模板，就为该行加上 `inject: [credentials]`。
 
 ### 何时选择它
 
-当服务器集合需要在运行时变化——设置编辑或管理界面添加、改配、停用、删除配置的服务器，或已安装插件带来自己的服务器——就选管理器。当部署把服务器钉死在组合里，或某台服务器只属于一个 agent preset 而非整个宿主时，继续用普通的 `dsh-mcp-client` 行；管理器只治理全局面。
+当服务器集合需要在运行时变化——设置编辑或管理界面添加、改配、停用、删除配置的服务器，或已安装插件带来自己的服务器——就选管理器。当部署把服务器钉死在组合里，或某台服务器只属于一个 agent preset 而非整个宿主时，继续用普通的 `ocean-mcp-client` 行；管理器只治理全局面。
 
 ### 最小配置
 
@@ -111,7 +111,7 @@ export function apply(ctx: Context): void {
 
 ### Remote 操作
 
-浏览器客户端经 [`dsh-api-remotes`](../../api/remotes/README.zh.md) 以 `ctx.remote.mcpManager` 访问管理器。`watch(signal)` 在订阅时推送完整服务器列表，之后每次状态或条目变化再推送一次，订阅方尚未读取的变化会合并；中止信号结束该流，管理器销毁结束所有流。`restart(name)` 与 `probe(name, signal)` 执行上述操作。配置写入仍走 Settings Remote；管理器不提供写入方法，因此浏览器无法定义服务器命令。
+浏览器客户端经 [`ocean-api-remotes`](../../api/remotes/README.zh.md) 以 `ctx.remote.mcpManager` 访问管理器。`watch(signal)` 在订阅时推送完整服务器列表，之后每次状态或条目变化再推送一次，订阅方尚未读取的变化会合并；中止信号结束该流，管理器销毁结束所有流。`restart(name)` 与 `probe(name, signal)` 执行上述操作。配置写入仍走 Settings Remote；管理器不提供写入方法，因此浏览器无法定义服务器命令。
 
 -----
 
@@ -162,7 +162,7 @@ export function apply(ctx: Context): void {
 <a id="model-experience"></a>
 ## 模型体验
 
-通过其挂载的 `dsh-mcp-client` 实例间接影响；进入请求的是那些实例的服务器限定工具与 schema，管理器自身不注册任何提示词或工具内容。
+通过其挂载的 `ocean-mcp-client` 实例间接影响；进入请求的是那些实例的服务器限定工具与 schema，管理器自身不注册任何提示词或工具内容。
 
 #### KV Cache 影响
 

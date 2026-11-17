@@ -6,7 +6,7 @@
 [English](python-sdk.md) | [中文](python-sdk.zh.md) | [Русский](python-sdk.ru.md) | [日本語](python-sdk.ja.md) | [Español](python-sdk.es.md) | [Français](python-sdk.fr.md) | [Deutsch](python-sdk.de.md) | Português | [한국어](python-sdk.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Este tutorial compila o SDK Python a partir do código-fonte deste repositório, executa o perfil mínimo independente incluído e mostra como personalizar o mesmo perfil `dsh` no seu programa. O Ocean ainda não tem uma distribuição pública validada do SDK no npm ou no PyPI.
+Este tutorial compila o SDK Python a partir do código-fonte deste repositório, executa o perfil mínimo independente incluído e mostra como personalizar o mesmo perfil `ocean` no seu programa. O Ocean ainda não tem uma distribuição pública validada do SDK no npm ou no PyPI.
 
 <a id="prerequisites"></a>
 
@@ -58,7 +58,7 @@ python -m pip install (Get-ChildItem dist-python\*.whl)
 
 :::
 
-Escolha o valor de `--platform` e o executável correspondente de `dist-exe/` para sua máquina: `linux-x64`, `linux-arm64`, `macos-arm64`, `macos-x64` ou `win-x64`; compile cada destino em sua arquitetura nativa. A instalação inclui um wheel do ambiente nativo correspondente e o comando `dsh`. A execução normal do SDK não precisa do Node.js do sistema. O [fluxo de contribuição em Python](../../../python/development.md) define os nomes exatos dos arquivos, a validação e as verificações de publicação dessas etapas de compilação.
+Escolha o valor de `--platform` e o executável correspondente de `dist-exe/` para sua máquina: `linux-x64`, `linux-arm64`, `macos-arm64`, `macos-x64` ou `win-x64`; compile cada destino em sua arquitetura nativa. A instalação inclui um wheel do ambiente nativo correspondente e o comando `ocean`. A execução normal do SDK não precisa do Node.js do sistema. O [fluxo de contribuição em Python](../../../python/development.md) define os nomes exatos dos arquivos, a validação e as verificações de publicação dessas etapas de compilação.
 
 <a id="run-the-checked-in-example"></a>
 
@@ -99,7 +99,7 @@ Execute uma tarefa com caminhos explícitos para o espaço de trabalho e a pasta
 ```sh [Linux/macOS]
 python python/sdk/examples/minimal.py \
   --workspace /absolute/path/to/disposable-workspace \
-  --dsh-home /absolute/path/to/example-dsh-home \
+  --ocean-home /absolute/path/to/example-ocean-home \
   --session-id example-001 \
   "Inspect the repository and fix the failing tests."
 ```
@@ -107,14 +107,14 @@ python python/sdk/examples/minimal.py \
 ```powershell [Windows PowerShell]
 python python/sdk/examples/minimal.py `
   --workspace C:\work\disposable-workspace `
-  --dsh-home C:\work\example-dsh-home `
+  --ocean-home C:\work\example-ocean-home `
   --session-id example-001 `
   "Inspect the repository and fix the failing tests."
 ```
 
 :::
 
-O script exibe a resposta final do assistente ou o resultado do comando fornecido pelo perfil selecionado. A pasta do Ocean escolhida recebe o perfil gerado `sdk-minimal`, os plugins instalados e os registros de sessão JSONL não compactados em `sessions/`. O exemplo e o SDK nunca leem `~/.dsh` silenciosamente.
+O script exibe a resposta final do assistente ou o resultado do comando fornecido pelo perfil selecionado. A pasta do Ocean escolhida recebe o perfil gerado `sdk-minimal`, os plugins instalados e os registros de sessão JSONL não compactados em `sessions/`. O exemplo e o SDK nunca leem `~/.ocean` silenciosamente.
 
 <a id="use-the-sdk-in-your-program"></a>
 
@@ -126,13 +126,13 @@ from pathlib import Path
 from deepseek_harness import DeepSeekHarness
 
 workspace = Path("/absolute/path/to/disposable-workspace").resolve()
-dsh_home = Path("/absolute/path/to/example-dsh-home").resolve()
+ocean_home = Path("/absolute/path/to/example-ocean-home").resolve()
 with DeepSeekHarness(
     provider="deepseek-official",
     model="deepseek-v4-flash",
     max_tokens=49_152,
     cwd=str(workspace),
-    dsh_home=str(dsh_home),
+    ocean_home=str(ocean_home),
     profile="sdk-minimal",
 ) as harness:
     result = harness.run(
@@ -143,13 +143,13 @@ with DeepSeekHarness(
 print(result.final_response)
 ```
 
-O SDK inicia o processo incluído `dsh --profile sdk-minimal` apenas quando necessário e o reutiliza até sair do gerenciador de contexto. O perfil, seu patch persistente, o patch da pasta do Ocean e qualquer tupla ordenada `patches` formam a configuração do aplicativo. Não há um executável separado para o ambiente de execução do Python nem uma opção de configuração completa.
+O SDK inicia o processo incluído `ocean --profile sdk-minimal` apenas quando necessário e o reutiliza até sair do gerenciador de contexto. O perfil, seu patch persistente, o patch da pasta do Ocean e qualquer tupla ordenada `patches` formam a configuração do aplicativo. Não há um executável separado para o ambiente de execução do Python nem uma opção de configuração completa.
 
 <a id="install-or-define-plugins"></a>
 
 ## Instalar ou definir plugins
 
-Use `dsh plugin` para dependências e camadas de pacotes que devem persistir nesta pasta do Ocean:
+Use `ocean plugin` para dependências e camadas de pacotes que devem persistir nesta pasta do Ocean:
 
 <div>
 <a id="linux-and-macos-3"></a>
@@ -160,20 +160,20 @@ Use `dsh plugin` para dependências e camadas de pacotes que devem persistir nes
 ::: code-group
 
 ```sh [Linux/macOS]
-export DSH_HOME=/absolute/path/to/example-dsh-home
-dsh --profile sdk-minimal --dump-default-config >/dev/null
-dsh plugin --profile sdk-minimal add file:/absolute/path/to/my-plugin-bundle
+export OCEAN_HOME=/absolute/path/to/example-ocean-home
+ocean --profile sdk-minimal --dump-default-config >/dev/null
+ocean plugin --profile sdk-minimal add file:/absolute/path/to/my-plugin-bundle
 ```
 
 ```powershell [Windows PowerShell]
-$env:DSH_HOME = "C:\work\example-dsh-home"
-dsh --profile sdk-minimal --dump-default-config | Out-Null
-dsh plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
+$env:OCEAN_HOME = "C:\work\example-ocean-home"
+ocean --profile sdk-minimal --dump-default-config | Out-Null
+ocean plugin --profile sdk-minimal add file:C:/work/my-plugin-bundle
 ```
 
 :::
 
-O primeiro comando inicializa o perfil independente incluído. O segundo encaminha o gerenciamento de pacotes ao `pnpm` e registra cada pacote instalado que exporta uma camada `dsh.bundle`. Instale `pnpm` apenas para esse comando de gerenciamento; iniciar o SDK instalado não exige isso. Edite `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` para mudanças persistentes nas entradas ou passe arquivos de patches pelo Python para mudanças a cada inicialização.
+O primeiro comando inicializa o perfil independente incluído. O segundo encaminha o gerenciamento de pacotes ao `pnpm` e registra cada pacote instalado que exporta uma camada `ocean.bundle`. Instale `pnpm` apenas para esse comando de gerenciamento; iniciar o SDK instalado não exige isso. Edite `$OCEAN_HOME/profiles/sdk-minimal/cordis.patch.yml` para mudanças persistentes nas entradas ou passe arquivos de patches pelo Python para mudanças a cada inicialização.
 
 Outro `profile` é válido quando inclui `@ocean/ocean-sdk-app` ou outra entrada de servidor JSON-RPC. Entradas de servidor ausentes, plugins não resolvidos e patches inválidos causam falha na inicialização em vez de recorrer a outra composição.
 
@@ -188,7 +188,7 @@ O ambiente incluído contém `str_replace_editor`, mas `sdk-minimal` o omite da 
       name: '@ocean/ocean-tool-str-replace-editor'
 ```
 
-Passe `patches=("/absolute/path/to/editor.patch.yml",)` ao construir `DeepSeekHarness(profile="sdk-minimal", ...)`, ou coloque o patch em `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` para configuração persistente. Na próxima inicialização do ambiente, as solicitações ao modelo incluem `str_replace_editor` junto das ferramentas padrão. O provedor de sistema de arquivos local usa o diretório de trabalho do ambiente para caminhos relativos; assim como o shell mínimo, ele não restringe o acesso a esse diretório. O mesmo patch funciona com o perfil padrão `sdk`.
+Passe `patches=("/absolute/path/to/editor.patch.yml",)` ao construir `DeepSeekHarness(profile="sdk-minimal", ...)`, ou coloque o patch em `$OCEAN_HOME/profiles/sdk-minimal/cordis.patch.yml` para configuração persistente. Na próxima inicialização do ambiente, as solicitações ao modelo incluem `str_replace_editor` junto das ferramentas padrão. O provedor de sistema de arquivos local usa o diretório de trabalho do ambiente para caminhos relativos; assim como o shell mínimo, ele não restringe o acesso a esse diretório. O mesmo patch funciona com o perfil padrão `sdk`.
 
 <a id="enable-team-mode"></a>
 ### Ativar o modo Team
@@ -211,20 +211,20 @@ Crie uma nova sessão raiz e peça para criar e listar uma tarefa compartilhada.
 
 | Propriedade | Valor |
 |---|---|
-| Prompt do sistema | `DSH_SYSTEM_PROMPT`, com `You are a helpful software engineer assistant.` como alternativa |
-| Modelo em `minimal.py` | `--model`, depois `DSH_MODEL`, depois `deepseek-v4-flash` |
+| Prompt do sistema | `OCEAN_SYSTEM_PROMPT`, com `You are a helpful software engineer assistant.` como alternativa |
+| Modelo em `minimal.py` | `--model`, depois `OCEAN_MODEL`, depois `deepseek-v4-flash` |
 | Ferramentas visíveis ao modelo | `bash` persistente no Linux/macOS ou `pwsh` no Windows, `read_image` e `working_directory` |
 | Tempo limite do shell | 300 segundos |
 | Contexto de execução opcional | Ausente |
 | Compactação de contexto | Automática; resume o histórico mais antigo por uma solicitação adicional ao modelo |
-| Persistência de sessões | JSONL não compactado em `<dsh_home>/sessions` |
+| Persistência de sessões | JSONL não compactado em `<ocean_home>/sessions` |
 
-O único pacote do perfil insere a árvore completa sobre uma raiz vazia e não inclui `dsh-base`; portanto, ferramentas adicionadas depois ao perfil base não podem aparecer implicitamente. Ele contém o protocolo do SDK, um adaptador DeepSeek configurado pelo ambiente, execução local e persistência, mas não ferramentas de arquivos de texto, configurações, credenciais gerenciadas, telemetria OTel, ferramentas web, subagentes ou descoberta de instruções locais. O [componente de registros de sessão DeepSeek](../../../packages/session/session-log-deepseek/README.md) envia por padrão eventos do registro ainda não aceitos com as solicitações DeepSeek, até `maxBytes` (8 MiB) por solicitação; defina `session-log-deepseek.enabled: false` em um patch do perfil para desativá-lo. Ele fixa `danger-full-access`, então o shell persistente selecionado para a plataforma pode modificar qualquer caminho visível ao ambiente; use uma cópia descartável do repositório ou um contêiner.
+O único pacote do perfil insere a árvore completa sobre uma raiz vazia e não inclui `ocean-base`; portanto, ferramentas adicionadas depois ao perfil base não podem aparecer implicitamente. Ele contém o protocolo do SDK, um adaptador DeepSeek configurado pelo ambiente, execução local e persistência, mas não ferramentas de arquivos de texto, configurações, credenciais gerenciadas, telemetria OTel, ferramentas web, subagentes ou descoberta de instruções locais. O [componente de registros de sessão DeepSeek](../../../packages/session/session-log-deepseek/README.md) envia por padrão eventos do registro ainda não aceitos com as solicitações DeepSeek, até `maxBytes` (8 MiB) por solicitação; defina `session-log-deepseek.enabled: false` em um patch do perfil para desativá-lo. Ele fixa `danger-full-access`, então o shell persistente selecionado para a plataforma pode modificar qualquer caminho visível ao ambiente; use uma cópia descartável do repositório ou um contêiner.
 
 A leitura de imagens exige uma rota compatível com imagens. A compactação automática preserva o registro completo da sessão. Consulte a [referência do pacote](../../../packages/bundle/sdk-minimal/README.md) para os efeitos no modelo e no armazenamento. Nesta composição `sdk-minimal`, os comandos com barra que o perfil não aceita continuam como texto comum do prompt.
 
-O wheel instalado ainda inclui o perfil completo `web` e os recursos do frontend. Execute `dsh web` com um `DSH_HOME` explícito quando uma implantação do SDK Python também precisar do aplicativo de navegador; `web` é um aplicativo CLI separado e não pode atender a um cliente do SDK Python.
+O wheel instalado ainda inclui o perfil completo `web` e os recursos do frontend. Execute `ocean web` com um `OCEAN_HOME` explícito quando uma implantação do SDK Python também precisar do aplicativo de navegador; `web` é um aplicativo CLI separado e não pode atender a um cliente do SDK Python.
 
 Use uma pasta do Ocean nova quando perfis, plugins, credenciais, configurações e sessões precisarem ficar isolados. Use um novo identificador de sessão para trabalho independente; reutilize um harness, sua pasta e o identificador apenas para continuar a mesma conversa persistente e os recursos dessa sessão.
 
-A [referência do pacote](../../../packages/bundle/sdk-minimal/README.md) define a árvore exata, e a [referência do exemplo](../../../python/sdk/examples/README.md) define o programa executável. A [referência do SDK Python](../../../python/sdk/README.md) aborda ciclo de vida, resultados, notificações e comportamento de baixo nível; a [referência da CLI dsh](../../../apps/cli/reference/README.md) aborda as camadas dos perfis.
+A [referência do pacote](../../../packages/bundle/sdk-minimal/README.md) define a árvore exata, e a [referência do exemplo](../../../python/sdk/examples/README.md) define o programa executável. A [referência do SDK Python](../../../python/sdk/README.md) aborda ciclo de vida, resultados, notificações e comportamento de baixo nível; a [referência da CLI ocean](../../../apps/cli/reference/README.md) aborda as camadas dos perfis.

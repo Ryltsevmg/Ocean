@@ -517,7 +517,7 @@ function SessionTree({
     // (WorkspaceBrowser.module.css).
       <div
         key={group.key}
-        style={{ '--dsh-workspace-indent': `${depth * 12}px` } as CSSProperties}
+        style={{ '--ocean-workspace-indent': `${depth * 12}px` } as CSSProperties}
         className={clsx(
           css.groupSection,
           workspaceMarker === 'before' && css.workspaceDropBefore,

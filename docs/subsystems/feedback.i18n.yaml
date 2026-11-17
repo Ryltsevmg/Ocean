@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/feedback.md
 /message-feedback:
-  en: d2c250b596cea5fb
-  zh: 2a0e5bd286b18749
+  en: 11c432854d334b6e
+  zh: 051a9cf190ddbb3a
 /message-feedback/public-types:
   en: 514e3a869e355a86
   zh: 4b6f416f8ff3847f
@@ -18,8 +18,8 @@
   en: 5f27c79e933bec0a
   zh: e9211a24f97e730f
 /message-feedback/persistence-and-remote-contract:
-  en: d30ec3f187959494
-  zh: 3a32859637c492ce
+  en: a4b823e2e4d734b4
+  zh: 20e70589b90974df
 /message-feedback/web-surface:
   en: 66d03b275c89cc45
   zh: 6ce413c5654a584f

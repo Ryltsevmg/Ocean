@@ -141,10 +141,10 @@ function fixture(name = '@ocean/ocean-core'): {
   installed: string
   profile: Profile
 } {
-  // root plays $DSH_HOME; the running dsh lives in a global install outside the profiles tree.
+  // root plays $OCEAN_HOME; the running ocean lives in a global install outside the profiles tree.
   // Node reports resolved module paths through the native realpath: /private/var for a macOS tmpdir under /var,
   // and the long directory name for a Windows tmpdir spelled with an 8.3 short name.
-  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-profile-resolution-')))
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-profile-resolution-')))
   roots.push(root)
   const installDir = join(root, 'global', 'node_modules', '@ocean', 'ocean')
   const installed = join(installDir, 'node_modules', name)
@@ -152,7 +152,7 @@ function fixture(name = '@ocean/ocean-core'): {
   pkg(installed, name, 1)
   const profileDir = join(root, 'profiles', 'web')
   file(join(profileDir, 'package.json'), JSON.stringify({
-    name: 'dsh-profile-web', private: true, dependencies: { 'missing-local': '*' },
+    name: 'ocean-profile-web', private: true, dependencies: { 'missing-local': '*' },
   }))
   return {
     root,
@@ -534,7 +534,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('keeps a profile-local package ahead of the resolution', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       dependencies: { '@ocean/ocean-core': '*', 'linked-local': '*' },
     }))
@@ -573,7 +573,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     const installedRealName = join(dirname(f.installAnchor), 'node_modules', 'real-name')
     pkg(installedRealName, 'real-name', 7)
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       dependencies: { alias: 'npm:real-name' },
     }))
@@ -614,7 +614,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('keeps package imports aliases on the resolution route', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       imports: { '#@ocean/ocean-core': '@ocean/ocean-core' },
     }))
@@ -639,7 +639,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('imports package aliases through the resolution and reports the original importer', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       imports: { '#library': '@ocean/ocean-core', '#missing': '@ocean/ocean-core/missing' },
     }))
@@ -656,7 +656,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('leaves relative package imports targets and their diagnostics to Node', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       imports: { '#missing-relative': './missing.cjs' },
     }))
@@ -679,7 +679,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('keeps local and native-after-resolution package imports targets in native order', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       imports: { '#local': 'local-import', '#ancestor': 'ancestor-import' },
     }))
@@ -714,7 +714,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('does not inherit package imports across node_modules', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true, imports: { '#@ocean/ocean-core': '@ocean/ocean-core' },
+      name: 'ocean-profile-web', private: true, imports: { '#@ocean/ocean-core': '@ocean/ocean-core' },
     }))
     const nested = join(f.profile.dir, 'node_modules', 'manifestless', 'entry.cjs')
     file(nested, '')
@@ -729,7 +729,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('falls through a missing local CommonJS subpath to the resolution', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       dependencies: { '@ocean/ocean-core': '*' },
     }))
@@ -758,7 +758,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('treats null exports as legacy CommonJS package resolution', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web',
+      name: 'ocean-profile-web',
       private: true,
       dependencies: { '@ocean/ocean-core': '*' },
     }))
@@ -1005,7 +1005,7 @@ describe('runtime resolution', { concurrent: false }, () => {
       dir: profileDir,
       patchPath: join(profileDir, 'cordis.patch.yml'),
     }
-    file(join(profileDir, 'package.json'), JSON.stringify({ name: 'dsh-profile-web', private: true }))
+    file(join(profileDir, 'package.json'), JSON.stringify({ name: 'ocean-profile-web', private: true }))
     file(join(profileDir, 'node_modules', '@ocean/ocean-core', 'package.json'), JSON.stringify({
       name: '@ocean/ocean-core', version: '2.0.0',
     }))
@@ -1076,11 +1076,11 @@ describe('runtime resolution', { concurrent: false }, () => {
     expect(await importFrom('left-pad', parent)).toMatchObject({ marker: 9 })
   })
 
-  it.each(['profile', 'plugin'] as const)('uses the installation DSH package from a %s while a stale shared link remains', async (importer) => {
+  it.each(['profile', 'plugin'] as const)('uses the installation OCEAN package from a %s while a stale shared link remains', async (importer) => {
     const name = '@ocean/ocean-core'
     const f = fixture(name)
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true, dependencies: { [name]: '*' },
+      name: 'ocean-profile-web', private: true, dependencies: { [name]: '*' },
       imports: { '#library': name },
     }))
     const parentDir = importer === 'profile' ? f.profile.dir : join(f.profile.dir, 'node_modules', 'my-plugin')
@@ -1090,7 +1090,7 @@ describe('runtime resolution', { concurrent: false }, () => {
         name: 'my-plugin', type: 'module', dependencies: { [name]: '*' }, imports: { '#library': name },
       }))
     }
-    const target = join(f.root, 'old-dsh', 'node_modules', name)
+    const target = join(f.root, 'old-ocean', 'node_modules', name)
     pkg(target, name, 9)
     const shared = join(f.root, 'profiles', 'node_modules', name)
     mkdirSync(dirname(shared), { recursive: true })
@@ -1115,9 +1115,9 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('treats a profile symlink into .dsh-module-fallback as an ordinary local package', async () => {
     const f = fixture()
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true, dependencies: { '@ocean/ocean-core': '*' },
+      name: 'ocean-profile-web', private: true, dependencies: { '@ocean/ocean-core': '*' },
     }))
-    const target = join(f.root, 'old-dsh', 'node_modules', '@ocean', 'ocean-core')
+    const target = join(f.root, 'old-ocean', 'node_modules', '@ocean', 'ocean-core')
     pkg(target, '@ocean/ocean-core', 9)
     const owned = join(f.profile.dir, '.dsh-module-fallback', 'node_modules', '@ocean/ocean-core')
     const projected = join(f.profile.dir, 'node_modules', '@ocean/ocean-core')
@@ -1151,7 +1151,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     const middleDir = join(selected, 'node_modules', middle)
     const leafDir = join(middleDir, 'node_modules', leaf)
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true, dependencies: { [plugin]: '*' },
+      name: 'ocean-profile-web', private: true, dependencies: { [plugin]: '*' },
     }))
     pkg(pluginDir, plugin, 1, { [dependency]: '*' })
     pkg(selected, dependency, 2, { [middle]: '*' })
@@ -1202,7 +1202,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     const plugin = 'shared-plugin'
     for (const [bundle, marker] of [['bundle-a', 1], ['bundle-b', 2]] as const) {
       file(join(modules, bundle, 'package.json'), JSON.stringify({
-        name: bundle, version: '1.0.0', dependencies: { [plugin]: '*' }, dsh: { bundle: { patch: './cordis.patch.yml' } },
+        name: bundle, version: '1.0.0', dependencies: { [plugin]: '*' }, ocean: { bundle: { patch: './cordis.patch.yml' } },
       }))
       file(join(modules, bundle, 'cordis.patch.yml'), '[]\n')
       pkg(join(modules, bundle, 'node_modules', plugin), plugin, marker)
@@ -1213,12 +1213,12 @@ describe('runtime resolution', { concurrent: false }, () => {
     symlinkSync(join(modules, 'bundle-a', 'node_modules', plugin), owned, process.platform === 'win32' ? 'junction' : 'dir')
     symlinkSync(owned, join(modules, plugin), process.platform === 'win32' ? 'junction' : 'dir')
     file(join(profileDir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true,
+      name: 'ocean-profile-web', private: true,
       dependencies: { 'bundle-a': '*', 'bundle-b': '*' },
-      dsh: { profile: { bundles: ['bundle-b'] } },
+      ocean: { profile: { bundles: ['bundle-b'] } },
     }))
 
-    const profile = loadProfile('dsh', 'web', f.installAnchor, f.root)
+    const profile = loadProfile('ocean', 'web', f.installAnchor, f.root)
     expect(profile.layers.map(layer => layer.packageName)).toEqual(['bundle-b'])
     expect(existsSync(join(profileDir, '.dsh-module-fallback'))).toBe(false)
     expect(existsSync(join(modules, plugin))).toBe(false)
@@ -1241,7 +1241,7 @@ describe('runtime resolution', { concurrent: false }, () => {
       packageName: 'my-bundle', packageDir: bundle,
       patchPaths: [join(bundle, 'cordis.patch.yml')], patches: [],
     })
-    const target = join(f.root, 'old-dsh', 'node_modules', 'bridge')
+    const target = join(f.root, 'old-ocean', 'node_modules', 'bridge')
     const owned = join(f.profile.dir, '.dsh-module-fallback', 'node_modules', 'bridge')
     const projected = join(f.profile.dir, 'node_modules', 'bridge')
     pkg(target, 'bridge', 9)
@@ -1271,7 +1271,7 @@ describe('runtime resolution', { concurrent: false }, () => {
       patchPaths: [join(bundleDir, 'cordis.patch.yml')], patches: [],
     })
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true, dependencies: { 'my-plugin': '*', 'my-bundle': '*' },
+      name: 'ocean-profile-web', private: true, dependencies: { 'my-plugin': '*', 'my-bundle': '*' },
     }))
     const logical: Record<LookupLayer, string> = {
       private: join(pluginDir, 'node_modules', name),
@@ -1327,7 +1327,7 @@ describe('runtime resolution', { concurrent: false }, () => {
   })
 
   it('uses shared packages in the canonicalized profiles tree before its ancestors', async () => {
-    const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-profile-resolution-symlink-')))
+    const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ocean-profile-resolution-symlink-')))
     roots.push(root)
     const carrier = join(root, 'carrier')
     const profilesDir = join(root, 'home', 'profiles')
@@ -1596,7 +1596,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     const first = await resolutionOf(f)
     const registration = installRuntimeInterception(first)
     registrations.push(registration)
-    const alias = join(f.root, 'dsh-core-alias')
+    const alias = join(f.root, 'ocean-core-alias')
     symlinkSync(f.installed, alias, process.platform === 'win32' ? 'junction' : 'dir')
     registration.replace({
       ...first,
@@ -2110,7 +2110,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     writeManifest(peerDependencies)
     file(join(linkedRoot, 'index.js'), 'export const marker = 30\n')
     file(join(linkedRoot, 'index.cjs'), 'module.exports = { marker: 30 }\n')
-    // The devDependency copy a type checker needs, the plugin's own third-party version, and a dsh package
+    // The devDependency copy a type checker needs, the plugin's own third-party version, and an ocean package
     // declared as a plain dependency.
     pkg(join(linkedRoot, 'node_modules', '@ocean', 'ocean-core'), '@ocean/ocean-core', 21)
     pkg(join(linkedRoot, 'node_modules', 'zod'), 'zod', 22)
@@ -2126,7 +2126,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     mkdirSync(modules, { recursive: true })
     symlinkSync(linkedRoot, join(modules, 'my-plugin'), linkType)
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-web', private: true, dependencies: { 'my-plugin': '*' },
+      name: 'ocean-profile-web', private: true, dependencies: { 'my-plugin': '*' },
     }))
     return { f, linkedRoot, helper, writeManifest }
   }
@@ -2137,7 +2137,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     function unsavedFixture(): ReturnType<typeof linkedPluginFixture> {
       const result = linkedPluginFixture()
       file(join(result.f.profile.dir, 'package.json'), JSON.stringify({
-        name: 'dsh-profile-web', private: true, dependencies: {},
+        name: 'ocean-profile-web', private: true, dependencies: {},
       }))
       return result
     }
@@ -2572,7 +2572,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     // A cache-busting query on the importer, as hot module replacement re-imports it, changes nothing.
     expect(resolveFrom('@ocean/ocean-core', `${parent}?t=1`)).toBe(pathToFileURL(join(f.installed, 'index.js')).href)
     expect(resolveFrom('zod', `${parent}?t=1`)).toBe(pathToFileURL(join(linkedRoot, 'node_modules', 'zod', 'index.js')).href)
-    // Plain dependencies keep the plugin's own copies, including a dsh package declared as one.
+    // Plain dependencies keep the plugin's own copies, including an ocean package declared as one.
     await expectResolution('zod', join(linkedRoot, 'node_modules', 'zod'), 22)
     await expectResolution('@ocean/ocean-util', join(linkedRoot, 'node_modules', '@ocean', 'ocean-util'), 23)
     // An undeclared name without an entry follows the real ancestor chain.

@@ -339,7 +339,7 @@ describe('settings global panels', () => {
 })
 
 describe('sidebar launcher pins', () => {
-  const PINS_KEY = 'dsh.slot.manual-order.sidebar.panellist.v1'
+  const PINS_KEY = 'ocean.slot.manual-order.sidebar.panellist.v1'
 
   it('ignores stored unpinned panels and shows all registered launchers', async () => {
     localStorage.setItem(PINS_KEY, JSON.stringify({ unpinned: [ALPHA, BETA, PLUGINS, 'removed-plugin'] }))

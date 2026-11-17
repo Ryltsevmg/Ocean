@@ -5,61 +5,68 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AGENTS_HOME_DIR_NAME,
   DEFAULT_AGENTS_HOME_DISPLAY,
-  DEFAULT_DSH_HOME_DISPLAY,
-  DSH_HOME_DIR_NAME,
+  DEFAULT_OCEAN_HOME_DISPLAY,
+  OCEAN_HOME_DIR_NAME,
   agentsHomeDisplay,
   canonicalizeWatchPath,
   defaultAgentsHome,
-  defaultDshHome,
-  dshCachePath,
-  dshHomeDisplay,
-  dshHomePath,
+  defaultOceanHome,
+  oceanCachePath,
+  oceanHomeDisplay,
+  oceanHomePath,
   expandHomePath,
   resolveAgentsHome,
-  resolveDshHome,
+  resolveOceanHome,
 } from '@ocean/ocean-home-paths'
 
 afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('dsh path helpers', () => {
-  it('owns the shared default DSH home directory name', () => {
-    expect(DSH_HOME_DIR_NAME).toBe('.ocean')
-    expect(DEFAULT_DSH_HOME_DISPLAY).toBe('~/.ocean')
-    expect(defaultDshHome()).toBe(join(homedir(), '.ocean'))
+describe('ocean path helpers', () => {
+  it('keeps legacy home overrides while explicit Ocean overrides take precedence', () => {
+    expect(resolveOceanHome(undefined, { DSH_HOME: '/legacy' })).toBe(resolve('/legacy'))
+    expect(resolveOceanHome(undefined, { DSH_HOME: '/legacy', OCEAN_HOME: '/current' })).toBe(resolve('/current'))
+    expect(resolveOceanHome(undefined, { DSH_HOME: '/legacy', OCEAN_HOME: '' })).toBe(defaultOceanHome())
+    expect(resolveAgentsHome(undefined, { DSH_AGENTS_HOME: '/legacy-agents' })).toBe(resolve('/legacy-agents'))
+    expect(resolveAgentsHome(undefined, { DSH_AGENTS_HOME: '/legacy', OCEAN_AGENTS_HOME: '/current' })).toBe(resolve('/current'))
+  })
+  it('owns the shared default OCEAN home directory name', () => {
+    expect(OCEAN_HOME_DIR_NAME).toBe('.ocean')
+    expect(DEFAULT_OCEAN_HOME_DISPLAY).toBe('~/.ocean')
+    expect(defaultOceanHome()).toBe(join(homedir(), '.ocean'))
   })
 
   it('expands tilde paths without changing non-tilde paths', () => {
     expect(expandHomePath('~')).toBe(homedir())
     expect(expandHomePath('~/.ocean')).toBe(join(homedir(), '.ocean'))
     expect(expandHomePath('~\\.ocean')).toBe(join(homedir(), '.ocean'))
-    expect(expandHomePath('/tmp/.dsh')).toBe('/tmp/.dsh')
-    expect(expandHomePath('~other/.dsh')).toBe('~other/.dsh')
+    expect(expandHomePath('/tmp/.ocean')).toBe('/tmp/.ocean')
+    expect(expandHomePath('~other/.ocean')).toBe('~other/.ocean')
   })
 
-  it('resolves explicit path before DSH_HOME and the default', () => {
-    const envHome = join(homedir(), 'env-dsh')
+  it('resolves explicit path before OCEAN_HOME and the default', () => {
+    const envHome = join(homedir(), 'env-ocean')
 
-    expect(resolveDshHome('/tmp/explicit-dsh', { DSH_HOME: '~/env-dsh' })).toBe(resolve('/tmp/explicit-dsh'))
-    expect(resolveDshHome(undefined, { DSH_HOME: '~/env-dsh' })).toBe(envHome)
-    expect(resolveDshHome(undefined, {})).toBe(defaultDshHome())
+    expect(resolveOceanHome('/tmp/explicit-ocean', { OCEAN_HOME: '~/env-ocean' })).toBe(resolve('/tmp/explicit-ocean'))
+    expect(resolveOceanHome(undefined, { OCEAN_HOME: '~/env-ocean' })).toBe(envHome)
+    expect(resolveOceanHome(undefined, {})).toBe(defaultOceanHome())
   })
 
-  it('treats an empty or whitespace-only DSH_HOME as unset', () => {
-    expect(resolveDshHome(undefined, { DSH_HOME: '' })).toBe(defaultDshHome())
-    expect(resolveDshHome(undefined, { DSH_HOME: '   ' })).toBe(defaultDshHome())
+  it('treats an empty or whitespace-only OCEAN_HOME as unset', () => {
+    expect(resolveOceanHome(undefined, { OCEAN_HOME: '' })).toBe(defaultOceanHome())
+    expect(resolveOceanHome(undefined, { OCEAN_HOME: '   ' })).toBe(defaultOceanHome())
   })
 
-  it('joins child segments onto the resolved DSH_HOME', () => {
-    vi.stubEnv('DSH_HOME', '~/env-dsh')
-    expect(dshHomePath()).toBe(join(homedir(), 'env-dsh'))
-    expect(dshHomePath('storages', 'cache')).toBe(join(homedir(), 'env-dsh', 'storages', 'cache'))
+  it('joins child segments onto the resolved OCEAN_HOME', () => {
+    vi.stubEnv('OCEAN_HOME', '~/env-ocean')
+    expect(oceanHomePath()).toBe(join(homedir(), 'env-ocean'))
+    expect(oceanHomePath('storages', 'cache')).toBe(join(homedir(), 'env-ocean', 'storages', 'cache'))
   })
 
   it('labels a resolved home by whether it is the default root', () => {
-    expect(dshHomeDisplay(resolve(defaultDshHome()))).toBe('~/.ocean')
-    expect(dshHomeDisplay('/some/other/root')).toBe('$DSH_HOME')
+    expect(oceanHomeDisplay(resolve(defaultOceanHome()))).toBe('~/.ocean')
+    expect(oceanHomeDisplay('/some/other/root')).toBe('$OCEAN_HOME')
   })
 
   it('owns the shared default agents home directory name', () => {
@@ -68,54 +75,54 @@ describe('dsh path helpers', () => {
     expect(defaultAgentsHome()).toBe(join(homedir(), '.agents'))
   })
 
-  it('resolves an explicit agents home before DSH_AGENTS_HOME and the default', () => {
+  it('resolves an explicit agents home before OCEAN_AGENTS_HOME and the default', () => {
     const envHome = join(homedir(), 'env-agents')
 
-    expect(resolveAgentsHome('/tmp/explicit-agents', { DSH_AGENTS_HOME: '~/env-agents' })).toBe(resolve('/tmp/explicit-agents'))
-    expect(resolveAgentsHome(undefined, { DSH_AGENTS_HOME: '~/env-agents' })).toBe(envHome)
+    expect(resolveAgentsHome('/tmp/explicit-agents', { OCEAN_AGENTS_HOME: '~/env-agents' })).toBe(resolve('/tmp/explicit-agents'))
+    expect(resolveAgentsHome(undefined, { OCEAN_AGENTS_HOME: '~/env-agents' })).toBe(envHome)
     expect(resolveAgentsHome(undefined, {})).toBe(defaultAgentsHome())
   })
 
-  it('treats an empty or whitespace-only DSH_AGENTS_HOME as unset', () => {
-    expect(resolveAgentsHome(undefined, { DSH_AGENTS_HOME: '' })).toBe(defaultAgentsHome())
-    expect(resolveAgentsHome(undefined, { DSH_AGENTS_HOME: '   ' })).toBe(defaultAgentsHome())
+  it('treats an empty or whitespace-only OCEAN_AGENTS_HOME as unset', () => {
+    expect(resolveAgentsHome(undefined, { OCEAN_AGENTS_HOME: '' })).toBe(defaultAgentsHome())
+    expect(resolveAgentsHome(undefined, { OCEAN_AGENTS_HOME: '   ' })).toBe(defaultAgentsHome())
   })
 
   it('labels a resolved agents home by whether it is the default root', () => {
     expect(agentsHomeDisplay(resolve(defaultAgentsHome()))).toBe('~/.agents')
-    expect(agentsHomeDisplay('/some/other/root')).toBe('$DSH_AGENTS_HOME')
+    expect(agentsHomeDisplay('/some/other/root')).toBe('$OCEAN_AGENTS_HOME')
   })
 
   it.each([
     [undefined, join(homedir(), '.ocean')],
     ['', join(homedir(), '.ocean')],
     ['   ', join(homedir(), '.ocean')],
-    ['~/env-dsh', join(homedir(), 'env-dsh')],
-    ['./relative-dsh', resolve('./relative-dsh')],
-  ] as const)('resolves cache paths with DSH_HOME=%j', (home, expectedHome) => {
-    vi.stubEnv('DSH_HOME', home)
+    ['~/env-ocean', join(homedir(), 'env-ocean')],
+    ['./relative-ocean', resolve('./relative-ocean')],
+  ] as const)('resolves cache paths with OCEAN_HOME=%j', (home, expectedHome) => {
+    vi.stubEnv('OCEAN_HOME', home)
     try {
-      expect(dshCachePath()).toBe(join(expectedHome, 'cache'))
-      expect(dshCachePath('models', 'index.json')).toBe(join(expectedHome, 'cache', 'models', 'index.json'))
+      expect(oceanCachePath()).toBe(join(expectedHome, 'cache'))
+      expect(oceanCachePath('models', 'index.json')).toBe(join(expectedHome, 'cache', 'models', 'index.json'))
     } finally {
       vi.unstubAllEnvs()
     }
   })
 
   it('resolves configured cache homes before the environment', () => {
-    vi.stubEnv('DSH_HOME', '~/env-dsh')
+    vi.stubEnv('OCEAN_HOME', '~/env-ocean')
     try {
-      expect(dshCachePath({ dshHome: '~/explicit-dsh' })).toBe(join(homedir(), 'explicit-dsh', 'cache'))
-      expect(dshCachePath({ dshHome: './explicit-dsh' }, 'attachments', 'request-images'))
-        .toBe(resolve('./explicit-dsh/cache/attachments/request-images'))
-      expect(dshCachePath({}, 'attachments')).toBe(join(homedir(), 'env-dsh', 'cache', 'attachments'))
+      expect(oceanCachePath({ oceanHome: '~/explicit-ocean' })).toBe(join(homedir(), 'explicit-ocean', 'cache'))
+      expect(oceanCachePath({ oceanHome: './explicit-ocean' }, 'attachments', 'request-images'))
+        .toBe(resolve('./explicit-ocean/cache/attachments/request-images'))
+      expect(oceanCachePath({}, 'attachments')).toBe(join(homedir(), 'env-ocean', 'cache', 'attachments'))
     } finally {
       vi.unstubAllEnvs()
     }
   })
 
   it('canonicalizes a watcher ancestor while preserving a missing suffix', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-watch-path-'))
+    const root = await mkdtemp(join(tmpdir(), 'ocean-watch-path-'))
     const target = join(root, 'target')
     const alias = join(root, 'alias')
     try {

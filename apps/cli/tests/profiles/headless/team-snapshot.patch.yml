@@ -9,6 +9,8 @@
   disabled: true
 
 - id: agent-loop
+  # Configured fixture agents must start after the inspected persistence backend.
+  inject: [sessionPersistence]
   config:
     agents:
       - id: main
@@ -28,5 +30,5 @@
 - id: sandbox-policy
   inject: []
   config:
-    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    mode: !!js process.env.OCEAN_PERMISSION_MODE ?? 'workspace-write'
     workspaceRoot: !!js process.cwd()

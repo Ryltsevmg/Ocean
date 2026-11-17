@@ -69,7 +69,7 @@ class FakePwsh extends ShellExecutor {
       onExpiry: request.onExpiry ?? 'kill',
       stdoutMaxBytes: request.stdoutMaxBytes ?? 64_000,
       ...request.signal ? { signal: request.signal } : {},
-      ...request.dshEnv !== undefined ? { dshEnv: request.dshEnv } : {},
+      ...request.oceanEnv !== undefined ? { oceanEnv: request.oceanEnv } : {},
       sandboxPolicy: request.sandboxPolicy,
     }
   }
@@ -505,7 +505,7 @@ describe('foreground commands as jobs (pwsh)', () => {
   })
 
   it('runs under the deadline kill when no job controller serves the owner', async () => {
-    // The same composition minus dsh-tool-jobs: the registry exists, so the
+    // The same composition minus ocean-tool-jobs: the registry exists, so the
     // job-backed variant is registered, but admission refuses at the start
     // and the call runs under the executor's deadline instead.
     const ctx = new Context()

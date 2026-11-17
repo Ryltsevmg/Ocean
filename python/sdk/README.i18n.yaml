@@ -3,26 +3,26 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write python/sdk/README.md
 /ocean-python-sdk:
-  en: 872eab94ef187bd7
-  zh: 336fd5b639a50b2f
+  en: da0c51fa96771043
+  zh: 0de37356888a9d20
 /ocean-python-sdk/optional-office-operations:
-  en: ddf4dabea526cef1
-  zh: 6e31cab10d2f3ed8
+  en: 2f58062d16f497f7
+  zh: 0716fced2d64fd2d
 /ocean-python-sdk/start-a-runtime:
-  en: c5f53abecc99613b
-  zh: a84f8762d9918aa5
+  en: d35be52157794d6b
+  zh: 19326852180dbb52
 /ocean-python-sdk/run-text-and-commands:
-  en: b2c847c1452e137d
-  zh: c595c5e82151d0cb
+  en: df6dd7031ddf2c4b
+  zh: a3d24525f8ebd847
 /ocean-python-sdk/client-approvals:
   en: 1d18c09832dd4a42
   zh: 6e7260b650a1f987
 /ocean-python-sdk/customize-plugins:
-  en: 179686f8d1c23228
-  zh: 829861e4ee4624b2
+  en: 9d72265fd29b6cb0
+  zh: 8540776c8c812bca
 /ocean-python-sdk/native-user-questions:
   en: 979ad00fe498b2be
   zh: 4b656bd268292a13
 /ocean-python-sdk/results-and-notifications:
-  en: 6b81899ea865ffd2
-  zh: d9e326a3fb04e696
+  en: 693f40ba0b9f74b9
+  zh: 0ec281769a1d4447

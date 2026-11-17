@@ -12,7 +12,7 @@ import {
   installFailLoud, loadEnv, loadLayeredEnv, loadOverlayPatches, resolveConfigPath, type FailLoudEvent, type FailLoudProcess,
 } from '../src/index.ts'
 
-const NAME = 'dsh-test-bin'
+const NAME = 'ocean-test-bin'
 
 const tempRoots: string[] = []
 afterAll(() => {
@@ -20,7 +20,7 @@ afterAll(() => {
 })
 
 const tmp = (): string => {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-app-boot-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ocean-app-boot-'))
   tempRoots.push(dir)
   return dir
 }
@@ -45,12 +45,12 @@ describe('resolveConfigPath', () => {
 describe('loadEnv', () => {
   it('loads variables from .env in the given dir', () => {
     const dir = tmp()
-    writeFileSync(join(dir, '.env'), 'DSH_APP_BOOT_SPEC_VAR=loaded\n')
+    writeFileSync(join(dir, '.env'), 'OCEAN_APP_BOOT_SPEC_VAR=loaded\n')
     const warn = vi.fn()
     loadEnv(NAME, dir, warn)
-    expect(process.env['DSH_APP_BOOT_SPEC_VAR']).toBe('loaded')
+    expect(process.env['OCEAN_APP_BOOT_SPEC_VAR']).toBe('loaded')
     expect(warn).not.toHaveBeenCalled()
-    delete process.env['DSH_APP_BOOT_SPEC_VAR']
+    delete process.env['OCEAN_APP_BOOT_SPEC_VAR']
   })
 
   it('stays silent when no .env exists (ambient environment wins)', () => {
@@ -70,7 +70,7 @@ describe('loadEnv', () => {
 
   it('defaults dir to the process cwd and warn to a stderr write', () => {
     const dir = tmp()
-    writeFileSync(join(dir, '.env'), 'DSH_APP_BOOT_SPEC_DEFAULTS=yes\n')
+    writeFileSync(join(dir, '.env'), 'OCEAN_APP_BOOT_SPEC_DEFAULTS=yes\n')
     const previous = process.cwd()
     process.chdir(dir)
     try {
@@ -78,8 +78,8 @@ describe('loadEnv', () => {
     } finally {
       process.chdir(previous)
     }
-    expect(process.env['DSH_APP_BOOT_SPEC_DEFAULTS']).toBe('yes')
-    delete process.env['DSH_APP_BOOT_SPEC_DEFAULTS']
+    expect(process.env['OCEAN_APP_BOOT_SPEC_DEFAULTS']).toBe('yes')
+    delete process.env['OCEAN_APP_BOOT_SPEC_DEFAULTS']
     // The default warn sink itself: point it at a broken .env with stderr
     // spied, so the arrow body runs without polluting the test output.
     const broken = tmp()
@@ -98,6 +98,24 @@ describe('loadEnv', () => {
 })
 
 describe('loadLayeredEnv', () => {
+  it('accepts legacy inherited names after validation and prefers explicit Ocean names', () => {
+    const home = tmp()
+    const project = tmp()
+    vi.stubEnv('OCEAN_HOME', home)
+    vi.stubEnv('DSH_COMPAT_TEST', 'legacy')
+    vi.stubEnv('OCEAN_COMPAT_TEST', undefined)
+    try {
+      writeFileSync(join(project, '.env'), 'DSH_HOME=/untrusted\n')
+      expect(() => loadLayeredEnv(NAME, project, vi.fn())).toThrow(/only the launching environment may set/)
+      expect(process.env.OCEAN_COMPAT_TEST).toBeUndefined()
+      writeFileSync(join(project, '.env'), '')
+      expect(loadLayeredEnv(NAME, project, vi.fn()).get('OCEAN_COMPAT_TEST')?.value).toBe('legacy')
+      process.env.OCEAN_COMPAT_TEST = 'current'
+      expect(loadLayeredEnv(NAME, project, vi.fn()).get('OCEAN_COMPAT_TEST')?.value).toBe('current')
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
   const NAMES = ['APP_BOOT_LAYERED_SHARED', 'APP_BOOT_LAYERED_USER', 'APP_BOOT_LAYERED_PROJECT'] as const
 
   function clear(): void {
@@ -120,7 +138,7 @@ describe('loadLayeredEnv', () => {
       '',
     ].join('\n'))
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     vi.stubEnv('APP_BOOT_LAYERED_INHERITED', 'inherited')
     const warn = vi.fn()
     try {
@@ -137,10 +155,10 @@ describe('loadLayeredEnv', () => {
   })
 
   it.each([
-    ['a harness switch', 'DSH_PERMISSION_MODE=danger-full-access\n'],
+    ['a harness switch', 'OCEAN_PERMISSION_MODE=danger-full-access\n'],
     ['the executable search path', 'PATH=/tmp/evil\n'],
     ['a module preload', 'NODE_OPTIONS=--require /tmp/evil.js\n'],
-    ['a skill root', 'DSH_AGENTS_HOME=/tmp/injected\n'],
+    ['a skill root', 'OCEAN_AGENTS_HOME=/tmp/injected\n'],
     ['a network proxy', 'HTTPS_PROXY=http://attacker.example\n'],
     ['a lowercase network proxy', 'https_proxy=http://attacker.example\n'],
     ['a browser command', 'BROWSER=./script\n'],
@@ -152,7 +170,7 @@ describe('loadLayeredEnv', () => {
     const project = tmp()
     writeFileSync(join(project, '.env'), `${NAMES[1]}=applied-anyway\n${content}`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     try {
       expect(() => loadLayeredEnv(NAME, project, vi.fn())).toThrow(/only the launching environment may set/)
       expect(process.env[NAMES[1]]).toBeUndefined()
@@ -176,7 +194,7 @@ describe('loadLayeredEnv', () => {
     // supplies it, and that the launching shell outranks the file, is not.
     writeFileSync(join(home, '.env'), 'HTTP_PROXY=http://from-home:8080\nno_proxy=example.com\nHTTPS_PROXY=http://from-home:8443\n')
     clear(); clearProxy()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     vi.stubEnv('HTTPS_PROXY', 'http://exported:8080')
     try {
       const snapshot = loadLayeredEnv(NAME, project, vi.fn())
@@ -201,7 +219,7 @@ describe('loadLayeredEnv', () => {
       '',
     ].join('\n'))
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     vi.stubEnv('DEEPSEEK_BASE_URL', 'https://exported.example/anthropic')
     vi.stubEnv('DEEPSEEK_SEARCH_BASE_URL', undefined)
     try {
@@ -223,7 +241,7 @@ describe('loadLayeredEnv', () => {
     // Consumers look the endpoint up by its exact name on POSIX, so another spelling would load without effect.
     writeFileSync(join(home, '.env'), `${name}=https://from-home.example/v1\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     vi.stubEnv(name, undefined)
     try {
       expect(() => loadLayeredEnv(NAME, project, vi.fn()))
@@ -238,15 +256,15 @@ describe('loadLayeredEnv', () => {
   it.each([
     'SSL_CERT_FILE=/tmp/ca.pem\n',
     'NODE_TLS_REJECT_UNAUTHORIZED=0\n',
-    'DSH_HOME=/tmp/elsewhere\n',
+    'OCEAN_HOME=/tmp/elsewhere\n',
   ])('still refuses every other bootstrap name in the Harness-home .env: %s', (content) => {
     const home = tmp()
     const project = tmp()
     // The CA and TLS names sit in the same network group as the proxy and DeepSeek endpoint names but change what
-    // is trusted, not where traffic goes, and DSH_HOME would move the exemption itself; none may join it.
+    // is trusted, not where traffic goes, and OCEAN_HOME would move the exemption itself; none may join it.
     writeFileSync(join(home, '.env'), content)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     try {
       expect(() => loadLayeredEnv(NAME, project, vi.fn())).toThrow(/only the launching environment may set/)
     } finally {
@@ -260,7 +278,7 @@ describe('loadLayeredEnv', () => {
     const project = tmp()
     writeFileSync(join(project, '.env'), `${name}=http://attacker.example\n`)
     clear(); clearProxy()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     vi.stubEnv(name, undefined)
     try {
       expect(() => loadLayeredEnv(NAME, project, vi.fn()))
@@ -276,7 +294,7 @@ describe('loadLayeredEnv', () => {
     const home = tmp()
     writeFileSync(join(home, '.env'), 'HTTP_PROXY=http://from-home:8080\n')
     clear(); clearProxy()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     try {
       // Launched from inside the home itself, its one file is read as the project layer; the
       // exemption follows the directory, not the layer name.
@@ -293,7 +311,7 @@ describe('loadLayeredEnv', () => {
     writeFileSync(join(home, '.env'), `${NAMES[1]}=u\n`)
     writeFileSync(join(project, '.env'), `${NAMES[2]}=p\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     try {
       const snapshot = loadLayeredEnv(NAME, project, vi.fn())
       expect(snapshot.get(NAMES[1])).toEqual({ value: 'u', source: 'user-env', path: join(home, '.env') })
@@ -311,7 +329,7 @@ describe('loadLayeredEnv', () => {
     writeFileSync(join(home, '.env'), `${NAMES[1]}=real-home\n`)
     writeFileSync(join(project, '.env'), `${NAMES[2]}=set-by-project\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     try {
       loadLayeredEnv(NAME, project, vi.fn())
       expect(process.env[NAMES[1]]).toBe('real-home')
@@ -329,7 +347,7 @@ describe('loadLayeredEnv', () => {
     mkdirSync(join(home, '.env'))
     writeFileSync(join(project, '.env'), `${NAMES[2]}=project-only\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     const warn = vi.fn()
     try {
       const snapshot = loadLayeredEnv(NAME, project, warn)
@@ -349,7 +367,7 @@ describe('loadLayeredEnv', () => {
     mkdirSync(join(home, '.env'))
     writeFileSync(join(project, '.env'), `${NAMES[2]}=project-only\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     const write = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
     try {
       const snapshot = loadLayeredEnv(NAME, project)
@@ -368,7 +386,7 @@ describe('loadLayeredEnv', () => {
     const project = tmp()
     writeFileSync(join(project, '.env'), `${NAMES[2]}=project-only\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     const warn = vi.fn()
     try {
       const snapshot = loadLayeredEnv(NAME, project, warn)
@@ -384,7 +402,7 @@ describe('loadLayeredEnv', () => {
     const home = tmp()
     const project = tmp()
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('OCEAN_HOME', home)
     vi.stubEnv('APP_BOOT_LAYERED_INHERITED', 'inherited')
     try {
       const snapshot = loadLayeredEnv(NAME, project, vi.fn())
@@ -399,7 +417,7 @@ describe('loadLayeredEnv', () => {
     const both = tmp()
     writeFileSync(join(both, '.env'), `${NAMES[2]}=one-file\n`)
     clear()
-    vi.stubEnv('DSH_HOME', both)
+    vi.stubEnv('OCEAN_HOME', both)
     try {
       const snapshot = loadLayeredEnv(NAME, both, vi.fn())
       expect(snapshot.get(NAMES[2])).toEqual({ value: 'one-file', source: 'project-env', path: join(both, '.env') })
@@ -570,15 +588,15 @@ describe('installFailLoud', () => {
   it('turns an uncaught exception into a labelled diagnostic with its enumerable properties and exits 1', () => {
     const proc = fakeProc()
     installFailLoud(NAME, proc)
-    const error = Object.assign(new Error("ENOENT: no such file or directory, open '/tmp/dsh-subprocess-x/out.log'"), {
-      errno: -2, code: 'ENOENT', syscall: 'open', path: '/tmp/dsh-subprocess-x/out.log',
+    const error = Object.assign(new Error("ENOENT: no such file or directory, open '/tmp/ocean-subprocess-x/out.log'"), {
+      errno: -2, code: 'ENOENT', syscall: 'open', path: '/tmp/ocean-subprocess-x/out.log',
     })
     proc.exception(error)
     expect(proc.written).toHaveLength(1)
     expect(proc.written[0]).toContain(`${NAME}: fatal uncaught exception: `)
     expect(proc.written[0]).toContain(error.stack)
     expect(proc.written[0]).toContain("syscall: 'open'")
-    expect(proc.written[0]).toContain("path: '/tmp/dsh-subprocess-x/out.log'")
+    expect(proc.written[0]).toContain("path: '/tmp/ocean-subprocess-x/out.log'")
     expect(proc.exits).toEqual([1])
   })
 
@@ -852,7 +870,7 @@ describe('auditStartupEntries', () => {
     ]), NAME, warn).catch((error: unknown) => error)
     expect(error).toBeInstanceOf(StartupError)
     expect((error as Error).message).toMatchInlineSnapshot(`
-      "dsh-test-bin: startup failed: 3 required plugins did not activate
+      "ocean-test-bin: startup failed: 3 required plugins did not activate
 
       Failed plugins (1):
         webserver (required)
@@ -1068,10 +1086,10 @@ describe('boot', () => {
     }
   })
 
-  it('exposes dshHomePath to Loader config expressions', async () => {
+  it.each(['oceanHomePath', 'dshHomePath'])('exposes %s to Loader config expressions', async (helper) => {
     const dir = tmp()
-    const dshHome = join(dir, 'home')
-    vi.stubEnv('DSH_HOME', dshHome)
+    const oceanHome = join(dir, 'home')
+    vi.stubEnv('OCEAN_HOME', oceanHome)
     writeFileSync(join(dir, 'capture.mjs'), [
       'export const name = "capture"',
       'export function apply(ctx, config) {',
@@ -1083,13 +1101,13 @@ describe('boot', () => {
       '- id: capture',
       '  name: ./capture.mjs',
       '  config:',
-      "    path: !!js dshHomePath('sessions')",
+      `    path: !!js ${helper}('sessions')`,
       '',
     ].join('\n'))
     let ctx: Context | undefined
     try {
       ctx = await boot(NAME, join(dir, 'cordis.yml'))
-      expect(ctx.get('capturedPath')).toBe(join(dshHome, 'sessions'))
+      expect(ctx.get('capturedPath')).toBe(join(oceanHome, 'sessions'))
     } finally {
       await ctx?.fiber.dispose()
       vi.unstubAllEnvs()
@@ -1237,8 +1255,8 @@ describe('boot', () => {
     let disposed = false
     writeFileSync(join(dir, 'good.mjs'), [
       'export function apply(ctx) {',
-      '  globalThis.__DSH_REQUIRED_TEST_DISPOSED__ = false',
-      '  ctx.effect(() => () => { globalThis.__DSH_REQUIRED_TEST_DISPOSED__ = true })',
+      '  globalThis.__OCEAN_REQUIRED_TEST_DISPOSED__ = false',
+      '  ctx.effect(() => () => { globalThis.__OCEAN_REQUIRED_TEST_DISPOSED__ = true })',
       '}',
       '',
     ].join('\n'))
@@ -1256,8 +1274,8 @@ describe('boot', () => {
       String.raw`webserver \(required\)`,
       'required apply failure',
     ].join(String.raw`[\s\S]*`)))
-    disposed = (globalThis as { __DSH_REQUIRED_TEST_DISPOSED__?: boolean }).__DSH_REQUIRED_TEST_DISPOSED__ ?? false
-    delete (globalThis as { __DSH_REQUIRED_TEST_DISPOSED__?: boolean }).__DSH_REQUIRED_TEST_DISPOSED__
+    disposed = (globalThis as { __OCEAN_REQUIRED_TEST_DISPOSED__?: boolean }).__OCEAN_REQUIRED_TEST_DISPOSED__ ?? false
+    delete (globalThis as { __OCEAN_REQUIRED_TEST_DISPOSED__?: boolean }).__OCEAN_REQUIRED_TEST_DISPOSED__
     expect(disposed).toBe(true)
   })
 

@@ -16,7 +16,7 @@ async function mount() {
   const theme = new ThemeRuntime(ctx, stubConfigForm<ThemeSettings>().scope)
   const fiber = ctx.plugin({ apply(scope) { installIconSprite(scope, theme.getTheme().active.icons) } })
   await fiber.await()
-  const sprite = (): SVGSVGElement | null => document.querySelector('svg[data-dsh-icon-sprite]')
+  const sprite = (): SVGSVGElement | null => document.querySelector('svg[data-ocean-icon-sprite]')
   const symbol = (id: string): Element | null => sprite()?.querySelector(`symbol[id="${id}"]`) ?? null
   return { ctx, theme, fiber, sprite, symbol }
 }

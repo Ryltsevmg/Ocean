@@ -6,17 +6,17 @@
 [English](public-deployments.md) | [中文](public-deployments.zh.md) | [Русский](public-deployments.ru.md) | [日本語](public-deployments.ja.md) | [Español](public-deployments.es.md) | [Français](public-deployments.fr.md) | Deutsch | [Português](public-deployments.pt.md) | [한국어](public-deployments.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-`dsh --profile web` stellt die Weboberfläche auf einem Loopback-Port bereit. Ein Browser auf einem anderen Rechner kann den Port daher nicht direkt erreichen, und der Prozess kennt die öffentliche Adresse nicht. Der Reverse Proxy verwaltet den öffentlichen Hostnamen, TLS und das Pfadpräfix. Vor der Weiterleitung an den Webserver entfernt er dieses Präfix. Mit `--public-url` geben Sie DSH die Adresse an, die Browser verwenden.
+`ocean --profile web` stellt die Weboberfläche auf einem Loopback-Port bereit. Ein Browser auf einem anderen Rechner kann den Port daher nicht direkt erreichen, und der Prozess kennt die öffentliche Adresse nicht. Der Reverse Proxy verwaltet den öffentlichen Hostnamen, TLS und das Pfadpräfix. Vor der Weiterleitung an den Webserver entfernt er dieses Präfix. Mit `--public-url` geben Sie OCEAN die Adresse an, die Browser verwenden.
 
 ```sh
-dsh --profile web --public-url https://app.example/ui/ --trusted-host app.example
+ocean --profile web --public-url https://app.example/ui/ --trusted-host app.example
 ```
 
 <a id="what---public-url-advertises"></a>
 
 ## Von `--public-url` veröffentlichte URL
 
-`--public-url` akzeptiert eine Basis-URL mit `http://` oder `https://` und einem optionalen Pfadpräfix und ergänzt bei Bedarf ein abschließendes `/`. Der Wert bestimmt die beim Start ausgegebene und geöffnete URL, den Wert von `DSH_WEB_URL` und die Weboberflächen-URL im Laufzeitkontext des Agenten. Der Webserver bedient weiterhin seine Routen relativ zum Wurzelpfad und kennt das Präfix nicht. Das Konfigurationsfeld `publicUrl` veröffentlicht dieselbe URL.
+`--public-url` akzeptiert eine Basis-URL mit `http://` oder `https://` und einem optionalen Pfadpräfix und ergänzt bei Bedarf ein abschließendes `/`. Der Wert bestimmt die beim Start ausgegebene und geöffnete URL, den Wert von `OCEAN_WEB_URL` und die Weboberflächen-URL im Laufzeitkontext des Agenten. Der Webserver bedient weiterhin seine Routen relativ zum Wurzelpfad und kennt das Präfix nicht. Das Konfigurationsfeld `publicUrl` veröffentlicht dieselbe URL.
 
 <a id="what-the-proxy-must-do"></a>
 
@@ -42,7 +42,7 @@ Die veröffentlichte URL und der Filter schützen den Port selbst nicht. Beschr�
 
 Die TLS-Verbindung kann am Proxy, am Webserver oder an beiden enden. `--public-url` dient weiterhin nur der Veröffentlichung der Adresse. Eine öffentliche Basis-URL mit `http://` überträgt das Starttoken im Klartext. Eine Proxy-Basis-URL mit `https://` schützt die Verbindung vom Browser zum Proxy. Die Verschlüsselung zwischen Proxy und Webserver richtet sich nach der TLS-Konfiguration des Servers.
 
-Um TLS am Webserver zu terminieren, geben Sie `--tls-cert` und `--tls-key` an. Beide Pfade werden relativ zum Arbeitsverzeichnis des Prozesses aufgelöst. Die Zertifikatsdatei enthält die vollständige Zertifikatskette, die Schlüsseldatei einen unverschlüsselten privaten PEM-Schlüssel. DSH beschafft, erneuert und überwacht keine Zertifikate. Die Dateien werden einmalig eingelesen. Wenn Sie sie austauschen, laden Sie den Webserver neu oder starten Sie den Prozess erneut. Bei einem fehlenden oder ungültigen Dateipaar schlägt der Start fehl, ohne auf HTTP zurückzufallen. Der Browser prüft das Zertifikat anhand seines eigenen Zertifikatsspeichers und des aufgerufenen Namens. Das Zertifikat muss den Hostnamen oder die IP-Adresse im Browser abdecken. Der Standardport bleibt 3080. Der Webserver unterstützt TLS direkt ohne Proxy. Die Bereitstellung über einen Proxy und `--public-url` bleiben unabhängig davon möglich. Ein Webserver mit TLS setzt für Sitzungscookies `Secure`. Stellen Sie die öffentliche Verbindung über HTTPS bereit, damit Browser diese Cookies zurücksenden können.
+Um TLS am Webserver zu terminieren, geben Sie `--tls-cert` und `--tls-key` an. Beide Pfade werden relativ zum Arbeitsverzeichnis des Prozesses aufgelöst. Die Zertifikatsdatei enthält die vollständige Zertifikatskette, die Schlüsseldatei einen unverschlüsselten privaten PEM-Schlüssel. OCEAN beschafft, erneuert und überwacht keine Zertifikate. Die Dateien werden einmalig eingelesen. Wenn Sie sie austauschen, laden Sie den Webserver neu oder starten Sie den Prozess erneut. Bei einem fehlenden oder ungültigen Dateipaar schlägt der Start fehl, ohne auf HTTP zurückzufallen. Der Browser prüft das Zertifikat anhand seines eigenen Zertifikatsspeichers und des aufgerufenen Namens. Das Zertifikat muss den Hostnamen oder die IP-Adresse im Browser abdecken. Der Standardport bleibt 3080. Der Webserver unterstützt TLS direkt ohne Proxy. Die Bereitstellung über einen Proxy und `--public-url` bleiben unabhängig davon möglich. Ein Webserver mit TLS setzt für Sitzungscookies `Secure`. Stellen Sie die öffentliche Verbindung über HTTPS bereit, damit Browser diese Cookies zurücksenden können.
 
 Die ausgegebene URL enthält Zugangsdaten für den Prozess. Geben Sie die URL nur an die vorgesehenen Benutzer weiter.
 

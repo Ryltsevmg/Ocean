@@ -12,8 +12,8 @@ import * as LibreOfficeProvider from '@ocean/ocean-office-kit'
 import { expect, it, onTestFinished } from 'vitest'
 
 it('loads one shared conversion row and retains caller-owned PDFs after disposal', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-conversion-loader-'))
-  const outputDirectory = await mkdtemp(join(tmpdir(), 'dsh-conversion-outputs-'))
+  const directory = await mkdtemp(join(tmpdir(), 'ocean-conversion-loader-'))
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'ocean-conversion-outputs-'))
   const ctx = new Context()
   onTestFinished(async () => {
     try { await ctx.fiber.dispose() }

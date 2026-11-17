@@ -72,7 +72,7 @@ function moduleShortName(moduleName: string): string {
   return unscoped
     .replace(/^cordis:/, '')
     .replace(/^cordis-plugin-/, '')
-    .replace(/^(?:ocean|dsh)-(?:host-|client-)?/, '')
+    .replace(/^(?:ocean|ocean)-(?:host-|client-)?/, '')
 }
 
 /** Display an entry identity without the composition-only `include:` marker. */

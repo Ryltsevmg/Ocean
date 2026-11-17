@@ -52,7 +52,7 @@ function secondTurn(): SessionEvent[] {
 
 describe.each(['none', 'zstd'] as const)('interrupted tail (%s)', (compression) => {
   it('stays listed, readable with committed history, and repairable across restarts', async () => {
-    const root = await mkdtemp(join(tmpdir(), `dsh-torn-tail-${compression}-`))
+    const root = await mkdtemp(join(tmpdir(), `ocean-torn-tail-${compression}-`))
     roots.push(root)
     const header = meta(`torn-tail-${compression}`, '/work')
     const committed = oneTurnLog()

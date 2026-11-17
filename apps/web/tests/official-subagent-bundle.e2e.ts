@@ -76,7 +76,7 @@ describe.skipIf(MODE === 'record')('web snapshot: Official native subagent bundl
   let nativeEndpoint: Awaited<ReturnType<typeof heldNativeEndpoint>>
 
   beforeAll(async () => {
-    root = await mkdtemp(join(tmpdir(), 'dsh-official-subagent-'))
+    root = await mkdtemp(join(tmpdir(), 'ocean-official-subagent-'))
     const config = join(root, 'claude-config')
     const xdg = join(root, 'xdg')
     await Promise.all([mkdir(config), mkdir(xdg)])

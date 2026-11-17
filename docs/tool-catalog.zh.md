@@ -83,7 +83,7 @@
     },
     "runtimeVersion": {
       "type": "string",
-      "description": "For set_version_exemption: exact DSH version from list_version_exemptions. Target must be the manifest package-name@version, not an alias or version range."
+      "description": "For set_version_exemption: exact OCEAN version from list_version_exemptions. Target must be the manifest package-name@version, not an alias or version range."
     },
     "acceptRisk": {
       "type": "boolean",

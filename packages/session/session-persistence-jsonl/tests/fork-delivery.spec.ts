@@ -9,7 +9,7 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 import { generationLogPath } from '../src/format.ts'
 
 async function fixture(compression: 'none' | 'zstd') {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-fork-delivery-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-fork-delivery-'))
   const ctx = new Context()
   onTestFinished(async () => {
     await ctx.fiber.dispose()

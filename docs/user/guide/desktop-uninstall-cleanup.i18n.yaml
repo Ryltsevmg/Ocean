@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/guide/desktop-uninstall-cleanup.md
 /uninstall-ocean-desktop:
-  en: fb9f89f80acf9cba
-  zh: e96ed7c9f58fd9c2
+  en: d90dd92a52064584
+  zh: 32ba738d32191f56
 /uninstall-ocean-desktop/1-uninstall-the-app:
-  en: 7e2b3f8196801b6c
-  zh: 72375cbeb5c24aac
+  en: 1056562b9ba80763
+  zh: 1fb4e637738434c2
 /uninstall-ocean-desktop/2-inspect-local-data-before-cleanup:
-  en: 2752676f761b6619
-  zh: d889a510039f01b1
+  en: 3fea7c401c11eed3
+  zh: 74caec02c33723c5
 /uninstall-ocean-desktop/3-remove-verified-data-and-check:
   en: f7c9fdd2664fc3ba
   zh: 8c35e2153eeea1cd

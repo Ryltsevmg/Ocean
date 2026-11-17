@@ -71,7 +71,7 @@ export interface PackageDependencyManifest {
   optionalDependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
   peerDependenciesMeta?: Record<string, unknown>
-  dsh?: { client?: { inject?: string[] } }
+  ocean?: { client?: { inject?: string[] } }
 }
 
 /** One workspace package and its source location. */
@@ -176,7 +176,7 @@ export function discoverPackageDependencyScope(
     if (exclude.has(name)) violations.push(`${name} appears in both clientFaceInclude and clientFaceExclude`)
     const pkg = byName.get(name)
     if (pkg !== undefined
-      && (pkg.manifestPath.startsWith('packages/client/') || hasClientDeclaration(pkg.manifest.dsh))) {
+      && (pkg.manifestPath.startsWith('packages/client/') || hasClientDeclaration(pkg.manifest.ocean))) {
       violations.push(`clientFaceInclude redundantly names automatically discovered package ${name}`)
     }
   }
@@ -184,15 +184,15 @@ export function discoverPackageDependencyScope(
     const pkg = byName.get(name)
     if (pkg !== undefined && pkg.manifestPath.startsWith('packages/client/')) {
       violations.push(`clientFaceExclude cannot exempt packages/client package ${name}`)
-    } else if (pkg !== undefined && !hasClientDeclaration(pkg.manifest.dsh)) {
-      violations.push(`clientFaceExclude names ${name}, which declares no dsh.client entry`)
+    } else if (pkg !== undefined && !hasClientDeclaration(pkg.manifest.ocean)) {
+      violations.push(`clientFaceExclude names ${name}, which declares no ocean.client entry`)
     }
   }
 
   const selected: Array<WorkspacePackageManifest & { role: PackageDependencyRole }> = []
   for (const pkg of packages) {
     const clientDirectory = pkg.manifestPath.startsWith('packages/client/')
-    const clientHost = (hasClientDeclaration(pkg.manifest.dsh) || include.has(pkg.name)) && !exclude.has(pkg.name)
+    const clientHost = (hasClientDeclaration(pkg.manifest.ocean) || include.has(pkg.name)) && !exclude.has(pkg.name)
     const clientOnly = clientDirectory && !clientHost
     const configuredHost = host.has(pkg.name)
     if (configuredHost && (clientHost || clientOnly)) {
@@ -435,7 +435,7 @@ export async function readHostBuildEntries(root: string, pkg: WorkspacePackageMa
   const configs: BuildEntryConfig[] = []
   for (const face of BUILD_FACES) {
     const value: unknown = typeof exported === 'function'
-      ? await (exported as (inline: { env: Record<string, string> }) => unknown)({ env: { DSH_BUILD_FACE: face } })
+      ? await (exported as (inline: { env: Record<string, string> }) => unknown)({ env: { OCEAN_BUILD_FACE: face } })
       : exported
     configs.push(...(Array.isArray(value) ? value : [value]) as BuildEntryConfig[])
   }
@@ -529,7 +529,7 @@ export async function readPackageDependencyFacts(
   generatedHostSource?: string,
   precomputedSourceUses?: Map<string, string[]>,
 ): Promise<PackageDependencyFacts> {
-  const inject = pkg.manifest.dsh?.client?.inject ?? []
+  const inject = pkg.manifest.ocean?.client?.inject ?? []
   const hostRuntime = role === 'client-only'
     ? { packageUses: new Map<string, string[]>(), exportUses: [] }
     : readHostRuntimeUses(root, pkg, await readHostBuildEntries(root, pkg), generatedHostSource)
@@ -798,7 +798,7 @@ export function expectedPackageDependencies(
     }
   }
   for (const name of facts.clientInject) {
-    if (facts.workspaceNames.has(name)) add(name, 'devDependencies', 'dsh.client.inject')
+    if (facts.workspaceNames.has(name)) add(name, 'devDependencies', 'ocean.client.inject')
   }
   for (const name of facts.configurationOnlyDevDependencies) {
     if (facts.workspaceNames.has(name)) add(name, 'devDependencies', 'configured development-only relationship')

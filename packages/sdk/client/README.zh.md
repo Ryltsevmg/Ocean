@@ -9,7 +9,9 @@ kind: "package-library"
 
 ## 概述
 
-`dsh-sdk-client` 让 TypeScript 程序通过 stdio JSON-RPC 驱动完整的 Ocean 运行时。使用 `run()` 运行普通文本、支持的 slash 命令和图片内容块，通过 `onNotification` 观察其通知。`HarnessClient` 提供直接协议访问。调用方可以提供 `dshBin`；否则客户端解析同版本的 `@ocean/ocean` 可执行文件。客户端持有子进程，报告类型化错误，并在 `close()` 或 `await using` 时回收进程。
+`ocean-sdk-client` 让 TypeScript 程序通过 stdio JSON-RPC 驱动完整的 Ocean 运行时。使用 `run()` 运行普通文本、支持的 slash 命令和图片内容块，通过 `onNotification` 观察其通知。`HarnessClient` 提供直接协议访问。调用方可以提供 `oceanBin`；否则客户端解析同版本的 `@ocean/ocean` 可执行文件。客户端持有子进程，报告类型化错误，并在 `close()` 或 `await using` 时回收进程。
+
+当 `oceanBin` 和 `oceanHome` 不存在时，仍接受旧的 `dshBin` 和 `dshHome` 启动选项。
 
 ## 目录
 
@@ -39,7 +41,7 @@ import { DeepSeekHarness } from '@ocean/ocean-sdk-client'
 const terminal = createInterface({ input: stdin, output: stdout })
 try {
   await using harness = new DeepSeekHarness({
-    dshHome: '/absolute/path/to/isolated-dsh-home', approvalRequests: true,
+    oceanHome: '/absolute/path/to/isolated-ocean-home', approvalRequests: true,
   })
   harness.client.start()
   harness.client.onRequest(async (method, params) => {
@@ -53,7 +55,7 @@ try {
 }
 ```
 
-`await harness.resumeSession(savedId)` 从配置的 `dshHome` 恢复持久化会话，并返回可调用 `run()` 的 `HarnessSession`。请保存原会话 id，并沿用其 home 和工作区。恢复会保留对话历史及其目录、修复最后一个被中断的轮次，且不发送新输入。会话缺失、不可读、不兼容或被占用时，请求失败且不创建替代会话。`session(id)` 仍是当前进程内会话的惰性句柄，不会请求持久化恢复。此 API 不恢复 shell、浏览器或其他外部进程。
+`await harness.resumeSession(savedId)` 从配置的 `oceanHome` 恢复持久化会话，并返回可调用 `run()` 的 `HarnessSession`。请保存原会话 id，并沿用其 home 和工作区。恢复会保留对话历史及其目录、修复最后一个被中断的轮次，且不发送新输入。会话缺失、不可读、不兼容或被占用时，请求失败且不创建替代会话。`session(id)` 仍是当前进程内会话的惰性句柄，不会请求持久化恢复。此 API 不恢复 shell、浏览器或其他外部进程。
 
 `HarnessSession.getWorkingDirectory()` 读取有效目录；`setWorkingDirectory(path)` 修改目录并返回校验后的绝对路径。两个方法都可创建未知 Session，而不启动模型轮次。相对路径以 Session 当前目录解析。起始目录元数据、权限与已有进程保持不变。`HarnessClient` 提供同名方法，并以 `sessionId` 作为首个参数。
 
@@ -65,7 +67,7 @@ import { ReasoningEffortId } from '@ocean/ocean-llm'
 
 await using harness = new DeepSeekHarness({
   profile: 'sdk',
-  dshHome: '/absolute/path/to/dsh-home',
+  oceanHome: '/absolute/path/to/ocean-home',
   patches: ['./automation.cordis.yml'],
   provider: 'deepseek-official',
   model: 'deepseek-v4-flash',
@@ -87,7 +89,7 @@ console.log(result.finalResponse)
 ```ts
 import { DeepSeekHarness } from '@ocean/ocean-sdk-client'
 
-await using harness = new DeepSeekHarness({ profile: 'sdk', dshHome: '/absolute/path/to/dsh-home' })
+await using harness = new DeepSeekHarness({ profile: 'sdk', oceanHome: '/absolute/path/to/ocean-home' })
 const session = harness.session()
 const result = await session.run('/compact')
 console.log(result.finalResponse)
@@ -107,7 +109,7 @@ console.log(result.finalResponse)
 
 拥有完整任务的消费者可以先订阅，再调用 `prompt()`，随后调用 `request('session/wait', { sessionId })`，并通过 `tryNext()` 取完已排队的通知。这会等待受管理后代及其触发的根 Agent 摘要轮次；`HarnessSession.run()` 对普通提示词仍以首次空闲作为活动区间终点。`validatedSessionEvent()` 在事件进入输出折叠前，校验事件封装及 SDK 读取方使用的 assistant／turn 字段。
 
-本客户端为每种失败模式导出类型化错误：`JsonRpcResponseError`（协议错误响应，保留 code 与 data）、`RequestTimeoutError`（配置的时限已到）、`SdkProtocolError`（响应超出文档化协议）、`TransportClosedError`（运行时已消失——消息携带退出码与有界 stderr 尾部）。`close()` 先请求协议 `shutdown`（受 `shutdownTimeoutMs` 约束，默认 1000 毫秒），然后走 stdin-EOF → SIGTERM → SIGKILL 阶梯直到进程退出；幂等，已关闭的客户端拒绝复用。`HarnessClientOptions.env` 给定时整体替换子进程环境（`undefined` 原样继承父进程环境）；凭据策略归调用方——`dsh-subprocess` 的 `scrubbedParentEnv` 是面向隔离启动的共享擦除基底。
+本客户端为每种失败模式导出类型化错误：`JsonRpcResponseError`（协议错误响应，保留 code 与 data）、`RequestTimeoutError`（配置的时限已到）、`SdkProtocolError`（响应超出文档化协议）、`TransportClosedError`（运行时已消失——消息携带退出码与有界 stderr 尾部）。`close()` 先请求协议 `shutdown`（受 `shutdownTimeoutMs` 约束，默认 1000 毫秒），然后走 stdin-EOF → SIGTERM → SIGKILL 阶梯直到进程退出；幂等，已关闭的客户端拒绝复用。`HarnessClientOptions.env` 给定时整体替换子进程环境（`undefined` 原样继承父进程环境）；凭据策略归调用方——`ocean-subprocess` 的 `scrubbedParentEnv` 是面向隔离启动的共享擦除基底。
 
 <a id="native-user-questions"></a>
 ### 原生用户问答
@@ -128,7 +130,7 @@ console.log(result.finalResponse)
 
 ### 设计理念
 
-客户端是同一协议上的两层：`DeepSeekHarness`（自有运行）叠加在 `HarnessClient`（协议客户端）之上，与 Python SDK 的分层一致。两种 SDK 都通过公开 `run()` 接收提示词或命令，请求构造与响应校验保留在内部辅助函数中。它运行在任何 harness 上下文之外，因此直接 spawn 运行时而非经由 `dsh-subprocess` 服务——即该 seam 记录的 SDK 托管传输例外——其关闭阶梯也位于本包。运行时对上下文内每个会话都发通知；会话树范围限定是客户端对 `subagent.started` 血缘边的过滤。
+客户端是同一协议上的两层：`DeepSeekHarness`（自有运行）叠加在 `HarnessClient`（协议客户端）之上，与 Python SDK 的分层一致。两种 SDK 都通过公开 `run()` 接收提示词或命令，请求构造与响应校验保留在内部辅助函数中。它运行在任何 harness 上下文之外，因此直接 spawn 运行时而非经由 `ocean-subprocess` 服务——即该 seam 记录的 SDK 托管传输例外——其关闭阶梯也位于本包。运行时对上下文内每个会话都发通知；会话树范围限定是客户端对 `subagent.started` 血缘边的过滤。
 
 ### 源码地图
 
@@ -160,8 +162,8 @@ console.log(result.finalResponse)
 - [SDK 协议格式](../protocol/README.zh.md)——本客户端使用的 JSON-RPC 方法与载荷结构。
 - [JSON-RPC 服务插件](../server/README.zh.md)——服务本客户端的运行时插件。
 - [Python SDK](../../../python/README.zh.md) — 共享同一运行时对端与协议的设计孪生。
-- [SDK subagent 后端](../../subagent/subagent-dsh-sdk/README.zh.md) — harness 内部消费本客户端的例子。
-- [SDK 应用组合包](../../bundle/sdk-app/README.zh.md) — 本客户端启动的 `dsh --profile sdk` 运行时应用。
+- [SDK subagent 后端](../../subagent/subagent-ocean-sdk/README.zh.md) — harness 内部消费本客户端的例子。
+- [SDK 应用组合包](../../bundle/sdk-app/README.zh.md) — 本客户端启动的 `ocean --profile sdk` 运行时应用。
 
 -----
 
@@ -181,7 +183,7 @@ console.log(result.finalResponse)
 
 这些限制说明本客户端何时不合适或需要特别注意。它们是当前包约束，不是与其他 SDK 客户端的对比或任务积压。
 
-- **无捆绑运行时解析**——客户端解析同版本 `@ocean/ocean` 包（或调用方提供的 `dshBin`）；打包可执行文件的发现留在 Python 侧，直到出现 TypeScript 发行版消费方。
+- **无捆绑运行时解析**——客户端解析同版本 `@ocean/ocean` 包（或调用方提供的 `oceanBin`）；打包可执行文件的发现留在 Python 侧，直到出现 TypeScript 发行版消费方。
 - **无运行时取消请求**——RPC 超时或观察回调失败会结束本地等待，不会停止运行时工作。停止运行时工作需要关闭 harness（见[协议限制](../protocol/README.zh.md#known-limitations-and-deferred-work)）。
 - **无独占模型响应**——提示词结果涵盖从回执到 idle 的活动，可能包含 steering 或其他排队工作。并发调用观察 Session 的实际事件流；命令结果不独占后续 turn。
 - **回调必须释放自己的资源**——SDK 通过 `AbortSignal` 发出取消；忽略它的应用工作可能在 SDK 停止等待答案后继续运行。

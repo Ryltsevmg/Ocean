@@ -49,7 +49,7 @@ function injectedOf(entry: { inject?: (() => object) | undefined }): object {
   return injected
 }
 beforeEach(() => {
-  vi.stubEnv('DSH_CLIENT_VERSION', '0.0.0-test')
+  vi.stubEnv('OCEAN_CLIENT_VERSION', '0.0.0-test')
   vi.stubGlobal('screen', { width: 1512, height: 982 })
   vi.stubGlobal('devicePixelRatio', 2)
 })
@@ -79,7 +79,7 @@ withoutAccountAccess('opens no account stream and registers no account surface w
 }, 60_000)
 
 it('claims account balance notices from the frame-wide quota chain and declines generic quota', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const entry = quotaNoticeEntry(c)
   expect(entry).toBeDefined()
@@ -94,7 +94,7 @@ it('claims account balance notices from the frame-wide quota chain and declines 
 it('shares account actions across seats, publishes dialog ownership, and opens support without account context', async ({ start }) => {
   vi.stubGlobal(CONTACT_CONFIG_GLOBAL, { contactFormUrl: 'https://example.test/form/?prefill_device_model=old&hide_device_model=1', contactSource: 'harness' })
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   expect(c.ctx.slots.entries('settings.models.sign-in')[0]!.inject!()).toBe(actions)
@@ -145,7 +145,7 @@ it('shares account actions across seats, publishes dialog ownership, and opens s
 it('opens only the support bot without reading native device data', async ({ start }) => {
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const deviceInfo = vi.fn(async () => 'private device data')
-  vi.stubGlobal('dshDesktop', { deviceInfo })
+  vi.stubGlobal('oceanDesktop', { deviceInfo })
   const c = await start()
   const actions = operations(c)
   expect(open).not.toHaveBeenCalled()
@@ -197,7 +197,7 @@ it('publishes one avatar load and retries it through the shared Settings refresh
 }, 60_000)
 
 it('keeps successful account refreshes silent and reports only failed reads', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const output = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const info = vi.spyOn(console, 'info').mockImplementation(() => undefined)
   const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
@@ -231,7 +231,7 @@ it('keeps successful account refreshes silent and reports only failed reads', as
 }, 60_000)
 
 it('coalesces refreshes, publishes independent failures, and rejects stale responses after sign-out or unload', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   const pending = Promise.withResolvers<ReturnType<typeof ok<AccountDetails['profile'] | null>>>()
@@ -266,7 +266,7 @@ it('coalesces refreshes, publishes independent failures, and rejects stale respo
 
 for (const desktop of [false, true]) it(`uses the browser or Desktop login carrier (Desktop: ${desktop}) and exposes operation errors`, async ({ start, mock }) => {
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
-  if (desktop) vi.stubGlobal('dshDesktop', {})
+  if (desktop) vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   mock.remote.account.startSignIn.mockResolvedValue(ok(view))
@@ -305,11 +305,11 @@ it('navigates the preopened browser tab to the themed authorization page', async
 }, 60_000)
 
 it('uses the Desktop stream origin and exposes the native platform bridge', async ({ start, mock }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
-  vi.stubGlobal('__DSH_TRANSPORT__', { streamBaseUrl: 'http://localhost:9876/stream' })
+  vi.stubGlobal('__OCEAN_TRANSPORT__', { streamBaseUrl: 'http://localhost:9876/stream' })
   const platform = { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() }
-  vi.stubGlobal('dshPlatform', platform)
+  vi.stubGlobal('oceanPlatform', platform)
   await c.reload(SELF)
   const actions = operations(c)
   // The native commands reach the one shared host through the account page channel.
@@ -340,9 +340,9 @@ it('uses the Desktop stream origin and exposes the native platform bridge', asyn
 
 
 it('re-reads the account when the shared host returns from top-up, and not from usage or an absent page', async ({ start, mock }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
-  vi.stubGlobal('dshPlatform', { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() })
+  vi.stubGlobal('oceanPlatform', { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() })
   await c.reload(SELF)
   const actions = operations(c)
   const host = injectedOf(platformHostEntry(c)!) as AccountPlatformHostInjected
@@ -378,9 +378,9 @@ it('re-reads the account when the shared host returns from top-up, and not from 
 }, 60_000)
 
 it('re-reads profile and balance but no bonus for the onboarding recharge return, and nothing on supersede or release', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
-  vi.stubGlobal('dshPlatform', { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() })
+  vi.stubGlobal('oceanPlatform', { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() })
   await c.reload(SELF)
   const actions = operations(c)
   const track = vi.fn()
@@ -427,9 +427,9 @@ it('re-reads profile and balance but no bonus for the onboarding recharge return
 }, 60_000)
 
 it('waits for an in-flight pre-return read before the post-top-up read', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
-  vi.stubGlobal('dshPlatform', { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() })
+  vi.stubGlobal('oceanPlatform', { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() })
   await c.reload(SELF)
   const actions = operations(c)
   const host = injectedOf(platformHostEntry(c)!) as AccountPlatformHostInjected
@@ -466,7 +466,7 @@ it('waits for an in-flight pre-return read before the post-top-up read', async (
 }, 60_000)
 
 it('publishes a terminal state-stream failure without mistaking it for plugin disposal', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   await c.mock.streams.opened('account/watch', 1)
@@ -475,7 +475,7 @@ it('publishes a terminal state-stream failure without mistaking it for plugin di
 }, 60_000)
 
 it('ignores a terminal stream error when plugin disposal already owns teardown', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   let disposal: Promise<void> | undefined
   const original = c.ctx.remote.$stream.bind(c.ctx.remote)
@@ -495,7 +495,7 @@ it('ignores a terminal stream error when plugin disposal already owns teardown',
 }, 60_000)
 
 it('samples the build version, language, and UTC offset for every account call', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   const offset = vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(480)
@@ -514,7 +514,7 @@ it('samples the build version, language, and UTC offset for every account call',
 }, 60_000)
 
 it('reads the account task impact and reports a refused query', async ({ start, mock }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   mock.remote.account.hasRunningAccountTasks.mockResolvedValueOnce(ok(true))
@@ -525,7 +525,7 @@ it('reads the account task impact and reports a refused query', async ({ start, 
 
 
 it('forwards live account notices and removes their subscriptions', async ({ start }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const c = await start()
   const actions = operations(c)
   const expired = vi.fn()
@@ -548,9 +548,9 @@ it('forwards live account notices and removes their subscriptions', async ({ sta
   expect(unavailable).toHaveBeenCalledOnce()
 })
 for (const native of [false, true]) it(`exposes desktop progress actions and disposes its subscriptions (native platform: ${native})`, async ({ start, mock }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const platform = { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() }
-  if (native) vi.stubGlobal('dshPlatform', platform)
+  if (native) vi.stubGlobal('oceanPlatform', platform)
   const c = await start()
   const entry = c.ctx.slots.entries('shell.overlay').find(entry => entry.options.id === 'desktop-onboarding')!
   const injected = (entry.inject!() as object) as DesktopOnboardingInjected
@@ -574,7 +574,7 @@ for (const native of [false, true]) it(`exposes desktop progress actions and dis
 }, 60_000)
 
 it('applies API-key defaults through the desktop slot and shared configuration owners', async ({ start, mock }) => {
-  vi.stubGlobal('dshDesktop', {})
+  vi.stubGlobal('oceanDesktop', {})
   const values: Record<string, object> = {
     'ui-settings-account': { version: 1, step: 'welcome', purpose: null, process: null, completion: null, usage: 'compact', developerTools: false },
     'ui-chat': { transcriptView: 'compact', performanceUsage: 'detailed', linkOpening: 'sidebar' },
@@ -586,7 +586,7 @@ it('applies API-key defaults through the desktop slot and shared configuration o
     writable: true, hasDocument: true, namespaces: Object.keys(schemas).map(ns => namespace(ns as keyof typeof schemas)),
   }))
   const hasApiKey = vi.fn(async () => true)
-  vi.stubGlobal('dshOnboarding', { hasApiKey })
+  vi.stubGlobal('oceanOnboarding', { hasApiKey })
   mock.remote.settings.mutate.mockImplementation(async (ns, ops) => {
     const key = ns as keyof typeof schemas
     const value: Record<string, unknown> = { ...values[key] }

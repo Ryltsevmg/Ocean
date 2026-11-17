@@ -22,7 +22,7 @@ import type { DirectoryPicker } from '@ocean/ocean-host-directory-picker'
 import BrowseDirectoryPicker from '@ocean/ocean-host-directory-picker-browse'
 import NativeDirectoryPicker from '@ocean/ocean-host-directory-picker-native'
 import {
-  createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot,
+  createLaunchEnvironmentSnapshot, OCEAN_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot,
 } from '@ocean/ocean-launch-environment'
 import { probeNonLoopbackIpv4 } from '../../../../scripts/test-non-loopback-address.ts'
 import * as DirectoryPickerAuto from '../src/index.ts'
@@ -109,7 +109,7 @@ async function loadComposition(
   bindHost: string,
   options: { failSurface?: boolean; launchEnvironment?: LaunchEnvironmentSnapshot; remoteAuthorities?: boolean } = {},
 ): Promise<{ ctx: Context; configPath: string }> {
-  root = await mkdtemp(join(tmpdir(), 'dsh-directory-picker-auto-'))
+  root = await mkdtemp(join(tmpdir(), 'ocean-directory-picker-auto-'))
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [
     "- name: '@ocean/ocean-host-webserver'",
@@ -122,7 +122,7 @@ async function loadComposition(
 
   context = new Context()
   context.provide('connection', { allowsRemoteAuthorities: options.remoteAuthorities === true } as never)
-  if (options.launchEnvironment !== undefined) context.provide(DSH_LAUNCH_ENVIRONMENT_KEY, options.launchEnvironment)
+  if (options.launchEnvironment !== undefined) context.provide(OCEAN_LAUNCH_ENVIRONMENT_KEY, options.launchEnvironment)
   context.baseUrl = pathToFileURL(root).href + '/'
   await context.plugin(Loader)
   context.loader.builtins.include = Include
@@ -171,7 +171,7 @@ function includeTree(ctx: Context): Include {
  * probe resolves identically on hosts with and without zenity/kdialog.
  */
 function stubAttendedHost(): void {
-  fakeBin = mkdtempSync(join(tmpdir(), 'dsh-picker-bin-'))
+  fakeBin = mkdtempSync(join(tmpdir(), 'ocean-picker-bin-'))
   const zenity = join(fakeBin, 'zenity')
   writeFileSync(zenity, '#!/bin/sh\n')
   chmodSync(zenity, 0o755)

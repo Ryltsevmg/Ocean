@@ -3,20 +3,20 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-renderer/README.md
 /:
-  en: 06bd9d926c743736
-  zh: 39acdcb577fd8c6d
+  en: afdae9a02cee79ce
+  zh: 3eb4f2d66b7aeeb5
 /ocean-ocean-client-ui-renderer:
-  en: b4a9e32567c41dab
-  zh: 9fab3254e57dd6ba
+  en: a57447c319a81575
+  zh: 73f746ef58ddfe5d
 /ocean-ocean-client-ui-renderer/summary:
-  en: 1ba1a4112d222f62
-  zh: c1b7601dfe949711
+  en: 3b18db3b2f159bfb
+  zh: c5fe7bd42cadd029
 /ocean-ocean-client-ui-renderer/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-client-ui-renderer/use-this-package:
-  en: b83a441098d5b7fd
-  zh: 57cd24edbc2e6602
+  en: 8ddfa11e6f952ab5
+  zh: ebbf6d1fb15200df
 /ocean-ocean-client-ui-renderer/use-this-package/what-mounting-does:
   en: 1d5350799ce072d0
   zh: 942e543fdab51818
@@ -27,8 +27,8 @@
   en: 0de0a8ad857b93f6
   zh: 98a0fae2d6606a7d
 /ocean-ocean-client-ui-renderer/understand-the-implementation/activation-and-mount:
-  en: 002496a4609490f6
-  zh: bab3626fbe30ff55
+  en: de7c3f8f8712a09a
+  zh: 291b8ec09187b07f
 /ocean-ocean-client-ui-renderer/understand-the-implementation/slot-bindings:
   en: 6ab26cf5744a23d4
   zh: 84a531322a724a84
@@ -36,8 +36,8 @@
   en: 2a349d500ead79cb
   zh: ac49c8b1d73dcd6c
 /ocean-ocean-client-ui-renderer/further-exploration:
-  en: 470f2f4344a03bae
-  zh: 335b156406b4ccaf
+  en: c13d59d85d4686d1
+  zh: 53f71646f9216dac
 /ocean-ocean-client-ui-renderer/model-experience:
   en: ca4e29db08d34e6d
   zh: de6ec680414b1d54

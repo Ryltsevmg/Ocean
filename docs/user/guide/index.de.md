@@ -6,7 +6,7 @@
 [English](index.md) | [中文](index.zh.md) | [Русский](index.ru.md) | [日本語](index.ja.md) | [Español](index.es.md) | [Français](index.fr.md) | Deutsch | [Português](index.pt.md) | [한국어](index.ko.md)
 <!-- USER_LANGUAGES_END -->
 
-Starten Sie die Weboberfläche wie in der [README des Repositorys](../../development.md) beschrieben. Der Befehl gibt die URL aus. Folgen Sie dieser Anleitung, sobald der Server läuft. Der `dsh`-Prozess verwendet das Verzeichnis, aus dem Sie ihn starten, als Standardpfad im Dateisystem. In einer neuen Weboberfläche ist zunächst kein Arbeitsbereich ausgewählt.
+Starten Sie die Weboberfläche wie in der [README des Repositorys](../../development.md) beschrieben. Der Befehl gibt die URL aus. Folgen Sie dieser Anleitung, sobald der Server läuft. Der `ocean`-Prozess verwendet das Verzeichnis, aus dem Sie ihn starten, als Standardpfad im Dateisystem. In einer neuen Weboberfläche ist zunächst kein Arbeitsbereich ausgewählt.
 
 <a id="configure-a-model"></a>
 
@@ -18,7 +18,7 @@ Starten Sie die Weboberfläche wie in der [README des Repositorys](../../develop
 
 ## Einen Arbeitsbereich auswählen
 
-Klicken Sie auf **Arbeitsbereich auswählen**, fügen Sie das Projektverzeichnis hinzu, aus dem Sie `dsh` gestartet haben, und wählen Sie es aus. Das Eingabefeld der Sitzung ist erst verfügbar, wenn ein Arbeitsbereich ausgewählt ist.
+Klicken Sie auf **Arbeitsbereich auswählen**, fügen Sie das Projektverzeichnis hinzu, aus dem Sie `ocean` gestartet haben, und wählen Sie es aus. Das Eingabefeld der Sitzung ist erst verfügbar, wenn ein Arbeitsbereich ausgewählt ist.
 
 <a id="run-a-task"></a>
 

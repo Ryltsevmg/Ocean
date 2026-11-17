@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/attachment/attachment-local/README.md
 /:
-  en: 5d8d225549347391
-  zh: 0fc0e5ee73acf917
+  en: e6ba7230b3993725
+  zh: 84dd47d09ad221d4
 /ocean-ocean-attachment-local:
-  en: ed6316dcb7440e93
-  zh: d8d647c1931de09b
+  en: 837aef8981163ed7
+  zh: dda637a2a58865ad
 /ocean-ocean-attachment-local/summary:
-  en: 2350024cee2e9954
-  zh: 73a4900b1e40013b
+  en: 1f886cbc363e4c3b
+  zh: abcd3f7b032837d6
 /ocean-ocean-attachment-local/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,11 +18,11 @@
   en: 912a19be4b59ff8a
   zh: 9c14694cf2ebbaf2
 /ocean-ocean-attachment-local/use-this-package/minimal-configuration:
-  en: 56c8e14cc7d70c4c
-  zh: 54e0c91fb0c26503
+  en: 6a9638d1772c2d5a
+  zh: 8c7ad7bcd2f73a8c
 /ocean-ocean-attachment-local/use-this-package/where-your-images-are-stored-and-how-long-they-last:
-  en: 4ee90b8f74baa38c
-  zh: 9c577709ec55eb82
+  en: 72b316962d1af276
+  zh: 5ac6dd86e04e1d74
 /ocean-ocean-attachment-local/use-this-package/what-happens-when-you-attach-an-image:
   en: 75ba799b1e4edba4
   zh: 06c5f76200e8da8a
@@ -36,14 +36,14 @@
   en: dcd9857653645420
   zh: a27259a09f17465d
 /ocean-ocean-attachment-local/understand-the-implementation/write-and-read-paths:
-  en: 4cbbe8a1466ed46f
-  zh: 49d2d118501867d3
+  en: 7622503bd633aaf9
+  zh: c75a9f97dd33b822
 /ocean-ocean-attachment-local/understand-the-implementation/source-map:
   en: 05af85aa85934d01
   zh: 1c89e80d496dc0a3
 /ocean-ocean-attachment-local/further-exploration:
-  en: deec765ebf5f9b4a
-  zh: d258e0cee0fd957c
+  en: 0a813984b1be6325
+  zh: 0a9e08c92ef99362
 /ocean-ocean-attachment-local/model-experience:
   en: 2e18b3dfbc5af126
   zh: aaee1745632c561a
@@ -57,5 +57,5 @@
   en: d56846da29ad869c
   zh: 41e655e01351fd1d
 /ocean-ocean-attachment-local/known-limitations-and-deferred-work/dev-note/future-retention-and-remote-storage:
-  en: d4bbda6aadc3c879
-  zh: 97a22323e77affb3
+  en: 12c02b1956089d35
+  zh: b059dbfa19beef0f

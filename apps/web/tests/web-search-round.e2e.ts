@@ -25,7 +25,7 @@ const UI_EXPECTED = fileURLToPath(new URL('../../../snapshots/web/web-search-rou
 const MODE = webSnapshotMode()
 const QUERIES = ['Ocean snapshot search', 'Ocean multi-query search'] as const
 const PROMPT = `Use web_search once with queries ${JSON.stringify(QUERIES)}. Then reply exactly SEARCH_DONE and stop.`
-const SEARCH_CREDENTIAL_REF = credentialRef('DSH_WEB_SEARCH_E2E_KEY')
+const SEARCH_CREDENTIAL_REF = credentialRef('OCEAN_WEB_SEARCH_E2E_KEY')
 const SEARCH_CREDENTIAL = 'snapshot-search-key'
 
 /**

@@ -9,7 +9,7 @@ import { verifyInstalledProductIsolation } from './installed-product-isolation.t
 const roots: string[] = []
 
 function fixture(): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-installed-isolation-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-installed-isolation-'))
   roots.push(root)
   return root
 }

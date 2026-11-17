@@ -32,17 +32,17 @@ def display(notification: Notification) -> dict | None:
 def main() -> None:
     """Observe goal state before waiting for the final activity interval."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dsh-home", required=True, type=Path)
+    parser.add_argument("--ocean-home", required=True, type=Path)
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
-    parser.add_argument("--model", default=os.environ.get("DSH_MODEL", "deepseek-v4-flash"))
+    parser.add_argument("--model", default=os.environ.get("OCEAN_MODEL", "deepseek-v4-flash"))
     parser.add_argument("--timeout-seconds", type=float, default=300)
     parser.add_argument("objective", help="Objective for the native /goal command")
     args = parser.parse_args()
     if not args.objective.strip() or not math.isfinite(args.timeout_seconds) or args.timeout_seconds <= 0:
         parser.error("objective must be non-blank and timeout-seconds must be finite and positive")
     with DeepSeekHarness(
-        dsh_home=str(args.dsh_home.resolve()), cwd=str(args.workspace.resolve()),
-        profile="sdk", model=args.model, env={"DSH_PERMISSION_MODE": "workspace-write"},
+        ocean_home=str(args.ocean_home.resolve()), cwd=str(args.workspace.resolve()),
+        profile="sdk", model=args.model, env={"OCEAN_PERMISSION_MODE": "workspace-write"},
     ) as harness:
         session = harness.start_session()
         with ThreadPoolExecutor(max_workers=1) as worker:

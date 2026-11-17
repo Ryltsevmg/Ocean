@@ -45,16 +45,16 @@ const REQUESTING_PACKAGE_DIR = packageDir('client/ui-conversation')
 
 function clientConfigs(dir = REQUESTING_PACKAGE_DIR) {
   return clientBundle(dir, ['lib/types/index.js'])(
-    { env: { DSH_BUILD_FACE: 'client' } },
+    { env: { OCEAN_BUILD_FACE: 'client' } },
   ).filter(config => config.platform === 'browser')
 }
 
 describe('client bundle build faces', () => {
   it('names both configs and the loader registration after the package directory manifest', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-client-manifest-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-client-manifest-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@ocean/ocean-client-fixture' }))
-    const configs = clientBundle(root, ['lib/types/index.js'])({ env: { DSH_BUILD_FACE: 'client' } })
+    const configs = clientBundle(root, ['lib/types/index.js'])({ env: { OCEAN_BUILD_FACE: 'client' } })
     expect(configs.map(config => config.name)).toEqual([
       '@ocean/ocean-client-fixture', '@ocean/ocean-client-fixture/client',
     ])
@@ -67,7 +67,7 @@ describe('client bundle build faces', () => {
   })
 
   it('rejects a package directory without a named manifest', () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-client-manifest-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-client-manifest-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     expect(() => clientBundle(root, ['lib/types/index.js']))
       .toThrow(/cannot read .*package\.json; pass the package directory/)
@@ -78,7 +78,7 @@ describe('client bundle build faces', () => {
   it('opts shared Clients into independent Node ESM and browser factory entries', () => {
     for (const dir of ['client/connection', 'api/gateway', 'typert/registry']) {
       const configs = clientBundle(packageDir(dir), ['lib/types/index.js'], { dualClient: true })(
-        { env: { DSH_BUILD_FACE: 'client' } },
+        { env: { OCEAN_BUILD_FACE: 'client' } },
       )
       const node = configs.find(config => config.name?.endsWith('/client-node'))
       const browser = configs.find(config => config.name?.endsWith('/client'))
@@ -91,7 +91,7 @@ describe('client bundle build faces', () => {
       expect(configs.find(config => config.platform === 'node' && config.name?.endsWith('/client'))).toBeUndefined()
     }
     const ordinary = clientBundle(REQUESTING_PACKAGE_DIR, ['lib/types/index.js'])(
-      { env: { DSH_BUILD_FACE: 'client' } },
+      { env: { OCEAN_BUILD_FACE: 'client' } },
     )
     expect(ordinary.some(config => config.name?.endsWith('/client-node'))).toBe(false)
     expect(ordinary.find(config => config.platform === 'browser')?.outputOptions)
@@ -101,7 +101,7 @@ describe('client bundle build faces', () => {
   it('watches source in development and consumes emitted JavaScript in the Client build', () => {
     const bundle = clientBundle(REQUESTING_PACKAGE_DIR, ['lib/types/index.js'])
     const development = bundle({ env: {} }).find(config => config.platform === 'browser')
-    const artifact = bundle({ env: { DSH_BUILD_FACE: 'client' } })
+    const artifact = bundle({ env: { OCEAN_BUILD_FACE: 'client' } })
       .find(config => config.platform === 'browser')
 
     expect(development?.entry).toEqual({ client: 'src/client/index.ts' })
@@ -130,7 +130,7 @@ describe('statically linked client build modes', () => {
     { label: 'defaults to production', mode: undefined, expectedMode: 'production', frozen: false },
     { label: 'retains explicit development', mode: 'development', expectedMode: 'development', frozen: true },
   ])('$label when compiling conditional branches', async ({ mode, expectedMode, frozen }) => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-static-client-mode-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-static-client-mode-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     const entry = join(root, 'lib/types/client/index.js')
     mkdirSync(dirname(entry), { recursive: true })
@@ -147,7 +147,7 @@ describe('statically linked client build modes', () => {
     try {
       if (mode === undefined) Reflect.deleteProperty(process.env, 'NODE_ENV')
       else process.env.NODE_ENV = mode
-      config = staticLinked(root, ['lib/types/client/index.js'])({ env: { DSH_BUILD_FACE: 'client' } })
+      config = staticLinked(root, ['lib/types/client/index.js'])({ env: { OCEAN_BUILD_FACE: 'client' } })
         .find(candidate => candidate.platform === 'browser')
     } finally {
       if (previousMode === undefined) Reflect.deleteProperty(process.env, 'NODE_ENV')
@@ -179,9 +179,9 @@ function dynamicImportFixture(prefix: string): string {
 
 describe('client bundle dynamic imports', () => {
   it('keeps a dual Client browser chunk disjoint from its Node output', async () => {
-    const root = dynamicImportFixture('dsh-dual-client-chunk-')
+    const root = dynamicImportFixture('ocean-dual-client-chunk-')
     const configs = clientBundle(root, ['lib/types/index.js'], { dualClient: true })(
-      { env: { DSH_BUILD_FACE: 'client' } },
+      { env: { OCEAN_BUILD_FACE: 'client' } },
     )
     for (const platform of ['node', 'browser'] as const) {
       const config = configs.find(config => config.name?.endsWith(platform === 'node' ? '/client-node' : '/client'))
@@ -201,7 +201,7 @@ describe('client bundle dynamic imports', () => {
   })
 
   it('compiles import() to the module loader asynchronous operation', async () => {
-    const root = dynamicImportFixture('dsh-client-dynamic-import-')
+    const root = dynamicImportFixture('ocean-client-dynamic-import-')
     const config = clientConfigs()[0]
     if (config === undefined) throw new Error('client config missing')
 
@@ -219,7 +219,7 @@ function clientSourceMapPath(packagePath: string): string {
 function purityResolveId(dir = REQUESTING_PACKAGE_DIR): ResolveId {
   const configs = clientConfigs(dir)
   const plugins = (configs[0] as { plugins: { name: string; resolveId?: unknown }[] }).plugins
-  const gate = plugins.find(p => p.name === 'dsh-client-bundle-purity')
+  const gate = plugins.find(p => p.name === 'ocean-client-bundle-purity')
   if (gate?.resolveId === undefined) throw new Error('purity plugin missing from client config')
   return gate.resolveId as ResolveId
 }
@@ -227,7 +227,7 @@ function purityResolveId(dir = REQUESTING_PACKAGE_DIR): ResolveId {
 function cssModulePlugin(): CssModulePlugin {
   const configs = clientConfigs()
   const plugins = (configs[0] as { plugins: CssModulePlugin[] }).plugins
-  const plugin = plugins.find(candidate => candidate.name === 'dsh-css-modules-inline')
+  const plugin = plugins.find(candidate => candidate.name === 'ocean-css-modules-inline')
   if (plugin?.resolveId === undefined || plugin.load === undefined) {
     throw new Error('CSS Modules plugin missing from client config')
   }
@@ -237,7 +237,7 @@ function cssModulePlugin(): CssModulePlugin {
 function sourceMapPlugin(): SourceMapPlugin {
   const configs = clientConfigs()
   const plugins = (configs[0] as { plugins: SourceMapPlugin[] }).plugins
-  const plugin = plugins.find(candidate => candidate.name === 'dsh-tsc-sourcemap')
+  const plugin = plugins.find(candidate => candidate.name === 'ocean-tsc-sourcemap')
   if (plugin?.load === undefined) throw new Error('tsc sourcemap plugin missing from client config')
   return plugin
 }
@@ -364,7 +364,7 @@ describe('client bundle purity gate', () => {
 
 describe('client bundle input isolation', () => {
   function fixture() {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-client-inputs-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-client-inputs-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     const owner = join(root, 'client')
     const entry = join(owner, 'lib/types/client/index.js')
@@ -375,7 +375,7 @@ describe('client bundle input isolation', () => {
 
   function config(kind: 'static' | 'dynamic', dir = REQUESTING_PACKAGE_DIR): UserConfig {
     const configs = kind === 'static'
-      ? staticLinked(dir, ['lib/types/client/index.js'])({ env: { DSH_BUILD_FACE: 'client' } })
+      ? staticLinked(dir, ['lib/types/client/index.js'])({ env: { OCEAN_BUILD_FACE: 'client' } })
       : clientConfigs(dir)
     const browser = configs.find(config => config.platform === 'browser')
     if (browser === undefined) throw new Error('client config missing')
@@ -401,7 +401,7 @@ describe('client bundle input isolation', () => {
 
   function checkCompilerModule(module: string): void {
     const plugins = config('dynamic').plugins as InputIsolationPlugin[]
-    const plugin = plugins.find(plugin => plugin.name === 'dsh-client-input-isolation')
+    const plugin = plugins.find(plugin => plugin.name === 'ocean-client-input-isolation')
     if (plugin === undefined) throw new Error('client input isolation plugin missing')
     plugin.generateBundle.call({
       getModuleInfo: () => null,
@@ -453,7 +453,7 @@ describe('client bundle module requests', () => {
 
   it('rejects a malformed declaration instead of reading past it', () => {
     expect(() => requestedExternals('@ocean/ocean-client-fixture', { external: 'react' }))
-      .toThrow(/dsh\.client\.external must be a string array/)
+      .toThrow(/ocean\.client\.external must be a string array/)
   })
 })
 
@@ -465,7 +465,7 @@ describe('client bundle debug artifacts', () => {
   })
 
   it('chains emitted tsc maps when the production Client build consumes lib/types', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-client-sourcemap-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-client-sourcemap-'))
     try {
       const entry = join(root, 'lib', 'types', 'client', 'index.js')
       const source = join(root, 'src', 'client', 'index.ts')
@@ -494,7 +494,7 @@ describe('client bundle debug artifacts', () => {
 
     const source = transform('../src/client/GoalBar.tsx', clientSourceMapPath('client/ui-goal'))
     expect(source).toBe('../../../packages/client/ui-goal/src/client/GoalBar.tsx')
-    const resolved = new URL(source, 'https://dsh.test/plugins/@ocean/ocean-client-ui-goal/client.js.map')
+    const resolved = new URL(source, 'https://ocean.test/plugins/@ocean/ocean-client-ui-goal/client.js.map')
     expect(resolved.pathname).toBe('/packages/client/ui-goal/src/client/GoalBar.tsx')
   })
 
@@ -519,7 +519,7 @@ describe('client bundle debug artifacts', () => {
     const sourceMapPath = clientSourceMapPath('client/connection')
     const workspaceSource = transform('../src/rpc.ts', sourceMapPath)
     expect(workspaceSource).toBe('../../../packages/client/connection/src/rpc.ts')
-    const resolved = new URL(workspaceSource, 'https://dsh.test/plugins/@ocean/ocean-client-connection/client.js.map')
+    const resolved = new URL(workspaceSource, 'https://ocean.test/plugins/@ocean/ocean-client-connection/client.js.map')
     expect(resolved.pathname).toBe('/packages/client/connection/src/rpc.ts')
 
     const dependencySource = '../../../../node_modules/.pnpm/zod@4.6.6/node_modules/zod/index.js'

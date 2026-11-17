@@ -307,7 +307,7 @@
       "@ocean/ocean-util-values": ["./packages/util/values/src"],
       "@ocean/ocean-util-code-language": ["./packages/util/code-language/src"],
       // util/ folders are role-named without the util- prefix their npm names carry,
-      // so these aliases stay hand-written like dsh-util-crypto above.
+      // so these aliases stay hand-written like ocean-util-crypto above.
       "@ocean/ocean-util-time": ["./packages/util/time/src"],
       "@ocean/ocean-util-file-drag": ["./packages/util/file-drag/src"],
       "@ocean/ocean-util-ripgrep": ["./packages/util/ripgrep/src"],
@@ -469,8 +469,8 @@
       "@ocean/ocean-subagent-acp": ["./packages/subagent/subagent-acp/src"],
       "@ocean/ocean-subagent-claude-code": ["./packages/subagent/subagent-claude-code/src"],
       "@ocean/ocean-subagent-codex": ["./packages/subagent/subagent-codex/src"],
-      "@ocean/ocean-subagent-dsh-sdk": ["./packages/subagent/subagent-dsh-sdk/src"],
       "@ocean/ocean-subagent-fork-in-process": ["./packages/subagent/subagent-fork-in-process/src"],
+      "@ocean/ocean-subagent-ocean-sdk": ["./packages/subagent/subagent-ocean-sdk/src"],
       "@ocean/ocean-subagent-spawn-in-process": ["./packages/subagent/subagent-spawn-in-process/src"],
       "@ocean/ocean-subprocess": ["./packages/subprocess/subprocess/src"],
       "@ocean/ocean-subprocess-local": ["./packages/subprocess/subprocess-local/src"],

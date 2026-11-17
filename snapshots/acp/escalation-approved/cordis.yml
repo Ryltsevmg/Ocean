@@ -1,4 +1,4 @@
-# ACP snapshot-record patch over the shipped `acp` profile. The dsh
+# ACP snapshot-record patch over the shipped `acp` profile. The ocean
 # launcher owns environment loading, plugin resolution, and process shutdown;
 # stdout remains reserved for ACP JSON-RPC.
 
@@ -16,19 +16,19 @@
 - id: sandbox-policy
   name: '@ocean/ocean-sandbox-policy'
   config:
-    mode: !!js "process.env.DSH_PERMISSION_MODE ?? (process.env.DSH_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')"
+    mode: !!js "process.env.OCEAN_PERMISSION_MODE ?? (process.env.OCEAN_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')"
     workspaceRoot: !!js process.cwd()
 
 - id: approval
   name: '@ocean/ocean-user-approval'
   config:
-    policy: !!js "(process.env.DSH_PERMISSION_MODE ?? (process.env.DSH_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')) === 'danger-full-access' ? 'never' : 'ask'"
+    policy: !!js "(process.env.OCEAN_PERMISSION_MODE ?? (process.env.OCEAN_SNAPSHOT === undefined ? 'workspace-write' : 'danger-full-access')) === 'danger-full-access' ? 'never' : 'ask'"
 
 - id: session-persistence-jsonl
   name: '@ocean/ocean-session-persistence-jsonl'
   config:
-    root: !!js process.env.DSH_SNAPSHOT_SESSIONS_ROOT ?? dshHomePath('sessions')
-    compression: !!js "process.env.DSH_SNAPSHOT === undefined ? 'zstd' : 'none'"
+    root: !!js process.env.OCEAN_SNAPSHOT_SESSIONS_ROOT ?? oceanHomePath('sessions')
+    compression: !!js "process.env.OCEAN_SNAPSHOT === undefined ? 'zstd' : 'none'"
 
 - id: acp
   name: '@ocean/ocean-acp'

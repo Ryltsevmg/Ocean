@@ -7,7 +7,7 @@ import {
   DESKTOP_PACKAGES_DIR,
   DESKTOP_PACKAGE_SET_FILE,
   desktopCorePackageOverrides,
-  desktopDshPackageSpec,
+  desktopOceanPackageSpec,
   parseDesktopCorePackageSet,
   verifyDesktopCoreLockfile,
   verifyDesktopCorePackageSet,
@@ -28,28 +28,28 @@ function record(name: string, file: string, body: Buffer, version = '1.2.3'): De
 
 function packageSetProject(): {
   root: string
-  dsh: DesktopCorePackageRecord
+  ocean: DesktopCorePackageRecord
   base: DesktopCorePackageRecord
   host: DesktopCorePackageRecord
 } {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-desktop-package-set-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-desktop-package-set-'))
   roots.push(root)
   const packageDir = join(root, DESKTOP_PACKAGES_DIR)
   mkdirSync(packageDir)
-  const dshBody = Buffer.from('dsh')
+  const oceanBody = Buffer.from('ocean')
   const baseBody = Buffer.from('base')
   const hostBody = Buffer.from('host')
-  const dsh = record('@ocean/ocean', 'dsh.tgz', dshBody)
-  const base = record('@ocean/ocean-base', 'dsh-base.tgz', baseBody)
-  const host = record('@ocean/ocean-desktop-host', 'dsh-desktop-host.tgz', hostBody)
-  writeFileSync(join(packageDir, dsh.file), dshBody)
+  const ocean = record('@ocean/ocean', 'ocean.tgz', oceanBody)
+  const base = record('@ocean/ocean-base', 'ocean-base.tgz', baseBody)
+  const host = record('@ocean/ocean-desktop-host', 'ocean-desktop-host.tgz', hostBody)
+  writeFileSync(join(packageDir, ocean.file), oceanBody)
   writeFileSync(join(packageDir, base.file), baseBody)
   writeFileSync(join(packageDir, host.file), hostBody)
   writeFileSync(join(root, DESKTOP_PACKAGE_SET_FILE), `${JSON.stringify({
     schemaVersion: 1,
-    packages: [dsh, base, host],
+    packages: [ocean, base, host],
   })}\n`)
-  return { root, dsh, base, host }
+  return { root, ocean, base, host }
 }
 
 afterEach(() => {
@@ -57,39 +57,39 @@ afterEach(() => {
 })
 
 describe('desktop core package set', () => {
-  it('pins the direct dsh dependency and every internal package to local tarballs', () => {
+  it('pins the direct ocean dependency and every internal package to local tarballs', () => {
     const { root } = packageSetProject()
     const packageSet = verifyDesktopCorePackageSet(root, '1.2.3')
-    expect(desktopDshPackageSpec(packageSet)).toBe('file:./desktop-packages/dsh.tgz')
+    expect(desktopOceanPackageSpec(packageSet)).toBe('file:./desktop-packages/ocean.tgz')
     expect(desktopCorePackageOverrides(packageSet)).toEqual({
-      '@ocean/ocean': 'file:./desktop-packages/dsh.tgz',
-      '@ocean/ocean-base': 'file:./desktop-packages/dsh-base.tgz',
-      '@ocean/ocean-desktop-host': 'file:./desktop-packages/dsh-desktop-host.tgz',
+      '@ocean/ocean': 'file:./desktop-packages/ocean.tgz',
+      '@ocean/ocean-base': 'file:./desktop-packages/ocean-base.tgz',
+      '@ocean/ocean-desktop-host': 'file:./desktop-packages/ocean-desktop-host.tgz',
     })
   })
 
   it('rejects version drift, descriptor disorder, corruption, and extra files', () => {
-    const { root, dsh, base, host } = packageSetProject()
+    const { root, ocean, base, host } = packageSetProject()
     expect(() => verifyDesktopCorePackageSet(root, '2.0.0')).toThrow(/does not match Desktop/u)
     expect(() => parseDesktopCorePackageSet({
       schemaVersion: 1,
-      packages: [dsh, base, { ...host, version: '2.0.0' }],
+      packages: [ocean, base, { ...host, version: '2.0.0' }],
     }, '1.2.3')).toThrow(/ocean-desktop-host@2\.0\.0 does not match Desktop 1\.2\.3/u)
-    expect(() => parseDesktopCorePackageSet({ schemaVersion: 1, packages: [base, dsh, host] }))
+    expect(() => parseDesktopCorePackageSet({ schemaVersion: 1, packages: [base, ocean, host] }))
       .toThrow(/sorted by name/u)
-    writeFileSync(join(root, DESKTOP_PACKAGES_DIR, dsh.file), 'changed')
+    writeFileSync(join(root, DESKTOP_PACKAGES_DIR, ocean.file), 'changed')
     expect(() => verifyDesktopCorePackageSet(root, '1.2.3')).toThrow(/integrity check failed/u)
     writeFileSync(join(root, DESKTOP_PACKAGES_DIR, 'extra.tgz'), '')
     expect(() => verifyDesktopCorePackageSet(root, '1.2.3')).toThrow(/does not match its descriptor/u)
   })
 
   it('rejects registry resolutions for names supplied by the local package set', () => {
-    const dsh = record('@ocean/ocean', 'dsh.tgz', Buffer.from('dsh'))
+    const ocean = record('@ocean/ocean', 'ocean.tgz', Buffer.from('ocean'))
     const host = record('@ocean/ocean-desktop-host', 'host.tgz', Buffer.from('host'))
-    const packageSet = parseDesktopCorePackageSet({ schemaVersion: 1, packages: [dsh, host] })
+    const packageSet = parseDesktopCorePackageSet({ schemaVersion: 1, packages: [ocean, host] })
     expect(() => {
       verifyDesktopCoreLockfile(
-        "packages:\n  '@ocean/ocean@file:desktop-packages/dsh.tgz':\n    resolution: {}\n",
+        "packages:\n  '@ocean/ocean@file:desktop-packages/ocean.tgz':\n    resolution: {}\n",
         packageSet,
       )
     }).not.toThrow()

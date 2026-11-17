@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-slots/README.md
 /:
-  en: 5a5d547e129dd834
-  zh: 40cd5d61ef91e908
+  en: 55be8b4439786809
+  zh: 8d33e81e349d1049
 /ocean-ocean-client-ui-slots:
-  en: 78551612593ac611
-  zh: 483f51ab3e952b8b
+  en: abdfff3b02ad9714
+  zh: 4fe2e9b025b58b8d
 /ocean-ocean-client-ui-slots/summary:
-  en: 486631f9cc7b5d6f
-  zh: 61fdcd066fcd1402
+  en: 8cdb4cdeedb26de3
+  zh: 18345f87664eb547
 /ocean-ocean-client-ui-slots/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -39,8 +39,8 @@
   en: 2b6058e98fb1efe7
   zh: f32e37c8381809b9
 /ocean-ocean-client-ui-slots/further-exploration:
-  en: b60ecef059aa64d4
-  zh: b8ba9d1719535b45
+  en: 6a37be52c403bef8
+  zh: 3504b4a314816c5d
 /ocean-ocean-client-ui-slots/model-experience:
   en: 3120df665299c634
   zh: 67bb5e1fe59dae19

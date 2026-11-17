@@ -10,7 +10,7 @@
  * ephemeral `/tmp` mount, launcher-owned flags) — the honest per-runner
  * differences recorded in the sandbox RFC — with parity pinned by test.
  *
- * @module dsh-sandbox/roots
+ * @module ocean-sandbox/roots
  */
 
 import { realpathSync, statSync } from 'node:fs'

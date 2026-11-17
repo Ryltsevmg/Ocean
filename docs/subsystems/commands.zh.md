@@ -2,7 +2,7 @@
 
 [English](commands.md) | 中文
 
-[`dsh-commands`](../../packages/interaction/commands) 提供的用户命令注册表服务。交互式适配器用它发现插件拥有的命令，并针对确切的 agent（智能体）直接执行这些命令，而不创建模型消息。[包 README](../../packages/interaction/commands/README.zh.md) 负责分发、生命周期、组合方式与限制。
+[`ocean-commands`](../../packages/interaction/commands) 提供的用户命令注册表服务。交互式适配器用它发现插件拥有的命令，并针对确切的 agent（智能体）直接执行这些命令，而不创建模型消息。[包 README](../../packages/interaction/commands/README.zh.md) 负责分发、生命周期、组合方式与限制。
 
 来源：[`packages/interaction/commands/src/index.ts`](../../packages/interaction/commands/src/index.ts)
 

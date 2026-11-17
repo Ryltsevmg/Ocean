@@ -152,9 +152,9 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
     ...mirrorDependencyLinks(options.dependencyDir, destinationModules),
     ...mirrorWorkspaceDependencies([options.cliDir, options.hostDir], destinationModules),
   ]
-  const dshLink = join(destinationModules, '@ocean', 'ocean')
-  removeOwnedPath(dshLink)
-  linkDirectory(options.cliDir, dshLink)
+  const oceanLink = join(destinationModules, '@ocean', 'ocean')
+  removeOwnedPath(oceanLink)
+  linkDirectory(options.cliDir, oceanLink)
   const hostLink = join(destinationModules, '@ocean', 'ocean-desktop-host')
   removeOwnedPath(hostLink)
   linkDirectory(options.hostDir, hostLink)

@@ -1,4 +1,4 @@
-/** DeepSeek Files API identifiers. @module dsh-llm-deepseek/file-id */
+/** DeepSeek Files API identifiers. @module ocean-llm-deepseek/file-id */
 
 import type { Branded } from '@ocean/ocean-brand'
 

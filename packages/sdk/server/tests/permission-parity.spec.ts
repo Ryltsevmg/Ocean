@@ -164,7 +164,7 @@ async function switchAndContinue(path: 'sdk' | 'native', cwd: string) {
 }
 
 it('preserves native permission events, unchanged defaults, and the next model request through query', async () => {
-  const cwd = await mkdtemp(join(tmpdir(), 'dsh-sdk-permission-parity-'))
+  const cwd = await mkdtemp(join(tmpdir(), 'ocean-sdk-permission-parity-'))
   try {
     const native = await switchAndContinue('native', cwd)
     const sdk = await switchAndContinue('sdk', cwd)
@@ -180,7 +180,7 @@ it('preserves native permission events, unchanged defaults, and the next model r
     expect(texts).toContain('PERMISSION_READY')
     expect(sdk.approvalInputs).toHaveLength(1)
     expect(content).toEqual(expect.arrayContaining(sdk.approvalInputs.flat()))
-    expect(texts.some(text => text.includes('Current DSH file policy: read-only.'))).toBe(true)
+    expect(texts.some(text => text.includes('Current OCEAN file policy: read-only.'))).toBe(true)
     expect(texts).not.toContain('/permission read-only')
     expect(texts).not.toContain('preset read-only')
   } finally {

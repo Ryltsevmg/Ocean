@@ -6,7 +6,7 @@ vi.stubEnv('OCEAN_DOWNLOAD_ORIGIN', 'https://updates.ocean.example')
 afterAll(() => vi.unstubAllEnvs())
 
 const environment = {
-  DSH_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example', DOWNLOAD_PROD_COS_BUCKET: 'fixture-bucket',
+  OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production', OCEAN_DOWNLOAD_ORIGIN: 'https://updates.ocean.example', DOWNLOAD_PROD_COS_BUCKET: 'fixture-bucket',
   DOWNLOAD_PROD_COS_SECRET_ID: 'fixture-secret-id', DOWNLOAD_PROD_COS_SECRET_KEY: 'fixture-secret-key',
   DOWNLOAD_PROD_EO_ZONE_ID: 'zone-fixture',
 }
@@ -16,8 +16,8 @@ afterEach(() => vi.restoreAllMocks())
 
 describe('production EdgeOne configuration', () => {
   it.each([
-    [{ DSH_DESKTOP_AUTO_UPDATE_ENV: 'test' }, /production is required/u],
-    [{ DSH_DESKTOP_AUTO_UPDATE_ENV: 'prod' }, /must be "test" or "production"/u],
+    [{ OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'test' }, /production is required/u],
+    [{ OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'prod' }, /must be "test" or "production"/u],
     [{ DOWNLOAD_PROD_EO_ZONE_ID: '' }, /DOWNLOAD_PROD_EO_ZONE_ID/u],
     [{ DOWNLOAD_PROD_EO_ZONE_ID: 'invalid' }, /must name one EO zone/u],
     [{ DOWNLOAD_PROD_COS_SECRET_KEY: '' }, /DOWNLOAD_PROD_COS_SECRET_KEY/u],
@@ -28,8 +28,8 @@ describe('production EdgeOne configuration', () => {
   it('uses the upload plan URL verbatim and derives only cache-only destinations', () => {
     const url = 'https://updates.ocean.example/changed/installer.dmg'
     expect(resolveDesktopPurgeConfig(environment, 'mac-arm64', url).publicUrl).toBe(url)
-    expect(resolveDesktopPurgeConfig(environment, 'win-x64').publicUrl).toBe('https://updates.ocean.example/desktop/dsh-latest-windows-x64.exe')
-    expect(resolveDesktopPurgeConfig(environment, 'mac-x64').publicUrl).toBe('https://updates.ocean.example/desktop/dsh-latest-macos-x64.dmg')
+    expect(resolveDesktopPurgeConfig(environment, 'win-x64').publicUrl).toBe('https://updates.ocean.example/desktop/ocean-latest-windows-x64.exe')
+    expect(resolveDesktopPurgeConfig(environment, 'mac-x64').publicUrl).toBe('https://updates.ocean.example/desktop/ocean-latest-macos-x64.dmg')
   })
 })
 

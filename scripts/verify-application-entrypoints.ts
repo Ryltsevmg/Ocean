@@ -1,5 +1,5 @@
 /**
- * Enforce dsh profiles as the only supported Node application launcher.
+ * Enforce ocean profiles as the only supported Node application launcher.
  * Vendor CLIs, build tools, and test tools are explicit classifications
  * rather than implicit holes.
  */
@@ -19,7 +19,7 @@ interface RootManifest {
 }
 
 interface LauncherPolicy {
-  readonly kind: 'dsh-direct' | 'dsh-wrapper'
+  readonly kind: 'ocean-direct' | 'ocean-wrapper'
   readonly wrapper?: string
 }
 
@@ -30,8 +30,8 @@ const MANIFEST_BIN_ALLOWLIST = new Map<string, ManifestBin>([
 
 /** Every JavaScript executable in an application or packaging workspace has one explicit role. */
 const EXECUTABLE_SOURCE_ALLOWLIST = new Map<string, string>([
-  ['apps/cli/src/installed-bin.ts', 'installed dsh command entry'],
-  ['apps/cli/src/bin.ts', 'supported dsh application launcher'],
+  ['apps/cli/src/installed-bin.ts', 'installed ocean command entry'],
+  ['apps/cli/src/bin.ts', 'supported ocean application launcher'],
   ['apps/desktop/scripts/logged-notarytool.mjs', 'build-only notarization logging wrapper'],
   ['packages/context/time-context/tests/fixtures/driver.ts', 'test-only subprocess driver'],
   ['packages/sdk/client/tests/fake-runtime.ts', 'test-only SDK runtime peer'],
@@ -40,21 +40,21 @@ const EXECUTABLE_SOURCE_ALLOWLIST = new Map<string, string>([
   ['packages/subagent/subagent-acp/tests/fixtures/loader/driver.ts', 'test-only subprocess driver'],
   ['packages/subagent/subagent-claude-code/tests/fixtures/loader/driver.ts', 'test-only subprocess driver'],
   ['packages/subagent/subagent-codex/tests/fixtures/loader/driver.ts', 'test-only subprocess driver'],
-  ['packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/driver.ts', 'test-only subprocess driver'],
+  ['packages/subagent/subagent-ocean-sdk/tests/fixtures/loader/driver.ts', 'test-only subprocess driver'],
   ['packages/test-support/loader-smoke/tests/fixtures/headless-driver.ts', 'test-only subprocess driver'],
   ['packages/test-support/llm-mock-server/src/bin.ts', 'test-only model server'],
   ['python/sdk-runtime/runtime-bootstrap.mjs', 'private packaging-only runtime dispatcher'],
 ])
 
 /**
- * Root scripts that start an application must visibly select dsh: every `demo:*`
+ * Root scripts that start an application must visibly select ocean: every `demo:*`
  * script needs a row here, and the Web start and development scripts are pinned
  * by name.
  */
 const ROOT_LAUNCHER_POLICIES = new Map<string, LauncherPolicy>([
-  ['demo:ptc', { kind: 'dsh-wrapper', wrapper: 'scripts/demo-ptc.mjs' }],
-  ['start:web', { kind: 'dsh-direct' }],
-  ['dev:web', { kind: 'dsh-wrapper', wrapper: 'scripts/dev-web.ts' }],
+  ['demo:ptc', { kind: 'ocean-wrapper', wrapper: 'scripts/demo-ptc.mjs' }],
+  ['start:web', { kind: 'ocean-direct' }],
+  ['dev:web', { kind: 'ocean-wrapper', wrapper: 'scripts/dev-web.ts' }],
 ])
 
 const SOURCE_PATTERNS = [
@@ -103,7 +103,7 @@ function manifestBinViolations(root: string): string[] {
     if (manifest.bin === undefined) continue
     const expected = MANIFEST_BIN_ALLOWLIST.get(path)
     if (expected === undefined) {
-      failures.push(`${path}: package bin bypasses the dsh launcher; applications use apps/cli profiles`)
+      failures.push(`${path}: package bin bypasses the ocean launcher; applications use apps/cli profiles`)
       continue
     }
     if (normalizedBin(manifest.bin) !== normalizedBin(expected)) {
@@ -126,7 +126,7 @@ function executableSourceViolations(root: string): string[] {
   return failures
 }
 
-function referencesDshCli(source: string): boolean {
+function referencesOceanCli(source: string): boolean {
   return source.includes('apps/cli/src/bin.ts')
 }
 
@@ -143,13 +143,13 @@ function rootLauncherViolations(root: string): string[] {
     const policy = ROOT_LAUNCHER_POLICIES.get(name)
     if (policy === undefined) {
       if (name.startsWith('demo:')) {
-        failures.push(`package.json scripts.${name}: demo launcher has no explicit dsh or in-process classification`)
+        failures.push(`package.json scripts.${name}: demo launcher has no explicit ocean or in-process classification`)
       }
       continue
     }
     const command = typeof commandValue === 'string' ? commandValue : ''
-    if (policy.kind === 'dsh-direct') {
-      if (!referencesDshCli(command)) failures.push(`package.json scripts.${name}: application launcher script must launch apps/cli/src/bin.ts`)
+    if (policy.kind === 'ocean-direct') {
+      if (!referencesOceanCli(command)) failures.push(`package.json scripts.${name}: application launcher script must launch apps/cli/src/bin.ts`)
       if (referencesPackageEntry(command)) failures.push(`package.json scripts.${name}: application launcher script must not launch a package entry directly`)
       continue
     }
@@ -164,7 +164,7 @@ function rootLauncherViolations(root: string): string[] {
       continue
     }
     const source = readFileSync(wrapperPath, 'utf8')
-    if (!referencesDshCli(source)) failures.push(`${wrapper}: application launcher wrapper must launch apps/cli/src/bin.ts`)
+    if (!referencesOceanCli(source)) failures.push(`${wrapper}: application launcher wrapper must launch apps/cli/src/bin.ts`)
     if (referencesPackageEntry(source)) failures.push(`${wrapper}: application launcher wrapper must not launch a package entry directly`)
   }
   return failures
@@ -195,6 +195,6 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(resolve(p
     for (const failure of failures) console.error(`  ${failure}`)
     process.exitCode = 1
   } else {
-    console.log('verify-application-entrypoints: dsh is the only supported Node application launcher.')
+    console.log('verify-application-entrypoints: ocean is the only supported Node application launcher.')
   }
 }

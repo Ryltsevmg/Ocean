@@ -17,7 +17,7 @@ afterEach(async () => {
 })
 
 async function fixture(issuer: string, config: Config = {}) {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-account-origin-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-account-origin-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
   const ctx = new Context()
   cleanups.push(() => ctx.fiber.dispose())

@@ -109,7 +109,7 @@ describe('JSONL V2 PTC publication and restore', () => {
   let ctx: Context | undefined
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), 'dsh-jsonl-v2-ptc-'))
+    root = await mkdtemp(join(tmpdir(), 'ocean-jsonl-v2-ptc-'))
     ctx = new Context()
     await ctx.plugin(JsonlSessionPersistence, { root, compression: 'none' })
   })

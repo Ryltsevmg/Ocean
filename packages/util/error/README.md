@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-error` holds `HarnessError`, the base class for every expected Harness failure. A `HarnessError` carries a stable machine-routable `code` beside its human-readable `message` and optional `cause`, and its `name` is the constructing class name. The tool registry records `name` and `code` of a thrown `HarnessError` on `tool/result`, so retry policy, UI, replay, and analytics route on the code instead of parsing text. The package has no dependencies, so packages below `dsh-llm` in the dependency graph can extend the base too; `dsh-llm` re-exports the same class.
+`ocean-error` holds `HarnessError`, the base class for every expected Harness failure. A `HarnessError` carries a stable machine-routable `code` beside its human-readable `message` and optional `cause`, and its `name` is the constructing class name. The tool registry records `name` and `code` of a thrown `HarnessError` on `tool/result`, so retry policy, UI, replay, and analytics route on the code instead of parsing text. The package has no dependencies, so packages below `ocean-llm` in the dependency graph can extend the base too; `ocean-llm` re-exports the same class.
 
 ## Table of Contents
 
@@ -33,7 +33,7 @@ export class ArchiveError extends HarnessError {}
 throw new ArchiveError('archive entry is missing', 'ARCHIVE_ENTRY_NOT_FOUND')
 ```
 
-Assign `this.name` a string literal in a subclass constructor when a bundler could rename the class, because `name` is persisted. Import the class from `@ocean/ocean-error` or from its `@ocean/ocean-llm` re-export; both name the same class, so `instanceof` checks agree. The [error class and code guide](../../../.agents/skills/dsh-error-handling/references/error-codes.md) defines class choice, naming, and code conventions.
+Assign `this.name` a string literal in a subclass constructor when a bundler could rename the class, because `name` is persisted. Import the class from `@ocean/ocean-error` or from its `@ocean/ocean-llm` re-export; both name the same class, so `instanceof` checks agree. The [error class and code guide](../../../.agents/skills/ocean-error-handling/references/error-codes.md) defines class choice, naming, and code conventions.
 
 -----
 
@@ -51,7 +51,7 @@ Assign `this.name` a string literal in a subclass constructor when a bundler cou
 
 ### Why it stays dependency-free
 
-`dsh-llm` depends on lower packages such as `dsh-attachment` and `dsh-typert-protocol`, so a base class defined there could not be extended below it without a dependency cycle. Keeping the class in a package without dependencies lets every package extend it
+`ocean-llm` depends on lower packages such as `ocean-attachment` and `ocean-typert-protocol`, so a base class defined there could not be extended below it without a dependency cycle. Keeping the class in a package without dependencies lets every package extend it
 
 </details>
 
@@ -61,7 +61,7 @@ Assign `this.name` a string literal in a subclass constructor when a bundler cou
 ## Further Exploration
 
 - [Tools subsystem](../../../docs/subsystems/tools.md) — how the registry records `ToolErrorInfo` from a thrown `HarnessError`.
-- [Error-handling rules](../../../.agents/skills/dsh-error-handling/SKILL.md) — when code must throw a `HarnessError`.
+- [Error-handling rules](../../../.agents/skills/ocean-error-handling/SKILL.md) — when code must throw a `HarnessError`.
 
 -----
 

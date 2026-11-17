@@ -26,7 +26,7 @@ afterEach(async () => {
 })
 
 it.each([true, false])('reports an unversioned package by name alongside a versioned sibling (private=%s)', async (isPrivate) => {
-  root = await mkdtemp(join(tmpdir(), 'dsh-private-package-composition-'))
+  root = await mkdtemp(join(tmpdir(), 'ocean-private-package-composition-'))
   const parent = join(root, 'inspector')
   const privateDir = join(parent, 'skill')
   const siblingDir = join(parent, 'sibling')

@@ -29,7 +29,7 @@ Enable **Claude Code subagent** in the Web or Desktop Plugins page when a task n
 
 ### Installing the Bundle
 
-The Official entry is visible offline. Enabling it installs the [target for the running DSH installation](../../boot/plugin-manager/README.md#use-this-package) through the ordinary bundle installer and selects its profile layer. The layer registers the provider and adds `subagent_claude_code` to every Agent as a global tool; it starts no native process until delegation. Restart when the installer reports that one is required.
+The Official entry is visible offline. Enabling it installs the [target for the running OCEAN installation](../../boot/plugin-manager/README.md#use-this-package) through the ordinary bundle installer and selects its profile layer. The layer registers the provider and adds `subagent_claude_code` to every Agent as a global tool; it starts no native process until delegation. Restart when the installer reports that one is required.
 
 Switching Off deselects the layer and leaves the package installed. Remove is a separate package operation. Enabling or switching Off registers or removes the global tool in the running Host, so live Agents see the change on their next request.
 
@@ -121,7 +121,7 @@ A start accepts only a non-empty sequence of text blocks and derives the child c
 Read these pages when the package-level contract is not enough. They move from this provider to the seam it plugs into and the sibling product provider.
 
 - [Subagent subsystem](../../../docs/subsystems/subagent.md) — the service contract, provider contract, and terminal result semantics.
-- [dsh-subagent seam](../subagent/README.md) — the registry and start API this provider registers on.
+- [ocean-subagent seam](../subagent/README.md) — the registry and start API this provider registers on.
 - [Codex subagent provider](../subagent-codex/README.md) — the sibling product backend over the official app-server protocol.
 - historical Claude Code and Codex backends — the design record for the product providers.
 - [Generated configuration catalog](../../../docs/config-catalog.md#oceanocean-subagent-claude-code) — every accepted config field and its source declaration.
@@ -149,7 +149,7 @@ Independent of the parent request cache. Reuse depends only on Claude Code's own
 
 #### What the model sees
 
-Through `dsh-tool-subagent`, the parent model first receives the child's name, then the final Claude Code answer or a failure notice with its stop reason and safe diagnostic. Diagnostics contain only fixed stage, category, and observed protocol or process facts. Product reasoning, intermediate messages, tool activity, stderr, usage, product identifiers, commands, paths, and raw protocol payloads are not copied into the parent Session.
+Through `ocean-tool-subagent`, the parent model first receives the child's name, then the final Claude Code answer or a failure notice with its stop reason and safe diagnostic. Diagnostics contain only fixed stage, category, and observed protocol or process facts. Product reasoning, intermediate messages, tool activity, stderr, usage, product identifiers, commands, paths, and raw protocol payloads are not copied into the parent Session.
 
 #### Token effect
 

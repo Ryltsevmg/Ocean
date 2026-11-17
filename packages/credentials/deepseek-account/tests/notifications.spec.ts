@@ -52,7 +52,7 @@ function wire(id: string, fields: Record<string, unknown> = {}) {
 }
 
 async function fixture() {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-bonus-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-bonus-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
   const requests: Recorded[] = []
   let profileId: string | null = USER

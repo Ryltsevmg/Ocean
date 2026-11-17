@@ -6,8 +6,8 @@
   en: 0ca51f37788dcbdb
   zh: 14d73c6bc8d4e17f
 /ocean-ocean-client-ui-conversation:
-  en: 56dc3aa9bdce59c6
-  zh: 3859276d8c6156bd
+  en: a22a91ae8b663d9f
+  zh: 5b2f1c53f48405a2
 /ocean-ocean-client-ui-conversation/summary:
   en: 5529071868714140
   zh: bc4b7d55c156a728
@@ -15,17 +15,17 @@
   en: eef4f18c3972ccc4
   zh: 6be65c6ac84ce497
 /ocean-ocean-client-ui-conversation/conversation-assembly:
-  en: 13dffea8a24e19ee
-  zh: 021ff0d9a3bcd88c
+  en: 6d80f688fcbf8ddc
+  zh: 4abafd76c97a5894
 /ocean-ocean-client-ui-conversation/sent-user-text:
-  en: 2f6edb4c10509f61
-  zh: dbbfe361392fe9be
+  en: 71a6fab75bb6dae6
+  zh: d3bb48ab9929afa9
 /ocean-ocean-client-ui-conversation/shell-and-standard-props:
-  en: 1d9b908c0e328559
-  zh: a932e0e940e37a60
+  en: 046d256d50e6a4a3
+  zh: 3aaea0f51ab30abb
 /ocean-ocean-client-ui-conversation/temporary-composer-entries:
-  en: 59cd63057dfb6eeb
-  zh: b2e2c86e810b7bb8
+  en: 242073d0fc506ae9
+  zh: 09593bd98bf7d9f5
 /ocean-ocean-client-ui-conversation/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -42,8 +42,8 @@
   en: f8621bbc481c26ae
   zh: 5be844989dc80803
 /ocean-ocean-client-ui-conversation/known-limitations-and-deferred-work:
-  en: c8323c1986c1be46
-  zh: 6151492c67d4cb88
+  en: 711da62e65ad6199
+  zh: 43c7e9f8556fd09d
 /ocean-ocean-client-ui-conversation/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

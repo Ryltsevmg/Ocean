@@ -844,7 +844,7 @@ describe.skipIf(MODE === 'record')('web e2e: blank area after next-message foldi
 
   for (const scenario of CASES) {
     it(scenario.id, async () => {
-      const replayDir = await mkdtemp(join(tmpdir(), 'dsh-fold-matrix-'))
+      const replayDir = await mkdtemp(join(tmpdir(), 'ocean-fold-matrix-'))
       let world: World | undefined
       try {
         world = await openWorld(browser, scenario, replayDir)

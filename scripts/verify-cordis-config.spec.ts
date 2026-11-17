@@ -61,7 +61,7 @@ describe('workspace Bundle discovery and product dependency closures', () => {
   })
 
   it('discovers a Bundle outside packages/bundle from its manifest declaration', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'dsh-bundle-discovery-'))
+    const fixture = mkdtempSync(join(tmpdir(), 'ocean-bundle-discovery-'))
     try {
       const bundleDir = join(fixture, 'packages/subagent/example')
       const plainDir = join(fixture, 'packages/bundle/plain')
@@ -69,7 +69,7 @@ describe('workspace Bundle discovery and product dependency closures', () => {
       mkdirSync(plainDir, { recursive: true })
       writeFileSync(join(bundleDir, 'package.json'), JSON.stringify({
         name: '@ocean/ocean-subagent-example',
-        dsh: { bundle: { patch: './cordis.patch.yml' } },
+        ocean: { bundle: { patch: './cordis.patch.yml' } },
       }))
       writeFileSync(join(plainDir, 'package.json'), JSON.stringify({
         name: '@ocean/ocean-plain',
@@ -125,7 +125,7 @@ describe('package-owned Loader test dependency closures', () => {
   })
 
   it('requires executable package test fixtures to declare their bare imports', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'dsh-package-test-entrypoint-'))
+    const fixture = mkdtempSync(join(tmpdir(), 'ocean-package-test-entrypoint-'))
     try {
       const packageDir = join(fixture, 'packages/example/owner')
       const driverDir = join(packageDir, 'tests/fixtures/loader')
@@ -158,7 +158,7 @@ describe('package-owned Loader test dependency closures', () => {
   })
 
   it('fails loud when package-owned Loader fixtures disappear from the scan', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'dsh-empty-package-test-entrypoint-'))
+    const fixture = mkdtempSync(join(tmpdir(), 'ocean-empty-package-test-entrypoint-'))
     try {
       expect(packageTestFixtureDependencyErrors(fixture)).toEqual([
         'package test fixture dependency scan found no package-owned Loader configs',

@@ -6,11 +6,11 @@
   en: 5c47c9629036f119
   zh: 7730d7468a38b38d
 /ocean-ocean-compaction:
-  en: bd896553791d60f9
-  zh: 83f46de95330f76b
+  en: 3358c2651ecfc179
+  zh: 36a6abef34053db5
 /ocean-ocean-compaction/summary:
-  en: 8cde722f68374b24
-  zh: 11f5aff0d0ecd573
+  en: 6b2d3f4cd1083408
+  zh: 39cc2256d8bc6a52
 /ocean-ocean-compaction/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,17 +18,17 @@
   en: 7d1dad97626dbd2e
   zh: 075fef4e1844ad12
 /ocean-ocean-compaction/use-this-package/when-to-choose-it:
-  en: 19c39a458294769b
-  zh: fd7534068f49e2af
+  en: b8da5c80f6328c68
+  zh: 66be537ba043ed60
 /ocean-ocean-compaction/use-this-package/what-condensation-looks-like:
   en: 0abbee3a3b929a90
   zh: 334736dffe93488d
 /ocean-ocean-compaction/use-this-package/turning-condensation-on:
-  en: 8213b79c776f1a75
-  zh: 481c0dffd342426a
+  en: 428ece4394d01b3e
+  zh: 9be1d769d25f4eec
 /ocean-ocean-compaction/use-this-package/implementing-a-backend:
-  en: 280b5fda4c9b9c8b
-  zh: 764ca79fccf98279
+  en: 7deffec1db5fcc56
+  zh: fbb611cd826997c7
 /ocean-ocean-compaction/use-this-package/recognizing-condensed-history:
   en: 35502487f2850f05
   zh: 333d2b86cc1d6eb0
@@ -36,20 +36,20 @@
   en: 321c3dc665ea03ff
   zh: f0fa408cde7b0454
 /ocean-ocean-compaction/understand-the-implementation/design-philosophy:
-  en: d43c167ff4c41a00
-  zh: 8219084d138eaf0d
+  en: 598e9f35c5fa8b3b
+  zh: bfeb9de658b3cd45
 /ocean-ocean-compaction/understand-the-implementation/service-api:
-  en: d742d41c7eb5d406
-  zh: 6ff26c23eba5dd59
+  en: c277b056e9509c08
+  zh: 47952a143062ecca
 /ocean-ocean-compaction/understand-the-implementation/manual-failure-taxonomy:
-  en: 81449c88ba52f445
-  zh: 2cdcce236bfbf284
+  en: a4665b2ebe63c967
+  zh: 3972ac1a36329025
 /ocean-ocean-compaction/understand-the-implementation/tool-pairing-boundaries:
   en: 15dad68a04d6c86b
   zh: 3b95acf1b7e503bf
 /ocean-ocean-compaction/understand-the-implementation/the-surface-contract:
-  en: 28980d8259e59700
-  zh: c452e0bb4b778824
+  en: 0f17b9bd55d784e9
+  zh: 2d1fad7caab6991d
 /ocean-ocean-compaction/understand-the-implementation/source-map:
   en: 076448ecc9911baf
   zh: 1b671f96fb217d5e
@@ -57,11 +57,11 @@
   en: 68caa51bed28bada
   zh: 3f8261f9dcba95ed
 /ocean-ocean-compaction/understand-the-implementation/events:
-  en: dc5faf71b27cc340
-  zh: 065f8339009c1a3a
+  en: ea3705b3f83ee1e5
+  zh: 4e06f6c850af2dce
 /ocean-ocean-compaction/further-exploration:
-  en: c678017bcdf08b26
-  zh: 9630aab93e4c16ac
+  en: 5ed56e465e581d40
+  zh: 49ff91757f008b4d
 /ocean-ocean-compaction/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90

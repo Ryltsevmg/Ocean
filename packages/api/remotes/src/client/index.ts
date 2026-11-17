@@ -166,7 +166,7 @@ export type { SessionReferenceMentionCandidate } from '@ocean/ocean-session-refe
 // The Remote failure vocabulary, re-exported so business packages keep naming
 // this assembly alone. Types only: a value export would make spec imports load
 // this module's owner /remote artifacts; specs take RemoteError from
-// dsh-client-test-runtime instead.
+// ocean-client-test-runtime instead.
 export type {
   RemoteErrorCode, RemoteErrorDetailsMap, RemoteFailure, RemoteResult,
 } from '@ocean/ocean-typert-protocol'

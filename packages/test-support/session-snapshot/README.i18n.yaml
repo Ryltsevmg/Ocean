@@ -6,11 +6,11 @@
   en: 35f64a68381efbd0
   zh: dd2c508ba263d788
 /ocean-ocean-session-snapshot:
-  en: f1120ede9dd669af
-  zh: c1ee993c1ab53b40
+  en: 0f71d9792ef574a5
+  zh: ef0eb5520252a6d1
 /ocean-ocean-session-snapshot/summary:
-  en: 5d11e1dbbf5dd1cf
-  zh: 7a54089ed26ddd8f
+  en: ddd017c277a6ed2c
+  zh: 1ffc0f253cc905fa
 /ocean-ocean-session-snapshot/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,11 +18,11 @@
   en: 594ad1f3e6f02054
   zh: 7ca4f565976704be
 /ocean-ocean-session-snapshot/use-this-package/writing-a-snapshot-suite:
-  en: ac4850ac8c9282ee
-  zh: ae7572b73ea3cf62
+  en: a75cd7303a936e5c
+  zh: b99560098e1273e4
 /ocean-ocean-session-snapshot/use-this-package/record-replay-and-refresh:
-  en: bd9dcb62ea4e77db
-  zh: be9615f0ae662c9e
+  en: b9484e4ced105b21
+  zh: eb607a6d4fe4226d
 /ocean-ocean-session-snapshot/use-this-package/pinning-request-headers-and-system-prompts:
   en: fe59b0197fa5e34c
   zh: dfa1844c2c965358
@@ -30,8 +30,8 @@
   en: 64666ea2894acc4a
   zh: 0e78df32bcfd3633
 /ocean-ocean-session-snapshot/use-this-package/what-can-go-wrong:
-  en: 0b03592947ca43d6
-  zh: b14a64238c4b5f80
+  en: b8f87f20c7592ba3
+  zh: e5af559ffc3e2c13
 /ocean-ocean-session-snapshot/understand-the-implementation:
   en: 18ff76b440fe40da
   zh: 4dbf2eb5f9ee98a2
@@ -45,8 +45,8 @@
   en: a71c8ab2e78798c5
   zh: 419cebed1c023fbf
 /ocean-ocean-session-snapshot/further-exploration:
-  en: 84279d50373a156a
-  zh: fcd600bf386f6efe
+  en: 9f52ee09e722ee48
+  zh: 9440c167b50c0bb8
 /ocean-ocean-session-snapshot/model-experience:
   en: 9f12d94ab5e31ade
   zh: 7c75a17565caca1c
@@ -54,8 +54,8 @@
   en: ca75c51c89c2c9b0
   zh: f57cc48a1b5cbfa9
 /ocean-ocean-session-snapshot/known-limitations-and-deferred-work:
-  en: 42e871839dddaf6d
-  zh: b7ab1d313527612b
+  en: c69a0355a8c0a38d
+  zh: 2259ba9fda07b06a
 /ocean-ocean-session-snapshot/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

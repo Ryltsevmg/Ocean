@@ -6,32 +6,32 @@
   en: aa0f6a31440050d2
   zh: 388fc575115b9a4f
 /ocean-ocean-tool-bash:
-  en: d2c7b55ea400ab12
-  zh: 12a3d713fd5ba6f6
+  en: f1af7bd0e45f247e
+  zh: fd116423415203ea
 /ocean-ocean-tool-bash/summary:
-  en: fea9162fe27f9091
-  zh: 267c460b81aeddf6
+  en: aabb83e53ff77d70
+  zh: 00bb190aa6e503f3
 /ocean-ocean-tool-bash/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-tool-bash/use-this-package:
-  en: b38c1a304e18185c
-  zh: 05275ff8d127c9c0
+  en: f00bb4af9de1526f
+  zh: 94a2d84e88fa01d6
 /ocean-ocean-tool-bash/use-this-package/minimal-configuration:
-  en: 8d23eabb3780dbe2
-  zh: a3146a90458cb8f7
+  en: 83d68f8d9c94c013
+  zh: 78f747dfb2418c26
 /ocean-ocean-tool-bash/use-this-package/running-a-command:
   en: 7610fa7c373e339a
   zh: e3001ca072f53734
 /ocean-ocean-tool-bash/use-this-package/running-long-commands-in-the-background:
-  en: a5eecea7bb7a75e8
-  zh: fae7f08e0e11594e
+  en: 1d27764fa2777956
+  zh: a5486a3cfdab7a9d
 /ocean-ocean-tool-bash/use-this-package/foreground-commands-as-jobs:
   en: d6da2d08afdca324
   zh: 606b7b1da7447874
 /ocean-ocean-tool-bash/use-this-package/sandboxed-execution-and-escalation:
-  en: 472beeb895ca46cf
-  zh: ba110c9f62f7d5b8
+  en: 3980c4201fe6f601
+  zh: 414463efe82253f7
 /ocean-ocean-tool-bash/use-this-package/what-can-go-wrong:
   en: 4fc69ffef4d0cea5
   zh: e8114605c3fbf4c7
@@ -39,8 +39,8 @@
   en: 165313776a851b51
   zh: 828f48807036aff0
 /ocean-ocean-tool-bash/understand-the-implementation/design-philosophy:
-  en: 9332353fda6ac7be
-  zh: 45c17e5e83478032
+  en: 67c2841b482b141f
+  zh: 34c2dc111a84bc19
 /ocean-ocean-tool-bash/understand-the-implementation/source-map:
   en: 0547d68864628d08
   zh: 5adb79f945b17a0d
@@ -48,11 +48,11 @@
   en: 56dae7757fab0a79
   zh: 7930235dc0490c73
 /ocean-ocean-tool-bash/understand-the-implementation/rendering-story:
-  en: 167c045d6a6278cc
-  zh: 3f17ee8d31e0bbad
+  en: e4dac3bda66740da
+  zh: 11f3f99c6ee6c7a1
 /ocean-ocean-tool-bash/further-exploration:
-  en: 7db732de35e055dd
-  zh: 0305577ce2f10c98
+  en: 7d4579ab25f49bdc
+  zh: 785efbcaf4912daa
 /ocean-ocean-tool-bash/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -75,8 +75,8 @@
   en: 3039bc5e7a796b21
   zh: 6b7a9eaf69c9ea53
 /ocean-ocean-tool-bash/model-experience/tool-schemas/what-the-model-sees:
-  en: c93b8187456a227c
-  zh: 7e1d8bf2680671bf
+  en: afe3dbecd81086ca
+  zh: a433e19cb096a533
 /ocean-ocean-tool-bash/model-experience/tool-schemas/token-effect:
   en: cdbd4262314e6856
   zh: e8c12c0cf5492386
@@ -87,8 +87,8 @@
   en: d83f1f25a3719c54
   zh: 445ca808e28dc936
 /ocean-ocean-tool-bash/model-experience/foreground-result/what-the-model-sees:
-  en: 1cf435133078b803
-  zh: 3e7eb766a62b7e77
+  en: df3d8e92a6fe55f1
+  zh: c7507c43086ef1d0
 /ocean-ocean-tool-bash/model-experience/foreground-result/token-effect:
   en: b2018adbda15b8a7
   zh: 79521073a45c7f80
@@ -99,8 +99,8 @@
   en: 38ce70c1818a5694
   zh: ed3ad10f12ed1b8e
 /ocean-ocean-tool-bash/model-experience/background-job-context-and-results/what-the-model-sees:
-  en: b2586ae30256dda7
-  zh: 03000224da9a68d1
+  en: 400be9447ad04a16
+  zh: e27756a8df2b926b
 /ocean-ocean-tool-bash/model-experience/background-job-context-and-results/token-effect:
   en: 3a0d2d43640158d6
   zh: 45ae711aedaa1d41

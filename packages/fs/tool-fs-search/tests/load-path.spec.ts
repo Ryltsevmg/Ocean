@@ -24,7 +24,7 @@ import ToolRuntime from '@ocean/ocean-tools'
 import LocalSubprocessRuntime from '@ocean/ocean-subprocess-local'
 import * as toolFsSearch from '@ocean/ocean-tool-fs-search'
 
-describe('dsh-tool-fs-search real-load-path guard', () => {
+describe('ocean-tool-fs-search real-load-path guard', () => {
   it('has no default export and keeps name/inject/Config through unwrapExports', () => {
     expect('default' in toolFsSearch).toBe(false)
 

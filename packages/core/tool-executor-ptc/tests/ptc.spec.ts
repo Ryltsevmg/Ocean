@@ -1965,7 +1965,7 @@ describe('the run_code dispatch bridge', () => {
 
       expect(result.isError).toBe(true)
       expect(result.content).toEqual([{
-        type: 'text', text: 'Error: dsh-tools: run_code with an Agent requires workingDirectory',
+        type: 'text', text: 'Error: ocean-tools: run_code with an Agent requires workingDirectory',
       }])
       expect(runtime.lastRequest).toBeUndefined()
       expect(calls).toEqual([])
@@ -2513,7 +2513,7 @@ describe('per-agent presentation', () => {
     // `native` here, so a collapse predicate reading it instead of this
     // scope's effective mode would announce [run_code] and still execute the
     // native call — the bypass, reopened for exactly the preset composition
-    // `dsh-agent-tool-presentation` produces.
+    // `ocean-agent-tool-presentation` produces.
     expect(new PtcExecutor(ctx)['pipeline'].executionMode({
       signal: testToolSignal,
       callId: ToolCallId('preset-coded-schedule'),
@@ -2718,7 +2718,7 @@ describe('PTC standing file policy and sandbox outcomes', () => {
       await ctx.plugin(ConfinedFakeRuntime)
       const result = await runCode(ctx, 'return 1')
       expect(result.isError).toBe(true)
-      expect(result.content).toEqual([{ type: 'text', text: 'Error: dsh-tools: confined PTC runtime requires sandboxPolicy' }])
+      expect(result.content).toEqual([{ type: 'text', text: 'Error: ocean-tools: confined PTC runtime requires sandboxPolicy' }])
       expect((ctx.ptcRuntime as ConfinedFakeRuntime).lastRequest).toBeUndefined()
     } finally { await ctx.fiber.dispose() }
   })

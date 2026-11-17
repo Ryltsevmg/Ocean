@@ -13,7 +13,7 @@
  * hands the closure down, so this package never depends on the approval or
  * agent packages.
  *
- * @module dsh-sandbox/escalation
+ * @module ocean-sandbox/escalation
  */
 
 import { HarnessError } from '@ocean/ocean-error'

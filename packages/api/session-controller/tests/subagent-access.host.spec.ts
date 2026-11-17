@@ -32,7 +32,7 @@ afterEach(async () => {
 })
 
 async function harness() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-subagent-access-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-subagent-access-'))
   const ctx = new Context()
   cleanups.push(async () => {
     try { await ctx.fiber.dispose() } finally { await rm(root, { recursive: true, force: true }) }

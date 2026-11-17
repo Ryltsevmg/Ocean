@@ -56,7 +56,7 @@ describe('Wine and Vitest configuration', () => {
 
   it('applies the lane test budget inside every Vitest project', () => {
     // Each inline project spreads coverageTestTimeoutOptions, the only route
-    // for DSH_COVERAGE_TEST_TIMEOUT_MS into projects; the behavior itself is
+    // for OCEAN_COVERAGE_TEST_TIMEOUT_MS into projects; the behavior itself is
     // pinned by scripts/lane-test-budget.spec.ts.
     const config = readFileSync(resolve(root, 'vitest.config.ts'), 'utf8')
 

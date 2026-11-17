@@ -10,7 +10,7 @@ import { generateConfigSchema, type ConfigSchemaDump } from '@ocean/ocean-app-bo
 import { collectConfigDumpLayers } from './dump-config.ts'
 import { INSTALL_ANCHOR, prepareProfile } from './profile-boot.ts'
 
-const NAME = 'dsh'
+const NAME = 'ocean'
 
 /**
  * Print one JSON Schema document; incomplete collection or projection sets exitCode to 1.

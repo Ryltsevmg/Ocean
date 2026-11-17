@@ -1,5 +1,5 @@
 ---
-description: "The TypeScript SDK client for callers that spawn a Ocean runtime subprocess and drive agent turns over stdio JSON-RPC: the DeepSeekHarness run API and the lower-level HarnessClient."
+description: "The TypeScript SDK client for callers that spawn an Ocean runtime subprocess and drive agent turns over stdio JSON-RPC: the DeepSeekHarness run API and the lower-level HarnessClient."
 kind: "package-library"
 ---
 
@@ -9,7 +9,9 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-sdk-client` lets TypeScript programs drive a complete Ocean runtime over stdio JSON-RPC. Use `run()` for ordinary text, supported slash commands, and image content blocks, and `onNotification` to observe its notifications. `HarnessClient` provides direct protocol access. Callers may provide `dshBin`; otherwise the client resolves the same-version `@ocean/ocean` executable. The client owns the subprocess, reports typed failures, and reaps it on `close()` or `await using`.
+`ocean-sdk-client` lets TypeScript programs drive a complete Ocean runtime over stdio JSON-RPC. Use `run()` for ordinary text, supported slash commands, and image content blocks, and `onNotification` to observe its notifications. `HarnessClient` provides direct protocol access. Callers may provide `oceanBin`; otherwise the client resolves the same-version `@ocean/ocean` executable. The client owns the subprocess, reports typed failures, and reaps it on `close()` or `await using`.
+
+The legacy `dshBin` and `dshHome` launch options remain accepted when `oceanBin` and `oceanHome` are absent.
 
 ## Table of Contents
 
@@ -39,7 +41,7 @@ import { DeepSeekHarness } from '@ocean/ocean-sdk-client'
 const terminal = createInterface({ input: stdin, output: stdout })
 try {
   await using harness = new DeepSeekHarness({
-    dshHome: '/absolute/path/to/isolated-dsh-home', approvalRequests: true,
+    oceanHome: '/absolute/path/to/isolated-ocean-home', approvalRequests: true,
   })
   harness.client.start()
   harness.client.onRequest(async (method, params) => {
@@ -53,7 +55,7 @@ try {
 }
 ```
 
-`await harness.resumeSession(savedId)` restores a persisted session from the configured `dshHome` and returns a `HarnessSession` ready for `run()`. Save the original session id and reuse its home and workspace. Restoration preserves conversation history and its directory, repairs an interrupted final turn, and sends no new input. Missing, unreadable, incompatible, or occupied sessions reject without creating a replacement. `session(id)` remains a lazy handle for an in-process session; it does not request persisted restoration. Shell, browser, and other external processes are not restored by this API.
+`await harness.resumeSession(savedId)` restores a persisted session from the configured `oceanHome` and returns a `HarnessSession` ready for `run()`. Save the original session id and reuse its home and workspace. Restoration preserves conversation history and its directory, repairs an interrupted final turn, and sends no new input. Missing, unreadable, incompatible, or occupied sessions reject without creating a replacement. `session(id)` remains a lazy handle for an in-process session; it does not request persisted restoration. Shell, browser, and other external processes are not restored by this API.
 
 `HarnessSession.getWorkingDirectory()` reads the effective directory; `setWorkingDirectory(path)` changes it and returns the validated absolute path. Either method creates an unknown Session without starting a model turn. Relative paths use the Session's current directory. Origin metadata, permissions, and existing processes remain unchanged. `HarnessClient` exposes the same methods with a leading `sessionId` argument.
 
@@ -65,7 +67,7 @@ import { ReasoningEffortId } from '@ocean/ocean-llm'
 
 await using harness = new DeepSeekHarness({
   profile: 'sdk',
-  dshHome: '/absolute/path/to/dsh-home',
+  oceanHome: '/absolute/path/to/ocean-home',
   patches: ['./automation.cordis.yml'],
   provider: 'deepseek-official',
   model: 'deepseek-v4-flash',
@@ -87,7 +89,7 @@ Select a model that supports image input. Submit a command and image in the exis
 ```ts
 import { DeepSeekHarness } from '@ocean/ocean-sdk-client'
 
-await using harness = new DeepSeekHarness({ profile: 'sdk', dshHome: '/absolute/path/to/dsh-home' })
+await using harness = new DeepSeekHarness({ profile: 'sdk', oceanHome: '/absolute/path/to/ocean-home' })
 const session = harness.session()
 const result = await session.run('/compact')
 console.log(result.finalResponse)
@@ -107,7 +109,7 @@ Launch options supply initial values. A permission command changes only its targ
 
 Task-owning consumers can subscribe before `prompt()`, then call `request('session/wait', { sessionId })` and drain queued notifications with `tryNext()`. This waits for managed descendants and their root summary turns; `HarnessSession.run()` retains its next-idle interval for ordinary prompts. `validatedSessionEvent()` validates the event envelope and the assistant/turn fields consumed by SDK readers before they enter an output fold.
 
-The client exports typed errors for every failure mode: `JsonRpcResponseError` (a wire error response, code and data preserved), `RequestTimeoutError` (a configured bound elapsed), `SdkProtocolError` (a response outside the documented protocol), and `TransportClosedError` (the runtime is gone — the message carries the exit code and a bounded stderr tail). `close()` requests protocol `shutdown` (bounded by `shutdownTimeoutMs`, default 1000 ms), then walks a stdin-EOF → SIGTERM → SIGKILL ladder until the process has exited; it is idempotent, and a closed client refuses reuse. `HarnessClientOptions.env` replaces the child environment entirely when given (`undefined` inherits the parent's); callers own credential policy — `scrubbedParentEnv` from `dsh-subprocess` is the shared scrub base for isolation-minded launches.
+The client exports typed errors for every failure mode: `JsonRpcResponseError` (a wire error response, code and data preserved), `RequestTimeoutError` (a configured bound elapsed), `SdkProtocolError` (a response outside the documented protocol), and `TransportClosedError` (the runtime is gone — the message carries the exit code and a bounded stderr tail). `close()` requests protocol `shutdown` (bounded by `shutdownTimeoutMs`, default 1000 ms), then walks a stdin-EOF → SIGTERM → SIGKILL ladder until the process has exited; it is idempotent, and a closed client refuses reuse. `HarnessClientOptions.env` replaces the child environment entirely when given (`undefined` inherits the parent's); callers own credential policy — `scrubbedParentEnv` from `ocean-subprocess` is the shared scrub base for isolation-minded launches.
 
 <a id="native-user-questions"></a>
 ### Native user questions
@@ -128,7 +130,7 @@ This section explains the design behind the client; the observable behavior is f
 
 ### Design concept
 
-The client is two layers over one wire: `DeepSeekHarness` (owned runs) over `HarnessClient` (the protocol client), mirroring the Python SDK's layering. Both SDKs expose `run()` for prompt-or-command input; request construction and response validation stay in internal helpers. It runs outside any harness context, so it spawns the runtime directly rather than through the `dsh-subprocess` service — the seam's documented exception for SDK-managed transports — and its teardown ladder lives in this package. The runtime notifies for every session in its context; session-tree scoping is a client-side filter over `subagent.started` lineage edges.
+The client is two layers over one wire: `DeepSeekHarness` (owned runs) over `HarnessClient` (the protocol client), mirroring the Python SDK's layering. Both SDKs expose `run()` for prompt-or-command input; request construction and response validation stay in internal helpers. It runs outside any harness context, so it spawns the runtime directly rather than through the `ocean-subprocess` service — the seam's documented exception for SDK-managed transports — and its teardown ladder lives in this package. The runtime notifies for every session in its context; session-tree scoping is a client-side filter over `subagent.started` lineage edges.
 
 ### Source map
 
@@ -160,8 +162,8 @@ Read these pages when the client contract is not enough. They move from the wire
 - [SDK wire protocol](../protocol/README.md) — the JSON-RPC methods and payload shapes this client speaks.
 - [JSON-RPC serving plugin](../server/README.md) — the runtime plugin that serves this client.
 - [Python SDK](../../../python/README.md) — the design twin that shares the same runtime peer and protocol.
-- [SDK subagent backend](../../subagent/subagent-dsh-sdk/README.md) — a harness-internal consumer of this client.
-- [SDK application bundle](../../bundle/sdk-app/README.md) — the `dsh --profile sdk` runtime application this client launches.
+- [SDK subagent backend](../../subagent/subagent-ocean-sdk/README.md) — a harness-internal consumer of this client.
+- [SDK application bundle](../../bundle/sdk-app/README.md) — the `ocean --profile sdk` runtime application this client launches.
 
 -----
 
@@ -181,7 +183,7 @@ None in the client process. Profile, patch, provider, model, and history choices
 
 These limits define when the client is a poor fit or needs special care. They are current package constraints, not a comparison with other SDK clients or a task backlog.
 
-- **No bundled-runtime resolution** — the client resolves the same-version `@ocean/ocean` package (or a caller-provided `dshBin`); packaged-executable discovery stays Python-side until a TypeScript distribution consumer exists.
+- **No bundled-runtime resolution** — the client resolves the same-version `@ocean/ocean` package (or a caller-provided `oceanBin`); packaged-executable discovery stays Python-side until a TypeScript distribution consumer exists.
 - **No runtime cancellation request** — an RPC timeout or observer failure ends local waiting without stopping runtime work. Stopping runtime work requires closing the harness (see the [protocol limitations](../protocol/README.md#known-limitations-and-deferred-work)).
 - **No exclusive model response** — prompt results cover receipt-to-idle activity and can include steering or other queued work. Concurrent calls observe the Session's actual event stream; a command result does not own a later turn.
 - **Callbacks must release their own resources** — the SDK delivers cancellation through `AbortSignal`; application work that ignores it may continue after the SDK stops awaiting its answer.

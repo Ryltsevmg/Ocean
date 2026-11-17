@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-sdk-jsonrpc-server` serves the SDK wire protocol over stdio so out-of-process clients can drive harness agents: it opens one session per `sessionId`, queues user prompts, and streams every session event and agent status transition back to the client. Mount it as the `jsonrpc` plugin in a Loader composition; the surrounding tree supplies everything else — agents, model adapters, persistence, and tools. Stdout carries only JSON-RPC frames, so a deployment must not compose a stdout logger. It answers `shutdown` by disposing the root runtime and exiting 0; the app bin owns EOF and signal exits.
+`ocean-sdk-jsonrpc-server` serves the SDK wire protocol over stdio so out-of-process clients can drive harness agents: it opens one session per `sessionId`, queues user prompts, and streams every session event and agent status transition back to the client. Mount it as the `jsonrpc` plugin in a Loader composition; the surrounding tree supplies everything else — agents, model adapters, persistence, and tools. Stdout carries only JSON-RPC frames, so a deployment must not compose a stdout logger. It answers `shutdown` by disposing the root runtime and exiting 0; the app bin owns EOF and signal exits.
 
 ## Table of Contents
 
@@ -39,7 +39,7 @@ The supported commands below are existing Desktop native operations that can exe
 
 `session/query` is the wire entry used by high-level SDK `run()` for strings and content-block arrays. Ordinary inputs retain their blocks and use the existing prompt queue. The full SDK recognizes bare `/compact`, `/permission <preset>` with a non-blank preset, `/plan [off|message]`, and `/goal [objective|clear|edit objective|pause|resume]` identified by their official definition IDs. Bare `/permission` or `/权限`, `/compact extra`, and all other input including `/model` remain ordinary prompts. A missing command also preserves the prompt path; a selected handler's failure never falls back. An unknown preset is a native command error. Encoded image blocks accompany recognized commands through native attachment admission. `session/prompt` remains the low-level queued-input entry without native slash-command routing.
 
-Host and Desktop adapters share `dsh-commands/builtin` for definition identity and English/Chinese aliases. The aliases `/压缩`, `/权限`, `/计划`, and `/目标` follow their official definitions after renaming; execution uses the current registered name. Exact names take precedence, but an unrelated same-name definition is not an SDK builtin and remains an ordinary prompt. Other builtin capabilities remain outside the SDK command set.
+Host and Desktop adapters share `ocean-commands/builtin` for definition identity and English/Chinese aliases. The aliases `/压缩`, `/权限`, `/计划`, and `/目标` follow their official definitions after renaming; execution uses the current registered name. Exact names take precedence, but an unrelated same-name definition is not an SDK builtin and remains an ordinary prompt. Other builtin capabilities remain outside the SDK command set.
 
 The first text block supplies the complete command line; encoded images may precede or follow it. When that line matches a supported command, it must be the only text block and every other block must be an encoded image. Additional text blocks, durable image references, and other content types reject with a JSON-RPC error before execution or enqueue, without prompt fallback. Ordinary prompts preserve all block content and ordering. Empty arrays and arrays containing only blank text are rejected; image-only input is allowed.
 
@@ -98,7 +98,7 @@ This section explains the design behind the serving plugin; the observable behav
 
 ### Design concept
 
-The plugin is a thin presentation adapter: [`HarnessSdkJsonRpcServer`](src/server.ts) owns the protocol methods and notifications, while the transport and the named wire types come from `dsh-sdk-protocol`, shared with the client SDKs. It subscribes to session, agent, and subagent lifecycle events and forwards them as wire notifications; subagent completions are forwarded only when the service-snapshotted lifecycle `local` flag is true — provider names, child ids, and durable lineage never establish locality. Both `subagent.started` and `subagent.finished` identify the durable direct creator in `parentSessionId`, including after that creator exits; the Team root only scopes runtime dispatch. Started notifications require `origin: subagent` and a direct creator id; ordinary forks, including historical ones with a parent id, produce none.
+The plugin is a thin presentation adapter: [`HarnessSdkJsonRpcServer`](src/server.ts) owns the protocol methods and notifications, while the transport and the named wire types come from `ocean-sdk-protocol`, shared with the client SDKs. It subscribes to session, agent, and subagent lifecycle events and forwards them as wire notifications; subagent completions are forwarded only when the service-snapshotted lifecycle `local` flag is true — provider names, child ids, and durable lineage never establish locality. Both `subagent.started` and `subagent.finished` identify the durable direct creator in `parentSessionId`, including after that creator exits; the Team root only scopes runtime dispatch. Started notifications require `origin: subagent` and a direct creator id; ordinary forks, including historical ones with a parent id, produce none.
 
 ### Source map
 
@@ -127,7 +127,7 @@ Read these pages when the plugin contract is not enough. They move from the wire
 
 - [SDK wire protocol](../protocol/README.md) — the methods and payload shapes this plugin serves.
 - [TypeScript SDK client](../client/README.md) — the client that drives this plugin.
-- [SDK application bundle](../../bundle/sdk-app/README.md) — the `dsh --profile sdk` application that boots this plugin.
+- [SDK application bundle](../../bundle/sdk-app/README.md) — the `ocean --profile sdk` application that boots this plugin.
 - [Python SDK](../../../python/README.md) — the Python client that drives the same server.
 
 -----

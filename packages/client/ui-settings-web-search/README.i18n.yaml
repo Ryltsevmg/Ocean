@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-settings-web-search/README.md
 /:
-  en: c998138f550b2c5c
-  zh: 7b7998c9801e1bdd
+  en: 5dfa4237ffd5ec3b
+  zh: 125e4252704181c1
 /ocean-ocean-client-ui-settings-web-search:
-  en: bbb9ca18561541ed
-  zh: d5d86902a1426b09
+  en: 8e7dd7bc96a2a097
+  zh: 7a09aa701eb250ec
 /ocean-ocean-client-ui-settings-web-search/summary:
   en: 23c442a512078061
   zh: f10ddb1d6afe7a82
@@ -15,14 +15,14 @@
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-client-ui-settings-web-search/use-this-package:
-  en: b00497ce4cf39d47
-  zh: 9663997b7a4cc959
+  en: 22e6d2ea09f3f6fb
+  zh: bb604718c9887dc1
 /ocean-ocean-client-ui-settings-web-search/understand-the-implementation:
   en: 836d3f3032033148
   zh: f5b5c1ee14450ab5
 /ocean-ocean-client-ui-settings-web-search/further-exploration:
-  en: 892dc41e9012f3c4
-  zh: dc7cf90868141c0d
+  en: 61f2706edd1c1222
+  zh: c77e2c17a121fdb0
 /ocean-ocean-client-ui-settings-web-search/model-experience:
   en: 6b7c6f82ab6c8435
   zh: 4517689c899abcbe
@@ -30,8 +30,8 @@
   en: ca75c51c89c2c9b0
   zh: 6e1c9a8fdde89577
 /ocean-ocean-client-ui-settings-web-search/known-limitations-and-deferred-work:
-  en: 5c6dad603abec1c3
-  zh: a594f9def4ef8215
+  en: d0ecc779b7b863a3
+  zh: b148acf2f1681247
 /ocean-ocean-client-ui-settings-web-search/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

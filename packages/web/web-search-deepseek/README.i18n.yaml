@@ -6,11 +6,11 @@
   en: d3ed4f8639422b9d
   zh: 35c2ac10b0158bd3
 /ocean-ocean-web-search-deepseek:
-  en: 72761a0b55b5a9d0
-  zh: 6bad054b7e6f8f7c
+  en: 81822693da1996cb
+  zh: 13a162b82482bb4a
 /ocean-ocean-web-search-deepseek/summary:
-  en: 6b1267e732370877
-  zh: 64460aba0564cb44
+  en: 673c98c0bd7f4692
+  zh: 24786d51b89786ea
 /ocean-ocean-web-search-deepseek/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -21,11 +21,11 @@
   en: 0187c8af8d2d98c5
   zh: 1c9607b3a662bcaa
 /ocean-ocean-web-search-deepseek/use-this-package/minimal-configuration:
-  en: 96e15e8fc9a0329a
-  zh: 67ab088cc5a852c2
+  en: 9582eab634912297
+  zh: 613b13fd34a3d492
 /ocean-ocean-web-search-deepseek/use-this-package/authentication:
-  en: 7a765ba931329067
-  zh: 6fc14edcc378684a
+  en: 70827bc1bc1c2f52
+  zh: b8e4cb71ed6c1d7e
 /ocean-ocean-web-search-deepseek/use-this-package/what-a-search-returns:
   en: e30442c90365357b
   zh: 9c9e2f1182963a8a
@@ -48,8 +48,8 @@
   en: d6c3f30b70a5f4b5
   zh: ab7c5b7d6fc3cae6
 /ocean-ocean-web-search-deepseek/further-exploration:
-  en: 65634df0df5ed92d
-  zh: 19334d6cf46b5479
+  en: 3c1feb9045a317ea
+  zh: b33d76656f4cd869
 /ocean-ocean-web-search-deepseek/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -69,8 +69,8 @@
   en: 666f5753c99783ab
   zh: b44328e99bcc45c9
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-result-indirectly/what-the-model-sees:
-  en: 0764d19c9b82aa98
-  zh: 88b0ba22ef64225b
+  en: fbc10ff2fe624934
+  zh: 6b4aa496dbeb0718
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-result-indirectly/token-effect:
   en: 01ec43a9b616139d
   zh: 0a5b7c28fde34bcf
@@ -81,20 +81,20 @@
   en: ddcce72a4a4e0def
   zh: 338aa339f5708d7d
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-list-indirectly/what-the-model-sees:
-  en: f4630a1af1a7ba32
-  zh: 98b9699676acc8d3
+  en: ed1ab5e3ad4b4147
+  zh: 58b62170f2adac07
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-list-indirectly/token-effect:
   en: fc3904d8f90cc055
   zh: 60f82b8a3b894e7a
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-list-indirectly/kv-cache-effect:
-  en: 1d836a33dfa97fcf
-  zh: 2593ccf2a5716b02
+  en: bb098f5753105660
+  zh: fad684eefb80d65b
 /ocean-ocean-web-search-deepseek/known-limitations-and-deferred-work:
-  en: 1cb15cc5e9b1967d
-  zh: 64f1d93e94bbc9c3
+  en: 3f2728c85860cf05
+  zh: d9eb6517679cc79c
 /ocean-ocean-web-search-deepseek/known-limitations-and-deferred-work/dev-note:
   en: 64ee46559b704be8
   zh: 29e47b77c4e476e1
 /ocean-ocean-web-search-deepseek/known-limitations-and-deferred-work/dev-note/dedicated-retrieval-endpoint:
-  en: 188ca3400a73352e
-  zh: f948e2c565ec6ac1
+  en: 4b62a1f2455550a9
+  zh: 199045c32a1f7740

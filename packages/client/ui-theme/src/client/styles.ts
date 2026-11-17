@@ -10,7 +10,7 @@ import gradientShadowText from '../styles/gradient-shadow-text.css?inline'
 import shiki from '../styles/shiki.css?inline'
 
 const PLUGIN_ID = '@ocean/ocean-client-ui-theme'
-const HAIRLINE_WIDTH = '--dsh-hairline-width'
+const HAIRLINE_WIDTH = '--ocean-hairline-width'
 
 const STYLES = [
   ['base.css', base],

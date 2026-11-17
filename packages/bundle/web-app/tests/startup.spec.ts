@@ -42,7 +42,7 @@ async function bootProvider(args: string[]): Promise<{
   values: WebStartupValues | undefined
   observed: Observed
 }> {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-web-startup-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ocean-web-startup-'))
   tempDirs.push(dir)
   const observed: Observed = { exits: [], out: '' }
   writeFileSync(join(dir, 'reader.mjs'), `
@@ -138,7 +138,7 @@ describe('web command-line provider', () => {
 
   it('prints its own help and leaves the consumer pending', async () => {
     const { values, observed } = await bootProvider(['--help'])
-    expect(observed.out).toContain('dsh --profile web')
+    expect(observed.out).toContain('ocean --profile web')
     expect(observed.out).toContain('--no-open')
     expect(observed.out).toContain('--public-url')
     expect(observed.out).toContain('--trusted-host')

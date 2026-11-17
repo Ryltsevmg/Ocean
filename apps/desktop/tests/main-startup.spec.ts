@@ -68,7 +68,7 @@ const harness = await vi.hoisted(async () => {
   let platformCloseDeferred: ReturnType<typeof deferred> | undefined
   const platformCloseAndWait = vi.fn(() => platformCloseDeferred?.promise ?? Promise.resolve())
   const readLoginShell = async (base: NodeJS.ProcessEnv) => ({
-    environment: { ...base, DSH_TEST_LOGIN_SHELL: 'login' }, failures: [{ shell: '/account/shell', reason: 'timeout' }],
+    environment: { ...base, OCEAN_TEST_LOGIN_SHELL: 'login' }, failures: [{ shell: '/account/shell', reason: 'timeout' }],
   })
   const loginShell = vi.fn((base: NodeJS.ProcessEnv, _config: unknown, _options: { signal?: AbortSignal }) => readLoginShell(base))
   const updateCheck = vi.fn(async (_manual?: boolean): Promise<DesktopUpdateState> => updateState)
@@ -95,7 +95,7 @@ const harness = await vi.hoisted(async () => {
       focus: vi.fn(),
       sendInputEvent: vi.fn(),
       send: vi.fn((channel: string, state: { policy?: { blocking: boolean } }) => {
-        if (channel === 'dsh-desktop:mandatory-state' && state.policy?.blocking) policyBlocked.resolve()
+        if (channel === 'ocean-desktop:mandatory-state' && state.policy?.blocking) policyBlocked.resolve()
       }),
     })
     readonly shown = deferred()
@@ -346,7 +346,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   const original = await importOriginal<typeof import('node:fs/promises')>()
   return { ...original, readFile: vi.fn((path: Parameters<typeof original.readFile>[0], encoding?: 'utf8') => {
     if (path === join('desktop-test-app', 'package.json')) {
-      return Promise.resolve(JSON.stringify({ dshDesktopAppId: 'com.deepseek.dsh', dshMandatoryUpdatePolicy: harness.embeddedPolicy }))
+      return Promise.resolve(JSON.stringify({ oceanDesktopAppId: 'com.deepseek.ocean', oceanMandatoryUpdatePolicy: harness.embeddedPolicy }))
     }
     return encoding === undefined ? original.readFile(path) : original.readFile(path, encoding)
   }) }
@@ -465,7 +465,7 @@ beforeEach(() => {
   testAuth.login.mockResolvedValue('cancelled')
   vi.useFakeTimers()
   harness.reset()
-  const userData = mkdtempSync(join(tmpdir(), 'dsh-main-user-data-'))
+  const userData = mkdtempSync(join(tmpdir(), 'ocean-main-user-data-'))
   onTestFinished(() => { rmSync(userData, { recursive: true, force: true }) })
   harness.app.getPath.mockImplementation(name => name === 'userData' ? userData : join(userData, `desktop-test-${name}`))
   vi.mocked(writeCrashReport).mockResolvedValue(join(harness.app.getPath('logs'), 'crash-test.log'))
@@ -477,15 +477,15 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.spyOn(console, 'info').mockImplementation(() => {})
   vi.spyOn(console, 'warn').mockImplementation(() => {})
-  vi.stubEnv('DSH_DESKTOP_PNPM_ENTRY', 'test-pnpm')
-  vi.stubEnv('DSH_DESKTOP_DSH_DIR', 'test-runtime')
-  vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', 'test-primary-runtime')
+  vi.stubEnv('OCEAN_DESKTOP_PNPM_ENTRY', 'test-pnpm')
+  vi.stubEnv('OCEAN_DESKTOP_OCEAN_DIR', 'test-runtime')
+  vi.stubEnv('OCEAN_DESKTOP_PRIMARY_RUNTIME_DIR', 'test-primary-runtime')
   vi.stubGlobal('process', { ...process, platform: 'win32', arch: 'x64', resourcesPath: 'desktop-test-resources' })
-  vi.stubEnv('DSH_DESKTOP_HOST_INSPECT_PORT', undefined)
-  vi.stubEnv('DSH_DESKTOP_DEV_PROJECT_DIR', undefined)
-  vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
-  vi.stubEnv('DSH_DESKTOP_UPDATE_JOURNAL_DIR', undefined)
-  vi.stubEnv('DSH_CLIENT_VERSION', '1.2.3')
+  vi.stubEnv('OCEAN_DESKTOP_HOST_INSPECT_PORT', undefined)
+  vi.stubEnv('OCEAN_DESKTOP_DEV_PROJECT_DIR', undefined)
+  vi.stubEnv('OCEAN_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
+  vi.stubEnv('OCEAN_DESKTOP_UPDATE_JOURNAL_DIR', undefined)
+  vi.stubEnv('OCEAN_CLIENT_VERSION', '1.2.3')
   harness.analyticsEnabled = true
 })
 
@@ -511,7 +511,7 @@ describe('desktop main startup', () => {
     await readyForUpdate()
     const primary = packaged ? join('desktop-test-resources', 'runtime', 'primary-runtime') : 'test-primary-runtime'
     expect(harness.hosts[0]!.node).toBe(join(primary, 'dependencies', 'node', 'bin', 'node'))
-    if (packaged) expect(harness.hosts[0]!.runtime).toBe(join('desktop-test-resources', 'dsh'))
+    if (packaged) expect(harness.hosts[0]!.runtime).toBe(join('desktop-test-resources', 'ocean'))
     expect(harness.windows[0]!.options).toMatchObject({ webPreferences: { sandbox: true, contextIsolation: true } })
   })
 
@@ -744,11 +744,11 @@ describe('desktop main startup', () => {
   })
 
   it('starts the Host without resolving Kit or writing a diagnostic file', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-main-office-'))
+    const root = mkdtempSync(join(tmpdir(), 'ocean-main-office-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
     writeFileSync(join(root, 'app.asar'), 'archive fixture')
     harness.app.isPackaged = false
-    vi.stubEnv('DSH_DESKTOP_DSH_DIR', join(root, 'app.asar', 'dsh'))
+    vi.stubEnv('OCEAN_DESKTOP_OCEAN_DIR', join(root, 'app.asar', 'ocean'))
     const host = await readyForUpdate()
     await vi.waitFor(() => { expect(harness.analytics.mock.calls.some(([event]) => (event as { eventName: string }).eventName === 'desktop_app_launch')).toBe(true) })
     expect(host.primaryRuntime).toBe('test-primary-runtime')
@@ -1116,9 +1116,9 @@ describe('desktop main startup', () => {
   })
 
   it('persists opt-in update evidence from the real main entry without private diagnostics', async () => {
-    const directory = mkdtempSync(join(tmpdir(), 'dsh-main-update-journal-'))
+    const directory = mkdtempSync(join(tmpdir(), 'ocean-main-update-journal-'))
     try {
-      vi.stubEnv('DSH_DESKTOP_UPDATE_JOURNAL_DIR', directory)
+      vi.stubEnv('OCEAN_DESKTOP_UPDATE_JOURNAL_DIR', directory)
       await readyForUpdate()
       harness.publishUpdate({ phase: 'error', failedOperation: 'download', version: '1.2.3', message: 'ENOSPC secret-url' })
       const checkUpdates = applicationMenuItems().find(item => item.label === en.checkUpdatesMenu)!.click as () => void
@@ -1402,7 +1402,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 Ocean-Chat', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', zh.toggleDevToolsMenu, 'separator', '退出',
+      '关于 Ocean-Chat', 'separator', '检查更新…', '管理 ocean 命令…', 'separator', zh.toggleDevToolsMenu, 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -2004,9 +2004,9 @@ describe('desktop main startup', () => {
   })
 
   it('shares the failed-check deadline across focus and resume, while explicit checks reset polling', async () => {
-    vi.stubEnv('DSH_DESKTOP_UPDATE_CHECK_INTERVAL_MS', '1000')
-    vi.stubEnv('DSH_DESKTOP_UPDATE_CHECK_MAX_BACKOFF_MS', '4000')
-    vi.stubEnv('DSH_DESKTOP_UPDATE_CHECK_JITTER', '0')
+    vi.stubEnv('OCEAN_DESKTOP_UPDATE_CHECK_INTERVAL_MS', '1000')
+    vi.stubEnv('OCEAN_DESKTOP_UPDATE_CHECK_MAX_BACKOFF_MS', '4000')
+    vi.stubEnv('OCEAN_DESKTOP_UPDATE_CHECK_JITTER', '0')
     harness.updateCheck.mockResolvedValue({ phase: 'error', failedOperation: 'check', message: 'offline' })
     const host = await readyForUpdate()
     await vi.advanceTimersByTimeAsync(0)
@@ -2035,7 +2035,7 @@ describe('desktop main startup', () => {
   it('blocks subsequent product operations without stopping the Host and clears only on a fresh no-force policy', async () => {
     harness.embeddedPolicy = { origin: 'https://policy.example.com',
       allowedPageOrigins: ['https://downloads.example.com'], intervalMs: 10_000, jitter: 0 }
-    vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', '{invalid environment override}')
+    vi.stubEnv('OCEAN_DESKTOP_MANDATORY_UPDATE_CONFIG', '{invalid environment override}')
     const request = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ code: 40005,
       data: { show_content: { title: 'Update required', detail: 'Please update' }, desktop_app_link: 'https://downloads.example.com/' } }))
     vi.stubGlobal('fetch', request)
@@ -2846,7 +2846,7 @@ describe('desktop main startup', () => {
       level: 'error', message: 'client-modules: bundle script plugins/??a/client.js&rev=1 failed to load',
       sourceId: 'dsh-app://app/assets/entry.js', lineNumber: 12,
     })
-    host.onFailure!(new Error('dsh desktop host exited with 1: fatal uncaught exception: ENOENT'))
+    host.onFailure!(new Error('ocean desktop host exited with 1: fatal uncaught exception: ENOENT'))
     await host.stopping.promise
     expect(writeCrashReport).toHaveBeenCalledOnce()
     const [directory, report] = vi.mocked(writeCrashReport).mock.calls[0]!
@@ -2909,7 +2909,7 @@ describe('desktop main startup', () => {
         expect(quitCompleted).toBe(false)
         await vi.advanceTimersByTimeAsync(1)
         expect(workerExited).toBe(false)
-        expect(console.error).toHaveBeenCalledWith('dsh desktop: operation report Worker has not exited; continuing shutdown')
+        expect(console.error).toHaveBeenCalledWith('ocean desktop: operation report Worker has not exited; continuing shutdown')
       } else {
         finishReport()
         await vi.advanceTimersByTimeAsync(0)
@@ -2952,7 +2952,7 @@ describe('desktop main startup', () => {
     else finishReport({ appended: false, timedOut: false, cancelled: true })
     await harness.quitCompleted.promise
     if (stuck) {
-      expect(console.error).toHaveBeenCalledWith('dsh desktop: operation report Worker has not exited; continuing shutdown')
+      expect(console.error).toHaveBeenCalledWith('ocean desktop: operation report Worker has not exited; continuing shutdown')
       finishReport({ appended: false, timedOut: false, cancelled: true })
     }
     expect(harness.app.relaunch).toHaveBeenCalledTimes(response === 0 ? 0 : 1)
@@ -2980,7 +2980,7 @@ describe('desktop main startup', () => {
     expect(harness.hosts).toHaveLength(0)
     finishRead()
     await harness.hostStarted.promise
-    expect(harness.hosts[0]!.environment?.DSH_TEST_LOGIN_SHELL).toBe('login')
+    expect(harness.hosts[0]!.environment?.OCEAN_TEST_LOGIN_SHELL).toBe('login')
     harness.hosts[0]!.ready.resolve()
     await Promise.all([boot, harness.navigated.promise])
     const { signal } = harness.loginShell.mock.calls[0]![2]
@@ -3009,13 +3009,13 @@ describe('desktop main startup', () => {
     expect(harness.applyRelease).toHaveBeenCalledTimes(1)
     expect(harness.hosts[0]).toMatchObject({
       node: process.execPath,
-      runtime: join(harness.app.getAppPath(), 'dsh'),
+      runtime: join(harness.app.getAppPath(), 'ocean'),
       primaryRuntime: join('desktop-test-resources', 'runtime', 'primary-runtime'),
       profile: 'desktop-test-profile',
     })
     expect(harness.hosts[0]!.environment).not.toBe(process.env)
-    expect(harness.hosts[0]!.environment?.DSH_CLIENT_VERSION).toBe('1.2.3')
-    expect(harness.hosts[0]!.environment?.DSH_TEST_LOGIN_SHELL).toBe('login')
+    expect(harness.hosts[0]!.environment?.OCEAN_CLIENT_VERSION).toBe('1.2.3')
+    expect(harness.hosts[0]!.environment?.OCEAN_TEST_LOGIN_SHELL).toBe('login')
     expect(console.warn).toHaveBeenCalledWith('desktop login shell: /account/shell failed (timeout)')
     expect(harness.analytics).toHaveBeenCalledExactlyOnceWith({ eventName: 'desktop_app_launch', timestamp: Date.now(), attributes: {} })
     expect(harness.hosts[0]!.start).toHaveBeenCalledTimes(1)
@@ -3025,7 +3025,7 @@ describe('desktop main startup', () => {
 
   it('prepares an independent plugin profile for the unpackaged Host', async () => {
     harness.app.isPackaged = false
-    vi.stubEnv('DSH_DESKTOP_DSH_DIR', undefined)
+    vi.stubEnv('OCEAN_DESKTOP_OCEAN_DIR', undefined)
     await import('../src/main.ts')
     await harness.preparing.promise
     harness.prepared.resolve()
@@ -3041,11 +3041,11 @@ describe('desktop main startup', () => {
 
   it('fails an unpackaged launch that receives no primary runtime directory', async () => {
     harness.app.isPackaged = false
-    vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', undefined)
+    vi.stubEnv('OCEAN_DESKTOP_PRIMARY_RUNTIME_DIR', undefined)
     await import('../src/main.ts')
     await harness.dialogShown.promise
     const options = harness.dialog.showMessageBox.mock.calls[0]![0] as MessageBoxOptions
-    expect(options.detail).toContain('DSH_DESKTOP_PRIMARY_RUNTIME_DIR is required for an unpackaged launch')
+    expect(options.detail).toContain('OCEAN_DESKTOP_PRIMARY_RUNTIME_DIR is required for an unpackaged launch')
     expect(harness.hosts).toHaveLength(0)
   })
 
@@ -3060,7 +3060,7 @@ describe('desktop main startup', () => {
     await harness.dialogShown.promise
     expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/'])
     expect(harness.dialog.showMessageBox).toHaveBeenCalledOnce()
-    expect(harness.handlers.has('dsh-desktop:backend-retry')).toBe(false)
+    expect(harness.handlers.has('ocean-desktop:backend-retry')).toBe(false)
     expect(harness.hosts).toHaveLength(1)
   })
 
@@ -3107,7 +3107,7 @@ describe('desktop main startup', () => {
   })
 })
 
-it.each(['failed', 'expired'] as const)('focuses DSH once when browser authorization becomes %s', async (phase) => {
+it.each(['failed', 'expired'] as const)('focuses OCEAN once when browser authorization becomes %s', async (phase) => {
   await import('../src/main.ts')
   await harness.preparing.promise
   harness.prepared.resolve()

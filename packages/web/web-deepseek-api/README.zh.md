@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-通过 DeepSeek Search 与 Fetch API 搜索和抓取网页：每次操作只发起一次直接请求，无需辅助模型请求。插件注册 `deepseek-search-api` 和 `deepseek-fetch-api`；每个能力的计费方式决定它的 DeepSeek 凭据：默认在 DeepSeek 模型提供方上沿用会话的账号或 API 密钥，否则先用 API 密钥，再用已登录的账号；也可以固定为其中一种。也可以在 YAML 中为任一能力单独配置基础地址与密钥。Search 返回标题、URL、snippet、summary 与发布时间；Fetch 返回页面 Markdown。面向模型的工具由 `dsh-tool-web` 提供；[旧版 Messages 搜索](../web-search-deepseek/README.zh.md)仍是独立提供方。
+通过 DeepSeek Search 与 Fetch API 搜索和抓取网页：每次操作只发起一次直接请求，无需辅助模型请求。插件注册 `deepseek-search-api` 和 `deepseek-fetch-api`；每个能力的计费方式决定它的 DeepSeek 凭据：默认在 DeepSeek 模型提供方上沿用会话的账号或 API 密钥，否则先用 API 密钥，再用已登录的账号；也可以固定为其中一种。也可以在 YAML 中为任一能力单独配置基础地址与密钥。Search 返回标题、URL、snippet、summary 与发布时间；Fetch 返回页面 Markdown。面向模型的工具由 `ocean-tool-web` 提供；[旧版 Messages 搜索](../web-search-deepseek/README.zh.md)仍是独立提供方。
 
 ## 目录
 
@@ -24,7 +24,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用此包
 
-将插件与 `dsh-web` 一起挂载，并选择它的提供方。内置配置挂载此插件，为搜索选择它的 Search API（`deepseek-search-api`），为抓取选择本地 HTTP 抓取。在**插件 > 内置插件配置 > 网页搜索与获取**中，在**搜索**下拉框选择 **DeepSeek Search API** 会选中 `deepseek-search-api`，在**获取**下拉框选择 **DeepSeek Fetch API** 会选中 `deepseek-fetch-api`；两个下拉框分别保存，选择其他条目即改用其他提供方。下拉框选中这两个提供方之一时，其下方的**计费方式**下拉框写入 `searchBilling` 或 `fetchBilling`：**自动**、**已登录的 DeepSeek 账号**或 **DeepSeek API Key**。保存的选择从下一次操作开始生效。
+将插件与 `ocean-web` 一起挂载，并选择它的提供方。内置配置挂载此插件，为搜索选择它的 Search API（`deepseek-search-api`），为抓取选择本地 HTTP 抓取。在**插件 > 内置插件配置 > 网页搜索与获取**中，在**搜索**下拉框选择 **DeepSeek Search API** 会选中 `deepseek-search-api`，在**获取**下拉框选择 **DeepSeek Fetch API** 会选中 `deepseek-fetch-api`；两个下拉框分别保存，选择其他条目即改用其他提供方。下拉框选中这两个提供方之一时，其下方的**计费方式**下拉框写入 `searchBilling` 或 `fetchBilling`：**自动**、**已登录的 DeepSeek 账号**或 **DeepSeek API Key**。保存的选择从下一次操作开始生效。
 
 ```yaml
 - name: '@ocean/ocean-web'
@@ -49,7 +49,7 @@ kind: "package-reference"
 | `fetchBaseURL` | 省略 | Fetch API 基础地址，包含路径前缀；追加 `/fetch`，默认值规则相同 |
 | `fetchApiKeyEnv` | 省略 | Fetch 凭据引用，默认值规则相同 |
 
-两个字段都未设置的能力按其计费方式，请求所选 DeepSeek 模型路由解析后的 Messages 基础地址的 origin 下的 `/v1/tools/search` 与 `/v1/tools/fetch`，因此官方 `https://api.deepseek.com/anthropic` 或 `DEEPSEEK_BASE_URL` 覆盖值分别得到 `https://api.deepseek.com/v1/tools`，或覆盖值的 origin 加 `/v1/tools`。`dsh` 启动器从启动环境或 `$DSH_HOME/.env` 接受 `DEEPSEEK_BASE_URL`，绝不从项目 `.env` 接受（[app-boot](../../boot/app-boot/README.zh.md)）。单独配置的基础地址填写完整的 API 基础地址，包含路径前缀，但不包含操作名；使用其他前缀（例如 `/api/v1/tools`）的部署需要填写其完整基础地址。空字段视为未设置。这些单独配置的字段只能在 YAML 中设置，优先于计费方式；设置页只为这两个提供方显示计费方式下拉框。早期设置中保存的 `baseURL`、`apiKeyEnv` 与 `apiKey` 字段可以正常加载，但不再生效。
+两个字段都未设置的能力按其计费方式，请求所选 DeepSeek 模型路由解析后的 Messages 基础地址的 origin 下的 `/v1/tools/search` 与 `/v1/tools/fetch`，因此官方 `https://api.deepseek.com/anthropic` 或 `DEEPSEEK_BASE_URL` 覆盖值分别得到 `https://api.deepseek.com/v1/tools`，或覆盖值的 origin 加 `/v1/tools`。`ocean` 启动器从启动环境或 `$OCEAN_HOME/.env` 接受 `DEEPSEEK_BASE_URL`，绝不从项目 `.env` 接受（[app-boot](../../boot/app-boot/README.zh.md)）。单独配置的基础地址填写完整的 API 基础地址，包含路径前缀，但不包含操作名；使用其他前缀（例如 `/api/v1/tools`）的部署需要填写其完整基础地址。空字段视为未设置。这些单独配置的字段只能在 YAML 中设置，优先于计费方式；设置页只为这两个提供方显示计费方式下拉框。早期设置中保存的 `baseURL`、`apiKeyEnv` 与 `apiKey` 字段可以正常加载，但不再生效。
 
 真实 API 测试要求同时设置 `DEEPSEEK_API_KEY` 和 `DEEPSEEK_SEARCH_API_TEST_BASE_URL`，后者包含 API 路径前缀。
 
@@ -68,11 +68,11 @@ Search 与 Fetch 每次操作各自从同一份设置快照解析端点和凭据
 
 引用使用[共享 DeepSeek 凭据函数](../../llm/llm-deepseek/README.zh.md#account-credentials)：`ctx.credentials` 具有权威性，仅在该服务缺席时读取启动环境。路由密钥与单独配置的密钥均接受与模型请求相同的首尾空白规范化和格式校验；格式错误在发送请求前失败。
 
-每个提供者的 `ready()` 按其计费方式的解析顺序回答其在该路由上的下一次操作是否有凭据：非空账号令牌，或 `ctx.credentials.describe` 报告已配置的密钥（没有该服务时，启动环境必须包含它）。账号令牌或凭据存储读取失败，或所需路由条目的设置无法解析时，回答 false。这两个提供者被选中时，[`dsh-tool-web`](../tool-web/README.zh.md#search-readiness) 会从它们回答 false 的每个请求中撤下 `web_search` 与 `web_fetch` 及其提示词指引。只检查是否存在：错误的密钥仍算就绪，并使每次调用失败。
+每个提供者的 `ready()` 按其计费方式的解析顺序回答其在该路由上的下一次操作是否有凭据：非空账号令牌，或 `ctx.credentials.describe` 报告已配置的密钥（没有该服务时，启动环境必须包含它）。账号令牌或凭据存储读取失败，或所需路由条目的设置无法解析时，回答 false。这两个提供者被选中时，[`ocean-tool-web`](../tool-web/README.zh.md#search-readiness) 会从它们回答 false 的每个请求中撤下 `web_search` 与 `web_fetch` 及其提示词指引。只检查是否存在：错误的密钥仍算就绪，并使每次调用失败。
 
 ### 结果与失败
 
-Search API 接收 `query`、`count`（配置的结果数，或请求中更小的 `maxResults`）、`need_content: false`，以及在 `sendOriginalQuestion` 未关闭时的 `ori_question`：发起会话中最近一条用户提示的文本，空白折叠后截取至 128 个字符。在会话之外或没有此类提示的搜索不发送该字段。提供者将 `results[].snippet` 映射为展示用摘录，将 `results[].summary` 映射为面向模型的摘录，并将可为 null 的 `date` 映射为可选的 `publishedAt`；`dsh-tool-web` 限制每条摘要的长度。空结果数组表示成功。Fetch 发送 `url`，以文本正文返回原始 Markdown，并报告 HTTP 状态 200，因为目标没有可用内容时 API 会返回错误状态。返回 URL 为请求 URL：API 不报告重定向后的最终 URL。
+Search API 接收 `query`、`count`（配置的结果数，或请求中更小的 `maxResults`）、`need_content: false`，以及在 `sendOriginalQuestion` 未关闭时的 `ori_question`：发起会话中最近一条用户提示的文本，空白折叠后截取至 128 个字符。在会话之外或没有此类提示的搜索不发送该字段。提供者将 `results[].snippet` 映射为展示用摘录，将 `results[].summary` 映射为面向模型的摘录，并将可为 null 的 `date` 映射为可选的 `publishedAt`；`ocean-tool-web` 限制每条摘要的长度。空结果数组表示成功。Fetch 发送 `url`，以文本正文返回原始 Markdown，并报告 HTTP 状态 200，因为目标没有可用内容时 API 会返回错误状态。返回 URL 为请求 URL：API 不报告重定向后的最终 URL。
 
 单独配置的基础地址无法解析时，该能力的提供者不可用；`count` 不在 1 至 50 之间时，Search 不可用。凭据缺失以 `WEB_PROVIDER_CREDENTIAL_MISSING` 失败；所需模型路由的设置无法解析时以 `WEB_PROVIDER_MISCONFIGURED` 失败，并点名解析器的失败原因、模型页面以及该能力的 `*BaseURL` 与 `*ApiKeyEnv`；取消使用 `WEB_ABORTED`；传输、HTTP 和响应格式错误使用 `WEB_PROVIDER_ERROR`。重定向在联系目标前即被拒绝。Fetch API 的非成功状态表示抓取失败，不代表目标页面的状态。账号鉴权的 HTTP 401 响应只作废该请求实际发送的 token，并提供重新登录指引；更新的登录不受影响，凭据删除失败不会替换原 HTTP 错误。API 密钥失败与 HTTP 403 从不作废账号 token；其他请求失败指出端点及其来源：路由端点指导用户在模型页面检查该提供方的基础地址，或设置该能力的 `*BaseURL` 与 `*ApiKeyEnv`；单独配置指导用户修改或删除这两个字段。不会自动重试或回退至其他提供者。
 
@@ -113,7 +113,7 @@ Search API 接收 `query`、`count`（配置的结果数，或请求中更小的
 
 #### 模型看到什么
 
-这两个提供者被选中时，其中一个未就绪的会话请求既不包含对应工具（`web_search` 或 `web_fetch`）的 schema，也不包含该工具的提示词指引；该效果由 [`dsh-tool-web`](../tool-web/README.zh.md#search-readiness) 负责。
+这两个提供者被选中时，其中一个未就绪的会话请求既不包含对应工具（`web_search` 或 `web_fetch`）的 schema，也不包含该工具的提示词指引；该效果由 [`ocean-tool-web`](../tool-web/README.zh.md#search-readiness) 负责。
 
 #### Token 影响
 
@@ -121,7 +121,7 @@ Search API 接收 `query`、`count`（配置的结果数，或请求中更小的
 
 #### KV Cache 影响
 
-重新提供或移除 Web 工具会按 [`dsh-tool-web`](../tool-web/README.zh.md#search-readiness) 所述改变声明的工具。
+重新提供或移除 Web 工具会按 [`ocean-tool-web`](../tool-web/README.zh.md#search-readiness) 所述改变声明的工具。
 
 ## 已知限制与待办工作
 
@@ -131,7 +131,7 @@ Search API 接收 `query`、`count`（配置的结果数，或请求中更小的
 - 2026-10-16 的探测中，不同的 `ori_question` 未改变结果顺序、评分或摘要；由于指南将其列为意图信号，提供者仍会发送。
 - 查询和 URL 约束由远端服务执行。2026-10-16 抓取无法解析的目标域名时返回 HTTP 500，而非文档所述的 404，其失败信息与端点失败附带相同的端点指引。Fetch 既不暴露目标状态，也不暴露最终重定向 URL，因此结果报告 HTTP 200 和请求 URL；提供者丢弃 API 返回的页面标题。
 - `available()` 无法查询异步凭据存储；`ready()` 可以，因此凭据存储缺少密钥时，模型步骤会撤下这两个工具。直接调用 `ctx.web.search()` 或 `ctx.web.fetch()` 仍可能因凭据缺失失败。
-- Search 限速只约束单个插件实例内的发送时间。同一账号下的其他进程和客户端共享账号级 5 QPS 限制，彼此不协调，网络抖动也可能使请求集中到达；HTTP 429 会使该次搜索失败，随后 `dsh-tool-web` 会使整个多查询调用失败。Fetch 不限速，因此并行的 `web_fetch` 调用可能超过 Fetch 限制。
+- Search 限速只约束单个插件实例内的发送时间。同一账号下的其他进程和客户端共享账号级 5 QPS 限制，彼此不协调，网络抖动也可能使请求集中到达；HTTP 429 会使该次搜索失败，随后 `ocean-tool-web` 会使整个多查询调用失败。Fetch 不限速，因此并行的 `web_fetch` 调用可能超过 Fetch 限制。
 - 路由端点与密钥只认入口根部的 `@ocean/ocean-llm-deepseek-api-key` 与 `@ocean/ocean-llm-deepseek-account` Loader 条目；以相同提供方 id 注册的其他包（例如测试回放适配器）视为没有路由，其会话使用 `DEEPSEEK_API_KEY` 与官方基础地址。
 
 <a id="dev-note"></a>

@@ -17,7 +17,7 @@ function hunks(old = 'old', replacement = 'new', context?: string) {
 }
 
 async function setup(diffBasisMaxBytes = 1024) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-patch-provider-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-patch-provider-'))
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const ctx = new Context()
   onTestFinished(() => ctx.fiber.dispose())

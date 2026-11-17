@@ -106,7 +106,7 @@ function counted(inner: StorageBackend): {
 }
 
 async function measure(args: Args) {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-clear-perf-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-clear-perf-'))
   try {
     const path = join(root, 'schedule.json')
     const seedStart = performance.now()

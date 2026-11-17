@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/development.md
 /development-guide:
-  en: 4cffacb58911b7a4
-  zh: 4796ff319e310878
+  en: 81f474fdaea41813
+  zh: e04180c6b36afaa5
 /development-guide/setup-tutorial:
   en: 5207d17725c07a27
   zh: 258884c4300ac63a
@@ -21,17 +21,17 @@
   en: 3221d1076554001f
   zh: 29f166be6a5c04d9
 /development-guide/contributor-reference/typescript-project-layout:
-  en: 6b999c23d60f5d1f
-  zh: f6d1d35af63d683a
+  en: 90c49cb3c5b9691e
+  zh: 7a17e8f3e2a544d9
 /development-guide/contributor-reference/environment-variables:
-  en: 9a0b2f1a520cfc68
-  zh: 62c9ec565909f605
+  en: 30260299470caa4e
+  zh: 4c605200028b18be
 /development-guide/contributor-reference/git-integrations:
-  en: 075658ecfc10da20
-  zh: 69e664417bbde87e
+  en: 9a0cece68fe52c17
+  zh: 0c91ad0c55978f02
 /development-guide/contributor-reference/ci-gates:
-  en: fe0775b546d0066d
-  zh: 5f3d6776f32a2d90
+  en: 0f986e67316be543
+  zh: 65ac66773583350f
 /development-guide/contributor-reference/daily-commands:
   en: 08aa6ec1cdabfeb7
   zh: dcce5ae9d3c829d0
@@ -39,11 +39,11 @@
   en: 7ce6264a6a06dc4a
   zh: e12b684f2bef942b
 /development-guide/contributor-reference/application-commands:
-  en: 98828fc2b972bf39
-  zh: 1dc889a3d766bf35
+  en: ee4ded6151c86e74
+  zh: 00455e56ecd67a8b
 /development-guide/contributor-reference/todo-markers:
   en: 85b38f78d87fc88f
   zh: 00d5eb625e7dfb61
 /development-guide/contributor-reference/documenting-types-verbatim-ts-type-equiv:
-  en: 6b9b948e0b80cf76
-  zh: 2642f4127ed9b719
+  en: a05409d9acee77ce
+  zh: 2f67f2b7da75f923

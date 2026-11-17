@@ -1,4 +1,4 @@
-/** Public dsh commands using the immutable runtime carried by the Desktop installation. */
+/** Public ocean commands using the immutable runtime carried by the Desktop installation. */
 
 import { basename, delimiter, dirname, join, resolve } from 'node:path'
 import { runCli } from '@ocean/ocean/lib/bin.js'
@@ -26,7 +26,7 @@ export async function runDesktopCli(supportDir: string): Promise<void> {
       args: ['--expose-internals', join(supportDir, 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs')],
       env: {
         ELECTRON_RUN_AS_NODE: '1',
-        DSH_DESKTOP_NODE_EXECUTABLE: process.execPath,
+        OCEAN_DESKTOP_NODE_EXECUTABLE: process.execPath,
         PATH: `${join(supportDir, 'bin')}${delimiter}${process.env.PATH ?? ''}`,
       },
     },

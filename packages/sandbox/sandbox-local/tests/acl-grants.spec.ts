@@ -75,7 +75,7 @@ async function setup() {
 }
 
 function workspaceRoot(): string {
-  return realpathSync(mkdtempSync(join(tmpdir(), 'dsh-acl-grants-ws-')))
+  return realpathSync(mkdtempSync(join(tmpdir(), 'ocean-acl-grants-ws-')))
 }
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -128,7 +128,7 @@ describe('windows-acl write grants (LocalSandboxProvider)', () => {
       const tempDir = flag(confined.argv, '--temp')
       const tempSid = flag(confined.argv, '--temp-write-sid')
       expect(tempDir).toBeDefined()
-      expect(basename(tempDir ?? '')).toMatch(/^dsh-[A-Za-z0-9_-]{6}$/u)
+      expect(basename(tempDir ?? '')).toMatch(/^ocean-[A-Za-z0-9_-]{6}$/u)
       expect(tempSid).toBe(`TEMP:${tempDir}`)
       expect(tempSid).not.toBe(WORKSPACE_SID)
       expect(confined.argv).toEqual([
@@ -301,7 +301,7 @@ describe('windows-acl write grants (LocalSandboxProvider)', () => {
   it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)('codes a private temp directory that cannot be created', async () => {
     const { sandbox } = await setup()
     const ws = workspaceRoot()
-    const lockedTemp = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-acl-locked-temp-')))
+    const lockedTemp = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-acl-locked-temp-')))
     scratch.push(ws, lockedTemp)
     const previous = process.env.TMPDIR
     chmodSync(lockedTemp, 0o500)

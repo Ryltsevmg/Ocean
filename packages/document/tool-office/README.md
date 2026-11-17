@@ -25,7 +25,7 @@ After an Office skill loads, the model gains three tools. `office_render` return
 <a id="use-this-package"></a>
 ## Use this package
 
-The [Web bundle](../../bundle/web-app/README.md) and the [SDK bundle](../../bundle/sdk-app/README.md) mount this plugin with `office-kit` in Desktop, ordinary `dsh web`, and the SDK; in the Web bundle the `standard` and `ptc` agent presets include it and the `minimal` preset does not. Loading any configured [Office skill](../../skill/skill-office/README.md) activates all three tools from the next model step, whether loaded by a model `skill` call, a nested PTC call, or direct user invocation such as `/office`. Failed loads and other skills do not activate them. Calls before activation return `UNKNOWN_TOOL`.
+The [Web bundle](../../bundle/web-app/README.md) and the [SDK bundle](../../bundle/sdk-app/README.md) mount this plugin with `office-kit` in Desktop, ordinary `ocean web`, and the SDK; in the Web bundle the `standard` and `ptc` agent presets include it and the `minimal` preset does not. Loading any configured [Office skill](../../skill/skill-office/README.md) activates all three tools from the next model step, whether loaded by a model `skill` call, a nested PTC call, or direct user invocation such as `/office`. Failed loads and other skills do not activate them. Calls before activation return `UNKNOWN_TOOL`.
 
 Activation matches only the skill names listed in `activationSkills`, so mount [`@ocean/ocean-skill-office`](../../skill/skill-office/README.md) or another provider that registers skills with those names; without one, the three tools never appear.
 

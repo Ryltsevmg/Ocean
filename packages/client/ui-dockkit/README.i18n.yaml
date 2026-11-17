@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-dockkit/README.md
 /:
-  en: 93fc2e9e86fc50f8
-  zh: 61c7c38a66935ad6
+  en: c55543e6d352b831
+  zh: 6487a3e4306ec36f
 /ocean-ocean-client-ui-dockkit:
-  en: 033f41228eb7fa19
-  zh: 055729f72bbde552
+  en: 6d4603e620d2bfe2
+  zh: b0a6b670f572cb6a
 /ocean-ocean-client-ui-dockkit/summary:
   en: 3ee4584a73215ef4
   zh: 051170a6d0993fa5
@@ -36,5 +36,5 @@
   en: 4323810ca5a87e6c
   zh: 3a24af2ea4467ab7
 /ocean-ocean-client-ui-dockkit/known-limitations-and-deferred-work/dev-note:
-  en: 45680a19e42f401a
-  zh: 5500de88331c8a59
+  en: 9e8724dbf0fc2087
+  zh: 1c4d001660d10668

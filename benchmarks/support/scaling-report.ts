@@ -23,7 +23,7 @@ import { join } from 'node:path'
 import { MACHINE_PROFILES, matchMachineProfile } from './machine-profiles.ts'
 
 /** Directory owning `results.jsonl` and `report.html`; ignored by Git. */
-export const REPORT_DIRECTORY = join(import.meta.dirname, '..', '.dsh-report')
+export const REPORT_DIRECTORY = join(import.meta.dirname, '..', '.ocean-report')
 const RESULTS_PATH = join(REPORT_DIRECTORY, 'results.jsonl')
 const REPORT_PATH = join(REPORT_DIRECTORY, 'report.html')
 
@@ -108,10 +108,10 @@ function appendRecords(records: readonly (TimingRecord | MemoryRecord)[]): void 
  * @throws If the value is not a known phase.
  */
 function reportPhase(): 'first' | 'last' | 'all' {
-  const raw = process.env.DSH_BENCH_REPORT_PHASE
+  const raw = process.env.OCEAN_BENCH_REPORT_PHASE
   if (raw === undefined || raw === '' || raw === 'all') return 'all'
   if (raw === 'first' || raw === 'last') return raw
-  throw new Error(`DSH_BENCH_REPORT_PHASE must be "first", "last", or "all", got ${JSON.stringify(raw)}.`)
+  throw new Error(`OCEAN_BENCH_REPORT_PHASE must be "first", "last", or "all", got ${JSON.stringify(raw)}.`)
 }
 
 /** Vitest global setup: discard results of an earlier run unless this phase continues one. */

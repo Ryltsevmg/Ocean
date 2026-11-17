@@ -3,20 +3,20 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/i18n/README.md
 /bilingual-documentation:
-  en: f9829ce537be0f72
-  zh: 5ab1c534d35fb0b3
+  en: fe81afb0dc63007c
+  zh: 4cf5aef0471fa23a
 /bilingual-documentation/the-pairing-contract:
-  en: 7072cc39ec9ac2f8
-  zh: abf98447591f80a8
+  en: a969f4cbdfdc0ca5
+  zh: b17d987a17b69f09
 /bilingual-documentation/the-gate-verify-translation-pairing:
-  en: b68940ed457c1861
-  zh: b75a8cf5935c96e7
+  en: bced96917a7158bc
+  zh: c90774836d133059
 /bilingual-documentation/scope-and-exclusions:
-  en: cdb30a41f62bfe19
-  zh: dfe0131021b1bda1
+  en: 463f79b93a9c374d
+  zh: b45bfc54796c907c
 /bilingual-documentation/additional-user-guide-languages:
   en: de641631fd64562b
   zh: 1c20f41f55b3cfce
 /bilingual-documentation/division-of-labor:
-  en: 88097c97cb72f3ba
-  zh: 78a18000626cc818
+  en: f1a3dc4fca8105ea
+  zh: 3ae9dc76b4f23ecb

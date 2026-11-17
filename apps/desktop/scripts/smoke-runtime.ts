@@ -28,7 +28,7 @@ export function assertOfficeSkillsLoadable(results: ReadonlyArray<{ readonly nam
 /**
  * Check CLI package operations, Host startup, its frontend, external plugins, packaged Office skill loading,
  * and real Office rendering, conversion, and recalculation.
- * @param root - Materialized dsh resources.
+ * @param root - Materialized ocean resources.
  * @param node - Prepared target Electron executable.
  * @param runtime - Verified resource descriptor.
  * @param environment - Credential-scrubbed build environment and private native cache.
@@ -38,11 +38,11 @@ export function assertOfficeSkillsLoadable(results: ReadonlyArray<{ readonly nam
 export async function smokeDesktopRuntime(
   root: string, node: string, runtime: DesktopRuntimeDescriptor, environment: NodeJS.ProcessEnv, resourcesRuntime: string,
 ): Promise<void> {
-  const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-smoke-'))
+  const home = mkdtempSync(join(tmpdir(), 'ocean-desktop-smoke-'))
   const profile = join(home, 'profiles', 'desktop')
   const hostEnvironment = {
     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !/^(?:npm|pnpm|corepack)_/iu.test(name))),
-    DSH_HOME: home, HOME: home, USERPROFILE: home,
+    OCEAN_HOME: home, HOME: home, USERPROFILE: home,
     XDG_CONFIG_HOME: home, XDG_CACHE_HOME: home, XDG_STATE_HOME: home,
     APPDATA: home, LOCALAPPDATA: home,
     npm_config_userconfig: join(home, 'npmrc'), npm_config_globalconfig: join(home, 'npmrc'),
@@ -62,7 +62,7 @@ export async function smokeDesktopRuntime(
     const installedPlugin = join(home, installedName)
     mkdirSync(installedPlugin)
     writeFileSync(join(installedPlugin, 'package.json'), JSON.stringify({
-      name: installedName, version: '1.0.0', type: 'module', exports: './index.js', dsh: { bundle: { patch: './bundle.yml' } },
+      name: installedName, version: '1.0.0', type: 'module', exports: './index.js', ocean: { bundle: { patch: './bundle.yml' } },
     }))
     writeFileSync(join(installedPlugin, 'index.js'), `
 export function apply(ctx) {
@@ -95,7 +95,7 @@ export function apply(ctx) {
     if (cordis === undefined) throw new Error('desktop runtime: missing shared Cordis package')
     writeFileSync(join(plugin, 'package.json'), JSON.stringify({
       name: pluginName, version: '1.0.0', type: 'module', exports: './index.js',
-      peerDependencies: { '@deepseek-ai/cordis': cordis.version }, dsh: { bundle: { patch: './bundle.yml' } },
+      peerDependencies: { '@deepseek-ai/cordis': cordis.version }, ocean: { bundle: { patch: './bundle.yml' } },
     }))
     writeFileSync(join(plugin, 'index.js'), `
 import { Context } from '@deepseek-ai/cordis'
@@ -175,10 +175,10 @@ export function apply(ctx) {
     cpSync(plugin, join(profile, 'node_modules', pluginName), { recursive: true })
     const manifest = JSON.parse(readFileSync(join(profile, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
-      dsh: { profile: { bundles: string[] } }
+      ocean: { profile: { bundles: string[] } }
     }
     manifest.dependencies = { ...manifest.dependencies, [pluginName]: `file:${plugin}` }
-    manifest.dsh.profile.bundles.push(pluginName)
+    manifest.ocean.profile.bundles.push(pluginName)
     writeFileSync(join(profile, 'package.json'), JSON.stringify(manifest))
     writeFileSync(join(profile, 'cordis.patch.yml'), '- id: webserver\n  config:\n    host: 127.0.0.1\n    port: 0\n')
     const ready = await Promise.race([host.start(), new Promise<never>((_, reject) => {

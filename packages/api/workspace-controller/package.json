@@ -42,7 +42,7 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "external": [
         "@ocean/ocean-api-gateway/client"

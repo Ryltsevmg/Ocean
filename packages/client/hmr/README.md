@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-client-hmr` keeps open Web pages in sync with the Host plugin graph and reloads rebuilt browser bundles. Ordinary plugin enable/disable changes take effect without reloading the page or restarting the Host. Code rebuilds replace the affected plugin with fresh component state. The model sees no new input or output.
+`ocean-client-hmr` keeps open Web pages in sync with the Host plugin graph and reloads rebuilt browser bundles. Ordinary plugin enable/disable changes take effect without reloading the page or restarting the Host. Code rebuilds replace the affected plugin with fresh component state. The model sees no new input or output.
 
 ## Table of Contents
 
@@ -78,7 +78,7 @@ Download failures leave the running plugin active. After the old fiber is torn d
 | File | Role |
 |---|---|
 | [`src/index.ts`](src/index.ts) | Node half: bundle stat-poll, `rebuilt` reporting, `/plugins/events` SSE channel |
-| [`src/client/index.ts`](src/client/index.ts) | Browser half: SSE subscription through the page's `__DSH_TRANSPORT__.fetch` when a shell provides one (the worker preview's tunnel), otherwise through `EventSource`, and delegation to the shared entry controller |
+| [`src/client/index.ts`](src/client/index.ts) | Browser half: SSE subscription through the page's `__OCEAN_TRANSPORT__.fetch` when a shell provides one (the worker preview's tunnel), otherwise through `EventSource`, and delegation to the shared entry controller |
 | [`src/events.ts`](src/events.ts) | Shared frame types (`graph` / `rebuilt`) and the endpoint constant |
 
 </details>

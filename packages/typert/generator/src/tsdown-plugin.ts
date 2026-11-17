@@ -63,7 +63,7 @@ type GenerationOutcome =
  */
 export function decoratorPlugin(): Pick<TypertPlugin, 'name' | 'transform'> {
   return {
-    name: 'dsh-decorators',
+    name: 'ocean-decorators',
     transform: {
       // Rolldown evaluates the id filter natively, so non-TypeScript modules
       // never cross into this JavaScript hook.
@@ -112,7 +112,7 @@ export function typertPlugin(pluginOptions: TypertPluginOptions = {}): TypertPlu
   }
   return {
     ...decoratorPlugin(),
-    name: 'dsh-typert-generator',
+    name: 'ocean-typert-generator',
     buildStart(inputOptions) {
       // tsdown builds every workspace package concurrently through this one
       // plugin instance; the first package build to start launches generation.

@@ -18,7 +18,7 @@ afterEach(async () => {
 })
 
 async function open() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-schedule-malformed-')); roots.push(root)
+  const root = await mkdtemp(join(tmpdir(), 'ocean-schedule-malformed-')); roots.push(root)
   const ctx = new Context(); contexts.push(ctx)
   await ctx.plugin(Storage)
   const backend = new JsonStorageBackend(root)

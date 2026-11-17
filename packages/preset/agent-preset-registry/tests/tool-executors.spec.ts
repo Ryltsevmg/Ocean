@@ -93,7 +93,7 @@ class ProgramFixture extends PtcRuntime {
 }
 
 it.each([true, false])('loads cordis.yml executor presets with runtime availability %s', async (hasRuntime) => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-executor-packages-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-executor-packages-'))
   const ctx = await harness()
   onTestFinished(async () => {
     try { await ctx.fiber.dispose() } finally { await rm(root, { recursive: true, force: true }) }

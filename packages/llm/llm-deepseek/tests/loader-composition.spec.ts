@@ -60,8 +60,8 @@ async function loadComposition(
   // A reused root is the restart case: the same harness home, its documents
   // exactly as the previous process left them.
   const fresh = options.reuseRoot === undefined
-  root = options.reuseRoot ?? await mkdtemp(join(tmpdir(), 'dsh-llm-composition-'))
-  vi.stubEnv('DSH_HOME', root)
+  root = options.reuseRoot ?? await mkdtemp(join(tmpdir(), 'ocean-llm-composition-'))
+  vi.stubEnv('OCEAN_HOME', root)
   const settingsPath = join(root, 'profile', 'cordis.patch.yml')
   const credentialsPath = join(root, '.credentials.yaml')
   if (options.withDynamic && fresh) {

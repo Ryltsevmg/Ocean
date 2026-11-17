@@ -11,7 +11,7 @@ export type AgentContext = Omit<Context, 'remote'> & {
 }
 
 /** Context tag written by {@link createScope}. */
-const kScope = Symbol('dsh.client.scope')
+const kScope = Symbol('ocean.client.scope')
 
 interface ScopeIdentity {
   readonly sessionId: SessionId

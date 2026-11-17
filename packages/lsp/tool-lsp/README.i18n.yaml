@@ -6,11 +6,11 @@
   en: 9004a9a19d07ed3d
   zh: 73bc717fc10e0f7c
 /ocean-ocean-tool-lsp:
-  en: 789bbd41b0c6b1c1
-  zh: ed41954e854f3a38
+  en: aaf57ba241d5468c
+  zh: 3953fd6e2db506d7
 /ocean-ocean-tool-lsp/summary:
-  en: 61f5312c56bdafcf
-  zh: 1371bf41d5759adf
+  en: 98e0d4cbb9990e14
+  zh: 97a5ecdf0b8f56fe
 /ocean-ocean-tool-lsp/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -24,11 +24,11 @@
   en: a99cb065502a29df
   zh: 3224078413b11e56
 /ocean-ocean-tool-lsp/use-this-package/configuration:
-  en: ae7da3ad7c049b1a
-  zh: 1b543013689b8925
+  en: c6661197fce82164
+  zh: 5c1d6366d1b9f0f9
 /ocean-ocean-tool-lsp/use-this-package/failures-and-recovery:
-  en: 93aff7952acc564a
-  zh: f27835dfeeb726b7
+  en: da65b21dfdfbfb7a
+  zh: ed0db6fb254146dd
 /ocean-ocean-tool-lsp/understand-the-implementation:
   en: 6574e484bce0e60b
   zh: 75688d1f9dde8f48
@@ -39,8 +39,8 @@
   en: ae801d20c57b1ffb
   zh: 65aa6d9c0e0488fb
 /ocean-ocean-tool-lsp/further-exploration:
-  en: f4965ba5ea4f8ee3
-  zh: b85ee14edf9fdef0
+  en: 1bf00ed4287b6db8
+  zh: bf6a0d59f292c0a4
 /ocean-ocean-tool-lsp/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -63,8 +63,8 @@
   en: e4c7376d4f29dbd5
   zh: 6b7a9eaf69c9ea53
 /ocean-ocean-tool-lsp/model-experience/tool-schema/what-the-model-sees:
-  en: 7a9c0f36542d5dac
-  zh: cb2ad3fdfefbeb79
+  en: dfddf19fbb1dfdcf
+  zh: e73c4d1bd62999d0
 /ocean-ocean-tool-lsp/model-experience/tool-schema/token-effect:
   en: 72a9d451f6de2b69
   zh: 5764c9b75aaf8696

@@ -40,7 +40,7 @@ const silentReader = { readFrom: (fromByte: number) => ({ text: '', nextOffset: 
 
 const testToolSignal = new AbortController().signal
 
-const spillDir = mkdtempSync(join(tmpdir(), 'dsh-tool-bash-spec-'))
+const spillDir = mkdtempSync(join(tmpdir(), 'ocean-tool-bash-spec-'))
 
 afterAll(() => {
   rmSync(spillDir, { recursive: true, force: true })
@@ -340,7 +340,7 @@ describe('bash tool', () => {
 
   it('surfaces spawn failures as isError', async () => {
     const ctx = await setup()
-    const result = await call(ctx, 'bash', { command: 'true', description: 'test command', workdir: '/nonexistent-dsh' })
+    const result = await call(ctx, 'bash', { command: 'true', description: 'test command', workdir: '/nonexistent-ocean' })
     expect(result.isError).toBe(true)
     expect(text(result)).toMatch(/ENOENT/)
   })
@@ -1310,7 +1310,7 @@ describe('tool-owned UI presentation (presentCall / presentResult)', () => {
 })
 
 describe('the model-facing bash tool builds its request from named args only (no {...args} forward)', () => {
-  const recordingDshHome = join(spillDir, 'dsh-home')
+  const recordingOceanHome = join(spillDir, 'ocean-home')
 
   /**
    * Records every {@link ShellExecRequest} the consumer hands to `resolve()`, so a
@@ -1321,7 +1321,7 @@ describe('the model-facing bash tool builds its request from named args only (no
    * future refactor that blindly forwards `...args` — which would silently thread
    * model input into the post-scrub `env` merge or per-run capture budget — NOT
    * to defend a trust boundary
-   * (the credential scrub in dsh-bash-local is the security control). Foreground `run()` returns a canned result; `start()`
+   * (the credential scrub in ocean-bash-local is the security control). Foreground `run()` returns a canned result; `start()`
    * hands back an already-settled fake handle so the task registration completes.
    */
   class RecordingBashExecutor extends ShellExecutor {
@@ -1337,7 +1337,7 @@ describe('the model-facing bash tool builds its request from named args only (no
         ...request.signal ? { signal: request.signal } : {},
         ...request.stdin !== undefined ? { stdin: request.stdin } : {},
         ...request.env !== undefined ? { env: request.env } : {},
-        ...request.dshEnv !== undefined ? { dshEnv: request.dshEnv } : {},
+        ...request.oceanEnv !== undefined ? { oceanEnv: request.oceanEnv } : {},
         sandboxPolicy: request.sandboxPolicy,
       }
     }
@@ -1367,7 +1367,7 @@ describe('the model-facing bash tool builds its request from named args only (no
     await ctx.plugin(AgentRegistry)
     await ctx.plugin(LocalJobRegistry)
     await ctx.plugin(ToolJobs)
-    await ctx.plugin(BashEnvPlugin, { dshHome: recordingDshHome })
+    await ctx.plugin(BashEnvPlugin, { oceanHome: recordingOceanHome })
     await ctx.plugin(RecordingBashExecutor)
     await ctx.plugin(ToolBash)
     return { ctx, bash: ctx.shell as RecordingBashExecutor }
@@ -1376,13 +1376,13 @@ describe('the model-facing bash tool builds its request from named args only (no
   it('describes the managed harness environment namespace to the model', async () => {
     const { ctx } = await setupRecording()
     const description = ctx.tools.get('bash')?.description ?? ''
-    expect(description).toContain('$DSH_*')
+    expect(description).toContain('$OCEAN_*')
   })
 
   it('injects built-ins and the stable session id into a foreground request', async () => {
     const { ctx, bash } = await setupRecording()
     const agent = await registerFakeAgent(ctx, 'request-fg', () => undefined)
-    const ambient = process.env.DSH_SESSION_ID
+    const ambient = process.env.OCEAN_SESSION_ID
 
     await executeToolFixture(ctx, {
       signal: testToolSignal,
@@ -1392,13 +1392,13 @@ describe('the model-facing bash tool builds its request from named args only (no
       agent,
     })
 
-    expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
-      DSH_NODE_EXECUTABLE: process.execPath,
-      DSH_SESSION_ID: 'request-fg',
-      DSH_SHELL: '1',
+    expect(bash.requests[0]?.oceanEnv).toEqual({
+      OCEAN_HOME: recordingOceanHome,
+      OCEAN_NODE_EXECUTABLE: process.execPath,
+      OCEAN_SESSION_ID: 'request-fg',
+      OCEAN_SHELL: '1',
     })
-    expect(process.env.DSH_SESSION_ID).toBe(ambient)
+    expect(process.env.OCEAN_SESSION_ID).toBe(ambient)
   })
 
   it('injects the same trusted variables into a background request without forwarding model env', async () => {
@@ -1413,17 +1413,17 @@ describe('the model-facing bash tool builds its request from named args only (no
         command: 'sleep 1',
         description: 'run command',
         run_in_background: true,
-        env: { DSH_SESSION_ID: 'spoofed' },
+        env: { OCEAN_SESSION_ID: 'spoofed' },
       },
       agent,
     })
 
     expect(bash.requests[0]?.env).toBeUndefined()
-    expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
-      DSH_NODE_EXECUTABLE: process.execPath,
-      DSH_SESSION_ID: 'request-bg',
-      DSH_SHELL: '1',
+    expect(bash.requests[0]?.oceanEnv).toEqual({
+      OCEAN_HOME: recordingOceanHome,
+      OCEAN_NODE_EXECUTABLE: process.execPath,
+      OCEAN_SESSION_ID: 'request-bg',
+      OCEAN_SHELL: '1',
     })
   })
 
@@ -1442,18 +1442,18 @@ describe('the model-facing bash tool builds its request from named args only (no
       })
     }
 
-    expect(bash.requests.map(request => request.dshEnv)).toEqual([
+    expect(bash.requests.map(request => request.oceanEnv)).toEqual([
       {
-        DSH_HOME: recordingDshHome,
-        DSH_NODE_EXECUTABLE: process.execPath,
-        DSH_SESSION_ID: 'request-parent',
-        DSH_SHELL: '1',
+        OCEAN_HOME: recordingOceanHome,
+        OCEAN_NODE_EXECUTABLE: process.execPath,
+        OCEAN_SESSION_ID: 'request-parent',
+        OCEAN_SHELL: '1',
       },
       {
-        DSH_HOME: recordingDshHome,
-        DSH_NODE_EXECUTABLE: process.execPath,
-        DSH_SESSION_ID: 'request-child',
-        DSH_SHELL: '1',
+        OCEAN_HOME: recordingOceanHome,
+        OCEAN_NODE_EXECUTABLE: process.execPath,
+        OCEAN_SESSION_ID: 'request-child',
+        OCEAN_SHELL: '1',
       },
     ])
   })
@@ -1520,7 +1520,7 @@ describe('resolved launch directory metadata', () => {
     { background: true, workdir: 'relative' },
   ])('records the executor directory for background=$background and workdir=$workdir', async ({ background, workdir }) => {
     const ctx = await setupWithJobs()
-    const directory = mkdtempSync(join(tmpdir(), 'dsh-bash-cwd-meta-'))
+    const directory = mkdtempSync(join(tmpdir(), 'ocean-bash-cwd-meta-'))
     const current = join(directory, 'current')
     const ensure = vi.spyOn(ctx.workingDirectory, 'ensure').mockResolvedValue(current)
     const resolve = ctx.shell.resolve.bind(ctx.shell)

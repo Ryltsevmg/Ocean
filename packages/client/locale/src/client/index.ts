@@ -249,7 +249,7 @@ export class LocaleRuntime {
    * locale, because the active value may be a provisional browser-derived or
    * fallback resolution that nothing has stored yet. Picking the language
    * already on screen is still an explicit choice, and it must survive a
-   * different browser sharing the same DSH home. Only the render notification
+   * different browser sharing the same OCEAN home. Only the render notification
    * is conditional: republishing an unchanged locale would churn every
    * subscriber for nothing.
    * @param id - a registered locale id; unknown ids throw.
@@ -566,7 +566,7 @@ export const inject = ['slots', 'remote', 'configForms']
  * @returns resolves after native language initialization and plugin registration.
  */
 export async function apply(ctx: ClientContext): Promise<void> {
-  const bridge = (globalThis as { __DSH_LOCALE__?: LocaleBridge }).__DSH_LOCALE__
+  const bridge = (globalThis as { __OCEAN_LOCALE__?: LocaleBridge }).__OCEAN_LOCALE__
   let bootstrap: LocaleBootstrap | undefined
   if (bridge !== undefined) {
     let value: unknown

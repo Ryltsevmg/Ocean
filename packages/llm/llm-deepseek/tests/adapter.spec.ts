@@ -45,9 +45,9 @@ async function endpoint(...args: Parameters<typeof server>) {
   return instance
 }
 async function context() {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-messages-test-'))
+  const home = await mkdtemp(join(tmpdir(), 'ocean-messages-test-'))
   cleanup.push(() => rm(home, { recursive: true, force: true }))
-  vi.stubEnv('DSH_HOME', home)
+  vi.stubEnv('OCEAN_HOME', home)
   const ctx = new Context()
   cleanup.push(() => ctx.fiber.dispose())
   return { ctx, home }
@@ -324,7 +324,7 @@ describe('Cordis provider composition', () => {
     const price = () => ctx.llm.imageRequestPricing('deepseek-official', model)!
     const dummy = { attachmentId: AttachmentId(`sha256:${'a'.repeat(64)}`), width: 1, height: 1, bytes: 3, mediaType: 'image/png' as const }
     expect(price().priceImages([{ type: 'image', attachment: dummy }])[0]?.text).toBeDefined()
-    await ctx.plugin(LocalAttachments, { dshHome: home })
+    await ctx.plugin(LocalAttachments, { oceanHome: home })
     const attachment = await ctx.attachments.saveImage({ data: await readFile(new URL('fixtures/red.png', import.meta.url)), mediaType: 'image/png' })
     expect(price().priceImages([{ type: 'image', attachment }])[0]?.text).not.toContain('/mounted/image.png')
     class MappedFiles extends Service {
@@ -372,7 +372,7 @@ describe('Cordis provider composition', () => {
 
   it.each(['deepseek-account', 'deepseek-official'].flatMap(provider => [
     { provider, body: JSON.stringify({ error: { type: 'authentication_error', message: 'API key is invalid' } }) },
-    { provider, body: JSON.stringify({ error: { message: 'Authentication Fails (invalid dsh token)' } }) },
+    { provider, body: JSON.stringify({ error: { message: 'Authentication Fails (invalid ocean token)' } }) },
     { provider, body: 'Unauthorized' },
     { provider, body: '' },
   ]))('handles $provider HTTP 401 independently of the response body ($body)', async ({ provider, body }) => {
@@ -407,7 +407,7 @@ describe('Cordis provider composition', () => {
   it('finishes the active account turn when rejected credentials publish sign-out', async () => {
     const { ctx } = await boot((response) => {
       response.writeHead(401)
-      response.end(JSON.stringify({ error: { message: 'Authentication Fails (invalid dsh token)' } }))
+      response.end(JSON.stringify({ error: { message: 'Authentication Fails (invalid ocean token)' } }))
     })
     ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
       rejectToken: async (_token: string): Promise<void> => { ctx.emit('deepseek-account/signed-out') } } as DeepSeekAccount)
@@ -423,7 +423,7 @@ describe('Cordis provider composition', () => {
   it('preserves the inference error when rejected credential removal fails', async () => {
     const { ctx } = await boot((response) => {
       response.writeHead(401)
-      response.end(JSON.stringify({ error: { message: 'Authentication Fails (invalid dsh token)' } }))
+      response.end(JSON.stringify({ error: { message: 'Authentication Fails (invalid ocean token)' } }))
     })
     ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
       rejectToken: async (_token: string): Promise<void> => { throw new Error('credential storage unavailable') } } as DeepSeekAccount)

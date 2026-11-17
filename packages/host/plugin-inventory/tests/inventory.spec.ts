@@ -40,7 +40,7 @@ async function harness(baseUrl?: string): Promise<{
 }
 
 function metadataFixture(mode: 'native' | 'runtime') {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-inventory-meta-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-inventory-meta-'))
   roots.push(root)
   const profilesDir = join(root, 'profiles')
   const profileDir = join(profilesDir, 'test')

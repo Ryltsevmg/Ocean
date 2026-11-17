@@ -54,7 +54,7 @@ async function agent(ctx: Context, cwd: string | undefined): Promise<Agent> {
 
 
 async function setup() {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-present-minimal-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-present-minimal-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx)
@@ -189,7 +189,7 @@ it('requires an agent, an open turn, and a workspace', async () => {
 
 it('declares readable files outside the Session directory using absolute and relative paths', async () => {
   const { root, execute, owner } = await setup()
-  const outside = await mkdtemp(join(tmpdir(), 'dsh-present-external-'))
+  const outside = await mkdtemp(join(tmpdir(), 'ocean-present-external-'))
   cleanups.push(() => rm(outside, { recursive: true, force: true }))
   const file = join(outside, 'report.txt')
   await writeFile(file, 'external report')

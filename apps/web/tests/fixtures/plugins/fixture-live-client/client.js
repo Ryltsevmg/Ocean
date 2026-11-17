@@ -107,9 +107,9 @@ window.__ModuleLoader__.load({
         })
         ctx.effect(() => {
           const ping = () => { counters.liveHits = String(Number(counters.liveHits ?? 0) + 1) }
-          window.addEventListener('dsh-fixture-ping', ping)
+          window.addEventListener('ocean-fixture-ping', ping)
           return async () => {
-            window.removeEventListener('dsh-fixture-ping', ping)
+            window.removeEventListener('ocean-fixture-ping', ping)
             await Promise.resolve()
             counters.liveDisposals = String(Number(counters.liveDisposals ?? 0) + 1)
           }

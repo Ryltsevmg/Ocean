@@ -3,23 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-settings-models/README.md
 /:
-  en: d1bc4d9ef67bfb19
-  zh: d095e4dc76f1c5e0
+  en: 1e1f89aec0dcff47
+  zh: 996e7d4a82ea527e
 /ocean-ocean-client-ui-settings-models:
-  en: b712bf9a2e815eae
-  zh: 9698c0485a61da49
+  en: bc58f74658825678
+  zh: cf327d28c62fbc4f
 /ocean-ocean-client-ui-settings-models/summary:
-  en: 51252c1e9fa6da0a
-  zh: 227b54d7898417fa
+  en: 463c98337ae12a4a
+  zh: 825bb3ea9652594a
 /ocean-ocean-client-ui-settings-models/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-client-ui-settings-models/use-this-package:
-  en: db5aaf7f702e1f0c
-  zh: 409a78c14fb2b6e3
+  en: aa85e5bbb2aec53a
+  zh: 4e63f0b59495cb89
 /ocean-ocean-client-ui-settings-models/use-this-package/api-keys:
-  en: fa2cefbf8c4fdafe
-  zh: 3a4689591b50f6ea
+  en: 94b83933ef218eda
+  zh: bbaedc624830ea45
 /ocean-ocean-client-ui-settings-models/use-this-package/editing-a-provider:
   en: a83a61e44b6f1c00
   zh: 2dc6d84692e524ac
@@ -30,8 +30,8 @@
   en: 589397a35f82244e
   zh: 342fbceee2c173a2
 /ocean-ocean-client-ui-settings-models/use-this-package/extension-slots:
-  en: 79f8f80bdaba73cd
-  zh: f4d7496b293fbf81
+  en: a840a5f441f0f8c7
+  zh: 59e80c824815771d
 /ocean-ocean-client-ui-settings-models/understand-the-implementation:
   en: a87afbec5e339b36
   zh: 6348c81af7e650e1
@@ -45,8 +45,8 @@
   en: dc515a31212e477a
   zh: 770ba77cd9a69f73
 /ocean-ocean-client-ui-settings-models/further-exploration:
-  en: df2c1e09f7b20336
-  zh: a591d1983f1e6969
+  en: c4ba5d315bcc64c6
+  zh: ccd72201beefc31e
 /ocean-ocean-client-ui-settings-models/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a

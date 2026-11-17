@@ -467,9 +467,9 @@ describe('ModelSelect reasoning effort', () => {
     // Outside the composer subtree — column overflow clips cannot crop it.
     expect(container.contains(menu)).toBe(false)
     expect(menu.parentElement).toBe(document.body)
-    const anchor = trigger.style.getPropertyValue('--dsh-model-anchor')
-    expect(anchor).toMatch(/^--dsh-model-/)
-    expect(menu.style.getPropertyValue('--dsh-model-anchor')).toBe(anchor)
+    const anchor = trigger.style.getPropertyValue('--ocean-model-anchor')
+    expect(anchor).toMatch(/^--ocean-model-/)
+    expect(menu.style.getPropertyValue('--ocean-model-anchor')).toBe(anchor)
     expect(menu.style.left).toBe('')
     expect(menu.style.top).toBe('')
     expect(measure).not.toHaveBeenCalled()

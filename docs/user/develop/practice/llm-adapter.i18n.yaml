@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/develop/practice/llm-adapter.md
 /llm-adapters:
-  en: b1773ae9a186fd66
-  zh: e0a190393f7215b7
+  en: 2fd97f85957f8d17
+  zh: dd111812dd1381c5
 /llm-adapters/overview:
   en: 41c0c7fd00acc50d
   zh: 6ee6949e384e96f7

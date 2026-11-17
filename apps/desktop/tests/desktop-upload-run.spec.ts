@@ -22,7 +22,7 @@ const BINARY_BYTES = 'binary fixture'
 const FEED_BYTES = 'version: 1.2.3\n'
 
 async function fixture(environment: 'test' | 'production' = 'test') {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-upload-audit-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-upload-audit-'))
   roots.push(root)
   const binary = join(root, 'package.exe')
   await writeFile(binary, BINARY_BYTES)
@@ -196,7 +196,7 @@ describe('release upload audit with the real COS SDK and an isolated loopback or
 it('sends the fixed-download save filename through the real COS SDK', async () => {
   const f = await fixture('production')
   const contentDisposition = 'attachment; filename="ocean-chat-1.2.3-rc.5-win-x64.exe"'
-  const plan = { ...f.plan, artifacts: [{ ...f.plan.artifacts[0]!, key: 'desktop/dsh-latest-windows-x64.exe', contentDisposition }] }
+  const plan = { ...f.plan, artifacts: [{ ...f.plan.artifacts[0]!, key: 'desktop/ocean-latest-windows-x64.exe', contentDisposition }] }
   const { cos, loopback } = await transport()
   await uploadDesktopRelease(plan, cos, f.records)
   expect(loopback.requests).toHaveLength(1)

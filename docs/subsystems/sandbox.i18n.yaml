@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/sandbox.md
 /process-sandbox:
-  en: e0d4876306b192c3
-  zh: 63baaa0c79e87deb
+  en: 44c16fb7616e211a
+  zh: b19400f200292543
 /process-sandbox/modes-and-enforcement:
   en: 3e518b62c9bbcd6e
   zh: d59d4a3830ce7cf6
@@ -12,8 +12,8 @@
   en: 53850780ce70e3d8
   zh: 60769c319d778e0e
 /process-sandbox/wrapped-argv-and-classification-dialects:
-  en: 2ba8930762e92e40
-  zh: 220f64da1a9e5d57
+  en: 69884ecb423e8f28
+  zh: 42264e67f025f4b7
 /process-sandbox/provider-and-fail-closed-errors:
-  en: a1f9649b3cde0aca
-  zh: 6708348a70eb2451
+  en: 180196a29db42881
+  zh: 7b9eb55e2bcb29f8

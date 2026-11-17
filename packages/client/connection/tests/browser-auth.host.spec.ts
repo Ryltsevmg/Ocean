@@ -103,7 +103,7 @@ describe('API credentials', () => {
     expect(res.state).toEqual({
       status: 401,
       headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8' },
-      body: 'dsh web authentication required; reopen the URL printed by dsh web.\n',
+      body: 'ocean web authentication required; reopen the URL printed by ocean web.\n',
     })
     expect(publish).not.toHaveBeenCalled()
   })
@@ -165,6 +165,7 @@ describe('BrowserAuth', () => {
     const processOwner = {}
     const first = await createAuth(store, 30, processOwner)
     const login = exchange(first)
+    expect(login.cookie).toMatch(/^dsh-auth-/u)
 
     expect(login.state).toMatchObject({
       status: 303,
@@ -239,9 +240,9 @@ describe('BrowserAuth', () => {
 
   it('preserves the caller authority and mount while adding only this process token', async () => {
     const auth = await createAuth(new RecordCredentials())
-    const mounted = new URL(auth.authenticatedUrl('https://gateway.example/tools/dsh/'))
+    const mounted = new URL(auth.authenticatedUrl('https://gateway.example/tools/ocean/'))
     expect(mounted.origin).toBe('https://gateway.example')
-    expect(mounted.pathname).toBe('/tools/dsh/')
+    expect(mounted.pathname).toBe('/tools/ocean/')
     expect([...mounted.searchParams.keys()]).toEqual(['token'])
 
     const loopback = new URL(auth.authenticatedUrl('http://127.0.0.1:3080/'))
@@ -283,7 +284,7 @@ describe('BrowserAuth', () => {
       })
       expect(denied.state.body).toBe(candidate.method === 'HEAD'
         ? undefined
-        : 'dsh web authentication required; reopen the URL printed by dsh web.\n')
+        : 'ocean web authentication required; reopen the URL printed by ocean web.\n')
     }
   })
 

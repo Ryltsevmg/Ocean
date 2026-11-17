@@ -6,11 +6,11 @@
   en: 04735af7a998f2ae
   zh: ab6bf3d0f098877a
 /ocean-ocean-subprocess:
-  en: 24aea3ada1f010be
-  zh: 957561187a447feb
+  en: f0506469357da04b
+  zh: b9cfd62162a01f3f
 /ocean-ocean-subprocess/summary:
-  en: 4c3e83922d6ba18c
-  zh: d794f5cb99939e6d
+  en: 5eb9b8a6b58036b0
+  zh: 4de2baca8fb8a75e
 /ocean-ocean-subprocess/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -27,8 +27,8 @@
   en: c02fe7246326c164
   zh: 1d31096e31e1feee
 /ocean-ocean-subprocess/use-this-package/using-a-control-pipe:
-  en: 1f14dff5fa32f58a
-  zh: d81bde171a84dae6
+  en: 96e53f3702c4c2fc
+  zh: a7306147818f52cb
 /ocean-ocean-subprocess/use-this-package/managing-process-lifetime:
   en: 83d662d278184411
   zh: 2c4e7fbe76823fa8
@@ -36,8 +36,8 @@
   en: e3631497344c2ebd
   zh: c4ebc7b08f0a316e
 /ocean-ocean-subprocess/use-this-package/environment-every-child-starts-from:
-  en: 4d4cbb311575d071
-  zh: 7be2d265adb661bc
+  en: 7da98bf4012574e3
+  zh: 589fcbe2e3e69aab
 /ocean-ocean-subprocess/use-this-package/what-can-go-wrong:
   en: 819a0d9b6ac823ab
   zh: 57be33bc8204dd3e
@@ -45,11 +45,11 @@
   en: 25cd344c959cfd9e
   zh: 045880776ab82d1e
 /ocean-ocean-subprocess/understand-the-implementation/design-concept:
-  en: 07201ec2256c25f6
-  zh: 046109cfa92194f3
+  en: b5c4aa092a8b1c90
+  zh: 69b8e746c9e32675
 /ocean-ocean-subprocess/understand-the-implementation/source-map:
-  en: e56d6825d1b990a5
-  zh: c70cabda3bfcd2ab
+  en: 735120b8ea93b619
+  zh: 2207a374491dec08
 /ocean-ocean-subprocess/understand-the-implementation/data-model-and-flow:
   en: 9998dc0a990fbcf1
   zh: ba179617f60cb9bc
@@ -57,8 +57,8 @@
   en: a132325eea7cadb4
   zh: 434cbbc61ff9cd0e
 /ocean-ocean-subprocess/further-exploration:
-  en: 7377ad75fbebb7cf
-  zh: ee674cf9c8f10903
+  en: dca6a2f88566fc02
+  zh: a0ee5c324702809d
 /ocean-ocean-subprocess/model-experience:
   en: 36d8f1820f81de29
   zh: da18a4123bdd28b7

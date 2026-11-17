@@ -61,7 +61,7 @@ async function setupWith(adapter: MockAdapter | GatedAdapter) {
   const ctx = new Context()
   contexts.add(ctx)
   await mountAgentLoopTestDependencies(ctx)
-  const root = mkdtempSync(join(tmpdir(), 'dsh-tool-list-agents-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-tool-list-agents-'))
   roots.push(root)
   await ctx.plugin(JsonlSessionPersistence, { root })
   await ctx.plugin(TestSessionQuery)

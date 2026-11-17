@@ -25,7 +25,7 @@ This package registers the Ocean sidebar mark and wordmark. Registration does no
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount this plugin in a client composition to occupy `sidebar.brand.mark` and `sidebar.brand.name`. The mark uses `FishLogo`; the name uses `BrandWordmark` with `includeMark={false}` so the independently slotted mark is not repeated. The wordmark renders “Ocean”. The package accepts no artwork configuration and does not read `DSH_CLIENT_BUILD_PROFILE`.
+Mount this plugin in a client composition to occupy `sidebar.brand.mark` and `sidebar.brand.name`. The mark uses `FishLogo`; the name uses `BrandWordmark` with `includeMark={false}` so the independently slotted mark is not repeated. The wordmark renders “Ocean”. The package accepts no artwork configuration and does not read `OCEAN_CLIENT_BUILD_PROFILE`.
 
 For another identity, omit this package and compose a different package for the sidebar slots. This package does not occupy the conversation hero-mark slot or `conversation.hero.frame`.
 

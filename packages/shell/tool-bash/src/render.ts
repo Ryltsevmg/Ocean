@@ -119,7 +119,7 @@ export function renderJobRead(
 
 /**
  * The exit-status parse is the shared marker-contract half of the shell-tool
- * rendering story, owned by `@ocean/ocean-shell` so `dsh-tool-pwsh` reuses
+ * rendering story, owned by `@ocean/ocean-shell` so `ocean-tool-pwsh` reuses
  * it (its renderer emits the same markers). Re-exported here to keep
  * `../src/render.ts` a single import root for bash-tool consumers.
  */

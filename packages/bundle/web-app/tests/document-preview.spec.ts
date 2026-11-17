@@ -27,8 +27,8 @@ const kit = vi.hoisted(() => ({ create: vi.fn<(options?: ConverterOptions) => Pr
 vi.mock('@deepseek-ai/libreoffice-kit', () => ({ createConverter: kit.create }))
 
 it('loads the shipped Office rows with separately patched settings and authorized PDF output', async () => {
-  const directory = await realpath(await mkdtemp(join(tmpdir(), 'dsh-web-office-')))
-  const outputDirectory = await mkdtemp(join(tmpdir(), 'dsh-web-office-outputs-'))
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'ocean-web-office-')))
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'ocean-web-office-outputs-'))
   const ctx = new Context()
   onTestFinished(async () => {
     try { await ctx.fiber.dispose() }
@@ -103,7 +103,7 @@ it('loads the shipped Office rows with separately patched settings and authorize
   const injections: IndexInjection[] = []
   ctx.emit('webserver/index-inject', injections, PAGE_PEER)
   expect(injections).toEqual([
-    { kind: 'global', name: '__DSH_DOCUMENT_PREVIEW_CONFIG__', value: clientConfig },
+    { kind: 'global', name: '__OCEAN_DOCUMENT_PREVIEW_CONFIG__', value: clientConfig },
   ])
 
   const id = SessionId('office-loader')

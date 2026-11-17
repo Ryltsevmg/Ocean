@@ -25,7 +25,7 @@ it.each(['system-bin', undefined])('dispatches with bundled pnpm when PATH is %s
       args: ['--expose-internals', join(support, 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs')],
       env: {
         ELECTRON_RUN_AS_NODE: '1',
-        DSH_DESKTOP_NODE_EXECUTABLE: process.execPath,
+        OCEAN_DESKTOP_NODE_EXECUTABLE: process.execPath,
         PATH: `${join(support, 'bin')}${delimiter}${path ?? ''}`,
       },
     },
@@ -34,7 +34,7 @@ it.each(['system-bin', undefined])('dispatches with bundled pnpm when PATH is %s
 
 it('locates the archive of an ASAR-contained runtime and leaves a prepared runtime without one', () => {
   const resources = join('Application 中文', 'resources')
-  expect(runtimeArchivePath(join(resources, 'app.asar', 'dsh'))).toBe(join(resources, 'app.asar'))
-  expect(runtimeArchivePath(join(resources, 'app.asar.unpacked', 'dsh'))).toBeUndefined()
-  expect(runtimeArchivePath(join(resources, 'dsh'))).toBeUndefined()
+  expect(runtimeArchivePath(join(resources, 'app.asar', 'ocean'))).toBe(join(resources, 'app.asar'))
+  expect(runtimeArchivePath(join(resources, 'app.asar.unpacked', 'ocean'))).toBeUndefined()
+  expect(runtimeArchivePath(join(resources, 'ocean'))).toBeUndefined()
 })

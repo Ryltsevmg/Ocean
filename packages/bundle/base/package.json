@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-base",
-  "description": "The shared dsh core as a profile bundle: the first patch layer of base-backed profiles, inserting core rows over the empty profile root",
+  "description": "The shared ocean core as a profile bundle: the first patch layer of base-backed profiles, inserting core rows over the empty profile root",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
@@ -31,7 +31,7 @@
     "src"
   ],
   "license": "MIT",
-  "dsh": {
+  "ocean": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }

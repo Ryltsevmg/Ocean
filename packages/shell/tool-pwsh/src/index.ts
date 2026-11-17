@@ -4,10 +4,10 @@
  * `@ocean/ocean-pwsh-local`) backs `ctx.shell`; the tool contract is
  * PowerShell-dialect: native `C:\...` paths and `$env:NAME` variables.
  *
- * Behavior mirrors `dsh-tool-bash` call-for-call: foreground and
+ * Behavior mirrors `ocean-tool-bash` call-for-call: foreground and
  * `run_in_background` execution (with a job registry composed, every call
  * registers its process with `ctx.jobs` as it starts, and a foreground call
- * waits on its job until the timeout passes), the managed `DSH_*` environment through the
+ * waits on its job until the timeout passes), the managed `OCEAN_*` environment through the
  * shared `shell-env` registry, the per-call sandbox policy resolution (the
  * calling session's mode and cwd travel to the confining executor), the
  * sandbox-denial rendering with the same-turn escalation surface
@@ -106,7 +106,7 @@ interface PwshForegroundResult {
   sandbox?: { mode: string; denied: boolean; enforcement?: string; runnerFailed?: boolean }
 }
 
-/* jscpd:ignore-start -- minimal mirror of dsh-tool-bash's validation and execute plumbing . */
+/* jscpd:ignore-start -- minimal mirror of ocean-tool-bash's validation and execute plumbing . */
 function validatePwshArgs(args: PwshToolArgs): void {
   if (args.command.trim().length === 0) {
     throw new ToolArgsError(['invalid command: expected a non-empty string'])
@@ -125,7 +125,7 @@ function pwshDescription(windowsSandbox: boolean): string {
   const base = 'Execute a PowerShell command (`pwsh -Command`) and return its stdout/stderr. '
     + 'Each call runs in a fresh pwsh process; pass `workdir` instead of using `cd`. Paths use native Windows form (`C:\\...`); read environment '
     + 'variables with `$env:NAME`. '
-    + 'Managed `$env:DSH_*` variables expose current harness environment facts. '
+    + 'Managed `$env:OCEAN_*` variables expose current harness environment facts. '
     + 'Long output is truncated to its tail; the full output is saved to a file whose path is reported when available. '
     + 'On Windows a force-killed command settles as `[exit code: 1]` without a signal marker — treat it as an interruption, not a command failure. '
     + 'Provide `description` before `command` in the arguments. '
@@ -175,7 +175,7 @@ function canonicalPwshResult(result: ShellRunResult, cwd: string): PwshForegroun
     timedOut: result.timedOut,
     aborted: result.aborted,
     timeoutMs: result.timeoutMs,
-    /* jscpd:ignore-start -- the canonical projection and background-handle shape mirror dsh-tool-bash's by design . */
+    /* jscpd:ignore-start -- the canonical projection and background-handle shape mirror ocean-tool-bash's by design . */
     stdout: output(result.stdout),
     stderr: output(result.stderr),
     ...result.sandbox !== undefined ? {
@@ -224,7 +224,7 @@ const BACKGROUND_OUTPUT_PROPERTIES = {
 } as const
 /* jscpd:ignore-end */
 
-/* jscpd:ignore-start -- deliberate mirror of dsh-tool-bash's apply() preamble. */
+/* jscpd:ignore-start -- deliberate mirror of ocean-tool-bash's apply() preamble. */
 export function apply(ctx: Context, config: Config = {}): void {
   const backgroundEnabled = config.enableRunInBackground ?? true
   // Keeping a timed-out command needs the whole background surface: the job
@@ -241,7 +241,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const resolveSandboxPolicy = (exec: ToolExecution): SandboxExecutionPolicy | undefined =>
     sandboxPolicy?.resolve(exec.agent === undefined ? {} : { session: exec.agent.session })
 
-  /* jscpd:ignore-start -- deliberate mirror of dsh-tool-bash's escalation resolver. */
+  /* jscpd:ignore-start -- deliberate mirror of ocean-tool-bash's escalation resolver. */
   /**
    * Resolve a sandbox-escalation request through `ctx.approval` BEFORE
    * anything executes, delegating the shared fail-closed sequence (strict
@@ -295,7 +295,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const pwshTool = (jobs: JobRegistry | undefined): ToolDefinition => {
     const background = jobs !== undefined
     const promote = background && promoteOnTimeout
-    /* jscpd:ignore-start -- the job start and wait mirror dsh-tool-bash's by design. */
+    /* jscpd:ignore-start -- the job start and wait mirror ocean-tool-bash's by design. */
     /** Register the command as a job; the process spawns inside the starter, after admission. */
     const startJob = (registry: JobRegistry, args: PwshToolArgs, exec: ToolExecution, spec: ShellExecSpec): StartedJob => {
       let proc: ShellExecution | undefined
@@ -408,7 +408,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     return defineTool({
       name: 'pwsh',
       description: pwshDescription(escalationModes.length > 0),
-      /* jscpd:ignore-start -- deliberate mirror of dsh-tool-bash's parameter surface. */
+      /* jscpd:ignore-start -- deliberate mirror of ocean-tool-bash's parameter surface. */
       parameters: {
         description: {
           type: 'string',
@@ -443,9 +443,9 @@ export function apply(ctx: Context, config: Config = {}): void {
       },
       /* jscpd:ignore-end */
       output: {
-        // The foreground result wire shape mirrors dsh-tool-bash's by contract —
+        // The foreground result wire shape mirrors ocean-tool-bash's by contract —
         // consumers of one must accept the other.
-        /* jscpd:ignore-start -- deliberate result-schema symmetry with dsh-tool-bash. */
+        /* jscpd:ignore-start -- deliberate result-schema symmetry with ocean-tool-bash. */
         schema: {
           oneOf: [
             {
@@ -521,7 +521,7 @@ export function apply(ctx: Context, config: Config = {}): void {
         }],
         presentationMeta: (_args, value) => ({ cwd: value.cwd }),
       },
-      /* jscpd:ignore-start -- the execute path mirrors dsh-tool-bash's by design. */
+      /* jscpd:ignore-start -- the execute path mirrors ocean-tool-bash's by design. */
       async execute(args: PwshToolArgs, exec) {
         validatePwshArgs(args)
         // Description is display metadata; workdir defaults to the caller's session.
@@ -538,7 +538,7 @@ export function apply(ctx: Context, config: Config = {}): void {
           command: args.command,
           ...workdir !== undefined ? { workdir } : {},
           ...args.timeoutMs !== undefined ? { timeoutMs: args.timeoutMs } : {},
-          dshEnv: ctx.shellEnv.collect(exec),
+          oceanEnv: ctx.shellEnv.collect(exec),
           ...policy !== undefined ? { sandboxPolicy: policy } : {},
         }
         if (args.run_in_background === true) {

@@ -10,7 +10,7 @@ import { failureOf, openWorkspace, signal, type Caps, type Harness } from './har
 
 let harness: Harness
 beforeEach(async () => {
-  harness = await openWorkspace('dsh-workspace-search-rg-')
+  harness = await openWorkspace('ocean-workspace-search-rg-')
 })
 afterEach(async () => {
   vi.restoreAllMocks()

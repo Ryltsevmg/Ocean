@@ -386,7 +386,7 @@ class Hmr extends Service {
       let lastInputs: string | undefined
       let lastBundles = JSON.stringify(profile.startedBundles)
       const refresh = async (manifestOnly: boolean): Promise<void> => {
-        const bundles = JSON.stringify(readProfileManifest('dsh', profile.dir).dsh?.profile?.bundles ?? [])
+        const bundles = JSON.stringify(readProfileManifest('ocean', profile.dir).ocean?.profile?.bundles ?? [])
         if (manifestOnly && bundles === lastBundles) return
         const inputs = JSON.stringify([bundles, ...patchFiles.map((filename) => {
           try { return readFileSync(filename, 'utf8') }
@@ -888,7 +888,7 @@ class Hmr extends Service {
   /**
    * Evict the loaded modules below the directories of mappings a recomposition dropped and expire their package
    * configuration, so a disabled or removed package that is installed or enabled again is imported afresh. Modules of
-   * DSH's own static graph, and those below a directory that is still mapped, stay loaded.
+   * OCEAN's own static graph, and those below a directory that is still mapped, stay loaded.
    * @param dropped Real directories, with a trailing separator, of the dropped mappings.
    * @param kept Real directories, with a trailing separator, of the mappings that stay.
    */
@@ -939,7 +939,7 @@ class Hmr extends Service {
     let comparedAt = 0
     let pending: PendingModule[] = []
     try {
-      const patches = readProfilePatches('dsh', profile)
+      const patches = readProfilePatches('ocean', profile)
       comparedAt = this.files.now()
       // A failed comparison keeps every record, so the next recomposition compares the same modules again.
       comparison = await this.contained('comparing loaded modules with disk', () => {
@@ -971,7 +971,7 @@ class Hmr extends Service {
           return job !== undefined && namespaceOf(job) === undefined
         }))
       }, undefined)
-      const result = await recomposeProfile(this.ownerContext.root, patches, 'dsh', { requiredIds, running })
+      const result = await recomposeProfile(this.ownerContext.root, patches, 'ocean', { requiredIds, running })
       const restartReason = compared === undefined || unavailable ? 'module-comparison' : result.restartReason
       return { warnings: result.warnings, pending, ...restartReason === undefined ? {} : { restartReason } }
     } finally {

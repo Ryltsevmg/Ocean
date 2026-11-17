@@ -16,7 +16,7 @@
  * Anthropic messages are serialized without changing those objects requires a
  * new {@link DIGEST_SEED}.
  *
- * @module dsh-llm-pi-ai/prefix-binding
+ * @module ocean-llm-pi-ai/prefix-binding
  */
 
 import { createHash } from 'node:crypto'

@@ -22,7 +22,7 @@ afterEach(() => {
 
 /** A temporary git repository with the given files written and none of them staged. */
 function repository(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-plugin-record-callers-'))
+  const root = mkdtempSync(join(tmpdir(), 'ocean-plugin-record-callers-'))
   roots.push(root)
   execFileSync('git', ['init', '--quiet'], { cwd: root, stdio: 'pipe' })
   for (const [file, contents] of Object.entries(files)) {

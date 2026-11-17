@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-settings-agent-loop/README.md
 /:
-  en: 12adb999b01b035a
-  zh: 15ac17dd70c78e07
+  en: 418f1b869f6c039f
+  zh: 6dde57b678f4b509
 /ocean-ocean-client-ui-settings-agent-loop:
-  en: 9f64ef9415b5eea1
-  zh: 34d6d5e848436e85
+  en: fed6ea781d69d4cf
+  zh: 11dca386f263951b
 /ocean-ocean-client-ui-settings-agent-loop/summary:
   en: 42fc4bae4890b0f7
   zh: b11cbdc801aefb56
@@ -21,8 +21,8 @@
   en: 6412d65e7c17da6a
   zh: 530d8b53c355efba
 /ocean-ocean-client-ui-settings-agent-loop/further-exploration:
-  en: 14267229f22a17b0
-  zh: e59359820f0c2c2f
+  en: e9af5ed8fe4cfdef
+  zh: 9cb59eca1cb980c4
 /ocean-ocean-client-ui-settings-agent-loop/model-experience:
   en: 6b7c6f82ab6c8435
   zh: 4517689c899abcbe

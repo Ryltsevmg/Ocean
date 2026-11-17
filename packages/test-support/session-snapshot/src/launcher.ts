@@ -57,7 +57,7 @@ export interface AgentUnderTest {
   libBinScript?: string | undefined
   /** Base config or profile patch loaded by the bin. */
   configPath: string
-  /** Named dsh profile; omitted only for test-only fake bins with their own config grammar. */
+  /** Named ocean profile; omitted only for test-only fake bins with their own config grammar. */
   profile?: string
   /** The repo tsconfig whose paths resolve unbuilt workspace imports. */
   tsconfigPath: string
@@ -124,13 +124,13 @@ export function launchAcpTestAgent(options: AcpTestLaunchOptions): LaunchedAcpTe
     libBin: agent.libBinScript,
     configArgs: agent.profile === undefined
       ? ['--config', selectedConfig]
-      : profileArgs(agent.profile, agent.configPath, selectedConfig, options.env?.DSH_SNAPSHOT, cwd),
+      : profileArgs(agent.profile, agent.configPath, selectedConfig, options.env?.OCEAN_SNAPSHOT, cwd),
     tsconfigPath: agent.tsconfigPath,
     ...agent.profile === undefined ? {} : { sourceImport: 'tsx/esm' },
     env: {
       ...options.env,
-      DSH_HOME: join(cwd, '.dsh'),
-      DSH_AGENTS_HOME: join(cwd, '.agents'),
+      OCEAN_HOME: join(cwd, '.ocean'),
+      OCEAN_AGENTS_HOME: join(cwd, '.agents'),
     },
   })
   const child = spawn(
@@ -340,7 +340,7 @@ export function launchAcpTestAgent(options: AcpTestLaunchOptions): LaunchedAcpTe
   }
 }
 
-/** Build one dsh profile invocation from the base and optional scenario patches. */
+/** Build one ocean profile invocation from the base and optional scenario patches. */
 function profileArgs(
   profile: string,
   basePatch: string,
@@ -355,7 +355,7 @@ function profileArgs(
   const patches = snapshotMode === 'replay'
     ? [base, replayPatchPath(selected)]
     : [...new Set([base, selected])]
-  const materializedRoot = join(cwd, '.dsh-profile-patches')
+  const materializedRoot = join(cwd, '.ocean-profile-patches')
   mkdirSync(materializedRoot, { recursive: true })
   const materializedDir = mkdtempSync(join(materializedRoot, 'launch-'))
   const materialized = patches.map((file, index) => materializeProfilePatch(file, cwd, profile, materializedDir, index))
@@ -386,14 +386,14 @@ function packageDirFromPatch(source: string, packageName: string): string | unde
 
 /**
  * Install an authored patch's resolvable bare package into the temporary
- * profile. This mirrors `dsh plugin` while retaining the bare entry
+ * profile. This mirrors `ocean plugin` while retaining the bare entry
  * name and package identity used by request metadata.
  */
 function linkProfilePackage(source: string, cwd: string, profile: string, packageName: string): void {
   const packageDir = packageDirFromPatch(source, packageName)
-  // The package may instead belong to the dsh installation; profile boot heals those links.
+  // The package may instead belong to the ocean installation; profile boot heals those links.
   if (packageDir === undefined) return
-  const link = join(cwd, '.dsh', 'profiles', profile, 'node_modules', packageName)
+  const link = join(cwd, '.ocean', 'profiles', profile, 'node_modules', packageName)
   mkdirSync(dirname(link), { recursive: true })
   if (existsSync(link)) {
     if (realpathSync(link) !== packageDir) {

@@ -4,7 +4,7 @@
  * The `Branded<B>` primitive lives in `@ocean/ocean-brand`; this module
  * is a pure type/constructor outlet (no cordis imports, no module
  * augmentation) so wire and client programs can name the brand without
- * loading the host plugin's Context merges — the `dsh-llm/brand` shape.
+ * loading the host plugin's Context merges — the `ocean-llm/brand` shape.
  *
  * @module @ocean/ocean-commands/brand
  */

@@ -19,8 +19,8 @@ import { Notifier } from './notifier.ts'
 
 // The single projection type table, typed end to end (host unit, wire block,
 // client store, React hook) — the Service Definition package's pure-type outlet
-// (`/types`, zero imports), never the package root: the root's dsh-agent →
-// dsh-session chain would drag the host `Context.sessions` merge into the
+// (`/types`, zero imports), never the package root: the root's ocean-agent →
+// ocean-session chain would drag the host `Context.sessions` merge into the
 // client program (one program must not hold both sides). No second
 // client-side "views" table.
 export type { SessionProjectionMap } from '@ocean/ocean-session-projection/types'

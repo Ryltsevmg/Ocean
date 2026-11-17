@@ -6,11 +6,11 @@
   en: dba7f5089d194048
   zh: 956905ee19f6f362
 /ocean-ocean-web-fetch-http:
-  en: 02c4038b430abaa2
-  zh: d1f244b45eb2f5e5
+  en: fb8475d5d2b46e20
+  zh: 572cb7a00c155d95
 /ocean-ocean-web-fetch-http/summary:
-  en: afb0ecfdd563bced
-  zh: 734f74bf506e34e2
+  en: 8ec82f1e68d61876
+  zh: bb443995d007a945
 /ocean-ocean-web-fetch-http/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -21,8 +21,8 @@
   en: acb7517f571c38b8
   zh: 8ee9da18953ab65e
 /ocean-ocean-web-fetch-http/use-this-package/minimal-configuration:
-  en: bfdb9400959bac17
-  zh: 09937ab753bb927e
+  en: dc45ce189d960c17
+  zh: 31fdf85ded675688
 /ocean-ocean-web-fetch-http/use-this-package/what-a-fetch-returns:
   en: 2d18cdcc9b53dd0f
   zh: 3bc6ca7c5933ee5d
@@ -36,8 +36,8 @@
   en: 9842c69ad3636bb3
   zh: 3cdc3f816cbdd0cb
 /ocean-ocean-web-fetch-http/understand-the-implementation/design-philosophy:
-  en: 422128dac5eebdde
-  zh: 25ba5f49b305a056
+  en: 1861b7b3f1074893
+  zh: 51262f198a0910d1
 /ocean-ocean-web-fetch-http/understand-the-implementation/source-map:
   en: 1f355ec2726ff61b
   zh: 076a0c259c94f22a
@@ -45,11 +45,11 @@
   en: 4836d06bc065477d
   zh: 5a7ddc805a7c67d8
 /ocean-ocean-web-fetch-http/further-exploration:
-  en: ba05b1514534bdc7
-  zh: 7e866957745869a5
+  en: 5854f6944bcf1fa4
+  zh: b647ebe3a239c3f4
 /ocean-ocean-web-fetch-http/model-experience:
-  en: 5c488f8d23ce3e90
-  zh: 3cc8f8dc3ab60b65
+  en: d6b4939bf1cb06d8
+  zh: af4a3df263dacdc6
 /ocean-ocean-web-fetch-http/model-experience/kv-cache-effect:
   en: 40294c1c31b74824
   zh: d75d48f485447a74

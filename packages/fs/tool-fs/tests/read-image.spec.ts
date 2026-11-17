@@ -92,8 +92,8 @@ let dir: string
 let home: string
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'dsh-read-image-'))
-  home = await mkdtemp(join(tmpdir(), 'dsh-read-image-home-'))
+  dir = await mkdtemp(join(tmpdir(), 'ocean-read-image-'))
+  home = await mkdtemp(join(tmpdir(), 'ocean-read-image-home-'))
 })
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true })
@@ -123,7 +123,7 @@ async function setup(options: SetupOptions = {}) {
   await ctx.plugin(LocalFileSystem, { cwd: dir })
   await ctx.plugin(FsPolicy)
   if (options.attachments !== false) {
-    await ctx.plugin(LocalAttachmentStore, { dshHome: home, ...options.storeConfig })
+    await ctx.plugin(LocalAttachmentStore, { oceanHome: home, ...options.storeConfig })
   }
   if (options.llm !== false) {
     await ctx.plugin(LlmRuntime)
@@ -937,13 +937,13 @@ describe('registration surface', () => {
       await ctx.plugin(ToolRuntime)
       await ctx.plugin(NativeToolExecutor)
       await ctx.plugin(LocalFileSystem, { cwd: dir })
-      const attachment = await ctx.plugin(LocalAttachmentStore, { dshHome: home })
+      const attachment = await ctx.plugin(LocalAttachmentStore, { oceanHome: home })
       const plugin = await ctx.plugin(ToolFs, { read: false, write: false, edit: false })
       const names = () => ctx.tools.schemas().map(tool => tool.name).sort()
       expect(names()).toEqual(['read_image'])
       await attachment.dispose()
       expect(names()).toEqual([])
-      await ctx.plugin(LocalAttachmentStore, { dshHome: home })
+      await ctx.plugin(LocalAttachmentStore, { oceanHome: home })
       expect(names()).toEqual(['read_image'])
       await plugin.dispose()
       expect(names()).toEqual([])
@@ -960,7 +960,7 @@ describe('registration surface', () => {
     await ctx.plugin(NativeToolExecutor)
     await ctx.plugin(LocalFileSystem, { cwd: dir })
     await ctx.plugin(FsPolicy)
-    const attachmentsFiber = await ctx.plugin(LocalAttachmentStore, { dshHome: home })
+    const attachmentsFiber = await ctx.plugin(LocalAttachmentStore, { oceanHome: home })
     const toolFsFiber = await ctx.plugin(ToolFs)
     const names = () => ctx.tools.schemas().map(schema => schema.name).sort()
     expect(names()).toEqual(['edit', 'read', 'read_image', 'write'])
@@ -971,7 +971,7 @@ describe('registration surface', () => {
     expect(names()).toEqual(['edit', 'read', 'write'])
 
     // Remounting the store restores the conditional registration.
-    const remounted = await ctx.plugin(LocalAttachmentStore, { dshHome: home })
+    const remounted = await ctx.plugin(LocalAttachmentStore, { oceanHome: home })
     expect(names()).toEqual(['edit', 'read', 'read_image', 'write'])
 
     // Disposing the whole plugin withdraws every tool, read_image included.

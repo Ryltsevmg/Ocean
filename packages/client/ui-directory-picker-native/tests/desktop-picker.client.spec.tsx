@@ -10,17 +10,17 @@ import { ClientRoster, createClientTest, webApp } from '@ocean/ocean-client-test
 
 const manifest = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8')) as {
   name: string
-  dsh: { client: { inject: string[] } }
+  ocean: { client: { inject: string[] } }
 }
 // Auto mounts the native row dynamically; use that package's actual dependency declaration.
 const test = createClientTest({ roster: ClientRoster.of([...webApp.rows, {
-  name: manifest.name, inject: manifest.dsh.client.inject, immediately: false,
+  name: manifest.name, inject: manifest.ocean.client.inject, immediately: false,
 }]) })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 test('the composed native flow cancels through Desktop without invoking the Host chooser', async ({ start, remote }) => {
   const pick = vi.fn<() => Promise<string | null>>().mockResolvedValue(null)
-  vi.stubGlobal('__DSH_DIRECTORY_PICKER__', { pick })
+  vi.stubGlobal('__OCEAN_DIRECTORY_PICKER__', { pick })
   const client = await start()
   const entry = client.ctx.slots.entries('sidebar.workspaces.directoryFlow')[0]!
   const injected = (entry.inject as () => { pick: () => Promise<string | null> })()

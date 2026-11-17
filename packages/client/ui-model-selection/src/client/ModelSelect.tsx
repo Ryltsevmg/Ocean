@@ -88,8 +88,8 @@ export function ModelSelect(
   const groupsRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const id = useId()
-  const anchorStyle: CSSProperties & Record<'--dsh-model-anchor', string> = {
-    '--dsh-model-anchor': `--dsh-model-${id.replaceAll(':', '')}`,
+  const anchorStyle: CSSProperties & Record<'--ocean-model-anchor', string> = {
+    '--ocean-model-anchor': `--ocean-model-${id.replaceAll(':', '')}`,
   }
 
   const accountProviderName = t('provider.account')

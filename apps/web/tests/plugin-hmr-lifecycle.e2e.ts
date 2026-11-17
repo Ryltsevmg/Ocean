@@ -42,7 +42,7 @@ describe('web e2e: plugin lifecycle with HMR', () => {
     await mkdir(dir, { recursive: true })
     await writeFile(join(dir, 'package.json'), JSON.stringify({
       name: NAME, version: `${label.replace(/\D/gu, '') || '0'}.0.0`, type: 'module', main: './index.mjs',
-      dsh: { bundle: { patch: './cordis.patch.yml' } },
+      ocean: { bundle: { patch: './cordis.patch.yml' } },
     }))
     await writeFile(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${NAME}\n      name: ${NAME}\n`)
     await writeFile(join(dir, 'index.mjs'), `${body}
@@ -117,7 +117,7 @@ export function apply(ctx) {
   }
 
   beforeAll(async () => {
-    scratch = await mkdtemp(join(tmpdir(), 'dsh-plugin-hmr-'))
+    scratch = await mkdtemp(join(tmpdir(), 'ocean-plugin-hmr-'))
     tracePath = join(scratch, 'trace.log')
     await writeFile(tracePath, '')
     scaffold = await launchWebScaffold({ profile: { packages: [], packageManager: isolatedPnpm(scratch) } })
@@ -220,14 +220,14 @@ export function apply(ctx) {
 
 describe('web e2e: plugin installation without HMR', () => {
   it('asks for a restart after installing into a profile that applies changes at startup', async () => {
-    const scratch = await mkdtemp(join(tmpdir(), 'dsh-plugin-startup-'))
+    const scratch = await mkdtemp(join(tmpdir(), 'ocean-plugin-startup-'))
     let scaffold: WebScaffold | undefined
     let browser: Browser | undefined
     try {
       const dir = join(scratch, 'addon')
       await mkdir(dir)
       await writeFile(join(dir, 'package.json'), JSON.stringify({
-        name: NAME, version: '1.0.0', type: 'module', main: './index.mjs', dsh: { bundle: { patch: './cordis.patch.yml' } },
+        name: NAME, version: '1.0.0', type: 'module', main: './index.mjs', ocean: { bundle: { patch: './cordis.patch.yml' } },
       }))
       await writeFile(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${NAME}\n      name: ${NAME}\n`)
       await writeFile(join(dir, 'index.mjs'), `export const name = '${NAME}'\nexport function apply() {}\n`)
@@ -243,7 +243,7 @@ describe('web e2e: plugin installation without HMR', () => {
       const dialog = page.getByRole('dialog')
       await dialog.getByRole('textbox', { name: '包名或地址' }).fill(`file:${dir}`)
       await dialog.getByRole('button', { name: '安装', exact: true }).click()
-      await dialog.getByText('已安装，请重启 DSH 加载它。这个 profile 只在启动时应用更改。', { exact: true }).waitFor({ timeout: 30_000 })
+      await dialog.getByText('已安装，请重启 OCEAN 加载它。这个 profile 只在启动时应用更改。', { exact: true }).waitFor({ timeout: 30_000 })
     } finally {
       await browser?.close()
       await scaffold?.close()

@@ -6,17 +6,17 @@
   en: 54dedea99ec5492c
   zh: 23b29cb5d738dadb
 /ocean-ocean-session:
-  en: 0405d0325e72288c
-  zh: d63762a61b9ca0e6
+  en: a272ead4fcc8a396
+  zh: 93410cf84ff57baa
 /ocean-ocean-session/summary:
-  en: 311239677afd230a
-  zh: f2c575945baaa2a2
+  en: fc9b83354628f7f5
+  zh: c5344d6ee0fcf8f5
 /ocean-ocean-session/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-session/use-this-package:
-  en: 0882d4056c45aa75
-  zh: fcee78e9845b78b3
+  en: 9ba769ea0f576457
+  zh: dc3e51521a83bf26
 /ocean-ocean-session/use-this-package/create-and-inspect-sessions:
   en: 971e583b3d6c1af8
   zh: c7da934ecb8f1e87
@@ -27,11 +27,11 @@
   en: cf2a6409dbb63ada
   zh: 61316ae3e5bed0c7
 /ocean-ocean-session/use-this-package/write-plugin-records:
-  en: 9abce7b492d7277d
-  zh: 0cfeda1fb3087f27
+  en: 8ea7ecd8cf031fb1
+  zh: a6fe3f837eb17b28
 /ocean-ocean-session/use-this-package/fork-a-session:
-  en: 4fcc9eb5c0278b51
-  zh: 2a26e81ebffbd9a6
+  en: fac01fb93372abd7
+  zh: d057f7524fc2a129
 /ocean-ocean-session/use-this-package/flush-durable-state:
   en: 70a7673145c851ad
   zh: 0dd1667d9518993d
@@ -45,14 +45,14 @@
   en: 7727ecdbe401b9a8
   zh: 6630ada7442e6663
 /ocean-ocean-session/understand-the-implementation/source-map:
-  en: c596a8f74b4f1b79
-  zh: a29f23c4c1d1ff75
+  en: 25f0a3940f18b30d
+  zh: 4b4db7637fa4b047
 /ocean-ocean-session/understand-the-implementation/append-validation:
   en: 5c09583bc8e1ffc6
   zh: 3b25552de2d1f9b6
 /ocean-ocean-session/understand-the-implementation/shared-recovery:
-  en: 160b35afd9d866e4
-  zh: cd1021e0ef567f87
+  en: e99cac51590f4612
+  zh: 03fe113f1b6fe4ed
 /ocean-ocean-session/understand-the-implementation/derived-history:
   en: 4a9861492a8c3869
   zh: e9566de647206230
@@ -60,8 +60,8 @@
   en: 1349f47bea4dab00
   zh: 20cc03f2c87ec492
 /ocean-ocean-session/further-exploration:
-  en: e23d6c8b31295044
-  zh: 5105ac9ce8c5d90d
+  en: f143736e5bf4607a
+  zh: b817fbc46b0a240a
 /ocean-ocean-session/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -102,8 +102,8 @@
   en: 5eb30cfb410d52c0
   zh: da56365b8ab896da
 /ocean-ocean-session/known-limitations-and-deferred-work:
-  en: 9208f76142c9149d
-  zh: e33648c65c418d5f
+  en: 2d49482ca6b1e9be
+  zh: cc4b9b7131fdd2a4
 /ocean-ocean-session/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

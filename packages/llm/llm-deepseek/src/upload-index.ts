@@ -1,10 +1,10 @@
-/** Durable DeepSeek attachment-to-file-id index. @module dsh-llm-deepseek/upload-index */
+/** Durable DeepSeek attachment-to-file-id index. @module ocean-llm-deepseek/upload-index */
 
 import { createHash } from 'node:crypto'
 import { readFile, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { withFileLock, writeFileAtomic } from '@ocean/ocean-atomic-write'
-import { resolveDshHome } from '@ocean/ocean-home-paths'
+import { resolveOceanHome } from '@ocean/ocean-home-paths'
 import { ImageVariantId } from '@ocean/ocean-attachment'
 import type { AttachmentId, ImageVariantId as ImageVariantIdType } from '@ocean/ocean-attachment'
 import { DeepSeekFileId, DeepSeekFileScope } from './file-id.ts'
@@ -108,15 +108,15 @@ function reusable(record: DeepSeekUploadRecord, now: number, refreshMarginMs: nu
   return record.expiresAt - now > refreshMarginMs
 }
 
-/** Atomic local index shared by every DeepSeek session in this DSH home. */
+/** Atomic local index shared by every DeepSeek session in this OCEAN home. */
 export class DeepSeekUploadIndex {
   /** Absolute owner-private JSON index path. */
   readonly path: string
 
   /**
-   * @param path - explicit test path; omission uses `DSH_HOME/llm-deepseek/files-v3.json`.
+   * @param path - explicit test path; omission uses `OCEAN_HOME/llm-deepseek/files-v3.json`.
    */
-  constructor(path = join(resolveDshHome(), 'llm-deepseek', 'files-v3.json')) {
+  constructor(path = join(resolveOceanHome(), 'llm-deepseek', 'files-v3.json')) {
     this.path = path
   }
 

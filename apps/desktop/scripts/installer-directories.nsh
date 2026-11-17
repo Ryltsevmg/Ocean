@@ -1,20 +1,20 @@
 !include "LogicLib.nsh"
 
-Var dshFinalDirectory
-Var dshNewDirectory
-Var dshOldDirectory
-Var dshOldMoved
-Var dshNewMoved
-Var dshDirectoryError
-Var dshDirectorySource
-Var dshDirectoryDestination
-Var dshRestoreError
-Var dshDirectoryLogDirectory
-Var dshRecoveryStopped
+Var oceanFinalDirectory
+Var oceanNewDirectory
+Var oceanOldDirectory
+Var oceanOldMoved
+Var oceanNewMoved
+Var oceanDirectoryError
+Var oceanDirectorySource
+Var oceanDirectoryDestination
+Var oceanRestoreError
+Var oceanDirectoryLogDirectory
+Var oceanRecoveryStopped
 
 ; MoveFileEx preserves the destination and exposes the Windows error before rollback changes it.
 ; Open files inside a directory can make its rename return access denied (5).
-!macro dshDirectoryOperation SOURCE DESTINATION RESULT PHASE
+!macro oceanDirectoryOperation SOURCE DESTINATION RESULT PHASE
   Push $0
   Push $1
   Push $2
@@ -60,28 +60,28 @@ Var dshRecoveryStopped
   Pop $0
 !macroend
 
-!macro dshReportDirectoryFailure
-  ${If} $dshRestoreError != 0
-    StrCpy $dshRecoveryStopped "1"
+!macro oceanReportDirectoryFailure
+  ${If} $oceanRestoreError != 0
+    StrCpy $oceanRecoveryStopped "1"
   ${EndIf}
   !ifmacrodef customInstallerDirectoryFailed
     !insertmacro customInstallerDirectoryFailed
   !else
-    DetailPrint "Directory operation failed ($dshDirectoryError): $dshDirectorySource -> $dshDirectoryDestination; restore error: $dshRestoreError"
+    DetailPrint "Directory operation failed ($oceanDirectoryError): $oceanDirectorySource -> $oceanDirectoryDestination; restore error: $oceanRestoreError"
   !endif
 !macroend
 
-!macro dshExtractPayload FILE
+!macro oceanExtractPayload FILE
   !ifmacrodef customInstallerExtract
     !insertmacro customInstallerExtract "${FILE}"
   !else
-    nsExec::ExecToStack '"$PLUGINSDIR\dsh-7za.exe" x -y -bd -bb0 "-o$INSTDIR" "${FILE}"'
+    nsExec::ExecToStack '"$PLUGINSDIR\ocean-7za.exe" x -y -bd -bb0 "-o$INSTDIR" "${FILE}"'
     Pop $R0
     Pop $R1
   !endif
   ${If} $R0 != 0
     DetailPrint $R1
-    Call dshRollbackDirectories
+    Call oceanRollbackDirectories
     !ifmacrodef customInstallerExtractFailed
       !insertmacro customInstallerExtractFailed "${FILE}"
     !else
@@ -92,133 +92,133 @@ Var dshRecoveryStopped
   ${EndIf}
 !macroend
 
-!macro dshStageApplication
-  !ifdef DSH_INSTALLER_LOG_DIR
+!macro oceanStageApplication
+  !ifdef OCEAN_INSTALLER_LOG_DIR
     ; electron-builder defines the cache name after including our function bodies, before this section expands.
-    StrCpy $dshDirectoryLogDirectory "${DSH_INSTALLER_LOG_DIR}"
+    StrCpy $oceanDirectoryLogDirectory "${OCEAN_INSTALLER_LOG_DIR}"
   !endif
-  StrCpy $dshFinalDirectory $INSTDIR
+  StrCpy $oceanFinalDirectory $INSTDIR
   System::Call 'ole32::CoCreateGuid(g .r0) i .r1'
   ${If} $1 != 0
     SetErrorLevel 2
     Quit
   ${EndIf}
-  StrCpy $dshNewDirectory "$INSTDIR.new-$0"
-  StrCpy $dshOldDirectory "$INSTDIR.old-$0"
-  StrCpy $dshOldMoved ""
-  StrCpy $dshNewMoved ""
-  StrCpy $dshDirectoryError 0
-  StrCpy $dshRestoreError 0
-  StrCpy $dshRecoveryStopped ""
+  StrCpy $oceanNewDirectory "$INSTDIR.new-$0"
+  StrCpy $oceanOldDirectory "$INSTDIR.old-$0"
+  StrCpy $oceanOldMoved ""
+  StrCpy $oceanNewMoved ""
+  StrCpy $oceanDirectoryError 0
+  StrCpy $oceanRestoreError 0
+  StrCpy $oceanRecoveryStopped ""
   ClearErrors
-  CreateDirectory $dshNewDirectory
+  CreateDirectory $oceanNewDirectory
   ${If} ${Errors}
     SetErrorLevel 2
     Quit
   ${EndIf}
-  File /oname=$PLUGINSDIR\dsh-7za.exe "${DSH_SEVENZIP_PATH}"
-  StrCpy $INSTDIR $dshNewDirectory
+  File /oname=$PLUGINSDIR\ocean-7za.exe "${OCEAN_SEVENZIP_PATH}"
+  StrCpy $INSTDIR $oceanNewDirectory
   SetOutPath $INSTDIR
   !insertmacro installApplicationFiles
-  !ifdef DSH_SEVENZIP_LICENSE_DIR
-    File /oname=7zip-installer-LICENSE.txt "${DSH_SEVENZIP_LICENSE_DIR}\LICENSE.txt"
-    File /oname=7zip-installer-COPYING.txt "${DSH_SEVENZIP_LICENSE_DIR}\COPYING"
+  !ifdef OCEAN_SEVENZIP_LICENSE_DIR
+    File /oname=7zip-installer-LICENSE.txt "${OCEAN_SEVENZIP_LICENSE_DIR}\LICENSE.txt"
+    File /oname=7zip-installer-COPYING.txt "${OCEAN_SEVENZIP_LICENSE_DIR}\COPYING"
   !endif
   !ifdef UNINSTALLER_ICON
     File /oname=uninstallerIcon.ico "${UNINSTALLER_ICON}"
   !endif
-  StrCpy $INSTDIR $dshFinalDirectory
+  StrCpy $INSTDIR $oceanFinalDirectory
   SetOutPath $PLUGINSDIR
 !macroend
 
 Function .onGUIEnd
-  Call dshCleanupDirectories
+  Call oceanCleanupDirectories
 FunctionEnd
 
-Function dshCleanupDirectories
-  ${If} $dshRecoveryStopped == "1"
+Function oceanCleanupDirectories
+  ${If} $oceanRecoveryStopped == "1"
     Return
   ${EndIf}
-  ${If} $dshFinalDirectory != ""
-    Call dshRollbackDirectories
+  ${If} $oceanFinalDirectory != ""
+    Call oceanRollbackDirectories
   ${EndIf}
 FunctionEnd
 
 ; Only directories created or renamed by this installer are removed during rollback.
-Function dshRollbackDirectories
+Function oceanRollbackDirectories
   SetOutPath $PLUGINSDIR
-  ${If} $dshNewMoved == "1"
-    RMDir /r "\\?\$dshFinalDirectory"
-    StrCpy $dshNewMoved ""
+  ${If} $oceanNewMoved == "1"
+    RMDir /r "\\?\$oceanFinalDirectory"
+    StrCpy $oceanNewMoved ""
   ${EndIf}
-  ${If} $dshOldMoved == "1"
-    !insertmacro dshDirectoryOperation "$dshOldDirectory" "$dshFinalDirectory" $dshRestoreError "restore"
-    ${If} $dshRestoreError != 0
+  ${If} $oceanOldMoved == "1"
+    !insertmacro oceanDirectoryOperation "$oceanOldDirectory" "$oceanFinalDirectory" $oceanRestoreError "restore"
+    ${If} $oceanRestoreError != 0
       ; Leave the complete backup in place if another process prevents restoration.
-      DetailPrint $dshOldDirectory
-      RMDir /r "\\?\$dshNewDirectory"
+      DetailPrint $oceanOldDirectory
+      RMDir /r "\\?\$oceanNewDirectory"
       Return
     ${EndIf}
-    StrCpy $dshOldMoved ""
+    StrCpy $oceanOldMoved ""
   ${EndIf}
-  ${If} $dshNewDirectory != ""
-    RMDir /r "\\?\$dshNewDirectory"
+  ${If} $oceanNewDirectory != ""
+    RMDir /r "\\?\$oceanNewDirectory"
   ${EndIf}
-  StrCpy $INSTDIR $dshFinalDirectory
+  StrCpy $INSTDIR $oceanFinalDirectory
 FunctionEnd
 
-Function dshPromoteDirectories
+Function oceanPromoteDirectories
   !ifmacrodef InstallerPublishStage
     !insertmacro InstallerPublishStage 2
   !endif
   ; SetOutPath opens a directory handle; release it before either rename.
   SetOutPath $PLUGINSDIR
   ClearErrors
-  ${If} ${FileExists} "$dshFinalDirectory\*.*"
-    StrCpy $dshDirectorySource $dshFinalDirectory
-    StrCpy $dshDirectoryDestination $dshOldDirectory
-    !insertmacro dshDirectoryOperation "$dshDirectorySource" "$dshDirectoryDestination" $dshDirectoryError "backup"
-    ${If} $dshDirectoryError != 0
-      Call dshRollbackDirectories
-      !insertmacro dshReportDirectoryFailure
+  ${If} ${FileExists} "$oceanFinalDirectory\*.*"
+    StrCpy $oceanDirectorySource $oceanFinalDirectory
+    StrCpy $oceanDirectoryDestination $oceanOldDirectory
+    !insertmacro oceanDirectoryOperation "$oceanDirectorySource" "$oceanDirectoryDestination" $oceanDirectoryError "backup"
+    ${If} $oceanDirectoryError != 0
+      Call oceanRollbackDirectories
+      !insertmacro oceanReportDirectoryFailure
       SetErrors
       Return
     ${EndIf}
-    StrCpy $dshOldMoved "1"
+    StrCpy $oceanOldMoved "1"
   ${Else}
     ; NSIS can create the destination before the install section starts.
-    StrCpy $dshDirectorySource $dshFinalDirectory
-    StrCpy $dshDirectoryDestination ""
-    !insertmacro dshDirectoryOperation "$dshDirectorySource" "" $dshDirectoryError "remove-empty"
-    ${If} $dshDirectoryError != 0
-      Call dshRollbackDirectories
-      !insertmacro dshReportDirectoryFailure
+    StrCpy $oceanDirectorySource $oceanFinalDirectory
+    StrCpy $oceanDirectoryDestination ""
+    !insertmacro oceanDirectoryOperation "$oceanDirectorySource" "" $oceanDirectoryError "remove-empty"
+    ${If} $oceanDirectoryError != 0
+      Call oceanRollbackDirectories
+      !insertmacro oceanReportDirectoryFailure
       SetErrors
       Return
     ${EndIf}
   ${EndIf}
   ClearErrors
-  StrCpy $dshDirectorySource $dshNewDirectory
-  StrCpy $dshDirectoryDestination $dshFinalDirectory
-  !insertmacro dshDirectoryOperation "$dshDirectorySource" "$dshDirectoryDestination" $dshDirectoryError "promote"
-  ${If} $dshDirectoryError != 0
-    Call dshRollbackDirectories
-    !insertmacro dshReportDirectoryFailure
+  StrCpy $oceanDirectorySource $oceanNewDirectory
+  StrCpy $oceanDirectoryDestination $oceanFinalDirectory
+  !insertmacro oceanDirectoryOperation "$oceanDirectorySource" "$oceanDirectoryDestination" $oceanDirectoryError "promote"
+  ${If} $oceanDirectoryError != 0
+    Call oceanRollbackDirectories
+    !insertmacro oceanReportDirectoryFailure
     SetErrors
     Return
   ${EndIf}
-  StrCpy $dshNewMoved "1"
-  SetOutPath $dshFinalDirectory
+  StrCpy $oceanNewMoved "1"
+  SetOutPath $oceanFinalDirectory
   !ifmacrodef InstallerPublishStage
     !insertmacro InstallerPublishStage 3
   !endif
   ClearErrors
 FunctionEnd
 
-!macro dshFinishDirectories
-  StrCpy $dshNewMoved ""
-  ${If} $dshOldMoved == "1"
-    RMDir /r "\\?\$dshOldDirectory"
-    StrCpy $dshOldMoved ""
+!macro oceanFinishDirectories
+  StrCpy $oceanNewMoved ""
+  ${If} $oceanOldMoved == "1"
+    RMDir /r "\\?\$oceanOldDirectory"
+    StrCpy $oceanOldMoved ""
   ${EndIf}
 !macroend

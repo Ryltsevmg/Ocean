@@ -4,7 +4,7 @@
  * later wake after the active turn reaches quiescence. The suite
  * covers every landing window plus signal reset, `whenIdle()` quiescence, and
  * the cause each cancelled turn records.
- * @module dsh-agent-loop/tests/cancel
+ * @module ocean-agent-loop/tests/cancel
  */
 import * as NativeToolExecutor from '@ocean/ocean-tool-executor-native'
 import { ToolCallId, createUserMessage, expandAssistantStream } from '@ocean/ocean-llm'
@@ -729,7 +729,7 @@ describe('Agent.cancel()', () => {
     const ctx = await harness(adapter)
     const agent = await ctx.agentLoop.create(SessionId('recovery-cancel'), { provider: 'mock', model: 'mock' })
     // Cancellation lands while agent/request-error is in flight — the window
-    // dsh-llm-retry opens when its backoff waits after appending llm/retry.
+    // ocean-llm-retry opens when its backoff waits after appending llm/retry.
     ctx.on('agent/request-error', async ({ agent: subject }) => {
       if (subject === agent) subject.cancel({ kind: 'user' })
     })

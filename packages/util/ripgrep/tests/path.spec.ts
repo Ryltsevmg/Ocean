@@ -36,9 +36,9 @@ describe('ripgrep resolution', () => {
   it('uses the native sidecar beside the current executable', async () => {
     Reflect.defineProperty(process, 'pkg', { configurable: true, value: {} })
     Reflect.defineProperty(process, 'platform', { configurable: true, enumerable: true, value: 'linux' })
-    process.execPath = '/runtime/dsh'
+    process.execPath = '/runtime/ocean'
     existsSync.mockReturnValue(true)
-    const sidecar = '/runtime/dsh-rg'
+    const sidecar = '/runtime/ocean-rg'
     const { resolveRgPath } = await import('@ocean/ocean-util-ripgrep')
 
     await expect(resolveRgPath()).resolves.toBe(sidecar)
@@ -80,11 +80,11 @@ describe('ripgrep resolution', () => {
 
   it('uses the unpacked executable path for an Electron ASAR dependency', async () => {
     Reflect.defineProperty(process.versions, 'electron', { configurable: true, value: '44.0.0' })
-    dependency.rgPath = '/Applications/Ocean.app/Contents/Resources/app.asar/dsh/node_modules/@vscode/ripgrep/bin/rg'
+    dependency.rgPath = '/Applications/Ocean.app/Contents/Resources/app.asar/ocean/node_modules/@vscode/ripgrep/bin/rg'
     const { resolveRgPath } = await import('@ocean/ocean-util-ripgrep')
 
     await expect(resolveRgPath()).resolves.toBe(
-      '/Applications/Ocean.app/Contents/Resources/app.asar.unpacked/dsh/node_modules/@vscode/ripgrep/bin/rg',
+      '/Applications/Ocean.app/Contents/Resources/app.asar.unpacked/ocean/node_modules/@vscode/ripgrep/bin/rg',
     )
   })
 })

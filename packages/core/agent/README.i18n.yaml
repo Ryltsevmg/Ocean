@@ -6,23 +6,23 @@
   en: b6bcf3c8b941d336
   zh: 28b5d2aa43fdd026
 /ocean-ocean-agent:
-  en: 3ef4ca387f93aa69
-  zh: 27eabd97c1b693eb
+  en: 3435b03c418dccbc
+  zh: f44095a92ca035ca
 /ocean-ocean-agent/summary:
-  en: 717e7d19a6f72e56
-  zh: 152c18689fe4f377
+  en: d750e62e09dbf21c
+  zh: 2f3417f4cf8d646e
 /ocean-ocean-agent/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-agent/use-this-package:
-  en: 7d1ae2375bd4fbfc
-  zh: b6b4b2e943174cb2
+  en: 734fb0b4d9b93caa
+  zh: 225a15c25b01af88
 /ocean-ocean-agent/use-this-package/create-or-resume-an-agent:
-  en: a62e2d3dd8c32597
-  zh: 646f48ab401d5941
+  en: 1c7e5149665c3bd3
+  zh: 39d2cf808b30b0cb
 /ocean-ocean-agent/use-this-package/select-a-model:
-  en: 85b0ff72a187110f
-  zh: 3f61c1568d27b8bc
+  en: d0adbab61e963bcd
+  zh: 95c0224b7d99062e
 /ocean-ocean-agent/use-this-package/drive-an-agent-s-conversation:
   en: 8dcb90a344e7ef2c
   zh: d48f07379f4674d6
@@ -30,20 +30,20 @@
   en: 2594a1e02adea801
   zh: cae8860369728efb
 /ocean-ocean-agent/use-this-package/intercept-or-observe-work-in-flight:
-  en: 371511fb13093dd2
-  zh: 4be81d246cf299b2
+  en: 932f9d550ddf19c6
+  zh: 440208dbd9ea408d
 /ocean-ocean-agent/understand-the-implementation:
   en: ce7e776e9d516bdb
   zh: 59d2751743db7795
 /ocean-ocean-agent/understand-the-implementation/design-concept:
-  en: 7c850051d2857bfa
-  zh: 4cab817553114e15
+  en: 259f19d44d5451aa
+  zh: 5bbd45a0fb06615d
 /ocean-ocean-agent/understand-the-implementation/step-admission:
   en: c5ebf07dbc1a883f
   zh: 847735016e1727a3
 /ocean-ocean-agent/understand-the-implementation/durable-inbox:
-  en: 8f3fe9303468d735
-  zh: 52162010ae1ed29e
+  en: 33ca5db98ac52fb5
+  zh: b1d30cc9dfa1629d
 /ocean-ocean-agent/understand-the-implementation/durable-model-selection:
   en: 692ec951bbb16b33
   zh: 5a650805ae8943c3
@@ -51,8 +51,8 @@
   en: bdeb146a53d8eee6
   zh: 38024efe70a2776f
 /ocean-ocean-agent/understand-the-implementation/registry-and-lifecycle:
-  en: b04a03694317a993
-  zh: a84c0ff58a4c051a
+  en: c35dc5e2e3bc2ffe
+  zh: a820c8c40b8179a3
 /ocean-ocean-agent/understand-the-implementation/initiator-scope:
   en: ca2565da62d43d5a
   zh: 148a31a95928cdff
@@ -60,8 +60,8 @@
   en: e48eae6c7de88cf8
   zh: 1f5b37bdb0e53788
 /ocean-ocean-agent/further-exploration:
-  en: 0b90cebece885c73
-  zh: 9567dac8ba9ea56c
+  en: d7cbd2d26352eb35
+  zh: 9da4da7cab51c794
 /ocean-ocean-agent/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90

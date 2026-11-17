@@ -14,7 +14,7 @@ import type { AccountClientMetadata } from '@ocean/ocean-deepseek-account/types'
  * @throws Error when the build carries no version, instead of reporting an empty one.
  */
 export function accountClientMetadata(locale: string, version: string | undefined): AccountClientMetadata {
-  if (version === undefined || version === '') throw new Error('account: this client build carries no DSH_CLIENT_VERSION')
+  if (version === undefined || version === '') throw new Error('account: this client build carries no OCEAN_CLIENT_VERSION')
   return {
     version,
     locale,

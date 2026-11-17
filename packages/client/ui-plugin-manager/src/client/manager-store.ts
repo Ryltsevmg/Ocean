@@ -342,7 +342,7 @@ export type VersionCheck =
   | { readonly phase: 'done'; readonly list: PluginVersionList; readonly checkedAt: number }
 
 /**
- * The version an update offers first: the newest one that declares a bundle, accepts the running DSH version, and is
+ * The version an update offers first: the newest one that declares a bundle, accepts the running OCEAN version, and is
  * neither deprecated nor a prerelease.
  * @param list - the Host's version list.
  * @returns the version, or undefined when none qualifies or the list was refused.
@@ -355,7 +355,7 @@ export function updateCandidate(list: PluginVersionList): PluginVersion | undefi
 /**
  * Whether the Host can install a listed version in place of the installed one.
  * @param version - one listed version.
- * @returns true when it declares a bundle and accepts the running DSH version.
+ * @returns true when it declares a bundle and accepts the running OCEAN version.
  */
 export function installable(version: PluginVersion): boolean {
   return version.bundle && version.incompatible === undefined
@@ -691,7 +691,7 @@ export class PluginManagerController {
   readonly details: BundleDetailController
   /** The registry last used from this browser, kept across dialogs and page loads; null until one was used. */
   private readonly registryMemory: SnapshotStore<RegistryChoice | null> = createSnapshotStore<RegistryChoice | null>(null, {
-    persist: { name: 'dsh.plugin-manager.install-registry' },
+    persist: { name: 'ocean.plugin-manager.install-registry' },
   })
 
   /**

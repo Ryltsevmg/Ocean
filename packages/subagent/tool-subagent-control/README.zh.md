@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-tool-subagent-control` 让 agent（智能体）按名称发现和联系其 subagent（子智能体）树、中断后代，并等待自身下一步收件箱。默认情况下，一个插件实例注册全部四个工具；成员继承相同定义和顺序。
+`ocean-tool-subagent-control` 让 agent（智能体）按名称发现和联系其 subagent（子智能体）树、中断后代，并等待自身下一步收件箱。默认情况下，一个插件实例注册全部四个工具；成员继承相同定义和顺序。
 
 ## 目录
 
@@ -99,7 +99,7 @@ kind: "package-reference"
 当包级约定不够用时阅读以下页面；它们从工具 schema 进入其背后的继续执行服务。
 
 - [Subagent 子系统](../../../docs/subsystems/subagent.zh.md)——可继续子级、Activation、inbox、中断与后续消息权限。
-- [dsh-tool-subagent](../tool-subagent/README.zh.md)——启动可继续子级的委派工具。
+- [ocean-tool-subagent](../tool-subagent/README.zh.md)——启动可继续子级的委派工具。
 - [生成工具目录](../../../docs/tool-catalog.zh.md#oceanocean-tool-subagent-control)——工具 schema。
 
 -----

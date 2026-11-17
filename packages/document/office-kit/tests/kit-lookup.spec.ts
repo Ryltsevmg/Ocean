@@ -7,7 +7,7 @@ import { expect, it, onTestFinished } from 'vitest'
 import { resolveKitModule } from '../src/locate.ts'
 
 function kitTree() {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-kit-lookup-')))
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'ocean-kit-lookup-')))
   onTestFinished(() => { rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 10 }) })
   const kitDirectory = join(root, 'node_modules', '@deepseek-ai', 'libreoffice-kit')
   const entry = join(kitDirectory, 'lib', 'index.js')

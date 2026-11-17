@@ -1,4 +1,4 @@
-/** Unified JSON-value schema DSL, inference, compilation, and tool definition helpers. @module dsh-tools/schema */
+/** Unified JSON-value schema DSL, inference, compilation, and tool definition helpers. @module ocean-tools/schema */
 
 import { HarnessError } from '@ocean/ocean-llm'
 import type { ContentBlock, ToolSchema } from '@ocean/ocean-llm'

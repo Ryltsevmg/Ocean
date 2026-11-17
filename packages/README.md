@@ -63,7 +63,7 @@ Every package lives in exactly one group; new packages join existing groups, and
 | [`plan/`](plan/README.md) | Plan collaboration state with a direct entry command and reviewed exit |
 | [`preset/`](preset/README.md) | Per-session agent composition from preset `cordis.yml` files |
 | [`guard/`](guard/README.md) | Loop-hygiene guards: advisory repeat-call reminders + the `tools/execute` deadline enforcer |
-| [`bundle/`](bundle/README.md) | Installable `dsh --profile` patch layers |
+| [`bundle/`](bundle/README.md) | Installable `ocean --profile` patch layers |
 | [`extensions/`](extensions/README.md) | Agent runtime self-modification: live plugin/service inspection and model-written mount/unmount |
 | [`mcp/`](mcp/README.md) | External Model Context Protocol servers exposed as native tools |
 | [`session/`](session/README.md) | Durable session data plane: persistence seam + backends, projection seam, log-backed titles, session reporting |
@@ -95,7 +95,7 @@ Product groups have maintained product roles, while their public APIs remain pre
 
 The dependency graph is generated: [docs/module-graph.md](../docs/module-graph.md) (`pnpm run gen-module-graph`, freshness-gated in CI).
 
-**Extension plugins depend on Service Definitions, never concrete providers.** `dsh-agent-loop` is swappable; UI, hook, and tool plugins use `dsh-agent`. Composition bundles may depend on spine plugins. Capabilities separate Service Definition / Service Provider / Consumer roles when they evolve independently; see [capability seams](../docs/capability-seams.md).
+**Extension plugins depend on Service Definitions, never concrete providers.** `ocean-agent-loop` is swappable; UI, hook, and tool plugins use `ocean-agent`. Composition bundles may depend on spine plugins. Capabilities separate Service Definition / Service Provider / Consumer roles when they evolve independently; see [capability seams](../docs/capability-seams.md).
 
 -----
 

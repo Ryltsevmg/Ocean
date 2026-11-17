@@ -1524,7 +1524,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     kind: 'single',
     scope: 'session',
     summary: 'Model selector inside the composer tool row.',
-    doc: 'Model selector inside the composer tool row. When expanded controls cannot\nshare a line, the row sets --dsh-composer-model-text-display to none and\n--dsh-composer-model-icon-display to block for an occupant\'s compact display.\nFixed overlays must portal to the document body because the docked composer contains them.',
+    doc: 'Model selector inside the composer tool row. When expanded controls cannot\nshare a line, the row sets --ocean-composer-model-text-display to none and\n--ocean-composer-model-icon-display to block for an occupant\'s compact display.\nFixed overlays must portal to the document body because the docked composer contains them.',
     registerOptions: [],
     ownerProps: [
       '/** Owner share of the named plan, permission, and model controls. */\nexport interface InputControlOwnerProps {\n  /** Whether the composer currently refuses interaction. */\n  locked: boolean\n}',
@@ -3998,7 +3998,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     kind: 'single',
     scope: 'root',
     summary: 'Window-chrome seat at the frame\'s top-left, over every main panel.',
-    doc: 'Window-chrome seat at the frame\'s top-left, over every main panel.\nMounted for narrow drawers and collapsed macOS desktop sidebars. macOS\ntraffic lights sit before it outside native fullscreen; browser controls\nstart at the frame edge.\nOCCUPIED by ui-sidebar\'s reopen/New Session controls.\n\nWhile the seat is mounted the frame publishes\n`--dsh-frame-leading-clearance` (the inline inset the seat\'s band\noccupies, measured from the frame\'s left edge); a main panel whose\ncontent reaches the top-left corner pads by it so nothing lands under\nthe lights or the controls.',
+    doc: 'Window-chrome seat at the frame\'s top-left, over every main panel.\nMounted for narrow drawers and collapsed macOS desktop sidebars. macOS\ntraffic lights sit before it outside native fullscreen; browser controls\nstart at the frame edge.\nOCCUPIED by ui-sidebar\'s reopen/New Session controls.\n\nWhile the seat is mounted the frame publishes\n`--ocean-frame-leading-clearance` (the inline inset the seat\'s band\noccupies, measured from the frame\'s left edge); a main panel whose\ncontent reaches the top-left corner pads by it so nothing lands under\nthe lights or the controls.',
     registerOptions: [],
     ownerProps: [],
     ownerPropsReferences: [],

@@ -67,7 +67,7 @@ class VisionAdapter extends LlmAdapter {
 }
 
 async function setup(content: JsonValue[], maxInlineTokens: number, mode: 'native' | 'ptc' = 'native') {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-multimodal-spill-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-multimodal-spill-'))
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx, root)
   onTestFinished(async () => {

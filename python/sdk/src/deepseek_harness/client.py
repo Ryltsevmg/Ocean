@@ -26,10 +26,10 @@ UserQuestionHandler: TypeAlias = Callable[[UserQuestionRequest, threading.Event]
 class HarnessConfig:
     """Configuration for launching the local Ocean SDK runtime."""
 
-    dsh_bin: str | None = None
+    ocean_bin: str | None = None
     profile: str = "sdk"
     patches: tuple[str, ...] = ()
-    dsh_home: str | None = None
+    ocean_home: str | None = None
     cwd: str | None = None
     env: dict[str, str] | None = None
     initialize_timeout_seconds: float = 30.0
@@ -37,6 +37,9 @@ class HarnessConfig:
     shutdown_timeout_seconds: float | None = 1.0
     # Callbacks run outside the reader; observe the Event to release work on cancellation.
     on_user_question: UserQuestionHandler | None = None
+    # Compatibility options; explicit Ocean options take precedence.
+    dsh_bin: str | None = None
+    dsh_home: str | None = None
 
 
 class HarnessClient:
@@ -186,7 +189,7 @@ class HarnessClient:
             )
         except TimeoutError as error:
             self.close()
-            raise TimeoutError(f"{error}\nselected dsh profile {self.config.profile!r}") from error
+            raise TimeoutError(f"{error}\nselected ocean profile {self.config.profile!r}") from error
         except BaseException as error:
             self.close()
             diagnostics = self._runtime_diagnostics()
@@ -412,11 +415,11 @@ class HarnessClient:
             raise self._runtime_closed_error("Failed to write to Ocean runtime") from exc
 
     def _start_reader_thread(self) -> None:
-        self._reader_thread = threading.Thread(target=self._reader_loop, name="dsh-runtime-reader", daemon=True)
+        self._reader_thread = threading.Thread(target=self._reader_loop, name="ocean-runtime-reader", daemon=True)
         self._reader_thread.start()
 
     def _start_stderr_thread(self) -> None:
-        self._stderr_thread = threading.Thread(target=self._stderr_loop, name="dsh-runtime-stderr", daemon=True)
+        self._stderr_thread = threading.Thread(target=self._stderr_loop, name="ocean-runtime-stderr", daemon=True)
         self._stderr_thread.start()
 
     def _reader_loop(self) -> None:
@@ -545,7 +548,7 @@ class HarnessClient:
                     if current is not None and current[0] is cancelled:
                         self._question_tasks.pop(request.request_id, None)
 
-        thread = threading.Thread(target=answer, name="dsh-user-question", daemon=True)
+        thread = threading.Thread(target=answer, name="ocean-user-question", daemon=True)
         with self._lock:
             if self._closing:
                 return
@@ -586,26 +589,30 @@ class HarnessClient:
         return "\n".join(parts)
 
     def _default_launch_args(self, env: dict[str, str]) -> tuple[str, ...]:
-        if self.config.dsh_bin is None:
+        executable = self.config.ocean_bin if self.config.ocean_bin is not None else self.config.dsh_bin
+        home = self.config.ocean_home if self.config.ocean_home is not None else self.config.dsh_home
+        if executable is None:
             try:
                 from deepseek_harness_runtime import resolve_bundled_launch_args
             except ImportError as exc:
                 raise FileNotFoundError(
-                    "Unable to locate the bundled Ocean dsh runtime. "
+                    "Unable to locate the bundled Ocean ocean runtime. "
                     "Install deepseek-harness-runtime-bin."
                 ) from exc
             base = resolve_bundled_launch_args()
         else:
-            base = (str(Path(self.config.dsh_bin).expanduser().resolve()),)
+            base = (str(Path(executable).expanduser().resolve()),)
 
-        if self.config.dsh_home is not None:
-            if not self.config.dsh_home.strip():
-                raise ValueError("HarnessConfig requires a non-empty dsh_home")
-            env["DSH_HOME"] = str(Path(self.config.dsh_home).expanduser().resolve())
-        elif not env.get("DSH_HOME", "").strip():
+        if home is not None:
+            if not home.strip():
+                raise ValueError("HarnessConfig requires a non-empty ocean_home")
+            env["OCEAN_HOME"] = str(Path(home).expanduser().resolve())
+        elif "OCEAN_HOME" not in env and "DSH_HOME" in env:
+            env["OCEAN_HOME"] = env["DSH_HOME"]
+        if not env.get("OCEAN_HOME", "").strip():
             raise ValueError(
-                "HarnessConfig requires an explicit dsh_home or non-empty DSH_HOME; "
-                "the Python SDK never uses ~/.dsh implicitly"
+                "HarnessConfig requires an explicit ocean_home or non-empty OCEAN_HOME; "
+                "the Python SDK never uses ~/.ocean implicitly"
             )
 
         patches = tuple(

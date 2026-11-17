@@ -74,7 +74,7 @@
     "@ocean/ocean-session-title": "workspace:*",
     "react": "^18.2.0"
   },
-  "dsh": {
+  "ocean": {
     "client": {
       "inject": [
         "@ocean/ocean-client-locale",

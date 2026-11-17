@@ -40,7 +40,7 @@ vi.mock('electron', () => ({
   },
 }))
 
-beforeEach(() => { vi.stubEnv('DSH_CLIENT_VERSION', '1.2.3') })
+beforeEach(() => { vi.stubEnv('OCEAN_CLIENT_VERSION', '1.2.3') })
 afterEach(() => {
   state.views.length = 0; state.sessions.length = 0; state.loadFailure = undefined; state.loadBarrier = undefined
   vi.clearAllMocks(); vi.unstubAllEnvs()
@@ -323,7 +323,7 @@ it('bootstraps the current language and updates an open view without reloading',
   expect(manager.bootstrap({ sender, senderFrame: sender.mainFrame }).locale).toBe('zh_CN')
   locale = 'en_US'
   manager.notifyLocaleChanged()
-  expect(sender.send).toHaveBeenCalledWith('dsh-platform:locale-changed', 'en_US')
+  expect(sender.send).toHaveBeenCalledWith('ocean-platform:locale-changed', 'en_US')
   expect(sender.loadURL).toHaveBeenCalledOnce()
   manager.close()
   sender.send.mockClear()

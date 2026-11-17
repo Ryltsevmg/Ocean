@@ -32,7 +32,7 @@ export interface AgentTerminalRequest {
   /** Executable names tried in order among discovered shells before the environment default. */
   readonly preferredShells: readonly string[]
   /**
-   * Variables added to the shell environment; the controller's `DSH_SESSION_ID`, and `HISTFILE` in confined
+   * Variables added to the shell environment; the controller's `OCEAN_SESSION_ID`, and `HISTFILE` in confined
    * POSIX shells, take precedence.
    */
   readonly env?: Readonly<Record<string, string>>

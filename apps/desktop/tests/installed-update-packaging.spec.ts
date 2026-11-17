@@ -41,7 +41,7 @@ vi.mock('../scripts/packaging-run.mjs', async (original) => {
 const versions = ['0.1.6-nightly.20260914.1', '0.1.6-nightly.20260914.2'] as const
 
 async function fixture(body: (manifest: string, root: string) => Promise<void>): Promise<void> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-packaging-entry-'))
+  const root = await mkdtemp(join(tmpdir(), 'ocean-packaging-entry-'))
   const previous = { ...state }
   try {
     state.home = root
@@ -53,12 +53,12 @@ async function fixture(body: (manifest: string, root: string) => Promise<void>):
     await writeFile(tool, 'inert unused signer fixture')
     await mkdir(join(run.root, 'application'))
     await writeFile(join(run.root, 'application/result.json'), '{}')
-    await mkdir(join(run.root, versions[0], 'dsh'), { recursive: true })
-    await writeFile(join(run.root, versions[0], 'dsh/desktop-runtime.json'), '{}')
+    await mkdir(join(run.root, versions[0], 'ocean'), { recursive: true })
+    await writeFile(join(run.root, versions[0], 'ocean/desktop-runtime.json'), '{}')
     state.settings = { ...Object.fromEntries(Object.entries(process.env)
       .filter(([name]) => !/KEY|SECRET|TOKEN|PASSWORD|^NODE_OPTIONS$/iu.test(name))),
-    DSH_DESKTOP_WINDOWS_CER_FILE: certificate, DSH_DESKTOP_WINDOWS_SIGNTOOL: tool,
-    DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'fixture-secret-pin', DSH_DESKTOP_WINDOWS_KEY_CONTAINER: 'fixture-container' }
+    OCEAN_DESKTOP_WINDOWS_CER_FILE: certificate, OCEAN_DESKTOP_WINDOWS_SIGNTOOL: tool,
+    OCEAN_DESKTOP_WINDOWS_TOKEN_PIN: 'fixture-secret-pin', OCEAN_DESKTOP_WINDOWS_KEY_CONTAINER: 'fixture-container' }
     await body(join(run.root, 'run.json'), root)
   } finally { Object.assign(state, previous); await rm(root, { recursive: true, force: true }) }
 }
@@ -66,25 +66,25 @@ async function fixture(body: (manifest: string, root: string) => Promise<void>):
 describe('operator-driven packaging entry', () => {
   it('refuses the interlock before loading credentials, confirmation, or child allocation and preserves it byte-for-byte', async () => {
     await fixture(async (manifest, root) => {
-      const lock = join(root, '.dsh-desktop-signing/attempt.json')
-      await mkdir(join(root, '.dsh-desktop-signing'))
+      const lock = join(root, '.ocean-desktop-signing/attempt.json')
+      await mkdir(join(root, '.ocean-desktop-signing'))
       await writeFile(lock, 'retained incident record')
       const confirm = vi.fn(async () => true)
       await expect(packageInstalledUpdate(manifest, versions[0], { execute: true, confirm })).rejects.toThrow('interlock exists')
       expect(state.loads).toBe(0)
       expect(confirm).not.toHaveBeenCalled()
       expect(await readFile(lock, 'utf8')).toBe('retained incident record')
-      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['dsh'])
+      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['ocean'])
       await expect(assertInstalledUpdateSigningClear(lock)).rejects.toThrow('interlock exists')
     })
   })
 
   it('strips unrelated secrets and preload overrides while retaining signing inputs and the Windows archive filter', () => {
-    expect(installedUpdatePackagingEnvironment({ DSH_DESKTOP_TARGET_PLATFORM: 'win32', PATH: 'tool-path',
-      DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'pin', DSH_DESKTOP_WINDOWS_KEY_CONTAINER: 'container',
+    expect(installedUpdatePackagingEnvironment({ OCEAN_DESKTOP_TARGET_PLATFORM: 'win32', PATH: 'tool-path',
+      OCEAN_DESKTOP_WINDOWS_TOKEN_PIN: 'pin', OCEAN_DESKTOP_WINDOWS_KEY_CONTAINER: 'container',
       DEEPSEEK_API_KEY: 'llm', DOWNLOAD_TEST_COS_SECRET_KEY: 'cos', NODE_OPTIONS: 'preload', NODE_PATH: 'injected' }))
-      .toEqual({ DSH_DESKTOP_TARGET_PLATFORM: 'win32', PATH: 'tool-path', DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'pin',
-        DSH_DESKTOP_WINDOWS_KEY_CONTAINER: 'container', DSH_DESKTOP_UNSIGNED: '0', ELECTRON_BUILDER_7Z_FILTER: 'BCJ' })
+      .toEqual({ OCEAN_DESKTOP_TARGET_PLATFORM: 'win32', PATH: 'tool-path', OCEAN_DESKTOP_WINDOWS_TOKEN_PIN: 'pin',
+        OCEAN_DESKTOP_WINDOWS_KEY_CONTAINER: 'container', OCEAN_DESKTOP_UNSIGNED: '0', ELECTRON_BUILDER_7Z_FILTER: 'BCJ' })
   })
 
   it('checks without confirmation or allocating a packaging directory', async () => {
@@ -93,14 +93,14 @@ describe('operator-driven packaging entry', () => {
       expect(await packageInstalledUpdate(manifest, versions[0], { execute: false, confirm }))
         .toMatchObject({ mode: 'check', childLaunched: false, signed: false })
       expect(confirm).not.toHaveBeenCalled()
-      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['dsh'])
+      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['ocean'])
     })
   })
 
   it.runIf(process.platform === 'win32' && process.arch === 'x64').each([true, false])(
     'supervises an inert child with failure=%s, retains redaction and refuses reuse', async (failure) => {
       await fixture(async (manifest) => {
-        state.settings.DSH_TEST_PACKAGING_FAIL = failure ? '1' : '0'
+        state.settings.OCEAN_TEST_PACKAGING_FAIL = failure ? '1' : '0'
         const result = packageInstalledUpdate(manifest, versions[0], { execute: true, confirm: async () => true })
         if (failure) await expect(result).rejects.toThrow('signed-installer failed')
         else expect(await result).toMatchObject({ builderCompleted: true, packageVerification: 'pending', published: false })
@@ -123,11 +123,11 @@ describe('operator-driven packaging entry', () => {
       await expect(packageInstalledUpdate(manifest, versions[0], { execute: true, confirm: async () => false }))
         .rejects.toThrow('did not confirm')
       await expect(packageInstalledUpdate(manifest, versions[0], { execute: true, confirm: async () => {
-        await mkdir(join(root, '.dsh-desktop-signing'))
-        await writeFile(join(root, '.dsh-desktop-signing/attempt.json'), 'another operation acquired the token')
+        await mkdir(join(root, '.ocean-desktop-signing'))
+        await writeFile(join(root, '.ocean-desktop-signing/attempt.json'), 'another operation acquired the token')
         return true
       } })).rejects.toThrow('interlock exists')
-      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['dsh'])
+      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['ocean'])
     })
   })
 
