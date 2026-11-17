@@ -9,7 +9,7 @@ description: Ocean 命令、环境变量和插件元数据替代 DSH 名称。
 
 ## 变更
 
-首选 CLI 命令为 `ocean`；`dsh` 保留为别名。环境变量使用 `OCEAN_` 前缀，插件清单使用 `ocean` 和 `engines.ocean`。默认主目录仍为 `~/.ocean`。TypeScript 标识符中的 `Dsh` 改为 `Ocean`；子代理 SDK 包改为 `@ocean/ocean-subagent-ocean-sdk`。桌面应用链接使用 `ocean://`；仍接受 `dsh://open`。内部资源 URI 协议、浏览器存储键、所有权标记和跨版本锁保留现有标识符。
+首选 CLI 命令为 `ocean`；`dsh` 保留为别名。环境变量使用 `OCEAN_` 前缀，插件清单使用 `ocean` 和 `engines.ocean`。默认主目录仍为 `~/.ocean`。TypeScript 标识符中的 `Dsh` 改为 `Ocean`；子代理 SDK 包改为 `@ocean/ocean-subagent-ocean-sdk`。桌面应用链接使用 `ocean://`；仍接受 `dsh://open`。内部资源 URI 协议、浏览器存储键、身份验证 Cookie、旧投影目录、所有权标记和跨版本锁保留现有标识符。
 
 当对应的 Ocean 名称不存在时，仍接受旧的 `dsh` 清单元数据、`engines.dsh`、继承的 `DSH_*` 启动变量及 SDK 的 `dshBin`/`dshHome` 选项。显式 Ocean 值优先。保留旧的主目录路径导出，供已安装插件使用。
 

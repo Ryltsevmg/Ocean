@@ -9,7 +9,7 @@ English | [中文](guide.zh.md)
 
 ## Change
 
-The preferred CLI command is `ocean`; `dsh` remains an alias. Environment variables use `OCEAN_`, and plugin manifests use `ocean` and `engines.ocean`. The default home remains `~/.ocean`. TypeScript identifiers containing `Dsh` now contain `Ocean`; the subagent SDK package is `@ocean/ocean-subagent-ocean-sdk`. Desktop links use `ocean://`; `dsh://open` remains accepted. Internal resource URI schemes, browser storage keys, ownership markers, and cross-version locks retain their existing identifiers.
+The preferred CLI command is `ocean`; `dsh` remains an alias. Environment variables use `OCEAN_`, and plugin manifests use `ocean` and `engines.ocean`. The default home remains `~/.ocean`. TypeScript identifiers containing `Dsh` now contain `Ocean`; the subagent SDK package is `@ocean/ocean-subagent-ocean-sdk`. Desktop links use `ocean://`; `dsh://open` remains accepted. Internal resource URI schemes, browser storage keys, authentication cookies, legacy projection directories, ownership markers, and cross-version locks retain their existing identifiers.
 
 Legacy `dsh` manifest metadata, `engines.dsh`, inherited `DSH_*` launcher variables, and SDK `dshBin`/`dshHome` options remain accepted when their Ocean equivalents are absent. Explicit Ocean values take precedence. Legacy home-path exports remain available for installed plugins.
 

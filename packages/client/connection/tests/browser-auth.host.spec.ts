@@ -165,6 +165,7 @@ describe('BrowserAuth', () => {
     const processOwner = {}
     const first = await createAuth(store, 30, processOwner)
     const login = exchange(first)
+    expect(login.cookie).toMatch(/^dsh-auth-/u)
 
     expect(login.state).toMatchObject({
       status: 303,

@@ -90,12 +90,12 @@ it('refuses another page origin without forwarding its request', async () => {
 it('removes only legacy Host authentication cookies for the Host hostname', async () => {
   const removed: [string, string][] = []
   const cookies = {
-    get: vi.fn(async () => [{ name: 'ocean-auth-old' }, { name: 'other-app' }, { name: 'ocean-auth-older' }]),
+    get: vi.fn(async () => [{ name: 'dsh-auth-old' }, { name: 'other-app' }, { name: 'dsh-auth-older' }]),
     remove: vi.fn(async (url: string, name: string) => { removed.push([url, name]) }),
   }
   await removeLegacyHostCookies(cookies, 'http://127.0.0.1:1234/?token=secret')
   expect(cookies.get).toHaveBeenCalledExactlyOnceWith({ url: 'http://127.0.0.1:1234' })
-  expect(removed).toEqual([['http://127.0.0.1:1234', 'ocean-auth-old'], ['http://127.0.0.1:1234', 'ocean-auth-older']])
+  expect(removed).toEqual([['http://127.0.0.1:1234', 'dsh-auth-old'], ['http://127.0.0.1:1234', 'dsh-auth-older']])
 })
 
 it.each(['dsh-app://app', undefined])('forwards a trusted desktop plan request with the local Host origin (%s)', async (origin) => {

@@ -56,7 +56,7 @@ export interface HostCookieStore {
 }
 
 /**
- * Remove every `ocean-auth-*` cookie that earlier releases left in a cookie store for the Host's hostname.
+ * Remove every `dsh-auth-*` cookie that earlier releases left in a cookie store for the Host's hostname.
  * Cookies ignore ports, so cookies from earlier random-port Hosts would otherwise travel with every
  * request to that hostname until they expire.
  * @param cookies - Electron session cookie store.
@@ -65,7 +65,7 @@ export interface HostCookieStore {
 export async function removeLegacyHostCookies(cookies: HostCookieStore, url: string): Promise<void> {
   const origin = new URL(url).origin
   for (const { name } of await cookies.get({ url: origin })) {
-    if (name.startsWith('ocean-auth-')) await cookies.remove(origin, name)
+    if (name.startsWith('dsh-auth-')) await cookies.remove(origin, name)
   }
 }
 

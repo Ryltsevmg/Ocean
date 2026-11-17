@@ -37,7 +37,7 @@ Electron 在 `userData/desktop/locale-cache` 缓存最近确认的界面语言�
 
 桌面埋点遵循[产品采集策略](../../packages/client/product-analytics/README.zh.md)及其动态应用配置，不包含 Web 使用情况。安装更新会等待该操作的本地埋点接收请求结束，再锁定 API 准入并停止 Host。接收请求的时限为一秒，失败不会阻止安装，也不等待收集端完成发送。
 
-桌面应用是完整 ocean Web 应用外的一层 Electron 壳。子进程在 Linux 上使用 primary-runtime 的 Node，在 macOS 和 Windows 上使用 Electron RunAsNode，启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 校验应用请求的来源，将其转换为所属 Host 的来源后，再把应用 HTTP 请求转发给已认证的 Web Host；转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。原生 Host 请求会显式发送当前 Host 的认证 Cookie，任何 Electron session 都不保存该 Cookie；每次启动 Host 时都会移除早期版本遗留在默认 session 中的 `ocean-auth-*` Cookie，因为 Cookie 不区分端口，否则这些 Cookie 会随每个发往 `127.0.0.1` 的请求一并发送。
+桌面应用是完整 ocean Web 应用外的一层 Electron 壳。子进程在 Linux 上使用 primary-runtime 的 Node，在 macOS 和 Windows 上使用 Electron RunAsNode，启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 校验应用请求的来源，将其转换为所属 Host 的来源后，再把应用 HTTP 请求转发给已认证的 Web Host；转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。原生 Host 请求会显式发送当前 Host 的认证 Cookie，任何 Electron session 都不保存该 Cookie；每次启动 Host 时都会移除早期版本遗留在默认 session 中的 `dsh-auth-*` Cookie，因为 Cookie 不区分端口，否则这些 Cookie 会随每个发往 `127.0.0.1` 的请求一并发送。
 
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
@@ -143,6 +143,8 @@ Welcome 加载共享 Toast 的配色和阴影变量，挂载在 body 下的通�
 
 ## 安装归属
 
+macOS 命令安装器为每个命令目标分别保存所有权记录。安装或移除 `ocean` 不会改变旧的 `dsh` 链接、记录或备份。
+
 Electron 拥有 `$OCEAN_HOME/profiles/desktop`。其 `dependencies` 包含 pnpm 安装的包；`ocean.profile.bundles` 包含内置 bundle，后接已启用插件。打包应用在 Linux 上从 `resources/ocean`、在 macOS 和 Windows 上从 `resources/app.asar/ocean` 提供 ocean、私有 Desktop Host 及其生产依赖。打包应用选择 runtime profile 解析，不创建包链接；开发 profile 使用文件系统链接。Host 和插件共享同一进程：Linux 使用 primary-runtime 的 Node，macOS 和 Windows 使用 Electron Node 模式。Desktop 不启用 `--preserve-symlinks`。CLI 不能启动此 profile。Desktop 内置命令可在应用退出后管理其插件；npm 安装的 ocean 不能修改它。
 
 应用 preload 只向 `dsh-app://app` 文档暴露启动就绪、致命启动失败上报、原生目录选择、用于 composer 路径引用的 `__OCEAN_HOST_PATHS__` 桥接和租约范围内的 Browser 桥接。同一个 preload 通过 `oceanDesktop.deviceInfo()` 转发主进程采集的机器描述，按 `name=value` 字段以 `; ` 分隔：`platform`、`os`、`app_arch`（应用二进制实际运行的架构，模拟运行时与硬件架构不同）、`cpu` 和 `memory_gib`（物理内存总量，GiB，保留一位小数）。取值不可用时省略对应字段。该描述不包含主机名、用户名或序列号。产品页面使用共享的认证 HTTP API，并获得 Desktop 标记、更新展示数据和打开原生确认的操作，不能选择安装产物或授权安装。插件管理使用 Web 应用经过认证的 HTTP API；Electron 在 `dsh-app://shell/` 本地提供更新弹窗文档和资源，不依赖 Host 就绪。Electron 不提供插件管理 IPC 或独立管理页面。任何渲染进程都不会获得文件系统访问、原始 Electron IPC、shell 或任意 pnpm 参数。
@@ -170,7 +172,7 @@ macOS 上自定义菜单保留 Electron 的标准 Window 菜单及应用隐藏�
 签名资源中的 `resources/app.asar/ocean/desktop-runtime.json` 绑定 shell 版本、Electron 的 Node 版本、平台、架构、共享包版本和最终文件清单。启动读取元数据，并检查共享包记录。发布 schema、shell 版本、目标兼容性和文件完整性在打包时验证。只有出现打包校验与实际 Host 诊断无法充分解释的具体安装故障，才重新引入启动时的发布信息比较。首次启动不会把核心包复制到 profile 存储或通过 pnpm 安装核心包。
 
 1. 主窗口在 profile 准备或后端启动前，从打包静态资源于屏幕外加载共享 Web 加载页。共享 profile 初始化创建缺失的 manifest、空用户 patch 与 pnpm workspace 文件，不覆盖现有文件。
-2. 启动 Host 前，Desktop 校验运行时描述符并准备 profile，不改动已安装的包、依赖声明与锁文件；只删除早期 Link 后端启动写下的 `.ocean-module-fallback` 投影，启动从不运行 pnpm。profile 内的包保持原生优先级，本体包名通过 runtime resolution 解析。
+2. 启动 Host 前，Desktop 校验运行时描述符并准备 profile，不改动已安装的包、依赖声明与锁文件；只删除早期 Link 后端启动写下的 `.dsh-module-fallback` 投影，启动从不运行 pnpm。profile 内的包保持原生优先级，本体包名通过 runtime resolution 解析。
 3. Electron 的 Node 版本、平台或架构变化时保留已安装插件。原生兼容性问题在加载时报错，可通过 pnpm 修复。
 4. 主应用的“插件”页面通过共享[插件管理器](../../packages/boot/plugin-manager/README.zh.md)操作 Desktop profile。包操作使用内置 pnpm 及正常的用户和 profile 配置。
 5. 共享管理器负责安装错误、激活和重启要求。即使 Host 无法启动，原生恢复仍可禁用第三方 bundle。

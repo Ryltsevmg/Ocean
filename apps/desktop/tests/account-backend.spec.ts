@@ -65,14 +65,14 @@ it.each([
   const snapshot = { status: 'signed-out', attempt: null,
     links: { usageUrl: 'https://platform.deepseek.com/usage', topUpUrl: 'https://platform.deepseek.com/top_up' } }
   const received = Promise.withResolvers<undefined>()
-  const backend = desktopAccountBackend(`http://127.0.0.1:${address.port}`, () => Promise.resolve(snapshot), 'ocean-auth-fixture=signed')
+  const backend = desktopAccountBackend(`http://127.0.0.1:${address.port}`, () => Promise.resolve(snapshot), 'dsh-auth-fixture=signed')
   const failed = vi.fn()
   const stop = backend.watch(
     (value) => { expect(value).toEqual(snapshot); received.resolve(undefined) }, failed, expired, onAnalyticsEnabledChanged,
   )
   onTestFinished(stop)
   const [, upgrade] = await connected as [unknown, IncomingMessage]
-  expect(upgrade.headers.cookie).toBe('ocean-auth-fixture=signed')
+  expect(upgrade.headers.cookie).toBe('dsh-auth-fixture=signed')
   // Logical streams share the socket; observe their opening frames before sending data.
   const streams = new Map<string, string>()
   const opened = Promise.withResolvers<undefined>()
