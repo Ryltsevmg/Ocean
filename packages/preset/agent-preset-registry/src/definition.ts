@@ -7,6 +7,11 @@ export interface PresetDefinition {
   readonly name?: string
   readonly description?: string
   readonly order?: number
+  /**
+   * Internal preset that stays declared for sessions naming it but is never offered for selection.
+   * Omission keeps a preset selectable.
+   */
+  readonly hidden?: boolean
   readonly plugins: readonly (Omit<EntryOptions, 'id' | 'disabled'> & { id?: string; disabled?: EntryOptions['disabled'] | JsExpr })[]
 }
 

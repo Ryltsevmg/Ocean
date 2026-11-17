@@ -13,6 +13,7 @@ import type { SessionSummary } from '@ocean/ocean-api-session-controller/client'
 import type { SessionId } from '@ocean/ocean-session/types'
 import {
   AGENT_PRESET_SETTINGS_NS, AgentPresetSettingsController,
+  selectablePresets,
   writeDefaultPreset,
 } from '../src/client/settings-store.ts'
 
@@ -126,6 +127,30 @@ describe('the agent-preset roster store', () => {
     expect(controller.store.getSnapshot().options).toEqual([
       { id: 'standard', name: '标准模式', description: '完整的编码 agent。' },
     ])
+  })
+
+  it('keeps an internal preset name readable for the session header', async () => {
+    const controller = derivedController(fakeApi([
+      { id: 'standard', isDefault: true },
+      { id: 'worker', isDefault: false, hidden: true, name: 'Super agent worker' },
+    ] as never))
+
+    await controller.load()
+
+    // A session already running an internal preset still labels it by name;
+    // only the pickers drop it, through selectablePresets.
+    expect(controller.store.getSnapshot().options).toEqual([
+      { id: 'standard' },
+      { id: 'worker', name: 'Super agent worker' },
+    ])
+  })
+
+  it('never offers an internal preset for selection', () => {
+    expect(selectablePresets([
+      { id: 'standard', isDefault: true },
+      { id: 'worker', isDefault: false, hidden: true },
+      { id: 'minimal', isDefault: false },
+    ]).map(row => row.id)).toEqual(['standard', 'minimal'])
   })
 
   it('reports an empty roster as unavailable, not as an error', async () => {
@@ -247,6 +272,18 @@ describe('the new-session chip controller', () => {
     { id: 'standard', isDefault: true },
     { id: 'minimal', isDefault: false },
   ]
+
+  it('leaves an internal preset out of the new-session menu', async () => {
+    const controller = chip([
+      { id: 'standard', isDefault: true },
+      { id: 'worker', isDefault: false, hidden: true },
+      { id: 'minimal', isDefault: false },
+    ] as never, undefined)
+
+    await controller.load()
+
+    expect(controller.store.getSnapshot().options.map(option => option.id)).toEqual(['standard', 'minimal'])
+  })
 
   it('opens on the deployment default', async () => {
     const controller = chip(ROSTER, undefined)

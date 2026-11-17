@@ -3,7 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@ocean/ocean-api-remotes/client'
 import { createSnapshotStore, type SnapshotStore } from '@ocean/ocean-client-store'
 import type { AgentPresetRow } from '@ocean/ocean-agent-preset-registry/types'
-import { AGENT_PRESET_SETTINGS_NS, requiresCodingTools, writeDefaultPreset } from './settings-store.ts'
+import { AGENT_PRESET_SETTINGS_NS, requiresCodingTools, selectablePresets, writeDefaultPreset } from './settings-store.ts'
 
 /** The read-only composition viewer over one preset. */
 export interface PresetView {
@@ -47,7 +47,7 @@ export class AgentPresetSectionController {
     try {
       const result = await this.ctx.remote.agentPresets.list()
       if (!result.ok) throw new Error(result.error.message)
-      this.set({ status: 'ready', error: null, rows: result.value.presets })
+      this.set({ status: 'ready', error: null, rows: selectablePresets(result.value.presets) })
     } catch (error) { this.set({ status: 'error', error: message(error) }) }
   }
 

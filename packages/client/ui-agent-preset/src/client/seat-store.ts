@@ -18,7 +18,7 @@ import type {} from '@ocean/ocean-api-remotes/client'
 import type { SessionSummary } from '@ocean/ocean-api-session-controller/client'
 import { createSnapshotStore, type SnapshotStore } from '@ocean/ocean-client-store'
 import type {} from '@ocean/ocean-agent-preset-registry/types'
-import { presetOptions, readRoster } from './settings-store.ts'
+import { presetOptions, readRoster, selectablePresets } from './settings-store.ts'
 import type { AgentPresetOption } from './settings-store.ts'
 
 /** Hero-chip snapshot. */
@@ -114,7 +114,7 @@ export class AgentPresetSeatController {
     this.fallback = presets.find(preset => preset.isDefault)?.id ?? presets[0]?.id ?? ''
     const session = this.currentSession()
     this.set({
-      options: presetOptions(presets),
+      options: presetOptions(selectablePresets(presets)),
       // Staged pick first, then the composition the current session
       // already carries, then the Host-effective default. The middle term is
       // what keeps a late-landing load from regressing the display after

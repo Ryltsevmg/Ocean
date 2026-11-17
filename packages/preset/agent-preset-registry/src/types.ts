@@ -14,6 +14,8 @@ export interface AgentPresetRow {
   readonly name?: string
   /** One sentence on what this preset is for. */
   readonly description?: string
+  /** Declared as internal: kept on the roster for sessions naming it, never offered for selection. */
+  readonly hidden?: boolean
   /** Why this preset cannot compose a session; absent when it can. */
   readonly broken?: string
 }
