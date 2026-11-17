@@ -108,6 +108,17 @@ dsh plugin --profile demo add ./hello-plugin
 
 链接整个 checkout 不会对运行中安装自身的包目录应用 peer 拦截。目标仍位于 profile 内的链接（包括它的 pnpm store）属于 profile 自己安装的内容，不算外部 linked root。外部链接互相重叠也不改变查找顺序，每个请求仍从其 importer 所在目录开始。
 
+<a id="install-a-built-tarball"></a>
+### 安装构建好的 tarball
+
+`pnpm pack` 生成的 `.tgz` 包含打包那一刻的包内容：安装它运行的是这份打包快照，而上面通过链接安装的 checkout 会继续跟随磁盘上的文件。按绝对路径安装该压缩包；`/path/to/dsh-hello-plugin-0.1.0.tgz` 只是示例，请替换为你自己构建出的压缩包的实际绝对路径：
+
+```sh
+dsh plugin --profile demo add /path/to/dsh-hello-plugin-0.1.0.tgz
+```
+
+profile 会把该压缩包记为 `file:` 依赖，并像其他安装一样把组合包加入 `dsh.profile.bundles`，因此下面验证与移除命令同样适用。如果源码在打包之后发生了改动，且该包需要构建，就重新执行构建，再次运行 `pnpm pack`，然后安装新的压缩包。
+
 先不启动、只验证该层，再启动：
 
 ```sh
@@ -183,7 +194,7 @@ dsh plugin --profile demo add github:you/hello-plugin
 如果不想让用户做这项授权，就改为分发构建产物——以下两种形式都不需要任何构建权限：
 
 - **发布到 npm**，在 `pnpm publish` 时构建好 `lib/`；`dsh plugin add your-package` 安装的就是预构建代码。
-- **交付 tarball**：用 `pnpm pack` 打包；用户执行 `dsh plugin add ./hello-plugin-0.1.0.tgz`。
+- **交付 tarball**：用 `pnpm pack` 打包；[按绝对路径安装该压缩包](#install-a-built-tarball)。
 
 ## 下一步
 
