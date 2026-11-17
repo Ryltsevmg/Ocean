@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/testing.md
 /testing-policy:
-  en: 32b65e3544fc0396
-  zh: d88ac5f38a0bd372
+  en: 3d0aa2b241eca9fb
+  zh: 407f06997bff5b46
 /testing-policy/tiers:
-  en: d0adda8b52c24e5e
-  zh: 081fad63599442fd
+  en: 8abeb86d39179a9f
+  zh: d40cb8919865779d
 /testing-policy/how-specs-execute:
-  en: d48ace686ecd0085
-  zh: bbde171362a9f5fd
+  en: e474be4dc8ea56f6
+  zh: ca589fed3f0483f8
 /testing-policy/the-with-key-policy-inference-is-cheap-here:
-  en: f471fd1f1f5232cc
-  zh: 453229fba877292d
+  en: 42859c431a83eaf2
+  zh: 565ce0501f4dbb3b
 /testing-policy/prefer-the-real-implementation-over-a-mock:
   en: 9285fee52586ae25
   zh: ea4817ccd0546438

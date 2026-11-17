@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; font: 14px/1.45 system-ui; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 24px; min-height: 100dvh; color: CanvasText; background: Canvas; }
+form, label { display: grid; gap: 8px; }
+form { gap: 16px; }
+input, button { font: inherit; }
+input[type="url"], input[type="password"] { width: 100%; min-width: 0; padding: 8px 10px; }
+.remember { display: flex; align-items: center; }
+footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+button { max-width: 100%; padding: 6px 12px; overflow-wrap: anywhere; }
+.feedback { min-height: 3em; overflow-wrap: anywhere; }
+#failure { margin: 0; }

@@ -145,6 +145,7 @@ export class SshConnection extends Service {
 
   /**
    * Forward one authenticated stream through an independent SSH channel.
+   * Cancellation before socket creation releases its forwarding reservation.
    * @param endpoint - private coordinates issued by this connection's helper.
    * @param signal - cancellation of allocation and the resulting socket.
    * @returns a paused socket; attach a consumer before resuming it.
@@ -167,11 +168,12 @@ export class SshConnection extends Service {
       if (!this.closed) await this.controlCommand(['-O', 'cancel', '-L', forward]).catch(() => {})
       await rm(local, { force: true })
     }
+    let socket: Socket
     try {
       await this.controlCommand(['-O', 'forward', '-o', 'ExitOnForwardFailure=yes', '-L', forward], signal)
+      signal.throwIfAborted()
+      socket = createConnection({ path: local, allowHalfOpen: true })
     } catch (error) { await cancelForward(); throw error }
-    signal.throwIfAborted()
-    const socket = createConnection({ path: local, allowHalfOpen: true })
     this.sockets.add(socket)
     socket.once('close', () => {
       this.sockets.delete(socket)

@@ -202,6 +202,7 @@ export class RemoteAccessService extends TypertRemoteService {
     if (principal.kind === 'owner' || action === FOLLOW_ACTION) return ALLOW
     const entry = this.policies.get(principal.kind)
     if (entry === undefined) return NO_ALLOW
+    if (entry.policy.globalActions?.has(action)) return ALLOW
     const bindings = this.bindingsOf(entry, principal, action)
     if (bindings === undefined) return POLICY_FAILED
     for (const resource of request.resources) {
@@ -239,6 +240,7 @@ export class RemoteAccessService extends TypertRemoteService {
     const action: RemoteAccessAction = `${invocation.request.namespace}/${invocation.request.method}`
     const entry = this.policies.get(principal.kind)
     if (entry === undefined) return false
+    if (entry.policy.globalActions?.has(action)) return true
     const bindings = this.bindingsOf(entry, principal, action)
     return bindings !== undefined && this.evaluate(entry, bindings, action, resource, undefined).kind === 'allow'
   }
@@ -287,7 +289,8 @@ export class RemoteAccessService extends TypertRemoteService {
         sent = next
         for (const grant of next) {
           const before = previous.find(other => sameResource(other.resource, grant.resource))
-          if (before === undefined || !sameActions(before.actions, grant.actions)) yield { type: 'upsert', grant }
+          if (before === undefined || !sameActions(before.actions, grant.actions)
+            || !sameActions(before.allResources ?? [], grant.allResources ?? [])) yield { type: 'upsert', grant }
         }
         for (const grant of previous) {
           if (!next.some(other => sameResource(other.resource, grant.resource))) yield { type: 'remove', resource: grant.resource }
@@ -359,7 +362,9 @@ export class RemoteAccessService extends TypertRemoteService {
     if (bindings === undefined) return []
     const grants: RemoteAccessGrant[] = []
     const seen: RemoteAccessResource[] = []
-    for (const { resource } of bindings) {
+    const resources = bindings.map(binding => binding.resource)
+    if (entry.policy.globalActions !== undefined) resources.push({ kind: 'global' })
+    for (const resource of resources) {
       if (seen.some(other => sameResource(other, resource))) continue
       seen.push(resource)
       const candidates = new Set<RemoteAccessAction>()
@@ -369,8 +374,18 @@ export class RemoteAccessService extends TypertRemoteService {
           if (!action.startsWith('event:')) candidates.add(action)
         }
       }
-      const actions = [...candidates].filter(action => this.evaluate(entry, bindings, action, resource, undefined).kind === 'allow').sort()
-      if (actions.length > 0) grants.push(Object.freeze({ resource, actions: Object.freeze(actions) }))
+      const actions = new Set([...candidates].filter(action =>
+        this.evaluate(entry, bindings, action, resource, undefined).kind === 'allow'))
+      // The resource union is extended by Host domains.
+      // oxlint-disable-next-line typescript/no-unnecessary-condition
+      const allResources = resource.kind === 'global'
+        ? [...entry.policy.globalActions ?? []].filter(action => !action.startsWith('event:')).sort()
+        : []
+      for (const action of allResources) actions.add(action)
+      if (actions.size > 0) grants.push(Object.freeze({
+        resource, actions: Object.freeze([...actions].sort()),
+        ...(allResources.length === 0 ? {} : { allResources: Object.freeze(allResources) }),
+      }))
     }
     return grants
   }

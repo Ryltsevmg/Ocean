@@ -21,10 +21,13 @@ describe('Official on-demand catalog', () => {
 })
 
 describe('Shipped profile templates', () => {
-  it('stack each mode bundle on base except the standalone minimal SDK', () => {
+  it('stacks each mode bundle on base except the standalone minimal SDK', () => {
     expect(PROFILE_TEMPLATES).toEqual({
       acp: { bundles: ['@ocean/ocean-base', '@ocean/ocean-acp-app'] },
       web: { bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'] },
+      connect: { bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'] },
+      'remote-device': { bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'] },
+      serve: { bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'] },
       headless: { bundles: ['@ocean/ocean-base', '@ocean/ocean-headless'] },
       sdk: { bundles: ['@ocean/ocean-base', '@ocean/ocean-sdk-app'] },
       'sdk-minimal': { bundles: ['@ocean/ocean-sdk-minimal'] },

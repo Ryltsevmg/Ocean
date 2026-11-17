@@ -127,7 +127,7 @@ export type ConnectionAdmission =
     /** Remove and dispose an API Peer; browser releases leave the shared browser Peer intact. */
     readonly release: () => Promise<void>
   }
-  | { readonly rejection: 401 | 403 | 409 }
+  | { readonly rejection: 401 | 403 | 409 | 503 }
 
 /**
  * Handler invoked after Connection has decoded the transport envelope.
@@ -155,12 +155,13 @@ export interface ConnectionFetchRoute {
   readonly path: string
   /** Methods this route owns. Other methods continue through normal shared-channel dispatch. */
   readonly methods: readonly ConnectionFetchMethod[]
-  /** Buffered requests obey the configured JSON cap; streaming requests arrive with backpressure and no aggregate cap. */
+  /** Streaming requests deliver chunks with backpressure. HTTP device uploads also obey the configured body cap. */
   readonly requestBody: ConnectionRequestBodyMode
+  /** Allow authenticated devices on this route. The route owner must enforce any resource restrictions. */
+  readonly allowRemoteDevice?: true
   /**
    * Handle one request after the physical carrier has applied its trust and
-   * authentication policy. Only owner Peers reach an exact route; the shared
-   * handler answers 403 for every other principal.
+   * authentication policy. Owners and explicitly enabled devices reach the route.
    */
   readonly fetch: (request: Request) => Promise<Response>
 }
@@ -254,6 +255,29 @@ export interface HostConnectionHandle {
    * API admission synchronously without cancelling independent HTTP calls.
    */
   admitConnection(request: ConnectionTrustRequest): ConnectionAdmission
+
+  /**
+   * Authenticate a network request and return an owned transport lease.
+   * @param request - Incoming HTTP request or upgrade.
+   * @param socket - Whether the request upgrades to a socket.
+   * @returns A rejection or the Peer and its release callback.
+   */
+  admitTransport(request: ConnectionTrustRequest & { readonly destroyed: boolean }, socket: boolean): Promise<ConnectionAdmission>
+
+  /**
+   * Admit an index render for a logged-in device where device mode is enabled.
+   * @param request - Browser document request.
+   * @returns A render lease or rejection, or undefined for legacy index login.
+   */
+  admitDeviceDocument?(request: Request): Promise<ConnectionAdmission | undefined>
+
+  /**
+   * Check whether a request may answer an event delivered to a device stream.
+   * @param first - Request Peer.
+   * @param second - Event stream Peer.
+   * @returns Whether the Peers share a live device login.
+   */
+  sharesDeviceSession?(first: PeerScope, second: PeerScope): boolean
 
   /**
    * Authenticate one frontend index request, owning a token redirect or 401.

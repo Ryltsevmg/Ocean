@@ -27,11 +27,11 @@ uv run --project python/sdk pytest
 
 `python/sdk/tests/test_bundled_runtime.py` 会运行可用的内置载体；某个载体的产物尚未构建时，会跳过该载体。仓库级测试政策见 [测试](../docs/testing.zh.md)。
 
-匹配的 engine 包已发布时，LibreOffice Kit CI 负责在 macOS、Windows 和 Linux 上通过已安装的 Node API 与 CLI 检查可见的 Office 内容。Harness 则通过已安装 wheel 包的冒烟测试验证搬移后的 Office sidecar；Python 测试会拒绝全白、全透明、左右颠倒和缺少文字的输出。
+存在匹配的 engine 包时，安装后 wheel 冒烟测试可验证搬移后的 Office sidecar。Python 测试会拒绝全白、全透明、左右颠倒和缺少文字的输出；Ocean 验证不构建各平台 wheel 矩阵。
 
-将 `OCEAN_OFFICE_TEST_ARTIFACTS` 设为一个新目录，即可保留已安装 wheel 包冒烟测试的 Office 输入、PNG、清单与失败诊断信息。CI 在成功与失败时都会上传这些文件，不包含临时运行时文件。
+将 `OCEAN_OFFICE_TEST_ARTIFACTS` 设为新目录，可保留安装后 wheel 冒烟测试的 Office 输入、PNG、清单与失败诊断信息，不包含临时运行时文件。
 
-该套件面向的是伪造的运行时对端。`scripts/smoke-python-runtime.py` 面向打包运行时。`python-runtime` CI 任务在拉取请求上构建 Linux x64 与 Windows x64，在 master 推送上构建 Linux arm64 与两种 macOS 架构。每个选定目标把匹配的 SDK wheel 包与运行时 wheel 包安装进新的 Python 3.10 虚拟环境，在 checkout 外清除 `PYTHONPATH` 与 `OCEAN_RUNTIME_MODE` 后运行，证明两个模块及可执行文件都来自这些 distribution，然后运行全部 keyless 场景。聚焦的本地源码 SDK 运行可以选择一个已构建可执行文件与场景：
+[Ocean 验证](../.github/workflows/ocean-verify.yml)安装锁定的测试依赖组，在构建 CLI 后运行 pytest，覆盖伪运行时对端与无密钥的构建后运行时投影。独立产物缺失时，内置载体测试仍会跳过。`scripts/smoke-python-runtime.py` 面向打包运行时；`--installed-wheel` 在 checkout 外验证已安装的分发包。聚焦的本地运行可选择一个已构建的可执行文件与场景：
 
 ```sh
 uv run --project python/sdk python scripts/smoke-python-runtime.py \
@@ -44,7 +44,7 @@ SDK 场景会比对 `scripts/snapshots/python-sdk-single-exe/` 下已提交的�
 
 `advanced` 与 `restart` 的比较按每份输入自身的 Session 代际匹配原生 delivery 限定值，包括 SDK 事件与通知。捕获的代际及其他 delivery 代际保留数值。每一侧的 Session 角色必须使用同一个代际，新日志必须标识当前写入器。比较绝不重写已提交的记录。
 
-可信拉取请求与 master 推送还会在各自选定的原生目标上运行 `--scenario sdk-live --installed-wheel`。该场景面向 `https://api.deepseek.com` 执行两个使用工具的轮次：立即检查已创建文件，将其内容替换为仅宿主知道的随机挑战值，并要求第二轮将变更后的内容复制到全新的回执文件，且不修改源文件。两个轮次都必须完成、返回精确的哨兵答案并由模型请求调用工具；文件通过外部逐字节比较验证。仓库密钥缺失时失败，而不是自行 skip。Fork 与 Dependabot 拉取请求会运行完整的 keyless 安装后 wheel 路径，但不会获得密钥。
+可选的 `--scenario sdk-live --installed-wheel` 冒烟测试需要显式提供 API 密钥。它向 `https://api.deepseek.com` 执行两个使用工具的轮次，再检查仅宿主知道的文件挑战值与精确哨兵回答。Ocean 验证不提供提供方凭据，也不运行此场景。
 
 交互式冒烟测试需要环境变量或仓库根目录 `.env` 中存在 `DEEPSEEK_API_KEY`：
 
@@ -95,12 +95,10 @@ pip install \
   "dist-python/deepseek_harness_runtime_bin-$version-py3-none-macosx_14_0_arm64.whl"
 ```
 
-运行时分发包仅提供 wheel 包。发布流水线会连同纯 SDK wheel 包一起发布五个平台 wheel 包：Linux x64、Linux arm64、macOS 14 或更高版本的 arm64 与 x64，以及 Windows x64（`win_amd64`）。只有与仓库版本匹配时，才接受 `python-v<repository-version>` 标签；`0.0.1-rc.1` 之类的仓库预发布版本在 wheel 包文件名和元数据中使用规范化的 PEP 440 写法，例如 `0.0.1rc1`。
+运行时分发包仅提供 wheel。为每个支持的原生目标构建一个 wheel：Linux x64、Linux arm64、macOS 14 或更高版本的 arm64 与 x64，以及 Windows x64（`win_amd64`）。`0.0.1-rc.1` 之类的仓库预发布版本在文件名和元数据中使用规范化的 PEP 440 写法，例如 `0.0.1rc1`。
 
 ## 验证候选发行版
 
-手动运行 GitHub 的 `Release (Python)` 工作流并设置 `publish=false`，即可构建全部六个 wheel 包，在 Python 3.10 和 3.14 上安装 Linux 发行集合，检查精确文件名和元数据，执行 PyPI 默认单文件大小限制，并保留一份带 SHA-256 哈希的汇总产物。该运行没有注册表凭据，dry-run 运行无法进入任何发布作业。
+在 checkout 外的全新环境中本地验证候选 wheel：安装匹配的 SDK 与运行时，清除 `PYTHONPATH` 与 `OCEAN_RUNTIME_MODE`，运行无密钥的安装后 wheel 冒烟测试。检查文件名、版本与校验和，再保留产物供评审。
 
-公开发布从私有自动化仓库运行。包元数据指向独立的只读公开源码镜像，该镜像不运行发布 Actions。私有仓库把仓库变量 `PYPI_PUBLISHER_REPOSITORY` 定义为自身的 `owner/name`，并且只在有意发布期间把 `PUBLIC_PYPI_RELEASE_ENABLED` 从 `false` 改为 `true`。
-
-独立的运行时与 SDK 作业使 SDK 上传失败后可以继续执行，而无需重新发送不可变的运行时文件。只有工作流从配置的发布仓库、匹配的 `python-v*` 标签运行，且受保护的 `pypi-runtime` 和 `pypi` 环境分别批准运行时与 SDK 作业时，才接受 `publish=true`。PyPI Trusted Publishing 仍会提供短期 OIDC 凭据，但公开 attestation 会披露私有发布仓库身份，因此将其禁用。
+Ocean GitHub Actions 不发布 Python 包。启用发布前须满足 [.github 发布前提](../.github/AGENTS.md#release-prerequisites)。

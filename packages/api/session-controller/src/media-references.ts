@@ -1,7 +1,7 @@
 /**
  * Authenticated GET/HEAD /api/file reads bounded file responses through
  * the composed filesystem provider. Paths and MIME types do not restrict access;
- * the connection service authenticates requests before this handler. A request
+ * Connection admits owner and remote-device reads before this handler. A request
  * without the current `v` version is redirected, uncached, to the versioned URL,
  * whose response is cacheable indefinitely.
  * @module @ocean/ocean-api-session-controller/media-references
@@ -78,6 +78,7 @@ export const SessionMediaReferences = {
       path: '/api/file',
       methods: ['GET', 'HEAD'],
       requestBody: 'buffered',
+      allowRemoteDevice: true,
       fetch: request => serveFile(request, ctx.fs, maxBytes),
     }), 'session-controller: /api/file')
   },

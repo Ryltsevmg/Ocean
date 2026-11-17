@@ -2,20 +2,19 @@
 /** The plugin fills each region's More menu with the discovery and Creator actions. */
 import type { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, within } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { useState } from 'react'
 import { makeTranslate, SlotTestRuntime } from '@ocean/ocean-client-test-runtime'
 import { LocaleRuntime } from '@ocean/ocean-client-locale/client'
-import { Menu } from '@ocean/ocean-client-ui-primitives'
 import type { PropsRenderSlots } from '@ocean/ocean-client-ui-slots'
 import type { TrackProductEvent } from '@ocean/ocean-client-product-analytics/client'
 import { EntryMenuContent } from '../src/client/EntryMenuContent.tsx'
 import { en } from '../src/client/locales.ts'
 import { apply, inject } from '../src/client/index.ts'
 
-type Seats = 'sidebar.panellist.actions' | 'conversation.session.header.views.actions' | 'sidebar.right.tab.guide.actions'
-const SEATS = ['sidebar.panellist.actions', 'conversation.session.header.views.actions', 'sidebar.right.tab.guide.actions'] as const
+type Seats = 'conversation.session.header.views.actions' | 'sidebar.right.tab.guide.actions'
+const SEATS = ['conversation.session.header.views.actions', 'sidebar.right.tab.guide.actions'] as const
 const runtimes = new Set<SlotTestRuntime>()
 afterEach(async () => {
   try { for (const runtime of runtimes) await runtime.dispose() }
@@ -33,7 +32,7 @@ function content(overrides: Partial<ContentProps> = {}) {
   }
   const props = {
     entries: [{ id: 'notes', label: 'Notes', pinned: true }, { id: 'tasks', label: 'Tasks', pinned: false }],
-    region: 'sidebar', t: makeTranslate(en),
+    region: 'conversation', t: makeTranslate(en),
     usePluginNavigation: <T,>(select: (present: boolean) => T): T => select(true),
     usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
     useResource: unused, useWorkspaces: unused, renderFactorySlot: () => null,
@@ -45,19 +44,6 @@ function content(overrides: Partial<ContentProps> = {}) {
 }
 
 describe('More menu rows', () => {
-  it('closes the containing settings surface only before browsing or creating', () => {
-    const onNavigate = vi.fn()
-    const b = content({ onNavigate })
-    fireEvent.click(b.view.getByRole('menuitem', { name: 'Pin Tasks' }))
-    expect(onNavigate).not.toHaveBeenCalled()
-    fireEvent.click(b.view.getByRole('menuitem', { name: 'Browse other plugins' }))
-    expect(onNavigate).toHaveBeenCalledOnce()
-    expect(onNavigate.mock.invocationCallOrder[0]).toBeLessThan(b.browsePlugins.mock.invocationCallOrder[0]!)
-    fireEvent.click(b.view.getByRole('menuitem', { name: 'Create your plugin' }))
-    expect(onNavigate).toHaveBeenCalledTimes(2)
-    expect(onNavigate.mock.invocationCallOrder[1]).toBeLessThan(b.createPlugin.mock.invocationCallOrder[0]!)
-  })
-
   it.each(['rightbar'] as const)('shows only discovery and creation in %s regardless of entries', (region) => {
     const b = content({ region, entries: [
       { id: 'notes', label: 'Notes', pinned: true, active: true },
@@ -73,37 +59,6 @@ describe('More menu rows', () => {
     expect(b.onDismiss.mock.invocationCallOrder[1]).toBeLessThan(b.createPlugin.mock.invocationCallOrder[0]!)
     expect(b.onOpen).not.toHaveBeenCalled()
     expect(b.onPinnedChange).not.toHaveBeenCalled()
-  })
-
-  it('lists only unpinned sidebar entries and pins without navigating', () => {
-    const b = content()
-    expect(b.view.queryByRole('menuitem', { name: 'Notes' })).toBeNull()
-    fireEvent.click(b.view.getByRole('menuitem', { name: 'Tasks' }))
-    expect(b.onOpen).toHaveBeenCalledExactlyOnceWith('tasks')
-    expect(b.onPinnedChange).not.toHaveBeenCalled()
-    b.onOpen.mockClear()
-    fireEvent.click(b.view.getByRole('menuitem', { name: 'Pin Tasks' }))
-    expect(b.onPinnedChange).toHaveBeenCalledExactlyOnceWith('tasks', true)
-    expect(b.onOpen).not.toHaveBeenCalled()
-  })
-
-  it('returns focus to More after keyboard pinning without opening the entry', async () => {
-    const b = content()
-    b.view.unmount()
-    function PinMenu() {
-      const [open, setOpen] = useState(true)
-      return <Menu open={open} onClose={() => { setOpen(false) }} autoFocus
-        anchor={<button type="button">More</button>}>
-        <EntryMenuContent {...b.props} onDismiss={() => { setOpen(false) }} />
-      </Menu>
-    }
-    const view = render(<PinMenu />)
-    const pin = view.getByRole('menuitem', { name: 'Pin Tasks' })
-    act(() => { pin.focus() })
-    fireEvent.keyDown(pin, { key: 'Tab' })
-    await waitFor(() => { expect(document.activeElement).toBe(view.getByRole('button', { name: 'More' })) })
-    expect(b.onPinnedChange).toHaveBeenCalledExactlyOnceWith('tasks', true)
-    expect(b.onOpen).not.toHaveBeenCalled()
   })
 
   it.each([true, false])('opens folded Views and marks the active View with plugin navigation present=%s', (browsable) => {
@@ -134,7 +89,7 @@ describe('More menu rows', () => {
     expect(b.view.queryByRole('separator')).toBeNull()
   })
 
-  it.each(['sidebar', 'rightbar'] as const)('keeps only creation in %s without plugin navigation', (region) => {
+  it.each(['conversation', 'rightbar'] as const)('keeps only creation in %s without plugin navigation', (region) => {
     const b = content({ region, entries: [], usePluginNavigation: select => select(false) })
     expect(b.view.getAllByRole('menuitem').map(row => row.textContent)).toEqual(['Create your plugin'])
     expect(b.view.queryByRole('separator')).toBeNull()
@@ -182,7 +137,6 @@ async function bench(
     },
   })
   await runtime.root.declare({
-    'sidebar.panellist.actions': { kind: 'list', scope: 'root' },
     'conversation.session.header.views.actions': { kind: 'list', scope: 'root' },
     'sidebar.right.tab.guide.actions': { kind: 'list', scope: 'root' },
   }, Frame)
@@ -194,11 +148,11 @@ async function bench(
 describe('More menu registrations', () => {
   it('shows plugin discovery only while the Plugins page navigation is present', async () => {
     const b = await bench('en', { navigation: false })
-    const sidebar = () => within(b.view.getByRole('menu', { name: 'sidebar.panellist.actions' }))
+    const sidebar = () => within(b.view.getByRole('menu', { name: 'conversation.session.header.views.actions' }))
     expect(sidebar().queryByRole('menuitem', { name: 'Browse other plugins' })).toBeNull()
     expect(sidebar().getByRole('menuitem', { name: 'Create your plugin' })).toBeTruthy()
     expect(sidebar().queryByRole('separator')).toBeNull()
-    const injected = b.runtime.slots.entries('sidebar.panellist.actions')[0]!.inject!() as { browsePlugins: () => void }
+    const injected = b.runtime.slots.entries('conversation.session.header.views.actions')[0]!.inject!() as { browsePlugins: () => void }
     expect(() => { injected.browsePlugins() }).not.toThrow()
 
     const navigation = await b.runtime.mount({
@@ -221,7 +175,7 @@ describe('More menu registrations', () => {
       expect(within(b.view.getByRole('menu', { name: seat })).getAllByRole('menuitem').map(row => row.textContent))
         .toEqual(['Browse other plugins', 'Create your plugin'])
     }
-    const sidebar = within(b.view.getByRole('menu', { name: 'sidebar.panellist.actions' }))
+    const sidebar = within(b.view.getByRole('menu', { name: 'conversation.session.header.views.actions' }))
     fireEvent.click(sidebar.getByRole('menuitem', { name: 'Browse other plugins' }))
     expect(b.openList).toHaveBeenCalledExactlyOnceWith()
     await b.plugin.dispose()
@@ -232,10 +186,8 @@ describe('More menu registrations', () => {
   })
 
   it.each([
-    ['en', 'sidebar.panellist.actions', 'Create an Ocean-Chat plugin with a left sidebar entry.'],
     ['en', 'conversation.session.header.views.actions', 'Create an Ocean-Chat conversation view plugin.'],
     ['en', 'sidebar.right.tab.guide.actions', 'Create an Ocean-Chat plugin with a right sidebar entry.'],
-    ['zh', 'sidebar.panellist.actions', '创建一个带左侧栏入口的 Ocean-Chat 插件。'],
     ['zh', 'conversation.session.header.views.actions', '创建一个 Ocean-Chat 会话视图插件。'],
     ['zh', 'sidebar.right.tab.guide.actions', '创建一个带右侧栏入口的 Ocean-Chat 插件。'],
   ] as const)('starts an unsent %s Creator draft from %s', async (language, seat, prompt) => {
@@ -248,7 +200,6 @@ describe('More menu registrations', () => {
   })
 
   it.each([
-    ['sidebar.panellist.actions', 'sidebar'],
     ['conversation.session.header.views.actions', 'conversation'],
     ['sidebar.right.tab.guide.actions', 'rightbar'],
   ] as const)('reports both footer actions of %s as the %s region before acting', async (seat, region) => {

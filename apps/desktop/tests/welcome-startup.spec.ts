@@ -51,6 +51,7 @@ vi.mock('../src/crash-report.ts', async importOriginal => ({
 }))
 vi.mock('electron', () => ({
   clipboard: { writeText: state.copy },
+  safeStorage: { isEncryptionAvailable: () => false },
   app: {
     isPackaged: false,
     name: 'Harness',

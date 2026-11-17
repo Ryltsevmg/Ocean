@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; form-action 'none'; base-uri 'none'">
+  <link rel="stylesheet" href="remote-connection.css">
+  <script src="remote-connection.js" type="module"></script>
+</head>
+<body>
+  <form autocomplete="off">
+    <label><span id="address-label"></span><input id="address" type="url" list="saved-addresses"></label>
+    <datalist id="saved-addresses"></datalist>
+    <label><span id="token-label"></span><input id="token" type="password"></label>
+    <label class="remember"><input id="remember" type="checkbox"><span id="remember-label"></span></label>
+    <div class="feedback"><p id="failure" role="alert" hidden></p></div>
+    <footer>
+      <button id="forget" type="button" hidden></button>
+      <button id="connect" type="submit" disabled></button>
+    </footer>
+  </form>
+</body>
+</html>

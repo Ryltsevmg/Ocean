@@ -29,7 +29,8 @@ function fixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'ocean-release-pack-'))
   roots.push(root)
   write(join(root, 'package.json'), JSON.stringify({ name: '@deepseek-ai/pack-root', private: true, version: '1.2.3' }))
-  write(join(root, 'pnpm-workspace.yaml'), 'packages:\n  - vendor/*\n  - native/*\n  - packages/*/*\n  - apps/*\n')
+  // Fixtures provide their own links; pnpm exec must not install and run unrelated prepare hooks.
+  write(join(root, 'pnpm-workspace.yaml'), 'verifyDepsBeforeRun: false\npackages:\n  - vendor/*\n  - native/*\n  - packages/*/*\n  - apps/*\n')
   return root
 }
 
@@ -270,7 +271,8 @@ describe('release pack CLI', () => {
     expect(result.status, result.stderr).toBe(0)
     expect(readFileSync(join(root, 'packed', PUBLISH_ORDER_FILE), 'utf8')).toBe('\n')
     expect(readdirSync(join(root, 'packed'))).toEqual([PUBLISH_ORDER_FILE])
-    expect(existsSync(join(root, 'hooks.log'))).toBe(false)
+    const hooks = join(root, 'hooks.log')
+    expect(existsSync(hooks), existsSync(hooks) ? readFileSync(hooks, 'utf8') : '').toBe(false)
   })
 
   it('leaves no publish order after a pack hook fails', async () => {

@@ -16,7 +16,7 @@ import type {} from '@ocean/ocean-schedule'
 import type {} from '@ocean/ocean-subagent'
 import {
   fixtureUserPrompts, launchWebScaffold, normalizeWebSessionVolatiles, rawSessionLog, readPersistedEvents,
-  recordedSessionFixturePath, selectedSessionFixture, webSnapshotMode,
+  selectedSessionFixture, webSnapshotMode,
 } from './scaffold.ts'
 import { REPO_ROOT } from './support.ts'
 
@@ -27,7 +27,9 @@ const MODE = webSnapshotMode()
 it.skipIf(MODE === 'record')('replays inherited schedule tools and refusals in a seeded Web fork', async () => {
   const paths = await Promise.all(['session.v4.jsonl', 'session.1.v4.jsonl']
     .map(file => selectedSessionFixture(join(DIR, file))))
-  let expected = await Promise.all(paths.map(path => readFile(path, 'utf8')))
+  const recorded = await Promise.all(paths.map(path => readFile(path, 'utf8')))
+  const expectedPaths = ['writer.expected.jsonl', 'writer.1.expected.jsonl'].map(file => join(DIR, file))
+  let expected = await Promise.all(expectedPaths.map(path => readFile(path, 'utf8')))
   const scaffold = await launchWebScaffold({
     replayFixture: paths[0]!, replayChildFixtures: [paths[1]!], compareReplaySession: false,
   })
@@ -37,12 +39,12 @@ it.skipIf(MODE === 'record')('replays inherited schedule tools and refusals in a
     const { sessionId } = await scaffold.ctx.sessionController.create({ cwd: scaffold.workspaceCwd })
     const parent = scaffold.ctx.agents.get(sessionId)
     if (parent === undefined) throw new Error('created parent has no Agent')
-    const prompt = fixtureUserPrompts(expected[0]!)[0]
+    const prompt = fixtureUserPrompts(recorded[0]!)[0]
     if (prompt === undefined) throw new Error('parent fixture has no user prompt')
     parent.followup(createUserMessage({ content: [{ type: 'text', text: prompt }], source: { kind: 'user' } }))
     await parent.whenIdle()
 
-    const childPrompt = parseSessionLog(expected[1]!).findLast(event => event.type === 'user/message'
+    const childPrompt = parseSessionLog(recorded[1]!).findLast(event => event.type === 'user/message'
       && event.data.source.kind === 'user')
     if (childPrompt?.type !== 'user/message') throw new Error('child fixture has no user prompt')
     const activation = await scaffold.ctx.subagents.startActivation({
@@ -94,7 +96,7 @@ it.skipIf(MODE === 'record')('replays inherited schedule tools and refusals in a
           prepareSessionSnapshotFixtureForComparison(log), expected[index]!, replacements, context,
         ))).split(scaffold.harnessHome).join('{{harnessHome}}')), expected))
       await Promise.all(expected.map((log, index) => writeFile(
-        recordedSessionFixturePath(paths[index]!, sessions[index]!.header.version), log,
+        expectedPaths[index]!, log,
       )))
     }
     expect(normalizeSessionSnapshots(raw, context))

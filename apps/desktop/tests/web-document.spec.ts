@@ -103,7 +103,7 @@ it.each(['dsh-app://app', undefined])('forwards a trusted desktop plan request w
   vi.stubGlobal('fetch', send)
   const headers = new Headers({ 'content-type': 'application/json' })
   if (origin !== undefined) headers.set('origin', origin)
-  const response = await forwardWebRequest(new Request('dsh-app://app/api/codex-subscription/plan/status', { method: 'POST', headers, body: '{}' }), 'http://127.0.0.1:1234/', 'session=owned')
+  const response = await forwardWebRequest(new Request('dsh-app://app/api/settings/save', { method: 'POST', headers, body: '{}' }), 'http://127.0.0.1:1234/', 'session=owned')
   expect(response.status).toBe(200)
   expect(new Headers(send.mock.calls[0]![1]?.headers).get('origin')).toBe('http://127.0.0.1:1234')
 })
@@ -111,7 +111,57 @@ it.each(['dsh-app://app', undefined])('forwards a trusted desktop plan request w
 it('refuses cross-site requests without an Origin before forwarding to the Host', async () => {
   const send = vi.fn()
   vi.stubGlobal('fetch', send)
-  const request = new Request('dsh-app://app/api/codex-subscription/plan/status', { method: 'POST', headers: { 'sec-fetch-site': 'cross-site', 'content-type': 'application/json' }, body: '{}' })
+  const request = new Request('dsh-app://app/api/settings/save', { method: 'POST', headers: { 'sec-fetch-site': 'cross-site', 'content-type': 'application/json' }, body: '{}' })
   expect((await forwardWebRequest(request, 'http://127.0.0.1:1234/', 'session=owned')).status).toBe(403)
   expect(send).not.toHaveBeenCalled()
+})
+
+it('forwards within the selected remote mount and contains Host redirects and cookies', async () => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {
+    status: 307, headers: { location: 'https://another.example/', 'set-cookie': 'private=value' },
+  }))
+  vi.stubGlobal('fetch', send)
+  const request = new Request('dsh-app://app/api/session/list', { headers: { authorization: 'Bearer renderer-value' } })
+  const reply = await forwardWebRequest(request, 'https://ocean.example/mount', 'device=login', true)
+  const [target, init] = send.mock.calls[0]!
+  expect(target).toEqual(new URL('https://ocean.example/mount/api/session/list'))
+  expect(init?.redirect).toBe('manual')
+  expect(new Headers(init?.headers).get('authorization')).toBeNull()
+  expect(reply.status).toBe(502)
+  expect(reply.headers.get('location')).toBeNull()
+  expect(reply.headers.get('set-cookie')).toBeNull()
+})
+
+it.each(['GET', 'HEAD'])('remaps a versioned remote media %s to the owned application URL', async (method) => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {
+    status: 302, headers: { location: '?path=%2Fworkspace%2Fimage.png&v=2', 'set-cookie': 'private=value' },
+  }))
+  vi.stubGlobal('fetch', send)
+  const reply = await forwardWebRequest(new Request('dsh-app://app/api/file?path=%2Fworkspace%2Fimage.png', { method }),
+    'https://ocean.example/mount/', 'device=login', true)
+  expect(reply.status).toBe(302)
+  expect(reply.headers.get('location')).toBe('dsh-app://app/api/file?path=%2Fworkspace%2Fimage.png&v=2')
+  expect(reply.headers.get('set-cookie')).toBeNull()
+  expect(send).toHaveBeenCalledOnce()
+})
+
+it.each([
+  ['GET', 'https://another.example/mount/api/file'],
+  ['GET', '//another.example/mount/api/file'],
+  ['GET', 'http://ocean.example/mount/api/file'],
+  ['GET', '/other/api/file'],
+  ['GET', '/mount-elsewhere/api/file'],
+  ['GET', '../../outside'],
+  ['GET', '/mount/%2e%2e/outside'],
+  ['GET', 'https://user:password@ocean.example/mount/api/file'],
+  ['GET', 'http://[invalid'],
+  ['POST', '?v=2'],
+])('rejects unsafe remote redirect for %s to %s', async (method, location) => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 302, headers: { location } }))
+  vi.stubGlobal('fetch', send)
+  const reply = await forwardWebRequest(new Request('dsh-app://app/api/file', { method }),
+    'https://ocean.example/mount/', 'device=login', true)
+  expect(reply.status).toBe(502)
+  expect(reply.headers.get('location')).toBeNull()
+  expect(send).toHaveBeenCalledOnce()
 })

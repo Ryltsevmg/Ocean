@@ -14,6 +14,15 @@ export const PROFILE_TEMPLATES: Record<string, ProfileTemplate> = {
   web: {
     bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'],
   },
+  connect: {
+    bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'],
+  },
+  'remote-device': {
+    bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'],
+  },
+  serve: {
+    bundles: ['@ocean/ocean-base', '@ocean/ocean-web-app'],
+  },
   headless: {
     bundles: ['@ocean/ocean-base', '@ocean/ocean-headless'],
   },

@@ -196,6 +196,18 @@ describe('canonicalSessionFixture', () => {
 })
 
 describe('isPhysicalSessionFixture', () => {
+  it.each([0, 2, 3, 4])('preserves frozen upstream v%i bytes from layout migration', (version) => {
+    expect(isPhysicalSessionFixture(
+      `packages/session/session-format-catalog/tests/fixtures/upstream-e8f7b93a/v${version}.jsonl`,
+    )).toBe(true)
+  })
+
+  it.each(['v1.jsonl', 'v5.jsonl', 'session.v4.jsonl', 'nested/v4.jsonl'])('keeps %s outside the frozen upstream exception', (file) => {
+    expect(isPhysicalSessionFixture(
+      `packages/session/session-format-catalog/tests/fixtures/upstream-e8f7b93a/${file}`,
+    )).toBe(false)
+  })
+
   it('recognizes fixtures that preserve physical persistence encoding', () => {
     expect(isPhysicalSessionFixture(
       'scripts/snapshots/python-sdk-single-exe/advanced/session.1.jsonl',

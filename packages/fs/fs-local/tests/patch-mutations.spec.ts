@@ -64,6 +64,42 @@ describe('patchText', () => {
   })
 })
 
+describe('UTF-8 BOM preservation', () => {
+  it.each(['edit', 'patch', 'move', 'move-patch'] as const)(
+    '%s keeps the source BOM and line endings while matching the first line',
+    async (operation) => {
+      const { fs, root, file } = await setup()
+      const before = 'старое\r\nхвост\r\n'
+      const after = operation === 'move' ? before : 'новое\r\nхвост\r\n'
+      const source = await file('source.ps1', `\uFEFF${before}`)
+      let output = 'source.ps1'
+      if (operation === 'edit') {
+        const result = await fs.editText(source, { oldString: 'старое', newString: 'новое', replaceAll: false })
+        expect(result).toMatchObject({ before: 'старое\nхвост\n', after: 'новое\nхвост\n' })
+      } else if (operation === 'patch') {
+        const result = await fs.patchText(source, hunks('старое', 'новое'))
+        expect(result).toMatchObject({ before: 'старое\nхвост\n', after: 'новое\nхвост\n' })
+      } else {
+        output = 'moved.ps1'
+        const options = operation === 'move-patch' ? { hunks: hunks('старое', 'новое') } : {}
+        expect(await fs.moveFile(source, await file(output, 'existing destination\n'), options)).toMatchObject({
+          sourceDeleted: true,
+          destination: { before: 'existing destination\n', after: after.replaceAll('\r\n', '\n') },
+        })
+        await expect(readFile(join(root, 'source.ps1'))).rejects.toMatchObject({ code: 'ENOENT' })
+      }
+      expect(await readFile(join(root, output))).toEqual(Buffer.from(`\uFEFF${after}`))
+    },
+  )
+
+  it('keeps a BOM-only file when moving it', async () => {
+    const { fs, root, file } = await setup()
+    const source = await file('empty.txt', '\uFEFF')
+    await fs.moveFile(source, await file('moved.txt'), {})
+    expect(await readFile(join(root, 'moved.txt'))).toEqual(Buffer.from([0xEF, 0xBB, 0xBF]))
+  })
+})
+
 describe('source guards', () => {
   it.each(['patch', 'delete', 'move'] as const)('%s rejects missing, directory, and stale sources', async (operation) => {
     const { fs, file, root, bytes } = await setup()

@@ -207,7 +207,7 @@ export interface Config {
 ## `@ocean/ocean-api-gateway`
 
 - `inject`: `typert` · `remoteAccess`
-- `source`: [`packages/api/gateway/src/index.ts:158`](../packages/api/gateway/src/index.ts)
+- `source`: [`packages/api/gateway/src/index.ts:160`](../packages/api/gateway/src/index.ts)
 
 ```ts config-catalog
 /** Gateway transport configuration. */
@@ -216,6 +216,10 @@ export interface Config {
   readonly websocketHeartbeatIntervalMs?: number
   /** Buffered uplink frame bytes one logical stream may hold before it fails with `gateway/uplink-overflow`. @default 262144 */
   readonly streamInboxBytes?: number
+  /** Maximum concurrent streams opened by one WebSocket. @default 256 */
+  readonly maxStreamsPerSocket?: number
+  /** Maximum wait for a forwarded tool approval. Zero leaves timing to the producer. */
+  readonly approvalTimeoutMs?: number
   /** Per-message compression for the Remote stream WebSocket; `'none'` disables the extension. @default 'deflate' */
   readonly websocketCompression?: 'none' | 'deflate'
 }
@@ -483,11 +487,13 @@ export type Config = LocalConfig
 ## `@ocean/ocean-client-connection`
 
 - `inject`: `credentials`
-- `source`: [`packages/client/connection/src/index.ts:96`](../packages/client/connection/src/index.ts)
+- `source`: [`packages/client/connection/src/host-config.ts:7`](../packages/client/connection/src/host-config.ts)
 
 ```ts config-catalog
 /** Browser authentication, request limits, and connection recovery configuration. */
 export interface ConnectionConfig {
+  /** Provide only local device issuance and listing, without transport resources. */
+  deviceBootstrapOnly?: boolean
   /** Browser recovery timing, injected into each served page. */
   recovery?: ConnectionRecoveryConfig
   /**
@@ -497,9 +503,27 @@ export interface ConnectionConfig {
    * an entry here. A non-canonical or non-bare authority fails plugin load.
    */
   trustedHosts?: string[]
+  /** Permit launch-token exchanges and owner cookies. Defaults to true for local Web. */
+  allowOwnerLogin?: boolean
+  /** External HTTPS URL for a reverse proxy that exclusively reaches a loopback listener. */
+  deviceProxyUrl?: string
+  /** Maximum simultaneous valid logins per device. */
+  maxDeviceSessions?: number
+  /** Combined limit on pending device admissions and active device transports. */
+  maxDeviceTransports?: number
+  /** Limit on active HTTP or WebSocket transports for one device. */
+  maxDeviceTransportsPerDevice?: number
+  /** Maximum credential exchanges per authenticated device per window. */
+  maxDeviceExchangesPerWindow?: number
+  /** Window for device credential exchange attempts in milliseconds. */
+  deviceExchangeWindowMs?: number
+  /** Absolute local administrator socket in an owner-only directory. */
+  deviceAdminSocket?: string
   /** Absolute browser and API cookie lifetime in days. Default: 30. */
   cookieMaxAgeDays?: number
-  /** Maximum buffered JSON body for every `/api` request. Default: 300 MiB. */
+  /** Lifetime of new device logins in seconds. Defaults to cookieMaxAgeDays converted to seconds. */
+  deviceSessionLifetimeSeconds?: number
+  /** Maximum HTTP body for buffered `/api` requests and device uploads. Default: 300 MiB. */
   maxRequestBodyBytes?: number
 }
 
@@ -1066,7 +1090,7 @@ export interface Config {
 ## `@ocean/ocean-host-frontend-static`
 
 - `inject`: `webServer` · `connection`
-- `source`: [`packages/host/frontend-static/src/index.ts:34`](../packages/host/frontend-static/src/index.ts)
+- `source`: [`packages/host/frontend-static/src/index.ts:35`](../packages/host/frontend-static/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: the dist anchor. */
@@ -3917,6 +3941,8 @@ export interface WebRuntimeConfig {
 export interface Config {
   /** Permit default-browser handoff after the Loader tree settles; an SSH launch suppresses it. */
   openBrowser: boolean
+  /** Announce the server profile and require TLS on non-loopback listeners. */
+  serverMode?: boolean
   /** Print the URL line on activation; a non-interactive layer can turn it off. */
   printUrl: boolean
   /**
@@ -4204,6 +4230,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-mcp-resources` | `tools` | [`packages/mcp/mcp-resources/src/index.ts`](../packages/mcp/mcp-resources/src/index.ts) |
 | `@ocean/ocean-message-quotes` | — | [`packages/session/message-quotes/src/index.ts`](../packages/session/message-quotes/src/index.ts) |
 | `@ocean/ocean-otel` | — | [`packages/telemetry/otel/src/index.ts`](../packages/telemetry/otel/src/index.ts) |
+| `@ocean/ocean-plugin-market` | — | [`packages/extensions/plugin-market/src/index.ts`](../packages/extensions/plugin-market/src/index.ts) |
 | `@ocean/ocean-sandbox-ssh` | `ssh` | [`packages/ssh/sandbox-ssh/src/index.ts`](../packages/ssh/sandbox-ssh/src/index.ts) |
 | `@ocean/ocean-session` | — | [`packages/core/session/src/index.ts`](../packages/core/session/src/index.ts) |
 | `@ocean/ocean-session-checkpoint-policy` | `llm` · `sessionPersistence` · `sessions` · `tools` | [`packages/session/session-checkpoint-policy/src/index.ts`](../packages/session/session-checkpoint-policy/src/index.ts) |

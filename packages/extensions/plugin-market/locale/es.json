@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Mercado de plugins",
+    "description": "Una pestaña «Catálogo» en la página Plugins con paquetes seleccionados que se pueden instalar, eliminar y actualizar mediante el gestor de plugins del perfil.",
+    "detail": "docs/DETAIL.md"
+  }
+}

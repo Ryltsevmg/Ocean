@@ -80,12 +80,13 @@ describe('web e2e: plugin manager', () => {
   /** Select the sidebar's Plugins entry and wait for the management page in the main column. */
   async function openPluginsPanel() {
     await closeSettings()
-    await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+    await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
     const panel = page.locator('[data-plugin-panel]')
     await panel.waitFor({ timeout: 10_000 })
     while (await panel.getByRole('button', { name: /^返回/ }).count() > 0) {
       await panel.getByRole('button', { name: /^返回/ }).first().click()
     }
+    await panel.getByRole('tab', { name: '已安装', exact: true }).click()
     await panel.getByRole('heading', { name: '插件', exact: true }).waitFor({ timeout: 10_000 })
     return panel
   }
@@ -102,11 +103,9 @@ describe('web e2e: plugin manager', () => {
     // view-installation button, which moves the wrap threshold.
     const headerScaffold = await launchWebScaffold()
     try {
-      // Pin the extremes; at intermediate widths, the rendered font and locale
-      // determine whether the two intrinsic items fit beside each other. Narrow
-      // widths shrink the actions to icons before they wrap; the collapsed-bar case
-      // pins those widths.
-      const PINNED_PLACEMENT: Record<number, 'beside' | 'below'> = { 1680: 'beside', 1024: 'beside' }
+      // The wide header keeps its actions beside the title. At smaller widths,
+      // the tab row participates in wrapping; all three groups stay separate.
+      const PINNED_PLACEMENT: Record<number, 'beside' | 'below'> = { 1680: 'beside' }
       for (const language of ['en', 'zh'] as const) {
         const context = await browser.newContext({
           viewport: { width: 1680, height: 1000 }, locale: language === 'en' ? 'en-US' : ZH_BROWSER_LOCALE,
@@ -121,6 +120,7 @@ describe('web e2e: plugin manager', () => {
           const panel = probe.locator('[data-plugin-panel]')
           const header = panel.locator('[data-plugin-bar] > header')
           await header.getByRole('heading', { name: title, exact: true }).waitFor()
+          await panel.getByRole('tab', { name: language === 'en' ? 'Installed' : '已安装', exact: true }).click()
           await probe.evaluate(() => document.fonts.ready)
           const add = header.getByRole('button', { name: language === 'en' ? 'Add plugin' : '添加插件', exact: true })
           await expect.poll(() => add.isEnabled()).toBe(true)
@@ -136,6 +136,9 @@ describe('web e2e: plugin manager', () => {
               width: Math.max(titleRect.right, introRect.right) - Math.min(titleRect.left, introRect.left),
             }
             const actionRect = actions.getBoundingClientRect()
+            const tabRect = element.querySelector('[data-plugin-header-part="tabs"]')!.getBoundingClientRect()
+            const separate = (a: DOMRect, b: DOMRect) => a.bottom <= b.top + 1 || b.bottom <= a.top + 1
+              || a.right <= b.left + 1 || b.right <= a.left + 1
             const headerRect = element.getBoundingClientRect()
             const intrinsicHeading = heading.cloneNode(true) as HTMLElement
             intrinsicHeading.querySelectorAll('[data-plugin-header-part]').forEach((part) => {
@@ -183,6 +186,8 @@ describe('web e2e: plugin manager', () => {
                 ? 'beside' as const
                 : actionRect.top >= headingRect.bottom - 1 ? 'below' as const : 'overlapping' as const,
               contained: actionRect.left >= headerRect.left - 1 && actionRect.right <= headerRect.right + 1,
+              tabsContained: tabRect.left >= headerRect.left - 1 && tabRect.right <= headerRect.right + 1,
+              tabsSeparate: separate(tabRect, actionRect) && separate(tabRect, heading.getBoundingClientRect()),
               infoFollowsText: info.left >= lastText.right && info.left - lastText.right <= 5
                 && info.top < lastText.bottom && info.bottom > lastText.top,
               focused: buttons.includes(document.activeElement as HTMLButtonElement),
@@ -190,7 +195,7 @@ describe('web e2e: plugin manager', () => {
           })
           const validLayout = (layout: Awaited<ReturnType<typeof measure>>) =>
             layout.singleLine && layout.contained && layout.infoFollowsText && layout.focused
-            && layout.placement === (layout.fitsBeside ? 'beside' : 'below')
+            && layout.tabsContained && layout.tabsSeparate && layout.placement !== 'overlapping'
           for (const width of [1680, 768, 520, 440, 390, 430, 1024]) {
             await probe.setViewportSize({ width, height: 1000 })
             await expect.poll(async () => {
@@ -200,7 +205,7 @@ describe('web e2e: plugin manager', () => {
             const { placement } = await measure()
             const pinned = PINNED_PLACEMENT[width]
             if (pinned !== undefined) expect(placement).toBe(pinned)
-            facts.push(`${language} ${width}px: actions ${pinned === undefined ? 'beside or below (according to intrinsic fit)' : placement} the heading, single-line; contained; information follows subtitle; focus retained`)
+            facts.push(`${language} ${width}px: actions ${pinned === undefined ? 'beside or below' : placement} the heading, single-line; tabs and actions contained and separate; information follows subtitle; focus retained`)
           }
           // Force less room than even the icon actions need beside the heading.
           await probe.setViewportSize({ width: 240, height: 1000 })
@@ -246,7 +251,7 @@ describe('web e2e: plugin manager', () => {
     }
   })
 
-  it('keeps the plugin page title and actions pinned while the cards scroll', async () => {
+  it('keeps the plugin page navigation and actions pinned while the cards scroll', async () => {
     await page.setViewportSize({ width: 1000, height: 480 })
     const panel = await openPluginsPanel()
     const body = panel.locator('[data-plugin-body]')
@@ -272,12 +277,12 @@ describe('web e2e: plugin manager', () => {
       await page.waitForFunction(() => document.querySelector('[data-plugin-bar]')?.hasAttribute('data-compact') === true)
       expect(await barHeight()).toBe(restingHeight)
       expect(await bar.evaluate(element => getComputedStyle(element, '::after').borderBottomWidth)).not.toBe('0px')
-      expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height))).toBe(64)
+      expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height))).toBe(66)
       expect(await body.evaluate(element => element.getBoundingClientRect().top)).toBe(resting)
       expect(await Promise.all([refreshButton.boundingBox(), addButton.boundingBox()]))
         .toEqual(restingActions.map((bounds) => {
           if (bounds === null) throw new Error('Plugin toolbar action is not visible')
-          return { ...bounds, y: bounds.y - 24 }
+          return { ...bounds, y: resting + (66 - bounds.height) / 2 }
         }))
       // Reverse keyboard navigation scrolls each focused control into view below the bar, never under it.
       await panel.locator('[data-plugin-package] [role="switch"]').last().focus()
@@ -340,9 +345,10 @@ describe('web e2e: plugin manager', () => {
         const consoleWatch = watchConsole(probe)
         await probe.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
         await probe.waitForSelector('[class*="frame"]', { timeout: 30_000 })
-        await probe.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+        await probe.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
         await expect.poll(() => spy.mock.calls.length, { timeout: 10_000 }).toBeGreaterThan(0)
         const panel = probe.locator('[data-plugin-panel]')
+        await panel.getByRole('tab', { name: '已安装', exact: true }).click()
         const skeleton = panel.locator('[data-plugin-loading]')
         await skeleton.waitFor()
         await probe.evaluate(() => document.fonts.ready)
@@ -350,7 +356,7 @@ describe('web e2e: plugin manager', () => {
         expect(await skeleton.getAttribute('role')).toBe('status')
         expect(await skeleton.getAttribute('aria-label')).toBe('正在读取插件…')
         expect(await panel.getAttribute('aria-busy')).toBe('true')
-        const actions = panel.locator('[data-plugin-bar] > header > div:last-child button')
+        const actions = panel.locator('[data-plugin-toolbar] button')
         expect(await actions.count()).toBe(3)
         for (const action of await actions.all()) expect(await action.isDisabled()).toBe(true)
         expect(await panel.getByRole('button', { name: '插件说明' }).isEnabled()).toBe(true)
@@ -459,8 +465,9 @@ describe('web e2e: plugin manager', () => {
       onTestFailed(() => saveFailureShot(probe, 'web-e2e-plugin-manager-refresh'))
       await probe.clock.install()
       await probe.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await probe.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+      await probe.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
       const panel = probe.locator('[data-plugin-panel]')
+      await panel.getByRole('tab', { name: '已安装', exact: true }).click()
       const refresh = panel.getByRole('button', { name: '刷新', exact: true })
       const add = panel.getByRole('button', { name: '添加插件', exact: true })
       await panel.getByRole('button', { name: '查看 @fixture/bundle', exact: true }).waitFor()
@@ -497,6 +504,9 @@ describe('web e2e: plugin manager', () => {
         await tooltip.waitFor({ state: 'detached' })
 
         await add.focus()
+        await probe.keyboard.press('Shift+Tab')
+        expect(await panel.getByRole('button', { name: '浏览其他插件', exact: true })
+          .evaluate(element => element === document.activeElement)).toBe(true)
         await probe.keyboard.press('Shift+Tab')
         expect(await refresh.evaluate(element => element === document.activeElement)).toBe(true)
         await probe.clock.runFor(499)
@@ -598,6 +608,7 @@ describe('web e2e: plugin manager', () => {
       await probe.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
       await probe.getByRole('button', { name: '插件', exact: true }).click()
       const panel = probe.locator('[data-plugin-panel]')
+      await panel.getByRole('tab', { name: '已安装', exact: true }).click()
       const refresh = panel.getByRole('button', { name: '刷新', exact: true })
       const info = panel.getByRole('button', { name: '插件说明', exact: true })
       await expect.poll(() => refresh.isEnabled()).toBe(true)
@@ -749,7 +760,7 @@ describe('web e2e: plugin manager', () => {
     // Both subagent bundles are held back to the More list while the profile leaves them off.
     expect(await panel.locator('[data-plugin-group="extensions"] [data-plugin-package]').count()).toBe(0)
     expect(await panel.locator('[data-plugin-package="@ocean/ocean-subagent-codex"]').count()).toBe(0)
-    await panel.getByRole('button', { name: '更多', exact: true }).click()
+    await panel.getByRole('button', { name: '浏览其他插件', exact: true }).click()
     await panel.getByRole('heading', { name: '可选插件', exact: true, level: 1 }).waitFor()
     const bundles = await scaffold.ctx.pluginManager.listBundles()
     expect(await panel.locator('[data-plugin-group="more"] [data-plugin-package]').count())
@@ -835,7 +846,7 @@ describe('web e2e: plugin manager', () => {
     }
     await checkImage('[data-plugin-package="@fixture/bundle"]', fixtureIcon, 'Third-party bundle card')
     // The held-back Codex bundle shows its manifest icon on the More list card and detail page.
-    await panel.getByRole('button', { name: '更多', exact: true }).click()
+    await panel.getByRole('button', { name: '浏览其他插件', exact: true }).click()
     const codex = panel.locator('[data-plugin-package="@ocean/ocean-subagent-codex"]')
     expect(await codex.getByRole('switch').getAttribute('aria-checked')).toBe('false')
     await checkImage('[data-plugin-package="@ocean/ocean-subagent-codex"]', codexIcon, 'Disabled Codex subagent card')
@@ -908,16 +919,17 @@ describe('web e2e: plugin manager', () => {
     onTestFinished(closeSettings)
     onTestFailed(() => saveFailureShot(page, 'web-e2e-plugin-manager-locale'))
     const panel = await openPluginsPanel()
-    await panel.getByRole('button', { name: '更多', exact: true }).click()
+    await panel.getByRole('button', { name: '浏览其他插件', exact: true }).click()
     await panel.getByRole('button', { name: '查看 Codex 子智能体', exact: true }).click()
     const packageName = panel.locator('[data-plugin-name]')
+    const description = panel.locator('[class*="_detailDesc"]')
     expect(await packageName.textContent()).toBe('@ocean/ocean-subagent-codex')
-    expect(await panel.getByText('使用 Codex 原生认证和设置委派单个任务。').count()).toBe(1)
+    expect(await description.textContent()).toBe('使用 Codex 原生认证和设置委派单个任务。')
     try {
       await setLanguage('en')
       await panel.getByRole('heading', { name: 'Codex subagent', exact: true }).waitFor()
       expect(await packageName.textContent()).toBe('@ocean/ocean-subagent-codex')
-      expect(await panel.getByText('Delegate one task to Codex using its native authentication and settings.').count()).toBe(1)
+      expect(await description.textContent()).toBe('Delegate one task to Codex using its native authentication and settings.')
       await panel.getByRole('button', { name: 'Back to Optional plugins' }).click()
       await panel.getByRole('button', { name: 'View Codex subagent', exact: true }).waitFor()
       expect(await panel.getByRole('switch', { name: 'Enable Codex subagent', exact: true }).count()).toBe(1)
@@ -973,7 +985,7 @@ describe('web e2e: plugin manager', () => {
     expect(scheduleRows().every(entry => entry.fiber?.state === FiberState.ACTIVE)).toBe(true)
     expect(await panel.getByRole('button', { name: '查看 自动化任务', exact: true }).count()).toBe(0)
     expect(await panel.getByRole('switch', { name: '启用 自动化任务', exact: true }).count()).toBe(0)
-    await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '自动化任务', exact: true }).waitFor()
+    await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '自动化任务', exact: true }).waitFor()
     expect(tripwire.pageErrors).toEqual([])
   }, 60_000)
 
@@ -997,8 +1009,9 @@ describe('web e2e: plugin manager', () => {
       onTestFailed(() => saveFailureShot(probe, 'web-e2e-plugin-manager-ime-enter'))
       await probe.clock.install()
       await probe.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await probe.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+      await probe.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
       const panel = probe.locator('[data-plugin-panel]')
+      await panel.getByRole('tab', { name: '已安装', exact: true }).click()
       await panel.getByRole('button', { name: '查看 @fixture/bundle', exact: true }).waitFor({ timeout: 20_000 })
       const trace: string[] = ['Synthetic browser KeyboardEvents, not an OS input-method test.']
       for (const target of ['package', 'custom registry'] as const) {
@@ -1247,8 +1260,9 @@ describe('web e2e: startup-applied plugin management', () => {
       const tripwire = watchConsole(page)
       onTestFailed(() => saveFailureShot(page, 'web-e2e-plugin-manager-live'))
       await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+      await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
       const panel = page.locator('[data-plugin-panel]')
+      await panel.getByRole('tab', { name: '已安装', exact: true }).click()
       const toggle = panel.getByRole('switch', { name: '启用 @fixture/bundle' })
       await toggle.waitFor({ timeout: 20_000 })
       const mounted = () => [...scaffold.ctx.loader.entries()].find(entry => entry.options.id === 'fixture-row')

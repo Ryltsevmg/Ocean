@@ -78,7 +78,7 @@ A session is materialized lazily: `create(header)` writes nothing and returns th
 
 The current-generation scanner applies the current codec owner’s structural admission checks before recoverable-tail handling. Retired required PTC tags and `request/header.header.system` refuse the file even after an earlier malformed row; recovery never truncates them as ordinary damaged tail data.
 
-Unloading the backend waits for the consumer unloads it triggers through `sessionPersistence` injection before removing live-event listeners and draining and closing remaining handles. Consumers must register cleanup in that injecting scope; unrelated scopes and explicit Session or handle closure have their own lifetimes. Programmatic mounting uses the plugin namespace (`import * as JsonlSessionPersistence from '@ocean/ocean-session-persistence-jsonl'`) with `ctx.plugin`; access storage through `ctx.sessionPersistence`.
+Unloading the backend waits for the consumer unloads it triggers through `sessionPersistence` injection before removing live-event listeners and draining and closing remaining handles. Consumers must register cleanup in that injecting scope; unrelated scopes and explicit Session or handle closure have their own lifetimes. A live `session/flush` checkpoint that encounters a closing writer waits for its close to finish and propagates any drain or lock-release failure. Programmatic mounting uses the plugin namespace (`import * as JsonlSessionPersistence from '@ocean/ocean-session-persistence-jsonl'`) with `ctx.plugin`; access storage through `ctx.sessionPersistence`.
 
 ### Reading the logs
 

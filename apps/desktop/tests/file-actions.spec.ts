@@ -3,7 +3,6 @@ import { EventEmitter } from 'node:events'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { IpcMainInvokeEvent } from 'electron'
 import { afterEach, expect, it, vi } from 'vitest'
 import { installFileActions } from '../src/file-actions.ts'
 import { DESKTOP_IPC } from '../src/ipc.ts'
@@ -23,16 +22,19 @@ async function directory() { const path = await mkdtemp(join(tmpdir(), 'ocean-fi
 
 function harness(root: string) {
   const owner = Object.assign(new EventEmitter(), {
-    webContents: Object.assign(new EventEmitter(), { downloadURL: vi.fn<(url: string) => void>() }), isDestroyed: () => false,
+    webContents: Object.assign(new EventEmitter(), {
+      session: electron.session.defaultSession, downloadURL: vi.fn<(url: string) => void>(),
+    }),
+    isDestroyed: () => false,
   })
   owners.push(owner)
   const assertOwner = vi.fn(() => owner as never)
   electron.app.getPath.mockReturnValue(root)
   installFileActions(assertOwner)
-  const event = {} as IpcMainInvokeEvent
+  const event = { sender: owner.webContents }
   const invoke = async (channel: string, value: unknown): Promise<unknown> => {
     const handler = electron.ipcMain.handle.mock.calls.find(([name]) => name === channel)?.[1] as
-      (event: IpcMainInvokeEvent, value: unknown) => Promise<unknown>
+      (event: { sender: object }, value: unknown) => Promise<unknown>
     return handler(event, value)
   }
   const item = (mime = 'image/gif', url = owner.webContents.downloadURL.mock.lastCall![0]) => {
@@ -199,15 +201,20 @@ it('preserves pending downloads across iframe and same-document navigation', asy
 it('rejects redirects to the application Host', async () => {
   const root = await directory()
   const owner = Object.assign(new EventEmitter(), {
-    webContents: Object.assign(new EventEmitter(), { downloadURL: vi.fn<(url: string) => void>() }), isDestroyed: () => false,
+    webContents: Object.assign(new EventEmitter(), {
+      session: electron.session.defaultSession, downloadURL: vi.fn<(url: string) => void>(),
+    }),
+    isDestroyed: () => false,
   })
-  installFileActions(() => owner as never, () => 'http://127.0.0.1:19321')
+  const host = vi.fn(() => 'http://127.0.0.1:19322').mockReturnValueOnce('http://127.0.0.1:19321')
+  installFileActions(() => owner as never, host)
   const handler = (name: string) => electron.ipcMain.handle.mock.calls.find(([channel]) => channel === name)![1] as
-    (event: IpcMainInvokeEvent, value: unknown) => Promise<unknown>
+    (event: { sender: object }, value: unknown) => Promise<unknown>
   const fetchImage = vi.fn(async () => new Response(null, { status: 302, headers: { location: 'http://localhost:19321/api/private' } }))
   vi.stubGlobal('fetch', fetchImage)
-  const event = {} as IpcMainInvokeEvent
+  const event = { sender: owner.webContents }
   await expect(handler(DESKTOP_IPC.clipboardImageRead)(event, 'https://images.example/photo')).rejects.toThrow('Invalid image URL')
   expect(fetchImage).toHaveBeenCalledOnce()
+  expect(host).toHaveBeenCalledWith(owner.webContents)
   expect(await readdir(root)).toEqual([])
 })

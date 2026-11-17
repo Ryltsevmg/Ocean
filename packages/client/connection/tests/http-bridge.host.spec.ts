@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { Readable } from 'node:stream'
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import { ServerResponse, type IncomingMessage } from 'node:http'
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
 import { bridge } from '../src/http-bridge.ts'
@@ -187,6 +187,36 @@ describe('HTTP bridge abort', () => {
     expect(status).toBe(200)
     expect(received).toEqual([Uint8Array.of(1, 2), Uint8Array.of(3, 4)])
     expect(Buffer.concat(responseBytes).toString()).toBe('stored')
+  })
+
+  it('stops a chunked device upload at the configured byte limit', async () => {
+    const peer = new Peer(new Context(), { principal: {
+      kind: 'remote-device',
+      deviceId: 'c881a516-9a1a-451c-b0b2-86ba98762ba7' as Extract<Peer['principal'], { kind: 'remote-device' }>['deviceId'],
+    } })
+    const request = Readable.from([Buffer.from('123'), Buffer.from('45')]) as IncomingMessage
+    Object.assign(request, { url: '/api/session/uploadFileBinary', method: 'POST', headers: {} })
+    let status: number | undefined
+    const response = Object.assign(new ServerResponse(request), {
+      writeHead(code: number) { status = code; return this },
+      end() { return this },
+    })
+    let received = ''
+    try {
+      await bridge(request, response, {
+        requestBodyMode: () => 'streaming',
+        fetch: async (input) => {
+          if (input.body === null) throw new Error('streaming request lost its body')
+          for await (const chunk of input.body) received += Buffer.from(chunk).toString()
+          return new Response('stored')
+        },
+      }, peer, 4)
+      expect(status).toBe(413)
+      expect(received).toBe('123')
+      expect(request.destroyed).toBe(true)
+    } finally {
+      await peer.dispose()
+    }
   })
 
   it('closes an unread streaming request after returning an early validation response', async () => {

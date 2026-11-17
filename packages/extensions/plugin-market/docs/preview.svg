@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="Вкладка «Каталог» на странице Plugins: карточки с кнопками «Установить», «Обновить до 0.4.0» и «Удалить»">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12222B"/>
+      <stop offset="1" stop-color="#0C171D"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4FA8C9"/>
+      <stop offset="1" stop-color="#2F6E8F"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="14" fill="url(#panel)"/>
+  <text x="28" y="42" fill="#E6F1F5" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="600">Плагины</text>
+  <g font-family="Helvetica, Arial, sans-serif" font-size="13">
+    <rect x="28" y="58" width="120" height="26" rx="8" fill="#1A2C36" stroke="#2C4451"/>
+    <text x="46" y="75" fill="#8FA9B6">Установленные</text>
+    <rect x="158" y="58" width="124" height="26" rx="8" fill="#1E3743" stroke="url(#accent)"/>
+    <text x="176" y="75" fill="#E6F1F5">Каталог</text>
+  </g>
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect x="28" y="104" width="584" height="100" rx="12" fill="#11202A" stroke="#2C4451"/>
+    <text x="48" y="132" fill="#E6F1F5" font-size="14" font-weight="600">Super Agent</text>
+    <rect x="524" y="118" width="68" height="20" rx="10" fill="#15303B" stroke="#2C4451"/>
+    <text x="538" y="132" fill="#8FA9B6" font-size="11">Включён</text>
+    <text x="48" y="154" fill="#9CB4C0" font-size="12">Постоянная доска задач разработки и исполнитель репозитория.</text>
+    <text x="48" y="174" fill="#6E8895" font-size="11" font-family="Menlo, monospace">@ocean/ocean-super-agent · 0.3.1</text>
+    <rect x="424" y="180" width="96" height="26" rx="8" fill="#13303C" stroke="url(#accent)"/>
+    <text x="440" y="197" fill="#D6EAF2" font-size="12">Обновить 0.4.0</text>
+    <rect x="528" y="180" width="64" height="26" rx="8" fill="none" stroke="#5A3A38"/>
+    <text x="545" y="197" fill="#D08A80" font-size="12">Удалить</text>
+
+    <rect x="28" y="216" width="584" height="100" rx="12" fill="#11202A" stroke="#2C4451"/>
+    <text x="48" y="244" fill="#E6F1F5" font-size="14" font-weight="600">Remotion studio</text>
+    <rect x="524" y="230" width="68" height="20" rx="10" fill="#15303B" stroke="#2C4451"/>
+    <text x="534" y="244" fill="#8FA9B6" font-size="11">Выключен</text>
+    <text x="48" y="266" fill="#9CB4C0" font-size="12">Проект Remotion, просмотр в Studio и рендер MP4.</text>
+    <text x="48" y="286" fill="#6E8895" font-size="11" font-family="Menlo, monospace">@ocean/ocean-remotion-studio · 0.1.0</text>
+    <rect x="524" y="292" width="68" height="26" rx="8" fill="#13303C" stroke="url(#accent)"/>
+    <text x="538" y="309" fill="#D6EAF2" font-size="12">Включить</text>
+  </g>
+</svg>

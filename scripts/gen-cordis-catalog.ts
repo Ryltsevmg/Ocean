@@ -55,6 +55,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   productTelemetry: 'product-telemetry.md',
   productAnalytics: 'product-telemetry.md',
   connection: 'web-server.md',
+  deviceBootstrap: 'credentials.md',
   pluginManager: 'boot.md',
   pluginRegistryProbe: 'boot.md',
   configEditor: 'boot.md',
@@ -164,6 +165,7 @@ export const SERVICE_PAGE: Record<string, string> = {
  * to a model as `cordis_runtime_inspect what:"client"`).
  */
 export const SERVICE_WALK_EXEMPTIONS: Record<string, string> = {
+  connectionLaunch: 'not a service: root-owned immutable launch credentials and epoch — packages/client/connection/README.md owns their lifetime',
   contextMenus: 'client-side interface-typed menu registry — packages/client/ui-context-menu/README.md owns the API',
   fileActions: 'client-side interface-typed file actions — packages/client/ui-file-actions/README.md owns the API',
   invocation: 'not a service: per-call accessor (RemoteInvocation | undefined) the Gateway derives for each Remote call — packages/api/gateway/README.md owns the contract',
@@ -294,6 +296,8 @@ export const EVENT_WALK_EXEMPTIONS: Record<string, string> = {
 export const LINK_MAP: Readonly<Record<string, string>> = {
   Principal: 'typert.md',
   PrincipalMap: 'typert.md',
+  DeviceId: 'credentials.md',
+  DeviceMetadata: 'credentials.md',
   RemoteAccessResource: 'typert.md',
   RemoteAccessResourceKind: 'typert.md',
   RemoteStream: 'typert.md',

@@ -91,25 +91,56 @@ const PLUGIN_BUNDLE_PATH = /^\/plugins\//u
  * under a revision that changes every launch, so Chromium's disk cache would only accumulate bundles
  * no later launch can reuse.
  * @param request - Request from the application origin.
- * @param host - Owned Host URL.
+ * @param host - Authenticated Host URL, including its mount path.
  * @param cookie - Host-issued authentication cookie.
+ * @param containRemoteRedirects - Remap read redirects within the selected HTTPS mount and reject all others.
  * @returns Host response without connection-level headers.
  */
-export async function forwardWebRequest(request: Request, host: string, cookie: string): Promise<Response> {
+export async function forwardWebRequest(request: Request, host: string, cookie: string, containRemoteRedirects = false): Promise<Response> {
   const source = new URL(request.url)
+  if (source.protocol !== 'dsh-app:' || source.host !== 'app' || source.username || source.password) {
+    return new Response(null, { status: 403 })
+  }
   const origin = request.headers.get('origin')
   if ((origin !== null && origin !== 'dsh-app://app') || request.headers.get('sec-fetch-site') === 'cross-site') return new Response(null, { status: 403 })
   const target = new URL(host)
-  target.pathname = source.pathname
+  const mount = target.pathname.endsWith('/') ? target.pathname : target.pathname + '/'
+  target.pathname = mount + source.pathname.slice(1)
+  if (!target.pathname.startsWith(mount)) return new Response(null, { status: 403 })
   target.search = source.search
   const headers = new Headers(request.headers)
-  for (const name of ['host', 'origin', 'cookie', 'sec-fetch-site']) headers.delete(name)
+  for (const name of ['host', 'origin', 'cookie', 'authorization', 'sec-fetch-site']) headers.delete(name)
   headers.set('origin', target.origin)
   headers.set('cookie', cookie)
   const init = { method: request.method, headers, body: request.body, signal: request.signal, duplex: 'half', redirect: 'manual' as const }
   const response = await fetch(target, init)
   const outgoing = new Headers(response.headers)
+  const location = outgoing.get('location')
+  if (containRemoteRedirects && response.status >= 300 && response.status < 400 && location !== null) {
+    const redirect = remoteReadRedirect(request, target, mount, location)
+    if (redirect === undefined) {
+      await response.body?.cancel()
+      return new Response(null, { status: 502 })
+    }
+    outgoing.set('location', redirect)
+  }
   for (const name of WITHHELD_RESPONSE_HEADERS) outgoing.delete(name)
   if (PLUGIN_BUNDLE_PATH.test(source.pathname)) outgoing.set('cache-control', 'no-store')
   return new Response(response.body, { status: response.status, headers: outgoing })
+}
+
+/** Preserve versioned media reads without exposing a credential-bearing Host URL to Chromium. */
+function remoteReadRedirect(request: Request, target: URL, mount: string, location: string): string | undefined {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return undefined
+  let redirect: URL
+  try { redirect = new URL(location, target) } catch (_error) {
+    // A malformed Location is not a destination the owned view can request.
+    return undefined
+  }
+  if (redirect.origin !== target.origin || redirect.username || redirect.password || !redirect.pathname.startsWith(mount)) return undefined
+  const local = new URL(request.url)
+  local.pathname = '/' + redirect.pathname.slice(mount.length)
+  local.search = redirect.search
+  local.hash = redirect.hash
+  return local.href
 }

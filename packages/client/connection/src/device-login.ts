@@ -1,0 +1,209 @@
+/** HTTPS-only exchange of device tokens for browser login credentials. */
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { isTrustedApiRequest } from './api-request-trust.ts'
+import { DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION } from './connect-protocol.ts'
+import type { HostId, HostEpoch } from './connect-protocol.ts'
+import type { ConnectionTrustRequest } from './rpc.ts'
+import type { DeviceId, DeviceSession, DeviceSessionKey, DeviceTokens } from './device-tokens.ts'
+import { DeviceLoginCapacityError } from './device-tokens.ts'
+
+function header(request: ConnectionTrustRequest, name: string): string | undefined {
+  if (request.headers instanceof Headers) return request.headers.get(name) ?? undefined
+  const value = request.headers[name]
+  return typeof value === 'string' ? value : undefined
+}
+
+/** Resolve device login origins without accepting forwarded headers. */
+export class DeviceLogin {
+  private windowStartedAt = -Infinity
+  private readonly attempts = new Map<DeviceId, number>()
+  /**
+   * @param tokens - Durable credential registry.
+   * @param config - Login limits and the optional HTTPS proxy origin.
+   */
+  constructor(readonly tokens: DeviceTokens, private readonly config: {
+    trustedHosts: readonly string[]
+    proxyOrigin?: string
+    lifetimeMs: number
+    maxSessionsPerDevice: number
+    maxExchangesPerWindow: number
+    exchangeWindowMs: number
+    identity: { hostId: HostId; epoch: HostEpoch }
+  }) {}
+
+  /**
+   * Exchange an Authorization bearer and set a host-only login cookie.
+   * @param req - Incoming POST request with the device bearer in Authorization.
+   * @param res - Response owned by the login endpoint.
+   * @param listener - Bound address and transport protocol.
+   */
+  async exchange(req: IncomingMessage, res: ServerResponse, listener: {
+    host: string
+    protocol: 'http:' | 'https:'
+  }): Promise<void> {
+    const reject = (status: number, headers: Record<string, string> = {}): void => {
+      res.writeHead(status, { 'cache-control': 'no-store', ...headers })
+      res.end()
+    }
+    if (req.method !== 'POST') {  reject(405); return }
+    const origin = this.origin(req, listener)
+    if (origin === undefined) {  reject(403); return }
+    if (req.headers[DEVICE_PROTOCOL_HEADER] !== DEVICE_PROTOCOL_VERSION) {
+      reject(409, { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION }); return
+    }
+    const expectedHost = header(req, DEVICE_HOST_HEADER)
+    if (expectedHost !== undefined && expectedHost !== this.config.identity.hostId) {  reject(412); return }
+    const bearer = req.headers.authorization
+    if (bearer?.length !== 87 || !bearer.startsWith('Bearer ')) {  reject(401); return }
+    let device: DeviceId | undefined
+    try {
+      device = await this.tokens.verify(bearer.slice(7))
+    } catch (_error) {
+      // Credential storage details are not part of the public response.
+      reject(503); return
+    }
+    if (device === undefined) { reject(401); return }
+    const now = performance.now()
+    if (now - this.windowStartedAt >= this.config.exchangeWindowMs) {
+      this.windowStartedAt = now
+      this.attempts.clear()
+    }
+    const attempts = this.attempts.get(device) ?? 0
+    if (attempts >= this.config.maxExchangesPerWindow) {
+      const retryAfter = Math.ceil((this.windowStartedAt + this.config.exchangeWindowMs - now) / 1000)
+      reject(429, { 'retry-after': String(retryAfter) }); return
+    }
+    this.attempts.set(device, attempts + 1)
+    let credential: string | undefined
+    try {
+      credential = await this.tokens.exchange(bearer.slice(7), origin, this.config)
+    } catch (error) {
+      // Credential provider errors can contain record details. Keep them off the wire.
+      if (error instanceof DeviceLoginCapacityError) {
+        reject(503, { 'ocean-device-error': 'capacity' }); return
+      }
+      reject(503); return
+    }
+    if (credential === undefined) {  reject(401); return }
+    res.writeHead(204, {
+      ...this.identityHeaders(),
+      'cache-control': 'no-store',
+      'set-cookie': `__Host-ocean-device=${credential}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${Math.ceil(this.config.lifetimeMs / 1000)}`,
+    })
+    res.end()
+  }
+
+  /**
+   * Report Host identity for an explicit preflight or a valid authenticated reconnect.
+   * @param req - Incoming HEAD request.
+   * @param res - Response owned by the login endpoint.
+   * @param listener - Bound address and protocol.
+   */
+  async identify(req: IncomingMessage, res: ServerResponse, listener: { host: string; protocol: 'http:' | 'https:' }): Promise<void> {
+    const protocol = header(req, DEVICE_PROTOCOL_HEADER)
+    if (protocol !== undefined && header(req, 'cookie') === undefined) {
+      const trusted = this.origin(req, listener) !== undefined
+      const compatible = protocol === DEVICE_PROTOCOL_VERSION
+      res.writeHead(!trusted ? 403 : compatible ? 204 : 409, {
+        'cache-control': 'no-store',
+        ...(trusted ? compatible ? this.identityHeaders() : { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION } : {}),
+      })
+      res.end()
+      return
+    }
+    let valid: boolean
+    try {
+      valid = await this.authenticate(req, listener) !== undefined
+    } catch (_error) {
+      // A failed read establishes nothing about the presented login.
+      res.writeHead(503, { 'cache-control': 'no-store' })
+      res.end()
+      return
+    }
+    res.writeHead(valid ? 204 : 401, {
+      'cache-control': 'no-store',
+      ...(valid ? this.identityHeaders() : {}),
+    })
+    res.end()
+  }
+
+  private identityHeaders(): Record<string, string> {
+    return {
+      [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION,
+      [DEVICE_HOST_HEADER]: this.config.identity.hostId,
+      [DEVICE_EPOCH_HEADER]: this.config.identity.epoch,
+    }
+  }
+
+  /**
+   * Remove the current login and expire its browser cookie.
+   * @param req - Incoming DELETE request.
+   * @param res - Response owned by the login endpoint.
+   * @param listener - Bound address and protocol.
+   * @param close - Release live transports before confirming logout.
+   */
+  async logout(
+    req: IncomingMessage,
+    res: ServerResponse,
+    listener: { host: string; protocol: 'http:' | 'https:' },
+    close: (login: DeviceSessionKey) => Promise<void>,
+  ): Promise<void> {
+    const origin = this.origin(req, listener)
+    const credential = this.cookie(req)
+    if (origin === undefined || credential === undefined || req.headers[DEVICE_PROTOCOL_HEADER] !== DEVICE_PROTOCOL_VERSION) {
+      res.writeHead(403, { 'cache-control': 'no-store' })
+      res.end()
+      return
+    }
+    try {
+      const login = await this.tokens.endSession(credential, origin)
+      if (login !== undefined) await close(login)
+    } catch (_error) {
+      // Logout confirms both durable invalidation and live cleanup.
+      res.writeHead(503, { 'cache-control': 'no-store' })
+      res.end()
+      return
+    }
+    res.writeHead(204, {
+      'cache-control': 'no-store',
+      'set-cookie': '__Host-ocean-device=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0',
+    })
+    res.end()
+  }
+
+  /**
+   * Resolve a presented login using the same transport and origin checks as exchange.
+   * @param req - HTTP request or WebSocket upgrade.
+   * @param listener - Bound address and protocol.
+   * @returns The authenticated device, if its login is valid.
+   */
+  async authenticate(req: ConnectionTrustRequest, listener: { host: string; protocol: 'http:' | 'https:' }): Promise<DeviceSession | undefined> {
+    const origin = this.origin(req, listener)
+    const credential = this.cookie(req)
+    if (origin === undefined || credential === undefined) return undefined
+    return this.tokens.readSession(credential, origin)
+  }
+
+  private cookie(req: ConnectionTrustRequest): string | undefined {
+    const prefix = '__Host-ocean-device='
+    const cookies = header(req, 'cookie')?.split(';').map(part => part.trim()).filter(part => part.startsWith(prefix))
+    return cookies?.length === 1 ? cookies[0]?.slice(prefix.length) : undefined
+  }
+
+  private origin(req: ConnectionTrustRequest, listener: { host: string; protocol: 'http:' | 'https:' }): string | undefined {
+    if (!isTrustedApiRequest(req, this.config.trustedHosts, listener.host, 'https:')) return undefined
+    const host = header(req, 'host')
+    if (host === undefined || !/^[a-z0-9.:[\]-]+$/iu.test(host)) return undefined
+    let origin: string
+    try {
+      origin = new URL(`https://${host}`).origin
+    } catch (_error) {
+      // The Host header must parse as a URL authority.
+      return undefined
+    }
+    const incomingOrigin = header(req, 'origin')
+    if (incomingOrigin !== undefined && incomingOrigin !== origin) return undefined
+    if (listener.protocol === 'https:') return origin
+    return origin === this.config.proxyOrigin ? origin : undefined
+  }
+}

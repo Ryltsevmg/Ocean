@@ -2,6 +2,8 @@
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
+import { makeTranslate } from '@ocean/ocean-client-test-runtime'
+import { en } from '@ocean/ocean-client-locale/src/locales/en.ts'
 import { SlotRegistry } from '@ocean/ocean-client-ui-renderer/client'
 import { apply, inject } from '../src/client/index.ts'
 import { OfficialBrandMark, OfficialBrandName } from '../src/client/Brand.tsx'
@@ -93,7 +95,7 @@ describe('official browser-brand plugin', () => {
   })
 
   it('renders the official name independently from both requested mark sizes', () => {
-    const name = render(<OfficialBrandName />)
+    const name = render(<OfficialBrandName t={makeTranslate(en)} />)
     expect(name.container.querySelector('text')?.textContent).toBe('Ocean')
     expect(name.container.querySelector('svg')?.getAttribute('viewBox')).toBe('26 0 72 24')
     name.unmount()

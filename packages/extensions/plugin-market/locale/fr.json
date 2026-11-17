@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Marché des plugins",
+    "description": "Un onglet « Catalogue » dans la page Plugins pour installer, supprimer et mettre à jour des ensembles sélectionnés avec le gestionnaire de plugins du profil.",
+    "detail": "docs/DETAIL.md"
+  }
+}

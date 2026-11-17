@@ -6,6 +6,7 @@
  */
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
+import * as pluginMarket from '@ocean/ocean-plugin-market/client'
 import * as modulesClient from '@ocean/ocean-client-modules/client'
 import { parseBootManifest } from '@ocean/ocean-client-modules/client'
 import type { WebBootGraph } from '@ocean/ocean-client-modules/client'
@@ -31,11 +32,12 @@ function graph(names: readonly string[]): WebBootGraph {
 }
 
 describe('loadPluginModules', () => {
-  it('imports the vendored Ocean Codex source namespace without executing a browser bundle', async () => {
-    const name = '@ocean/ocean-codex-subscription'
+  it('loads the shipped plugin catalog from ESM sources without a browser artifact', async () => {
+    const name = '@ocean/ocean-plugin-market'
     const modules = await loadPluginModules({ roster: ClientRoster.of([row(name)]) })
-    expect(modules.get(name)).toHaveProperty('apply', expect.any(Function))
-    expect(modules.get(name)).toHaveProperty('inject')
+    expect(modules.get(name)).toBe(pluginMarket)
+    expect(pluginMarket.inject).toContain('remote.pluginManager')
+    expect(typeof pluginMarket.apply).toBe('function')
   })
 
   it('imports real rows dynamically, takes provided rows from the plan, and pins the bootstrap row', async () => {

@@ -23,7 +23,7 @@ vi.mock('../scripts/desktop-build-paths.mjs', async importOriginal => ({
   }),
 }))
 vi.mock('@electron/get', () => ({ downloadArtifact: async () => 'electron.zip' }))
-vi.mock('extract-zip', () => ({ default: state.extractElectron }))
+vi.mock('../../../scripts/extract-runtime-zip.ts', () => ({ extractRuntimeZip: state.extractElectron }))
 vi.mock('node:child_process', async importOriginal => ({
   ...await importOriginal<typeof import('node:child_process')>(),
   execFileSync: (file: string) => file === '/usr/libexec/PlistBuddy' ? '12.0\n' : '24.18.1\n',
@@ -83,6 +83,7 @@ it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('prepares %s with one pnpm
   const runtime = join(state.root, 'runtime')
   mkdirSync(join(runtime, 'pnpm'), { recursive: true })
   await import('../scripts/prepare-runtime.ts')
+  expect(state.extractElectron).toHaveBeenCalledWith('electron.zip', join(state.root, 'electron'))
   expect(existsSync(join(runtime, 'pnpm'))).toBe(false)
   expect(existsSync(join(runtime, 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'))).toBe(true)
   expect(existsSync(join(runtime, 'bin', 'node'))).toBe(true)

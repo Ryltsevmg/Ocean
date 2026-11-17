@@ -50,6 +50,29 @@ function clientConfigs(dir = REQUESTING_PACKAGE_DIR) {
 }
 
 describe('client bundle build faces', () => {
+  it('keeps static Node exports independent without introducing unpublished shared chunks', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'ocean-static-exports-'))
+    onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@ocean/ocean-static-fixture', type: 'module' }))
+    writeFileSync(join(root, 'shared.js'), 'export const value = globalThis.String("shared")\n')
+    for (const entry of ['index', 'device']) writeFileSync(join(root, `${entry}.js`), 'export { value } from "./shared.js"\n')
+    const configs = clientBundle(root, ['index.js', 'device.js'], { hostPhase: true, independentLibEntries: true })(
+      { env: { OCEAN_BUILD_FACE: 'host' } },
+    )
+    expect(configs.map(config => config.entry)).toEqual([['index.js'], ['device.js']])
+    for (const [index, config] of configs.entries()) {
+      const builds = await build({ ...config, cwd: root, config: false, tsconfig: false,
+        write: false, clean: false, exports: false, report: false, logLevel: 'silent' })
+      try {
+        const chunks = builds.flatMap(bundle => bundle.chunks).filter(chunk => chunk.type === 'chunk')
+        expect(chunks.map(chunk => chunk.fileName)).toEqual([index === 0 ? 'index.js' : 'device.js'])
+        expect(chunks[0]?.imports).toEqual([])
+      } finally {
+        for (const bundle of builds) await bundle[Symbol.asyncDispose]()
+      }
+    }
+  })
+
   it('names both configs and the loader registration after the package directory manifest', () => {
     const root = mkdtempSync(join(tmpdir(), 'ocean-client-manifest-'))
     onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })

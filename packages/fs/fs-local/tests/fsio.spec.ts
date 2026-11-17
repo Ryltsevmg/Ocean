@@ -21,7 +21,7 @@ import {
   readWholeBytes,
   readWholeText,
   resolveLocalTarget,
-  restoreLineEndings,
+  restoreTextFormat,
   streamWholeText,
   writeFileAtomic,
 } from '../src/fsio.ts'
@@ -964,14 +964,22 @@ describe('applyLiteralEdit', () => {
   })
 })
 
-describe('readForEdit + restoreLineEndings', () => {
+describe('readForEdit + restoreTextFormat', () => {
+  it.each(['', '\uFEFF'])('preserves BOM %j separately from editable text', async (prefix) => {
+    const file = join(dir, 'bom.txt')
+    await writeFile(file, `${prefix}first\nsecond\n`)
+    const original = await readForEdit(file, file)
+    expect(original).toEqual({ content: 'first\nsecond\n', lineEndings: 'LF', bom: prefix.length > 0 })
+    expect(restoreTextFormat('FIRST\nsecond\n', original)).toBe(`${prefix}FIRST\nsecond\n`)
+  })
+
   it('round-trips CRLF: matches on LF, writes back CRLF', async () => {
     const file = join(dir, 'crlf.txt')
     await writeFile(file, 'one\r\ntwo\r\n')
     const original = await readForEdit(file, file)
     expect(original.lineEndings).toBe('CRLF')
     const edited = applyLiteralEdit(original.content, 'two', 'TWO', false, file)
-    expect(restoreLineEndings(edited.content, original.lineEndings)).toBe('one\r\nTWO\r\n')
+    expect(restoreTextFormat(edited.content, original)).toBe('one\r\nTWO\r\n')
   })
 
   it('rejects a binary file and invalid UTF-8', async () => {

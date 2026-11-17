@@ -10,6 +10,7 @@ import {
   proxyRouteFor,
 } from '../src/index.ts'
 import { PROXY_ENV_NAMES } from '../src/policy.ts'
+import { withFixtureDnsFailure } from './dns-fixture.ts'
 
 /** Absolute-form request targets the fake proxy received; a populated entry proves a request was tunnelled. */
 let proxied: string[] = []
@@ -107,13 +108,15 @@ describe('installProxyFromEnvironment', () => {
   })
 
   it('connects directly when the bypass list covers the target', async () => {
-    const { dispose } = await install(env({ HTTP_PROXY: proxyUrl, NO_PROXY: 'origin.test' }))
-    try {
-      await expect(fetch(proxyTarget, { signal: AbortSignal.timeout(1500) })).rejects.toThrow()
-      expect(proxied).toEqual([])
-    } finally {
-      await dispose()
-    }
+    await withFixtureDnsFailure('origin.test', async () => {
+      const { dispose } = await install(env({ HTTP_PROXY: proxyUrl, NO_PROXY: 'origin.test' }))
+      try {
+        await expect(fetch(proxyTarget)).rejects.toMatchObject({ cause: { code: 'ENOTFOUND', hostname: 'origin.test' } })
+        expect(proxied).toEqual([])
+      } finally {
+        await dispose()
+      }
+    })
   })
 
   it('reports a value it cannot use and installs the rest', async () => {
@@ -190,19 +193,20 @@ describe('installProxyFromEnvironment', () => {
     // What `HTTPS_PROXY=socks5://…` plus `HTTP_PROXY=http://p` resolves to: http proxied, https
     // direct. undici's own EnvHttpProxyAgent cannot express this — with no HTTPS proxy present it
     // reuses the HTTP one, tunnelling the scheme the diagnostic told the user stayed direct.
-    const { dispose } = await install(env({ HTTP_PROXY: proxyUrl, HTTPS_PROXY: 'socks5://127.0.0.1:1080' }))
-    try {
-      // The direct path here fails on a DNS miss whose latency is the machine's resolver to decide;
-      // the deadline bounds it. Either rejection proves the same thing — no CONNECT reached the
-      // proxy — and a proxied hop would have answered in milliseconds instead.
-      await expect(fetch('https://refused-scheme.invalid/', { signal: AbortSignal.timeout(1500) })).rejects.toThrow()
-      expect(proxied).toEqual([])
-      // The same policy still tunnels http, so the empty expectation above is not vacuous.
-      await expect((await fetch(proxyTarget)).text()).resolves.toBe('VIA-PROXY')
-      expect(proxied).toEqual([`GET ${proxyTarget}`])
-    } finally {
-      await dispose()
-    }
+    await withFixtureDnsFailure('refused-scheme.invalid', async () => {
+      const { dispose } = await install(env({ HTTP_PROXY: proxyUrl, HTTPS_PROXY: 'socks5://127.0.0.1:1080' }))
+      try {
+        await expect(fetch('https://refused-scheme.invalid/')).rejects.toMatchObject({
+          cause: { code: 'ENOTFOUND', hostname: 'refused-scheme.invalid' },
+        })
+        expect(proxied).toEqual([])
+        // The same policy still tunnels http, so the empty expectation above is not vacuous.
+        await expect((await fetch(proxyTarget)).text()).resolves.toBe('VIA-PROXY')
+        expect(proxied).toEqual([`GET ${proxyTarget}`])
+      } finally {
+        await dispose()
+      }
+    })
   })
 })
 

@@ -555,8 +555,14 @@ export class JsonlBackendTracker {
         const writer = writers.get(session.id)
         if (writer === null || writer === undefined) return undefined
         return (async () => {
-          await writer.drainLive()
-          await writer.flush()
+          try {
+            await writer.drainLive()
+            await writer.flush()
+          } catch (error: unknown) {
+            if (!(error instanceof SessionHandleClosedError)) throw error
+            // Close owns the final durable drain; a concurrent checkpoint joins its outcome.
+            await writer.close()
+          }
         })()
       })
       yield ctx.on('session/disposed', (session: Session) => {

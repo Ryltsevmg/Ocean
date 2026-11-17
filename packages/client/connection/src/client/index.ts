@@ -12,7 +12,7 @@ import { createWebConnectionRpc, type RpcFetch, type RpcStreamOpen } from './rpc
 import { isLoopbackHostname } from '../loopback-hostname.ts'
 import type { ClientConnectionRpc } from '../rpc.ts'
 import { resolveConnectionConfig } from '../recovery-config.ts'
-import type { ConnectionInteractions } from '../connect-protocol.ts'
+import { CONNECT_PATH, DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION, type ConnectionInteractions } from '../connect-protocol.ts'
 import { openConnectionWebSocket, type ConnectionWebSocket, type ConnectionWebSocketFactory } from './socket.ts'
 
 export type { ConnectionInteractions } from '../connect-protocol.ts'
@@ -140,6 +140,11 @@ export interface ConnectionInstallOptions {
   readonly recovery?: ConnectionRecoveryConfig
   /** Page location; omit for a non-browser composition. */
   readonly location?: ConnectionLocation
+  /** Same-origin admission check for a browser document served to a remote device. */
+  readonly deviceDocument?: {
+    readonly connectUrl: URL
+    readonly signIn: () => void
+  }
 }
 
 /**
@@ -147,6 +152,8 @@ export interface ConnectionInstallOptions {
  * and reset callbacks; Connection stays independent of downstream domain state.
  */
 export interface ConnectionHandle {
+  /** End this browser login and return to the Host sign-in form. Available on device documents. */
+  endDeviceSession?: () => Promise<void>
   /** Forwarded-event participation selected at installation. */
   readonly interactions: ConnectionInteractions
   /**
@@ -228,6 +235,7 @@ function watchBrowserNetwork(controller: ConnectionController): () => void {
 export function installConnection(ctx: Context, options: ConnectionInstallOptions = {}): void {
   const pageLocation = options.location
   const transport = options.transport
+  const deviceDocument = options.deviceDocument
   const recovery = options.recovery ?? {}
   const interactions = options.interactions ?? (pageLocation === undefined ? 'none' : 'answer')
   const rpc = transport?.rpc ?? createWebConnectionRpc(transport?.fetch, transport?.openStream)
@@ -269,9 +277,21 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
     publishState(undefined)
   }
   const handle: ConnectionHandle = {
+    ...(deviceDocument === undefined ? {} : {
+      async endDeviceSession() {
+        const response = await fetch(deviceDocument.connectUrl, {
+          method: 'DELETE', credentials: 'same-origin', redirect: 'error',
+          headers: { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION },
+        })
+        if (response.status !== 204) throw new Error(`Ocean device sign-out failed (HTTP ${response.status})`)
+        if (owner !== undefined) releaseOwner(owner)
+        deviceDocument.signIn()
+      },
+    }),
     interactions,
     openWebSocket: path => openConnectionWebSocket(path, transport?.createWebSocket, transport?.streamBaseUrl),
-    isLoopback: transport?.ownsHost === true || pageLocation === undefined || isLoopbackHostname(pageLocation.hostname),
+    isLoopback: deviceDocument === undefined
+      && (transport?.ownsHost === true || pageLocation === undefined || isLoopbackHostname(pageLocation.hostname)),
     generation: {
       getSnapshot: () => generation,
       subscribe: (listener) => {
@@ -308,7 +328,23 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
       if (source === undefined) throw new Error('connection: no generation source is registered')
       const token = {}
       const ownsGeneration = (): boolean => owner?.token === token
-      const controller = new ConnectionController(source, {
+      const startGeneration: ConnectionGenerationSource = deviceDocument === undefined ? source : async (signal, ready) => {
+        const response = await fetch(deviceDocument.connectUrl, {
+          method: 'HEAD', credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal,
+        })
+        signal.throwIfAborted()
+        if (response.status === 401) {
+          const current = owner
+          if (current?.token === token) {
+            releaseOwner(current)
+            deviceDocument.signIn()
+          }
+          return
+        }
+        if (response.status !== 204) throw new Error(`Ocean device session check failed (HTTP ${response.status})`)
+        await source(signal, ready)
+      }
+      const controller = new ConnectionController(startGeneration, {
         ...sinks,
         onConnected: (host) => {
           const nextGeneration = { id: ++generationId, host }
@@ -344,9 +380,18 @@ export function apply(ctx: Context): void {
   const globals = globalThis as ClientTransportGlobal
   const pageLocation = typeof location === 'undefined' ? undefined : location
   const transport = globals.__OCEAN_TRANSPORT__
+  const deviceBase = transport === undefined && typeof document !== 'undefined'
+    ? document.querySelector<HTMLBaseElement>('base[data-ocean-device]')
+    : null
   installConnection(ctx, {
     ...(transport === undefined ? {} : { transport }),
     recovery: resolveConnectionConfig(globals.__OCEAN_CONNECTION_RECOVERY__),
     ...(pageLocation === undefined ? {} : { location: pageLocation }),
+    ...(deviceBase == null || pageLocation === undefined ? {} : {
+      deviceDocument: {
+        connectUrl: new URL(CONNECT_PATH.slice(1), deviceBase.href),
+        signIn: () => { pageLocation.reload() },
+      },
+    }),
   })
 }

@@ -1,11 +1,12 @@
 import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterAll, describe, expect, it, onTestFinished } from 'vitest'
+import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import Storage, { storageBackendServiceKey } from '@ocean/ocean-storage'
 import { runKvBackendContract } from '../../storage/tests/contract.ts'
 import { Config, JsonStorageBackend, apply } from '../src/index.ts'
+import * as format from '../src/format.ts'
 
 const roots: string[] = []
 
@@ -417,6 +418,74 @@ describe('per-record layout', () => {
     const unit2 = await backend.kv.open(descriptor)
     expect(await unit2.loadAll()).toEqual({ tables: { t: { old1: { v: 1 }, old2: { v: 2 } } }, global: null })
     await backend.close()
+  })
+
+  it.each(['../../sentinel', '../sentinel', 'nested/key', 'nested\\key', '..', ''])(
+    'rejects legacy key %j before copying any declared table',
+    async (key) => {
+      const root = await freshRoot()
+      const sentinel = Buffer.from('untouched external file\n')
+      await writeFile(join(root, 'sentinel.json'), sentinel)
+      const legacy = JSON.stringify({
+        unit: { name: 'recs', version: 2 },
+        tables: { t: { safe: { value: 1 } }, later: { safe: { value: 2 }, [key]: { value: 3 } } },
+      })
+      await writeFile(join(root, 'recs.json'), legacy)
+      const backend = new JsonStorageBackend(root)
+      onTestFinished(() => backend.close())
+      const unit = await backend.kv.open({ ...descriptor, tables: ['t', 'later'] })
+
+      await expect(unit.loadAll()).rejects.toMatchObject({ name: 'StorageError', code: 'malformed-medium' })
+      expect(await readFile(join(root, 'sentinel.json'))).toEqual(sentinel)
+      expect(await readFile(join(root, 'recs.json'), 'utf8')).toBe(legacy)
+      expect((await readdir(root)).sort()).toEqual(['recs.json', 'sentinel.json'])
+    },
+  )
+
+  it.each([null, [], 'records', 42])('ignores malformed legacy table %j before writing valid earlier tables', async (invalid) => {
+    const root = await freshRoot()
+    const legacy = JSON.stringify({
+      unit: { name: 'recs', version: 2 },
+      tables: { t: { safe: { value: 1 } }, later: invalid },
+    })
+    await writeFile(join(root, 'recs.json'), legacy)
+    const backend = new JsonStorageBackend(root)
+    onTestFinished(() => backend.close())
+    const unit = await backend.kv.open({ ...descriptor, tables: ['t', 'later'] })
+
+    expect(await unit.loadAll()).toEqual({ tables: { t: {}, later: {} }, global: null })
+    expect(await readFile(join(root, 'recs.json'), 'utf8')).toBe(legacy)
+    expect(await readdir(root)).toEqual(['recs.json'])
+  })
+
+  it.each(['null', '[]', '{"unit":null}', '{"unit":{"name":"recs","version":2},"tables":[]}'])(
+    'ignores non-unit legacy JSON %s without creating a destination',
+    async (legacy) => {
+      const root = await freshRoot()
+      await writeFile(join(root, 'recs.json'), legacy)
+      const backend = new JsonStorageBackend(root)
+      onTestFinished(() => backend.close())
+      const unit = await backend.kv.open(descriptor)
+      expect(await unit.loadAll()).toEqual({ tables: { t: {} }, global: null })
+      expect(await readFile(join(root, 'recs.json'), 'utf8')).toBe(legacy)
+      expect(await readdir(root)).toEqual(['recs.json'])
+    },
+  )
+
+  it('propagates an unexpected legacy parser failure without creating the destination', async () => {
+    const root = await freshRoot()
+    const legacy = JSON.stringify({ unit: { name: 'recs', version: 2 }, tables: { t: { safe: 1 } } })
+    await writeFile(join(root, 'recs.json'), legacy)
+    const backend = new JsonStorageBackend(root)
+    onTestFinished(() => backend.close())
+    const unit = await backend.kv.open(descriptor)
+    const defect = new Error('parser failure')
+    const parser = vi.spyOn(format, 'parse').mockImplementationOnce(() => { throw defect })
+    onTestFinished(() => { parser.mockRestore() })
+
+    await expect(unit.loadAll()).rejects.toBe(defect)
+    expect(await readFile(join(root, 'recs.json'), 'utf8')).toBe(legacy)
+    expect(await readdir(root)).toEqual(['recs.json'])
   })
 
   it('bootstraps from a legacy file only when its stored version is accepted', async () => {

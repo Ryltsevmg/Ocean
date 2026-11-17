@@ -25,6 +25,8 @@ This package lets browser features store a `Blob`, exact bytes, or a `ReadableSt
 <a id="use-this-package"></a>
 ## Use this package
 
+The `./protocol` entry exposes upload route and framing definitions to native clients without loading the upload service.
+
 Mount the package before a consumer that injects `fileUpload`, then call `ctx.fileUpload.upload(sessionId, body, name, signal, onProgress)`, or `ctx.fileUpload.uploadImage(sessionId, blob, mediaType, name, signal, onProgress)` for a prompt image. The Session identity addresses both the raw route and generated Remote fallback; callers do not assemble either request.
 
 ```yaml
@@ -55,7 +57,7 @@ The Host plugin provides `ctx.fileUploads`. It owns the authenticated streaming 
 
 </details>
 
-Each upload receipt belongs to one exact Session, and each request uses one selected carrier. Unsupported stream carriers fail before the body is sent.
+Each upload receipt belongs to one exact Session, and each request uses one selected carrier. Unsupported stream carriers fail before the body is sent. Authenticated remote devices can stage files and images through the same upload route. The Connection HTTP body limit applies to device streams.
 
 -----
 

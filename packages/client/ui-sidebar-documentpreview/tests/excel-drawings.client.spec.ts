@@ -42,6 +42,25 @@ it('keeps ordinary archives byte-identical and does not interpret cell text as d
   expect((await convertExcel(source, 'xlsx', limits)).unsupportedFeatures).toEqual([])
 })
 
+it('previews values from exported extended data bars while retaining the original workbook', async () => {
+  const workbook = new ExcelJS.Workbook()
+  const sheet = workbook.addWorksheet('Progress')
+  sheet.getCell('A1').value = 25
+  sheet.getCell('A2').value = 75
+  sheet.addConditionalFormatting({
+    ref: 'A1:A2',
+    rules: [{ type: 'dataBar', priority: 1, gradient: false, cfvo: [{ type: 'min' }, { type: 'max' }] }],
+  })
+  const source = new Uint8Array(await workbook.xlsx.writeBuffer())
+  const before = source.slice()
+  const xml = strFromU8(unzipSync(source)['xl/worksheets/sheet1.xml']!)
+  expect(xml).toMatch(/<x14:cfRule type="dataBar" id="\{[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}\}"/u)
+  const preview = await convertExcel(source, 'xlsx', limits)
+  expect(preview.sheets[0]!.celldata!.map(cell => cell.v?.v)).toEqual([25, 75])
+  expect(preview.unsupportedFeatures).toEqual(['conditionalFormatting'])
+  expect(source).toEqual(before)
+})
+
 it.each([false, true])('reports images with background=%s without hiding cell content', async (background) => {
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Image')

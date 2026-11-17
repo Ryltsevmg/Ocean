@@ -164,6 +164,9 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   // Tools entry points share error classes and invocation stages through runtime chunks.
   '@ocean/ocean-tools': ['lib/pipeline.js', 'lib/shared-*.js'],
   '@ocean/ocean-tool-executor-ptc': ['lib/run-code.js', 'lib/_chunks/*.js'],
+  '@ocean/ocean-client-connection': ['lib/device.js', 'lib/protocol.js'],
+  '@ocean/ocean-api-gateway': ['lib/device.js'],
+  '@ocean/ocean-client-file-upload': ['lib/protocol.js'],
   // Owned Worker bundles import this public bootstrap before their business entry.
   '@ocean/ocean-app-boot': ['lib/worker/profile-resolution-bootstrap.js'],
   // Statically linked client libraries keep their stylesheets next to the emitted
@@ -506,6 +509,14 @@ export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): st
     if (manifest.name === '@ocean/ocean-tool-executor-ptc'
       && !hasExportPair(manifest, './run-code', './lib/types/run-code.d.ts', './lib/run-code.js')) {
       errors.push(`${label}: exports["./run-code"] must expose lib/types/run-code.d.ts and lib/run-code.js`)
+    }
+    const transportEntries = manifest.name === '@ocean/ocean-client-connection' ? ['device', 'protocol']
+      : manifest.name === '@ocean/ocean-api-gateway' ? ['device']
+        : manifest.name === '@ocean/ocean-client-file-upload' ? ['protocol'] : []
+    for (const entry of transportEntries) {
+      if (!hasExportPair(manifest, `./${entry}`, `./lib/types/${entry}.d.ts`, `./lib/${entry}.js`)) {
+        errors.push(`${label}: exports["./${entry}"] must expose lib/types/${entry}.d.ts and lib/${entry}.js`)
+      }
     }
     const expectedFiles = expectedOceanPackageFiles(manifest, detailDocumentFiles(join(root, dir)))
     if (!sameStringList(manifest.files, expectedFiles)) {

@@ -26,7 +26,15 @@
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json"
+    "./locale/*.json": "./locale/*.json",
+    "./device": {
+      "types": "./lib/types/device.d.ts",
+      "default": "./lib/device.js"
+    },
+    "./protocol": {
+      "types": "./lib/types/protocol.d.ts",
+      "default": "./lib/protocol.js"
+    }
   },
   "ocean": {
     "client": {
@@ -46,6 +54,8 @@
     "lib/index.js",
     "lib/client.browser.js",
     "lib/client.node.js",
+    "lib/device.js",
+    "lib/protocol.js",
     "lib/types/**/*.d.ts",
     "lib/types/**/*.d.ts.map",
     "lib/**/*.js.map",
@@ -53,7 +63,8 @@
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
-    "@ocean/ocean-scope": "workspace:*"
+    "@ocean/ocean-scope": "workspace:*",
+    "@ocean/ocean-error": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
@@ -63,6 +74,7 @@
     "@ocean/ocean-llm": "workspace:*",
     "@ocean/ocean-scope": "workspace:*",
     "@ocean/ocean-session": "workspace:*",
-    "@ocean/ocean-typert-protocol": "workspace:*"
+    "@ocean/ocean-typert-protocol": "workspace:*",
+    "@ocean/ocean-error": "workspace:*"
   }
 }

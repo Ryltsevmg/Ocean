@@ -17,7 +17,7 @@ import { defineStore, type EngineStoreHandle } from '@ocean/ocean-client-store'
 import type { TabId } from '@ocean/ocean-client-ui-dockkit'
 import type { WorkspaceFileText } from '@ocean/ocean-api-workspace-files/types'
 import type { DocumentFileBytes } from './rpc.ts'
-import type { DocumentLoadMode } from './document/registry.ts'
+import type { DocumentLoadMode } from './contract/preview.ts'
 
 /**
  * One page as the store keeps it: its text and the Host's line count, which

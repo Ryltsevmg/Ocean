@@ -6,6 +6,13 @@ The credential seam of [ocean-credentials](../../packages/credentials/credential
 
 Source: [`packages/credentials/credentials/src/index.ts`](../../packages/credentials/credentials/src/index.ts)
 
+<a id="remote-device-credentials"></a>
+## Remote device credentials
+
+The [Connection provider](../../packages/client/connection/README.md#browser-authentication-and-request-trust) owns remote-device records through the credential provider’s serialized `modifyRecord` operation. `DeviceId` is a validated UUID branded as `DeviceId`; it identifies one issued device record and is distinct from an account device identifier or the Host’s durable identity. `DeviceMetadata` contains only `id: DeviceId`, `label: string`, and `revoked: boolean`; administrative inventory never includes token hashes or session credentials. Both types are exported by `@ocean/ocean-client-connection`.
+
+`ctx.deviceBootstrap.issue(label)` returns the committed device identifier and a newly issued bearer shown once. `ctx.deviceBootstrap.list()` returns `DeviceMetadata[]` from the credential provider’s current snapshot. This local-only service has no network listener and does not revoke or rotate live sessions. The [deployment cookbook](../cookbook/deploying-remote-host.md) covers live administration and credential-home recovery.
+
 ## Identity
 
 A reference names one credential as a POSIX-style environment-variable name. The brand prevents callers from mixing credential references with other strings passed between packages or processes; construction validates the shell-identifier syntax.
@@ -395,6 +402,29 @@ watch(signal: AbortSignal, includeIdentityChanges: boolean = false): AsyncIterab
 ```
 
 Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
+
+<a id="ctxdevicebootstrap--devicebootstrap"></a>
+
+### `ctx.deviceBootstrap` — `DeviceBootstrap`
+
+Uses the selected credential provider's serialization and file-access policy.
+
+```ts cordis-catalog
+/**
+ * Create a device in the local credential home without exposing a listener.
+ * @param label - User-visible name for the device.
+ * @returns The device identifier and its token, shown once after the write commits.
+ */
+issue(label: string): Promise<{ id: DeviceId; token: string }>
+
+/**
+ * Read local device metadata without credential material.
+ * @returns The credential provider's current device inventory.
+ */
+list(): Promise<DeviceMetadata[]>
+```
+
+Source: [`packages/client/connection/src/device-bootstrap.ts`](../../packages/client/connection/src/device-bootstrap.ts)
 
 <a id="authorization-events"></a>
 

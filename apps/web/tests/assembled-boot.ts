@@ -71,7 +71,7 @@ const workspacePackageManifests = new Map(globSync('packages/*/*/package.json', 
   if (pkg.name === undefined) throw new Error(`assembled boot: workspace package has no name: ${path}`)
   return [pkg.name, path]
 }))
-const appBoot = await import(pathToFileURL(webBundleResolver.resolve('@ocean/ocean-app-boot')).href) as unknown as BootComposition
+const appBoot = await import(pathToFileURL(webBundleResolver.resolve('@ocean/ocean-app-boot')).href) as BootComposition
 
 function resolvePackageManifest(specifier: string): string | undefined {
   return workspacePackageManifests.get(specifier)
@@ -243,8 +243,8 @@ export function installAssembledBootEnv(): void {
     vi.stubGlobal('ResizeObserver', ResizeObserverStub)
     vi.stubGlobal('EventSource', EventSourceStub)
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-      setTimeout(() => { callback(0) }, 0) as unknown as number)
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => { clearTimeout(id) })
+      window.setTimeout(() => { callback(0) }, 0))
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => { window.clearTimeout(id) })
   })
 
   afterEach(async () => {
@@ -270,11 +270,9 @@ export function installAssembledBootEnv(): void {
     document.head.querySelectorAll('style[data-plugin]').forEach((style) => { style.remove() })
     document.title = ''
     history.replaceState(null, '', '/')
-    // Deleting the own properties uncovers jsdom's own accessors again
-    // (Navigator declares both readonly, hence the erased receiver).
-    const ownNavigator = navigator as unknown as Record<string, unknown>
-    delete ownNavigator.languages
-    delete ownNavigator.language
+    // Deleting the own properties uncovers jsdom's own accessors again.
+    Reflect.deleteProperty(navigator, 'languages')
+    Reflect.deleteProperty(navigator, 'language')
     vi.unstubAllGlobals()
     if (fontsDescriptor === undefined) Reflect.deleteProperty(document, 'fonts')
     else Object.defineProperty(document, 'fonts', fontsDescriptor)

@@ -208,6 +208,24 @@ describe('package payload constraints', () => {
     } })).toContainEqual(expect.stringContaining('exports["./run-code"] must expose'))
   })
 
+  it.each([
+    ['packages/client/connection', 'device'],
+    ['packages/client/connection', 'protocol'],
+    ['packages/api/gateway', 'device'],
+    ['packages/client/file-upload', 'protocol'],
+  ])('publishes the independent transport entry for %s', (dir, entry) => {
+    const manifest = JSON.parse(readFileSync(new URL(`../${dir}/package.json`, import.meta.url), 'utf8')) as WorkspaceManifest['manifest']
+    expect(checkWorkspaceManifest({ dir, manifest })).toEqual([])
+    expect(checkWorkspaceManifest({ dir, manifest: {
+      ...manifest, files: manifest.files!.filter(file => file !== `lib/${entry}.js`),
+    } })).toContainEqual(expect.stringContaining('package.json files must be'))
+    expect(checkWorkspaceManifest({ dir, manifest: {
+      ...manifest, exports: {
+        ...manifest.exports, [`./${entry}`]: { types: `./lib/types/${entry}.d.ts`, default: './lib/index.js' },
+      },
+    } })).toContainEqual(expect.stringContaining(`exports["./${entry}"] must expose`))
+  })
+
   it('publishes the directory of each locale detail document after the locale resources', () => {
     const dir = mkdtempSync(join(tmpdir(), 'ocean-detail-files-'))
     onTestFinished(() => { rmSync(dir, { recursive: true, force: true }) })

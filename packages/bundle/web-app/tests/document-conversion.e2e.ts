@@ -34,13 +34,19 @@ it('loads one shared conversion row and retains caller-owned PDFs after disposal
   await ctx.plugin(Loader)
   ctx.loader.builtins.include = Include
   // The Loader resolves the same source-plane module namespace as the test.
+  const unsupported = (): never => { throw new Error('Unexpected native loader operation in composition fixture') }
   ctx.loader.internal = {
     version: 'v2',
+    get loadCache() { return unsupported() },
+    register: unsupported,
+    getOrCreateModuleJob: unsupported,
+    resolveSync: unsupported,
+    load: unsupported,
     async import(specifier: string) {
       if (specifier !== '@ocean/ocean-office-kit') throw new Error(`Unexpected plugin: ${specifier}`)
       return LibreOfficeProvider
     },
-  } as unknown as NonNullable<typeof ctx.loader.internal>
+  }
   await ctx.loader.create({ name: 'cordis:include', config: { path: pathToFileURL(configPath).href } })
   await ctx.loader.await()
   const entry = [...ctx.loader.entries()].find(candidate => candidate.options.id === 'office-kit')!

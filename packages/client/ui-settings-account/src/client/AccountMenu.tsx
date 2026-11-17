@@ -22,7 +22,7 @@ export type AccountMenuProps = PropsRuntime<'settings.launcher'> & PropsRenderSl
 export function AccountMenu({
   subscribeSessionExpired, subscribeModelSignInRequired, wide, settingsShortcut, openSettings, openOnboarding, settingsOpen,
   useAccount, useTheme, signOut, hasRunningAccountTasks, refreshAccount, renderSlot,
-  contactUs, showLogin, start, cancel, avatarFailed, t,
+  showLogin, start, cancel, avatarFailed, t,
 }: AccountMenuProps) {
   // The launcher outlives the panel, so a false-to-true edge is one Settings entry:
   // re-renders, section switches and tab switches inside one open must not read again.
@@ -71,14 +71,12 @@ export function AccountMenu({
       items={[
         { id: 'settings', label: t('settings'), icon: <IconSettingsOutlineMedium size={16} />,
           ...(settingsShortcut === undefined ? {} : { shortcut: settingsShortcut }) },
-        { id: 'contact', label: t('contactUs'), icon: <IconPaperPlaneOutlineMedium size={16} /> },
         ...(signedIn ? [{ id: 'signout', label: t('signOut'), icon: <LogoutIcon />, disabled: busy }]
           : []),
       ]}
       onClose={() => { setOpen(false) }}
       onSelect={(id) => {
         if (id === 'settings') { setOpen(false); trigger.current?.focus(); openSettings() }
-        else if (id === 'contact') { setOpen(false); contactUs() }
         else void requestSignOut()
       }} />
     {account.loginVisible && !account.onboarding && <SignInDialog account={account} colorScheme={colorScheme}
@@ -86,5 +84,36 @@ export function AccountMenu({
       close={() => { showLogin(false) }} useApiKey={() => { showLogin(false); openOnboarding('deepseek-official') }} />}
     {signedIn && signOutImpact !== undefined && <SignOutDialog running={signOutImpact} signOut={signOut}
       close={() => { setSignOutImpact(undefined) }} t={t} />}
+  </div>
+}
+
+/** Open the configured feedback destination from Settings without submitting a report.
+ * @param props - Settings dismissal, localized copy and configured feedback action.
+ * @returns The settings navigation action.
+ */
+export function FeedbackSettingsAction({ close, contactUs, t }: PropsRuntime<'settings.navigation'>
+  & PropsLocale<'settings.account'> & Pick<AccountSectionInjected, 'contactUs'>) {
+  return <button type="button" className={css.feedbackNavigation} onClick={() => { close(); contactUs() }}>
+    <IconPaperPlaneOutlineMedium size={16} />
+    <span>{t('contactUs')}</span>
+  </button>
+}
+
+/**
+ * @param props - Sidebar width, locale, and the current device sign-out operation.
+ * @returns A sidebar action that confirms ending the shared browser login.
+ */
+export function DeviceDisconnectButton({ wide, t, endDeviceSession }: PropsRuntime<'sidebar.footer.action'>
+  & PropsLocale<'settings.account'> & { endDeviceSession: () => Promise<void> }) {
+  const [confirm, setConfirm] = useState(false)
+  const trigger = useRef<HTMLButtonElement>(null)
+  return <div className={css.root}>
+    <button ref={trigger} type="button" className={css.trigger} data-collapsed={!wide} data-signed-out
+      aria-label={t('deviceSignOut')} aria-haspopup="dialog" onClick={() => { setConfirm(true) }}>
+      <LogoutIcon />
+      {wide && <span className={css.label}>{t('deviceSignOut')}</span>}
+    </button>
+    {confirm && <SignOutDialog running={false} device signOut={endDeviceSession}
+      close={() => { setConfirm(false); trigger.current?.focus() }} t={t} />}
   </div>
 }

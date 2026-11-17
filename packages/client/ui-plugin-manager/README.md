@@ -27,6 +27,8 @@ Use the **Plugins** entry in the Web sidebar to manage the profile's installed b
 <a id="use-this-package"></a>
 ## Use this package
 
+Use **Browse other plugins** on the Plugins page to open the optional-bundle list. **Add plugin → Let the agent create a plugin** opens the Creator draft without sending a message. These actions have no duplicate Settings menu.
+
 Below 768px, the page uses 20px horizontal insets to align with the conversation header.
 
 A bundle may declare a default-hidden intent in its manifest (`ocean.bundle.listedByDefault: false`), which keeps it out of both lists, including **More**, until a declared row runs or it is enabled. Existing selections remain manageable; switching off an installation-carried copy hides it again. The page's manifest rule is generic: a bundle whose manifest does not declare `listedByDefault: false` is listed; one that does is listed only when the profile enables it, the installation carries it selected, or one of its declared rows runs; a hidden bundle is not opened by its ID either.
@@ -204,3 +206,5 @@ These limits define the reach of the management view; they are current package c
 None.
 
 </details>
+
+Contributed `plugins.tab` entries use `order` relative to Installed at zero. The first negative-order tab opens initially and through `pluginNavigation.openList()`; selecting a tab keeps that choice when entries change. A selected tab that unloads returns to Installed. The bundled market uses this ordering to open its catalog.

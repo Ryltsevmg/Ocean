@@ -32,6 +32,10 @@ Connection 可用时，Host 入口会在 Connection 共享的 `/api` FetchHandle
 
 每次调用都指明它所代表的 Peer：`InvokeRemoteRequest.peer` 与 `wireStream.open()` 的 `peer` 参数都是必填项，Gateway 从不提供默认 Peer。来自已释放 Peer 的分发以 `gateway/peer-disposed` 失败，一元调用、流、`$events` 与 `$events/result` 一律如此，wire 路径在读取 payload 之前检查。Host 服务注入 `remoteAccess`，没有 [`ocean-api-remote-access`](../remote-access/README.zh.md) 就不启动。每次调用在 endpoint 与参数字段检查之后按 Typert 编译类型校验一次 JSON 参数，失败为 `gateway/input-invalid`，分派复用校验后的值。对 Peer 的 principal 不是 owner 的调用，Gateway 在该校验之后、lookup 与 Context 解析之前解析调用访问的资源，并以端点为 action、校验后的参数为 `args` 询问 `ctx.remoteAccess.decide({ principal, action, resources, args })`，资源非法时不询问而以原因 `resource-invalid` 拒绝；被拒的调用抛出 details 为 `{ action, reason }` 的 `remote-access/denied`，因此被拒绝的调用在激活任何 Session 之前就失败。owner 的调用不解析资源、不询问判定即分派。
 
+设备 Peer 可通过设置控制器读取和保存 Host 配置，并接收配置变更通知。设置响应会隐藏声明为秘密的字段。设备可以列出 Host 上已注册和可配置的模型提供商，也可以保存和移除凭据引用，并读取其状态和掩码预览。使用原生编辑器打开设置文档需要 owner 权限。
+
+设备 Peer 可以列出并搜索 Session 的工作区，通过组合配置的文件系统提供方读取文件元数据、受限的文本或字节，并订阅文件系统变更。
+
 资源从已校验参数中读取：Typert 编译 codec 会移除未声明的对象字段，SRC fallback 只检查 JSON 安全性而不移除字段；lookup 与 Context 身份保持 wire 值。对每个资源种类，方法 `@Remote({ resources })` 或 `@RemoteScope(key, { resources })` options 中的读取函数优先；它以方法的位置参数调用（lookup 位为 wire 身份，取消参数位为调用的 signal），从根 Service 实例的类元数据读取。否则 provider 经 `resource` 声明了该种类的每个 lookup 参数贡献其 wire 身份，省略的可选 lookup 参数不贡献；Host Context adapter 声明了该种类的 Context 方法贡献其 Context 身份，在解析 Context 之前直接从参数读取。再否则使用该种类在 `typert.resources` 中登记的默认字段或同步 resolver。字段规则读取同名顶层参数，没有时读取第一个对象参数的同名字段。resolver 以 `{ args, parameters }` 调用一次：命名的已校验 wire 值，以及包含 `name`、`wire` 的有序参数描述。两种默认规则均返回单个身份或 `undefined`，数组无效。显式读取函数可以返回多个身份。resolver 或读取函数抛错、读取函数返回空列表、或某个身份（含 Context 身份）不是非空字符串时，解析结果为 `invalid`；不指明任何资源的调用只访问 `global` 资源，指明了资源的调用只访问这些资源。转发事件携带其条目声明的每个资源，因此在事件路径上读取函数返回 `undefined` 同样使解析结果为 `invalid`，而没有读取函数的条目访问 `global`。
 
 `getPendingRemoteEvents()` 按到达顺序返回当前未结算转发事件的独立元数据，仅含事件名和 Agent ID。它不暴露请求正文，不改变事件生命周期，也不提供变化通知。
@@ -46,11 +50,28 @@ Connection 可用时，Host 入口会在 Connection 共享的 `/api` FetchHandle
 
 Host 下行、Host 上行和 Client 上行泵的取消与停止状态归属单次读取，不保留已交付项的历史。下行结束也会唤醒尚未完成的上行读取。
 
-Host 组合可通过 `registerRemoteEvents()` 注册唯一的应用事件 source。Gateway 为它保留内部 `$events` logical endpoint，只接受空 `args`，并在 source 撤回时中止该注册打开的流。事件名单、参数校验、每个 Client 的队列及 opening `{ type: 'ready', clientId, host: { home } }` frame 中的 Host home 由 API Remotes 拥有。source factory 在返回 iterable 前同步挂好增量 listener，因此 Client 只在增量投递就绪后发布 generation 并开始 baseline 读取。Peer 的 principal 不是 owner 的 `$events` 流从不收到它可以作答的 scoped waterfall（瀑布式事件）；只有当 `ctx.remoteAccess.decide({ principal, action: 'event:<name>', resources })` 在该帧读取函数指明的资源上（帧没有读取函数时为 `global`）允许时，才整条、不裁剪地收到广播 emit 帧；每帧只解析一次资源，资源非法的帧不经判定即不送达任何非 owner 流，被拒的帧只对该流丢弃。这类 Peer 的 `$events/result` 回复以 `gateway/invocation-unavailable` 失败。
+Host 组合可通过 `registerRemoteEvents()` 注册唯一的应用事件 source。Gateway 为它保留内部 `$events` logical endpoint，只接受空 `args`，并在 source 撤回时中止该注册打开的流。事件名单、参数校验、每个 Client 的队列及 opening `{ type: 'ready', clientId, host: { home } }` frame 中的 Host home 由 API Remotes 拥有。source factory 在返回 iterable 前同步挂好增量 listener，因此 Client 只在增量投递就绪后发布 generation 并开始 baseline 读取。Peer 的 principal 既不是 owner 也不是 remote-device 的 `$events` 流从不收到它可以作答的 scoped waterfall（瀑布式事件）；只有当 `ctx.remoteAccess.decide({ principal, action: 'event:<name>', resources })` 在该帧读取函数指明的资源上（帧没有读取函数时为 `global`）允许时，才整条、不裁剪地收到广播 emit 帧；每帧只解析一次资源，资源非法的帧不经判定即不送达任何非 owner 流，被拒的帧只对该流丢弃。这类 Peer 的 `$events/result` 回复以 `gateway/invocation-unavailable` 失败。
 
-已释放的 Peer 在事件流参与检查之前被拒绝。无论 principal 是否为 owner，`$events` 与 `$events/result` 都要求 `peer.interactions === 'answer'`；否则返回 `gateway/interactions-forbidden`。只有 owner Peer 接收并回答转发的 waterfall，回复必须来自持有该事件流的同一 Peer。`hasLiveClient()` 只计算未取消的 owner 回答流；非 owner 广播流、单独的 WebSocket 与已取消但尚未完成 iterator 清理的流均不计入。这一同步观察不保证后续投递成功或 Client Provider 已就绪。
+已释放的 Peer 在事件流参与检查之前被拒绝。旧版 Peer 使用 `$events` 和 `$events/result` 时必须满足 `peer.interactions === 'answer'`。设备 Peer 可以通过 `$events` 接收显式授权的通知；否则返回 `gateway/interactions-forbidden`。owner 回复必须来自持有事件流的同一 Peer。设备流接收工具审批，可由同一活动设备登录返回 `allowed-once` 或 `rejected`。该流必须已收到待处理事件。`hasLiveClient()` 只计算未取消的 owner 回答流；非 owner 广播流、单独的 WebSocket 与已取消但尚未完成 iterator 清理的流均不计入。这一同步观察不保证后续投递成功或 Client Provider 已就绪。
+
+设备流也接收用户问题。Host 在接受第一个有效答复前校验问题 ID 和提供的选项。设备只能为限时问题报告倒计时到期。
+
+每个 WebSocket 最多接纳 `maxStreamsPerSocket` 个并发逻辑流，包括尚在分派的请求。达到上限时再打开一个流会以 1013 关闭 socket，客户端可重连并重新同步。
 
 <a id="client-service-clientremote-ctx-key-remote"></a>
+
+`./device` 入口导出 Node socket 工厂以及共享的 `RemoteStreamMuxClient`、`RemoteStreamCarrierError` 和 `ClientUplinkQueue`，不加载 Gateway 插件。`./stream-protocol` 导出为原生桌面调用方提供共享的 Remote 流帧格式和解析器。它们与浏览器客户端使用同一个经过认证的 WebSocket 端点。
+
+通过认证的设备使用 Gateway 的设备策略。该策略显式允许列出、搜索、创建和重命名会话、发送提示、取消会话及已列出的历史记录与状态方法。未列出的操作仍会被拒绝。
+
+已认证设备可以通过 `deviceApproval/list` 和 `deviceApproval/answer` 列出并回答待处理的工具审批。两种操作都需要 Session ID。答复可授权一次执行或拒绝请求。第一个有效答复会完成待处理请求并取消未完成的投递。
+
+`serve` profile 将 `approvalTimeoutMs` 设为 120,000 毫秒。转发的工具审批在客户端断开后仍保持待处理，直到收到答复、被取消或到期。到期时 Gateway 移除请求并委托给下一个 Host 答复方。没有可用答复方时，审批服务拒绝授权。
+
+设备策略允许 `workspaceFiles/list` 和 `workspaceFiles/read`，并沿用 Host 的路径和文件系统检查。
+
+已认证设备可以列出、创建和关闭保留的终端。设备创建的终端沿用用户创建终端时的 Host shell 执行策略。
+
 ## Client 服务：`ClientRemote`（ctx key：`remote`）
 
 同一个 `./client` 导入在 Node 中选择独立的 ESM `lib/client.node.js`，在浏览器中选择 loader factory `lib/client.browser.js`；Host 包根入口保持独立。浏览器载体接受 [Connection](../../client/connection/README.zh.md#use-this-package) 定义的 shell 所拥有的流 origin；逻辑流帧与生命周期保持一致。
@@ -107,5 +128,3 @@ Client waterfall 的 Context 解析保持同步。解析器可以返回借用的
 无。
 
 </details>
-
-./stream-protocol 导出为原生桌面调用方提供共享的 Remote 流帧格式和解析器。它们与浏览器客户端使用同一个经过认证的 WebSocket 端点。

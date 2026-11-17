@@ -86,6 +86,17 @@ function createProductApi(): OceanDesktopProductApi {
   }
 }
 
+const remoteHost = process.argv.includes('--ocean-remote-host')
+if (process.isMainFrame && location.href === `${SCHEME}://shell/remote-connection.html`) {
+  contextBridge.exposeInMainWorld('oceanRemoteForm', {
+    load: () => ipcRenderer.invoke(DESKTOP_IPC.remoteForm),
+    connect: (address: string, token: string, remember: boolean) =>
+      ipcRenderer.invoke(DESKTOP_IPC.remoteConnect, address, token, remember),
+    forget: (address?: string) => ipcRenderer.invoke(DESKTOP_IPC.remoteForget, address),
+    close: () => ipcRenderer.invoke(DESKTOP_IPC.remoteClose),
+  })
+}
+
 if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
   contextBridge.exposeInMainWorld('oceanOnboarding', {
     hasApiKey: () => ipcRenderer.invoke(DESKTOP_IPC.onboardingApiKey) as Promise<boolean>,
@@ -101,14 +112,31 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
   })
   syncWindowsAppearance()
   if (process.platform === 'win32') installMandatoryUpdateOverlay()
-  contextBridge.exposeInMainWorld('__OCEAN_DIRECTORY_PICKER__', {
+  if (!remoteHost) contextBridge.exposeInMainWorld('__OCEAN_DIRECTORY_PICKER__', {
     pick: () => ipcRenderer.invoke(DESKTOP_IPC.directoryPick) as Promise<string | null>,
   })
   // The composer cites dropped, picked, and pasted files and folders that
   // have a real path as `@path` references instead of uploading them; a
   // File without one (pasted bytes) answers '' and uploads as before.
-  contextBridge.exposeInMainWorld('__OCEAN_HOST_PATHS__', {
+  if (!remoteHost) contextBridge.exposeInMainWorld('__OCEAN_HOST_PATHS__', {
     pathFor: (file: File) => webUtils.getPathForFile(file),
+  })
+  if (process.isMainFrame) contextBridge.exposeInMainWorld('oceanDesktopHosts', {
+    read: () => ipcRenderer.invoke(DESKTOP_IPC.hostSelection),
+    select: (id: string) => ipcRenderer.invoke(DESKTOP_IPC.selectHost, id),
+    publishSessions: (publication: import('./remote-publication.ts').DesktopHostPublication) =>
+      ipcRenderer.invoke(DESKTOP_IPC.publishHostSessions, publication),
+    openSession: (hostId: string, sessionId: string) => ipcRenderer.invoke(DESKTOP_IPC.openHostSession, hostId, sessionId),
+    onOpenOwnedSession: (listener: (id: string) => void) => {
+      const notify = (_event: Electron.IpcRendererEvent, id: string): void => { listener(id) }
+      ipcRenderer.on(DESKTOP_IPC.openOwnedSession, notify)
+      return () => ipcRenderer.off(DESKTOP_IPC.openOwnedSession, notify)
+    },
+    subscribe: (listener: () => void) => {
+      const notify = (): void => { listener() }
+      ipcRenderer.on(DESKTOP_IPC.hostSelectionChanged, notify)
+      return () => ipcRenderer.off(DESKTOP_IPC.hostSelectionChanged, notify)
+    },
   })
   contextBridge.exposeInMainWorld('oceanDesktopBoot', {
     ready: () => ipcRenderer.invoke(DESKTOP_IPC.boot) as Promise<unknown>,

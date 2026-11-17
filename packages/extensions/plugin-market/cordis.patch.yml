@@ -1,0 +1,6 @@
+# Mounts our plugin market. The Host half holds the Loader row the client
+# module system serves the browser half for; the catalogue itself lives in
+# catalog.js, and every management action goes through @ocean/ocean-plugin-manager.
+- insert:
+    - id: ocean-plugin-market
+      name: '@ocean/ocean-plugin-market'

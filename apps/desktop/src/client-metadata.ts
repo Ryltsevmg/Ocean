@@ -14,6 +14,22 @@ export function desktopClientVersion(): string {
   return version
 }
 
+/** Release fields shared by the packaged shell and remote Host boot graph. */
+export interface DesktopClientRelease {
+  readonly version: string
+  readonly commit?: string
+}
+
+/**
+ * Read release metadata fixed into the Desktop build.
+ * @returns The exact version and the source commit when the build records one.
+ */
+export function desktopClientRelease(): DesktopClientRelease {
+  const version = desktopClientVersion()
+  const commit = process.env.OCEAN_CLIENT_COMMIT_HASH
+  return commit === undefined || commit === '' ? { version } : { version, commit }
+}
+
 /**
  * Sample the Desktop client identity for one Platform request.
  * @param locale - current resolved Desktop language.

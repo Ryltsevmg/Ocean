@@ -1,0 +1,33 @@
+{
+  "repository": "https://github.com/Ryltsevmg/ocean-plugins.git",
+  "commit": "aa7facb62a89303da6c75d4551b9233a51d7a6c1",
+  "directory": "plugins/plugin-market",
+  "captured": "2026-11-17",
+  "includesLocalChanges": true,
+  "files": {
+    "README.md": "64f09393ab15419c6f094b2b01201020eb77b50f1a032fae0f1ffe614947d248",
+    "catalog.js": "f7e0742adadfb081666dabeb485b31298a52286c44fcef5359f18a6df72b2866",
+    "client.js": "2486e98966ff72206c3ae066609ea710babd86ecc9a15faac1094f6a7f5fc7fe",
+    "cordis.patch.yml": "8e79eb774445e6cae7f8c268b712c7cc2882fbcdb4392de10cc99e8f0c2dacc5",
+    "docs/DETAIL.md": "9d61d981258bdcfa92973dbd7c5c85ff99b98ef1933957bba7f2f518841129a8",
+    "docs/preview.svg": "df6dd8d85a835c4ee28a22de81bd42a7e3ed2329954652046aa4e5dc3b98a495",
+    "icon.svg": "91246f8bd7c43dd08e59441e7f6fda228f6c8b2b7934bcc24d0080697ccde80a",
+    "index.js": "8fd25092f1a71a31ec61858703a45040465dfd106f96110fb277a3b7d34a8b14",
+    "locale/en.json": "babb52e92c2ad677eb1dbd891e750dd735b9a1d2d2bf5129fc6d2aaee69b611a",
+    "locale/ru.json": "fb6a0169b4ec9ffe2439b4007dc2ad3e76a4ff7e849793f569e9e835d36f3844",
+    "package.json": "99deba757d2c7bbaf76e23439181a207f0d3ec7eabeac137aa910f546d8363d6",
+    "scripts/build-client.mjs": "b13267f0bedf5ebde6e91071c78679e0f8efbb0405d7ad11010ed885dde0ea16",
+    "src/controller.js": "88b41d5a40c8e0f608af26e8927807af07e6e19f7d9ffdafa03f7f83cae41e9c",
+    "src/entry.js": "b710536129e379b6c3ca0ca0e825c3ee454fad7f7907bd738958b38bd41fb12a",
+    "src/locales.js": "9d4266f5e215627d1c5f6db9f809e62694c7607215538c4e25bd9906007a707f",
+    "src/ui.js": "985573576973bec13125f2099049b1f1f7dc1886e1d6db491b5f0816c2222e4d",
+    "src/view.js": "9dca76c3bf2d04720fee30c23b99f06a8a779d0680bd341a0fd55a63a66b0bbc",
+    "tests/catalog.test.mjs": "57751f3134a2f000cf41b024d07efaa025c3383f982cf04e02b2abc2683496dd",
+    "tests/client-bundle.test.mjs": "97849afa82d94084fb60b7f90dc2259ab20beb5bee81cff22a9da5511f1ee070",
+    "tests/client-module.test.mjs": "9a49dda0b4cd082ca5aead6b660d08ee25099b03d8b00315c9ac315a4c6ca252",
+    "tests/controller.test.mjs": "e1f25310e88b2796d59af690fd2d436fee5dea74465a04096930ae9248971fac",
+    "tests/manifest.test.mjs": "410bfa89880d50eb58df0550ab863d4bf09621e32be8c6aef41a35ed5c9b5e0b",
+    "tests/view.test.mjs": "2263c0d78e3dc4cca706f8512c587aaa9529592b970bdb3d2d49b539304aa6d9"
+  },
+  "movedTo": "Ocean/packages/extensions/plugin-market"
+}

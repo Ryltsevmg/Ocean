@@ -716,7 +716,7 @@ describe('ocean-subagent-ocean-sdk provider', () => {
       expect(() => ctx.subagents.getProvider('dsh-sdk')!.start!(resolved))
         .toThrow(expectedFailure('stage: initialize; category: configuration'))
       expect(createdHarnessOptions).toEqual([])
-      expect(warn).toHaveBeenCalledWith('subagent-ocean-sdk "ocean-sdk": child start failed: %o', expect.any(Error))
+      expect(warn).toHaveBeenCalledWith('subagent-ocean-sdk "dsh-sdk": child start failed: %o', expect.any(Error))
     } finally {
       warn.mockRestore()
       await ctx.fiber.dispose()
@@ -807,7 +807,7 @@ describe('ocean-subagent-ocean-sdk provider', () => {
       diagnostic: expectedFailure('stage: session-run; category: protocol'),
     })
     expect(warnings).toHaveLength(1)
-    expect(warnings[0]).toContain('subagent-ocean-sdk "ocean-sdk": child run failed (error)')
+    expect(warnings[0]).toContain('subagent-ocean-sdk "dsh-sdk": child run failed (error)')
     await run.dispose()
     await ctx.fiber.dispose()
   })

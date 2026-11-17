@@ -1,10 +1,11 @@
+import type { Principal } from '@ocean/ocean-typert-protocol'
 import { randomUUID } from 'node:crypto'
 import { once } from 'node:events'
 import { queryObjects } from 'node:v8'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import WebSocket, { type RawData } from 'ws'
 import { Context, symbols } from '@deepseek-ai/cordis'
-import { apply as applyConnection, inject as connectionInject } from '@ocean/ocean-client-connection'
+import { apply as applyConnection, inject as connectionInject, serverResponseSchema } from '@ocean/ocean-client-connection'
 import WebServer from '@ocean/ocean-host-webserver'
 import { MAX_TIMER_DELAY_MS } from '@ocean/ocean-timeout'
 import type { AppReady } from '@ocean/ocean-cmdline'
@@ -418,17 +419,22 @@ describe('Typert Remote streams', () => {
 
   it('validates the WebSocket heartbeat timer range, the stream inbox bound, and the compression mode', () => {
     expect(TypertGatewayService.Config({})).toEqual({
+      approvalTimeoutMs: 0,
       websocketHeartbeatIntervalMs: 2_000,
       streamInboxBytes: 262_144,
+      maxStreamsPerSocket: 256,
       websocketCompression: 'deflate',
     })
     expect(TypertGatewayService.Config({
       websocketHeartbeatIntervalMs: MAX_TIMER_DELAY_MS,
       streamInboxBytes: 1,
+      maxStreamsPerSocket: 1,
       websocketCompression: 'none',
     })).toEqual({
+      approvalTimeoutMs: 0,
       websocketHeartbeatIntervalMs: MAX_TIMER_DELAY_MS,
       streamInboxBytes: 1,
+      maxStreamsPerSocket: 1,
       websocketCompression: 'none',
     })
     for (const websocketHeartbeatIntervalMs of [0, 1.5, MAX_TIMER_DELAY_MS + 1]) {
@@ -1351,6 +1357,97 @@ describe('Typert Remote streams', () => {
     await unregister()
   })
 
+  it('continues the approval chain when the configured deadline expires without an answer', async () => {
+    const { ctx } = await setup(false, { approvalTimeoutMs: 20 })
+    const source = new RemoteEventSourceProbe()
+    const unregister = ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST)
+    const pending = pendingInvocation(ctx.extend())
+    try {
+      source.push({ ...pending.dispatch, event: 'approval/request' })
+      await expect(pending.outcome).resolves.toEqual({ kind: 'next' })
+      expect(ctx.typertGateway.getPendingRemoteEvents()).toEqual([])
+    } finally {
+      await unregister()
+    }
+  })
+
+  it('settles device approvals and questions once within the owning session', async () => {
+    const { ctx } = await setup(true)
+    const source = new RemoteEventSourceProbe()
+    const unregister = ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST)
+    const pending = pendingInvocation(ctx.extend())
+    source.push({ ...pending.dispatch, event: 'approval/request' })
+    const device = peerFor(ctx, {
+      kind: 'remote-device',
+      deviceId: '4d847b74-6686-4ed8-87d2-15bc76b8bef0' as Extract<Principal, { kind: 'remote-device' }>['deviceId'],
+    })
+    const otherDevice = peerFor(ctx, {
+      kind: 'remote-device',
+      deviceId: '6f308bab-7867-49e3-bd45-0b09647d63ac' as Extract<Principal, { kind: 'remote-device' }>['deviceId'],
+    })
+    const handler = ctx.connection.createSharedFetchHandler('/api')
+    async function rpc(method: string, args: Record<string, unknown>, peer = device): Promise<unknown> {
+      const response = await handler.fetch(new Request(`http://localhost/api/${method}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'client-request', rpcId: 'approval', method, payload: { args } }),
+      }), peer)
+      return response.json()
+    }
+    try {
+      await vi.waitFor(() => { expect(ctx.typertGateway.getPendingRemoteEvents()).toHaveLength(1) })
+      const listed = await rpc('deviceApproval/list', { sessionId: 'agent-1' })
+      const { result } = serverResponseSchema.parse(listed)
+      if (!result.ok || !Array.isArray(result.value)) throw new Error('expected a pending approval list')
+      const first: unknown = result.value[0]
+      if (typeof first !== 'object' || first === null || !('id' in first) || typeof first.id !== 'string') {
+        throw new Error('expected a pending approval ID')
+      }
+      const id = first.id
+      expect(await rpc('deviceApproval/answer', { sessionId: 'other', id, allow: true }))
+        .toMatchObject({ result: { ok: true, value: { accepted: false } } })
+      expect(await rpc('deviceApproval/answer', { sessionId: 'agent-1', id, allow: true }, ownerPeer(ctx)))
+        .toMatchObject({ result: { ok: false } })
+      const answer = { sessionId: 'agent-1', id, allow: true }
+      const replies = await Promise.all([
+        rpc('deviceApproval/answer', answer),
+        rpc('deviceApproval/answer', answer, otherDevice),
+      ])
+      expect(replies).toContainEqual(expect.objectContaining({ result: { ok: true, value: { accepted: true } } }))
+      expect(replies).toContainEqual(expect.objectContaining({ result: { ok: true, value: { accepted: false } } }))
+      await expect(pending.outcome).resolves.toEqual({ kind: 'result', value: 'allowed-once' })
+      expect(await rpc('deviceApproval/answer', { sessionId: 'agent-1', id, allow: false }))
+        .toMatchObject({ result: { ok: true, value: { accepted: false } } })
+      expect(pending.resolve).toHaveBeenCalledTimes(1)
+
+      const question = pendingInvocation(ctx.extend())
+      source.push({
+        ...question.dispatch,
+        event: 'user-questions/request',
+        request: { agent: question.dispatch.context.subject, questions: [
+          { id: 'q1', question: 'Choose a target', options: [{ label: 'Local' }, { label: 'Remote' }] },
+        ] },
+      })
+      await vi.waitFor(() => { expect(ctx.typertGateway.getPendingRemoteEvents()).toHaveLength(1) })
+      const questionList = serverResponseSchema.parse(await rpc('deviceQuestion/list', { sessionId: 'agent-1' }))
+      const questionId: unknown = questionList.result.ok && Array.isArray(questionList.result.value)
+        ? (questionList.result.value[0] as { id?: unknown } | undefined)?.id : undefined
+      if (typeof questionId !== 'string') throw new Error('expected a pending question ID')
+      const reply = { sessionId: 'agent-1', id: questionId, answer: { answers: [{ id: 'q1', selected: ['Remote'] }] } }
+      expect(await rpc('deviceQuestion/answer', { ...reply, answer: { answers: [{ id: 'q1', selected: ['Unlisted'] }] } }))
+        .toMatchObject({ result: { ok: false, error: { code: 'gateway/arguments-invalid' } } })
+      expect(await rpc('deviceQuestion/answer', { ...reply, sessionId: 'other' }))
+        .toMatchObject({ result: { ok: true, value: { accepted: false } } })
+      expect(await rpc('deviceQuestion/answer', reply))
+        .toMatchObject({ result: { ok: true, value: { accepted: true } } })
+      expect(await rpc('deviceQuestion/answer', reply, otherDevice))
+        .toMatchObject({ result: { ok: true, value: { accepted: false } } })
+      await expect(question.outcome).resolves.toEqual({ kind: 'result', value: reply.answer })
+    } finally {
+      await unregister()
+    }
+  })
+
   it('fans one scoped waterfall out and accepts the first Client result', async () => {
     const { ctx } = await setup(true)
     const source = new RemoteEventSourceProbe()
@@ -1468,7 +1565,9 @@ describe('Typert Remote streams', () => {
     const pending = pendingInvocation(agent, undefined, 'before-connect', agentId('agent-late-client'))
 
     source.push(pending.dispatch)
-    await vi.waitFor(() => { expect(randomUuid).toHaveBeenCalledTimes(1) })
+    await vi.waitFor(() => { expect(ctx.typertGateway.getPendingRemoteEvents()).toContainEqual({
+      event: 'fixture/approval', agentId: agentId('agent-late-client'),
+    }) })
 
     const client = await openEventClient(ctx, 'events-first-client')
     await vi.waitFor(() => { expect(deliveredInvocation(client)).toBeDefined() })

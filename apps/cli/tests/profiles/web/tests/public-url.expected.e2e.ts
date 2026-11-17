@@ -1,6 +1,6 @@
 /** Built Web-profile acceptance for concrete bind addresses, the advertised public root, and browser authentication. */
 
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { request as httpRequest, type IncomingMessage } from 'node:http'
 import { request as httpsRequest } from 'node:https'
 import { tmpdir } from 'node:os'
@@ -41,12 +41,12 @@ type WebChild = ReturnType<typeof spawnWeb>
 type StoppedWeb = Awaited<WebChild>
 
 /** Start one keyless Web process with an outer lifetime deadline. */
-function spawnWeb(root: string, patch: string, interrupt: string, flags: string[]) {
+function spawnWeb(root: string, patch: string, interrupt: string, flags: string[], profile: 'web' | 'serve') {
   return execa(process.execPath, [
     oceanBin,
-    '--profile', 'web',
+    '--profile', profile,
     '--patch', patch,
-    '--no-open',
+    ...profile === 'web' ? ['--no-open'] : [],
     '--port', '0',
     ...flags,
   ], {
@@ -81,9 +81,10 @@ interface RunningWeb {
  * The marker plugin also polls for the interrupt file and emits `SIGTERM` on
  * the child's own process, because Windows has no deliverable SIGTERM.
  */
-async function bootWeb(root: string, flags: string[]): Promise<RunningWeb> {
+async function bootWeb(root: string, flags: string[], profile: 'web' | 'serve' = 'web'): Promise<RunningWeb> {
   const marker = join(root, 'listen-port.mjs')
   const interrupt = join(root, 'interrupt')
+  rmSync(interrupt, { force: true })
   writeFileSync(marker, [
     "import { existsSync } from 'node:fs'",
     "export const name = 'public-url-listen-port'",
@@ -101,7 +102,7 @@ async function bootWeb(root: string, flags: string[]): Promise<RunningWeb> {
   ].join('\n'))
   const patch = join(root, 'extra.yml')
   writeFileSync(patch, `- insert:\n    - name: ${JSON.stringify(pathToFileURL(marker).href)}\n`)
-  const child = spawnWeb(root, patch, interrupt, flags)
+  const child = spawnWeb(root, patch, interrupt, flags, profile)
   const lines = createInterface({ input: child.stdout })
   const ready = Promise.withResolvers<RunningWeb>()
   let stopping: Promise<StoppedWeb> | undefined
@@ -113,7 +114,8 @@ async function bootWeb(root: string, flags: string[]): Promise<RunningWeb> {
   }
   lines.on('line', (line) => {
     if (line.startsWith('public-url-listen-port: ')) port = Number(line.slice('public-url-listen-port: '.length))
-    if (line.startsWith('ocean web: http')) startup = new URL(line.slice('ocean web: '.length))
+    const prefix = `ocean ${profile}: `
+    if (line.startsWith(prefix + 'http')) startup = new URL(line.slice(prefix.length))
     announced()
   })
   void child.then((result) => {
@@ -352,5 +354,65 @@ describe.skipIf(!builtArtifactsExist)('ocean Web profile bind address and advert
       expectCleanExit(stopped)
       expect(stopped.stderr).not.toContain('plain HTTP')
     })
+  })
+})
+
+describe.skipIf(!builtArtifactsExist || process.platform === 'win32')('ocean serve device authorization', () => {
+  it('retains recorded history and device revocation across a restart', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'ocean-serve-'))
+    let host: RunningWeb | undefined
+    try {
+      const tls = await materializeTlsFixture(root)
+      const socket = join(root, 'admin.sock')
+      const home = join(root, 'home')
+      const { seedSession } = await import('../../../../../../apps/web/tests/scaffold.ts')
+      const recording = readFileSync(join(repoRoot, 'snapshots/web/fresh-round-trip/session.v4.jsonl'), 'utf8')
+      const sessionId = await seedSession({ workspaceCwd: root, harnessHome: home, persistenceRoot: join(home, 'sessions') },
+        recording, 'remote-recorded-history', 'standard')
+      const flags = ['--tls-cert', tls.certFile, '--tls-key', tls.keyFile, '--device-admin-socket', socket]
+      host = await bootWeb(root, flags, 'serve')
+      expect(host.startup.search).toBe('')
+      const run = (args: string[], token?: string) => execa(process.execPath, [oceanBin, ...args], {
+        cwd: root,
+        env: {
+          OCEAN_HOME: join(root, 'home'),
+          OCEAN_TELEMETRY_DISABLED: '1',
+          NODE_EXTRA_CA_CERTS: tls.certFile,
+        },
+        input: token ?? '',
+        reject: false,
+        timeout: 15_000,
+      })
+      const admin = (...args: string[]) => run(['remote-device', '--socket', socket, ...args])
+      const issue = async (label: string) => {
+        const reply = await admin('create', label)
+        expect(reply.exitCode).toBe(0)
+        return JSON.parse(reply.stdout) as { id: string; token: string }
+      }
+      const list = (url: URL, token: string) => run(['connect', '--url', url.href, '--token-stdin', 'list'], token)
+      const laptop = await issue('Laptop')
+      const phone = await issue('Phone')
+      expect((await list(host.startup, laptop.token)).exitCode).toBe(0)
+      expect((await list(host.startup, phone.token)).exitCode).toBe(0)
+      expect((await admin('revoke', laptop.id)).exitCode).toBe(0)
+      expect((await list(host.startup, laptop.token)).exitCode).toBe(1)
+      expect((await list(host.startup, phone.token)).exitCode).toBe(0)
+      expectCleanExit(await host.stop())
+      expect((await admin('list')).exitCode).toBe(1)
+      host = await bootWeb(root, flags, 'serve')
+      expect((await list(host.startup, laptop.token)).exitCode).toBe(1)
+      expect((await list(host.startup, phone.token)).exitCode).toBe(0)
+      const history = await run(['connect', '--url', host.startup.href, '--token-stdin', 'history', sessionId], phone.token)
+      expect(history.exitCode).toBe(0)
+      expect(history.stdout).toContain('echo WEB_E2E_OK')
+      expect(history.stdout).toMatch(/"text"\s*:\s*"DONE"/u)
+      expectCleanExit(await host.stop())
+    } finally {
+      try {
+        await host?.stop()
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    }
   })
 })

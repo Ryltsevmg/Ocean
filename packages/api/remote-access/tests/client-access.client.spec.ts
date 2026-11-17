@@ -44,6 +44,22 @@ describe('ClientAccessState', () => {
     expect(state.global('session/list').getSnapshot()).toBe(false)
   })
 
+  it('exposes unconditional global actions on scoped controls without inheriting ordinary global grants', () => {
+    const state = new ClientAccessState(GRANTED)
+    const create = state.resource('test-desk', 'd1', 'session/create')
+    expect(state.resource('test-desk', 'd1', 'session/list').getSnapshot()).toBe(false)
+    const grant = { resource: { kind: 'global' } as const, actions: ['session/list', 'session/create'], allResources: ['session/create'] }
+    const baseline = { type: 'baseline', owner: false, grants: [grant] } as const
+    expect(parseInjectedBaseline(baseline)).toEqual(baseline)
+    expect(() => parseInjectedBaseline({ ...baseline, grants: [{ ...grant, allResources: ['ungranted'] }] })).toThrow(TypeError)
+    state.replace(baseline)
+    expect(create.getSnapshot()).toBe(true)
+    state.update({ type: 'remove', resource: grant.resource })
+    expect(create.getSnapshot()).toBe(false)
+    state.update({ type: 'upsert', grant })
+    expect(create.getSnapshot()).toBe(true)
+  })
+
   it('starts from the injected baseline before any stream frame', () => {
     expect(new ClientAccessState({ type: 'baseline', owner: true }).global('session/create').getSnapshot()).toBe(true)
     const granted = new ClientAccessState(GRANTED)

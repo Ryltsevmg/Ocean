@@ -12,10 +12,20 @@
     "src/client/random-uuid.ts",
     "src/client/rpc.ts",
     "src/connect-protocol.ts",
+    "src/device-admin.ts",
+    "src/device-bootstrap.ts",
+    "src/device-client.ts",
+    "src/device-host-identity.ts",
+    "src/device-login.ts",
+    "src/device-tokens.ts",
+    "src/device.ts",
+    "src/host-config.ts",
     "src/http-bridge.ts",
     "src/index.ts",
+    "src/launch-identity.ts",
     "src/loopback-hostname.ts",
     "src/peer.ts",
+    "src/protocol.ts",
     "src/recovery-config.ts",
     "src/rpc-host.ts",
     "src/rpc-schema.ts",
@@ -48,6 +58,9 @@
     },
     {
       "path": "../../util/brand"
+    },
+    {
+      "path": "../../util/error"
     }
   ]
 }

@@ -1,5 +1,6 @@
 /**
- * Sidebar shell: column geometry and global panel navigation.
+ * Sidebar shell: column geometry and global panel navigation. The panel rows are
+ * the automation panel first, then Plugins and the registered plugin panels.
  * Collapse is a slide plus crossfade:
  * content freezes at its expanded width (inline style) and fades out in place
  * while the sliding column (AppFrame grid tracks) clips it — nothing reflows
@@ -66,7 +67,6 @@ export function SidebarRoot({
   toggleSidebar,
   trackEntryClick,
   selectPanel,
-  setPinned,
   usePanels,
   usePanelInfo,
   renderFactorySlot,
@@ -75,7 +75,13 @@ export function SidebarRoot({
   t,
   renderSlot,
 }: SidebarRootComponentProps) {
-  const panels = usePanels(snapshot => snapshot).filter(panel => panel.id === 'schedules')
+  // Automation and Plugins precede feature-owned panel registrations.
+  const registeredPanels = usePanels(snapshot => snapshot)
+  const panels = [
+    ...registeredPanels.filter(({ id }) => id === 'schedules'),
+    ...registeredPanels.filter(({ id }) => id === 'plugins'),
+    ...registeredPanels.filter(({ id }) => id !== 'schedules' && id !== 'plugins'),
+  ]
   const shortcut = useShortcuts(rows => rows.find(row => row.id === 'sidebar.left.toggle'))
   const newShortcut = useShortcuts(rows => rows.find(row => row.id === 'session.new'))
   // A page whose access snapshot excludes starting a Session offers no New Session affordance.
@@ -306,6 +312,8 @@ export function SidebarRoot({
         </Tooltip>
       )}
 
+      {renderSlot('sidebar.hosts', { wide })}
+
       <div className={css.scrollRegion}>
         <div
           ref={scrollHandoff.bindViewportRef}
@@ -314,8 +322,7 @@ export function SidebarRoot({
         >
           {panels.length > 0 && <nav className={css.panelList} aria-label={t('panels.label')}>
             {panels.map(({ id, label }) => <PanelRow key={id} id={id} label={label} wide={wide}
-              unpinLabel={t('panels.unpin', { name: label })} unpinTooltip={t('panels.unpinTooltip')}
-              canUnpin={false} setPinned={setPinned} usePanelInfo={usePanelInfo} selectPanel={selectPanel}
+              usePanelInfo={usePanelInfo} selectPanel={selectPanel}
               trackEntryClick={trackEntryClick} renderFactorySlot={renderFactorySlot} />)}
           </nav>}
           <div className={css.regionArea}>

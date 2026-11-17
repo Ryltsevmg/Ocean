@@ -43,7 +43,7 @@ Subpath exports keep their path: `@cordisjs/plugin-loader/repository` becomes `@
 
 ## Applying, verifying, and reverting
 
-[`scripts/rescope-vendor.ts`](../scripts/rescope-vendor.ts) owns the mapping above and performs the rename, so no reference is renamed by hand:
+[`scripts/rescope-vendor.ts`](../scripts/rescope-vendor.ts) owns the mapping above and performs the rename, so no reference is renamed by hand: Its generic pass reads current tracked files and skips paths deleted from the working tree; required exact-edit sites and postconditions still fail when missing.
 
 ```sh
 pnpm run rescope-vendor            # report what would change

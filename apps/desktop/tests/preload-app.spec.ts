@@ -205,6 +205,66 @@ it('withholds the product API from same-origin child frames', async () => {
   expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('oceanDesktop', { protocolVersion: 1 })
 })
 
+it.each([
+  ['dsh-app://shell/remote-connection.html', true, true],
+  ['dsh-app://shell/remote-connection.html', false, false],
+  ['dsh-app://shell/remote-connection.html?other', true, false],
+  ['dsh-app://app/remote-connection.html', true, false],
+  ['https://shell/remote-connection.html', true, false],
+] as const)('scopes remote credentials to the exact form main frame (%s, %s)', async (url, mainFrame, exposed) => {
+  vi.stubGlobal('location', new URL(url))
+  vi.stubGlobal('process', { ...process, isMainFrame: mainFrame })
+  await import('../src/preload-app.ts')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'oceanRemoteForm')?.[1] as
+    {
+      load(): Promise<unknown>
+      connect(address: string, token: string, remember: boolean): Promise<unknown>
+      forget(address: string): Promise<unknown>
+      close(): Promise<unknown>
+    } | undefined
+  expect(api !== undefined).toBe(exposed)
+  if (api === undefined) return
+  await api.load()
+  await api.connect('https://host.example/', 'fixture-token', false)
+  await api.forget('https://host.example/')
+  await api.close()
+  expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+    [DESKTOP_IPC.remoteForm], [DESKTOP_IPC.remoteConnect, 'https://host.example/', 'fixture-token', false],
+    [DESKTOP_IPC.remoteForget, 'https://host.example/'], [DESKTOP_IPC.remoteClose],
+  ])
+})
+
+it('publishes only through the application main frame and releases Host subscriptions', async () => {
+  vi.stubGlobal('location', new URL('dsh-app://app/'))
+  vi.stubGlobal('process', { ...process, isMainFrame: true, argv: [...process.argv, '--ocean-remote-host'] })
+  await import('../src/preload-app.ts')
+  const names = electron.contextBridge.exposeInMainWorld.mock.calls.map(([name]) => name as string)
+  expect(names).not.toContain('oceanRemoteForm')
+  expect(names).not.toContain('__OCEAN_HOST_PATHS__')
+  expect(names).not.toContain('__OCEAN_DIRECTORY_PICKER__')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'oceanDesktopHosts')![1] as {
+    publishSessions(publication: object): Promise<unknown>
+    subscribe(listener: () => void): () => void
+    onOpenOwnedSession(listener: (id: string) => void): () => void
+  }
+  const publication = { revision: 1, sessions: [], pendingApprovals: 2, pendingQuestions: 3 }
+  await api.publishSessions(publication)
+  expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(DESKTOP_IPC.publishHostSessions, publication)
+  const listener = vi.fn()
+  const off = api.subscribe(listener)
+  const openOff = api.onOpenOwnedSession(listener)
+  off(); openOff()
+  for (const channel of [DESKTOP_IPC.hostSelectionChanged, DESKTOP_IPC.openOwnedSession]) {
+    const callback = electron.ipcRenderer.on.mock.calls.find(([name]) => name === channel)![1] as (...args: unknown[]) => void
+    expect(electron.ipcRenderer.off).toHaveBeenCalledWith(channel, callback)
+  }
+  vi.resetModules()
+  electron.contextBridge.exposeInMainWorld.mockClear()
+  vi.stubGlobal('process', { ...process, isMainFrame: false })
+  await import('../src/preload-app.ts')
+  expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'oceanDesktopHosts')).toBe(false)
+})
+
 it('forwards only the focused product iframe and releases native input subscriptions', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')

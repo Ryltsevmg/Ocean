@@ -51,8 +51,9 @@ type WindowFixture = EventEmitter & Pick<BrowserWindow, 'isDestroyed' | 'isFocus
   webContents: ContentsFixture
 }
 type InvokeFixture = { sender: object; senderFrame: object | null }
-type KeyboardFixture = Omit<ReturnType<typeof installDesktopShortcuts>, 'attach' | 'attachGuest'> & {
+type KeyboardFixture = Omit<ReturnType<typeof installDesktopShortcuts>, 'attach' | 'attachGuest' | 'attachView'> & {
   attach(window: WindowFixture): void
+  attachView(window: WindowFixture, contents: ContentsFixture): () => void
   attachGuest(window: WindowFixture, guest: ContentsFixture, name: DesktopBrowserLeaseId): () => void
 }
 // Electron is substituted at module load; fixtures implement the native members exercised by this installer.
@@ -60,6 +61,7 @@ const installFixture = installDesktopShortcuts as (
   getWindow: () => WindowFixture | undefined, userData: string,
   platform: Parameters<typeof installDesktopShortcuts>[2], updateMenu: () => void,
   overlayInput: (window: WindowFixture) => { readonly revision: number; readonly blocked: boolean },
+  getActiveContents?: () => ContentsFixture | undefined,
 ) => KeyboardFixture
 type GuestsFixture = {
   acquire(owner: ContentsFixture, workspace: unknown): DesktopBrowserReservation
@@ -91,9 +93,10 @@ async function fixture(platform: 'macos' | 'windows' | 'linux' = 'macos') {
   const window = Object.assign(new EventEmitter(), { webContents: contents, isDestroyed: vi.fn(() => false),
     isFocused: vi.fn(() => true), isEnabled: vi.fn(() => true), close: vi.fn() })
   let current: WindowFixture | undefined = window
+  let active: ContentsFixture = contents
   const updateMenu = vi.fn()
   const updateOverlays = new DesktopUpdateOverlays()
-  const keyboard = installFixture(() => current, root, platform, updateMenu, window => updateOverlays.input(window))
+  const keyboard = installFixture(() => current, root, platform, updateMenu, window => updateOverlays.input(window), () => active)
   keyboard.attach(current)
   onTestFinished(() => { keyboard.dispose() })
   const handlers = new Map<string, (event: InvokeFixture, ...args: unknown[]) => unknown>(
@@ -104,8 +107,28 @@ async function fixture(platform: 'macos' | 'windows' | 'linux' = 'macos') {
     { id: 'sidebar.left.toggle' as ShortcutCommandId, defaults: desktopDefaults({ code: 'KeyB', modifiers: ['primary'] }) },
   ]
   return { keyboard, window, updateOverlays, contents, frame, event, handlers, call, definitions, updateMenu,
-    detach: () => { current = undefined } }
+    detach: () => { current = undefined }, activate: (view: ContentsFixture) => { active = view } }
 }
+
+it('shares shortcuts with attached views and sends the close command only to the selected view', async () => {
+  const f = await fixture()
+  const snapshot = await f.call<ShortcutConfigSnapshot>(DESKTOP_IPC.shortcutsGet, f.definitions)
+  const remote = Object.assign(new EventEmitter(), { mainFrame: f.frame, focusedFrame: f.frame,
+    isDestroyed: () => false, isFocused: () => true, send: vi.fn(),
+    setIgnoreMenuShortcuts: vi.fn(), focus: vi.fn(), sendInputEvent: vi.fn() })
+  const release = f.keyboard.attachView(f.window, remote)
+  const event = { sender: remote, senderFrame: remote.mainFrame }
+  const read = f.handlers.get(DESKTOP_IPC.shortcutsGet)!
+  expect(await read(event, [])).toEqual(snapshot)
+  f.activate(remote)
+  const menu = f.keyboard.fileMenu({ fileMenu: 'File', closePage: 'Close' }).submenu as Electron.MenuItemConstructorOptions[]
+  const close = menu[0]?.click as (() => void) | undefined
+  close?.()
+  expect(remote.send).toHaveBeenCalledWith(DESKTOP_IPC.shortcutsInput, expect.objectContaining({ commandId: 'page.close' }))
+  expect(f.contents.send).not.toHaveBeenCalledWith(DESKTOP_IPC.shortcutsInput, expect.anything())
+  release()
+  await expect(async () => await read(event, [])).rejects.toThrow('rejected sender')
+})
 
 function updateOverlayFixture(f: Awaited<ReturnType<typeof fixture>>) {
   const platform = vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')

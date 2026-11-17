@@ -102,9 +102,9 @@ describe('RepositoryCleaner', () => {
 
     await new RepositoryCleaner(root).clean()
 
-    expect(readdirSync(join(hoisted, '@deepseek-ai'))).toEqual(['ocean-live'])
-    expect(readdirSync(hoisted)).toEqual(['@deepseek-ai'])
-    expect(readdirSync(join(root, 'node_modules/@deepseek-ai'))).toEqual([])
+    expect(readdirSync(join(hoisted, '@ocean'))).toEqual(['ocean-live'])
+    expect(readdirSync(hoisted)).toEqual(['@ocean'])
+    expect(readdirSync(join(root, 'node_modules/@ocean'))).toEqual([])
     expect(existsSync(join(hoisted, '@ocean/ocean-live/package.json'))).toBe(true)
   })
 

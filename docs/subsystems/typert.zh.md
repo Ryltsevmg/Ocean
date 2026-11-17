@@ -210,6 +210,9 @@ interface PrincipalMap {
 }
 ```
 
+Connection 为 `PrincipalMap` 扩展 `remote-device: { readonly kind: 'remote-device'; readonly deviceId: DeviceId }`。[设备标识](credentials.zh.md#remote-device-credentials)指向已签发的凭据记录；principal 不包含持有者令牌、校验值或会话 Cookie。Host 从已认证的登录生成它，Gateway 在解析目标服务之前应用已注册的远程设备资源策略。
+
+
 ```ts type-equiv
 /** One caller identity; the authorization layer reads only this. */
 type Principal = PrincipalMap[keyof PrincipalMap]

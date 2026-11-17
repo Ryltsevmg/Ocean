@@ -11,6 +11,8 @@ English | [中文](README.zh.md)
 
 This package registers the Ocean sidebar mark and wordmark. Registration does not depend on a build profile. It contributes browser presentation only, with no home-background animation or model requests.
 
+The wordmark receives the locale-owned `brand.localBuild` name from the common dictionary; its SVG remains decorative.
+
 ## Table of Contents
 
 - [Use this package](#use-this-package)

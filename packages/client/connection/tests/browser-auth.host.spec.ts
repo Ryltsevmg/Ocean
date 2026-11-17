@@ -1,6 +1,7 @@
 /** Browser launch-token and persistent-cookie behavior. */
 
 import { createHmac } from 'node:crypto'
+import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CredentialProvider } from '@ocean/ocean-credentials'
 import type { PeerId } from '@ocean/ocean-typert-protocol'
@@ -55,7 +56,7 @@ function credentials(store: RecordCredentials): CredentialProvider {
 function createAuth(
   store: RecordCredentials,
   maxAgeDays = 30,
-  processOwner: object = {},
+  processOwner = new Context(),
 ): Promise<BrowserAuth> {
   return BrowserAuth.create(processOwner, credentials(store), maxAgeDays)
 }
@@ -162,7 +163,7 @@ describe('API credentials', () => {
 describe('BrowserAuth', () => {
   it('mints one process token and a persistent authority-bound cookie', async () => {
     const store = new RecordCredentials()
-    const processOwner = {}
+    const processOwner = new Context()
     const first = await createAuth(store, 30, processOwner)
     const login = exchange(first)
     expect(login.cookie).toMatch(/^dsh-auth-/u)

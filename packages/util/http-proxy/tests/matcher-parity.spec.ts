@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { installProxyFromEnvironment } from '../src/index.ts'
 import { proxyForUrl, resolveProxyPolicy } from '../src/policy.ts'
+import { withFixtureDnsFailure } from './dns-fixture.ts'
 
 /**
  * `proxyForUrl` answers where a URL goes; these cases check that answer against where a real `fetch`
@@ -59,17 +60,21 @@ describe('bypass matcher parity', () => {
     const url = new URL(`http://probe.invalid${path}`)
     const env = proxyEnv(noProxy)
     const { policy } = resolveProxyPolicy(env)
-    const dispose = await installProxyFromEnvironment(env, () => undefined)
-    try {
-      // A bypassed target has no route here, so the fetch fails; a proxied one reaches the recorder
-      // in milliseconds. The deadline bounds the failing path, whose DNS miss is otherwise as slow
-      // as the machine's resolver decides — and only that path, so it cannot mask a proxied hop.
-      await fetch(url, { signal: AbortSignal.timeout(1500) }).then(response => response.text()).catch(() => undefined)
-      const agentProxied = seen.length > 0
-      expect({ ours: proxyForUrl(policy, url) !== undefined, agent: agentProxied })
-        .toEqual({ ours: !bypassed, agent: !bypassed })
-    } finally {
-      await dispose()
-    }
+    await withFixtureDnsFailure('probe.invalid', async () => {
+      const dispose = await installProxyFromEnvironment(env, () => undefined)
+      try {
+        const request = fetch(url)
+        if (bypassed) {
+          await expect(request).rejects.toMatchObject({ cause: { code: 'ENOTFOUND', hostname: 'probe.invalid' } })
+        } else {
+          await expect(request.then(response => response.text())).resolves.toBe('VIA-PROXY')
+        }
+        expect(seen).toEqual(bypassed ? [] : [url.href])
+        expect({ ours: proxyForUrl(policy, url) !== undefined, agent: seen.length > 0 })
+          .toEqual({ ours: !bypassed, agent: !bypassed })
+      } finally {
+        await dispose()
+      }
+    })
   })
 })

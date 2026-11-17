@@ -83,6 +83,26 @@ describe('Session log export Fetch route', () => {
     ), connection.browserPeer)).status).toBe(404)
   })
 
+  it('lets authenticated devices export logs through GET and HEAD only', async () => {
+    const { connection, dispose } = await mounted(true)
+    const peer = connection.createPeer({ principal: {
+      kind: 'remote-device',
+      deviceId: '00000000-0000-4000-8000-000000000001' as Extract<Parameters<HostConnectionService['createPeer']>[0]['principal'], { kind: 'remote-device' }>['deviceId'],
+    } })
+    const shared = connection.createSharedFetchHandler('/api')
+    const url = `http://host${SESSION_LOG_EXPORT_PATH}?sessionId=session-1`
+    try {
+      const response = await shared.fetch(new Request(url), peer)
+      expect(response.status).toBe(200)
+      expect(unzipSync(new Uint8Array(await response.arrayBuffer()))[SESSION_LOG_FILENAME]).toBeDefined()
+      expect((await shared.fetch(new Request(url, { method: 'HEAD' }), peer)).status).toBe(200)
+      for (const method of ['POST', 'DELETE']) expect((await shared.fetch(new Request(url, { method }), peer)).status).toBe(404)
+    } finally {
+      await peer.dispose()
+      await dispose()
+    }
+  })
+
   it('validates the query before reporting missing export services', async () => {
     const { connection, dispose } = await mounted(false)
     const shared = connection.createSharedFetchHandler('/api')

@@ -3,6 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import { HostConnectionService } from '@ocean/ocean-client-connection'
+import type { BrowserAuth } from '@ocean/ocean-client-connection/src/browser-auth.ts'
+import type { PrincipalMap } from '@ocean/ocean-typert-protocol'
 import { FsError, FsTargetKey, FsVersion } from '@ocean/ocean-fs'
 import { LocalFileSystem } from '@ocean/ocean-fs-local'
 import { SessionMediaReferences } from '../src/media-references.ts'
@@ -62,6 +65,33 @@ describe('SessionMediaReferences /api/file', () => {
       dispose: () => ctx.fiber.dispose(),
     }
   }
+
+  it('serves device media reads while rejecting writes and unrelated paths', async () => {
+    const path = join(root, 'device.png')
+    await writeFile(path, PNG_BYTES)
+    const ctx = new Context()
+    contexts.push(ctx)
+    ctx.provide('attachments', { imageLimits: { maxImageBytes: DEFAULT_LIMIT } } as never)
+    await ctx.plugin(LocalFileSystem, { cwd: root }).await()
+    const connection = new HostConnectionService(ctx, [], {} as BrowserAuth)
+    await ctx.plugin(SessionMediaReferences).await()
+    const peer = connection.createPeer({ principal: {
+      kind: 'remote-device', deviceId: '00000000-0000-4000-8000-000000000001' as PrincipalMap['remote-device']['deviceId'],
+    } })
+    const handler = connection.createSharedFetchHandler('/api')
+    const url = `http://host/api/file?path=${encodeURIComponent(path)}`
+    const redirect = await handler.fetch(new Request(url), peer)
+    expect(redirect.status).toBe(302)
+    const versioned = new URL(redirect.headers.get('location')!, url)
+    const image = await handler.fetch(new Request(versioned), peer)
+    expect(image.status).toBe(200)
+    expect(await responseBytes(image)).toEqual(PNG_BYTES)
+    expect((await handler.fetch(new Request(versioned, { method: 'HEAD' }), peer)).status).toBe(200)
+    for (const method of ['POST', 'DELETE']) {
+      expect((await handler.fetch(new Request(versioned, { method }), peer)).status).toBe(404)
+    }
+    expect((await handler.fetch(new Request('http://host/api/file/other'), peer)).status).toBe(404)
+  })
 
   it('serves the inclusive image cap and refuses larger images for GET, HEAD and Range', async () => {
     const route = await mount(PNG_BYTES.length)

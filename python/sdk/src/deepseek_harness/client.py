@@ -68,6 +68,7 @@ class HarnessClient:
         self._stderr_thread: threading.Thread | None = None
         self._question_tasks: dict[str, tuple[threading.Event, threading.Thread]] = {}
         self._closing = False
+        self._terminal_error: BaseException | None = None
         self._user_question_handler: UserQuestionHandler | None = None
 
     def __enter__(self) -> "HarnessClient":
@@ -84,6 +85,7 @@ class HarnessClient:
             self._session_parents.clear()
             self._question_tasks.clear()
             self._closing = False
+            self._terminal_error = None
             self._user_question_handler = self.config.on_user_question
         env = os.environ.copy()
         if self.config.env:
@@ -104,7 +106,7 @@ class HarnessClient:
         self._start_stderr_thread()
 
     def close(self) -> None:
-        """Close the runtime after a bounded opportunity to flush durable state."""
+        """Close after bounded durable flushing; fail subscriptions even before start()."""
         with self._lock:
             self._closing = True
             question_tasks = list(self._question_tasks.values())
@@ -112,6 +114,7 @@ class HarnessClient:
                 cancelled.set()
         proc = self._proc
         if proc is None:
+            self._fail_waiters(self._runtime_closed_error("Ocean runtime closed"))
             return
         shutdown_completed = False
         try:
@@ -300,10 +303,16 @@ class HarnessClient:
         self,
         notification_filter: NotificationFilter | None = None,
     ) -> "NotificationSubscription":
+        """Subscribe to notifications; a terminated runtime produces an already-failed handle."""
         subscription_id = str(uuid.uuid4())
         notifications: queue.Queue[Notification | BaseException] = queue.Queue()
         with self._lock:
-            self._notification_subscribers[subscription_id] = (notifications, notification_filter)
+            if self._terminal_error is not None:
+                notifications.put(self._terminal_error)
+            elif self._closing:
+                notifications.put(TransportClosedError("Ocean runtime is closing"))
+            else:
+                self._notification_subscribers[subscription_id] = (notifications, notification_filter)
         return NotificationSubscription(self, subscription_id, notifications)
 
     def subscribe_session_notifications(self, session_id: str) -> "NotificationSubscription":
@@ -347,6 +356,8 @@ class HarnessClient:
         temp_subscription: NotificationSubscription | None = None
         subscription = notification_subscription
         with self._lock:
+            if self._terminal_error is not None:
+                raise self._terminal_error
             self._responses[request_id] = waiter
         if on_notification is not None and subscription is None:
             temp_subscription = self.subscribe_notifications(notification_filter)
@@ -500,6 +511,9 @@ class HarnessClient:
 
     def _fail_waiters(self, exc: BaseException) -> None:
         with self._lock:
+            if self._terminal_error is not None:
+                return
+            self._terminal_error = exc
             for cancelled, _thread in self._question_tasks.values():
                 cancelled.set()
             waiters = list(self._responses.values())
@@ -698,12 +712,13 @@ class NotificationSubscription:
         self._client._unsubscribe_notifications(self._subscription_id)
 
     def next(self, timeout_seconds: float | None = None) -> Notification:
-        """Read one notification; an optional timeout stops only this local wait."""
+        """Read one notification, then retain terminal errors; timeout bounds only this wait."""
         try:
             item = self._notifications.get(timeout=timeout_seconds)
         except queue.Empty as exc:
             raise TimeoutError("timed out waiting for an SDK notification") from exc
         if isinstance(item, BaseException):
+            self._notifications.put(item)
             raise item
         return item
 
@@ -714,6 +729,7 @@ class NotificationSubscription:
             except queue.Empty:
                 return
             if isinstance(item, BaseException):
+                self._notifications.put(item)
                 raise item
             on_notification(item)
 

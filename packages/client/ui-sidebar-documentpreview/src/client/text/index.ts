@@ -1,11 +1,10 @@
 /** Plain text implementation registered through the same document extension points as other viewers. */
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '../index.ts'
-import type { DocumentPreviewDefinition } from '../document/registry.ts'
+import type { DocumentPreviewDefinition } from '../contract/preview.ts'
 import { TextBody } from './TextBody.tsx'
 
-/** Stable plain-text implementation identity within this package. */
-export const PLAIN_BODY_ID = '@ocean/ocean-client-ui-sidebar-documentpreview/text'
+import { PLAIN_BODY_ID } from '../contract/preview.ts'
 
 /**
  * Describe the plain-text fallback.

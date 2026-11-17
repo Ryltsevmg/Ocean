@@ -6,6 +6,13 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
+  'hosts.local': '本地主机',
+  'hosts.pending': '等待：{approvals} 项审批，{questions} 个问题',
+  'hosts.pendingUnknown': '正在同步待处理请求…',
+  'hosts.error.load': '无法读取主机。重试',
+  'hosts.error.select': '无法切换主机。重试',
+  'hosts.error.publish': '无法发布待处理请求。重试',
+  'hosts.retry': '重试',
   'defaultWorkspace.failed': '无法创建默认工作区，请通过“选择工作区”选择文件夹',
   'draft.workspaceRequired': '请先选择工作区',
   'draft.initializationFailed': '暂时无法填入草稿，请稍后重试',
@@ -132,6 +139,13 @@ export type WorkspaceKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
+  'hosts.local': 'Local host',
+  'hosts.pending': 'Waiting: {approvals} approvals, {questions} questions',
+  'hosts.pendingUnknown': 'Syncing pending requests…',
+  'hosts.error.load': 'Could not read hosts. Retry',
+  'hosts.error.select': 'Could not switch hosts. Retry',
+  'hosts.error.publish': 'Could not publish pending requests. Retry',
+  'hosts.retry': 'Retry',
   'defaultWorkspace.failed': 'Unable to create default workspace. Use Choose workspace to select a folder.',
   'draft.workspaceRequired': 'Choose a workspace first.',
   'draft.initializationFailed': 'Could not fill the draft. Please try again shortly.',
@@ -255,6 +269,13 @@ export const en = {
 
 /** Japanese copy, checked against the English keys. */
 export const ja = {
+  'hosts.local': 'ローカルホスト',
+  'hosts.pending': '待機中：承認 {approvals} 件、質問 {questions} 件',
+  'hosts.pendingUnknown': '保留中のリクエストを同期中…',
+  'hosts.error.load': 'ホストを読み込めません。再試行',
+  'hosts.error.select': 'ホストを切り替えられません。再試行',
+  'hosts.error.publish': '保留中のリクエストを送信できません。再試行',
+  'hosts.retry': '再試行',
   'defaultWorkspace.failed': '既定のワークスペースを作成できません。「ワークスペースを選択」からフォルダーを選んでください。',
   'draft.workspaceRequired': '先にワークスペースを選択してください。',
   'draft.initializationFailed': '下書きを埋め込めませんでした。しばらくしてからもう一度お試しください。',
@@ -378,6 +399,13 @@ export const ja = {
 
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
+  'hosts.local': 'Host local',
+  'hosts.pending': 'En espera: {approvals} aprobaciones, {questions} preguntas',
+  'hosts.pendingUnknown': 'Sincronizando solicitudes pendientes…',
+  'hosts.error.load': 'No se pudieron leer los hosts. Reintentar',
+  'hosts.error.select': 'No se pudo cambiar de host. Reintentar',
+  'hosts.error.publish': 'No se pudieron enviar las solicitudes pendientes. Reintentar',
+  'hosts.retry': 'Reintentar',
   'defaultWorkspace.failed': 'No se pudo crear el espacio de trabajo predeterminado. Usa Elegir espacio de trabajo para seleccionar una carpeta.',
   'draft.workspaceRequired': 'Elija un espacio de trabajo primero.',
   'draft.initializationFailed': 'No se pudo completar el borrador. Inténtelo de nuevo en breve.',
@@ -501,6 +529,13 @@ export const es = {
 
 /** French dictionary, checked against the English keys. */
 export const fr = {
+  'hosts.local': 'Hôte local',
+  'hosts.pending': 'En attente : {approvals} approbations, {questions} questions',
+  'hosts.pendingUnknown': 'Synchronisation des demandes en attente…',
+  'hosts.error.load': 'Impossible de lire les hôtes. Réessayer',
+  'hosts.error.select': 'Impossible de changer d’hôte. Réessayer',
+  'hosts.error.publish': 'Impossible d’envoyer les demandes en attente. Réessayer',
+  'hosts.retry': 'Réessayer',
   'defaultWorkspace.failed': 'Impossible de créer l’espace de travail par défaut. Utilisez « Choisir un espace de travail » pour sélectionner un dossier.',
   'draft.workspaceRequired': "Choisissez d'abord un espace de travail.",
   'draft.initializationFailed': 'Impossible de remplir le projet. Veuillez réessayer sous peu.',
@@ -624,6 +659,13 @@ export const fr = {
 
 /** German dictionary, checked against the English keys. */
 export const de = {
+  'hosts.local': 'Lokaler Host',
+  'hosts.pending': 'Ausstehend: {approvals} Bestätigungen, {questions} Fragen',
+  'hosts.pendingUnknown': 'Ausstehende Anfragen werden synchronisiert…',
+  'hosts.error.load': 'Hosts konnten nicht gelesen werden. Erneut versuchen',
+  'hosts.error.select': 'Host konnte nicht gewechselt werden. Erneut versuchen',
+  'hosts.error.publish': 'Ausstehende Anfragen konnten nicht gesendet werden. Erneut versuchen',
+  'hosts.retry': 'Erneut versuchen',
   'defaultWorkspace.failed': 'Standardarbeitsbereich konnte nicht erstellt werden. Wähle über „Arbeitsbereich wählen“ einen Ordner aus.',
   'draft.workspaceRequired': 'Wählen Sie zunächst einen Arbeitsbereich.',
   'draft.initializationFailed': 'Der Entwurf konnte nicht ausgefüllt werden. Bitte versuchen Sie es in Kürze noch einmal.',
@@ -747,6 +789,13 @@ export const de = {
 
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
+  'hosts.local': 'Локальный Host',
+  'hosts.pending': 'Ожидают: подтверждения — {approvals}, вопросы — {questions}',
+  'hosts.pendingUnknown': 'Синхронизация ожидающих запросов…',
+  'hosts.error.load': 'Не удалось получить список Host. Повторить',
+  'hosts.error.select': 'Не удалось переключить Host. Повторить',
+  'hosts.error.publish': 'Не удалось передать ожидающие запросы. Повторить',
+  'hosts.retry': 'Повторить',
   'defaultWorkspace.failed': 'Не удалось создать рабочее пространство по умолчанию. Укажите папку через «Выбрать рабочее пространство».',
   'draft.workspaceRequired': 'Сначала выберите рабочее место.',
   'draft.initializationFailed': 'Не удалось заполнить черновик. Повторите попытку позже.',
@@ -870,6 +919,13 @@ export const ru = {
 
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
+  'hosts.local': 'Host local',
+  'hosts.pending': 'A aguardar: {approvals} aprovações, {questions} perguntas',
+  'hosts.pendingUnknown': 'A sincronizar pedidos pendentes…',
+  'hosts.error.load': 'Não foi possível ler os hosts. Tentar novamente',
+  'hosts.error.select': 'Não foi possível mudar de host. Tentar novamente',
+  'hosts.error.publish': 'Não foi possível enviar os pedidos pendentes. Tentar novamente',
+  'hosts.retry': 'Tentar novamente',
   'defaultWorkspace.failed': 'Não foi possível criar o espaço de trabalho padrão. Use Escolher espaço de trabalho para selecionar uma pasta.',
   'draft.workspaceRequired': 'Escolha um espaço de trabalho primeiro.',
   'draft.initializationFailed': 'Não foi possível preencher o rascunho. Por favor, tente novamente em breve.',

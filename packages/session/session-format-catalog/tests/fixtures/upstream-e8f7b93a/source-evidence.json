@@ -11,19 +11,19 @@
     },
     {
       "file": "v2.jsonl",
-      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--ocean-workspace--/preview-showcase/session.v2.jsonl",
+      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--dsh-workspace--/preview-showcase/session.v2.jsonl",
       "sha256": "67102c6f7f9595505963ebd899bd98c00358d32bc1cc1fb9baa5474caaafe886",
       "expected": "reject-pre-step-surface-without-mutating-source"
     },
     {
       "file": "v3.jsonl",
-      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--ocean-workspace--/preview-showcase/session.v3.jsonl",
+      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--dsh-workspace--/preview-showcase/session.v3.jsonl",
       "sha256": "eb7ecaf5fdd8a2b95959ef9cc5eebba5761848f014e4e1a99eaf6134515898cb",
       "expected": "restore-v4-with-explicit-empty-child-facts"
     },
     {
       "file": "v4.jsonl",
-      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--ocean-workspace--/preview-showcase/session.v4.jsonl",
+      "upstreamPath": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/--dsh-workspace--/preview-showcase/session.v4.jsonl",
       "sha256": "d4483f4275785beff03ef3cabb3d75f2fc1f5d8dddbea1c77fbb958b2de2bcde",
       "expected": "restore-v4-with-explicit-empty-child-facts"
     }

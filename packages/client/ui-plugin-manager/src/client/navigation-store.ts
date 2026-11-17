@@ -12,11 +12,11 @@ type View =
   | { readonly kind: 'item'; readonly id: string }
   | { readonly kind: 'row'; readonly name: string; readonly rowId: string; readonly from?: 'more'; readonly returnTab?: string }
 
-/** `installed` is the page's own tab; any other value is the id of a `plugins.tab` entry. */
-type NavigationState = { view: View; tab: string }
+/** `null` selects the first tab preceding Installed; other values select Installed or a contributed `plugins.tab` id. */
+type NavigationState = { view: View; tab: string | null }
 type NavigationActions = {
   setView: (draft: NavigationState, view: View) => void
-  setTab: (draft: NavigationState, tab: string) => void
+  setTab: (draft: NavigationState, tab: string | null) => void
 }
 
 /**
@@ -25,10 +25,10 @@ type NavigationActions = {
  */
 export function createNavigationStore(): EngineStoreHandle<NavigationState, NavigationActions> {
   return defineStore({
-    init: (): NavigationState => ({ view: { kind: 'list' }, tab: 'installed' }),
+    init: (): NavigationState => ({ view: { kind: 'list' }, tab: null }),
     actions: {
       setView: (draft, view: View) => { draft.view = view },
-      setTab: (draft, tab: string) => { draft.tab = tab },
+      setTab: (draft, tab: string | null) => { draft.tab = tab },
     },
   })
 }

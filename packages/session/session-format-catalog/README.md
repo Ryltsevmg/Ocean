@@ -105,6 +105,6 @@ No direct effect; restored history determines cache identity in its consumer.
 <details>
 <summary>Working context for maintainers — click to expand</summary>
 
-None.
+The frozen upstream fixtures in [`tests/fixtures/upstream-e8f7b93a/`](tests/fixtures/upstream-e8f7b93a/source-evidence.json) retain their original bytes and source paths, including upstream names. Their recorded digests verify compatibility inputs independently of Ocean-generated examples; product renaming must not rewrite these files or replace their digests. Fixture-layout migration excludes these four evidence files, including the current-format input, whose original physical encoding remains part of the fixture.
 
 </details>

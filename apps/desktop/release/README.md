@@ -61,7 +61,7 @@ The sequence floor must be durable and independently stored by the installer; a 
 
 ## Release checklist
 
-- Reconcile the current feature commit with remote main without dropping the Ocean Codex, branding, navigation, or feedback changes; run focused tests plus the final build/type checks.
+- Reconcile the current feature commit with remote main without dropping the branding, navigation, or feedback changes; run focused tests plus the final build/type checks.
 - Qualify both hosted architectures and independently verify the packaged runtime, native dependencies, permissions, launch, tray, task protection, and offline plugin paths.
 - Choose version, channels, distribution URL, signing identity, and key custody. Keep secrets outside repository files, logs, client bundles, and untrusted CI jobs.
 - Complete and test the Linux staging/install/recovery implementation, including interruption at every journal step, concurrent update attempts, low disk space, tampering, replay, wrong architecture, active tasks, unknown task state, and data migration compatibility.

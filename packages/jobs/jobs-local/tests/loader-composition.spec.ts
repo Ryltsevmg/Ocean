@@ -33,13 +33,19 @@ describe('jobs-local through a real Loader composition', () => {
     context.baseUrl = pathToFileURL(root).href + '/'
     await context.plugin(Loader)
     context.loader.builtins.include = Include
+    const unsupported = (): never => { throw new Error('Unexpected native loader operation in composition fixture') }
     context.loader.internal = {
       version: 'v2',
+      get loadCache() { return unsupported() },
+      register: unsupported,
+      getOrCreateModuleJob: unsupported,
+      resolveSync: unsupported,
+      load: unsupported,
       async import(specifier: string) {
         if (specifier === '@ocean/ocean-jobs-local') return LocalJobRegistry
         throw new Error(`unexpected Loader import: ${specifier}`)
       },
-    } as unknown as NonNullable<typeof context.loader.internal>
+    }
     await context.loader.create({
       name: 'cordis:include',
       config: { path: pathToFileURL(configPath).href },

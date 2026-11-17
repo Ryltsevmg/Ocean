@@ -47,7 +47,7 @@ describe('shipped MCP resource composition', () => {
     try {
       const profile = loadProfile('ocean', name, installAnchor, home)
       const rows = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches])
-      expect(rows.filter(row => row.name === '@ocean/ocean-mcp-manager')).toEqual(name === 'web'
+      expect(rows.filter(row => row.name === '@ocean/ocean-mcp-manager')).toEqual(['web', 'connect', 'remote-device', 'serve'].includes(name)
         ? [{ id: 'mcp-manager', name: '@ocean/ocean-mcp-manager', inject: ['credentials'] }]
         : [])
     } finally {

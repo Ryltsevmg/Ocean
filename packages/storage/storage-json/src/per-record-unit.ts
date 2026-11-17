@@ -23,7 +23,8 @@
  * set — a legacy file stamped with any other version is left alone and reads
  * as the empty unit. An existing declared table directory, even when empty,
  * or a declared global document suppresses the bootstrap for the whole unit.
- * The legacy file is never changed or deleted.
+ * The legacy file is never changed or deleted. All declared tables and keys
+ * are validated before publication; an unsafe key rejects without writing.
  * @module @ocean/ocean-storage-json/src/per-record-unit
  */
 
@@ -33,7 +34,7 @@ import type { Dirent } from 'node:fs'
 import { StorageError } from '@ocean/ocean-storage'
 import type { KvUnit, KvUnitDescriptor } from '@ocean/ocean-storage'
 import { fsyncDirectory, writeAtomic } from './atomic.ts'
-import { parseRecord, serializeRecord } from './format.ts'
+import { parse, parseRecord, serializeRecord } from './format.ts'
 import type { UnitState } from './format.ts'
 
 /** Keys become path segments in this layout; this set is path-safe on every OS. */
@@ -117,7 +118,8 @@ function acceptedStamps(descriptor: KvUnitDescriptor): readonly number[] {
  * version is outside the accepted set — migrating records the owner never
  * vouched for would stamp them with the current version and turn a
  * discardable stale cache into schema failures at the domain layer. Other
- * read failures propagate.
+ * read failures propagate. Every migrated key must be path-safe; an unsafe
+ * key rejects with `malformed-medium` before any destination is created.
  * @param descriptor - Static identity and shape of the unit.
  * @param dir - The per-record unit directory (`<root>/<name>`).
  * @param state - The empty tree state; bootstrapped records are added.
@@ -131,30 +133,30 @@ async function bootstrapLegacyUnit(descriptor: KvUnitDescriptor, dir: string, st
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     return
   }
-  // The legacy document is runtime data: only `unit.name`, `unit.version`,
-  // and the tables map shape are checked here — the record values are
-  // migrated as-is and the domain layer's schemas judge them.
-  let document: { unit?: { name?: unknown; version?: unknown }; tables?: unknown }
+  let legacy: UnitState
   try {
-    document = JSON.parse(text) as { unit?: { name?: unknown; version?: unknown }; tables?: unknown }
-  } catch {
-    return // Malformed legacy file: not ours to interpret or delete.
+    legacy = parse(text, descriptor)
+  } catch (error) {
+    if (!(error instanceof StorageError)) throw error
+    return // Malformed, foreign, or incompatible legacy files remain untouched.
   }
-  if (document.unit?.name !== descriptor.name) return
-  const stamped = document.unit.version
-  if (typeof stamped !== 'number' || !acceptedStamps(descriptor).includes(stamped)) return
-  const tables = document.tables
-  if (typeof tables !== 'object' || tables === null) return
-  const recordsByTable = tables as Record<string, Record<string, unknown>>
-  for (const [table, records] of Object.entries(recordsByTable)) {
-    const target = state.tables.get(table)
-    if (target === undefined) continue
-    for (const [key, value] of Object.entries(records)) {
+  for (const [table, records] of legacy.tables) {
+    for (const key of records.keys()) {
+      if (!SAFE_KEY_RE.test(key)) {
+        throw new StorageError(
+          'malformed-medium',
+          `unit '${descriptor.name}': legacy table '${table}' key '${key}' is not path-safe (must match ${SAFE_KEY_RE})`,
+        )
+      }
+    }
+  }
+  for (const [table, records] of legacy.tables) {
+    for (const [key, value] of records) {
       const path = join(dir, table, `${key}.json`)
       await mkdir(dirname(path), { recursive: true, mode: 0o700 })
       await writeAtomic(path, serializeRecord(descriptor.version, value))
-      target.set(key, value)
     }
+    state.tables.set(table, records)
   }
 }
 

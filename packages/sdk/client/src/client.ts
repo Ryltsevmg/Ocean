@@ -483,6 +483,7 @@ export class HarnessClient {
    * Shut the runtime down and reap it: a best-effort protocol `shutdown`
    * bounded by `shutdownTimeoutMs`, then the shared stdin-EOF → SIGTERM →
    * SIGKILL ladder until the process actually exited. Idempotent.
+   * Pending subscriptions fail even if the runtime was never started.
    * @returns settlement of the complete teardown.
    */
   close(): Promise<void> {
@@ -493,7 +494,10 @@ export class HarnessClient {
   private async performClose(): Promise<void> {
     this.abortUserQuestions(new TransportClosedError('SDK client is closing'))
     const child = this.child
-    if (child === undefined) return
+    if (child === undefined) {
+      this.failSubscriptions(this.closedError('Ocean runtime closed'))
+      return
+    }
     try {
       await this.request('shutdown', undefined, this.runtime.shutdownTimeoutMs ?? 1_000)
     } catch (error) {

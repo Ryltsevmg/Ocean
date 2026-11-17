@@ -10,7 +10,7 @@
  * index render (structured injection rows, then raw taps). Non-index assets
  * stay public; every file other than the index carries a weak ETag with
  * `cache-control: no-cache` and answers a matching `If-None-Match` with 304,
- * while the index carries no cache headers. The dist location is workspace
+ * while the index is not cacheable. The dist location is workspace
  * knowledge of the composing application, so `distIndex` is typically
  * supplied through a `!!js` expression, never hardcoded by a deployment.
  * @module @ocean/ocean-host-frontend-static
@@ -21,8 +21,9 @@ import { readFile } from 'node:fs/promises'
 import { dirname, extname, join, normalize, resolve, sep } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type {} from '@ocean/ocean-client-connection'
+import type { ConnectionAdmission } from '@ocean/ocean-client-connection'
 import type {} from '@ocean/ocean-host-webserver'
+import { deviceSignIn } from './device-sign-in.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'frontend-static'
@@ -92,7 +93,7 @@ function bytesBody(bytes: Uint8Array): ReadableStream<Uint8Array> {
  */
 async function serveStatic(
   request: Request, distRoot: string, distIndex: string,
-  authorizeIndex: () => Response | undefined,
+  authorizeIndex: () => Response | undefined | Promise<Response | undefined>,
   renderIndex: (html: string) => string,
 ): Promise<Response> {
   const target = resolve(normalize(join(distRoot, decodeURIComponent(new URL(request.url).pathname))))
@@ -104,10 +105,10 @@ async function serveStatic(
   let headers: Record<string, string>
   try {
     if (target === distRoot || target === distIndex) {
-      const refusal = authorizeIndex()
+      const refusal = await authorizeIndex()
       if (refusal !== undefined) return refusal
       body = renderIndex(await readFile(distIndex, 'utf8'))
-      headers = { 'content-type': HTML_MIME }
+      headers = { 'content-type': HTML_MIME, 'cache-control': 'no-store' }
     } else {
       body = await readFile(target)
       // Weak: gzip changes the transferred bytes.
@@ -150,18 +151,33 @@ export function apply(ctx: Context, config: Config): void {
     return admitted ? undefined : new Response(body, { status, headers })
   }
   ctx.effect(() => ctx.webServer.registerFallback({
-    resource: (request, peer) => serveStatic(
-      request,
-      distRoot,
-      distIndex,
-      // A read with a Peer was admitted by its caller; an HTTP request carries
-      // none and passes Connection's browser authentication instead.
-      () => peer === undefined ? authorizeIndex(request) : undefined,
-      // The browser authentication admits the owner's shared browser Peer. The
-      // base goes in after all index transforms, so it precedes every resource
-      // reference they insert.
-      html => ctx.webServer.renderIndex(html, peer ?? ctx.connection.browserPeer)
-        .replace(/<head(?:\s[^>]*)?>/i, open => `${open}<base href="./">`),
-    ),
+    resource: async (request, peer) => {
+      let lease: Extract<ConnectionAdmission, { peer: object }> | undefined
+      try {
+        return await serveStatic(
+          request,
+          distRoot,
+          distIndex,
+          async () => {
+            if (peer !== undefined) return undefined
+            const device = await ctx.connection.admitDeviceDocument?.(request)
+            if (device === undefined) return authorizeIndex(request)
+            if ('rejection' in device) {
+              if (device.rejection === 401) return deviceSignIn(request)
+              return new Response(null, { status: device.rejection, headers: { 'cache-control': 'no-store' } })
+            }
+            lease = device
+            return undefined
+          },
+          (html) => {
+            lease?.peer.signal.throwIfAborted()
+            return ctx.webServer.renderIndex(html, lease?.peer ?? peer ?? ctx.connection.browserPeer)
+              .replace(/<head(?:\s[^>]*)?>/i, open => `${open}<base href="./"${lease === undefined ? '' : ' data-ocean-device'}>`)
+          },
+        )
+      } finally {
+        await lease?.release()
+      }
+    },
   }), 'frontend-static: fallback seat')
 }

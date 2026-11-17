@@ -147,6 +147,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'The ocean launcher supplies data-only profile locations and composition inputs; reload scheduling belongs to ocean-hmr.',
   },
   {
+    key: 'deviceBootstrap',
+    pkg: 'client-connection',
+    title: 'Local remote-device credential bootstrap',
+    mode: 'core',
+    consumers: ['web-app'],
+    note: 'Issues devices and lists metadata through the selected credential provider without opening a network listener; live revocation belongs to the active Host.',
+  },
+  {
     key: 'connection',
     pkg: 'client-connection',
     title: 'Authenticated browser transport',

@@ -26,6 +26,7 @@ it('replays highlighted Python stubs, PowerShell and CSV reads with their docume
   const scaffold = await launchWebScaffold({
     ...(MODE === 'record' ? {} : { replayFixture: FIXTURE }),
     compareReplaySession: true,
+    replayExpectedSession: join(DIR, 'writer.expected.jsonl'),
   })
   let browser: Browser | undefined
   try {

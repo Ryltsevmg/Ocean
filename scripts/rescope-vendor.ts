@@ -101,6 +101,7 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'apps/cli/tests/web-agent-presets.e2e.ts', upstream: ['cordis'] },
   { file: 'apps/cli/tests/profiles/web/tests/fixtures/creator-plugin-manager.mjs', upstream: ['cordis'] },
   { file: 'apps/web/tests/agent-preset-authoring.e2e.ts', upstream: ['cordis'] },
+  { file: 'apps/web/tests/creator-persona.e2e.ts', upstream: ['cordis'] },
   { file: 'packages/preset/agent-preset-registry/tests/session.spec.ts', upstream: ['cordis'] },
   // Preset selection, reminder policy and UI copy use the same product id.
   { file: 'apps/web/tests/agent-preset-selection.e2e.ts', upstream: ['cordis'] },
@@ -116,6 +117,15 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'docs/upgrade-guide/v0.2.1-alpha.1/subagent-preset-composition/guide.zh.md', upstream: ['cordis'] },
   { file: 'docs/user/guide/schedule.md', upstream: ['cordis'] },
   { file: 'docs/user/guide/schedule.zh.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.de.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.es.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.fr.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.ja.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.ko.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.pt.md', upstream: ['cordis'] },
+  { file: 'docs/user/guide/schedule.ru.md', upstream: ['cordis'] },
+  { file: 'docs/upgrade-guide/v0.2.2-rc.1/subagent-interrupt-default/guide.md', upstream: ['cordis'] },
+  { file: 'docs/upgrade-guide/v0.2.2-rc.1/subagent-interrupt-default/guide.zh.md', upstream: ['cordis'] },
   { file: 'packages/bundle/web-app/cordis.patch.yml', upstream: ['cordis'] },
   { file: 'packages/client/ui-agent-preset/src/client/CreatePluginMenuItem.tsx', upstream: ['cordis'] },
   { file: 'packages/client/ui-agent-preset/src/client/analytics.ts', upstream: ['cordis'] },
@@ -667,6 +677,18 @@ export function listRescopeFiles(repoRoot: string, env?: NodeJS.ProcessEnv): str
     .filter(file => file !== '' && !isRescopeExcluded(file))
 }
 
+/**
+ * Read a tracked source path from the working tree, including an unstaged deletion.
+ * @param path - Absolute path selected by the generic rescope pass.
+ * @returns Current file text, or undefined when the tracked path has been removed.
+ */
+export function readRescopeSource(path: string): string | undefined {
+  try { return readFileSync(path, 'utf8') } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return undefined
+    throw error
+  }
+}
+
 function main(): void {
   const args = process.argv.slice(2)
   const mode = args.includes('--apply') ? 'apply' : args.includes('--check') ? 'check' : 'dry'
@@ -714,7 +736,8 @@ function main(): void {
 
   for (const file of files) {
     const path = resolve(root, file)
-    const before = readFileSync(path, 'utf8')
+    const before = readRescopeSource(path)
+    if (before === undefined) continue
     const { text: after, lines } = rewrite(before, file, all)
     if (after === before) continue
     outstanding.push(file)

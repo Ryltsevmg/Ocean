@@ -1,6 +1,6 @@
-/** Panel launchers shared by the automation sidebar row and Settings. */
+/** Global panel launchers in the main sidebar. */
 import clsx from 'clsx'
-import { IconPinFillRegular, focusWithoutRing, Tooltip } from '@ocean/ocean-client-ui-primitives'
+import { Tooltip } from '@ocean/ocean-client-ui-primitives'
 import type { InjectFace, PropsRenderFactories, PropsRuntime } from '@ocean/ocean-client-ui-slots'
 import type { SidebarPanelMetadata, SidebarRootInjected, SidebarSectionOwnerProps } from './contract/slots.ts'
 import css from './SidebarRoot.module.css'
@@ -9,8 +9,7 @@ type PanelRowProps =
   Pick<SidebarPanelMetadata, 'id' | 'label'>
   & Pick<SidebarSectionOwnerProps, 'wide'>
   & Pick<PropsRuntime<'sidebar'>, 'usePanelInfo'>
-  & Pick<InjectFace<SidebarRootInjected>, 'selectPanel' | 'trackEntryClick' | 'setPinned'>
-  & { readonly unpinLabel: string; readonly unpinTooltip: string; readonly canUnpin: boolean }
+  & Pick<InjectFace<SidebarRootInjected>, 'selectPanel' | 'trackEntryClick'>
   & PropsRenderFactories
 
 /** Analytics category of an official panel; other panels are never reported.
@@ -24,10 +23,10 @@ export function officialEntry(id: string): 'plugin' | 'cron' | undefined {
 
 /** Each panel row subscribes only to its own selection state.
  * @param props - Panel identity, presentation, and navigation callbacks.
- * @returns One launcher and its optional unpin action.
+ * @returns One panel launcher.
  */
 export function PanelRow({
-  id, label, wide, unpinLabel, unpinTooltip, canUnpin, usePanelInfo, selectPanel, setPinned, trackEntryClick, renderFactorySlot,
+  id, label, wide, usePanelInfo, selectPanel, trackEntryClick, renderFactorySlot,
 }: PanelRowProps) {
   const active = usePanelInfo(info => info.activePanelId === id)
   return (
@@ -54,17 +53,6 @@ export function PanelRow({
           )}
         </button>
       </Tooltip>
-      {wide && canUnpin && <Tooltip label={unpinTooltip} side="bottom" align="end" delayMs={500} portal>
-        <button type="button" className={css.panelUnpin} aria-label={unpinLabel} onClick={(event) => {
-          // Unpin is rendered only while this navigation also renders More.
-          const navigation = event.currentTarget.closest('nav') as HTMLElement
-          const more = navigation.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement
-          focusWithoutRing(more)
-          setPinned(id, false)
-        }}>
-          <IconPinFillRegular size={14} />
-        </button>
-      </Tooltip>}
     </div>
   )
 }

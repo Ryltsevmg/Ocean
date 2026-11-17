@@ -45,7 +45,7 @@ kind: "package-reference"
 
 对根路径与配置 index 的 HTTP 请求会在读取 HTML 前调用 `ctx.connection.authorizeIndex`。有效进程 token 会得到 303 重定向与持久浏览器 cookie；已有有效 cookie 时直接提供 index；其他 index 请求得到 Connection 所有的 401 响应。非 index 文件仍是公开静态资源。Token、cookie、过期时间与签名记录语义都归 Connection 所有。
 
-除 index 外，所有提供的文件都由浏览器重新验证。这类响应携带 `cache-control: no-cache` 和由文件内容 SHA-1 生成的弱 ETag，因此文件内容变化后即使名字不变也会得到新的 ETag；`If-None-Match` 等于当前 ETag 的请求得到空的 304。渲染出的 index 不带缓存头。
+除 index 外，所有提供的文件都由浏览器重新验证。这类响应携带 `cache-control: no-cache` 和由文件内容 SHA-1 生成的弱 ETag，因此文件内容变化后即使名字不变也会得到新的 ETag；`If-None-Match` 等于当前 ETag 的请求得到空的 304。渲染出的 index 携带 `cache-control: no-store`。
 
 ### 可观察的失败
 
@@ -117,3 +117,7 @@ kind: "package-reference"
 无。
 
 </details>
+
+设备模式下，index 请求验证设备会话，并使用对应设备 Peer 渲染文档。构建响应后，渲染器会释放该 Peer。
+
+未经认证的设备模式 index 会渲染一个简洁的登录文档。表单在同源 `/connect` 端点交换令牌，并在登录后重新加载 index。该登录文档不含私有引导数据，并使用严格的内容安全策略。

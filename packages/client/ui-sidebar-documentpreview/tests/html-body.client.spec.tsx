@@ -10,7 +10,7 @@ import type { Resources, ResourceSnapshot } from '@ocean/ocean-client-resources/
 import type { WorkspaceFileStat } from '@ocean/ocean-api-workspace-files/types'
 import type { SessionId } from '@ocean/ocean-session/types'
 import { TextPreview } from '../src/client/TextPreview.tsx'
-import type { DocumentBodyOwner } from '../src/client/document/contract.ts'
+import type { DocumentBodyOwner } from '../src/client/contract/document.ts'
 import { textFace } from '../src/client/face.ts'
 import { HtmlBody } from '../src/client/html/HtmlBody.tsx'
 import type { HtmlBodyProps } from '../src/client/html/HtmlBody.tsx'

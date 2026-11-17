@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v1.0.0/remote-static-entrypoints/guide.md
+/:
+  en: 734ba37f4398d46e
+  zh: 0605f41a56e1dc9d
+/remote-transport-entrypoints-and-stream-limits:
+  en: b70a17186783e8b6
+  zh: 51b9afb54e148935
+/remote-transport-entrypoints-and-stream-limits/change:
+  en: b4111e7e068f9cec
+  zh: c0b1806bf3acdca3
+/remote-transport-entrypoints-and-stream-limits/migration:
+  en: 997f47b92848b22c
+  zh: a50f874db95100bb

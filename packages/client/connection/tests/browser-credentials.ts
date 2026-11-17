@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { CredentialProvider, CredentialRecord } from '@ocean/ocean-credentials'
+import type { CredentialKey, CredentialProvider, CredentialRecord } from '@ocean/ocean-credentials'
 
 /** Mutable credential-record double for Connection authentication tests. */
 export class RecordCredentials {
@@ -32,5 +32,19 @@ export class RecordCredentials {
 
 /** Provide the record operations Connection needs during authentication setup. */
 export function provideBrowserCredentials(ctx: Context): void {
-  ctx.provide('credentials', new RecordCredentials() as unknown as CredentialProvider)
+  const records = new Map<CredentialKey, RecordCredentials>()
+  function store(key: CredentialKey): RecordCredentials {
+    let record = records.get(key)
+    if (record === undefined) {
+      record = new RecordCredentials()
+      records.set(key, record)
+    }
+    return record
+  }
+  const provider: Pick<CredentialProvider, 'readRecord' | 'modifyRecord' | 'deleteRecord'> = {
+    readRecord: key => store(key).readRecord(),
+    modifyRecord: (key, modify) => store(key).modifyRecord(key, modify),
+    deleteRecord: key => store(key).deleteRecord(),
+  }
+  ctx.provide('credentials', provider as CredentialProvider)
 }

@@ -390,7 +390,7 @@ async function statRegularFile(target: LocalTarget, verb: 'read', signal?: Abort
  * non-regular files, invalid UTF-8, and NUL-byte binary samples.
  * @param target - the resolved file to read.
  * @param signal - aborts the read (`FS_ABORTED`).
- * @returns the full decoded text, byte-for-byte (no normalization).
+ * @returns the decoded text without its UTF-8 BOM; line endings are unchanged.
  */
 export async function readWholeText(target: LocalTarget, signal?: AbortSignal): Promise<string> {
   await statRegularFile(target, 'read', signal)
@@ -726,15 +726,15 @@ function detectLineEndings(raw: string): LineEndings {
 }
 
 /**
- * Convert LF-normalized content back to the line-ending style detected at read
- * time, for write-back. `LF` returns the content unchanged; `CRLF` re-normalizes
- * first so an already-CRLF sequence is never doubled to `\r\r\n`.
- * @param content - the LF-normalized (edited) text.
- * @param lineEndings - the original file's style, as detected by {@link readForEdit}.
- * @returns the text in the original file's line-ending style.
+ * Restore the source file's line endings and UTF-8 BOM for write-back.
+ * `CRLF` re-normalizes first so an existing pair never becomes `\r\r\n`.
+ * @param content - the LF-normalized, BOM-free (edited) text.
+ * @param format - source encoding markers detected by {@link readForEdit}.
+ * @returns the text with the source file's line-ending style and BOM.
  */
-function restoreLineEndings(content: string, lineEndings: LineEndings): string {
-  return lineEndings === 'LF' ? content : normalizeLineEndings(content).split('\n').join('\r\n')
+function restoreTextFormat(content: string, format: { lineEndings: LineEndings; bom: boolean }): string {
+  const restored = format.lineEndings === 'LF' ? content : normalizeLineEndings(content).split('\n').join('\r\n')
+  return format.bom ? `\uFEFF${restored}` : restored
 }
 
 function countOccurrences(content: string, needle: string): number {
@@ -750,23 +750,24 @@ function countOccurrences(content: string, needle: string): number {
 
 /**
  * Read and decode a file for editing: rejects binaries, returns LF-normalized
- * content plus the original line-ending style for write-back.
+ * content without its UTF-8 BOM, plus encoding markers for write-back.
  * @param absolutePath - the file to read (typically a target key).
  * @param displayPath - the caller-facing path used in error messages.
  * @param signal - aborts the read (`FS_ABORTED`).
- * @returns the LF-normalized content and the detected style to restore on write-back.
+ * @returns LF-normalized content and the original line endings and BOM flag.
  */
 export async function readForEdit(
   absolutePath: string,
   displayPath: string,
   signal?: AbortSignal,
-): Promise<{ content: string; lineEndings: LineEndings }> {
+): Promise<{ content: string; lineEndings: LineEndings; bom: boolean }> {
   throwIfAborted(signal, 'edit')
   const buffer = await readFileAbortable(absolutePath, displayPath, 'edit', signal)
   throwIfAborted(signal, 'edit')
   if (buffer.includes(0)) throw new FsError(`cannot edit "${displayPath}": binary file`, 'FS_NOT_TEXT')
   const raw = decodeUtf8(buffer, 'edit', displayPath)
-  return { content: normalizeLineEndings(raw), lineEndings: detectLineEndings(raw) }
+  const bom = buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF
+  return { content: normalizeLineEndings(raw), lineEndings: detectLineEndings(raw), bom }
 }
 
 /**
@@ -867,4 +868,4 @@ export function applyLiteralEdit(
   return { content: content.split(oldNorm).join(newNorm), replacements }
 }
 
-export { normalizeLineEndings, restoreLineEndings }
+export { normalizeLineEndings, restoreTextFormat }

@@ -134,7 +134,8 @@ declare module '@ocean/ocean-client-ui-slots' {
     /** Additional MenuItemButton rows after installation: 72px high, with a title and a description capped at two lines. */
     'plugins.add.actions': { kind: 'list'; scope: 'root'; owner: PluginAddActionsProps }
     /**
-     * Tabs after the page's own Installed tab: `label` names the tab and `order` places it. The
+     * Page tabs: `label` names the tab and `order` places it relative to Installed at zero. The first
+     * negative-order tab opens initially; explicit selections survive later registrations. The
      * page renders the selected entry under its header and tabs; the entry draws its own content and installs and
      * updates through the owner's `install` and `update`.
      */

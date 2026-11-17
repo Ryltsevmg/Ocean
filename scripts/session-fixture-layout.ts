@@ -39,9 +39,10 @@ export interface SessionFixtureLayout {
  * Whether a repository JSONL preserves physical persistence encoding rather
  * than the logical event projection owned by this script.
  * @param path - Repository-relative path with `/` separators.
- * @returns True for installed-runtime session logs.
+ * @returns True for installed-runtime session logs and frozen upstream decoder inputs.
  */
 export function isPhysicalSessionFixture(path: string): boolean {
+  if (/^packages\/session\/session-format-catalog\/tests\/fixtures\/upstream-e8f7b93a\/v(?:0|2|3|4)\.jsonl$/u.test(path)) return true
   return path.startsWith(PYTHON_RUNTIME_PHYSICAL_SESSION_FIXTURE_ROOT)
     && /\/session(?:\.[1-9]\d*)?(?:\.v[1-9]\d*)?\.jsonl$/.test(path)
 }

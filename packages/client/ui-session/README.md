@@ -24,6 +24,8 @@ Running status comes from Host list baselines or status events. Subagent catalog
 <a id="access-hooks"></a>
 ## Access Hooks
 
+`ctx.uiSession.pendingInteractions` exposes every outstanding interaction as an observable list. Multiple requests for one Session remain separate even when the row status displays only its highest-priority kind. The Workspace adapter uses this list to publish Desktop Host request counts.
+
 The package injects the Client `remoteAccess` service and publishes Session access Hooks over its `source()`: the root `useSessionAccess(sessionId, action)` answers on one Session resource, and the Session-scope `useAccess(action)` answers on the bound Session's resource; the `global` resource's answer is a different Hook, `useRemoteAccess(action)`, so neither shadows the other. `ctx.uiSession.whenAccess(sessionId, action, callback)` is the JS counterpart of `useSessionAccess`: it keeps the callback's effects installed while the current Peer may call `action` on that Session, with the semantics of `ctx.remoteAccess.whenAccess`. The SessionMaybe-scope `useAccess(action)` returns `undefined` while no Session is bound, which callers treat as not allowed; a decision on the `global` resource reads `useRemoteAccess` instead. Snapshot semantics belong to [`ocean-api-remote-access`](../../api/remote-access/README.md#client-face).
 
 <a id="model-experience"></a>

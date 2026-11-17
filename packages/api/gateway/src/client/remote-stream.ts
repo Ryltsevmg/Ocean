@@ -2,7 +2,7 @@
 
 import { RemoteError, remoteErrorOf } from '@ocean/ocean-typert-protocol'
 import type { ConnectionHandle } from '@ocean/ocean-client-connection/client'
-import { RemoteStreamCarrierError } from './stream-client.ts'
+import { RemoteStreamCarrierError } from '../stream-client.ts'
 
 /** One item annotated with the physical Remote-stream generation that delivered it. */
 export interface RemoteStreamItem<Item> {

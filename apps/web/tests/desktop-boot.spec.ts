@@ -17,15 +17,19 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-it('forwards client initialization failures to native recovery', async () => {
+it.each([
+  { ownsHost: true, streamBaseUrl: 'http://127.0.0.1:3080' },
+  { ownsHost: false, streamBaseUrl: 'https://ocean.example/mount/' },
+])('sets the Desktop transport and reports initialization failures for $streamBaseUrl', async (transport) => {
   document.body.innerHTML = '<div id="root"></div>'
   const gate = Promise.withResolvers<undefined>()
   const failed = vi.fn(async () => {})
   vi.stubGlobal('__OCEAN_BOOT_READY__', gate)
-  vi.stubGlobal('oceanDesktopBoot', { ready: async () => ({ injections: [], streamBaseUrl: 'http://127.0.0.1:3080' }), failed })
+  vi.stubGlobal('oceanDesktopBoot', { ready: async () => ({ injections: [], ...transport }), failed })
   vi.stubGlobal('__OCEAN_TRANSPORT__', undefined)
   await import('../src/main.ts')
   await gate.promise
+  expect(Reflect.get(globalThis, '__OCEAN_TRANSPORT__')).toEqual(transport)
   expect(boot.applyIndexInjections).toHaveBeenCalledWith([], expect.any(Function))
   const report = boot.run.mock.calls[0]![0] as (reason: unknown) => void
   report(new Error('client plugin activation failed'))

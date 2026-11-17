@@ -467,6 +467,10 @@ describe('execution through the bash seam', () => {
       OCEAN_NODE_EXECUTABLE: process.execPath,
       OCEAN_SHELL: '1',
       OCEAN_SESSION_ID: 'session-1',
+      DSH_HOME: oceanHome,
+      DSH_NODE_EXECUTABLE: process.execPath,
+      DSH_SHELL: '1',
+      DSH_SESSION_ID: 'session-1',
     })
     expect(bash.specs[0]?.workdir).toBe('/sessions/s1')
   })

@@ -5,6 +5,7 @@
     - button "Models"
     - button "Built-in plugins"
     - button "Agent presets"
+    - button "Feedback"
   - button "Open configuration file"
   - button "Close"
   - text: Permission Choose the default permission mode for new sessions
@@ -35,6 +36,6 @@
   - button "Queue"
   - text: Performance & usage Choose how much performance and usage information to show
   - button "Detailed"
-  - text: Upload Session Log when using the official model API Help improve DeepSeek models and products.
-  - switch "Upload Session Log when using the official model API"
+  - text: Send session logs with DeepSeek API requests Adds logged messages and tool results to requests sent by the DeepSeek adapter to its configured API address. Re-enabling can also send previously recorded logs.
+  - switch "Send session logs with DeepSeek API requests"
   - text: "Current version: {{version}}"

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { PropsLocale } from '@ocean/ocean-client-ui-slots'
 import { CodeBlock, languageForPath } from '@ocean/ocean-client-ui-primitives'
 import { parseFileAddress } from '@ocean/ocean-util-workspace-path'
-import type { DocumentPreviewProps } from '../document/contract.ts'
+import type { DocumentPreviewProps } from '../contract/document.ts'
 import type {} from './locales.ts'
 import css from './CodeBody.module.css'
 
