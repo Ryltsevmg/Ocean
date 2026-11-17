@@ -42,7 +42,7 @@ export function apply(ctx: Context, config: Config) {
         maxRetries: 5
 ```
 
-解析后的 `config` 是 `{ greeting: 'Hi there', maxRetries: 5, verbose: false }`。示例把 `greeting` 设为 `Hi there`，把 `maxRetries` 设为 5，没有写 `verbose`，因此 `verbose` 保留 schema 中声明的 `false`。配置中没有提供的字段，取 schema 中该字段声明的默认值。
+解析后的 `config` 是 `{ greeting: 'Hi there', maxRetries: 5, verbose: false }`。示例把 `greeting` 设为 `Hi there`，把 `maxRetries` 设为 5，没有写 `verbose`，因此 `verbose` 保留 schema 中声明的 `false`。配置中没有提供的字段，取 schema 中该字段声明的默认值。在 `cordis.yml` 中显式设置 `verbose: true`，就会覆盖这个 `false` 默认值。
 
 插件加载时，Cordis 会通过导出的 schema 校验配置，并填充未提供字段的默认值。不要导出普通对象作为 `Config`，因为它不满足 Cordis 要求的 Standard Schema 接口。
 
