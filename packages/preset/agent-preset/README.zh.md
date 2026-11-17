@@ -44,6 +44,9 @@ kind: "package-reference"
 | `name` | 未设置 | 展示名称 |
 | `description` | 未设置 | 展示说明 |
 | `order` | 未设置 | 列表排序 |
+| `hidden` | 未设置 | 内部 preset：为引用它的会话保留声明，但不出现在任何选择列表中 |
+
+`hidden: true` 用于运维方为自己会话提供的 preset，例如执行器的 worker 组合。它不改变任何组合，也不改变已保存的会话：preset 仍留在列表中，因此已在使用该 preset 的会话仍能显示其名称，而新会话选择器与设置页列表不再提供它。省略该字段表示可以选中。
 
 声明行的 `id` 是 Loader 编辑地址；`config.id` 是会话保存的 preset 标识符。子插件可省略行 ID，由 Loader 分配。
 

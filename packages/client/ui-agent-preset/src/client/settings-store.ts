@@ -102,6 +102,18 @@ export async function beginRosterRead<S extends { status: string; error: string 
 }
 
 /**
+ * The roster entries a picker may offer.
+ *
+ * A hidden preset stays on the wire roster so a session already running it keeps its display name,
+ * and is dropped from every selection list: the new-session chip and the settings roster.
+ * @param presets - the roster the host answered with.
+ * @returns the rows a picker may offer, in roster order.
+ */
+export function selectablePresets(presets: readonly RosterPreset[]): RosterPreset[] {
+  return presets.filter(preset => preset.hidden !== true)
+}
+
+/**
  * The roster entries as the pickers render them: healthy presets only.
  *
  * The chip exists to choose the NEXT session's composition, and a broken
