@@ -13,13 +13,7 @@ const EXPECTED = [
   '@local/ocean-adp',
   '@ocean/ocean-browser-control',
   '@ocean/ocean-computer-use-bundle',
-  '@local/ocean-theme-abyss',
-  '@local/ocean-theme-one-dark',
-  '@local/ocean-theme-dracula',
-  '@local/ocean-theme-github',
-  '@local/ocean-theme-solarized',
-  '@local/ocean-theme-nord',
-  '@local/ocean-theme-tokyo-night',
+  '@local/ocean-theme-picker',
   '@ocean/ocean-plugin-market',
 ]
 
