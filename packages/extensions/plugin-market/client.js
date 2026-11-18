@@ -35,7 +35,7 @@ window.__ModuleLoader__.load({
 const CATALOG = /** @type {readonly MarketEntry[]} */ ([
   {
     name: '@ocean/ocean-super-agent',
-    version: '0.3.1',
+    version: '0.2.5',
     title: { en: 'Super Agent', ru: 'Super Agent' },
     summary: {
       en: 'Persistent developer task board: a shared board, a repository executor and the preset that runs issues end to end.',
@@ -55,7 +55,7 @@ const CATALOG = /** @type {readonly MarketEntry[]} */ ([
   },
   {
     name: '@ocean/ocean-remotion-studio',
-    version: '0.1.0',
+    version: '1.0.0',
     title: { en: 'Remotion studio', ru: 'Remotion studio' },
     summary: {
       en: 'Reel studio: scaffold a Remotion project, preview it in Studio and render an MP4.',
@@ -95,7 +95,7 @@ const CATALOG = /** @type {readonly MarketEntry[]} */ ([
   },
   {
     name: '@ocean/ocean-browser-control',
-    version: '0.3.5',
+    version: '1.0.0',
     title: { en: 'Browser control', ru: 'Управление браузером' },
     summary: {
       en: 'Session-owned tabs in a paired Chromium through a local relay, with a setup panel and an Ocean-branded extension.',
@@ -114,8 +114,8 @@ const CATALOG = /** @type {readonly MarketEntry[]} */ ([
     },
   },
   {
-    name: '@ocean/ocean-computer-use-bundle',
-    version: '0.2.2',
+    name: '@ocean/ocean-cua-bundle',
+    version: '1.0.0',
     title: { en: 'Computer Use', ru: 'Computer Use' },
     summary: {
       en: 'Desktop control on macOS, Windows and Linux AT-SPI: observe the screen and operate native applications.',
@@ -134,142 +134,22 @@ const CATALOG = /** @type {readonly MarketEntry[]} */ ([
     },
   },
   {
-    name: '@local/ocean-theme-abyss',
-    version: '0.1.0',
-    title: { en: 'Abyss theme', ru: 'Тема «Abyss»' },
+    name: '@local/ocean-theme-picker',
+    version: '1.0.0',
+    title: { en: 'Theme picker', ru: 'Выбор темы' },
     summary: {
-      en: 'A deep cold palette over the built-in light and dark schemes: teal accent, blue-green surfaces.',
-      ru: 'Глубокая холодная палитра поверх штатных светлой и тёмной схем: бирюзовый акцент и сине-зелёные поверхности.',
+      en: 'One page for every palette: switch themes from the bundle settings and the interface repaints immediately.',
+      ru: 'Одна страница для всех палитр: тема переключается в настройках бандла, и интерфейс сразу перекрашивается.',
     },
     details: {
       about: {
-        en: 'Repaints the interface without changing its layout: backgrounds, cards, text and hairlines take a blue-green cast, the accent turns teal, and Appearance keeps choosing light, dark or system.',
-        ru: 'Перекрашивает интерфейс, не меняя вёрстку: фон, карточки, текст и тонкие границы получают сине-зелёный оттенок, акцент становится бирюзовым, а «Оформление» по-прежнему выбирает светлую, тёмную или системную схему.',
+        en: 'Embeds every palette under plugins/theme-* at build time, lists them on the bundle page in Plugins, and applies the choice through one override-token layer that is replaced on each switch.',
+        ru: 'Встраивает все палитры из plugins/theme-* при сборке, показывает их на странице бандла в Plugins и применяет выбор через один слой override-токенов, который заменяется при каждом переключении.',
       },
       points: [
-        { en: 'Follows light, dark and system instead of replacing the preference', ru: 'Следует светлой, тёмной и системной схеме, а не подменяет выбор' },
-        { en: 'Contrast of text and accent is checked in both schemes', ru: 'Контраст текста и акцента проверяется в обеих схемах' },
-        { en: 'Turning the bundle off restores the stock palette', ru: 'Выключение бандла возвращает штатную палитру' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-one-dark',
-    version: '0.1.0',
-    title: { en: 'One Dark / One Light', ru: 'One Dark / One Light' },
-    summary: {
-      en: "Atom's One Dark Pro and One Light for Ocean: graphite surfaces, blue accent, warm syntax colors.",
-      ru: 'One Dark Pro и One Light в Ocean: графитовые поверхности, синий акцент, тёплые синтаксические цвета.',
-    },
-    details: {
-      about: {
-        en: 'The light scheme paints One Light and the dark scheme One Dark Pro, so Appearance keeps switching between the two variants of one editor theme instead of being replaced by a fixed palette.',
-        ru: 'Светлая схема рисуется One Light, тёмная — One Dark Pro: «Оформление» переключает варианты одной темы редактора, а не подменяется фиксированной палитрой.',
-      },
-      points: [
-        { en: 'One Light for the light scheme, One Dark Pro for the dark one', ru: 'One Light для светлой схемы, One Dark Pro для тёмной' },
-        { en: 'Graphite panels and the theme blue accent', ru: 'Графитовые панели и синий акцент темы' },
-        { en: 'Switching the bundle off returns the stock palette', ru: 'Выключение возвращает штатную палитру' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-dracula',
-    version: '0.1.0',
-    title: { en: 'Dracula / Alucard', ru: 'Dracula / Alucard' },
-    summary: {
-      en: "Dracula's violet-accented palette with the official Alucard light counterpart.",
-      ru: 'Палитра Dracula с фиолетовым акцентом и официальная светлая пара Alucard.',
-    },
-    details: {
-      about: {
-        en: 'Dark mode reproduces the Dracula editor theme — #282A36 surfaces, violet accents and cyan links — and light mode uses Alucard, the official light counterpart, so Appearance switches between the pair.',
-        ru: 'Тёмная схема повторяет тему редактора Dracula — поверхности #282A36, фиолетовые акценты и голубые ссылки, — а светлая берёт Alucard, официальную светлую пару, поэтому «Оформление» переключает два варианта одной темы.',
-      },
-      points: [
-        { en: 'Dracula in the dark scheme, Alucard in the light one', ru: 'Dracula в тёмной схеме, Alucard в светлой' },
-        { en: 'Violet accent and cyan links from the specification', ru: 'Фиолетовый акцент и голубые ссылки из спецификации' },
-        { en: 'Switching the bundle off returns the stock palette', ru: 'Выключение возвращает штатную палитру' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-github',
-    version: '0.1.0',
-    title: { en: 'GitHub Light / GitHub Dark', ru: 'GitHub Light / GitHub Dark' },
-    summary: {
-      en: "GitHub's Primer colors: the white light theme, the deep blue-black dark theme and one blue accent.",
-      ru: 'Цвета GitHub Primer: белая светлая тема, чернильно-синяя тёмная и единый синий акцент.',
-    },
-    details: {
-      about: {
-        en: "Reproduces GitHub's own VS Code theme built on Primer: a white canvas in light mode, the #0D1117 canvas in dark mode, and the blue accent for links, activity and the right-panel flash.",
-        ru: 'Повторяет собственную тему GitHub для VS Code на палитре Primer: белое полотно в светлой схеме, полотно #0D1117 в тёмной и синий акцент для ссылок, активности и вспышки правой панели.',
-      },
-      points: [
-        { en: 'Primer light and dark canvases', ru: 'Светлое и тёмное полотно Primer' },
-        { en: 'One blue accent for links and activity', ru: 'Единый синий акцент для ссылок и активности' },
-        { en: 'Switching the bundle off returns the stock palette', ru: 'Выключение возвращает штатную палитру' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-solarized',
-    version: '0.1.0',
-    title: { en: 'Solarized Light / Solarized Dark', ru: 'Solarized Light / Solarized Dark' },
-    summary: {
-      en: "Ethan Schoonover's Solarized: warm paper and deep teal surfaces with the classic eight accents.",
-      ru: 'Solarized Итана Шунова: тёплая бумага и глубокие бирюзовые поверхности, классические восемь акцентов.',
-    },
-    details: {
-      about: {
-        en: 'The light scheme uses the official Solarized light rebase, the dark scheme the classic base03 palette, with #268BD2 as the single interface accent. Body text keeps Solarized deliberately soft contrast.',
-        ru: 'Светлая схема использует официальный светлый пересчёт Solarized, тёмная — классическую палитру base03, а единственный акцент интерфейса — #268BD2. Основной текст сохраняет намеренно мягкий контраст Solarized.',
-      },
-      points: [
-        { en: 'Warm paper in light mode, deep teal in dark mode', ru: 'Тёплая бумага в светлой схеме, глубокий бирюзовый в тёмной' },
-        { en: 'The classic eight accents with one interface accent', ru: 'Классические восемь акцентов и один акцент интерфейса' },
-        { en: 'Switching the bundle off returns the stock palette', ru: 'Выключение возвращает штатную палитру' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-nord',
-    version: '0.1.0',
-    title: { en: 'Nord', ru: 'Nord' },
-    summary: {
-      en: 'Arctic Nord: Polar Night surfaces, the Frost accent and the official Aurora colors.',
-      ru: 'Арктическая Nord: поверхности Polar Night, акцент Frost и официальные цвета Aurora.',
-    },
-    details: {
-      about: {
-        en: 'The dark scheme is the official Nord theme; Nord ships no light theme, so the light scheme is built from the same sixteen colors as its styleguide prescribes — Snow Storm surfaces, Polar Night text, and the Frost accent moved to nord10 for legibility.',
-        ru: 'Тёмная схема — официальная тема Nord; собственной светлой темы у Nord нет, поэтому светлая собрана из тех же шестнадцати цветов по правилам стайлгайда: поверхности Snow Storm, текст Polar Night, акцент Frost сдвинут в nord10 ради читаемости.',
-      },
-      points: [
-        { en: 'Official Polar Night and Snow Storm surfaces', ru: 'Официальные поверхности Polar Night и Snow Storm' },
-        { en: 'Frost accent and the Aurora state colors', ru: 'Акцент Frost и цвета состояний Aurora' },
-        { en: 'The light scheme is derived from the same palette, not invented', ru: 'Светлая схема выведена из той же палитры, а не придумана' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-tokyo-night',
-    version: '0.1.0',
-    title: { en: 'Tokyo Night', ru: 'Tokyo Night' },
-    summary: {
-      en: "Tokyo Night's midnight blues and neon accents, with the official Day palette in light mode.",
-      ru: 'Полуночные синие тона и неоновые акценты Tokyo Night с официальной дневной палитрой.',
-    },
-    details: {
-      about: {
-        en: 'Dark mode reproduces the Tokyo Night editor theme — the #1A1B26 canvas and its blue, green and magenta accents — and light mode uses the official Tokyo Night Day palette from the same project.',
-        ru: 'Тёмная схема повторяет тему редактора Tokyo Night — полотно #1A1B26 и его синие, зелёные и пурпурные акценты, — а светлая использует официальную палитру Tokyo Night Day из того же проекта.',
-      },
-      points: [
-        { en: 'Midnight-blue canvas and neon accents', ru: 'Полуночно-синее полотно и неоновые акценты' },
-        { en: 'The official Day palette for light mode', ru: 'Официальная дневная палитра для светлой схемы' },
-        { en: 'Switching the bundle off returns the stock palette', ru: 'Выключение возвращает штатную палитру' },
+        { en: 'Every palette in one bundle instead of one bundle per palette', ru: 'Все палитры в одном бандле вместо бандла на палитру' },
+        { en: 'Light and dark variants switch with Appearance', ru: 'Светлый и тёмный варианты следуют за «Оформлением»' },
+        { en: 'The chosen layer replaces the previous one instead of stacking', ru: 'Выбранный слой заменяет предыдущий, а не наслаивается' },
       ],
     },
   },

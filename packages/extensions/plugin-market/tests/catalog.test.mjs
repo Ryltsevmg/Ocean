@@ -12,14 +12,8 @@ const EXPECTED = [
   '@ocean/ocean-remotion-studio',
   '@local/ocean-adp',
   '@ocean/ocean-browser-control',
-  '@ocean/ocean-computer-use-bundle',
-  '@local/ocean-theme-abyss',
-  '@local/ocean-theme-one-dark',
-  '@local/ocean-theme-dracula',
-  '@local/ocean-theme-github',
-  '@local/ocean-theme-solarized',
-  '@local/ocean-theme-nord',
-  '@local/ocean-theme-tokyo-night',
+  '@ocean/ocean-cua-bundle',
+  '@local/ocean-theme-picker',
   '@ocean/ocean-plugin-market',
 ]
 
