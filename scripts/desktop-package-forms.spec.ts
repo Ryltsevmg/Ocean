@@ -13,10 +13,16 @@ const manifest = JSON.parse(readFileSync(new URL('../apps/desktop/package.json',
 }
 
 it('offers only the two native Linux architectures and dispatches the unsigned package scripts', () => {
-  expect(workflow.on.workflow_dispatch.inputs).toEqual({ architecture: {
-    description: 'Native hosted runner architecture', type: 'choice', required: true, default: 'x64', options: ['x64', 'arm64'],
-  } })
+  expect(workflow.on.workflow_dispatch.inputs).toEqual({
+    architecture: {
+      description: 'Native hosted runner architecture', type: 'choice', required: true, default: 'x64', options: ['x64', 'arm64'],
+    },
+    build_version: {
+      description: 'Extended build version (empty packages the checkout product version)', type: 'string', required: false, default: '',
+    },
+  })
   expect(workflow.jobs.package.env.OCEAN_ARCH).toBe('${{ inputs.architecture }}')
+  expect(workflow.jobs.package.env.OCEAN_BUILD_VERSION).toBe('${{ inputs.build_version }}')
   for (const arch of ['x64', 'arm64']) {
     expect(manifest.scripts[`package:linux:${arch}`]).toBe(`tsx scripts/package-target.ts linux-${arch} --unsigned`)
     expect(manifest.scripts[`package:linux:${arch}:dir`]).toBe(`tsx scripts/package-target.ts linux-${arch} --unsigned --dir`)
@@ -36,7 +42,7 @@ it.skipIf(process.platform === 'win32').each([
   const script = workflow.jobs.package.steps.find(step => step.name === 'Package unsigned native Linux archive')!.run!
   const child = spawnSync('bash', ['-e', '-u', '-o', 'pipefail', '-c',
     'node() { printf "%s" "$TEST_HOST_ARCH"; }; pnpm() { printf "%s\\n" "$@"; }; ' + script], {
-    env: { PATH: process.env.PATH, OCEAN_ARCH: target, TEST_HOST_ARCH: host }, encoding: 'utf8', timeout: 10_000,
+    env: { PATH: process.env.PATH, OCEAN_ARCH: target, OCEAN_BUILD_VERSION: '', TEST_HOST_ARCH: host }, encoding: 'utf8', timeout: 10_000,
   })
   expect(child.error).toBeUndefined()
   expect(child.signal).toBeNull()
@@ -47,4 +53,17 @@ it.skipIf(process.platform === 'win32').each([
     expect(child.status).not.toBe(0)
     expect(child.stdout).toBe('')
   }
+})
+
+// An extended build version reaches the package script as one argument pair; the product prefix stays validated there.
+it.skipIf(process.platform === 'win32')('passes a nonempty build version through to the package script', () => {
+  const script = workflow.jobs.package.steps.find(step => step.name === 'Package unsigned native Linux archive')!.run!
+  const child = spawnSync('bash', ['-e', '-u', '-o', 'pipefail', '-c',
+    'node() { printf "%s" "$TEST_HOST_ARCH"; }; pnpm() { printf "%s\\n" "$@"; }; ' + script], {
+    env: { PATH: process.env.PATH, OCEAN_ARCH: 'x64', OCEAN_BUILD_VERSION: '1.0.0-rc.1.20261118.1', TEST_HOST_ARCH: 'x64' },
+    encoding: 'utf8', timeout: 10_000,
+  })
+  expect(child.error).toBeUndefined()
+  expect(child.status, child.stderr).toBe(0)
+  expect(child.stdout).toBe('--filter\n@ocean/ocean-desktop\nrun\npackage:linux:x64\n--build-version\n1.0.0-rc.1.20261118.1\n')
 })
