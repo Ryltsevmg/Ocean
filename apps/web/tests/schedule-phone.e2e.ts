@@ -284,7 +284,9 @@ it.each([
           await editor.getByRole('button', { name: copy.repeat }).click()
           await page.getByRole('menuitem', { name: frequency, exact: true }).click()
           await expectEditorAlignment(title)
-          await expect.poll(() => editor.locator('[class*="_detailScroll"]').evaluate(node => node.scrollWidth - node.clientWidth)).toBe(0)
+          // Integer scrollWidth/clientWidth round independently, so a subpixel content extent can
+          // report one pixel; the element-bounds check below proves nothing actually crosses the pane.
+          await expect.poll(() => editor.locator('[class*="_detailScroll"]').evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1)
           expect(await editor.locator('input, textarea, button').evaluateAll(nodes => nodes.every((node) => {
             const box = node.getBoundingClientRect()
             const pane = node.closest('aside')!.getBoundingClientRect()
