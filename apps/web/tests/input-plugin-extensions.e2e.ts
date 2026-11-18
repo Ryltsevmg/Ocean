@@ -62,7 +62,9 @@ it('expands an input activity and inserts one undoable result without overwritin
 
 it('offers bundle guidance only after explicit activation and navigates to its configuration', async () => {
   const { page, tripwire } = await fixture(false)
-  await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+  // The page lands on the contributed Catalogue tab; the fixture bundle switch is on Installed.
+  await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
   const toggle = page.getByRole('switch', { name: 'Enable @fixture/input-extension', exact: true })
   await toggle.waitFor()
   const dialog = page.getByRole('dialog', { name: 'Input plugin setup', exact: true })

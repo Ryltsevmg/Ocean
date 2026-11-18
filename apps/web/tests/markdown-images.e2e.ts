@@ -249,7 +249,7 @@ describe('web e2e: Markdown image rendering', () => {
         referrerPolicy: element.getAttribute('referrerpolicy'),
       }
     })).toEqual({
-      borderRadius: '12px',
+      borderRadius: '8px',
       decoding: 'async',
       loading: 'lazy',
       maxWidth: 'min(100%, 640px)',

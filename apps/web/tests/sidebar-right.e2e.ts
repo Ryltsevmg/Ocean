@@ -1054,8 +1054,12 @@ describe('web e2e: shipped right Sidebar', () => {
       await expect.poll(async () => await tabTitles(first)).toEqual([...order].reverse())
 
       // 2. Cross-pane move into a second pane: the tab leaves one pane's strip
-      //    for another's.
+      //    for another's. The default docked column is too narrow for a row
+      //    split — each half would drop below the strip's fixed controls plus a
+      //    minimum chip, so the split control reports `width` and stays disabled.
+      //    Widen through the shipped resize grip before splitting.
       if (await panes.count() < 2) {
+        await setPanelWidth(page, 900)
         await first.locator('[data-dockkit-split-button]').click()
         await expect.poll(async () => await panes.count()).toBe(2)
       }
@@ -1209,6 +1213,9 @@ describe('web e2e: shipped right Sidebar', () => {
       expect(await column.locator('[data-dockkit-tab-close]').count()).toBe(1)
       await proseChip(page).click()
       await expect.poll(async () => await tabTitles(paneAt(column, 0))).toEqual(['Files', SAMPLE_NAME])
+      // The default docked column cannot host a row split; widen through the
+      // shipped resize grip so the split control leaves its `width` block.
+      await setPanelWidth(page, 900)
       await paneAt(column, 0).locator('[data-dockkit-split-button]').click()
       await expect.poll(async () => await panes.count()).toBe(2)
 
@@ -1415,7 +1422,7 @@ describe('web e2e: shipped right Sidebar', () => {
         const fileEntry = guide.locator('[data-sidebar-right-guide-entry="files"]')
         const terminalEntry = guide.locator('[data-sidebar-right-guide-entry="terminal"]')
         for (const entry of [fileEntry, terminalEntry]) {
-          expect(await entry.evaluate(node => getComputedStyle(node).borderRadius)).toBe('20px')
+          expect(await entry.evaluate(node => getComputedStyle(node).borderRadius)).toBe('8px')
         }
         expect(await terminalEntry.evaluate(node => getComputedStyle(node).overflow)).toBe('hidden')
         const terminalActions = terminalEntry.getByRole('button')

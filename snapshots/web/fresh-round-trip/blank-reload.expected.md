@@ -1,6 +1,7 @@
 - banner:
+  - navigation "Session hierarchy": workspace
   - button "Open right sidebar"
-- text: Into the Unknown Preview
+- text: Into the Unknown Start a new conversation
 - button "Choose workspace": workspace
 - button "Standard mode"
 - textbox "Describe what you want to build, / commands, @ files or sessions"

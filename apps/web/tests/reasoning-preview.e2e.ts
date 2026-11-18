@@ -80,23 +80,27 @@ it.each(['plain', 'signature'])('shows completed paragraph first lines with a ri
         await expect.poll(() => animatedWhale.isVisible()).toBe(false)
         await expect.poll(() => restingWhale.isVisible()).toBe(true)
         expect(await animatedWhale.evaluate(element => getComputedStyle(element).maskImage)).toBe('none')
-        const colors = await restingWhale.locator('path').evaluate((path) => {
+        // The shipped mark is the two-path Ocean logo: each path carries its own fill,
+        // so paint is checked per path instead of on one stroked silhouette.
+        const painted = await restingWhale.locator('path').evaluateAll((paths) => {
           const probe = document.createElement('span')
           probe.style.cssText = 'color: Canvas; forced-color-adjust: none'
           document.body.append(probe)
           try {
-            const style = getComputedStyle(path)
-            return {
-              stroke: style.stroke.toLowerCase() === 'currentcolor' ? style.color : style.stroke,
-              canvas: getComputedStyle(probe).color,
-              length: (path as SVGPathElement).getTotalLength(),
-            }
+            return paths.map((path) => {
+              const style = getComputedStyle(path)
+              const ink = style.fill.toLowerCase() === 'currentcolor' ? style.color : style.fill
+              return { ink: ink.toLowerCase(), canvas: getComputedStyle(probe).color, length: (path as SVGPathElement).getTotalLength() }
+            })
           } finally { probe.remove() }
         })
-        expect(colors.stroke).not.toBe('none')
-        expect(colors.stroke).not.toBe('transparent')
-        expect(colors.stroke).not.toBe(colors.canvas)
-        expect(colors.length).toBeGreaterThan(0)
+        expect(painted.map(({ ink }) => ink)).toHaveLength(2)
+        for (const { ink, canvas, length } of painted) {
+          expect(ink).not.toBe('none')
+          expect(ink).not.toBe('transparent')
+          expect(ink).not.toBe(canvas)
+          expect(length).toBeGreaterThan(0)
+        }
       }
       try {
         await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'none' })
@@ -112,10 +116,12 @@ it.each(['plain', 'signature'])('shows completed paragraph first lines with a ri
         }, WHALE_MASK.source)
         expect(imageSize).toEqual([28, 28])
         expect(await restingWhale.isVisible()).toBe(false)
+        // The whale morph is retired: the running mark keeps its masked paint with no
+        // animation, so consecutive frames stay identical.
+        expect(await animatedWhale.evaluate(element => getComputedStyle(element).animationName)).toBe('none')
         const firstWhaleFrame = await whale.screenshot({ animations: 'allow' })
-        await expect.poll(async () => !(await whale.screenshot({ animations: 'allow' })).equals(firstWhaleFrame), {
-          timeout: 5000,
-        }).toBe(true)
+        await page.waitForTimeout(500)
+        expect((await whale.screenshot({ animations: 'allow' })).equals(firstWhaleFrame)).toBe(true)
         await page.emulateMedia({ reducedMotion: 'reduce' })
         await expectStaticWhale()
         await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'active' })

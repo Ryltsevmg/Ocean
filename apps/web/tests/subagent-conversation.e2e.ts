@@ -710,7 +710,7 @@ describe('web e2e: persisted subagent conversation and human continuation', () =
       return { fontSize: style.fontSize, lineHeight: style.lineHeight, top: bounds.top, bottom: bounds.bottom }
     })))
     expect(crumbGeometry.map(({ fontSize, lineHeight }) => ({ fontSize, lineHeight })))
-      .toEqual([{ fontSize: '14px', lineHeight: '20px' }, { fontSize: '14px', lineHeight: '20px' }])
+      .toEqual([{ fontSize: '13px', lineHeight: '20px' }, { fontSize: '14px', lineHeight: '20px' }])
     expect(Math.abs(crumbGeometry[0]!.top - crumbGeometry[1]!.top), JSON.stringify(crumbGeometry)).toBeLessThanOrEqual(1)
     expect(Math.abs(crumbGeometry[0]!.bottom - crumbGeometry[1]!.bottom), JSON.stringify(crumbGeometry)).toBeLessThanOrEqual(1)
     expect(await hierarchy.getByRole('button', { name: '1 subagent', exact: true })

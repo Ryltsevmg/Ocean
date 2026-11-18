@@ -5,6 +5,7 @@
     - button "模型"
     - button "内置插件"
     - button "Agent 预设"
+    - button "意见反馈"
   - button "打开配置文件"
   - button "关闭"
   - heading "模型" [level=2]
@@ -17,7 +18,7 @@
       - text: DeepSeek deepseek-official API 密钥
       - button "认证说明": "?"
       - textbox "API 密钥":
-        - /placeholder: dsh_onboa•••••••••••••••••••••••••••••••test
+        - /placeholder: ocean_onboa•••••••••••••••••••••••••••••••test
       - paragraph: 使用已保存的 API key。
       - group:
         - text: 自定义设置 API 地址

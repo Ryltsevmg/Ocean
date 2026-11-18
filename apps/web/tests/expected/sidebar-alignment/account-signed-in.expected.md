@@ -1,12 +1,12 @@
 {
   "wide": {
     "height": 44,
-    "width": 260,
+    "width": 249,
     "footerCenterOffset": 0,
-    "leftOffset": -2,
-    "rightOffset": 2,
-    "paintedLeftOffset": -2,
-    "paintedRightOffset": 2
+    "leftOffset": 1,
+    "rightOffset": -1,
+    "paintedLeftOffset": 1,
+    "paintedRightOffset": -1
   },
   "rail": {
     "height": 36,

@@ -15,6 +15,8 @@
 - status:
   - text: This turn failedAPI key is invalid
   - code: AUTH
+- paragraph: This model could not continue. Choose another model in a new conversation.
+- button "Continue in a new conversation"
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands"
 - 'button "Access mode, current: Workspace Write"': Workspace Write

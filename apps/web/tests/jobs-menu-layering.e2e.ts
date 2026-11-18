@@ -77,6 +77,10 @@ describe.skipIf(MODE === 'record')('web e2e: jobs menu layering', () => {
     await seedSession(scaffold, await readFile(FIXTURE, 'utf8'), SEED_ID)
     browser = await chromium.launch()
     page = await newEnglishPage(browser)
+    // The shipped dock is 520px wide, so at the 1680 default the anchored jobs menu
+    // lands clear of it. One breakpoint narrower keeps the two overlapping, which is
+    // what the z-order and hit-test checks below need.
+    await page.setViewportSize({ width: 1366, height: 1000 })
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.route('https://browser.test/**', async route => route.fulfill({
       contentType: 'text/html', body: '<h1>Jobs menu browser fixture</h1>',

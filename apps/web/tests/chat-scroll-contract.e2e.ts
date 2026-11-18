@@ -729,7 +729,10 @@ describe('web e2e: long Chat scroll contract', () => {
             }, 0) }
         })
         expect(before.groupHeight).toBeGreaterThan(before.visibleHeight * 3)
-        if (scenario.bodyParagraphs === 32) expect(before.visibleSteps).toBe(0)
+        // body-only and large-input park every step group above the fold: the
+        // capped 14-line draft fills the composer so far that only the final
+        // answer stays visible at the bottom.
+        if (scenario.bodyParagraphs === 32 || scenario.name === 'large-input') expect(before.visibleSteps).toBe(0)
         else expect(before.visibleSteps).toBeGreaterThan(0)
         if (scenario.name === 'cancel-all-during-fold') {
           await openSettings(page, 'en')

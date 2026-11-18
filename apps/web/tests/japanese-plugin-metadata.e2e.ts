@@ -19,11 +19,12 @@ it('displays Japanese plugin titles and descriptions from package metadata', asy
   const tripwire = watchConsole(page)
   onTestFailed(() => saveFailureShot(page, 'japanese-plugin-metadata'))
   await page.goto(scaffold.authenticatedUrl)
-  await page.getByRole('button', { name: 'プラグイン', exact: true }).click()
+  await page.getByRole('navigation', { name: 'ツール' }).getByRole('button', { name: 'プラグイン', exact: true }).click()
   const panel = page.locator('[data-plugin-panel]')
-  // The held-back Codex bundle lists on the More page.
-  await panel.getByRole('button', { name: 'その他', exact: true }).click()
-  const title = panel.getByRole('button', { name: 'Codex サブエージェントを表示', exact: true })
+  // The page lands on the contributed Catalogue tab; the held-back Codex bundle lists on the More page of Installed.
+  await panel.getByRole('tab', { name: 'インストール済み', exact: true }).click()
+  await panel.getByRole('button', { name: '他のプラグインを探す', exact: true }).click()
+  const title = panel.getByRole('button', { name: 'Codex サブエージェント を表示', exact: true })
   await title.waitFor()
   const card = title.locator('xpath=ancestor::li')
   const locale = JSON.parse(await readFile(
@@ -32,7 +33,7 @@ it('displays Japanese plugin titles and descriptions from package metadata', asy
   await card.getByText(locale.meta.description, { exact: true }).waitFor()
   const expected = fileURLToPath(new URL('./expected/japanese-plugin-metadata/card.expected.md', import.meta.url))
   await compareOrRefreshGolden(expected,
-    await captureStableAria(page, '[data-plugin-panel] li:has(button[aria-label="Codex サブエージェントを表示"])', scaffold.workspaceCwd), webSnapshotMode())
+    await captureStableAria(page, '[data-plugin-panel] li:has(button[aria-label="Codex サブエージェント を表示"])', scaffold.workspaceCwd), webSnapshotMode())
   expect(tripwire.warnings).toEqual([])
   expect(tripwire.pageErrors).toEqual([])
 })

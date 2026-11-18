@@ -45,8 +45,14 @@ const BLANK_LIMIT = 120
  * closing row that has faded but not finished shrinking still covers its space. A band whose rows on
  * both sides have faded to full transparency shows the same background as those rows and does not
  * count; a band beside a visible row always counts.
+ * A batch drives a closing row's opacity to 0 at the end of its 70ms fade while the box has only
+ * started to close (`FADE_OUT_MS` and the opacity ramp in
+ * `packages/client/ui-chat/src/client/chat/flow-motion.ts`), so the faded row stops covering its box
+ * for more than one sample frame. Measured at 60Hz for main/other-tab/steps: two adjacent frames at
+ * 168px then 182px, each with a closing row and no committed room, while the settled gap after the
+ * fold is 12px.
  */
-const TRANSIENT_FRAMES = 1
+const TRANSIENT_FRAMES = 2
 const EVIDENCE = fileURLToPath(new URL('../../../.artifacts/screenshots/fold-blank-matrix/', import.meta.url))
 const MAIN_ROOT = '[data-conversation-scroll]:not([data-sidebar-chat] [data-conversation-scroll])'
 const SIDE_ROOT = '[data-sidebar-chat] [data-conversation-scroll]'

@@ -1,11 +1,9 @@
 - button "新建会话"
 - button "收起侧边栏"
 - button "新建会话": 新会话
-- navigation "全局面板":
-  - button "插件"
+- navigation "工具":
   - button "自动化任务"
-  - button "从侧边栏取消固定自动化任务"
-  - button "更多"
+  - button "插件"
 - text: 工作区
 - button "搜索会话"
 - textbox "搜索会话名称"
@@ -14,10 +12,12 @@
 - tree "会话":
   - treeitem "workspace" [expanded]
   - treeitem "新会话" [selected]
-- button "账号菜单": 更多
+- button "设置"
+- button "本地主机"
 - banner:
+  - navigation "会话层级": workspace
   - button "打开右侧边栏"
-- text: 探索未至之境 预览版
+- text: 探索未至之境 开始新对话
 - button "选择工作区": workspace
 - button "标准模式"
 - textbox "描述你想要构建的内容, / 调用指令, @ 文件或对话"

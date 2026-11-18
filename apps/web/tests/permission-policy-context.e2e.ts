@@ -16,7 +16,7 @@ import type { WebTerminalId } from '@ocean/ocean-api-terminal-controller/types'
 import type {} from '@ocean/ocean-api-terminal-controller'
 import {
   assertFinalWorkspaceSnapshot, assertFixtureInventory, fixtureUserPrompts, launchWebScaffold, recordFixture,
-  watchConsole, webSnapshotMode, type WebScaffold,
+  selectedSessionFixture, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
 import { connectFreshWorkspace, newEnglishPage, saveFailureShot, writeComposerDraft } from './support.ts'
 
@@ -73,7 +73,11 @@ describe('web e2e: current sandbox policy reaches the model before tools', () =>
 
   beforeAll(async () => {
     scaffold = await launchWebScaffold({
-      ...MODE === 'record' ? {} : { replayFixture: FIXTURE, compareReplaySession: true },
+      ...MODE === 'record' ? {} : {
+        replayFixture: FIXTURE,
+        compareReplaySession: true,
+        replayExpectedSession: join(SNAPSHOT_DIR, 'writer.expected.jsonl'),
+      },
       ...process.platform === 'win32' ? {} : {
         extraOverlayPath: fileURLToPath(new URL('./fixtures/sidebar-terminal.patch.yml', import.meta.url)),
       },
@@ -138,7 +142,7 @@ describe('web e2e: current sandbox policy reaches the model before tools', () =>
   it('switches read-only, danger-full-access, and workspace-write through the real GUI command path', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-permission-policy-context'))
     if (MODE !== 'record') {
-      expect(fixtureUserPrompts(await readFile(FIXTURE, 'utf8'))).toEqual(PROMPTS)
+      expect(fixtureUserPrompts(await readFile(await selectedSessionFixture(FIXTURE), 'utf8'))).toEqual(PROMPTS)
     }
 
     const input = page.locator('[data-composer-input][contenteditable="true"]').first()
@@ -196,7 +200,7 @@ describe('web e2e: current sandbox policy reaches the model before tools', () =>
     const answers = assistantTexts(sessionEvents)
     expect(answers.length).toBeGreaterThanOrEqual(4)
     expect(answers[0]).toMatch(/read-only.*(?:denied|cannot modify|cannot create or edit)/i)
-    expect(answers[1]).toMatch(/does not restrict.*(?:file operations|(?:write\/edit tools|write and edit tools).*one-shot bash commands)/i)
+    expect(answers[1]).toMatch(/does not restrict file (?:operations|modifications)/i)
     expect(answers[2]).toBe('WORKSPACE_POLICY_SEEN')
     const calls = sessionEvents.filter(
       (event): event is Extract<SessionEvent, { type: 'tool/call' }> => event.type === 'tool/call',
@@ -217,6 +221,6 @@ describe('web e2e: current sandbox policy reaches the model before tools', () =>
   it.skipIf(MODE === 'record')('stays clean and keeps the fixture inventory closed', async () => {
     expect(tripwire.pageErrors).toEqual([])
     expect(tripwire.warnings).toEqual([])
-    await assertFixtureInventory(SNAPSHOT_DIR, ['session.v3.jsonl', 'workspace.expected'])
+    await assertFixtureInventory(SNAPSHOT_DIR, ['session.v3.jsonl', 'workspace.expected', 'writer.expected.jsonl'])
   })
 })

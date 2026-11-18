@@ -180,9 +180,9 @@ it('keeps the automation page on screen with its text fields at the touch step',
       await expect.poll(() => viewFacts(desktopPage)).toEqual({
         width: 1024,
         documentWidth: 1024,
-        smallestField: 14,
+        smallestField: 13,
         name: 'absent',
-        search: '14px',
+        search: '13px',
         instruction: 'absent',
       })
       await desktopPanel.getByRole('button', { name: PHONE_TASK_TITLE, exact: true }).click()
@@ -190,10 +190,10 @@ it('keeps the automation page on screen with its text fields at the touch step',
       await expect.poll(() => viewFacts(desktopPage)).toEqual({
         width: 1024,
         documentWidth: 1024,
-        smallestField: 14,
-        name: '14px',
-        search: '14px',
-        instruction: '14px',
+        smallestField: 13,
+        name: '13px',
+        search: '13px',
+        instruction: '13px',
       })
       await desktop.close()
 

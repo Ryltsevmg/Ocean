@@ -41,7 +41,11 @@ it('keeps the view options menu anchored and dismissible through WebKit window r
   await menu.waitFor({ state: 'hidden' })
   await anchor.click()
   await menu.waitFor()
-  await page.mouse.click(800, 500)
+  // Dismiss by pressing outside the menu. The previous fixed point landed on a
+  // session row, whose pointer handler stops the document bubble that the menu's
+  // outside-press listener relies on, so the menu stayed open under WebKit after
+  // the resize. Press the empty scroll surface beside it instead.
+  await page.mouse.click(700, 200)
   await menu.waitFor({ state: 'hidden' })
   await anchor.click()
   await page.getByRole('menuitem', { name: 'In one list', exact: true }).click()

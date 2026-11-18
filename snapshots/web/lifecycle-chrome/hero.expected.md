@@ -1,11 +1,9 @@
 - button "New session"
 - button "Collapse sidebar"
 - button "New session": New Session
-- navigation "Global panels":
-  - button "Plugins"
+- navigation "Tools":
   - button "Automation tasks"
-  - button "Unpin Automation tasks from sidebar"
-  - button "More"
+  - button "Plugins"
 - text: Workspaces
 - button "Search sessions"
 - textbox "Search session names"
@@ -14,10 +12,12 @@
 - tree "Sessions":
   - treeitem "workspace" [expanded]
   - treeitem "New Session" [selected]
-- button "Account menu": More
+- button "Settings"
+- button "Local host"
 - banner:
+  - navigation "Session hierarchy": workspace
   - button "Open right sidebar"
-- text: Into the Unknown Preview
+- text: Into the Unknown Start a new conversation
 - button "Choose workspace": workspace
 - button "Standard mode"
 - textbox "Describe what you want to build, / commands, @ files or sessions":

@@ -5,6 +5,7 @@
     - button "模型"
     - button "内置插件"
     - button "Agent 预设"
+    - button "意见反馈"
   - button "打开配置文件"
   - button "关闭"
   - text: 权限 选择新会话的默认权限模式
@@ -35,6 +36,6 @@
   - button "排队发送"
   - text: 性能与用量 选择性能与用量信息展示的详细程度
   - button "详细"
-  - text: 在使用官方模型 API 时上传 Session Log 帮助改进 DeepSeek 模型与产品
-  - switch "在使用官方模型 API 时上传 Session Log"
+  - text: 随 DeepSeek API 请求发送会话日志 将日志中的消息和工具结果添加到 DeepSeek 适配器发送至所配置 API 地址的请求中。重新启用也可能发送此前记录的日志。
+  - switch "随 DeepSeek API 请求发送会话日志"
   - text: 当前版本：{{version}}

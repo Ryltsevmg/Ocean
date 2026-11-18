@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { chromium } from 'playwright'
+import { chromium, type Locator } from 'playwright'
 import { expect, it } from 'vitest'
 import { ToolCallId, createAssistantMessage, createToolResultMessage, createUserMessage } from '@ocean/ocean-llm'
 import { SESSION_FORMAT_VERSION, Session, SessionId } from '@ocean/ocean-session'
@@ -14,6 +14,25 @@ const COMMAND = 'node ./scripts/start-worker.mjs --workspace=/tmp/diagnostics/lo
 const ARGS = { command: COMMAND, description: 'Start the diagnostic worker', run_in_background: true }
 const OUTPUT = 'started background job bash-1'
 const LONG_ARGS = { ...ARGS, command: `${COMMAND} --token=${'x'.repeat(1024)}` }
+
+/**
+ * Wait until a scrollport stops moving, so the next keyboard scroll lands.
+ * Measured in the assembled page: a Home keypress that arrives while the End scroll it follows is
+ * still animating leaves the banner at maximum scrollTop (138 at full width, 1272 at 380px) for the
+ * whole poll window, while the same keypress after the banner stopped moving reached 0 within about
+ * 200ms (138, then 40, then 0). The banner takes no Ocean scroll handler — a Home keydown dispatched
+ * at the focused Copy button reports `defaultPrevented` false — so the test drives one keypress per
+ * animation, the way a keyboard reader whose scroll has landed presses the next key.
+ * @param scrollport - the focused scroll container to sample.
+ */
+async function waitForScrollRest(scrollport: Locator): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const before = await scrollport.evaluate(element => element.scrollTop)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    if (before === await scrollport.evaluate(element => element.scrollTop)) return
+  }
+  throw new Error('scrollport never came to rest')
+}
 
 /** A settled shell call rendered from durable arguments and its original result. */
 function shellFixture(arguments_: typeof ARGS, output: string): string {
@@ -122,6 +141,7 @@ it.each([
             await page.keyboard.press('End')
             await expect.poll(() => inputSection.evaluate(element =>
               element.scrollTop + element.clientHeight >= element.scrollHeight - 1)).toBe(true)
+            await waitForScrollRest(inputSection)
             await page.keyboard.press('Home')
             await expect.poll(() => inputSection.evaluate(element => element.scrollTop)).toBe(0)
           }

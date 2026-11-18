@@ -626,12 +626,15 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     { id: 'session-title-llm', disabled: true },
     // Fixture sessions must never leave the process: the shipped row defaults
     // to the production OTLP endpoint (or whatever OCEAN_TELEMETRY_OTLP_URL
-    // names in the ambient environment). A scenario with a local collector
-    // preserves the shipped disabled setting instead of overriding it.
+    // names in the ambient environment) and is disabled. A scenario with a
+    // local collector re-enables the row against its own loopback endpoint.
     options.telemetryUrl === undefined
       ? { id: 'session-telemetry-otel', disabled: true }
       : {
         id: 'session-telemetry-otel',
+        // The shipped row is disabled (no upstream feedback upload); a config-only
+        // patch cannot re-enable it, so a local-collector scenario must opt in explicitly.
+        disabled: false,
         config: {
           mode: options.telemetryMode ?? 'FEEDBACK_ONLY',
           exporter: { url: options.telemetryUrl },
