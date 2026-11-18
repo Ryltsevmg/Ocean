@@ -301,7 +301,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
       else await input.press('Escape')
     }
     await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).click()
-    await expect.poll(() => page.getByRole('button', { name: 'Account menu', exact: true }).getAttribute('data-collapsed')).toBe('true')
+    await expect.poll(() => page.getByRole('button', { name: 'Settings', exact: true }).getAttribute('data-collapsed')).toBe('true')
     const add = page.getByRole('button', { name: 'Add workspace', exact: true })
     const samples = await add.evaluate(async (button, entry) => {
       const header = button.closest<HTMLElement>('[class*="sectionHeader"]')
@@ -526,7 +526,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
     ] : []
     try {
       if (signedIn) await page.reload({ waitUntil: 'load' })
-      const accountButton = page.getByRole('button', { name: 'Account menu', exact: true })
+      const accountButton = page.getByRole('button', { name: signedIn ? 'Account menu' : 'Settings', exact: true })
       await expect.poll(() => accountButton.getAttribute('data-signed-out')).toBe(String(!signedIn))
       const measure = () => accountButton.evaluate((element) => {
         const button = element.getBoundingClientRect()

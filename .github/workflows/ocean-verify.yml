@@ -63,6 +63,8 @@ jobs:
         run: npm install --global pnpm@11.28.5
       - name: Install locked dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare and probe the Linux sandbox
+        run: bash scripts/prepare-ci-bubblewrap.sh
       - name: Require PowerShell coverage support
         run: pwsh -NoLogo -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion'
       - name: Build runtime artifacts for process fixtures
@@ -94,10 +96,14 @@ jobs:
         run: npm install --global pnpm@11.28.5
       - name: Install locked dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare and probe the Linux sandbox
+        run: bash scripts/prepare-ci-bubblewrap.sh
       - name: Build artifacts and check types
         run: pnpm run build --serial
       - name: Test assembled CLI expectations
         run: pnpm run test:expected --maxWorkers=1
+      - name: Install locked browser engines and host libraries
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium webkit
       - name: Replay recorded sessions
         run: pnpm run test:snapshot
       - name: Install pinned Python tooling
@@ -109,8 +115,6 @@ jobs:
         run: '"$RUNNER_TEMP/uv/bin/uv" sync --locked --project python/sdk --group test --python python3'
       - name: Test Python SDK and built runtime projections
         run: '"$RUNNER_TEMP/uv/bin/uv" run --no-sync --directory python/sdk pytest -ra'
-      - name: Install locked browser engines and host libraries
-        run: pnpm --dir apps/web exec playwright install --with-deps chromium webkit
       - name: Compare Web snapshots
         # Live HMR fixtures rebuild artifacts, so browser tests own the final step.
         run: pnpm run test:web:ci

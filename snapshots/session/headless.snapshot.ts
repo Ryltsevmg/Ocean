@@ -1466,8 +1466,9 @@ describe('headless recorded-session snapshots', () => {
       expect(result.stderr).toBe(expectedStderr)
       expect(actualLogs, `${scenario.name}: persisted session count`).toHaveLength(fixtures.length)
       const writerFiles = (await readdir(scenario.dir)).filter(name => /^writer(?:\.[1-9]\d*)?\.expected\.jsonl$/u.test(name)).sort()
+      const hasPowerShellWriter = scenario.name === 'pwsh-tool-turn' || scenario.name === 'persistent-pwsh-tool-turn'
       if (mode === 'replay') {
-        expect(writerFiles, 'native writer oracle inventory').toEqual(scenario.manifest.sessionFormat === undefined
+        expect(writerFiles, 'native writer oracle inventory').toEqual(!hasPowerShellWriter && scenario.manifest.sessionFormat === undefined
           ? [] : fixtures.map((_, index) => writerSnapshotName(index)).sort())
       }
       let expected = retainedToolInput === undefined ? fixtures : await fixtureSessions(scenario)
@@ -1482,6 +1483,7 @@ describe('headless recorded-session snapshots', () => {
         }
         expect(await fixtureSessions(scenario), 'historical replay input remains unchanged').toEqual(fixtures)
       }
+      if (hasPowerShellWriter) expected = [await readFile(join(scenario.dir, writerSnapshotName(0)), 'utf8')]
       const actualSnapshots = normalizeSessionSnapshots(actualLogs.map(log => log.content), actualContext, { nativeWriterOutput: true })
       const expectedSnapshots = normalizeSessionSnapshots(expected, contextOf(expected), { nativeWriterOutput: true })
       for (const [index, actual] of actualSnapshots.entries()) {

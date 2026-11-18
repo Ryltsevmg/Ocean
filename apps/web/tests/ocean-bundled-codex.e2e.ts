@@ -2,7 +2,7 @@
 import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
 import { launchWebScaffold } from './scaffold.ts'
-import { newEnglishPage, openSettings } from './support.ts'
+import { newEnglishPage } from './support.ts'
 
 it('enables and disables bundled Codex through the real plugin UI without installation', async () => {
   const scaffold = await launchWebScaffold()
@@ -11,11 +11,10 @@ it('enables and disables bundled Codex through the real plugin UI without instal
     const page = await newEnglishPage(browser)
     await page.goto(scaffold.authenticatedUrl)
     await page.waitForSelector('[class*="frame"]')
-    await openSettings(page, 'en')
-    await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+    await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
     const panel = page.locator('[data-plugin-panel]')
     await panel.waitFor()
-    await panel.getByRole('button', { name: 'More', exact: true }).click()
+    await panel.getByRole('button', { name: 'Browse other plugins', exact: true }).click()
     const name = '@ocean/ocean-subagent-codex'
     const card = panel.locator(`[data-plugin-package="${name}"]`)
     await card.waitFor()
