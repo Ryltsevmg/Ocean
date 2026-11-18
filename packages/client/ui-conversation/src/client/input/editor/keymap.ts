@@ -168,6 +168,30 @@ function movePastQuote(editor: LexicalEditor, event: KeyboardEvent): boolean {
 }
 
 /**
+ * Perform the Home/End line-boundary edit on the DOM selection. Native
+ * Home/End do not move the caret while the composer is docked inside the
+ * conversation scrollport, so the keymap owns the standard edit in every
+ * scroll context; Lexical absorbs the result through its selectionchange
+ * tracking. Modifier chords keep their native document-level navigation,
+ * and a selection outside the editor is left to its owner.
+ * @param editor - the shell-owned editor.
+ * @param event - the keydown carrying Home or End.
+ * @returns true when the keymap performed the edit and consumed the key.
+ */
+function moveLineBoundary(editor: LexicalEditor, event: KeyboardEvent): boolean {
+  if (event.key !== 'Home' && event.key !== 'End') return false
+  if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return false
+  const root = editor.getRootElement()
+  if (root === null) return false
+  const selection = root.ownerDocument.getSelection()
+  if (selection === null || !root.contains(selection.anchorNode)) return false
+  if (typeof selection.modify !== 'function') return false
+  event.preventDefault()
+  selection.modify(event.shiftKey ? 'extend' : 'move', event.key === 'Home' ? 'backward' : 'forward', 'lineboundary')
+  return true
+}
+
+/**
  * Register the composer keymap on one editor.
  * @param editor - the shell-owned editor.
  * @param handlers - bar-supplied behavior.
@@ -217,6 +241,7 @@ export function registerComposerKeymap(editor: LexicalEditor, handlers: Composer
       root?.addEventListener('compositionend', onCompositionEnd)
       syncComposition()
     }),
+    editor.registerCommand(KEY_DOWN_COMMAND, event => moveLineBoundary(editor, event), COMMAND_PRIORITY_CRITICAL),
     editor.registerCommand(KEY_DOWN_COMMAND, (event) => {
       if (!isApplePlatform() || !event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return false
       const key = event.key.toLowerCase()
