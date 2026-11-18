@@ -124,7 +124,7 @@ it('confirms logout without live cleanup when the cookie names no parseable logi
   await login.logout(request('DELETE', exchangeHeaders({ cookie: '__Host-ocean-device=garbage' })), reply.response, LISTENER, close)
   expect(reply.response.statusCode).toBe(204)
   expect(reply.writeHead).toHaveBeenCalledWith(204, expect.objectContaining({
-    'set-cookie': expect.stringContaining('Max-Age=0'),
+    'set-cookie': expect.stringContaining('Max-Age=0') as string,
   }))
   expect(close).not.toHaveBeenCalled()
 })

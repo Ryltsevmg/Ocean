@@ -306,6 +306,7 @@ describe('Session fork failures', () => {
     ctx.provide('llm', {
       listProviders: () => [{ id: 'fixture', name: 'Fixture' }],
       listModels: () => Promise.resolve([{ id: 'fixture-model', name: 'Fixture Model' }]),
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- non-Error sentinel by fixture design.
       resolveCallConfig: () => Promise.reject(failure),
     } as never)
     const source = completedSession(ctx, 'route-failure-source')

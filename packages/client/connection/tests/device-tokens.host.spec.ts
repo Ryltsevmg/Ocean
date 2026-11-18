@@ -120,16 +120,16 @@ it('returns the scoped logout key when no matching login exists and keeps other 
   // A parseable bearer for an absent device changes nothing but still names the scoped key.
   const absent = '00000000-0000-4000-8000-000000000099'
   expect(await devices.endSession(`${absent}.${'a'.repeat(43)}`, origin))
-    .toEqual({ deviceId: absent, origin, verifier: expect.any(String) })
+    .toEqual({ deviceId: absent, origin, verifier: expect.any(String) as string })
   // A login at another origin is not removed.
   const otherOrigin = 'https://other.example'
   expect(await devices.endSession(login, otherOrigin))
-    .toEqual({ deviceId: laptop.id, origin: otherOrigin, verifier: expect.any(String) })
+    .toEqual({ deviceId: laptop.id, origin: otherOrigin, verifier: expect.any(String) as string })
   expect(await devices.verifySession(login, origin)).toBe(laptop.id)
 
   // Removing one device's login leaves the other device record untouched.
   expect(await devices.endSession(login, origin))
-    .toEqual({ deviceId: laptop.id, origin, verifier: expect.any(String) })
+    .toEqual({ deviceId: laptop.id, origin, verifier: expect.any(String) as string })
   expect(await devices.verifySession(login, origin)).toBeUndefined()
   expect(await devices.verify(laptop.token)).toBe(laptop.id)
   expect(await devices.list()).toEqual([

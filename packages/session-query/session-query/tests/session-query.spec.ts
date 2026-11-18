@@ -191,6 +191,7 @@ function expectCode(code: SessionQueryErrorCode): Error {
 
 function rejectUnknown<T>(reason: unknown): Promise<T> {
   // Exercise containment for an implementation that violates the Error rejection convention.
+  // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- deliberate non-Error rejection.
   return Promise.reject(reason)
 }
 

@@ -1823,7 +1823,7 @@ describe('Typert Remote streams', () => {
     try {
       expect(await rpc('deviceApproval/list', {})).toMatchObject({
         ok: false,
-        error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('requires a session ID') },
+        error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('requires a session ID') as string },
       })
       expect(await rpc('deviceApproval/list', { args: { sessionId: '' } })).toMatchObject({
         ok: false,
@@ -1831,7 +1831,7 @@ describe('Typert Remote streams', () => {
       })
       expect(await rpc('deviceQuestion/answer', { args: { sessionId: 'agent-1', id: 7 } })).toMatchObject({
         ok: false,
-        error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('invalid device interaction response') },
+        error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('invalid device interaction response') as string },
       })
       expect(await rpc('deviceApproval/answer', { args: { sessionId: 'agent-1', id: 'event', allow: 'yes' } })).toMatchObject({
         ok: false,
@@ -1915,7 +1915,7 @@ describe('Typert Remote streams', () => {
       for (const answer of invalidAnswers) {
         expect(await rpc('deviceQuestion/answer', { sessionId: 'agent-1', id, answer })).toMatchObject({
           ok: false,
-          error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('answer must match the pending questions') },
+          error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('answer must match the pending questions') as string },
         })
       }
       expect(pending.resolve).not.toHaveBeenCalled()
@@ -1947,7 +1947,7 @@ describe('Typert Remote device event sessions', () => {
       && typeof frame.value === 'object'
       && frame.value !== null
       && Object.hasOwn(frame.value, 'eventId'))
-    expect(waterfalls.map(frame => Reflect.get(frame.value as object, 'event')))
+    expect(waterfalls.map((frame): string => Reflect.get(frame.value as object, 'event') as string))
       .toEqual(['approval/request', 'user-questions/request'])
 
     const removed = [approval.pending, question.pending, other].map(pending =>
@@ -2111,7 +2111,7 @@ describe('Typert Remote device event sessions', () => {
       }), other)
       expect(serverResponseSchema.parse(await response.json()).result).toMatchObject({
         ok: false,
-        error: { code: 'gateway/interactions-forbidden', message: expect.stringContaining('belongs to another login') },
+        error: { code: 'gateway/interactions-forbidden', message: expect.stringContaining('belongs to another login') as string },
       })
       expect(approval.pending.resolve).not.toHaveBeenCalled()
 

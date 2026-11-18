@@ -42,7 +42,9 @@ vi.mock('node:timers/promises', async importOriginal => ({
     return new Promise((resolve, reject) => {
       const signal = options?.signal
       // AbortSignal.reason belongs to the aborting caller and may be a non-Error sentinel.
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- AbortSignal.reason may be a non-Error sentinel.
       if (signal?.aborted) { reject(signal.reason); return }
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- signal.reason may be a non-Error sentinel.
       const onAbort = (): void => { reject(signal!.reason) }
       signal?.addEventListener('abort', onAbort, { once: true })
       if (!carrier.holdDelay) {
@@ -436,6 +438,7 @@ describe('connect unary commands', () => {
   it('stays silent when disposal aborts an in-flight request', async () => {
     host.rpcOverride = (_endpoint, _envelope, call) => new Promise<Response>((_resolve, reject) => {
       // AbortSignal.reason belongs to the aborting caller and may be a non-Error sentinel.
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- AbortSignal.reason may be a non-Error sentinel.
       call.signal?.addEventListener('abort', () => { reject(call.signal!.reason) }, { once: true })
     })
     boot = await bootConnect(['list'], { holdReady: true })
@@ -845,6 +848,7 @@ describe('connect streams', () => {
       // Hold the first identify until its own 5s check signal times out.
       return new Promise<Response>((_resolve, reject) => {
         // AbortSignal.reason belongs to the aborting caller and may be a non-Error sentinel.
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- AbortSignal.reason may be a non-Error sentinel.
         call.signal!.addEventListener('abort', () => { reject(call.signal!.reason) }, { once: true })
       })
     }
