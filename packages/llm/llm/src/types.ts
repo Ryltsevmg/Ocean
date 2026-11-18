@@ -525,6 +525,11 @@ export interface ToolSchema {
   description: string
   /** JSON Schema object for the arguments. */
   parameters: Record<string, unknown>
+  /**
+   * Declares program-image adaptation: in a TypeScript PTC runtime a successful
+   * result carrying exactly one image block is delivered to the program as an Image.
+   */
+  programImage?: true
 }
 
 /** User input for one LLM request; it has no durable Session identity or source. */

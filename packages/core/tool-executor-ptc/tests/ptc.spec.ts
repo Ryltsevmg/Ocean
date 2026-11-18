@@ -1712,6 +1712,43 @@ describe('the run_code dispatch bridge', () => {
     expect(result.content).toEqual([{ type: 'text', text: expect.stringContaining(message) as string }])
   })
 
+  it('passes non-image results of a declared program-image tool through as values', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    ctx.tools.register(defineContentToolFixture({
+      name: 'cua', description: 'Return a text observation.', parameters: {}, programImage: true,
+      execute: () => Promise.resolve([{ type: 'text', text: 'Window selected' }]),
+    }))
+    runtime.behavior = async request => printed(await request.bindings[0]!.functions.cua!({}))
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(false)
+    expect(result.content).toEqual([{ type: 'text', text: JSON.stringify([{ type: 'text', text: 'Window selected' }], null, 2) }])
+  })
+
+  it('adapts a single-image result of a declared program-image tool', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    ctx.tools.register(defineContentToolFixture({
+      name: 'cua', description: 'Return image content.', parameters: {}, programImage: true,
+      execute: () => Promise.resolve([{
+        type: 'image' as const,
+        attachment: {
+          attachmentId: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as never,
+          mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+        },
+      }]),
+    }))
+    runtime.behavior = async (request) => {
+      await request.bindings[0]!.functions.cua!({})
+      return { output: [] }
+    }
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(true)
+    expect(result.content).toEqual([{ type: 'text', text: expect.stringContaining('Image storage must expose a readable path') as string }])
+  })
+
   it('returns non-image tool content as program values', async () => {
     const { ctx, runtime } = await setup({ mode: 'ptc' })
     onTestFinished(() => ctx.fiber.dispose())

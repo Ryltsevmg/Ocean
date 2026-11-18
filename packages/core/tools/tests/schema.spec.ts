@@ -2,13 +2,32 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import {
   JsonSchemaError,
   parameterSchemaSpecToJsonSchema,
+  projectToolSchema,
   valueSchemaSpecToJsonSchema,
   type InferArgs,
   type InferValue,
   type ParameterSchemaSpec,
+  type ToolDefinition,
   type ValueSchemaSpec,
 } from '../src/index.ts'
 import type { JsonValue } from '@ocean/ocean-util-values'
+
+describe('projectToolSchema program-image projection', () => {
+  const definition: ToolDefinition = {
+    name: 'cua', description: 'Image-producing tool.', parameters: {},
+    output: { schema: { type: 'string' }, render: () => [] },
+    execute: () => Promise.resolve([]),
+  }
+
+  it('omits programImage when the output does not declare it', () => {
+    expect(projectToolSchema(definition, false)).not.toHaveProperty('programImage')
+  })
+
+  it('projects programImage when the output declares it', () => {
+    const declared: ToolDefinition = { ...definition, output: { ...definition.output, programImage: true } }
+    expect(projectToolSchema(declared, false)).toMatchObject({ programImage: true })
+  })
+})
 
 describe('the unified author schema DSL', () => {
   it('compiles every value root and the author-only json node', () => {
