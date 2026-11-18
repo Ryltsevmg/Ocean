@@ -553,8 +553,9 @@ export function createRunCodeTransport(
 
         const binding = (schema: ToolSchema): PtcBindingFunction => async (rawArgs: unknown): Promise<JsonValue> => {
           const { name } = schema
-          // FIXME: Let image-producing tools declare their program result adaptation.
-          const usesProgramImage = runtime.language === 'typescript' && name === 'read_image'
+          // Image-producing tools declare program-image adaptation on their output;
+          // read_image keeps the built-in adaptation for compatibility.
+          const usesProgramImage = runtime.language === 'typescript' && (name === 'read_image' || schema.programImage === true)
           if (runOver()) {
             throw new Error(`${toolName} run is over (${String(runController.signal.reason)}); ${name} not dispatched`)
           }
@@ -702,11 +703,15 @@ export function createRunCodeTransport(
             const images = outcome.content.filter(block => block.type === 'image')
             const first = images[0]
             if (first !== undefined && images.length === 1) return programImage(first.attachment)
-            if (outcome.imageRemoved) {
-              throw new Error('Image output was removed by a tool output policy.\n'
-                + outcome.content.filter(block => block.type === 'text').map(block => block.text).join('\n'))
+            // read_image must yield exactly one image; a declared program-image tool
+            // adapts single-image results and passes any other result through as a value.
+            if (name === 'read_image') {
+              if (outcome.imageRemoved) {
+                throw new Error('Image output was removed by a tool output policy.\n'
+                  + outcome.content.filter(block => block.type === 'text').map(block => block.text).join('\n'))
+              }
+              throw new Error('Image-producing tools must return exactly one image')
             }
-            throw new Error('Image-producing tools must return exactly one image')
           }
           return outcome.value
         }
