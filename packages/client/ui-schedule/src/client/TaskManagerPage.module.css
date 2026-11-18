@@ -131,8 +131,11 @@
 .workspaceMenuItem { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .workspaceMenuItem > span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .workspaceMenuPath { line-height: 18px; }
-.taskEditor { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 20px; }
-.editorField { display: grid; gap: 8px; font-size: 13px; min-width: 0; }
+/* The grid editors clamp their one column: a track with the default `auto`
+   minimum adopts a child's intrinsic width, and the name input's 20-character
+   intrinsic width then outgrows a narrow pane instead of shrinking to it. */
+.taskEditor { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.editorField { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; font-size: 13px; min-width: 0; }
 .editorField > h3 { margin: 0; font: inherit; }
 .editorField input::placeholder,
 .instruction::placeholder { color: var(--dsw-alias-label-secondary); }

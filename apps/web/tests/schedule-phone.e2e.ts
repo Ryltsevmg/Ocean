@@ -79,7 +79,7 @@ async function expectEditorAlignment(title: Locator): Promise<void> {
         actionRight: action.right,
         pane: [bounds.left, bounds.right],
         scroller: scroller === null ? null : [scroller.offsetWidth, scroller.clientWidth, scroller.scrollWidth],
-        scrollbarSpace: getComputedStyle(pane).getPropertyValue('--detail-scrollbar-space'),
+        scrollbarSpace: getComputedStyle(scroller ?? pane).getPropertyValue('--detail-scrollbar-space'),
       }
     }
     return {}
