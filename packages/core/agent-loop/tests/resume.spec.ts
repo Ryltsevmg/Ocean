@@ -1,7 +1,7 @@
 import * as NativeToolExecutor from '@ocean/ocean-tool-executor-native'
 import { ToolCallId, createMessage, createUserMessage } from '@ocean/ocean-llm'
 import { afterEach, describe, expect, it, vi, type MockInstance } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context, FiberState, type Fiber } from '@deepseek-ai/cordis'
 import { appendFile, mkdtemp, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -238,6 +238,60 @@ describe('AgentLoop factory create/resume', () => {
     expect(failure.errors.map(error => (error as Error).message)).toEqual(['scope exploded', 'close exploded'])
     expect(ctx.agents.get(sessionId)).toBeUndefined()
     await ctx.fiber.dispose()
+  })
+
+  it('aborts setup when the persistence dependency is disposed before it activates', async () => {
+    const { ctx } = await persistentHarness(new MockAdapter([]))
+    const sessionId = SessionId('persistence-dep-disposed')
+    let disposed = false
+    const stopObserving = ctx.on('internal/plugin', (fiber) => {
+      if (disposed || !('sessionPersistence' in fiber.inject)) return
+      disposed = true
+      void fiber.dispose()
+    })
+    try {
+      await expect(ctx.agents.create({ sessionId }))
+        .rejects.toThrow(`agent "${sessionId}" setup aborted: session persistence is not active`)
+      expect(ctx.agents.get(sessionId)).toBeUndefined()
+      expect(ctx.sessions.get(sessionId)).toBeUndefined()
+      // Rollback closed the write handle: the never-flushed session reports
+      // absence, not an ownership conflict.
+      await expect(ctx.sessionPersistence.open(sessionId, 'write')).rejects.toThrow('not found')
+    } finally {
+      stopObserving()
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('logs a persistence retirement failure during teardown without blocking disposal', async () => {
+    const { ctx } = await persistentHarness(new MockAdapter([]))
+    const sessionId = SessionId('persistence-retire-fails')
+    let dependency: Fiber | undefined
+    const stopCapture = ctx.on('internal/plugin', (fiber) => {
+      if ('sessionPersistence' in fiber.inject) dependency = fiber
+    })
+    const handle = await ctx.agents.create({ sessionId })
+    stopCapture()
+    if (dependency === undefined) throw new Error('missing persistence dependency fiber')
+    const errors: unknown[] = []
+    const loggerSpy = vi.spyOn(ctx.logger, 'error').mockImplementation((error: unknown) => { errors.push(error) })
+    const retirementFailure = new Error('retirement observer failed')
+    const stopStatus = ctx.on('internal/status', (fiber) => {
+      if (fiber === dependency && fiber.state === FiberState.DISPOSED) throw retirementFailure
+    })
+    try {
+      await handle.dispose()
+      // The retirement promise is detached inside teardown; wait for its
+      // contained failure to reach the logger.
+      await vi.waitFor(() => { expect(errors).toContain(retirementFailure) })
+      expect(ctx.agents.get(sessionId)).toBeUndefined()
+      expect(ctx.sessions.get(sessionId)).toBeUndefined()
+      await expect(ctx.sessionPersistence.open(sessionId, 'write')).rejects.toThrow('not found')
+    } finally {
+      stopStatus()
+      loggerSpy.mockRestore()
+      await ctx.fiber.dispose()
+    }
   })
 
   it('agent dispose releases write ownership of its stored session', async () => {

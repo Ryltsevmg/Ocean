@@ -1,5 +1,6 @@
 /** Node half: registers the /api prefix route bridging to the api gateway. */
 import { EventEmitter } from 'node:events'
+import { randomUUID } from 'node:crypto'
 import { createServer, request as httpRequest } from 'node:http'
 import { Readable } from 'node:stream'
 import { Context } from '@deepseek-ai/cordis'
@@ -8,8 +9,8 @@ import type { AddressInfo } from 'node:net'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { AttachmentStore } from '@ocean/ocean-attachment'
 import { HostConnectionService } from '../src/rpc-host.ts'
-import { DeviceTokens, deviceRegistryKey } from '../src/device-tokens.ts'
-import type { CredentialProvider } from '@ocean/ocean-credentials'
+import { DeviceTokens, deviceId, deviceRegistryKey } from '../src/device-tokens.ts'
+import { credentialKey, type CredentialProvider } from '@ocean/ocean-credentials'
 import type { IndexInjection, WebServer, WebRoute, WebResourceRoute, WebUpgradeRoute } from '@ocean/ocean-host-webserver'
 import {
   API_PATH,
@@ -1263,6 +1264,226 @@ describe('operator-scoped connect', () => {
         expect(restarted.connection.admit(fakeRequest({ host: 'localhost', cookie: api.cookie }))).toEqual({ rejection: 401 })
       } finally { await restarted.dispose() }
     } finally { await host.dispose() }
+  })
+})
+
+describe('connection transport leases and device administration', () => {
+  /** Exchange the launch token for one API operator cookie. */
+  async function apiCookie(host: Awaited<ReturnType<typeof mounted>>): Promise<string> {
+    const token = new URL(host.connection.authenticatedUrl('http://localhost')).search
+    const reply = fakeResponse()
+    await host.routes.find(route => route.path === '/connect')!.handler(
+      fakeRequest({ host: 'localhost' }, `/connect${token}`), reply.response,
+    )
+    return reply.state.headers?.['set-cookie']?.split(';', 1)[0] ?? ''
+  }
+
+  /** Issue one device with an origin-bound login and its admitted-request shape. */
+  async function deviceSession(host: Awaited<ReturnType<typeof mounted>>): Promise<{
+    tokens: DeviceTokens
+    device: { id: ReturnType<typeof deviceId.parse>; token: string }
+    request: IncomingMessage
+  }> {
+    const tokens = new DeviceTokens(host.ctx.credentials)
+    const device = await tokens.issue('Laptop')
+    const login = await tokens.exchange(device.token, 'https://localhost', { lifetimeMs: 60_000, maxSessionsPerDevice: 2 })
+    if (login === undefined) throw new Error('device login was refused')
+    return { tokens, device, request: fakeRequest({ host: 'localhost', cookie: `__Host-ocean-device=${login}` }) }
+  }
+
+  /** The concrete service behind a mounted Host handle. */
+  function serviceOf(connection: HostConnectionHandle): HostConnectionService {
+    if (!(connection instanceof HostConnectionService)) throw new Error('missing Host Connection service')
+    return connection
+  }
+
+  it('claims API socket ownership through admitTransport and keeps device administration out of owner mode', async () => {
+    const host = await mounted()
+    try {
+      const cookie = await apiCookie(host)
+      const request = fakeRequest({ host: 'localhost', cookie })
+      const claim = await host.connection.admitTransport(request, true)
+      if ('rejection' in claim) throw new Error('API socket was refused')
+      expect(await host.connection.admitTransport(request, true)).toEqual({ rejection: 409 })
+      const http = await host.connection.admitTransport(request, false)
+      if ('rejection' in http) throw new Error('API HTTP call was refused')
+      expect(http.peer).toBe(claim.peer)
+      await http.release()
+      expect(host.connection.admit(request)).toEqual({ peer: claim.peer })
+      await claim.release()
+      expect(await host.connection.admitDeviceDocument?.(new Request('http://localhost/'))).toBeUndefined()
+      const service = serviceOf(host.connection)
+      const absent = deviceId.parse(randomUUID())
+      await expect(service.revokeDevice(absent)).rejects.toThrow('device login is unavailable')
+      await expect(service.rotateDevice(absent)).rejects.toThrow('device login is unavailable')
+    } finally { await host.dispose() }
+  })
+
+  it('refuses device transports without a mounted Web carrier', async () => {
+    const ctx = new Context()
+    provideBrowserCredentials(ctx)
+    const fiber = ctx.plugin({ inject: [...inject], apply }, { allowOwnerLogin: false })
+    try {
+      await fiber.await()
+      const connection = ctx.get('connection') as HostConnectionHandle
+      expect(await connection.admitTransport(fakeRequest({ host: 'localhost', cookie: '__Host-ocean-device=unused' }), true))
+        .toEqual({ rejection: 401 })
+    } finally { await fiber.dispose() }
+  })
+
+  it('releases retained device leases on disposal and refuses later admission and administration', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    try {
+      const { device, request } = await deviceSession(host)
+      const lease = await host.connection.admitTransport(request, true)
+      if ('rejection' in lease) throw new Error('device admission failed')
+      await host.dispose()
+      expect(lease.peer.signal.aborted).toBe(true)
+      expect(await host.connection.admitTransport(request, true)).toEqual({ rejection: 401 })
+      const service = serviceOf(host.connection)
+      await expect(service.revokeDevice(device.id)).rejects.toThrow('device login is unavailable')
+      await expect(service.rotateDevice(device.id)).rejects.toThrow('device login is unavailable')
+    } finally { await host.dispose() }
+  })
+
+  it('refuses admission when the device registry changes during the credential read', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const { request } = await deviceSession(host)
+    const original = host.ctx.credentials.readRecord.bind(host.ctx.credentials)
+    const read = vi.spyOn(host.ctx.credentials, 'readRecord').mockImplementation(async (key) => {
+      host.ctx.emit('credentials/record-updated', deviceRegistryKey)
+      return original(key)
+    })
+    try {
+      expect(await host.connection.admitTransport(request, true)).toEqual({ rejection: 503 })
+    } finally { read.mockRestore(); await host.dispose() }
+  })
+
+  it('expires a device lease when revalidation fails and contains cleanup failures', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const { request } = await deviceSession(host)
+    const lease = await host.connection.admitTransport(request, true)
+    if ('rejection' in lease) throw new Error('device admission failed')
+    const warn = vi.spyOn(host.ctx.logger, 'warn').mockImplementation(() => {})
+    const cleanup = vi.spyOn(lease.peer, 'dispose').mockRejectedValueOnce(new Error('private cleanup detail'))
+    const read = vi.spyOn(host.ctx.credentials, 'readRecord').mockRejectedValueOnce(new Error('store offline'))
+    try {
+      host.ctx.emit('credentials/record-updated', deviceRegistryKey)
+      await vi.waitFor(() => {
+        expect(warn).toHaveBeenCalledWith('Device Peer cleanup failed: %s', expect.any(Error))
+      })
+      expect(host.connection.sharesDeviceSession?.(lease.peer, lease.peer)).toBe(false)
+    } finally {
+      cleanup.mockRestore()
+      read.mockRestore()
+      warn.mockRestore()
+      await lease.peer.dispose()
+      await host.dispose()
+    }
+  })
+
+  it('keeps a live lease through unrelated and validating registry updates', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const { request } = await deviceSession(host)
+    const lease = await host.connection.admitTransport(request, true)
+    if ('rejection' in lease) throw new Error('device admission failed')
+    try {
+      host.ctx.emit('credentials/record-updated', credentialKey('fixture', 'unrelated'))
+      await new Promise(resolve => setImmediate(resolve))
+      expect(lease.peer.signal.aborted).toBe(false)
+      expect(host.connection.sharesDeviceSession?.(lease.peer, lease.peer)).toBe(true)
+      // A registry update that revalidates the same login leaves the lease in place.
+      host.ctx.emit('credentials/record-updated', deviceRegistryKey)
+      await new Promise(resolve => setImmediate(resolve))
+      expect(lease.peer.signal.aborted).toBe(false)
+      expect(host.connection.sharesDeviceSession?.(lease.peer, lease.peer)).toBe(true)
+    } finally { await lease.release(); await host.dispose() }
+  })
+
+  it('writes device transport rejection bodies and destroys an invalidated device response', async () => {
+    const host = await mounted({ allowOwnerLogin: false, maxDeviceTransports: 1 }, 'https:')
+    const { device, request } = await deviceSession(host)
+    const service = serviceOf(host.connection)
+    const lease = await service.admitTransport(request, true)
+    if ('rejection' in lease) throw new Error('device admission failed')
+    try {
+      const busy = fakeResponse()
+      await service.handleHttpTransport(request, busy.response, async () => {})
+      expect(busy.state).toMatchObject({ status: 503, body: 'device transport unavailable' })
+      const owner = await mounted()
+      try {
+        const forbidden = fakeResponse()
+        await serviceOf(owner.connection).handleHttpTransport(fakeRequest({ host: 'other.example' }), forbidden.response, async () => {})
+        expect(forbidden.state).toMatchObject({ status: 403, body: 'forbidden' })
+      } finally { await owner.dispose() }
+      await lease.release()
+      const destroyed = vi.fn()
+      const live = fakeResponse()
+      Object.assign(live.response, { destroy: destroyed })
+      const entered = Promise.withResolvers<undefined>()
+      const finish = Promise.withResolvers<undefined>()
+      const handling = service.handleHttpTransport(request, live.response, async () => {
+        entered.resolve(undefined)
+        await finish.promise
+      })
+      await entered.promise
+      await service.revokeDevice(device.id)
+      expect(destroyed).toHaveBeenCalledOnce()
+      finish.resolve(undefined)
+      await handling
+    } finally { await host.dispose() }
+  })
+
+  it('reports unchanged devices and contains administration storage failures', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const { tokens, device } = await deviceSession(host)
+    const service = serviceOf(host.connection)
+    try {
+      const absent = deviceId.parse(randomUUID())
+      expect(await service.revokeDevice(absent)).toBe(false)
+      expect(await service.rotateDevice(absent)).toBeUndefined()
+      const modify = vi.spyOn(host.ctx.credentials, 'modifyRecord').mockRejectedValue(new Error('store offline'))
+      await expect(service.revokeDevice(device.id)).rejects.toMatchObject({
+        code: 'DEVICE_ADMIN_FAILED', durableOutcome: 'unknown', liveCleanup: 'complete',
+      })
+      modify.mockRestore()
+      expect(await service.revokeDevice(device.id)).toBe(true)
+      expect(await tokens.verify(device.token)).toBeUndefined()
+    } finally { await host.dispose() }
+  })
+
+  it('keeps the invalidation guard until concurrent administrations of one device settle', async () => {
+    const host = await mounted({ allowOwnerLogin: false, maxDeviceTransports: 2, maxDeviceTransportsPerDevice: 2 }, 'https:')
+    const { tokens, device, request } = await deviceSession(host)
+    const service = serviceOf(host.connection)
+    const first = await service.admitTransport(request, true)
+    const second = await service.admitTransport(request, false)
+    if ('rejection' in first || 'rejection' in second) throw new Error('device admission failed')
+    const gates: Array<PromiseWithResolvers<undefined>> = []
+    const original = host.ctx.credentials.modifyRecord.bind(host.ctx.credentials)
+    const modify = vi.spyOn(host.ctx.credentials, 'modifyRecord').mockImplementation(async (key, update) => {
+      const gate = Promise.withResolvers<undefined>()
+      gates.push(gate)
+      await gate.promise
+      return original(key, update)
+    })
+    try {
+      const revoking = service.revokeDevice(device.id)
+      const rotating = service.rotateDevice(device.id)
+      await vi.waitFor(() => { expect(gates).toHaveLength(2) })
+      expect(service.sharesDeviceSession(first.peer, second.peer)).toBe(false)
+      gates[0]?.resolve(undefined)
+      expect(await revoking).toBe(true)
+      expect(first.peer.signal.aborted).toBe(true)
+      expect(second.peer.signal.aborted).toBe(true)
+      gates[1]?.resolve(undefined)
+      expect(await rotating).toBeUndefined()
+      expect(await tokens.verify(device.token)).toBeUndefined()
+    } finally {
+      for (const gate of gates) gate.resolve(undefined)
+      modify.mockRestore()
+      await host.dispose()
+    }
   })
 })
 

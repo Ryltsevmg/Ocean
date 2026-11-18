@@ -174,6 +174,39 @@ it.each([en, zh])('updates the direct Settings shortcut from its owner', async (
   expect(props.openSettings).toHaveBeenCalledOnce()
 })
 
+it('shows the Settings shortcut inside the signed-in account menu', async () => {
+  const operations = operationsOf({ status: 'credential-stored', attempt: null })
+  const { AccountMenu } = await import('../src/client/AccountMenu.tsx')
+  render(<AccountMenu renderSlot={() => null} {...({} as GlobalStandardProps)} {...operations} settingsOpen={false}
+    settingsShortcut={{ keys: ['⌘', ','], aria: 'Meta+,' }}
+    useAccount={selector => selector(operations.hooks.account.getSnapshot())}
+    useTheme={selector => selector(operations.hooks.theme.getSnapshot())} wide openOnboarding={() => {}} openSettings={() => {}}
+    t={key => en[key as AccountKey]} />)
+  fireEvent.click(screen.getByRole('button', { name: en.menu }))
+  expect(screen.getByRole('menuitem', { name: en.settings }).getAttribute('aria-keyshortcuts')).toBe('Meta+,')
+})
+
+it.each([true, false])('confirms ending the shared browser login from the sidebar footer with wide=%s', async (wide) => {
+  const { DeviceDisconnectButton } = await import('../src/client/AccountMenu.tsx')
+  const endDeviceSession = vi.fn(async () => {})
+  render(<DeviceDisconnectButton {...({} as GlobalStandardProps)} wide={wide} endDeviceSession={endDeviceSession}
+    t={key => en[key as AccountKey]} />)
+  const trigger = screen.getByRole('button', { name: en.deviceSignOut })
+  expect(trigger.textContent).toBe(wide ? en.deviceSignOut : '')
+  fireEvent.click(trigger)
+  const dialog = screen.getByRole('dialog')
+  expect(within(dialog).getByText(en.deviceSignOutDescription)).toBeTruthy()
+  // Cancelling keeps the shared login and returns focus to the footer action.
+  fireEvent.click(within(dialog).getByRole('button', { name: en.cancel }))
+  expect(endDeviceSession).not.toHaveBeenCalled()
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(document.activeElement).toBe(trigger)
+  fireEvent.click(trigger)
+  await act(async () => { fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: en.deviceSignOut })) })
+  expect(endDeviceSession).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('dialog')).toBeNull()
+})
+
 it.each([en, zh])('opens Settings directly while signed out', async (copy) => {
   const openSettings = vi.fn()
   const operations = operationsOf({ status: 'signed-out', attempt: null })

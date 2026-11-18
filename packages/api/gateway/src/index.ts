@@ -1852,6 +1852,7 @@ function isDeviceInteractionEndpoint(endpoint: string): boolean {
 }
 
 function isTimedDeviceQuestion(request: unknown): boolean {
+  /* v8 ignore next -- the sole caller passes projectRemoteEventRequest output, always a plain null-prototype record. */
   if (!isObject(request) || !isPlainObject(request)) return false
   const { wait } = request
   return isObject(wait) && isPlainObject(wait) && wait.timed === true && typeof wait.callId === 'string'

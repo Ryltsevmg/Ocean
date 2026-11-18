@@ -12,7 +12,7 @@
       "colorScheme": "light",
       "focused": {
         "outline": "none",
-        "boxShadow": "rgb(65, 118, 230) 0px 0px 0px 0.5px inset",
+        "boxShadow": "rgb(23, 102, 188) 0px 0px 0px 0.5px inset",
         "borderColor": "rgb(236, 19, 19)"
       },
       "blurred": {
@@ -25,13 +25,13 @@
       "colorScheme": "dark",
       "focused": {
         "outline": "none",
-        "boxShadow": "rgb(122, 170, 255) 0px 0px 0px 0.5px inset",
-        "borderColor": "rgb(242, 90, 90)"
+        "boxShadow": "rgb(111, 179, 242) 0px 0px 0px 0.5px inset",
+        "borderColor": "rgb(240, 115, 111)"
       },
       "blurred": {
         "outline": "none",
         "boxShadow": "none",
-        "borderColor": "rgb(242, 90, 90)"
+        "borderColor": "rgb(240, 115, 111)"
       }
     }
   ],
@@ -40,7 +40,7 @@
       "colorScheme": "light",
       "focused": {
         "outline": "none",
-        "boxShadow": "rgb(65, 118, 230) 0px 0px 0px 0.5px inset",
+        "boxShadow": "rgb(23, 102, 188) 0px 0px 0px 0.5px inset",
         "borderColor": "rgb(236, 19, 19)"
       },
       "blurred": {
@@ -53,13 +53,13 @@
       "colorScheme": "dark",
       "focused": {
         "outline": "none",
-        "boxShadow": "rgb(122, 170, 255) 0px 0px 0px 0.5px inset",
-        "borderColor": "rgb(242, 90, 90)"
+        "boxShadow": "rgb(111, 179, 242) 0px 0px 0px 0.5px inset",
+        "borderColor": "rgb(240, 115, 111)"
       },
       "blurred": {
         "outline": "none",
         "boxShadow": "none",
-        "borderColor": "rgb(242, 90, 90)"
+        "borderColor": "rgb(240, 115, 111)"
       }
     }
   ]

@@ -15,6 +15,7 @@ import {
 import TypertRegistry from '@ocean/ocean-typert-registry'
 import RemoteAccessService, {
   REMOTE_ACCESS_SNAPSHOT_KEY,
+  type RemoteAccessAction,
   type RemoteAccessBinding,
   type RemoteAccessCondition,
   type RemoteAccessFrame,
@@ -337,6 +338,51 @@ describe('RemoteAccessService.decide', () => {
     access.registerPolicy('test-guest', { bindings: () => [] })
     const guest = await follow(ctx, GUEST)
     await expect(guest.next()).resolves.toEqual({ type: 'baseline', owner: false, grants: [] })
+    await guest.stop()
+  })
+})
+
+describe('RemoteAccessService global actions', () => {
+  it('allows a global action on any resource without a binding and grants it on the global resource', async () => {
+    const { ctx, access } = await setup()
+    const policy = new GuestPolicy()
+    policy.hold(GUEST, { role: SHELF_WRITER, resource: ROOM })
+    access.registerPolicy('test-guest', {
+      bindings: policy.bindings,
+      globalActions: new Set<RemoteAccessAction>(['notes/rooms', 'event:notes/changed']),
+    })
+    // A global action needs no binding on the touched resource.
+    expect(access.decide(ask(GUEST, 'notes/rooms', ROOM2))).toEqual({ kind: 'allow' })
+    expect(access.decide(ask(GUEST, 'event:notes/changed', DESK))).toEqual({ kind: 'allow' })
+    // Other actions still require a binding that allows them.
+    expect(access.decide(ask(GUEST, 'notes/write', ROOM))).toEqual({ kind: 'allow' })
+    expect(access.decide(ask(GUEST, 'notes/write', ROOM2))).toEqual({ kind: 'deny', reason: 'no-allow' })
+    expect(policy.bindings).toHaveBeenCalledTimes(2)
+
+    const guestCall = ctx.extend({ invocation: invocationOf(ctx, GUEST, 'rooms', 'notes') })
+    expect(guestCall.remoteAccess.allows(ROOM2)).toBe(true)
+    const writeCall = ctx.extend({ invocation: invocationOf(ctx, GUEST, 'write', 'notes') })
+    expect(writeCall.remoteAccess.allows(ROOM)).toBe(true)
+    expect(writeCall.remoteAccess.allows(ROOM2)).toBe(false)
+
+    // The snapshot lists the global actions once, on the global resource, without event actions.
+    expect(access.snapshotFor(GUEST)).toEqual({
+      type: 'baseline',
+      owner: false,
+      grants: [
+        { resource: ROOM, actions: ['notes/write'] },
+        { resource: GLOBAL, actions: ['notes/rooms'], allResources: ['notes/rooms'] },
+      ],
+    })
+    const guest = await follow(ctx, GUEST)
+    await expect(guest.next()).resolves.toEqual({
+      type: 'baseline',
+      owner: false,
+      grants: [
+        { resource: ROOM, actions: ['notes/write'] },
+        { resource: GLOBAL, actions: ['notes/rooms'], allResources: ['notes/rooms'] },
+      ],
+    })
     await guest.stop()
   })
 })

@@ -1,11 +1,13 @@
 import type { Principal } from '@ocean/ocean-typert-protocol'
 import { randomUUID } from 'node:crypto'
 import { once } from 'node:events'
+import type { IncomingMessage } from 'node:http'
 import { queryObjects } from 'node:v8'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import WebSocket, { type RawData } from 'ws'
 import { Context, symbols } from '@deepseek-ai/cordis'
-import { apply as applyConnection, inject as connectionInject, serverResponseSchema } from '@ocean/ocean-client-connection'
+import { apply as applyConnection, inject as connectionInject, serverResponseSchema, type ConnectionConfig } from '@ocean/ocean-client-connection'
+import { DeviceTokens } from '@ocean/ocean-client-connection/src/device-tokens.ts'
 import WebServer from '@ocean/ocean-host-webserver'
 import { MAX_TIMER_DELAY_MS } from '@ocean/ocean-timeout'
 import type { AppReady } from '@ocean/ocean-cmdline'
@@ -1750,6 +1752,402 @@ describe('Typert Remote streams', () => {
     rejected.resume()
     ;(request as { abort(): void }).abort()
   })
+
+  it('destroys an upgrade whose admitted Peer was disposed during admission', async () => {
+    const { ctx } = await setup(true)
+    const connection = ctx.connection
+    const admit = connection.admitTransport.bind(connection)
+    // Admission is asynchronous; a Peer can lose its scope before the upgrade resumes.
+    const racing = vi.spyOn(connection, 'admitTransport').mockImplementation(async (request, socket) => {
+      const admission = await admit(request, socket)
+      if (!('rejection' in admission)) await admission.peer.dispose()
+      return admission
+    })
+    try {
+      const socket = new WebSocket(`ws://127.0.0.1:${String(ctx.webServer.port)}/api/remote.mux`, {
+        headers: { cookie: browserCookie(ctx) },
+      })
+      socket.on('error', () => {})
+      let opened = false
+      socket.on('open', () => { opened = true })
+      const closed = new Promise<void>((resolve) => { socket.once('close', () => { resolve() }) })
+      await closed
+      expect(opened).toBe(false)
+    } finally {
+      racing.mockRestore()
+    }
+  })
+
+  it('delegates an approval whose deadline passed before its result arrived', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      const { ctx } = await setup(true, { approvalTimeoutMs: 60_000 })
+      const source = new RemoteEventSourceProbe()
+      const unregister = ctx.effect(() => ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+      const client = await openEventClient(ctx, 'events-expired')
+      const pending = pendingInvocation(ctx.extend())
+      source.push({ ...pending.dispatch, event: 'approval/request' })
+      await vi.waitFor(() => { expect(deliveredInvocation(client)).toBeDefined() })
+      const frame = deliveredInvocation(client)!
+
+      // The deadline timer has not run yet, but the wall clock is already past it.
+      vi.setSystemTime(Date.now() + 61_000)
+      await sendEventResult(client, frame, { kind: 'result', value: 'allowed-once' })
+
+      await expect(pending.outcome).resolves.toEqual({ kind: 'next' })
+      expect(ctx.typertGateway.getPendingRemoteEvents()).toEqual([])
+      client.socket.close()
+      await unregister()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('validates device interaction arguments and records a denied approval', async () => {
+    const { ctx } = await setup(true, { approvalTimeoutMs: 60_000 })
+    const source = new RemoteEventSourceProbe()
+    const unregister = ctx.effect(() => ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+    const device = peerFor(ctx, {
+      kind: 'remote-device',
+      deviceId: '7c9e6679-7425-40de-944b-e07fc1f90ae7' as Extract<Principal, { kind: 'remote-device' }>['deviceId'],
+    })
+    const handler = ctx.connection.createSharedFetchHandler('/api')
+    async function rpc(method: string, payload: unknown): Promise<ReturnType<typeof serverResponseSchema.parse>['result']> {
+      const response = await handler.fetch(new Request(`http://localhost/api/${method}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'client-request', rpcId: 'device-validation', method, payload }),
+      }), device)
+      return serverResponseSchema.parse(await response.json()).result
+    }
+    try {
+      expect(await rpc('deviceApproval/list', {})).toMatchObject({
+        ok: false,
+        error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('requires a session ID') },
+      })
+      expect(await rpc('deviceApproval/list', { args: { sessionId: '' } })).toMatchObject({
+        ok: false,
+        error: { code: 'gateway/arguments-invalid' },
+      })
+      expect(await rpc('deviceQuestion/answer', { args: { sessionId: 'agent-1', id: 7 } })).toMatchObject({
+        ok: false,
+        error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('invalid device interaction response') },
+      })
+      expect(await rpc('deviceApproval/answer', { args: { sessionId: 'agent-1', id: 'event', allow: 'yes' } })).toMatchObject({
+        ok: false,
+        error: { code: 'gateway/arguments-invalid' },
+      })
+
+      const pending = pendingInvocation(ctx.extend())
+      source.push({ ...pending.dispatch, event: 'approval/request' })
+      await vi.waitFor(() => { expect(ctx.typertGateway.getPendingRemoteEvents()).toHaveLength(1) })
+      const listed = await rpc('deviceApproval/list', { args: { sessionId: 'agent-1' } })
+      if (!listed.ok || !Array.isArray(listed.value)) throw new Error('expected a pending approval list')
+      const entry: unknown = listed.value[0]
+      if (typeof entry !== 'object' || entry === null || !('id' in entry) || typeof entry.id !== 'string') {
+        throw new Error('expected a pending approval ID')
+      }
+      expect(typeof Reflect.get(entry, 'expiresAt')).toBe('number')
+      expect(await rpc('deviceApproval/answer', { args: { sessionId: 'agent-1', id: entry.id, allow: false } }))
+        .toMatchObject({ ok: true, value: { accepted: true } })
+      await expect(pending.outcome).resolves.toEqual({ kind: 'result', value: 'rejected' })
+    } finally {
+      await unregister()
+    }
+  })
+
+  it('rejects device question answers that do not match the pending questions', async () => {
+    const { ctx } = await setup(true)
+    const source = new RemoteEventSourceProbe()
+    const unregister = ctx.effect(() => ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+    const device = peerFor(ctx, {
+      kind: 'remote-device',
+      deviceId: '7c9e6679-7425-40de-944b-e07fc1f90ae7' as Extract<Principal, { kind: 'remote-device' }>['deviceId'],
+    })
+    const handler = ctx.connection.createSharedFetchHandler('/api')
+    async function rpc(method: string, args: Record<string, unknown>): Promise<ReturnType<typeof serverResponseSchema.parse>['result']> {
+      const response = await handler.fetch(new Request(`http://localhost/api/${method}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'client-request', rpcId: 'device-answer', method, payload: { args } }),
+      }), device)
+      return serverResponseSchema.parse(await response.json()).result
+    }
+    try {
+      const pending = pendingInvocation(ctx.extend())
+      source.push({
+        ...pending.dispatch,
+        event: 'user-questions/request',
+        request: {
+          agent: pending.dispatch.context.subject,
+          questions: [
+            { id: 'q1', question: 'Choose a target', options: [{ label: 'A' }, { label: 'B' }] },
+            { id: 'q2', question: 'Why?' },
+          ],
+        },
+      })
+      await vi.waitFor(() => { expect(ctx.typertGateway.getPendingRemoteEvents()).toHaveLength(1) })
+      const listed = await rpc('deviceQuestion/list', { sessionId: 'agent-1' })
+      if (!listed.ok || !Array.isArray(listed.value)) throw new Error('expected a pending question list')
+      const entry: unknown = listed.value[0]
+      if (typeof entry !== 'object' || entry === null || !('id' in entry) || typeof entry.id !== 'string') {
+        throw new Error('expected a pending question ID')
+      }
+      const id = entry.id
+
+      const freeForm = { id: 'q2', selected: [], custom: 'because' }
+      const invalidAnswers: readonly unknown[] = [
+        'not an answer object',
+        { answers: 'not an array' },
+        { answers: [{ id: 'q1', selected: ['A'] }, freeForm], extra: true },
+        { answers: [] },
+        { answers: [null, freeForm] },
+        { answers: [['q1'], freeForm] },
+        { answers: [{ id: 1, selected: ['A'] }, freeForm] },
+        { answers: [{ id: 'q1', selected: ['A'] }, { id: 'q1', selected: ['B'] }] },
+        { answers: [{ id: 'q1', selected: 'A' }, freeForm] },
+        { answers: [{ id: 'q1', selected: ['A'], other: true }, freeForm] },
+        { answers: [{ id: 'q1', selected: [], custom: 5 }, freeForm] },
+        { answers: [{ id: 'q1', selected: [], custom: '   ' }, freeForm] },
+        { answers: [{ id: 'qX', selected: [] }, freeForm] },
+        { answers: [{ id: 'q1', selected: ['A'] }, { id: 'q2', selected: ['A'] }] },
+      ]
+      for (const answer of invalidAnswers) {
+        expect(await rpc('deviceQuestion/answer', { sessionId: 'agent-1', id, answer })).toMatchObject({
+          ok: false,
+          error: { code: 'gateway/arguments-invalid', message: expect.stringContaining('answer must match the pending questions') },
+        })
+      }
+      expect(pending.resolve).not.toHaveBeenCalled()
+
+      const answer = { answers: [{ id: 'q1', selected: ['B'] }, freeForm] }
+      expect(await rpc('deviceQuestion/answer', { sessionId: 'agent-1', id, answer }))
+        .toMatchObject({ ok: true, value: { accepted: true } })
+      await expect(pending.outcome).resolves.toEqual({ kind: 'result', value: answer })
+    } finally {
+      await unregister()
+    }
+  })
+})
+
+describe('Typert Remote device event sessions', () => {
+  it('delivers only approval and question waterfalls to a device event stream', async () => {
+    const host = await deviceSetup()
+    const source = new RemoteEventSourceProbe()
+    const unregister = host.ctx.effect(() => host.ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+    const client = await openEventClientAt(deviceOrigin(host), host.cookie, 'device-events')
+    const approval = await pushDeviceApproval(host, source, client)
+    const question = await pushDeviceQuestion(host, source, client)
+    const other = pendingInvocation(host.ctx.extend(), undefined, 'other')
+    source.push(other.dispatch)
+    await vi.waitFor(() => { expect(host.ctx.typertGateway.getPendingRemoteEvents()).toHaveLength(3) })
+
+    const waterfalls = client.frames.filter(frame => frame.type === 'item'
+      && frame.streamId === client.streamId
+      && typeof frame.value === 'object'
+      && frame.value !== null
+      && Object.hasOwn(frame.value, 'eventId'))
+    expect(waterfalls.map(frame => Reflect.get(frame.value as object, 'event')))
+      .toEqual(['approval/request', 'user-questions/request'])
+
+    const removed = [approval.pending, question.pending, other].map(pending =>
+      expect(pending.outcome).rejects.toThrow('forwarded Remote event source was removed'))
+    await unregister()
+    await Promise.all(removed)
+    client.socket.close()
+  })
+
+  it('settles device approvals and questions through the owning login', async () => {
+    const host = await deviceSetup()
+    const source = new RemoteEventSourceProbe()
+    const unregister = host.ctx.effect(() => host.ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+    const client = await openEventClientAt(deviceOrigin(host), host.cookie, 'device-results')
+    const leftovers: PendingInvocationProbe[] = []
+    try {
+      expect(await deviceResult(host, client.clientId, 'absent-event', { kind: 'result', value: 'allowed-once' }))
+        .toMatchObject({ ok: true })
+
+      const delegated = await pushDeviceApproval(host, source, client)
+      expect(await deviceResult(host, client.clientId, delegated.frame.eventId, { kind: 'next' })).toMatchObject({ ok: true })
+      leftovers.push(delegated.pending)
+
+      const invalidValue = await pushDeviceApproval(host, source, client)
+      expect(await deviceResult(host, client.clientId, invalidValue.frame.eventId, { kind: 'result', value: 'allowed-always' }))
+        .toMatchObject({ ok: true })
+      leftovers.push(invalidValue.pending)
+
+      const rejectedApproval = await pushDeviceApproval(host, source, client)
+      expect(await deviceResult(host, client.clientId, rejectedApproval.frame.eventId, {
+        kind: 'rejected', error: { name: 'ApprovalError', message: 'declined', code: 'DECLINED' },
+      })).toMatchObject({ ok: true })
+      leftovers.push(rejectedApproval.pending)
+
+      const invalidAnswer = await pushDeviceQuestion(host, source, client)
+      expect(await deviceResult(host, client.clientId, invalidAnswer.frame.eventId, {
+        kind: 'result', value: { answers: [{ id: 'q1', selected: ['Z'] }] },
+      })).toMatchObject({ ok: true })
+      leftovers.push(invalidAnswer.pending)
+
+      expect(host.ctx.typertGateway.getPendingRemoteEvents()).toHaveLength(4)
+      for (const pending of leftovers) expect(pending.resolve).not.toHaveBeenCalled()
+
+      const allowed = await pushDeviceApproval(host, source, client)
+      expect(await deviceResult(host, client.clientId, allowed.frame.eventId, { kind: 'result', value: 'allowed-once' }))
+        .toMatchObject({ ok: true })
+      await expect(allowed.pending.outcome).resolves.toEqual({ kind: 'result', value: 'allowed-once' })
+
+      const denied = await pushDeviceApproval(host, source, client)
+      expect(await deviceResult(host, client.clientId, denied.frame.eventId, { kind: 'result', value: 'rejected' }))
+        .toMatchObject({ ok: true })
+      await expect(denied.pending.outcome).resolves.toEqual({ kind: 'result', value: 'rejected' })
+
+      const answered = await pushDeviceQuestion(host, source, client)
+      const answer = { answers: [{ id: 'q1', selected: ['B'] }] }
+      expect(await deviceResult(host, client.clientId, answered.frame.eventId, { kind: 'result', value: answer }))
+        .toMatchObject({ ok: true })
+      await expect(answered.pending.outcome).resolves.toEqual({ kind: 'result', value: answer })
+    } finally {
+      const removed = leftovers.map(pending =>
+        expect(pending.outcome).rejects.toThrow('forwarded Remote event source was removed'))
+      await unregister()
+      await Promise.all(removed)
+      client.socket.close()
+    }
+  })
+
+  it('restores device question cancellations and timeouts from the owning login', async () => {
+    const host = await deviceSetup()
+    const source = new RemoteEventSourceProbe()
+    const unregister = host.ctx.effect(() => host.ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+    const client = await openEventClientAt(deviceOrigin(host), host.cookie, 'device-waits')
+    const leftovers: PendingInvocationProbe[] = []
+    const timeoutRejection = {
+      kind: 'rejected',
+      error: { name: 'UserQuestionError', message: 'device wait expired', code: 'ASK_TIMED_OUT' },
+    }
+    try {
+      const cancelled = await pushDeviceQuestion(host, source, client)
+      const cancelledOutcome = expect(cancelled.pending.outcome).rejects.toMatchObject({
+        name: 'UserQuestionError',
+        code: 'ASK_CANCELLED',
+        message: 'the user cancelled ask_user_question',
+      })
+      expect(await deviceResult(host, client.clientId, cancelled.frame.eventId, {
+        kind: 'rejected', error: { name: 'UserQuestionError', message: 'cancelled on the device', code: 'ASK_CANCELLED' },
+      })).toMatchObject({ ok: true })
+      await cancelledOutcome
+
+      const timed = await pushDeviceQuestion(host, source, client, { value: { timed: true, callId: 'call-1' } })
+      const timedOutcome = expect(timed.pending.outcome).rejects.toMatchObject({
+        name: 'UserQuestionError',
+        code: 'ASK_TIMED_OUT',
+        message: 'ask_user_question timed out before the user answered',
+      })
+      expect(await deviceResult(host, client.clientId, timed.frame.eventId, timeoutRejection)).toMatchObject({ ok: true })
+      await timedOutcome
+
+      const unmarkedWaits: ({ readonly value: unknown } | undefined)[] = [
+        undefined,
+        { value: null },
+        { value: [] },
+        { value: {} },
+        { value: { timed: false, callId: 'call-2' } },
+        { value: { timed: true, callId: 7 } },
+      ]
+      for (const wait of unmarkedWaits) {
+        const question = await pushDeviceQuestion(host, source, client, wait)
+        expect(await deviceResult(host, client.clientId, question.frame.eventId, timeoutRejection)).toMatchObject({ ok: true })
+        expect(question.pending.reject).not.toHaveBeenCalled()
+        leftovers.push(question.pending)
+      }
+
+      const otherCode = await pushDeviceQuestion(host, source, client)
+      expect(await deviceResult(host, client.clientId, otherCode.frame.eventId, {
+        kind: 'rejected', error: { name: 'UserQuestionError', message: 'offline', code: 'DEVICE_OFFLINE' },
+      })).toMatchObject({ ok: true })
+      leftovers.push(otherCode.pending)
+
+      const noCode = await pushDeviceQuestion(host, source, client)
+      expect(await deviceResult(host, client.clientId, noCode.frame.eventId, {
+        kind: 'rejected', error: { name: 'Error', message: 'offline' },
+      })).toMatchObject({ ok: true })
+      leftovers.push(noCode.pending)
+    } finally {
+      const removed = leftovers.map(pending =>
+        expect(pending.outcome).rejects.toThrow('forwarded Remote event source was removed'))
+      await unregister()
+      await Promise.all(removed)
+      client.socket.close()
+    }
+  })
+
+  it('refuses a device result presented by another login', async () => {
+    const host = await deviceSetup()
+    const source = new RemoteEventSourceProbe()
+    const unregister = host.ctx.effect(() => host.ctx.typertGateway.registerRemoteEvents(source.source, REMOTE_HOST))
+    const client = await openEventClientAt(deviceOrigin(host), host.cookie, 'device-other')
+    try {
+      const approval = await pushDeviceApproval(host, source, client)
+      const other = peerFor(host.ctx, {
+        kind: 'remote-device',
+        deviceId: '16fd2706-8baf-433b-82eb-8c7fada847da' as Extract<Principal, { kind: 'remote-device' }>['deviceId'],
+      })
+      const handler = host.ctx.connection.createSharedFetchHandler('/api')
+      const response = await handler.fetch(new Request('http://localhost/api/$events/result', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'client-request',
+          rpcId: 'other-login',
+          method: '$events/result',
+          payload: {
+            args: {
+              clientId: client.clientId,
+              eventId: approval.frame.eventId,
+              outcome: { kind: 'result', value: 'allowed-once' },
+            },
+          },
+        }),
+      }), other)
+      expect(serverResponseSchema.parse(await response.json()).result).toMatchObject({
+        ok: false,
+        error: { code: 'gateway/interactions-forbidden', message: expect.stringContaining('belongs to another login') },
+      })
+      expect(approval.pending.resolve).not.toHaveBeenCalled()
+
+      expect(await deviceResult(host, client.clientId, approval.frame.eventId, { kind: 'result', value: 'allowed-once' }))
+        .toMatchObject({ ok: true })
+      await expect(approval.pending.outcome).resolves.toEqual({ kind: 'result', value: 'allowed-once' })
+    } finally {
+      await unregister()
+      client.socket.close()
+    }
+  })
+
+  it('rejects a device upgrade beyond the transport budget with 503', async () => {
+    const host = await deviceSetup({}, { maxDeviceTransports: 1 })
+    const url = `${deviceOrigin(host).replace('http:', 'ws:')}/api/remote.mux`
+    const headers = { cookie: host.cookie }
+    const first = new WebSocket(url, { headers })
+    await once(first, 'open')
+    const second = new WebSocket(url, { headers })
+    second.on('error', () => {})
+    const responseEvent: unknown[] = await once(second, 'unexpected-response')
+    const response = responseEvent[1] as IncomingMessage
+    expect(response.statusCode).toBe(503)
+    const body = await new Promise<string>((resolve) => {
+      const chunks: Buffer[] = []
+      response.on('data', (chunk: Buffer) => { chunks.push(chunk) })
+      response.on('end', () => { resolve(Buffer.concat(chunks).toString('utf8')) })
+      response.resume()
+    })
+    expect(body).toBe('service unavailable')
+    const closed = new Promise<void>((resolve) => { second.once('close', () => { resolve() }) })
+    second.terminate()
+    await closed
+    first.close()
+    await once(first, 'close')
+  })
 })
 
 async function setup(
@@ -1865,8 +2263,11 @@ interface RemoteEventTestClient {
 }
 
 async function openEventClient(ctx: Context, streamId: string): Promise<RemoteEventTestClient> {
-  const origin = `http://127.0.0.1:${String(ctx.webServer.port)}`
-  const cookie = browserCookie(ctx)
+  return openEventClientAt(`http://127.0.0.1:${String(ctx.webServer.port)}`, browserCookie(ctx), streamId)
+}
+
+/** Open one `$events` generation against an explicit origin and login cookie. */
+async function openEventClientAt(origin: string, cookie: string, streamId: string): Promise<RemoteEventTestClient> {
   const socket = new WebSocket(`${origin.replace('http:', 'ws:')}/api/remote.mux`, {
     headers: { cookie },
   })
@@ -1897,6 +2298,116 @@ function deliveredInvocation(client: RemoteEventTestClient): RemoteEventInvocati
     return value as RemoteEventInvocationFrame
   }
   return undefined
+}
+
+interface DeviceHost {
+  readonly ctx: Context
+  readonly cookie: string
+}
+
+/**
+ * Mount a device-mode Host behind a declared HTTPS proxy origin and issue one
+ * device login whose cookie every fixture transport shares.
+ */
+async function deviceSetup(
+  gatewayConfig: GatewayConfig = {},
+  connectionConfig: ConnectionConfig = {},
+): Promise<DeviceHost> {
+  const ctx = new Context()
+  roots.push(ctx)
+  await ctx.plugin(WebServer, { host: '127.0.0.1', port: 0 })
+  provideBrowserCredentials(ctx)
+  await ctx.plugin(TypertRegistry)
+  await ctx.plugin(RemoteAccessService)
+  await ctx.plugin(TypertGatewayService, gatewayConfig)
+  // The login binds to the listener's own authority presented as the HTTPS
+  // proxy origin, so every transport admits with its default Host header.
+  const proxyOrigin = `https://127.0.0.1:${String(ctx.webServer.port)}`
+  await ctx.plugin({ inject: [...connectionInject], apply: applyConnection }, {
+    allowOwnerLogin: false,
+    deviceProxyUrl: proxyOrigin,
+    ...connectionConfig,
+  })
+  const tokens = new DeviceTokens(ctx.credentials)
+  const device = await tokens.issue('Fixture laptop')
+  const login = await tokens.exchange(device.token, proxyOrigin, { lifetimeMs: 60_000, maxSessionsPerDevice: 16 })
+  if (login === undefined) throw new Error('fixture device exchange did not commit a login')
+  return { ctx, cookie: `__Host-ocean-device=${login}` }
+}
+
+function deviceOrigin(host: DeviceHost): string {
+  return `http://127.0.0.1:${String(host.ctx.webServer.port)}`
+}
+
+/** The latest waterfall frame of one event kind held by the client. */
+function deliveredEvent(client: RemoteEventTestClient, event: string): RemoteEventInvocationFrame | undefined {
+  let found: RemoteEventInvocationFrame | undefined
+  for (const frame of client.frames) {
+    if (frame.type !== 'item' || frame.streamId !== client.streamId) continue
+    const value = frame.value
+    if (typeof value !== 'object' || value === null || !Object.hasOwn(value, 'eventId')) continue
+    if (Reflect.get(value, 'event') === event) found = value as RemoteEventInvocationFrame
+  }
+  return found
+}
+
+/** Push one approval waterfall and wait until the device client holds its delivery. */
+async function pushDeviceApproval(
+  host: DeviceHost,
+  source: RemoteEventSourceProbe,
+  client: RemoteEventTestClient,
+): Promise<{ readonly pending: PendingInvocationProbe; readonly frame: RemoteEventInvocationFrame }> {
+  const previous = deliveredEvent(client, 'approval/request')?.eventId
+  const pending = pendingInvocation(host.ctx.extend())
+  source.push({ ...pending.dispatch, event: 'approval/request' })
+  await vi.waitFor(() => {
+    const frame = deliveredEvent(client, 'approval/request')
+    expect(frame).toBeDefined()
+    expect(frame?.eventId).not.toBe(previous)
+  })
+  return { pending, frame: deliveredEvent(client, 'approval/request')! }
+}
+
+/** Push one question waterfall with an optional `wait` field and wait for its device delivery. */
+async function pushDeviceQuestion(
+  host: DeviceHost,
+  source: RemoteEventSourceProbe,
+  client: RemoteEventTestClient,
+  wait?: { readonly value: unknown },
+): Promise<{ readonly pending: PendingInvocationProbe; readonly frame: RemoteEventInvocationFrame }> {
+  const previous = deliveredEvent(client, 'user-questions/request')?.eventId
+  const pending = pendingInvocation(host.ctx.extend(), undefined, 'ask')
+  source.push({
+    ...pending.dispatch,
+    event: 'user-questions/request',
+    request: {
+      agent: pending.dispatch.context.subject,
+      questions: [{ id: 'q1', question: 'Choose a target', options: [{ label: 'A' }, { label: 'B' }] }],
+      ...(wait === undefined ? {} : { wait: wait.value }),
+    },
+  })
+  await vi.waitFor(() => {
+    const frame = deliveredEvent(client, 'user-questions/request')
+    expect(frame).toBeDefined()
+    expect(frame?.eventId).not.toBe(previous)
+  })
+  return { pending, frame: deliveredEvent(client, 'user-questions/request')! }
+}
+
+/** Send one `$events/result` RPC as a fresh transport of the host's device login. */
+async function deviceResult(host: DeviceHost, clientId: string, eventId: string, outcome: unknown): Promise<unknown> {
+  const response = await fetch(`${deviceOrigin(host)}/api/$events/result`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie: host.cookie },
+    body: JSON.stringify({
+      type: 'client-request',
+      rpcId: 'device-result',
+      method: '$events/result',
+      payload: { args: { clientId, eventId, outcome } },
+    }),
+  })
+  expect(response.status).toBe(200)
+  return serverResponseSchema.parse(await response.json()).result
 }
 
 async function sendEventResult(

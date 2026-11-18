@@ -199,6 +199,24 @@ describe('RemoteStream', () => {
     await expect(pending).resolves.toEqual({ done: true, value: undefined })
   })
 
+  it('ends a pending retry quietly when carrier diagnostics dispose the stream', async () => {
+    const source = hostSource(false)
+    const holder: { stream?: RemoteStream<string>; closing?: Promise<void> } = {}
+    const carrierFailed = vi.fn(() => {
+      const closing = holder.stream?.dispose()
+      if (closing !== undefined) holder.closing = closing
+    })
+    const stream = supervisor<string>(source.connection, [
+      { terminal: new RemoteStreamCarrierError('offline') },
+    ], carrierFailed)
+    holder.stream = stream
+
+    await expect(stream[Symbol.asyncIterator]().next()).resolves.toEqual({ done: true, value: undefined })
+    expect(carrierFailed).toHaveBeenCalledOnce()
+    await holder.closing
+    expect(stream.signal.aborted).toBe(true)
+  })
+
   it('contains a Host publication during subscription setup', async () => {
     let reads = 0
     let disposed = 0

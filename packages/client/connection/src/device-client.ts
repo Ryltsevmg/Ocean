@@ -108,6 +108,7 @@ export class DeviceClient {
     this.requireLogin(response)
     const identity = readIdentity(response)
     this.checkHost(identity, expected)
+    /* v8 ignore next -- the `?? ''` arm cannot run: split always yields a first element. */
     const deviceCookies = response.headers.getSetCookie()
       .map(value => value.split(';', 1)[0] ?? '')
       .filter(value => /^__Host-ocean-device=[A-Za-z0-9_.-]+$/u.test(value))

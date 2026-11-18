@@ -81,6 +81,7 @@ class FixtureJournal extends RemoteJournalStream<Page, Entry, number, PageReques
     changes: RemoteJournalChange<Page, Entry, string>[],
     failed: (error: unknown) => void,
     factory: RemoteStreamFactory = STREAM_FACTORY,
+    carrierFailed?: (error: RemoteStreamCarrierError) => void,
   ) {
     super(factory, {
       name: 'fixture journal',
@@ -93,6 +94,7 @@ class FixtureJournal extends RemoteJournalStream<Page, Entry, number, PageReques
       follows: (left, right) => right === left + 1,
       publish: (change) => { changes.push(change) },
       failed,
+      ...(carrierFailed === undefined ? {} : { carrierFailed }),
     })
   }
 
@@ -142,6 +144,7 @@ function journalFixture(
   generations: Generation[],
   pages: PageSource[],
   factory: RemoteStreamFactory = STREAM_FACTORY,
+  carrierFailed?: (error: RemoteStreamCarrierError) => void,
 ): {
   readonly journal: RemoteJournalStream<Page, Entry, number, PageRequest, string>
   readonly changes: RemoteJournalChange<Page, Entry, string>[]
@@ -167,6 +170,7 @@ function journalFixture(
     changes,
     failed,
     factory,
+    carrierFailed,
   )
   return { journal, changes, failed, calls, pageRequests, pageCursors, followRequests }
 }
@@ -469,6 +473,42 @@ describe('RemoteJournalStream', () => {
     })
     expect(fixture.followRequests).toEqual([{ limit: 5 }, { limit: 5 }])
     expect(fixture.pageCursors).toEqual([])
+    expect(fixture.failed).not.toHaveBeenCalled()
+    await fixture.journal.dispose()
+  })
+
+  it('observes carrier loss through the domain diagnostic hook before repairing', async () => {
+    const lost = new RemoteStreamCarrierError('carrier lost')
+    const carrierFailed = vi.fn<(error: RemoteStreamCarrierError) => void>()
+    const fixture = journalFixture(
+      [
+        {
+          frames: [
+            opened(1, page('initial', [0, 1])),
+            { type: 'entry', entry: { seq: 2 } },
+          ],
+          terminal: lost,
+        },
+        {
+          frames: [
+            opened(4, page('replacement', [0, 1, 2, 3, 4])),
+            { type: 'entry', entry: { seq: 3 } },
+            { type: 'entry', entry: { seq: 4 } },
+          ],
+          hold: true,
+        },
+      ],
+      [],
+      STREAM_FACTORY,
+      carrierFailed,
+    )
+
+    await fixture.journal.open({ limit: 5 })
+    await vi.waitFor(() => { expect(fixture.changes).toHaveLength(3) })
+
+    expect(carrierFailed).toHaveBeenCalledTimes(1)
+    expect(carrierFailed).toHaveBeenCalledWith(lost)
+    expect(fixture.changes.map(change => change.type)).toEqual(['replace', 'append', 'replace'])
     expect(fixture.failed).not.toHaveBeenCalled()
     await fixture.journal.dispose()
   })

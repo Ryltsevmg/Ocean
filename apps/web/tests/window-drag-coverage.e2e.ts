@@ -509,6 +509,7 @@ describe('web e2e: macOS window drag coverage', () => {
     try {
       await page.setViewportSize({ width: 1280, height: 480 })
       await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+      await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
       await page.locator('[data-plugin-package]').first().waitFor()
       const bar = page.locator('[data-plugin-bar]')
       const body = page.locator('[data-plugin-body]')
@@ -533,16 +534,18 @@ describe('web e2e: macOS window drag coverage', () => {
         const before = await toolbarGeometry()
         const footprint = (await bar.boundingBox())!.height
         expect(before.top).toBe(platform === 'darwin' ? 0 : 40)
-        expect(before.headingTop).toBe(platform === 'darwin' ? 76 : 28)
+        expect(before.headingTop).toBe(platform === 'darwin' ? 88 : 40)
         expect(before.buttons).toHaveLength(2)
-        await body.evaluate((element) => { element.scrollTop = 120 })
+        await body.evaluate((element) => { element.scrollTop = 500 })
         await page.waitForFunction(() => document.querySelector('[data-plugin-bar]')?.hasAttribute('data-compact'))
         const after = await toolbarGeometry()
         // macOS only needs the top strip cleared while the sidebar is collapsed; with it open the
         // native controls live in the sidebar, so the compact bar keeps its own 16px spacing.
+        // The compact row is the 34px tab list plus 16px bottom spacing; the 32px toolbar
+        // centers against the tab list, one pixel below its inset.
         const compactTop = platform === 'darwin' && collapsed ? 56 : 16
-        expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height))).toBe(compactTop + 48)
-        expect(after.buttons).toEqual(before.buttons.map(button => ({ ...button, y: button.y - (before.headingTop - compactTop) })))
+        expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height))).toBe(compactTop + 34 + 16)
+        expect(after.buttons).toEqual(before.buttons.map(button => ({ ...button, y: button.y - (before.headingTop - compactTop - 1) })))
         expect(after.buttons.every(button => button.y >= (platform === 'darwin' ? compactTop : 16))).toBe(true)
         expect(await body.evaluate(element => element.getBoundingClientRect().top))
           .toBe(await bar.evaluate(element => element.getBoundingClientRect().top))
@@ -604,6 +607,7 @@ describe('web e2e: macOS window drag coverage', () => {
       try {
         await page.setViewportSize({ width: 1280, height: 480 })
         await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+        await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
         await page.locator('[data-plugin-package]').first().waitFor()
         const bar = page.locator('[data-plugin-bar]')
         const body = page.locator('[data-plugin-body]')
@@ -616,18 +620,18 @@ describe('web e2e: macOS window drag coverage', () => {
           await body.evaluate((element) => { element.scrollTop = 0 })
           await page.waitForFunction(() => !document.querySelector('[data-plugin-bar]')?.hasAttribute('data-compact'))
           expect(await bar.locator('h1').evaluate(element => element.getBoundingClientRect().top)
-            - (await bar.boundingBox())!.y).toBe(platform === 'darwin' ? 76 : 28)
+            - (await bar.boundingBox())!.y).toBe(platform === 'darwin' ? 88 : 40)
           await body.evaluate((element) => { element.scrollTop = 500 })
           await page.waitForFunction(() => document.querySelector('[data-plugin-bar]')?.hasAttribute('data-compact'))
           const inset = platform === 'darwin' ? 56 : 16
-          expect(await top()).toBe(inset)
+          expect(await top()).toBe(inset + 1)
           expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height)))
-            .toBe(inset + 32 + 16)
+            .toBe(inset + 34 + 16)
         }
         await page.getByRole('button', { name: 'Open sidebar', exact: true }).last().click()
         await settled(page)
         await body.evaluate((element) => { element.scrollTop = 500 })
-        await expect.poll(top).toBe(16)
+        await expect.poll(top).toBe(17)
         expect(tripwire.pageErrors).toEqual([])
       } finally { await page.close() }
     } finally { if (host !== scaffold) await host.close() }
@@ -871,6 +875,7 @@ describe('web e2e: macOS window drag coverage', () => {
     const { page, tripwire } = await desktopPage()
     try {
       await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+      await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
       const head = page.locator('[class*="pageHead"]').first()
       await head.waitFor({ timeout: 15_000 })
       await settled(page)
@@ -909,6 +914,7 @@ describe('web e2e: macOS window drag coverage', () => {
     const { page, tripwire } = await desktopPage()
     try {
       await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+      await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
       const cards = page.locator('[data-plugin-package], [data-plugin-item]')
       await cards.first().waitFor({ timeout: 30_000 })
       await settled(page)

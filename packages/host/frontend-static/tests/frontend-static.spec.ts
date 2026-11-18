@@ -7,6 +7,7 @@
  */
 
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -15,6 +16,7 @@ import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import * as Connection from '@ocean/ocean-client-connection'
+import { DeviceTokens, deviceRegistryKey } from '@ocean/ocean-client-connection/src/device-tokens.ts'
 import LocalCredentials from '@ocean/ocean-credentials-local'
 import HttpServer from '@ocean/ocean-host-webserver'
 import * as FrontendStatic from '../src/index.ts'
@@ -30,7 +32,7 @@ afterEach(async () => {
 })
 
 /** Write a dist fixture and the authenticated Web rows, then boot them through the real Loader. */
-async function loadComposition(): Promise<Context> {
+async function loadComposition(connectionConfig?: Record<string, unknown>): Promise<Context> {
   root = await mkdtemp(join(tmpdir(), 'ocean-frontend-static-'))
   const dist = join(root, 'dist')
   await mkdir(dist)
@@ -43,6 +45,13 @@ async function loadComposition(): Promise<Context> {
   await writeFile(join(dist, 'icon-192.png'), 'PNG')
   await mkdir(join(dist, 'empty'))
   const configPath = join(root, 'cordis.yml')
+  const connectionLines = connectionConfig === undefined
+    ? ["- name: '@ocean/ocean-client-connection'"]
+    : [
+      "- name: '@ocean/ocean-client-connection'",
+      '  config:',
+      ...Object.entries(connectionConfig).map(([key, value]) => `    ${key}: ${JSON.stringify(value)}`),
+    ]
   await writeFile(configPath, [
     "- name: '@ocean/ocean-credentials-local'",
     '  config:',
@@ -52,7 +61,7 @@ async function loadComposition(): Promise<Context> {
     '  config:',
     "    host: '127.0.0.1'",
     '    port: 0',
-    "- name: '@ocean/ocean-client-connection'",
+    ...connectionLines,
     '- id: frontend',
     "  name: '@ocean/ocean-host-frontend-static'",
     '  config:',
@@ -301,5 +310,104 @@ describe('real Loader composition', () => {
     expect(await html.text()).toBe('<body>about</body>')
     const index = await loaded.webServer.readResource(new Request(`${base}/`), reader)
     expect([index.status, index.headers.get('cache-control'), index.headers.get('etag')]).toEqual([200, 'no-store', null])
+  })
+
+  it('challenges anonymous browsers with the device sign-in document and admits device logins', { timeout: 60_000 }, async () => {
+    const loaded = await loadComposition({
+      allowOwnerLogin: false,
+      deviceProxyUrl: 'https://app.example',
+      trustedHosts: ['app.example'],
+      maxDeviceTransports: 1,
+    })
+    const base = `http://127.0.0.1:${String(loaded.webServer.port)}`
+
+    // An anonymous document request receives the self-contained sign-in
+    // challenge, not the legacy plain-text authentication refusal.
+    const challenge = await fetch(`${base}/`)
+    expect(challenge.status).toBe(401)
+    expect(challenge.headers.get('content-type')).toBe('text/html; charset=utf-8')
+    expect(challenge.headers.get('cache-control')).toBe('no-store')
+    expect(challenge.headers.get('referrer-policy')).toBe('no-referrer')
+    const html = await challenge.text()
+    expect(html).toContain('<html lang="en">')
+    expect(html).toContain('Sign in to Ocean')
+    expect(html).toContain('<input id="device-token" type="password" autocomplete="off" required maxlength="80">')
+    expect(html).toContain('<button type="submit" disabled>Sign in</button>')
+    expect(html).toContain('<p role="alert" hidden>')
+    // The CSP hash admits exactly the one script the document embeds.
+    const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1]
+    expect(script).toBeDefined()
+    const integrity = createHash('sha256').update(script!).digest('base64')
+    expect(challenge.headers.get('content-security-policy')).toBe(
+      `default-src 'none'; script-src 'sha256-${integrity}'; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'`,
+    )
+
+    // HEAD carries the challenge headers without a body; Accept-Language
+    // selects the copy, trimmed and case-insensitive.
+    const head = await fetch(`${base}/`, { method: 'HEAD' })
+    expect(head.status).toBe(401)
+    expect(head.headers.get('content-type')).toBe('text/html; charset=utf-8')
+    expect(await head.text()).toBe('')
+    for (const [language, lang, title] of [
+      ['zh-CN', 'zh', '登录 Ocean'],
+      ['  ZH-Hans  ', 'zh', '登录 Ocean'],
+      ['fr', 'en', 'Sign in to Ocean'],
+    ] as const) {
+      const localized = await fetch(`${base}/`, { headers: { 'accept-language': language } })
+      expect(localized.status).toBe(401)
+      const body = await localized.text()
+      expect(body).toContain(`<html lang="${lang}">`)
+      expect(body).toContain(`<title>${title}</title>`)
+    }
+
+    // Issue a device and an origin-bound login through the real credential store.
+    const tokens = new DeviceTokens(loaded.credentials)
+    const device = await tokens.issue('laptop')
+    const credential = await tokens.exchange(device.token, 'https://app.example', { lifetimeMs: 60_000, maxSessionsPerDevice: 4 })
+    if (credential === undefined) throw new Error('device exchange did not commit a login')
+    const deviceHeaders = { host: 'app.example', cookie: `__Host-ocean-device=${credential}` }
+
+    // The listener is plain HTTP behind the declared HTTPS proxy origin, so a
+    // proxied browser's admission is presented as an in-process read with the
+    // same wire headers and no admitted Peer, exactly as HTTP dispatch does.
+    const read = (init?: RequestInit, peer?: Connection.PeerScope): Promise<Response> => loaded.webServer.readResource(
+      new Request('https://app.example/', init), peer as Connection.PeerScope)
+    const renderedFor: Connection.PeerScope[] = []
+    const offRows = loaded.on('webserver/index-inject', (_rows, peer) => { renderedFor.push(peer) })
+
+    const admitted = await read({ headers: deviceHeaders })
+    expect(admitted.status).toBe(200)
+    const document = await admitted.text()
+    expect(document).toContain('<base href="./" data-ocean-device>')
+    expect(document).toContain('shell')
+    expect(document.match(/<base\b/g)).toHaveLength(1)
+    expect(renderedFor).toHaveLength(1)
+    expect(renderedFor[0]!.principal.kind).toBe('remote-device')
+    // maxDeviceTransports is 1: the next admission only succeeds once the
+    // previous document's lease released.
+    const again = await read({ headers: deviceHeaders })
+    expect(again.status).toBe(200)
+    await again.body?.cancel()
+    const headAdmitted = await read({ method: 'HEAD', headers: deviceHeaders })
+    expect(headAdmitted.status).toBe(200)
+    expect(await headAdmitted.text()).toBe('')
+    offRows()
+
+    // An invalid login falls back to the challenge document.
+    const refused = await read({ headers: {
+      host: 'app.example',
+      cookie: '__Host-ocean-device=00000000-0000-4000-8000-000000000000.invalid',
+    } })
+    expect(refused.status).toBe(401)
+    expect(await refused.text()).toContain('Sign in to Ocean')
+
+    // A failed credential read is a 503, never an admission.
+    await loaded.credentials.modifyRecord(deviceRegistryKey, () => Promise.resolve({
+      kind: 'grant', payload: { version: 1, devices: 'corrupt' },
+    }))
+    const unavailable = await read({ headers: deviceHeaders })
+    expect(unavailable.status).toBe(503)
+    expect(unavailable.headers.get('cache-control')).toBe('no-store')
+    expect(await unavailable.text()).toBe('')
   })
 })

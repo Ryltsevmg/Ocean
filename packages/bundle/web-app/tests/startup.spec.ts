@@ -161,6 +161,12 @@ describe('web command-line provider', () => {
     expect(observed.exits).toEqual([])
   })
 
+  it('publishes the administrator socket named by a server invocation', async () => {
+    const { values, observed } = await bootProvider(['--device-admin-socket', '/run/ocean/admin.sock'], 'serve')
+    expect(values).toEqual({ openBrowser: false, trustedHosts: [], deviceAdminSocket: '/run/ocean/admin.sock' })
+    expect(observed.exits).toEqual([])
+  })
+
   it('rejects browser-only options in a server invocation', async () => {
     const { values, observed } = await bootProvider(['--no-open'], 'serve')
     expect(observed.out).toContain("unknown option '--no-open'")

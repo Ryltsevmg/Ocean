@@ -2,32 +2,35 @@
 - text: 安装、启用和配置插件
 - button "插件说明"
 - button "刷新"
+- button "浏览其他插件"
 - group "添加插件":
   - button "添加插件"
   - button "选择添加插件方式"
-- heading "内置插件配置" [level=3]
-- list:
-  - listitem:
-    - button "查看 子智能体": 子智能体
-    - text: 设置子智能体的递归层级、数量和模型。
-  - listitem:
-    - button "查看 网页搜索与获取": 网页搜索与获取
-    - text: 选择网页搜索与网页获取使用的提供方。
-  - listitem:
-    - button "查看 Agent 循环": Agent 循环
-    - text: 控制 Agent 派发工具调用的方式。
-  - listitem:
-    - button "查看 终端": 终端
-    - text: 限制每条命令最多能跑多久、最多输出多少内容。
-- heading "可选插件" [level=3]
-- button "更多"
-- heading "已安装插件" [level=3]
-- list:
-  - listitem:
-    - button "查看 @fixture/live-client": "@fixture/live-client"
-    - status
-    - switch "启用 @fixture/live-client"
-  - listitem:
-    - button "查看 dsh-web-scaffold-defaults": dsh-web-scaffold-defaults
-    - status
-    - switch "启用 dsh-web-scaffold-defaults" [checked]
+- tablist "插件视图":
+  - tab "Catalogue"
+  - tab "已安装" [selected]
+- tabpanel "已安装":
+  - heading "内置插件配置" [level=3]
+  - list:
+    - listitem:
+      - button "查看 子智能体": 子智能体
+      - text: 设置子智能体的递归层级、数量和模型。
+    - listitem:
+      - button "查看 网页搜索与获取": 网页搜索与获取
+      - text: 选择网页搜索与网页获取使用的提供方。
+    - listitem:
+      - button "查看 Agent 循环": Agent 循环
+      - text: 控制 Agent 派发工具调用的方式。
+    - listitem:
+      - button "查看 终端": 终端
+      - text: 限制每条命令最多能跑多久、最多输出多少内容。
+  - heading "已安装插件" [level=3]
+  - list:
+    - listitem:
+      - button "查看 @fixture/live-client": "@fixture/live-client"
+      - status
+      - switch "启用 @fixture/live-client"
+    - listitem:
+      - button "查看 ocean-web-scaffold-defaults": ocean-web-scaffold-defaults
+      - status
+      - switch "启用 ocean-web-scaffold-defaults" [checked]

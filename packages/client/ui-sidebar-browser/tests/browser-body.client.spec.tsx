@@ -126,6 +126,24 @@ describe('BrowserBody', () => {
     })
   })
 
+  it('opens the failed page externally from the load-failure recovery', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const target = { kind: 'https' as const, url: 'https://failed.example/page', title: 'Failed page' }
+    const state = createSnapshotStore<BrowserFrameState>({
+      ...emptyBrowserFrame(), target, address: 'observed', error: { code: -105, description: 'DNS failure' },
+    })
+    const mounted = mountBrowser(undefined, { createPage: () => ({
+      presentation: { mount: () => () => {} },
+      frame: { getSnapshot: () => state.getSnapshot(), subscribe: listener => state.subscribe(listener),
+        loadUrl: vi.fn(), goBack: vi.fn(), goForward: vi.fn(), reload: vi.fn(), dispose: async () => {} },
+    }) })
+    // The toolbar and the recovery section both offer the external action; the recovery one is last.
+    const external = mounted.view.getAllByRole('button', { name: zh.external }).at(-1)!
+    expect(external).toHaveProperty('disabled', false)
+    fireEvent.click(external)
+    expect(open).toHaveBeenCalledExactlyOnceWith(target.url, '_blank', 'noopener,noreferrer')
+  })
+
   it('routes address input to the controller and renders parser failures', async () => {
     const mounted = mountBrowser()
     const input = mounted.view.getByRole('textbox')

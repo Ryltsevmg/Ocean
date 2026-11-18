@@ -1811,10 +1811,17 @@ label.registryOption {
   }
 
   .pageHead .addButton,
-  .pageHead .addPrimary {
+  .pageHead .addPrimary,
+  .pageHead .groupMore {
     width: 32px;
     min-width: 32px;
     padding-inline: 0;
+  }
+
+  /* The collapsed More action joins the icon row; its trailing hover overhang belongs to the wide label. */
+  .pageHead .groupMore {
+    margin-inline-end: 0;
+    justify-content: center;
   }
 
   /* The icon actions keep their width; a wrapped update note stays within the head. */

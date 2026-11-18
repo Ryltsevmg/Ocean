@@ -1195,6 +1195,28 @@ describe('abort wiring', () => {
     await Promise.resolve()
   }, 1000)
 
+  it('stops waiting when the caller aborts while the credential refresh starts', async () => {
+    const controller = new AbortController()
+    const credential = Promise.withResolvers<string | undefined>()
+    const adapter = new PiAiAdapter({
+      profiles: () => resolveProfiles({ deepseek: {} }),
+      resolveApiKey: () => {
+        controller.abort('stop during refresh startup')
+        return credential.promise
+      },
+      auth: memoryAuth(),
+    })
+    const chunks = []
+    for await (const chunk of adapter.stream({
+      provider: 'deepseek', model: 'deepseek-flash', messages: [], signal: controller.signal,
+    })) chunks.push(chunk)
+    expect(chunks.at(-1)).toMatchObject({
+      type: 'finish', reason: { kind: 'aborted', failure: { code: 'ABORTED' } },
+    })
+    credential.resolve('synthetic-test-key')
+    await Promise.resolve()
+  })
+
   it('preserves an unknown pre-dispatch adapter Error exactly', async () => {
     const original = new Error('SDK context conversion exploded')
     const message = Object.defineProperty({}, 'content', {

@@ -58,7 +58,7 @@ it('reserves bottom content height without remounting it on main-panel navigatio
       expected.push(`open: ${JSON.stringify(await check(240))}`)
       await page.getByRole('button', { name: 'Grow bottom', exact: true }).click()
       expected.push(`grown: ${JSON.stringify(await check(360))}`)
-      await page.getByRole('navigation', { name: 'Global panels' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+      await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
       await page.locator('[data-plugin-panel]').waitFor()
       expect(await input.inputValue()).toBe('Retained across main panels')
       expect(await input.evaluate((element, previous) => element === previous, original)).toBe(true)

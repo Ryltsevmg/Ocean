@@ -80,11 +80,12 @@ export function apply(ctx) {
     const list = panel.getByRole('heading', { name: '插件', exact: true })
     // The sidebar entry toggles the page, so it is pressed only while the page is closed.
     if (await panel.count() === 0) {
-      await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+      await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
     } else if (!await list.isVisible()) {
       await panel.getByRole('button', { name: '返回插件', exact: true }).click()
     }
     await list.waitFor({ timeout: 10_000 })
+    await panel.getByRole('tab', { name: '已安装', exact: true }).click()
     return panel
   }
 
@@ -237,13 +238,13 @@ describe('web e2e: plugin installation without HMR', () => {
       await page.goto(scaffold.authenticatedUrl)
       await page.waitForSelector('[class*="frame"]')
       if (await page.getByRole('dialog', { name: '设置' }).count() > 0) await page.keyboard.press('Escape')
-      await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+      await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
       const panel = page.locator('[data-plugin-panel]')
       await panel.getByRole('button', { name: '添加插件', exact: true }).click()
       const dialog = page.getByRole('dialog')
       await dialog.getByRole('textbox', { name: '包名或地址' }).fill(`file:${dir}`)
       await dialog.getByRole('button', { name: '安装', exact: true }).click()
-      await dialog.getByText('已安装，请重启 OCEAN 加载它。这个 profile 只在启动时应用更改。', { exact: true }).waitFor({ timeout: 30_000 })
+      await dialog.getByText('已安装，请重启 Ocean-Chat 加载它。这个 profile 只在启动时应用更改。', { exact: true }).waitFor({ timeout: 30_000 })
     } finally {
       await browser?.close()
       await scaffold?.close()
