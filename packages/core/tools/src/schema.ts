@@ -496,6 +496,8 @@ export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends Valu
     render(args: InferArgs<S>, value: InferValue<NoInfer<O>>): ContentBlock[]
     /** Pure replayable presentation metadata for native and nested calls. */
     presentationMeta?(args: InferArgs<S>, value: InferValue<NoInfer<O>>): JsonValue
+    /** Declare program-image adaptation for a TypeScript PTC runtime. */
+    readonly programImage?: true
   }
   /** Requests deferred loading of the tool definition; see {@link @ocean/ocean-llm#ToolSchema.deferLoading}. */
   readonly deferLoading?: true
@@ -592,6 +594,7 @@ export function defineTool<const S extends ParameterSchemaSpec, const O extends 
           return userPresentationMeta(args as InferArgs<S>, value as InferValue<NoInfer<O>>)
         },
       } : {},
+      ...options.output.programImage === true ? { programImage: true } : {},
     },
     ...(options.deferLoading === true ? { deferLoading: options.deferLoading } : {}),
     ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
@@ -639,8 +642,9 @@ export function defineTool<const S extends ParameterSchemaSpec, const O extends 
  * @returns the model-facing schema fields.
  */
 export function projectToolSchema(definition: ToolDefinition, detachParameters: boolean): ToolSchema {
-  const { name, description, parameters, deferLoading } = definition
+  const { name, description, parameters, deferLoading, output } = definition
   const detached = detachParameters ? snapshotJsonValue(parameters) : parameters
   if (detached === undefined) throw new Error(`tool "${name}" parameters must be lossless JSON before schema projection`)
-  return { name, description, parameters: detached, ...deferLoading === true ? { deferLoading } : {} }
+  return { name, description, parameters: detached, ...deferLoading === true ? { deferLoading } : {},
+    ...output.programImage === true ? { programImage: true } : {} }
 }

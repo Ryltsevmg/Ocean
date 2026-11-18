@@ -24,6 +24,8 @@ export type ContentToolFixtureOptions<S extends ParameterSchemaSpec> = Omit<
 > & {
   /** Produce the fixture's content blocks as its canonical test value. */
   execute(args: InferArgs<S>, exec: ToolRunContext): Promise<ContentBlock[]>
+  /** Declare program-image adaptation for the fixture's content output. */
+  programImage?: true
 }
 
 /**
@@ -43,6 +45,7 @@ export function defineContentToolFixture<const S extends ParameterSchemaSpec>(
     output: {
       schema: CONTENT_VALUE_SCHEMA,
       render: (_args, value) => value as ContentValue[],
+      ...options.programImage === true ? { programImage: true } : {},
     },
     async execute(args, exec) {
       const value: ContentValue[] = await execute(args, exec)

@@ -163,6 +163,15 @@ describe('renderToolsSdk', () => {
     expect(outputs).toContain('cua: string;')
   })
 
+  it('declares Image-or-value results for tools that declare program-image adaptation', () => {
+    const tools: ToolSdkSchema[] = [{
+      name: 'cua', description: 'Image-producing tool.', parameters: {}, output: { type: 'string' }, programImage: true,
+    }]
+    const text = renderToolsSdk(tools)
+    const outputs = text.slice(text.indexOf('interface ToolOutputMap'), text.indexOf('type ToolName'))
+    expect(outputs).toContain('cua: Image | string;')
+  })
+
   it('lists the program before its description', () => {
     const text = renderToolsSdk([bash])
     expect(text).toContain('`code`')

@@ -1,0 +1,29 @@
+{
+  "formatVersion": 2,
+  "roots": [
+    {"key":"event:request/header","kind":"event","event":"request/header","surface":false,"digest":"ebfcbad087d5a3201d6f2f955b3384512bfb8e1ab25fe2bb458f1ce219f44962"}
+  ],
+  "types": [],
+  "nodes": {
+    "0657d3ca5ac4e7bf": {"kind":"primitive","type":"number"},
+    "0aa62ab51b36c0e6": {"kind":"object","properties":[],"indices":[{"key":"4cd48f3e5108bd6e","value":"bbc5696e3f13c758"}]},
+    "12a000359b587375": {"kind":"array","element":"a127f965178d9a6f"},
+    "326a9bfda27dda58": {"kind":"object","properties":[{"name":"maxTokens","type":"dacf3d5f3e4ff619","optional":true},{"name":"reasoningEffort","type":"dacf3d5f3e4ff619","optional":true}],"indices":[]},
+    "34d1ab5c5df37818": {"kind":"literal","value":"resume"},
+    "3e0eff5946255ff0": {"kind":"literal","value":"request/header"},
+    "4cd48f3e5108bd6e": {"kind":"primitive","type":"string"},
+    "4f507598cf476214": {"kind":"literal","value":"series"},
+    "530da6c0267813bb": {"kind":"union","types":["34d1ab5c5df37818","4f507598cf476214","e7ce49f12953583f","f789af5ab844827e"]},
+    "648ebcc3f1337b7c": {"kind":"object","properties":[{"name":"header","type":"b23ba367c3a455e9","optional":false},{"name":"reason","type":"530da6c0267813bb","optional":false},{"name":"startsSeries","type":"dacf3d5f3e4ff619","optional":true}],"indices":[]},
+    "67d5f73ceae82f52": {"kind":"object","properties":[{"name":"maxTokens","type":"0657d3ca5ac4e7bf","optional":true},{"name":"model","type":"4cd48f3e5108bd6e","optional":false},{"name":"provider","type":"4cd48f3e5108bd6e","optional":false},{"name":"reasoningEffort","type":"4cd48f3e5108bd6e","optional":true},{"name":"stop","type":"93c33d9687613293","optional":true},{"name":"temperature","type":"0657d3ca5ac4e7bf","optional":true}],"indices":[]},
+    "93c33d9687613293": {"kind":"array","element":"4cd48f3e5108bd6e"},
+    "a127f965178d9a6f": {"kind":"object","properties":[{"name":"deferLoading","type":"dacf3d5f3e4ff619","optional":true},{"name":"description","type":"4cd48f3e5108bd6e","optional":false},{"name":"name","type":"4cd48f3e5108bd6e","optional":false},{"name":"parameters","type":"0aa62ab51b36c0e6","optional":false},{"name":"programImage","type":"dacf3d5f3e4ff619","optional":true}],"indices":[]},
+    "b23ba367c3a455e9": {"kind":"object","properties":[{"name":"adapterDefaults","type":"326a9bfda27dda58","optional":true},{"name":"config","type":"67d5f73ceae82f52","optional":false},{"name":"system","type":"fcf427290c6213c2","optional":true},{"name":"tools","type":"12a000359b587375","optional":true}],"indices":[]},
+    "bbc5696e3f13c758": {"kind":"opaque","reason":"unknown"},
+    "dacf3d5f3e4ff619": {"kind":"literal","value":true},
+    "e7ce49f12953583f": {"kind":"literal","value":"initial"},
+    "ebfcbad087d5a320": {"kind":"object","properties":[{"name":"data","type":"648ebcc3f1337b7c","optional":false},{"name":"ignorable","type":"dacf3d5f3e4ff619","optional":true},{"name":"seq","type":"0657d3ca5ac4e7bf","optional":false},{"name":"time","type":"0657d3ca5ac4e7bf","optional":false},{"name":"type","type":"3e0eff5946255ff0","optional":false}],"indices":[]},
+    "f789af5ab844827e": {"kind":"literal","value":"change"},
+    "fcf427290c6213c2": {"kind":"primitive","type":"never"}
+  }
+}
