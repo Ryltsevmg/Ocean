@@ -67,8 +67,8 @@ it('shares menu transparency and blur across palettes and follows native menu bo
     Object.defineProperty(globalThis, 'oceanDesktop', { value: { protocolVersion: 1 } })
   })
   await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-  const account = page.getByRole('button', { name: 'Account menu', exact: true })
-  await account.waitFor()
+  const host = page.getByRole('button', { name: 'Local host', exact: true })
+  await host.waitFor()
 
   const results: Record<string, Awaited<ReturnType<typeof material>>> = {}
   const masks: Record<string, { fill: string; blur: string }> = {}
@@ -85,18 +85,16 @@ it('shares menu transparency and blur across palettes and follows native menu bo
         document.body.appendChild(overlay)
         try { return getComputedStyle(overlay).backgroundColor } finally { overlay.remove() }
       })
-      expect(overlayFill).toBe(platform === 'darwin'
-        ? dark ? 'rgba(48, 49, 54, 0.94)' : 'rgba(248, 249, 250, 0.94)'
-        : dark ? 'rgba(48, 49, 54, 0.64)' : 'rgba(252, 253, 254, 0.7)')
-      await account.click()
-      const menu = page.getByRole('menu').filter({ has: page.getByRole('menuitem', { name: 'Settings', exact: true }) })
+      expect(overlayFill).toBe(dark ? 'rgb(11, 17, 28)' : 'rgb(255, 255, 255)')
+      await host.click()
+      const menu = page.getByRole('menu').filter({ has: page.getByRole('menuitem', { name: 'Local host', exact: true }) })
       await menu.waitFor()
       const appearance = await material(menu)
       expect(appearance).toMatchObject({
-        fill: dark ? 'rgba(48, 49, 54, 0.64)' : 'rgba(252, 253, 254, 0.7)',
-        blur: 'blur(40px) saturate(1.5)',
+        fill: overlayFill,
+        blur: 'none',
       })
-      expect(appearance.shadow).toContain(`${dark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.04)'} 0px 0px 0px 0.5px`)
+      expect(appearance.shadow).toContain(`${dark ? 'rgb(61, 72, 84)' : 'rgba(0, 0, 0, 0.04)'} 0px 0px 0px 0.5px`)
       results[`${platform}-${dark ? 'dark' : 'light'}`] = appearance
       const backing = page.locator('[data-menu-backing]')
       if (platform === 'darwin') {
@@ -117,15 +115,14 @@ it('shares menu transparency and blur across palettes and follows native menu bo
       }
       await page.keyboard.press('Escape')
       await expect.poll(() => backing.count()).toBe(0)
-      await account.click()
-      await page.getByRole('menuitem', { name: 'Settings', exact: true }).click()
+      await page.getByRole('button', { name: 'Settings', exact: true }).click()
       const settings = page.getByRole('dialog', { name: 'Settings', exact: true })
       await settings.waitFor()
       const mask = await settings.locator('..').locator(':scope > [aria-hidden="true"]').evaluate((node) => {
         const style = getComputedStyle(node)
         return { fill: style.backgroundColor, blur: style.backdropFilter }
       })
-      expect(mask).toEqual({ fill: dark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.24)', blur: 'none' })
+      expect(mask).toEqual({ fill: 'rgba(0, 0, 0, 0.66)', blur: 'none' })
       masks[`${platform}-${dark ? 'dark' : 'light'}`] = mask
       await page.keyboard.press('Escape')
       await settings.waitFor({ state: 'hidden' })
@@ -159,6 +156,12 @@ it('shares menu transparency and blur across palettes and follows native menu bo
     return element
   })
   try {
+    // Supply a translucent palette for the transition probe independently of Ocean's opaque default.
+    await popup.evaluate((node) => {
+      const style = (node as HTMLElement).style
+      style.setProperty('--dsw-menu-surface-fill', 'rgba(48, 49, 54, 0.64)')
+      style.setProperty('--dsw-menu-backdrop-filter', 'blur(40px) saturate(1.5)')
+    })
     // Hide text while preserving layout so pixel contrast measures only the material.
     await popup.evaluate((node) => {
       for (const child of node.children) {
