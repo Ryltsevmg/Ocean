@@ -65,15 +65,14 @@ it('boots the built plugin graph and renders a fixture session end to end', asyn
     expect(document.querySelector('svg[viewBox="26 0 156 24"]')).not.toBeNull()
     expect(screen.queryByText('OCEAN Local Build')).toBeNull()
   } else {
-    expect(document.querySelector('svg[viewBox="0 0 23.16 17.04"]')).not.toBeNull()
-    const version = clientBuildValue('OCEAN_CLIENT_VERSION')
-    if (version === undefined) throw new Error('default client build record must carry OCEAN_CLIENT_VERSION')
-    const commit = clientBuildValue('OCEAN_CLIENT_COMMIT_HASH')
-    const buildVersion = version
-      + (commit === undefined ? '' : `-${commit}`)
-      + (clientBuildValue('OCEAN_CLIENT_GIT_DIRTY') === 'true' ? '-dirty' : '')
-    screen.getByText('OCEAN Local Build')
-    screen.getByText(buildVersion)
+    // The shipped brand mark is the static FishLogo: the 280-unit viewBox with
+    // its two filled paths, not the retired whale silhouette.
+    const fishLogo = document.querySelector('svg[viewBox="0 0 280 280"]')
+    if (fishLogo === null) throw new Error('local build brand mark missing')
+    expect(fishLogo.querySelectorAll('path[fill]')).toHaveLength(2)
+    // The local build shows the locale-owned brand wordmark; the build version
+    // badge now lives in the Settings surface, not the boot layout.
+    screen.getByText('Ocean')
   }
   // The compact layout dropped group session counts; the fixture workspace
   // group row renders immediately with its sessions beneath it.
