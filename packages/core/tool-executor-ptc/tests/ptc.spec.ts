@@ -1726,6 +1726,54 @@ describe('the run_code dispatch bridge', () => {
     expect(result.content).toEqual([{ type: 'text', text: JSON.stringify([{ type: 'text', text: 'Window selected' }], null, 2) }])
   })
 
+  it('passes a multi-image result of a declared program-image tool through as a value', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    const images = ['a', 'b'].map(seed => ({
+      type: 'image' as const,
+      attachment: {
+        attachmentId: `sha256:${seed.repeat(64)}` as never,
+        mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+      },
+    }))
+    ctx.tools.register(defineContentToolFixture({
+      name: 'cua', description: 'Return two images.', parameters: {}, programImage: true,
+      execute: () => Promise.resolve(images),
+    }))
+    runtime.behavior = async request => printed(await request.bindings[0]!.functions.cua!({}))
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(false)
+    expect(result.content).toEqual([{ type: 'text', text: JSON.stringify(images, null, 2) }])
+  })
+
+  it('passes a policy-replaced image of a declared program-image tool through as a value', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    const images = [{
+      type: 'image' as const,
+      attachment: {
+        attachmentId: `sha256:${'c'.repeat(64)}` as never,
+        mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+      },
+    }]
+    ctx.tools.register(defineContentToolFixture({
+      name: 'cua', description: 'Return image content.', parameters: {}, programImage: true,
+      execute: () => Promise.resolve(images),
+    }))
+    ctx.on('tools/post-execute', async (exec, _result, next): Promise<PostToolDecision> => {
+      const decision = await next()
+      return exec.name === 'cua' && decision.kind === 'accept'
+        ? { kind: 'accept', content: [{ type: 'text', text: 'image omitted; read the saved result' }] }
+        : decision
+    })
+    runtime.behavior = async request => printed(await request.bindings[0]!.functions.cua!({}))
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(false)
+    expect(result.content).toEqual([{ type: 'text', text: JSON.stringify(images, null, 2) }])
+  })
+
   it('adapts a single-image result of a declared program-image tool', async () => {
     const { ctx, runtime } = await setup({ mode: 'ptc' })
     onTestFinished(() => ctx.fiber.dispose())

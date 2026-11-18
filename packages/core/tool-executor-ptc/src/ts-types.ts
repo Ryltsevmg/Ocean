@@ -314,8 +314,10 @@ export function renderToolsSdk(schemas: readonly ToolSdkSchema[], programFormat:
     argsMembers.push(`${pad(1)}${renderKey(schema.name)}: ${jsonSchemaToTs(schema.parameters, 1)};`)
     // Program return type mirrors the binding adapter: read_image resolves to Image;
     // a declared program-image tool may yield Image or its canonical output value.
-    const output = schema.name === 'read_image' ? 'Image'
-      : schema.programImage === true ? `Image | ${jsonSchemaToTs(schema.output, 1)}`
+    const output = schema.name === 'read_image'
+      ? 'Image'
+      : schema.programImage === true
+        ? `Image | ${jsonSchemaToTs(schema.output, 1)}`
         : jsonSchemaToTs(schema.output, 1)
     outputMembers.push(`${pad(1)}${renderKey(schema.name)}: ${output};`)
   }

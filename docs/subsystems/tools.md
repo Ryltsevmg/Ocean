@@ -19,6 +19,13 @@ interface ToolOutputDefinition {
   render(args: unknown, value: JsonValue): ContentBlock[]
   /** Pure replayable presentation projection for native and nested calls. */
   presentationMeta?(args: unknown, value: JsonValue): JsonValue
+  /**
+   * Declares program-image adaptation: in a TypeScript PTC runtime a successful
+   * result with exactly one image block is delivered to the program as an Image.
+   * Every other result — none, several, or replaced by a tool output policy —
+   * passes through as the canonical value instead of failing.
+   */
+  readonly programImage?: true
 }
 ```
 
