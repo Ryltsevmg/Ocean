@@ -69,7 +69,20 @@ async function expectEditorAlignment(title: Locator): Promise<void> {
       right: Math.max(...Array.from(pane.querySelectorAll('textarea, [class*="_ruleRows"]'))
         .map(node => Math.abs(node.getBoundingClientRect().right - name.right))),
     }
-    return Object.fromEntries(Object.entries(offsets).filter(([, offset]) => offset > 1))
+    const mismatched = Object.fromEntries(Object.entries(offsets).filter(([, offset]) => offset > 1))
+    if (Object.keys(mismatched).length > 0) {
+      // Embed the raw geometry so a host-specific failure identifies the owner in the CI log.
+      const scroller = pane.querySelector('[class*="_detailScroll"]') as HTMLElement | null
+      return {
+        ...mismatched,
+        name: [name.left, name.right],
+        actionRight: action.right,
+        pane: [bounds.left, bounds.right],
+        scroller: scroller === null ? null : [scroller.offsetWidth, scroller.clientWidth, scroller.scrollWidth],
+        scrollbarSpace: getComputedStyle(pane).getPropertyValue('--detail-scrollbar-space'),
+      }
+    }
+    return {}
   })).toEqual({})
 }
 
