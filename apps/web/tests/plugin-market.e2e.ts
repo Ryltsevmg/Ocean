@@ -99,6 +99,8 @@ async function catalogueFixture() {
   await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
   await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
   const panel = page.locator('[data-plugin-panel]')
+  // Installed leads by default; these scenarios exercise the Catalogue tab.
+  await panel.getByRole('tab', { name: 'Catalogue', exact: true }).click()
   const catalogue = panel.getByRole('tabpanel', { name: 'Catalogue', exact: true })
   const installed = panel.getByRole('tabpanel', { name: 'Installed', exact: true })
   const profileDir = join(scaffold.harnessHome, 'profiles', 'scaffold')
