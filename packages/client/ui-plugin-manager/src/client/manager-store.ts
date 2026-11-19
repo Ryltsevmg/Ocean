@@ -13,6 +13,7 @@ import type {
   BundleInfo,
   ChangeResult,
   IncompatiblePlugin,
+  InstallBundleOptions,
   ManagementError,
   PluginEntryId,
   PluginInfo,
@@ -143,6 +144,8 @@ export type InstallSubject = Extract<PluginSpecInspection, { status: 'accepted' 
   readonly selection?: boolean
   /** Save an exact dependency version through the generic installer. */
   readonly saveExact?: boolean
+  /** Exact package identity the Host must verify before applying an Official catalogue installation. */
+  readonly expected?: NonNullable<InstallBundleOptions['expected']>
 }
 
 /** The registry the person picked for an install: one the Host offers, or a typed URL. */
@@ -440,7 +443,13 @@ export interface PluginManagerFace {
   ensure: () => void
   /** Read the Host again, then check every registry package for newer versions. */
   refresh: () => void
-  openInstall: () => void
+  /**
+   * Open the Add plugin dialog at its spec form; a supplied spec prefills the field.
+   * @param spec - the spec to prefill; omitted opens an empty form.
+   */
+  openInstall: (spec?: string) => void
+  /** Install an available Official offer by its current Host inventory name. */
+  installOfficial: (packageName: string) => void
   /**
    * Open the install dialog with a version the person confirmed elsewhere, such as a Discover entry, and start
    * checking it; the dialog shows no spec form. A hidden installation reopens instead. The registry is asked first for
@@ -763,9 +772,15 @@ export class PluginManagerController {
       configForm: id => this.ctx.configForms.get(id),
       ensure: () => { if (this.getSnapshot().status === 'idle') void this.load() },
       refresh: () => { void this.refresh() },
-      openInstall: () => {
+      openInstall: (spec?: string) => {
         this.ctx.get('productAnalytics')?.track('plugin_add_button_click', {})
-        this.openDialog()
+        this.openDialog(spec)
+      },
+      installOfficial: (packageName) => {
+        const pkg = this.getSnapshot().packages.find(pkg => pkg.name === packageName)
+        if (pkg?.official !== true || pkg.availability !== 'missing' || pkg.installed || pkg.enabled
+          || pkg.error !== undefined || pkg.readOnlyReason !== undefined || pkg.installTarget === undefined) return
+        this.openCatalogInstall(pkg, pkg.installTarget, true)
       },
       installFrom: ({ spec, registry, title, version }) => {
         // A hidden installation reopens as it is; only one installation runs at a time.
@@ -900,13 +915,14 @@ export class PluginManagerController {
   /**
    * Open the install dialog: a new one starts from the registry last used here and reads what the Host offers; a hidden
    * installation reopens as it is.
+   * @param spec - the spec to prefill on a new dialog.
    * @returns whether a new dialog started.
    */
-  private openDialog(): boolean {
+  private openDialog(spec?: string): boolean {
     const started = this.getSnapshot().install.requestId === undefined
     if (started) {
       this.transientRegistry = false
-      this.patch({ install: { ...IDLE_INSTALL, open: true, registry: this.registryMemory.getSnapshot() ?? OFFICIAL_REGISTRY } })
+      this.patch({ install: { ...IDLE_INSTALL, open: true, spec: spec ?? '', registry: this.registryMemory.getSnapshot() ?? OFFICIAL_REGISTRY } })
       const read: RegistryRead = { choice: this.getSnapshot().install.registry }
       this.registryRead = read
       read.done = this.readRegistries(read).finally(() => { delete read.done })
@@ -1185,7 +1201,7 @@ export class PluginManagerController {
     const subject: InstallSubject = {
       status: 'accepted', kind: local ? 'path' : 'registry', name: pkg.name, version: target.version, bundle: true,
       spec: target.spec, registry: registry.kind === 'custom' ? registry.url : registry.registry,
-      selection: enabled, ...local ? {} : { saveExact: true },
+      selection: enabled, expected: { name: pkg.name, version: target.version }, ...local ? {} : { saveExact: true },
     }
     this.patch({ install: { ...IDLE_INSTALL, open: true, spec: subject.spec, registry, subject } })
     const read: RegistryRead = { choice: registry }
@@ -1301,6 +1317,7 @@ export class PluginManagerController {
     const result = await this.ctx.remote.pluginManager.installBundle(spec, {
       enabled: subject.selection ?? false, requestId, registry,
       ...subject.saveExact === undefined ? {} : { saveExact: subject.saveExact },
+      ...subject.expected === undefined ? {} : { expected: subject.expected },
       ...approvedBuilds === undefined ? {} : { approvedBuilds: [...approvedBuilds] },
     })
     if (this.disposed || this.request !== request) return

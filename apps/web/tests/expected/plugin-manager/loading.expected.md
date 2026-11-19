@@ -6,7 +6,7 @@
   - button "添加插件" [disabled]
   - button "选择添加插件方式" [disabled]
 - tablist "插件视图":
-  - tab "Catalogue"
+  - tab "目录"
   - tab "已安装" [selected]
 - tabpanel "已安装":
   - status "正在读取插件…"

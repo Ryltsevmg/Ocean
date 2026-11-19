@@ -8300,6 +8300,9 @@ importers:
       '@ocean/ocean-client-ui-plugin-manager':
         specifier: workspace:*
         version: link:../../client/ui-plugin-manager
+      '@ocean/ocean-client-ui-primitives':
+        specifier: workspace:*
+        version: link:../../client/ui-primitives
       '@ocean/ocean-client-ui-slots':
         specifier: workspace:*
         version: link:../../client/ui-slots

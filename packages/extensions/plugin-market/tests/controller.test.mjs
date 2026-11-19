@@ -9,7 +9,7 @@ const text = localized => localized.ru ?? localized.en
 
 /** Two catalogue entries; only the first is registered as a registry-updatable bundle. */
 const catalog = [
-  { name: '@local/pkg-a', version: '0.2.0', title: { en: 'A', ru: 'А' }, summary: { en: 'a', ru: 'а' } },
+  { name: '@local/pkg-a', availability: 'profile', version: '0.2.0', title: { en: 'A', ru: 'А' }, summary: { en: 'a', ru: 'а' } },
   { name: '@local/pkg-b', version: '1.0.0', title: { en: 'B', ru: 'Б' }, summary: { en: 'b', ru: 'б' } },
 ]
 
@@ -27,13 +27,16 @@ function fakeApi(bundles) {
     async setBundleEnabled(name, enabled) {
       this.calls.push(['setBundleEnabled', name, enabled])
       this.bundles = this.bundles.map(bundle => bundle.name === name ? { ...bundle, enabled } : bundle)
+      return { application: 'applied' }
     },
     async removeBundle(name) {
       this.calls.push(['removeBundle', name])
       this.bundles = this.bundles.filter(bundle => bundle.name !== name)
+      return { application: 'applied' }
     },
     async updateBundle(name, version) {
       this.calls.push(['updateBundle', name, version])
+      return { application: 'applied' }
     },
   }
 }
@@ -44,14 +47,14 @@ function controllerFor(api) {
 }
 
 test('load publishes the projected cards and clears the busy marker', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', version: '0.2.0', enabled: false, installed: false, removable: false }])
+  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: false, installed: false, removable: false }])
   const controller = controllerFor(api)
   assert.equal(controller.getSnapshot().status, 'loading')
   await controller.load()
   const snapshot = controller.getSnapshot()
   assert.equal(snapshot.status, 'ready')
   assert.deepEqual(snapshot.counts, { total: 2, installed: 1, enabled: 0 })
-  assert.deepEqual(snapshot.cards.map(card => card.state), ['off', 'unavailable'])
+  assert.deepEqual(snapshot.cards.map(card => card.state), ['off', 'missing'])
   assert.equal(snapshot.busy, undefined)
 })
 
@@ -77,7 +80,7 @@ test('subscribe observes publishes and stops after unsubscribe', async () => {
 })
 
 test('setEnabled calls the Remote and re-reads the list', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', version: '0.2.0', enabled: false, installed: false, removable: false }])
+  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: false, installed: false, removable: false }])
   const controller = controllerFor(api)
   await controller.load()
   await controller.setEnabled('@local/pkg-a', true)
@@ -86,19 +89,20 @@ test('setEnabled calls the Remote and re-reads the list', async () => {
   assert.equal(controller.getSnapshot().cards[0].state, 'on')
 })
 
-test('a failed action reports the kind and the message', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', version: '0.2.0', enabled: false, installed: false, removable: false }])
+test('a failed action refetches and reports when the Host cannot confirm a change', async () => {
+  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: false, installed: false, removable: false }])
   api.setBundleEnabled = async () => { throw new Error('locked') }
   const controller = controllerFor(api)
   await controller.load()
   await controller.setEnabled('@local/pkg-a', true)
   const snapshot = controller.getSnapshot()
-  assert.equal(snapshot.error, 'enable: locked')
+  assert.deepEqual(snapshot.notice, { title: 'transportError', diagnostic: 'locked' })
+  assert.equal(snapshot.cards[0].state, 'off')
   assert.equal(snapshot.busy, undefined)
 })
 
 test('remove and update forward their targets', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', version: '0.2.0', enabled: true, installed: true, removable: true, update: 'registry' }])
+  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: true, installed: true, removable: true, update: 'registry' }])
   const controller = controllerFor(api)
   await controller.load()
   await controller.remove('@local/pkg-a')
@@ -118,4 +122,28 @@ test('invalidations do not read the Host before the catalog opens', async () => 
   market.dispose()
   market.invalidate()
   assert.equal(reads, 2)
+})
+
+for (const application of ['failed', 'restart-required', 'overridden', 'cancelled']) {
+  test(`the catalogue distinguishes the Host's ${application} outcome from success`, async () => {
+    const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', enabled: false }])
+    api.setBundleEnabled = async () => ({ application, error: { code: 'operation-error' } })
+    const controller = controllerFor(api)
+    await controller.load()
+    await controller.setEnabled('@local/pkg-a', true)
+    assert.equal(controller.getSnapshot().cards[0].state, 'off')
+    assert.deepEqual(controller.getSnapshot().notice, { title: application, diagnostic: 'operation-error' })
+  })
+}
+
+test('a successful empty inventory still relocalizes curated cards', async () => {
+  let language = 'en'
+  const api = fakeApi([])
+  const controller = createMarketController({ api, catalog, text: value => value[language], buildView: buildMarketView })
+  await controller.load()
+  assert.equal(controller.getSnapshot().cards[0].title, 'A')
+  language = 'ru'
+  controller.relocalize()
+  assert.equal(controller.getSnapshot().cards[0].title, 'А')
+  assert.deepEqual(api.calls, [['listBundles']])
 })

@@ -20,11 +20,12 @@ window.__ModuleLoader__.load({
   id: '@ocean/ocean-plugin-market',
   factory(require) {
     const React = require('react')
+    const { Modal } = require('@ocean/ocean-client-ui-primitives')
 `
 
 /** Footer closing the loader call. */
 const FOOTER = `
-    return createMarket(React)
+    return createMarket(React, Modal)
   },
 })
 `

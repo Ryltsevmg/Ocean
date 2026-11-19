@@ -11,6 +11,9 @@
   ],
   "references": [
     {
+      "path": "../../client/ui-primitives"
+    },
+    {
       "path": "../../../vendor/cordis"
     }
   ]

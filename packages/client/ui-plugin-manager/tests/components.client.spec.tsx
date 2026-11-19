@@ -118,6 +118,7 @@ function renderTab(
     ensure: vi.fn(),
     refresh: vi.fn(),
     openInstall: vi.fn(),
+    installOfficial: vi.fn(),
     installFrom: vi.fn(),
     closeInstall: vi.fn(),
     editInstallSpec: vi.fn(),

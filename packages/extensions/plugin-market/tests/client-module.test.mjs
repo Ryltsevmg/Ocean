@@ -43,7 +43,7 @@ async function applyWith(pluginManager, services, globals) {
     locale: {
       register: (namespace, dictionary) => { dictionaries.push({ namespace, dictionary }); return () => {} },
       bind: () => key => key,
-      resolveText: localized => localized.en,
+      resolveText: localized => typeof localized === 'string' ? localized : localized.en,
       subscribe: () => () => {},
     },
     get: name => services?.[name],
@@ -64,9 +64,9 @@ async function applyWith(pluginManager, services, globals) {
 test('the bundle declares our module id and builds the plugin from the loader React', async () => {
   const definition = await loadBundle()
   assert.equal(definition.id, '@ocean/ocean-plugin-market')
-  let requested
-  const plugin = definition.factory((name) => { requested = name; return React })
-  assert.equal(requested, 'react')
+  const requested = []
+  const plugin = definition.factory((name) => { requested.push(name); return React })
+  assert.deepEqual(requested, ['react', '@ocean/ocean-client-ui-primitives'])
   assert.equal(plugin.inject.join(','), 'slots,locale,remote,remote.pluginManager')
   assert.equal(typeof plugin.apply, 'function')
 })
@@ -75,13 +75,16 @@ test('apply registers the dictionary and one Plugins-page tab', async () => {
   const { entry, dictionaries } = await applyWith({})
   assert.equal(dictionaries.length, 1)
   assert.equal(dictionaries[0].namespace, 'pluginMarket')
-  assert.deepEqual(Object.keys(dictionaries[0].dictionary).sort(), ['en', 'ru'])
+  assert.deepEqual(Object.keys(dictionaries[0].dictionary).sort(), ['en', 'ru', 'zh'])
+  for (const language of ['ru', 'zh']) {
+    assert.deepEqual(Object.keys(dictionaries[0].dictionary[language]), Object.keys(dictionaries[0].dictionary.en))
+  }
   assert.equal(entry.name, 'plugins.tab')
   assert.equal(entry.id, 'our-plugins')
   assert.equal(entry.order, -10)
   assert.equal(entry.locale, 'pluginMarket')
   assert.equal(entry.label(), 'tab')
-  assert.equal(typeof entry.inject().market.load, 'function')
+  assert.equal(typeof entry.inject().actions.load, 'function')
 })
 
 test('the catalog does not inject footer controls or global sidebar styling', async () => {
@@ -95,9 +98,9 @@ test('the catalog does not inject footer controls or global sidebar styling', as
 test('a Remote answer is unwrapped before the controller sees it', async () => {
   const bundles = [{ name: 'x', enabled: true, installed: true, removable: true, version: '1.0.0' }]
   const { entry } = await applyWith({ listBundles: async () => ({ ok: true, value: bundles }) })
-  const market = entry.inject().market
-  await market.load()
-  const snapshot = market.getSnapshot()
+  const { hooks, actions } = entry.inject()
+  await actions.load()
+  const snapshot = hooks.market.getSnapshot()
   assert.equal(snapshot.status, 'ready')
   assert.equal(snapshot.cards.length > 0, true)
   assert.equal(snapshot.error, undefined)
@@ -106,8 +109,24 @@ test('a Remote answer is unwrapped before the controller sees it', async () => {
 test('a refused Remote answer surfaces the Host code, not a shape mismatch', async () => {
   const refusal = { ok: false, error: { code: 'plugin-manager/unknown-bundle', message: 'no managed profile' } }
   const { entry } = await applyWith({ listBundles: async () => refusal })
-  const market = entry.inject().market
-  await market.load()
-  assert.equal(market.getSnapshot().status, 'error')
-  assert.equal(market.getSnapshot().error, 'plugin-manager/unknown-bundle: no managed profile')
+  const { hooks, actions } = entry.inject()
+  await actions.load()
+  assert.equal(hooks.market.getSnapshot().status, 'error')
+  assert.equal(hooks.market.getSnapshot().error, 'plugin-manager/unknown-bundle: no managed profile')
+})
+
+
+test('an RPC success carrying a failed change keeps the card and reports the refusal', async () => {
+  const bundle = { name: 'x', availability: 'profile', enabled: true, installed: true, removable: true, version: '1.0.0' }
+  const { entry } = await applyWith({
+    listBundles: async () => ({ ok: true, value: [bundle] }),
+    setBundleEnabled: async () => ({ ok: true, value: { application: 'failed', error: { code: 'management-required' } } }),
+  })
+  const { hooks, actions } = entry.inject()
+  await actions.load()
+  await actions.setEnabled('x', false)
+  const snapshot = hooks.market.getSnapshot()
+  assert.equal(snapshot.cards.find(card => card.name === 'x')?.state, 'on')
+  assert.equal(snapshot.notice.title, 'failed')
+  assert.equal(snapshot.notice.diagnostic, 'management-required')
 })

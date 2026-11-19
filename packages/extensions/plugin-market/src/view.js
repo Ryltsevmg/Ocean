@@ -23,8 +23,10 @@ export function compareVersions(left, right) {
     if (one === undefined) return -1
     if (other === undefined) return 1
     if (one === other) continue
-    const numeric = /^\d+$/u.test(one) && /^\d+$/u.test(other)
-    if (numeric) return Number(one) < Number(other) ? -1 : 1
+    const oneNumeric = /^\d+$/u.test(one)
+    const otherNumeric = /^\d+$/u.test(other)
+    if (oneNumeric !== otherNumeric) return oneNumeric ? -1 : 1
+    if (oneNumeric && one.length !== other.length) return one.length < other.length ? -1 : 1
     return one < other ? -1 : 1
   }
   return 0
@@ -36,7 +38,7 @@ export function compareVersions(left, right) {
  */
 function parseVersion(value) {
   if (typeof value !== 'string') return undefined
-  const match = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/u.exec(value.trim())
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u.exec(value.trim())
   if (match === null) return undefined
   const parsed = { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]) }
   return match[4] === undefined ? parsed : { ...parsed, pre: match[4].split('.') }
@@ -61,69 +63,110 @@ export function cardFor(entry, bundle, options) {
   const details = entry.details
   const about = details === undefined ? '' : text(details.about)
   const points = details === undefined ? [] : details.points.map(point => text(point))
-  const installedVersion = bundle === undefined ? undefined : bundle.version
+  const readable = isReadable(bundle)
+  const configured = bundle?.installed === true || bundle?.enabled === true
+  const selected = bundle?.enabled === true
+  const installedVersion = readable ? bundle.version : undefined
+  const target = bundle?.installTarget
+  const error = errorText(bundle?.error)
+  const canChange = bundle?.readOnlyReason === undefined
   const isSelf = entry.self === true
-  const spec = typeof entry.spec === 'string' && entry.spec.length > 0 ? entry.spec : undefined
-
-  let state
-  if (isSelf) state = 'self'
-  else if (bundle === undefined) state = spec === undefined ? 'unavailable' : 'missing'
-  else state = bundle.enabled === true ? 'on' : 'off'
-
+  const state = isSelf ? 'self' : readable ? (error !== undefined ? 'blocked' : selected ? 'on' : 'off') : configured ? 'broken' : 'missing'
   const actions = []
   let note
-  let error
 
-  if (state === 'missing') actions.push({ kind: 'install', enabled: true })
-  if (state === 'off' || state === 'on') {
-    actions.push({ kind: state === 'on' ? 'disable' : 'enable', enabled: true })
-    if (bundle.installed === true && bundle.removable === true) actions.push({ kind: 'remove', enabled: true })
-    actions.push({ kind: 'open', enabled: true })
+  if (state === 'missing' && error === undefined && canChange) {
+    if (bundle?.official === true) {
+      if (target !== undefined) actions.push({ kind: 'installOfficial' })
+    } else {
+      actions.push({ kind: 'installForm', spec: entry.name })
+      note = 'noteNoSource'
+    }
+  }
+  if (!isSelf && (readable || configured)) {
+    if (canChange && selected) actions.push({ kind: 'disable' })
+    if (canChange && !selected && readable && error === undefined) actions.push({ kind: 'enable' })
+    if (canChange && bundle.removable === true) actions.push({ kind: 'remove' })
+    actions.push({ kind: 'open' })
   }
 
-  if (state === 'on' || state === 'off') {
-    error = errorText(bundle.error)
-    // The catalogue, not a registry scan, decides what an update is: the market offers only the version it curates, so
-    // pressing Update can never replace a local build with whatever the registry happens to publish.
+  if (state === 'broken') {
+    // Adding over a recorded dependency is refused by the Host; its profile entry must be removed first.
+    note = 'noteBroken'
+  } else if (error !== undefined) {
+    note = bundle.error.code === 'unsupported-platform' ? 'noteUnsupported' : 'noteError'
+  } else if (!isSelf && readable) {
     const curatedNewer = typeof entry.version === 'string' && typeof installedVersion === 'string'
       && compareVersions(entry.version, installedVersion) > 0
     if (bundle.update === 'git') {
       note = 'noteGitUpdate'
-    } else if (curatedNewer && bundle.update === 'registry') {
-      actions.unshift({ kind: 'update', enabled: true, version: entry.version })
+    } else if (curatedNewer && bundle.update === 'registry' && canChange) {
+      actions.unshift({ kind: 'update', version: entry.version })
     } else if (curatedNewer) {
-      // A bundle the installation itself carries follows the installation; one installed from a path, a tarball or a
-      // link can only be replaced by reinstalling it from that source.
       note = bundle.availability === 'installation' ? 'noteBuildCarried' : 'noteSourceUpdate'
+    } else if (bundle.optional === true) {
+      note = 'noteShipped'
     }
-  } else if (state === 'unavailable') {
-    note = 'noteNotInBuild'
   }
-  if (error !== undefined) note = 'noteError'
-  if (note === undefined && bundle !== undefined && bundle.optional === true) note = 'noteShipped'
 
   const title = text(entry.title)
   const summary = text(entry.summary)
+  const bundleName = bundle?.name ?? entry.name
   return {
     id: entry.name,
-    name: entry.name,
+    name: bundleName,
     title,
     summary,
     about,
     points,
     // One lowercased haystack per card: the search matches what the card and its popup show, and the package name.
-    search: [title, summary, entry.name, about, ...points].join(' ').toLowerCase(),
-    version: installedVersion ?? entry.version,
-    installedVersion,
+    search: [title, summary, entry.name, ...(entry.aliases ?? []), about, ...points].join(' ').toLowerCase(),
+    version: installedVersion ?? (!configured && error === undefined ? target?.version : undefined),
+    installed: readable,
+    enabled: selected && readable && error === undefined,
     state,
     badge: `badge${state[0].toUpperCase()}${state.slice(1)}`,
-    updateKind: bundle === undefined ? undefined : bundle.update,
-    spec,
-    removable: bundle !== undefined && bundle.removable === true,
-    optional: bundle !== undefined && bundle.optional === true,
     actions,
     note,
     error,
+  }
+}
+
+/** Native subagents and internal components are managed from Installed, not as catalogue products. */
+const HIDDEN_HOST_BUNDLES = new Set([
+  '@ocean/ocean-subagent-codex',
+  '@ocean/ocean-subagent-claude-code',
+  '@ocean/ocean-experimental-inspector',
+  '@ocean/ocean-experimental-session-inspector',
+  '@ocean/ocean-experimental-tool-worktree',
+])
+
+const THEME_PALETTE_PREFIX = '@local/ocean-theme-'
+
+/** Whether the Host can read the bundle's files. */
+function isReadable(bundle) {
+  return bundle?.availability === 'installation' || bundle?.availability === 'profile'
+}
+
+/**
+ * Choose a bundle for the card, preferring a usable copy over failed or unavailable alternatives.
+ * @param {object} entry catalogue entry.
+ * @param {Map<string, object>} byName Host bundles by package name.
+ * @returns {object | undefined} the bundle the card acts on.
+ */
+function bundleFor(entry, byName) {
+  const candidates = [entry.name, ...(entry.aliases ?? [])].map(name => byName.get(name)).filter(Boolean)
+  const usable = candidates.filter(bundle => isReadable(bundle) && bundle.error === undefined)
+  return usable.find(bundle => bundle.enabled) ?? usable.find(bundle => bundle.installed) ?? usable[0]
+    ?? candidates.find(bundle => bundle.enabled || bundle.installed) ?? candidates[0]
+}
+
+/** Build a card entry for a Host bundle the curated catalogue does not name. */
+function entryForBundle(bundle) {
+  return {
+    name: bundle.name,
+    title: bundle.meta?.title ?? bundle.name,
+    summary: bundle.meta?.description ?? bundle.description ?? '',
   }
 }
 
@@ -148,11 +191,29 @@ export function filterCards(cards, query) {
 export function buildMarketView(input) {
   const byName = new Map(input.bundles.map(bundle => [bundle.name, bundle]))
   const options = { text: input.text }
-  const cards = input.catalog.map(entry => cardFor(entry, byName.get(entry.name), options))
+  // The curated list keeps its order; every other bundle the Host manages joins after it, so an installed plugin the
+  // catalogue never named (and an official bundle offered on demand) is still visible here.
+  const entries = [...input.catalog]
+  const covered = new Set()
+  for (const entry of entries) {
+    covered.add(entry.name)
+    for (const name of entry.aliases ?? []) covered.add(name)
+  }
+  for (const bundle of input.bundles) {
+    if (covered.has(bundle.name) || HIDDEN_HOST_BUNDLES.has(bundle.name)) continue
+    if (bundle.name.startsWith(THEME_PALETTE_PREFIX) && bundle.name !== '@local/ocean-theme-picker') continue
+    const offered = bundle.official === true && (bundle.installTarget !== undefined || bundle.optional === true)
+    // The Host also lists composition-owned layers, not just plugins managed from this page.
+    const configured = (bundle.installed || bundle.enabled) && bundle.removable
+    if (!configured && !(offered && bundle.listedByDefault !== false)) continue
+    entries.push(entryForBundle(bundle))
+    covered.add(bundle.name)
+  }
+  const cards = entries.map(entry => cardFor(entry, bundleFor(entry, byName), options))
   const counts = { total: cards.length, installed: 0, enabled: 0 }
   for (const card of cards) {
-    if (card.installedVersion !== undefined) counts.installed += 1
-    if (card.state === 'on') counts.enabled += 1
+    if (card.installed) counts.installed += 1
+    if (card.enabled) counts.enabled += 1
   }
   return { cards, counts }
 }

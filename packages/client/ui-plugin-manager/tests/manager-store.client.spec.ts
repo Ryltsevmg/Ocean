@@ -616,6 +616,12 @@ describe('PluginManagerController', () => {
     expect(installBundle).toHaveBeenCalledTimes(2)
   })
 
+  it('opens the install form with the spec a tab supplies', () => {
+    const { face, state } = bench()
+    face.openInstall('@local/pkg')
+    expect(state().install).toMatchObject({ open: true, spec: '@local/pkg', phase: 'idle', inputError: null })
+  })
+
   it('checks the spec, hands the run to the Host, and folds the chunks that carry its request id', async () => {
     const gate = deferred<ReturnType<typeof ok<ChangeResult>>>()
     const { plugins, face, state, controller, started } = bench({ installBundle: vi.fn().mockReturnValueOnce(gate.promise) })
@@ -1995,16 +2001,26 @@ it.each(['registry', 'source'] as const)('installs a typed Official catalog name
   })
 })
 
-it('installs an absent Official entry directly at the host target and enables it through the normal installer', async () => {
+it.each(['toggle', 'tab'] as const)('installs the exact current Host offer when started by %s', async (entryPoint) => {
   const { controller, plugins, face, state } = bench({ listBundles: vi.fn().mockResolvedValue(ok([CATALOG])) })
   await controller.load()
-  face.setEnabled(CATALOG.name, true)
+  if (entryPoint === 'toggle') face.setEnabled(CATALOG.name, true)
+  else face.installOfficial(CATALOG.name)
   await vi.waitFor(() => { expect(plugins.installBundle).toHaveBeenCalledOnce() })
   expect(plugins.inspect).not.toHaveBeenCalled()
   expect(plugins.installBundle).toHaveBeenCalledWith(CATALOG.installTarget!.spec, {
-    enabled: true, saveExact: true, requestId: state().install.requestId, registry: null,
+    enabled: true, saveExact: true, expected: { name: CATALOG.name, version: '2.0.0' }, requestId: state().install.requestId, registry: null,
   })
   expect(state().install.subject).toMatchObject({ selection: true, saveExact: true, version: '2.0.0' })
+})
+
+it('does not start an Official install from a stale offer after the package is recorded', async () => {
+  const installed: BundleInfo = { ...CATALOG, installed: true, enabled: true, availability: 'profile' }
+  const { controller, plugins, face, state } = bench({ listBundles: vi.fn().mockResolvedValue(ok([installed])) })
+  await controller.load()
+  face.installOfficial(CATALOG.name)
+  expect(state().install.open).toBe(false)
+  expect(plugins.installBundle).not.toHaveBeenCalled()
 })
 
 it.each(['before', 'after'] as const)('reports one Official toggle when inventory refresh finishes %s installation', async (order) => {
@@ -2051,7 +2067,7 @@ it.each([true, false])('updates an Official entry with enabled=%s by removing it
   expect(plugins.removeBundle).toHaveBeenCalledWith(CATALOG.name)
   expect(plugins.removeBundle.mock.invocationCallOrder[0]).toBeLessThan(plugins.installBundle.mock.invocationCallOrder[0]!)
   expect(plugins.installBundle).toHaveBeenCalledWith(CATALOG.installTarget!.spec, {
-    enabled, saveExact: true, requestId: state().install.requestId, registry: null,
+    enabled, saveExact: true, expected: { name: CATALOG.name, version: '2.0.0' }, requestId: state().install.requestId, registry: null,
   })
   expect(state().install.restartRequired).toBe(true)
 })
@@ -2098,7 +2114,7 @@ it('preserves the Official exact target and selection when script approval retri
   await vi.waitFor(() => { expect(install).toHaveBeenCalledTimes(2) })
   expect(plugins.inspect).not.toHaveBeenCalled()
   expect(install).toHaveBeenLastCalledWith(CATALOG.installTarget!.spec, {
-    enabled: true, saveExact: true, requestId: state().install.requestId, registry: null, approvedBuilds: ['native-provider'],
+    enabled: true, saveExact: true, expected: { name: CATALOG.name, version: '2.0.0' }, requestId: state().install.requestId, registry: null, approvedBuilds: ['native-provider'],
   })
 })
 
@@ -2115,7 +2131,7 @@ it('retains a failed Official install target while changing its registry', async
   face.runInstall()
   await vi.waitFor(() => { expect(plugins.installBundle).toHaveBeenCalledTimes(2) })
   expect(plugins.installBundle).toHaveBeenLastCalledWith(CATALOG.installTarget!.spec, {
-    enabled: true, saveExact: true, requestId: state().install.requestId, registry: CORP,
+    enabled: true, saveExact: true, expected: { name: CATALOG.name, version: '2.0.0' }, requestId: state().install.requestId, registry: CORP,
   })
   expect(plugins.inspect).not.toHaveBeenCalled()
   await vi.waitFor(() => { expect(state().install.phase).toBe('done') })
@@ -2123,7 +2139,7 @@ it('retains a failed Official install target while changing its registry', async
   face.setEnabled(CATALOG.name, true)
   await vi.waitFor(() => { expect(plugins.installBundle).toHaveBeenCalledTimes(3) })
   expect(plugins.installBundle).toHaveBeenLastCalledWith(CATALOG.installTarget!.spec, {
-    enabled: true, saveExact: true, requestId: state().install.requestId, registry: CORP,
+    enabled: true, saveExact: true, expected: { name: CATALOG.name, version: '2.0.0' }, requestId: state().install.requestId, registry: CORP,
   })
 })
 
@@ -2175,7 +2191,7 @@ it('installs a source Official entry as a local path through the ordinary instal
   await vi.waitFor(() => { expect(state().install.phase).toBe('done') })
   expect(plugins.inspect).not.toHaveBeenCalled()
   expect(plugins.installBundle).toHaveBeenCalledWith(spec, {
-    enabled: true, requestId: state().install.requestId, registry: null,
+    enabled: true, expected: { name: entry.name, version: '2.0.0' }, requestId: state().install.requestId, registry: null,
   })
   expect(state().install.subject).toMatchObject({ kind: 'path', spec, selection: true })
   expect(state().install.subject?.saveExact).toBeUndefined()
@@ -2192,7 +2208,9 @@ it.each([true, false])('replaces a same-version registry package with its source
   face.update(entry.name)
   await vi.waitFor(() => { expect(state().install.phase).toBe('done') })
   expect(plugins.removeBundle).toHaveBeenCalledWith(CATALOG.name)
-  expect(plugins.installBundle).toHaveBeenCalledWith(spec, { enabled, requestId: state().install.requestId, registry: null })
+  expect(plugins.installBundle).toHaveBeenCalledWith(spec, {
+    enabled, expected: { name: entry.name, version: '2.0.0' }, requestId: state().install.requestId, registry: null,
+  })
   expect(state().install.subject).toMatchObject({ kind: 'path', spec, selection: enabled })
   expect(state().install.restartRequired).toBe(true)
 })

@@ -1,7 +1,7 @@
 import { CATALOG } from './catalog.js'
 import { createMarketController } from './controller.js'
 import { buildMarketView } from './view.js'
-import { en, ru } from './locales.js'
+import { en, ru, zh } from './locales.js'
 import { createMarketTab } from './ui.js'
 
 /**
@@ -48,25 +48,27 @@ export function remoteApi(ctx) {
   }
   return {
     listBundles: async () => remoteValue(manager().listBundles()),
-    setBundleEnabled: async (name, enabled) => { await remoteValue(manager().setBundleEnabled(name, enabled)) },
-    removeBundle: async name => { await remoteValue(manager().removeBundle(name)) },
-    updateBundle: async (name, version) => { await remoteValue(manager().updateBundle(name, version)) },
+    setBundleEnabled: (name, enabled) => remoteValue(manager().setBundleEnabled(name, enabled)),
+    removeBundle: name => remoteValue(manager().removeBundle(name)),
+    updateBundle: async (name, version) => (await remoteValue(manager().updateBundle(name, version))).result,
   }
 }
 
 /**
  * Build the browser plugin.
  * @param {object} React the module loader's React.
+ * @param {Function} Modal the shared client modal.
+ * @param {string} [dialogClass] the built catalogue's scrollable details styling.
  * @returns {{ inject: string[], apply: (ctx: object) => void }} the Cordis client plugin.
  */
-export function createMarket(React) {
-  const { MarketTab } = createMarketTab(React)
+export function createMarket(React, Modal, dialogClass) {
+  const { MarketTab } = createMarketTab(React, Modal, dialogClass)
   return {
     // `remote.pluginManager` is a scoped service: Cordis refuses to read it unless the plugin declares it, and the
     // declaration also keeps the tab from applying before the Remote face exists.
     inject: ['slots', 'locale', 'remote', 'remote.pluginManager'],
     apply(ctx) {
-      ctx.effect(() => ctx.locale.register(NS, { en, ru }), 'plugin-market: dictionaries')
+      ctx.effect(() => ctx.locale.register(NS, { en, ru, zh }), 'plugin-market: dictionaries')
       const market = createMarketController({
         api: remoteApi(ctx),
         catalog: CATALOG,
@@ -83,13 +85,15 @@ export function createMarket(React) {
         return () => { for (const dispose of disposers) dispose() }
       }, 'plugin-market: host invalidations')
       const t = ctx.locale.bind(NS)
+      const source = { subscribe: market.subscribe, getSnapshot: market.getSnapshot }
+      const actions = { load: market.load, setEnabled: market.setEnabled, remove: market.remove, update: market.update }
       ctx.slots.inject('plugins.tab', () => ctx.slots.register({
         name: 'plugins.tab',
         id: 'our-plugins',
         order: -10,
         label: () => t('tab'),
         locale: NS,
-        inject: () => ({ market }),
+        inject: () => ({ hooks: { market: source }, actions }),
       }, MarketTab))
     },
   }

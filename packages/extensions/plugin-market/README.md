@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Open Plugins in Ocean Web or Desktop to browse the bundled catalog and manage curated plugins. Read each plugin’s description, install available packages, and enable, disable, update, or remove profile packages. The catalog uses the Host’s installed bundle list and the shared installation dialogs. It has one main-sidebar entry and adds no model tools.
+Open Plugins in Ocean Web or Desktop to browse curated entries and manage plugins in the current profile. Search by name, description, or package name. Open Details to read what a plugin does and see its current status. The catalog uses the shared installation dialogs and adds no model tools.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ Open Plugins in Ocean Web or Desktop to browse the bundled catalog and manage cu
 
 The Web app composition includes this package in Web and Desktop. It needs no separate installation or external checkout. Plugins opens Catalog before Installed; explicit tab selections remain unchanged during catalog updates. The catalog cannot uninstall itself. Build-carried packages follow the Ocean build.
 
-The catalog reads on first opening, then refreshes after Host changes. A failed management request remains visible and can be retried. Its Host API calls use the existing connection and permissions; no separate credentials or network client are stored here.
+If the host offers an exact installation target, use **Install**. Otherwise use **Install from source** to open the shared Add plugin form, prefilled with the package name. You can enter another package name, a Git URL, a tarball, or a local directory. Opening the form does not check or install the package.
 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
@@ -35,7 +35,7 @@ The catalog reads on first opening, then refreshes after Host changes. A failed 
 
 The Host entry is inert. The Client contributes one `plugins.tab` entry with negative order. `src/catalog.js` lists curated packages; `src/view.js` derives cards; `src/controller.js` owns loading and management operations. The standard Client bundler emits `lib/client.js`; `scripts/build-client.mjs` refreshes the separate source-derived bundle used by the Node tests.
 
-The package was moved from `plugins/plugin-market` in the Ocean plugins repository, including its local working-tree changes. `src/source-snapshot.json` records the base commit and original per-file SHA-256 values; that commit does not identify a clean source tree. Ocean is the sole supported source home. The imported modules have explicit ESM imports, a typed Client entry, Ocean package metadata, lazy Host invalidation, and initial catalog navigation. The original MIT license is retained.
+The catalog reads the inventory on first opening and after host changes, keeping existing cards visible if refresh fails. A plugin referenced in the profile with missing files keeps its diagnostic and the available management actions. Those actions use the existing host connection and permissions.
 
 </details>
 
@@ -59,8 +59,10 @@ None; the package does not assemble or send provider requests.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- The catalog lists curated entries only and does not scan public registries. An absent package without an install source remains visibly unavailable.
-- Catalog copy is English and Russian with English fallback. The shared Plugins page localizes its own controls independently.
+- Curated entries do not imply that a package is publicly available. The catalog does not search registries or embed installation paths from a developer checkout.
+- Native Codex and Claude Code subagents, internal components, and individual theme palettes do not appear as separate catalog cards.
+- Git updates start from the package page in Installed. A registry update in the catalog targets only the exact version named by its curated entry.
+- Controls are available in English, Russian, and Simplified Chinese. Curated descriptions are available in English and Russian, with English fallback.
 
 <a id="dev-note"></a>
 ### Dev Note
@@ -68,6 +70,6 @@ None; the package does not assemble or send provider requests.
 <details>
 <summary>Working context for maintainers — click to expand</summary>
 
-Run `node scripts/build-client.mjs` after changing the modules and `node --test tests/*.test.mjs` for their behavior. The shared Plugins page and the real Web roster own navigation and lifecycle regressions. Edit only this package; the standalone Ocean-plugin copy has been removed.
+Run `node scripts/build-client.mjs` from this directory after changing the browser modules, then `node --test tests/*.test.mjs`. The [Web scenario](../../../apps/web/tests/plugin-market.e2e.ts) exercises the shipped tab and shared install form.
 
 </details>

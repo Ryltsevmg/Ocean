@@ -69,6 +69,7 @@
     "@ocean/ocean-api-remotes": "workspace:*",
     "@ocean/ocean-client-locale": "workspace:*",
     "@ocean/ocean-client-ui-plugin-manager": "workspace:*",
+    "@ocean/ocean-client-ui-primitives": "workspace:*",
     "@ocean/ocean-client-ui-slots": "workspace:*",
     "react": "^18.2.0"
   },

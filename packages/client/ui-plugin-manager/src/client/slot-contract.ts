@@ -110,6 +110,16 @@ export interface PluginTabProps {
    */
   readonly install: (target: PluginTabInstall) => void
   /**
+   * Open the page's Add plugin dialog at its spec form. A supplied package name or source prefills the field, so a
+   * tab can offer an install whose source the person still chooses (a Git address, a tarball, or a local directory).
+   * @param spec - the spec to prefill; omitted opens an empty form.
+   */
+  readonly openInstall: (spec?: string) => void
+  /** Install and enable a currently offered Official bundle. A stale or unavailable offer is not installed.
+   * @param packageName - the name in the Host inventory.
+   */
+  readonly installOfficial: (packageName: string) => void
+  /**
    * Open the page's update dialog at its confirmation for a bundle the Host lists with `update: 'git'`, from the
    * version the page lists; nothing opens before the page has listed the bundle or while another update runs. The
    * update removes the installed version, installs the target, and installs the removed version again when that fails.

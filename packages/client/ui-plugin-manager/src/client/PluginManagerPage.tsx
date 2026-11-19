@@ -1738,7 +1738,7 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
                     : (
                       <Tooltip label={t('installViewTask')} side="bottom" delayMs={500} focusDelayMs={500} portal disabled={!loaded}>
                         <Button variant="primary" size="sm" className={css.addButton} icon={<IconPlusOutlineRegular size={13} />}
-                          aria-label={t('installViewTask')} disabled={!loaded} onClick={props.openInstall}>
+                          aria-label={t('installViewTask')} disabled={!loaded} onClick={() => { props.openInstall() }}>
                           <span className={css.toolbarLabel}>{t('installViewTask')}</span>
                         </Button>
                       </Tooltip>
@@ -1768,6 +1768,8 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
             <div role="tabpanel" id={`${tabsId}-${tab}-panel`} aria-labelledby={`${tabsId}-${tab}`} className={css.tabPanel}>
               {renderSlot('plugins.tab', {
                 install: props.installFrom,
+                openInstall: props.openInstall,
+                installOfficial: props.installOfficial,
                 update: props.openGitUpdate,
                 openPackage: (name) => { setTab(INSTALLED_TAB); setView({ kind: 'package', name, returnTab: tab }) },
               }, { only: tab })}

@@ -1,0 +1,10 @@
+.dialog {
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.dialog > :first-child {
+  flex-shrink: 0;
+}

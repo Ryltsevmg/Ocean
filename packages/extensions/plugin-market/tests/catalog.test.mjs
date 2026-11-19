@@ -14,6 +14,12 @@ const EXPECTED = [
   '@ocean/ocean-browser-control',
   '@ocean/ocean-cua-bundle',
   '@local/ocean-theme-picker',
+  '@ocean/ocean-codex',
+  '@ocean/ocean-experimental-auto-review',
+  '@ocean/ocean-experimental-inspector-profile',
+  '@ocean/ocean-experimental-forge-bundle',
+  '@ocean/ocean-experimental-session-titles-bundle',
+  '@ocean/ocean-experimental-voice-input-bundle',
   '@ocean/ocean-plugin-market',
 ]
 
@@ -36,7 +42,8 @@ test('every entry is a localized, versioned package record', () => {
       assert.ok(localized.ru.length > 0, `${entry.name}.${field} needs Russian`)
       assert.equal(Object.keys(localized).sort().join(','), 'en,ru', `${entry.name}.${field} carries unexpected languages`)
     }
-    if (entry.spec !== undefined) assert.equal(typeof entry.spec, 'string')
+    assert.equal(Object.hasOwn(entry, 'spec'), false, `${entry.name}: install targets come from the Host`)
+    for (const alias of entry.aliases ?? []) assert.match(alias, /^@[a-z0-9-]+\/[a-z0-9-]+$/u)
     const { details } = entry
     assert.equal(typeof details, 'object', `${entry.name}.details must exist for the popup`)
     for (const language of ['en', 'ru']) {

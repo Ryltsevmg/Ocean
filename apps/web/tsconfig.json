@@ -95,6 +95,7 @@
     "tests/plugin-config.e2e.ts",
     "tests/input-plugin-extensions.e2e.ts",
     "tests/plugin-manager.e2e.ts",
+    "tests/plugin-market.e2e.ts",
     "tests/plugin-sticky-motion.e2e.ts",
     "tests/entry-customization.e2e.ts",
     "tests/bundle-platform.e2e.ts",

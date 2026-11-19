@@ -23,7 +23,7 @@ function messageOf(error) {
 export function createMarketController(options) {
   const { api, catalog, text, buildView } = options
   const listeners = new Set()
-  let bundles = []
+  let bundles
   let disposed = false
   let loadToken = 0
   let snapshot = Object.freeze({
@@ -32,6 +32,7 @@ export function createMarketController(options) {
     counts: { total: catalog.length, installed: 0, enabled: 0 },
     error: undefined,
     busy: undefined,
+    notice: undefined,
   })
 
   function emit() {
@@ -64,17 +65,21 @@ export function createMarketController(options) {
   }
 
   async function perform(name, kind, work) {
-    publish({ busy: { name, kind }, error: undefined })
+    if (disposed || snapshot.busy !== undefined) return
+    publish({ busy: { name, kind }, notice: undefined })
+    let notice
     try {
-      await work()
+      const result = await work()
+      if (result.application !== 'applied') {
+        notice = { title: result.application, diagnostic: result.error?.diagnostic ?? result.error?.code }
+      }
     } catch (error) {
-      if (disposed) return
-      publish({ busy: undefined, error: `${kind}: ${messageOf(error)}` })
-      return
+      notice = { title: 'transportError', diagnostic: messageOf(error) }
     }
     if (disposed) return
-    publish({ busy: undefined })
     await load()
+    if (disposed) return
+    publish({ busy: undefined, notice })
   }
 
   return {
@@ -111,7 +116,7 @@ export function createMarketController(options) {
     },
     /** Rebuild the cards after a language switch, without asking the Host. */
     relocalize() {
-      if (disposed || bundles.length === 0) return
+      if (disposed || bundles === undefined) return
       rebuild({})
     },
     /** Stop publishing; later Host answers are dropped. */

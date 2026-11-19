@@ -7,7 +7,7 @@
   - button "添加插件"
   - button "选择添加插件方式"
 - tablist "插件视图":
-  - tab "Catalogue"
+  - tab "目录"
   - tab "已安装" [selected]
 - tabpanel "已安装":
   - heading "内置插件配置" [level=3]
