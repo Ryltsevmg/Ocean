@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Ocean-Chat disables Desktop product collection by default. No product exporter is mounted unless a collector endpoint is explicitly configured. Ordinary Web clients never submit these events, and missing login identity is omitted.
+Ocean disables Desktop product collection by default. No product exporter is mounted unless a collector endpoint is explicitly configured. Ordinary Web clients never submit these events, and missing login identity is omitted.
 
 ## Table of Contents
 

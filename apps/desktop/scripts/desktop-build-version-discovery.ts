@@ -30,8 +30,15 @@ const LISTING_DEADLINE_MS = 8_000
 /** Objects one listing page may return. */
 const LISTING_PAGE_SIZE = 1000
 
-/** Artifact name electron-builder writes for one build, on either platform; unsigned and unnotarized builds add a suffix. */
-const ARTIFACT = /(?:^|\/)ocean-chat-(?<version>.+)-(?:mac|win|linux)-(?:arm64|x64)(?:-unsigned|-unnotarized)?\.(?:exe|dmg|zip|tar\.gz)$/u
+/**
+ * Artifact name electron-builder writes for one build, on either platform; unsigned and unnotarized builds add a suffix.
+ * The `ocean-chat-` spelling stays accepted for artifacts published before the product rename.
+ */
+const ARTIFACT = new RegExp(
+  String.raw`(?:^|\/)ocean(?:-chat)?-(?<version>.+)-(?:mac|win|linux)-(?:arm64|x64)`
+  + String.raw`(?:-unsigned|-unnotarized)?\.(?:exe|dmg|zip|tar\.gz)$`,
+  'u',
+)
 
 /** Inputs that decide which versions are already taken. */
 export interface DesktopBuildVersionSuggestionOptions {
@@ -105,9 +112,10 @@ async function remoteVersions(options: DesktopBuildVersionSuggestionOptions): Pr
     do {
       const page = await Promise.race([
         new Promise<{ keys: string[]; next: string | undefined }>((resolveListing, rejectListing) => {
+          // A broader prefix lists both current `ocean-` keys and legacy `ocean-chat-` ones; ARTIFACT decides which count.
           cos.getBucket({
             Bucket: update.bucket, Region: DESKTOP_COS_REGION, MaxKeys: LISTING_PAGE_SIZE,
-            Prefix: `${update.binaryKeyPrefix}/ocean-chat-`, ...marker === undefined ? {} : { Marker: marker },
+            Prefix: `${update.binaryKeyPrefix}/ocean`, ...marker === undefined ? {} : { Marker: marker },
           }, (error, data) => {
             if (error !== null && error !== undefined) rejectListing(error instanceof Error ? error : new Error(String(error)))
             else {

@@ -2937,7 +2937,7 @@ describe('registry versions and updates', () => {
     open(navigation)
     expect(within(section()).getByText(title)).toBeTruthy()
     expect(within(detail()).queryByRole('button', { name: /^Update to / })).toBeNull()
-    if (title === en.versionsBlocked) expect(within(section()).getByText(`2.0.0 needs @ocean/ocean >=0.9.0; this Ocean-Chat is ${runtime}`)).toBeTruthy()
+    if (title === en.versionsBlocked) expect(within(section()).getByText(`2.0.0 needs @ocean/ocean >=0.9.0; this Ocean is ${runtime}`)).toBeTruthy()
   })
 
   it('reports a refused check with the registries asked and a retry', () => {

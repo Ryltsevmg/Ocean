@@ -2,7 +2,7 @@
 description: "Desktop 在原生应用中运行 Harness 工作区。本参考文档说明应用行为、开发与集成；打包、Windows 签名和发布指南分别维护构建与发布操作。"
 ---
 
-# Ocean-Chat 桌面端
+# Ocean 桌面端
 
 [English](README.md) | 中文
 
@@ -55,7 +55,7 @@ Host 在 WebSocket 重连时拒绝登录，Desktop 仅关闭该 Host。若它正
 
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
-应用菜单第一项“**关于 Ocean-Chat**”打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 Ocean-Chat 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Windows 使用随包分发的 PNG。
+应用菜单第一项“**关于 Ocean**”打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 Ocean 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Windows 使用随包分发的 PNG。
 
 Desktop 的本地原生目录流程打开绑定应用窗口的 Electron 文件夹对话框，并先恢复、显示和聚焦该窗口。并发请求共用一个对话框；取消不返回路径，失败后可以重试。普通 Web 使用 Host 选择器。浏览模式列出 Host 目录。Linux 缺少 zenity 或 kdialog 时，自动选择使用浏览模式，不使用 Electron 对话框。
 
@@ -87,9 +87,9 @@ macOS 安装会创建 `/usr/local/bin/ocean`；目录权限需要时，系统会
 
 关闭主窗口（macOS 的关闭按钮和 ⌘W；Windows 的 ×、Alt+F4 和任务栏"关闭窗口"）会隐藏窗口；Windows 首次隐藏前需要确认。页面和 Host 继续运行，任务不受影响，下次显示时仍是原来的文档，会话、草稿和滚动位置都保留；macOS 全屏窗口先退出全屏再隐藏。macOS 通过 Dock 图标、再次启动或 `ocean://open` 找回窗口，Windows 通过托盘找回。最小化行为不变。进入工作区前关闭欢迎窗口，Windows 上走退出流程，macOS 上应用留在 Dock 中且没有窗口。
 
-Windows 在整个运行期间常驻托盘图标。悬停提示为产品名，单击显示并聚焦窗口，右键菜单提供壳语言下的"打开 Ocean-Chat"和"退出 Ocean-Chat"。首次隐藏前复用更新弹窗，显示“正在运行的任务不会中断，可在系统托盘中重新打开窗口”和“确认”按钮。确认后隐藏窗口，并在 Electron userData 下写入 `background-close-confirmed`；Esc、关闭弹窗或加载失败均保持主窗口可见，不记录确认。重复关闭请求会聚焦已有壳弹窗。覆盖更新保留标记，卸载删除标记。旧的 `background-notice-shown` 标记不会跳过此确认。关闭窗口不发送系统通知。托盘位图是 `resources/tray-windows.ico`，由 `pnpm run render:tray-icon` 从 `resources/icon-windows.svg` 按 16、20、24、32、40、48、64 像素分别渲染，打包为 `resources/tray.ico`。macOS 不提供菜单栏图标。
+Windows 在整个运行期间常驻托盘图标。悬停提示为产品名，单击显示并聚焦窗口，右键菜单提供壳语言下的"打开 Ocean"和"退出 Ocean"。首次隐藏前复用更新弹窗，显示“正在运行的任务不会中断，可在系统托盘中重新打开窗口”和“确认”按钮。确认后隐藏窗口，并在 Electron userData 下写入 `background-close-confirmed`；Esc、关闭弹窗或加载失败均保持主窗口可见，不记录确认。重复关闭请求会聚焦已有壳弹窗。覆盖更新保留标记，卸载删除标记。旧的 `background-notice-shown` 标记不会跳过此确认。关闭窗口不发送系统通知。托盘位图是 `resources/tray-windows.ico`，由 `pnpm run render:tray-icon` 从 `resources/icon-windows.svg` 按 16、20、24、32、40、48、64 像素分别渲染，打包为 `resources/tray.ico`。macOS 不提供菜单栏图标。
 
-所有普通退出入口——⌘Q、应用菜单、Dock 菜单、Windows 托盘和标题栏"应用程序"菜单，以及关闭欢迎窗口引起的退出——都先向 Host 查询退出会中断什么。Host 通过私有 IPC 通道回答两项事实：与更新重启检查同一口径的运行中任务（运行中的 agent（包括 subagent 和处于审批等待状态的 agent）、排队消息、运行中或停止中的后台任务），以及本次运行中已加载会话里由 `workspace/session-activity` 的 `schedule` family 报告的已挂定时器的提醒。两项都没有时直接退出，不弹框。否则弹出一个没有父窗口的原生消息框——隐藏的窗口保持隐藏——标题为**退出 Ocean-Chat？**，正文为三种本地化说明之一：正在运行的任务将会中断、应用关闭期间定时任务不会运行，或两者兼有。"退出"是默认按钮，Esc 等同"取消"；macOS 上"取消"在"退出"左侧，Windows 上"退出"在"取消"左侧，Windows 任务对话框显示应用图标且不跟随应用主题、始终为浅色。Host 尚未就绪或已失败时不可能有任务在跑，直接退出。查询失败或 Host 超过两秒截止时间未答复，按运行中任务处理。弹框打开期间，再次请求退出只会并入同一弹框而不叠加新弹框（macOS 上还会把它提到前面；Electron 不暴露 Windows 任务对话框的句柄）；任务开始或结束不会改变文案；点"退出"不再重新查询即停止应用；点"取消"不发生任何变化。取消由关闭欢迎窗口引起的退出时，欢迎窗口会重新显示。
+所有普通退出入口——⌘Q、应用菜单、Dock 菜单、Windows 托盘和标题栏"应用程序"菜单，以及关闭欢迎窗口引起的退出——都先向 Host 查询退出会中断什么。Host 通过私有 IPC 通道回答两项事实：与更新重启检查同一口径的运行中任务（运行中的 agent（包括 subagent 和处于审批等待状态的 agent）、排队消息、运行中或停止中的后台任务），以及本次运行中已加载会话里由 `workspace/session-activity` 的 `schedule` family 报告的已挂定时器的提醒。两项都没有时直接退出，不弹框。否则弹出一个没有父窗口的原生消息框——隐藏的窗口保持隐藏——标题为**退出 Ocean？**，正文为三种本地化说明之一：正在运行的任务将会中断、应用关闭期间定时任务不会运行，或两者兼有。"退出"是默认按钮，Esc 等同"取消"；macOS 上"取消"在"退出"左侧，Windows 上"退出"在"取消"左侧，Windows 任务对话框显示应用图标且不跟随应用主题、始终为浅色。Host 尚未就绪或已失败时不可能有任务在跑，直接退出。查询失败或 Host 超过两秒截止时间未答复，按运行中任务处理。弹框打开期间，再次请求退出只会并入同一弹框而不叠加新弹框（macOS 上还会把它提到前面；Electron 不暴露 Windows 任务对话框的句柄）；任务开始或结束不会改变文案；点"退出"不再重新查询即停止应用；点"取消"不发生任何变化。取消由关闭欢迎窗口引起的退出时，欢迎窗口会重新显示。
 
 强制更新的安装确认在 Windows 上额外显示等待提示，macOS 只显示简短的重启说明。
 
@@ -233,7 +233,7 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 API Key 输入框初始为空，并通过 `autocomplete="new-password"` 请求 Chromium 不要自动填入已保存的登录密码。
 
-启动在 Host 就绪后打开工作区，不以凭据作为准入条件；重复启动和 `ocean://open` 显示该工作区。下文说明的保留欢迎组件不会由 Ocean-Chat 启动流程挂载。
+启动在 Host 就绪后打开工作区，不以凭据作为准入条件；重复启动和 `ocean://open` 显示该工作区。下文说明的保留欢迎组件不会由 Ocean 启动流程挂载。
 
 保留的欢迎组件通过调用方提供的操作暴露 API Key、登录和跳过动作；它不控制当前启动路径。“保存并继续”和“稍后配置”委托给这些操作。“返回登录”回到组件入口，并清空未保存的密钥和校验提示。操作尚未完成时，按钮保持原文案并禁用竞争操作。运行中工作区的提供方配置仍位于设置中。
 
@@ -401,7 +401,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 登录会在系统浏览器中打开配置的平台页面。Host 负责 PKCE 和临时本机回调，保存凭证后将浏览器跳转到平台完成页；获取凭证不是访问工作区的前提。打开和复制的授权链接通过 `theme=light` 或 `theme=dark` 携带当前生效的 Desktop 主题；`system` 在执行操作时解析。即使平台页面随后批准，取消仍会撤销本地尝试。设置中的账号页面提供退出；退出登录和浏览器登录成功都保持工作区不变。完成页的 ocean://open 链接负责将应用置前。打包应用注册 ocean://open，只显示窗口而不传递凭证。macOS 开发启动器在 `.desktop-build/development` 下准备经临时签名的 `Harness Dev.app`，在 Info.plist 中声明 `ocean` 并注册到 Launch Services。它加载当前工作区，并记录选定的开发 home、浏览器数据路径和调试设置，以供冷启动使用。启动此应用会将其设为 `ocean://` 默认处理程序；启动打包应用会重新注册打包版处理程序。生成的应用包不包含账号 token，依赖工作区和已准备的运行环境继续存在。
 
-保留的欢迎组件可通过所属窗口的 IPC，调用调用方提供的 `takeNotice` 操作请求通知。Ocean-Chat 启动流程不创建该窗口，账号失效也不会将工作区重定向到该窗口。
+保留的欢迎组件可通过所属窗口的 IPC，调用调用方提供的 `takeNotice` 操作请求通知。Ocean 启动流程不创建该窗口，账号失效也不会将工作区重定向到该窗口。
 
 保留的欢迎渲染组件在登录超时后显示超时标题，并提供重新登录和添加 API Key 按钮。打开 API Key 表单会关闭授权视图；后续账号状态通知不会覆盖正在填写的密钥。
 
@@ -417,19 +417,19 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 上线前 CDN 与容量决策不在本预览快照范围内。
 
-## Ocean-Chat fork 发布隔离
+## Ocean fork 发布隔离
 
-此桌面应用使用 Ocean-Chat 品牌，产品布局不变。生产更新元数据要求显式设置 `OCEAN_DOWNLOAD_ORIGIN`，不会继承任何 DeepSeek 更新地址。打包和发布流程拒绝使用 DeepSeek 下载基础设施。本地无签名构建不包含更新源。上游许可证和第三方声明仍保留在仓库中。
+此桌面应用使用 Ocean 品牌，产品布局不变。生产更新元数据要求显式设置 `OCEAN_DOWNLOAD_ORIGIN`，不会继承任何 DeepSeek 更新地址。打包和发布流程拒绝使用 DeepSeek 下载基础设施。本地无签名构建不包含更新源。上游许可证和第三方声明仍保留在仓库中。
 
 ## 本地 Linux 归档
 
-Ocean-Chat 在架构匹配的 Linux 主机上添加 Linux arm64/x64 构建目标。运行 `pnpm --filter @ocean/ocean-desktop package:linux:arm64:dir`（或对应的 x64 命令）生成未打包的应用目录；省略 `:dir` 则生成 tar.gz 归档。Linux 构建是本地无签名产物，不包含更新源，也不会发布版本。Chromium 沙箱设置不变。上游命令安装界面尚不支持 Linux；可直接调用随包提供的 CLI 启动器。原生依赖和真实桌面行为仍需在目标主机上验证。
+Ocean 在架构匹配的 Linux 主机上添加 Linux arm64/x64 构建目标。运行 `pnpm --filter @ocean/ocean-desktop package:linux:arm64:dir`（或对应的 x64 命令）生成未打包的应用目录；省略 `:dir` 则生成 tar.gz 归档。Linux 构建是本地无签名产物，不包含更新源，也不会发布版本。Chromium 沙箱设置不变。上游命令安装界面尚不支持 Linux；可直接调用随包提供的 CLI 启动器。原生依赖和真实桌面行为仍需在目标主机上验证。
 
 离线签名验证和剩余 Linux 安装要求见 [Ocean Linux 发布准备](release/README.zh.md)。这些准备工作不会为现有安装启用更新器。
 
 ## 工作区优先启动
 
-即使没有提供方凭据，Ocean-Chat 也直接打开主工作区，不显示欢迎或账号引导窗口。提供方配置仍位于设置中；退出登录或会话过期不会替换工作区。Host 认证、发送方校验、沙箱及强制更新处理保持不变。
+即使没有提供方凭据，Ocean 也直接打开主工作区，不显示欢迎或账号引导窗口。提供方配置仍位于设置中；退出登录或会话过期不会替换工作区。Host 认证、发送方校验、沙箱及强制更新处理保持不变。
 
 ### Linux 原生 Host 运行时
 

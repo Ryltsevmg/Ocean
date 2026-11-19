@@ -76,7 +76,7 @@ describe('client build environment', () => {
     const expected = {
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3',
     } as const
 
@@ -106,7 +106,7 @@ describe('client build environment', () => {
     expect(resolveClientBuildEnvironment(parent)).toEqual({
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3',
     })
     expect(() => {
@@ -122,13 +122,13 @@ describe('client build environment', () => {
     expect(clientBuildProcessEnvironment(parent, {
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3',
     })).toEqual({
       PATH: '/bin',
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3',
     })
     expect(repositoryCommitHash('/unused', { OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH })).toBe(COMMIT_HASH.slice(0, 7))
@@ -138,7 +138,7 @@ describe('client build environment', () => {
     const parent = {
       OCEAN_BUILD_CLIENT_PROFILE: 'official',
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
       OCEAN_CLIENT_VERSION: '1.2.3',
       OCEAN_CLIENT_GIT_DIRTY: dirty,
@@ -156,7 +156,7 @@ describe('client build environment', () => {
     expect(resolveClientBuildEnvironment({ ...parent, ...local }, 'official')).toEqual({
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3',
     })
   })
@@ -187,7 +187,7 @@ describe('client build environment', () => {
     expect(officialClientBuildEnvironment(fixtureRoot)).toEqual({
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: commit,
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3-rc.4',
     })
 
@@ -296,7 +296,7 @@ describe('client build environment', () => {
     const officialEnvironment = {
       OCEAN_CLIENT_BUILD_PROFILE: 'official',
       OCEAN_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+      OCEAN_CLIENT_TITLE: 'Ocean',
       OCEAN_CLIENT_VERSION: '1.2.3',
     }
     const official = buildFixture(officialEnvironment)

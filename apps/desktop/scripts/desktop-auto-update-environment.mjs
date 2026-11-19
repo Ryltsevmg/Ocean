@@ -50,7 +50,7 @@ export function desktopLatestInstallerFilename(target) {
 /**
  * Resolve the production website installer URL shared by approval, upload and purge.
  * @param {'mac-arm64' | 'mac-x64' | 'win-x64' | 'linux-arm64' | 'linux-x64'} target Supported Desktop target.
- * @param {NodeJS.ProcessEnv} env Explicit Ocean-Chat release settings.
+ * @param {NodeJS.ProcessEnv} env Explicit Ocean release settings.
  * @returns {string} Fixed production download URL.
  */
 export function desktopWebsiteInstallerUrl(target, env = process.env) {
@@ -153,7 +153,7 @@ function httpsOrigin(value, name) {
     throw new Error(`desktop auto-update: ${name} must be an absolute HTTPS origin without a path, credentials, query, or fragment`)
   }
   if (parsed.hostname === 'deepseek.com' || parsed.hostname.endsWith('.deepseek.com')) {
-    throw new Error('desktop auto-update: Ocean-Chat must use its own update origin, not DeepSeek infrastructure')
+    throw new Error('desktop auto-update: Ocean must use its own update origin, not DeepSeek infrastructure')
   }
   return parsed.origin
 }

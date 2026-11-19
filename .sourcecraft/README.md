@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-This reference describes the disabled Ocean-Chat CI template. `ci.yaml.example` does not activate a workflow. Its syntax follows the existing Runne SourceCraft configuration; it has not been validated by a SourceCraft run. The official workflow reference is https://sourcecraft.dev/portal/docs/ru/sourcecraft/operations/ci-cd/create-workflow.
+This reference describes the disabled Ocean CI template. `ci.yaml.example` does not activate a workflow. Its syntax follows the existing Runne SourceCraft configuration; it has not been validated by a SourceCraft run. The official workflow reference is https://sourcecraft.dev/portal/docs/ru/sourcecraft/operations/ci-cd/create-workflow.
 
 ## Activation checklist
 

@@ -47,7 +47,7 @@ it('rejects multiline App outputs before writing Actions output fields', async (
 })
 
 
-it('rejects the upstream publishing destination for the Ocean-Chat fork', async () => {
+it('rejects the upstream publishing destination for the Ocean fork', async () => {
   const root = await mkdtemp(join(tmpdir(), 'publish-config-'))
   try {
     await mkdir(join(root, 'publishing'))

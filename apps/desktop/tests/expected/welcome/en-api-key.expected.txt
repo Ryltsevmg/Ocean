@@ -1,7 +1,7 @@
-Ocean-Chat
-Ocean-Chat
+Ocean
+Ocean
 Add an API key to get started
-Configure official DeepSeek models to start using Ocean-Chat
+Configure official DeepSeek models to start using Ocean
 Enter API key [password]
 Save and continue [disabled]
 Set up later

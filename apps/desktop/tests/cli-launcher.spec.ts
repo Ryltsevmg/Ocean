@@ -26,7 +26,7 @@ function fixture() {
   prepareDesktopCli(cli, platform)
   const electron = platform === 'linux'
     ? join(resources, 'runtime/primary-runtime/dependencies/node/bin/node')
-    : join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'Ocean-Chat'] : ['Ocean-Chat.exe'])
+    : join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'Ocean'] : ['Ocean.exe'])
   mkdirSync(dirname(electron), { recursive: true })
   if (platform === 'win32') copyFileSync(process.execPath, electron)
   else symlinkSync(process.execPath, electron)

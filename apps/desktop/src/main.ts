@@ -83,8 +83,8 @@ import { DesktopBackgroundNotice } from './background-notice.ts'
 
 // Wayland app_id and desktop-file identity must agree for shell icon lookup.
 if (process.platform === 'linux') {
-  app.setDesktopName(app.isPackaged ? 'ocean.desktop' : 'Ocean-Chat.desktop')
-  app.commandLine.appendSwitch('class', app.isPackaged ? 'ocean' : 'Ocean-Chat')
+  app.setDesktopName(app.isPackaged ? 'ocean.desktop' : 'Ocean.desktop')
+  app.commandLine.appendSwitch('class', app.isPackaged ? 'ocean' : 'Ocean')
 }
 
 let focusPrimaryWindow = (): void => {}
@@ -1224,7 +1224,7 @@ async function main(): Promise<void> {
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'Ocean-Chat',
+    applicationName: 'Ocean',
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',

@@ -30,7 +30,7 @@ it('disables unsupported bundles, shows the Host restriction, and refuses direct
   await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
   const panel = page.locator('[data-plugin-panel]')
   await panel.getByRole('tab', { name: '已安装', exact: true }).click()
-  const reason = '此插件不支持运行 Ocean-Chat 的主机操作系统'
+  const reason = '此插件不支持运行 Ocean 的主机操作系统'
   const card = page.locator(`[data-plugin-package="${name}"]`)
   await card.getByText(reason, { exact: true }).waitFor()
   expect(await card.getByRole('switch').isEnabled()).toBe(false)

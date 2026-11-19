@@ -39,6 +39,6 @@ export async function verifyRetainedDesktopSignatures(
   const extracted = await mkdtemp(join(tmpdir(), 'desktop-publish-verify-'))
   try {
     run('/usr/bin/ditto', ['-x', '-k', zipPath, extracted])
-    verifyMacOSNotarizedApplication(join(extracted, 'Ocean-Chat.app'), config.macOS)
+    verifyMacOSNotarizedApplication(join(extracted, 'Ocean.app'), config.macOS)
   } finally { await rm(extracted, { recursive: true, force: true }) }
 }

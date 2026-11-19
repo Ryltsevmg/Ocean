@@ -105,7 +105,7 @@ export function createElectronBuilderConfig(
   const packaged = resolveDesktopBuildCommit(env)
   return {
     appId,
-    protocols: [{ name: 'Ocean-Chat', schemes: ['ocean', 'dsh'] }],
+    protocols: [{ name: 'Ocean', schemes: ['ocean', 'dsh'] }],
     extraMetadata: {
       oceanDesktopAppId: appId,
       oceanDesktopUpdateChannel: update?.channel ?? 'nightly',
@@ -113,11 +113,11 @@ export function createElectronBuilderConfig(
       ...buildVersion === productVersion ? {} : { version: buildVersion },
       ...packaged === undefined ? {} : { oceanBuildCommit: packaged.commit, oceanBuildDirty: packaged.dirty },
     },
-    productName: 'Ocean-Chat',
+    productName: 'Ocean',
     // The default copyright uses author.name; this line names the product instead.
     copyright: `Copyright © ${new Date().getFullYear()} \${productName}`,
     // Unsigned builds carry their own suffix so a shared file can never pass for a release artifact.
-    artifactName: `ocean-chat-\${version}-\${os}-\${arch}${output.suffix}.\${ext}`,
+    artifactName: `ocean-\${version}-\${os}-\${arch}${output.suffix}.\${ext}`,
     directories: { output: output.directory },
     asar: true,
     electronDist: buildPaths.electron,
@@ -173,7 +173,7 @@ export function createElectronBuilderConfig(
       // macOS matches the application locale against this bundle, not Electron Framework resources.
       extendInfo: {
         CFBundleLocalizations: ['en', 'zh_CN', 'ja', 'es', 'fr', 'de', 'ru', 'pt'],
-        NSMicrophoneUsageDescription: 'Ocean-Chat uses your microphone to transcribe speech into message drafts.',
+        NSMicrophoneUsageDescription: 'Ocean uses your microphone to transcribe speech into message drafts.',
       },
       // Ad-hoc signing keeps the modified Electron executable runnable without a Developer ID.
       identity: unsigned ? '-' : macOSSigning?.signingIdentity,

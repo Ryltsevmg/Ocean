@@ -203,7 +203,7 @@ describe('Windows token signing', () => {
     }, {
       certificateFile: CERTIFICATE_FILE,
       signTool: 'C:\\tools\\signtool.exe',
-      path: 'C:\\release\\Ocean-Chat.exe',
+      path: 'C:\\release\\Ocean.exe',
       isNest: false,
       tokenPin: 'token-secret!',
       keyContainer: 'te-container',
@@ -213,7 +213,7 @@ describe('Windows token signing', () => {
       OCEAN_DESKTOP_WINDOWS_CER_FILE: CERTIFICATE_FILE,
       OCEAN_DESKTOP_WINDOWS_TOKEN_PIN: 'token-secret!',
       OCEAN_DESKTOP_WINDOWS_KEY_CONTAINER: 'te-container',
-      OCEAN_DESKTOP_WINDOWS_SIGN_TARGET: 'C:\\release\\Ocean-Chat.exe',
+      OCEAN_DESKTOP_WINDOWS_SIGN_TARGET: 'C:\\release\\Ocean.exe',
       OCEAN_DESKTOP_WINDOWS_SIGN_APPEND: '',
     })
   })

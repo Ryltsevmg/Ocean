@@ -59,7 +59,7 @@ const SCHEDULE_TIMING = {
   'relative.future': '{value}{unit} 후',
 }
 
-/** Korean copy imported from OCEAN Ocean 0.4.0 and completed for current Ocean-Chat catalogs. */
+/** Korean copy imported from OCEAN Ocean 0.4.0 and completed for current Ocean catalogs. */
 export const oceanKoreanCatalogs: Readonly<Record<string, Record<string, string>>> = {
   'common': {
     'ok': '확인',

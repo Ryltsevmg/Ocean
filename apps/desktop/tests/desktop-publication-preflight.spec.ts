@@ -25,7 +25,7 @@ it.each([['mac-arm64', 'test'], ['win-x64', 'test'], ['mac-arm64', 'production']
       bucket: 'fixture-1250000000', origin: 'https://EXAMPLE.com:443/', credentialsFile: join(root, 'absent-credentials.json'),
     }))
     const commit = 'b'.repeat(40)
-    const base = `ocean-chat-1.0.0-${target}`
+    const base = `ocean-1.0.0-${target}`
     const extension = target === 'win-x64' ? 'exe' : 'zip'
     const bytes = 'fixture installer bytes'
     await writeFile(join(artifacts, `${base}.${extension}`), bytes)

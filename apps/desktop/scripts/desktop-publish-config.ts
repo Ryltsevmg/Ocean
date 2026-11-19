@@ -27,7 +27,7 @@ export async function readDesktopPublishConfig(configRoot: string, preset: 'test
   const config = schema.parse(JSON.parse(await readFile(join(configRoot, 'publishing', `${preset}.json`), 'utf8')))
   const hostname = new URL(config.origin).hostname
   if (hostname === 'deepseek.com' || hostname.endsWith('.deepseek.com')) {
-    throw new Error('desktop publish: Ocean-Chat must use its own origin, not DeepSeek infrastructure')
+    throw new Error('desktop publish: Ocean must use its own origin, not DeepSeek infrastructure')
   }
   if (preset === 'production' && !config.githubApp) {
     throw new Error('desktop publish: production requires GitHub App configuration')

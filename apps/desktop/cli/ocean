@@ -13,6 +13,6 @@ done
 resources=$(CDPATH= cd -- "$(dirname -- "$launcher")/../../.." && pwd -P)
 case "$(uname -s)" in
   Linux) executable="$resources/runtime/primary-runtime/dependencies/node/bin/node"; runtime="$resources/ocean" ;;
-  *) executable="$resources/../MacOS/Ocean-Chat"; runtime="$resources/app.asar/ocean" ;;
+  *) executable="$resources/../MacOS/Ocean"; runtime="$resources/app.asar/ocean" ;;
 esac
 ELECTRON_RUN_AS_NODE=1 exec "$executable" --expose-internals "$runtime/node_modules/@ocean/ocean-desktop-host/lib/cli.js" "$@"

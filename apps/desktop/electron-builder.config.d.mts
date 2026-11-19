@@ -5,7 +5,7 @@ export interface DesktopElectronBuilderConfig {
   readonly appId: string
   readonly copyright: string
   readonly artifactName: string
-  readonly protocols: readonly [{ readonly name: 'Ocean-Chat'; readonly schemes: readonly ['ocean', 'dsh'] }]
+  readonly protocols: readonly [{ readonly name: 'Ocean'; readonly schemes: readonly ['ocean', 'dsh'] }]
   readonly directories: {
     readonly output: string
   }
