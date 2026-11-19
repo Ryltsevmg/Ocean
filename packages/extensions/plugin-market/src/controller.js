@@ -14,9 +14,11 @@ import { buildMarketView } from './view.js'
  * publication and inventory data can offer a new install.
  * @param {{listPublishedCatalog: () => Promise<unknown>, listBundles: () => Promise<BundleInfo[]>,
  *   setBundleEnabled: (name: string, enabled: boolean) => Promise<ChangeResult>}} api the Host's plugin manager.
+ * @param {(text: import('./catalog.js').PublishedPlugin['title']) => string} resolveText resolves offer text through
+ * the active locale's fallback chain; reads the current active locale at call time.
  * @returns The catalogue state source and tab actions.
  */
-export function createMarketController(api) {
+export function createMarketController(api, resolveText) {
   /** @type {Set<() => void>} */
   const listeners = new Set()
   /** @type {readonly import('./catalog.js').PublishedPlugin[] | undefined} */
@@ -30,7 +32,7 @@ export function createMarketController(api) {
     status: /** @type {CatalogStatus} */ ('loading'),
     inventory: /** @type {InventoryStatus} */ ('loading'),
     hasCatalog: false,
-    ...buildMarketView({ plugins: [], bundles, fresh: false, inventoryReady: false }),
+    ...buildMarketView({ plugins: [], bundles, fresh: false, inventoryReady: false, resolveText }),
     busy: /** @type {{name: string} | undefined} */ (undefined),
     notice: /** @type {ChangeNotice | undefined} */ (undefined),
   })
@@ -39,7 +41,7 @@ export function createMarketController(api) {
   function publish(patch) {
     const next = { ...snapshot, ...patch }
     const view = buildMarketView({
-      plugins: plugins ?? [], bundles, fresh: next.status === 'ready', inventoryReady: next.inventory === 'ready',
+      plugins: plugins ?? [], bundles, fresh: next.status === 'ready', inventoryReady: next.inventory === 'ready', resolveText,
     })
     snapshot = Object.freeze({ ...next, ...view, hasCatalog: plugins !== undefined })
     for (const listener of listeners) listener()
@@ -80,6 +82,10 @@ export function createMarketController(api) {
     },
     /** Read publication and inventory together, without coupling their results. */
     load,
+    /** Re-resolve card text after a UI language switch from the retained data, without re-reading the Host. */
+    republish() {
+      if (!disposed) publish({})
+    },
     /** Refresh only after the catalogue was opened at least once. */
     invalidate() {
       if (catalogRequest > 0) return load()

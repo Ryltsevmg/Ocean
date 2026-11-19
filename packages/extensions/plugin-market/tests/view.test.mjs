@@ -4,11 +4,14 @@ import test from 'node:test'
 import { buildMarketView, cardFor, filterCards } from '../src/view.js'
 
 const plugin = {
-  name: '@ocean/approved', version: '2.0.0', title: 'Approved plugin', description: 'Ищется по описанию.',
+  name: '@ocean/approved', version: '2.0.0', title: { en: 'Approved plugin', ru: 'Одобренный плагин' },
+  description: { en: 'Searchable by description.', ru: 'Ищется по описанию.' },
   sha256: '2'.repeat(64), compatible: true,
 }
 const bundle = { name: plugin.name, version: '1.0.0', availability: 'profile', enabled: true, installed: true, update: 'registry' }
-const ready = { fresh: true, inventoryReady: true }
+/** Resolve offer text as the named active locale would, falling back to English. */
+const resolver = locale => text => typeof text === 'string' ? text : text[locale] ?? text.en
+const ready = { fresh: true, inventoryReady: true, resolveText: resolver('en') }
 
 test('only published names are shown, in published order; unrelated inventory cannot add products', () => {
   const next = { ...plugin, name: '@ocean/another' }
@@ -22,18 +25,26 @@ test('only published names are shown, in published order; unrelated inventory ca
 })
 
 test('a compatible fresh release installs by exact identity, never by the inventory registry target', () => {
-  const { name, version, title, sha256 } = plugin
+  const { name, version, sha256 } = plugin
   const card = cardFor(plugin, { name, official: true, availability: 'missing', installTarget: { spec: `${name}@latest` } }, ready)
   assert.equal(card.badge, 'badgeMissing')
   assert.equal(card.publishedVersion, version)
-  assert.deepEqual(card.actions, [{ kind: 'install', target: { name, version, title, sha256 } }])
+  assert.deepEqual(card.actions, [{ kind: 'install', target: { name, version, title: 'Approved plugin', sha256 } }])
+})
+
+test('a ru offer resolves its card text and install title to Russian', () => {
+  const { name, version, sha256 } = plugin
+  const card = cardFor(plugin, undefined, { ...ready, resolveText: resolver('ru') })
+  assert.equal(card.title, 'Одобренный плагин')
+  assert.equal(card.description, 'Ищется по описанию.')
+  assert.deepEqual(card.actions, [{ kind: 'install', target: { name, version, title: 'Одобренный плагин', sha256 } }])
 })
 
 test('incompatible releases and offers with unknown local inventory do not install', () => {
   const incompatible = cardFor({ ...plugin, compatible: false }, undefined, ready)
   assert.equal(incompatible.badge, 'badgeIncompatible')
   assert.deepEqual(incompatible.actions, [])
-  const unknown = cardFor(plugin, undefined, { fresh: true, inventoryReady: false })
+  const unknown = cardFor(plugin, undefined, { fresh: true, inventoryReady: false, resolveText: resolver('en') })
   assert.equal(unknown.badge, 'badgeUnknown')
   assert.deepEqual(unknown.actions, [])
 })
@@ -47,7 +58,7 @@ test('a newer published version does not add a registry update for an installed 
 })
 
 test('cached and incompatible releases can still be switched on if their existing local copies are available', () => {
-  const card = cardFor({ ...plugin, compatible: false }, { ...bundle, enabled: false }, { fresh: false, inventoryReady: true })
+  const card = cardFor({ ...plugin, compatible: false }, { ...bundle, enabled: false }, { fresh: false, inventoryReady: true, resolveText: resolver('en') })
   assert.equal(card.badge, 'badgeOff')
   assert.equal(card.compatible, false)
   assert.deepEqual(card.actions, [{ kind: 'enable' }, { kind: 'open' }])
@@ -67,9 +78,13 @@ test('read-only and failed local bundles do not get an enable action', () => {
   }
 })
 
-test('search uses the published title, description and name without rewriting the Host copy', () => {
+test('search uses the resolved title, description and name in the active language', () => {
   const { cards } = buildMarketView({ plugins: [plugin], bundles: [], ...ready })
-  for (const query of ['  ', 'Approved Plugin', 'ОПИСАНИЮ', '@ocean/approved']) assert.deepEqual(filterCards(cards, query), cards)
-  assert.equal(cards[0].description, plugin.description)
+  for (const query of ['  ', 'Approved Plugin', 'by description', '@ocean/approved']) assert.deepEqual(filterCards(cards, query), cards)
+  assert.equal(cards[0].description, 'Searchable by description.')
   assert.deepEqual(filterCards(cards, 'third-party'), [])
+  assert.deepEqual(filterCards(cards, 'ОПИСАНИЮ'), [])
+  const ru = buildMarketView({ plugins: [plugin], bundles: [], ...ready, resolveText: resolver('ru') }).cards
+  for (const query of ['ОПИСАНИЮ', 'Одобренный Плагин', '@ocean/approved']) assert.deepEqual(filterCards(ru, query), ru)
+  assert.deepEqual(filterCards(ru, 'by description'), [])
 })

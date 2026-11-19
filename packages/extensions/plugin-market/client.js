@@ -10,7 +10,7 @@ window.__ModuleLoader__.load({
 
 /**
  * @typedef {import('@ocean/ocean-api-remotes/client').PublishedPluginTarget & {title: string}} PublishedInstallTarget
- * Exact publication the Plugins page asks the Host to install.
+ * Exact publication the Plugins page asks the Host to install, with the title resolved to the active UI language.
  */
 
 /** @typedef {import('@ocean/ocean-api-remotes/client').PublishedPluginOffer} PublishedPlugin */
@@ -29,12 +29,14 @@ function readPublishedCatalog(value) {
 }
 
 /**
- * Select only the release identity and display name requested by the Plugins page.
+ * Select only the release identity and the display title resolved to the active UI language.
  * @param {PublishedPlugin} plugin the published record.
+ * @param {(text: PublishedPlugin['title']) => string} resolveText resolves offer text through the active locale's fallback chain.
  * @returns {PublishedInstallTarget} the install intent, with no download location.
  */
-function installTarget({ name, version, sha256, title }) {
-  return { name, version, sha256, title }
+function installTarget(plugin, resolveText) {
+  const { name, version, sha256 } = plugin
+  return { name, version, sha256, title: resolveText(plugin.title) }
 }
 
     // ---- src/view.js ----
@@ -54,11 +56,14 @@ const badges = /** @type {const} */ ({
  * Project a release and its matching profile record. Compatibility describes the published release, not the installed copy.
  * @param {PublishedPlugin} plugin a release the Host lists in the catalogue.
  * @param {BundleInfo | undefined} bundle the matching local bundle, if found.
- * @param {{fresh: boolean, inventoryReady: boolean}} options whether installation offers and inventory are current.
+ * @param {{fresh: boolean, inventoryReady: boolean, resolveText: (text: PublishedPlugin['title']) => string}} options
+ * whether installation offers and inventory are current, and how offer text resolves to the active UI language.
  * @returns The card and its available actions.
  */
-function cardFor(plugin, bundle, { fresh, inventoryReady }) {
-  const { name, title, description, compatible, version: publishedVersion } = plugin
+function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) {
+  const { name, compatible, version: publishedVersion } = plugin
+  const title = resolveText(plugin.title)
+  const description = resolveText(plugin.description)
   const readable = bundle?.availability === 'installation' || bundle?.availability === 'profile'
   const configured = bundle?.installed === true || bundle?.enabled === true
   const selected = bundle?.enabled === true
@@ -73,7 +78,7 @@ function cardFor(plugin, bundle, { fresh, inventoryReady }) {
     if (canChange && !selected && readable && error === undefined) actions.push({ kind: 'enable' })
     actions.push({ kind: 'open' })
   } else if (fresh && inventoryReady && compatible && canChange && error === undefined) {
-    actions.push({ kind: 'install', target: installTarget(plugin) })
+    actions.push({ kind: 'install', target: installTarget(plugin, resolveText) })
   }
 
   return {
@@ -102,12 +107,13 @@ function filterCards(cards, query) {
 
 /**
  * Build cards only for packages from the publication channel; inventory supplies state but cannot add cards.
- * @param {{plugins: readonly PublishedPlugin[], bundles: readonly BundleInfo[], fresh: boolean, inventoryReady: boolean}} input current Host data.
+ * @param {{plugins: readonly PublishedPlugin[], bundles: readonly BundleInfo[], fresh: boolean, inventoryReady: boolean,
+ *   resolveText: (text: PublishedPlugin['title']) => string}} input current Host data and the active-language text resolver.
  * @returns {{cards: ReturnType<typeof cardFor>[], counts: {total: number, installed: number, enabled: number}}} the catalogue view.
  */
-function buildMarketView({ plugins, bundles, fresh, inventoryReady }) {
+function buildMarketView({ plugins, bundles, fresh, inventoryReady, resolveText }) {
   const byName = new Map(bundles.map(bundle => [bundle.name, bundle]))
-  const options = { fresh, inventoryReady }
+  const options = { fresh, inventoryReady, resolveText }
   const cards = plugins.map(plugin => cardFor(plugin, byName.get(plugin.name), options))
   const counts = { total: cards.length, installed: 0, enabled: 0 }
   for (const card of cards) {
@@ -132,9 +138,11 @@ function buildMarketView({ plugins, bundles, fresh, inventoryReady }) {
  * publication and inventory data can offer a new install.
  * @param {{listPublishedCatalog: () => Promise<unknown>, listBundles: () => Promise<BundleInfo[]>,
  *   setBundleEnabled: (name: string, enabled: boolean) => Promise<ChangeResult>}} api the Host's plugin manager.
+ * @param {(text: import('./catalog.js').PublishedPlugin['title']) => string} resolveText resolves offer text through
+ * the active locale's fallback chain; reads the current active locale at call time.
  * @returns The catalogue state source and tab actions.
  */
-function createMarketController(api) {
+function createMarketController(api, resolveText) {
   /** @type {Set<() => void>} */
   const listeners = new Set()
   /** @type {readonly import('./catalog.js').PublishedPlugin[] | undefined} */
@@ -148,7 +156,7 @@ function createMarketController(api) {
     status: /** @type {CatalogStatus} */ ('loading'),
     inventory: /** @type {InventoryStatus} */ ('loading'),
     hasCatalog: false,
-    ...buildMarketView({ plugins: [], bundles, fresh: false, inventoryReady: false }),
+    ...buildMarketView({ plugins: [], bundles, fresh: false, inventoryReady: false, resolveText }),
     busy: /** @type {{name: string} | undefined} */ (undefined),
     notice: /** @type {ChangeNotice | undefined} */ (undefined),
   })
@@ -157,7 +165,7 @@ function createMarketController(api) {
   function publish(patch) {
     const next = { ...snapshot, ...patch }
     const view = buildMarketView({
-      plugins: plugins ?? [], bundles, fresh: next.status === 'ready', inventoryReady: next.inventory === 'ready',
+      plugins: plugins ?? [], bundles, fresh: next.status === 'ready', inventoryReady: next.inventory === 'ready', resolveText,
     })
     snapshot = Object.freeze({ ...next, ...view, hasCatalog: plugins !== undefined })
     for (const listener of listeners) listener()
@@ -198,6 +206,10 @@ function createMarketController(api) {
     },
     /** Read publication and inventory together, without coupling their results. */
     load,
+    /** Re-resolve card text after a UI language switch from the retained data, without re-reading the Host. */
+    republish() {
+      if (!disposed) publish({})
+    },
     /** Refresh only after the catalogue was opened at least once. */
     invalidate() {
       if (catalogRequest > 0) return load()
@@ -632,8 +644,10 @@ function createMarket(React, Modal, dialogClass) {
     inject: ['slots', 'locale', 'remote', 'remote.pluginManager'],
     apply(ctx) {
       ctx.effect(() => ctx.locale.register(NS, { en, ru, zh }), 'plugin-market: dictionaries')
-      const market = createMarketController(remoteApi(ctx))
+      const resolveText = ctx.locale.resolveText.bind(ctx.locale)
+      const market = createMarketController(remoteApi(ctx), resolveText)
       ctx.effect(() => market.dispose, 'plugin-market: controller')
+      ctx.effect(() => ctx.locale.subscribe(() => market.republish()), 'plugin-market: locale')
       ctx.effect(() => {
         const stopChanged = ctx.remote.$on('plugin-manager/changed', () => { void market.invalidate() })
         const stopReset = ctx.on('connection/reset', () => { void market.invalidate() })

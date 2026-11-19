@@ -40,7 +40,10 @@ async function channel(onIndex?: (response: ServerResponse) => boolean) {
   const abort = new AbortController()
   const url = `${origin}/v1/current.json`
   const source = new PublishedCatalogSource({ url, profileDir, timeoutMs: 5_000, runtimeVersion: '1.0.0', lifetime: abort.signal })
-  const offer = { ...target, ocean: '^1.0.0', title: 'Example', description: 'Example description', archive: `${origin}/archives/${sha256}/plugin.tgz` }
+  const offer = {
+    ...target, ocean: '^1.0.0', title: { en: 'Example', ru: 'Пример' },
+    description: { en: 'Example description', ru: 'Описание примера' }, archive: `${origin}/archives/${sha256}/plugin.tgz`,
+  }
   index = { schemaVersion: 1, plugins: [offer] }
   return {
     source, abort, profileDir, offer, downloads: () => downloads,
@@ -64,7 +67,7 @@ it('admits new offers, retains only display data on failure, and accepts an auth
   expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
   c.setAvailable(true)
   expect(await c.source.list()).toEqual({ status: 'ready', plugins: [
-    { ...target, title: 'Example', description: 'Example description', compatible: true },
+    { ...target, title: { en: 'Example', ru: 'Пример' }, description: { en: 'Example description', ru: 'Описание примера' }, compatible: true },
   ] })
   c.setAvailable(false)
   expect(await c.source.list()).toMatchObject({ status: 'stale', plugins: [target] })
@@ -73,6 +76,26 @@ it('admits new offers, retains only display data on failure, and accepts an auth
   c.setIndex({ schemaVersion: 1, plugins: [] })
   expect(await c.source.list()).toEqual({ status: 'ready', plugins: [] })
   await expect(c.source.prepare(target, c.abort.signal)).rejects.toMatchObject({ code: 'published-offer-unavailable' })
+  expect(c.downloads()).toBe(0)
+})
+
+it('accepts localized display text with a required English fallback, and plain strings', async () => {
+  const c = await channel()
+  expect((await c.source.list()).plugins[0]).toMatchObject({ title: { en: 'Example', ru: 'Пример' }, compatible: true })
+  c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, title: 'Plain title', description: 'Plain description' }] })
+  expect((await c.source.list()).plugins[0]).toMatchObject({ title: 'Plain title', description: 'Plain description' })
+})
+
+it.each([
+  { title: { ru: 'Пример' } },
+  { description: { ru: 'Описание примера' } },
+  { title: { en: 'Example', ru: '  ' } },
+  { title: { en: 'x'.repeat(121) } },
+  { description: { en: 'x'.repeat(2049) } },
+])('refuses display text without a usable English fallback or beyond its bounds (%j)', async (change) => {
+  const c = await channel()
+  c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, ...change }] })
+  expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
   expect(c.downloads()).toBe(0)
 })
 

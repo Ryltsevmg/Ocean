@@ -24,6 +24,8 @@ const utf8 = new TextDecoder('utf-8', { fatal: true })
 const platformList = z.array(z.enum(['darwin', 'linux', 'win32'])).min(1).max(3)
   .refine(values => new Set(values).size === values.length, 'must not contain duplicate platforms')
 const publicText = (max: number) => z.string().max(max).refine(value => value.trim() !== '', 'must not be blank')
+// Display text is LocalizedText: one bounded string, or per-locale strings with a required English fallback.
+const localizedText = (max: number) => z.union([publicText(max), z.object({ en: publicText(max) }).catchall(publicText(max))])
 
 function barePackageName(value: string): boolean {
   try {
@@ -43,8 +45,8 @@ const inventorySchema = z.strictObject({
       const parsed = semver.parse(value)
       return parsed !== null && value === (parsed.build.length ? `${parsed.version}+${parsed.build.join('.')}` : parsed.version)
     }, 'must be an exact SemVer version'),
-    title: publicText(120),
-    description: publicText(2048),
+    title: localizedText(120),
+    description: localizedText(2048),
     ocean: z.string().max(128).refine(value => value.trim() !== '' && semver.validRange(value) !== null, 'must be a SemVer range'),
     platforms: platformList.optional(),
     archive: z.string().regex(/\.(?:tgz|tar\.gz)$/iu)

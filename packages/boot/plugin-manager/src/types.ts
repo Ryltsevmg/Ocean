@@ -1,6 +1,6 @@
 /** Public plugin management records shared with clients. */
 import type { Branded } from '@ocean/ocean-brand'
-import type { PluginLocalizedMeta } from '@ocean/ocean-package-manifest'
+import type { LocalizedText, PluginLocalizedMeta } from '@ocean/ocean-package-manifest'
 import type { PluginInventoryEntry } from '@ocean/ocean-host-plugin-inventory/types'
 export type { PluginEntryId } from '@ocean/ocean-host-plugin-inventory/types'
 import type { PluginEntryId } from '@ocean/ocean-host-plugin-inventory/types'
@@ -130,8 +130,10 @@ export interface PublishedPluginTarget {
 
 /** One approved listing with the current Host's compatibility decision. */
 export interface PublishedPluginOffer extends PublishedPluginTarget {
-  readonly title: string
-  readonly description: string
+  /** Display title; the Client resolves it to the active UI language, with the required English fallback. */
+  readonly title: LocalizedText
+  /** Display description; the Client resolves it to the active UI language, with the required English fallback. */
+  readonly description: LocalizedText
   readonly compatible: boolean
 }
 

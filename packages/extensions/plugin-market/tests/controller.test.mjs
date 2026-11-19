@@ -3,11 +3,16 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createMarketController } from '../src/controller.js'
 
-const plugin = { name: '@ocean/published', version: '2.1.0', title: 'Published plugin', description: 'From the channel', sha256: '2'.repeat(64), compatible: true }
+const plugin = {
+  name: '@ocean/published', version: '2.1.0', title: { en: 'Published plugin', ru: 'Опубликованный плагин' },
+  description: { en: 'From the channel', ru: 'Из канала' }, sha256: '2'.repeat(64), compatible: true,
+}
 const local = { name: plugin.name, availability: 'profile', enabled: false, installed: true }
 const publication = (status, plugins = [plugin]) => ({ status, plugins })
 
 function harness({ plugins = [plugin], bundles = [] } = {}) {
+  const language = { active: 'en' }
+  const resolveText = text => typeof text === 'string' ? text : text[language.active] ?? text.en
   const api = {
     catalog: publication('ready', plugins), bundles, calls: [],
     async listPublishedCatalog() { this.calls.push('catalog'); return this.catalog },
@@ -18,9 +23,9 @@ function harness({ plugins = [plugin], bundles = [] } = {}) {
       return { application: 'applied' }
     },
   }
-  const market = createMarketController(api)
+  const market = createMarketController(api, resolveText)
   const card = () => market.getSnapshot().cards[0]
-  return { market, api, card }
+  return { market, api, card, language }
 }
 
 test('opening and invalidation read both Remote lists with no reads before opening or after disposal', async () => {
@@ -47,7 +52,7 @@ test('the last valid list stays visible offline but offers no installation', asy
   const cached = { ...plugin, title: 'Later title in Host cache' }
   api.catalog = publication('stale', [cached])
   const pending = market.load()
-  assert.equal(card().title, plugin.title)
+  assert.equal(card().title, 'Published plugin')
   assert.equal(market.getInstallTarget(target), undefined)
   await pending
   assert.equal(market.getSnapshot().status, 'stale')
@@ -66,7 +71,7 @@ test('the Host stale cache can seed a first open or replace a prior list with an
   const { market, api, card } = harness()
   api.catalog = publication('stale')
   await market.load()
-  assert.equal(card().title, plugin.title)
+  assert.equal(card().title, 'Published plugin')
   assert.deepEqual(card().actions, [])
   api.catalog = publication('stale', [])
   await market.load()
@@ -163,6 +168,25 @@ test('an unconfirmed change retains the card, rereads inventory, and reports the
   assert.equal(card().state, 'off')
   assert.deepEqual(api.calls, ['catalog', 'inventory', 'inventory'])
   assert.deepEqual(market.getSnapshot().notice, { title: 'transportError', diagnostic: 'offline' })
+})
+
+test('a locale switch republishes resolved card text without re-reading the Host', async () => {
+  const { market, api, card, language } = harness()
+  await market.load()
+  let publications = 0
+  market.subscribe(() => { publications += 1 })
+  const rendered = card().actions[0].target
+  language.active = 'ru'
+  market.republish()
+  assert.equal(card().title, 'Опубликованный плагин')
+  assert.equal(card().description, 'Из канала')
+  assert.deepEqual(api.calls, ['catalog', 'inventory'])
+  assert.equal(publications, 1)
+  const current = market.getInstallTarget(rendered)
+  assert.deepEqual(current, { name: plugin.name, version: plugin.version, sha256: plugin.sha256, title: 'Опубликованный плагин' })
+  market.dispose()
+  market.republish()
+  assert.equal(publications, 1)
 })
 
 test('a disposed controller discards pending Remote answers', async () => {

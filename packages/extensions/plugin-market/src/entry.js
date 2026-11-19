@@ -48,8 +48,10 @@ export function createMarket(React, Modal, dialogClass) {
     inject: ['slots', 'locale', 'remote', 'remote.pluginManager'],
     apply(ctx) {
       ctx.effect(() => ctx.locale.register(NS, { en, ru, zh }), 'plugin-market: dictionaries')
-      const market = createMarketController(remoteApi(ctx))
+      const resolveText = ctx.locale.resolveText.bind(ctx.locale)
+      const market = createMarketController(remoteApi(ctx), resolveText)
       ctx.effect(() => market.dispose, 'plugin-market: controller')
+      ctx.effect(() => ctx.locale.subscribe(() => market.republish()), 'plugin-market: locale')
       ctx.effect(() => {
         const stopChanged = ctx.remote.$on('plugin-manager/changed', () => { void market.invalidate() })
         const stopReset = ctx.on('connection/reset', () => { void market.invalidate() })

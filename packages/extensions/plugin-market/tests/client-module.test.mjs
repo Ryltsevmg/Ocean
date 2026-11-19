@@ -5,7 +5,10 @@ import test from 'node:test'
 import vm from 'node:vm'
 
 const React = { createElement: () => undefined }
-const plugin = { name: '@ocean/approved', version: '1.0.0', title: 'Approved', description: 'An approved release.', sha256: '1'.repeat(64), compatible: true }
+const plugin = {
+  name: '@ocean/approved', version: '1.0.0', title: { en: 'Approved', ru: 'Одобрено' },
+  description: { en: 'An approved release.', ru: 'Одобренный выпуск.' }, sha256: '1'.repeat(64), compatible: true,
+}
 const ok = value => ({ ok: true, value })
 const published = plugins => ok({ status: 'ready', plugins })
 
@@ -24,21 +27,26 @@ async function applyWith(t, pluginManager, globals) {
   const registrations = []
   const listeners = new Map()
   const disposers = []
+  const localeListeners = new Set()
   function on(event, handler) {
     listeners.set(event, handler)
     return () => { listeners.delete(event) }
   }
   t.after(() => disposers.reverse().forEach(dispose => dispose()))
+  const locale = {
+    active: 'en',
+    register: (namespace, dictionary) => {
+      dictionaries.push({ namespace, dictionary })
+      return () => { dictionaries.pop() }
+    },
+    bind: () => key => key,
+    resolveText(text) { return typeof text === 'string' ? text : text[this.active] ?? text.en },
+    subscribe(fn) { localeListeners.add(fn); return () => { localeListeners.delete(fn) } },
+  }
   definition.factory(() => React).apply({
     effect: effect => disposers.push(effect()),
     on,
-    locale: {
-      register: (namespace, dictionary) => {
-        dictionaries.push({ namespace, dictionary })
-        return () => { dictionaries.pop() }
-      },
-      bind: () => key => key,
-    },
+    locale,
     remote: { $on: on, pluginManager },
     slots: {
       inject: (name, register) => disposers.push(register(name)),
@@ -47,7 +55,8 @@ async function applyWith(t, pluginManager, globals) {
   })
   const entry = registrations.find(entry => entry.name === 'plugins.tab')
   assert.ok(entry)
-  return { entry, dictionaries, registrations, listeners, dispose: () => { while (disposers.length > 0) disposers.pop()() } }
+  const switchLocale = active => { locale.active = active; for (const fn of [...localeListeners]) fn() }
+  return { entry, dictionaries, registrations, listeners, switchLocale, dispose: () => { while (disposers.length > 0) disposers.pop()() } }
 }
 
 test('the bundle declares the module and asks its loader for the shared React and modal', async () => {
@@ -100,6 +109,23 @@ test('the bundle unwraps both Remote lists and invalidates on profile and connec
   dispose()
   assert.equal(listeners.size, 0)
   assert.equal(hooks.market.getSnapshot(), snapshot)
+})
+
+test('a locale switch re-resolves the cards and install title without a Remote read', async t => {
+  const calls = []
+  const { entry, switchLocale } = await applyWith(t, {
+    listPublishedCatalog: async () => { calls.push('catalog'); return published([plugin]) },
+    listBundles: async () => { calls.push('inventory'); return ok([]) },
+  })
+  const { hooks, actions } = entry.inject()
+  await actions.load()
+  assert.equal(hooks.market.getSnapshot().cards[0].title, 'Approved')
+  switchLocale('ru')
+  const snapshot = hooks.market.getSnapshot()
+  assert.equal(snapshot.cards[0].title, 'Одобрено')
+  assert.equal(snapshot.cards[0].description, 'Одобренный выпуск.')
+  assert.equal(snapshot.cards[0].actions[0].target.title, 'Одобрено')
+  assert.deepEqual(calls, ['catalog', 'inventory'])
 })
 
 test('a refused catalogue request does not spoil the successful independent inventory read', async t => {

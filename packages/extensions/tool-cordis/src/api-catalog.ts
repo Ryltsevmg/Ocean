@@ -6775,7 +6775,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'PublishedPluginOffer',
-    declaration: 'export interface PublishedPluginOffer extends PublishedPluginTarget {\n    readonly title: string;\n    readonly description: string;\n    readonly compatible: boolean;\n}',
+    declaration: 'export interface PublishedPluginOffer extends PublishedPluginTarget {\n    readonly title: LocalizedText;\n    readonly description: LocalizedText;\n    readonly compatible: boolean;\n}',
   },
   {
     name: 'PublishedPluginTarget',

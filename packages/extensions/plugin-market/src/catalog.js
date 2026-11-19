@@ -2,7 +2,7 @@
 
 /**
  * @typedef {import('@ocean/ocean-api-remotes/client').PublishedPluginTarget & {title: string}} PublishedInstallTarget
- * Exact publication the Plugins page asks the Host to install.
+ * Exact publication the Plugins page asks the Host to install, with the title resolved to the active UI language.
  */
 
 /** @typedef {import('@ocean/ocean-api-remotes/client').PublishedPluginOffer} PublishedPlugin */
@@ -21,10 +21,12 @@ export function readPublishedCatalog(value) {
 }
 
 /**
- * Select only the release identity and display name requested by the Plugins page.
+ * Select only the release identity and the display title resolved to the active UI language.
  * @param {PublishedPlugin} plugin the published record.
+ * @param {(text: PublishedPlugin['title']) => string} resolveText resolves offer text through the active locale's fallback chain.
  * @returns {PublishedInstallTarget} the install intent, with no download location.
  */
-export function installTarget({ name, version, sha256, title }) {
-  return { name, version, sha256, title }
+export function installTarget(plugin, resolveText) {
+  const { name, version, sha256 } = plugin
+  return { name, version, sha256, title: resolveText(plugin.title) }
 }

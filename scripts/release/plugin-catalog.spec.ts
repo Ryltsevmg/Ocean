@@ -13,7 +13,8 @@ import { HarnessError } from '../../packages/util/error/src/index.ts'
 import { generatePluginCatalog } from './plugin-catalog.ts'
 
 const entry = {
-  name: '@fixture/alpha', version: '1.2.3-rc.1+reviewed.2', title: 'Alpha', description: 'Fixture bundle', ocean: '^1.0.0 || ^2.0.0',
+  name: '@fixture/alpha', version: '1.2.3-rc.1+reviewed.2', title: { en: 'Alpha', ru: 'Альфа' },
+  description: { en: 'Fixture bundle', ru: 'Фикстурный набор' }, ocean: '^1.0.0 || ^2.0.0',
 }
 const patch = 'cordis.patch.yml'
 const manifest = {
@@ -114,6 +115,16 @@ describe('plugin catalog dry run', () => {
     expect(generatePluginCatalog(test.inventory)).toBe(output)
   })
 
+  it('carries localized display text through unchanged and still accepts plain strings', async () => {
+    const test = await fixture()
+    const packedDigest = await test.pack()
+    const emitted = { ...approved, sha256: packedDigest, archive: `https://github.com/Ryltsevmg/Ocean/releases/download/plugin-${packedDigest}/plugin.tgz` }
+    await test.writeInventory([{ ...approved, sha256: packedDigest }])
+    expect(JSON.parse(generatePluginCatalog(test.inventory))).toEqual({ schemaVersion: 1, plugins: [emitted] })
+    await test.writeInventory([{ ...approved, sha256: packedDigest, title: 'Alpha', description: 'Fixture bundle' }])
+    expect(JSON.parse(generatePluginCatalog(test.inventory))).toEqual({ schemaVersion: 1, plugins: [{ ...emitted, title: 'Alpha', description: 'Fixture bundle' }] })
+  })
+
   it('requires an explicit inventory and accepts an explicit empty list through the CLI', async () => {
     const test = await fixture()
     await test.writeInventory([])
@@ -146,7 +157,12 @@ describe('plugin catalog dry run', () => {
     [{ name: 'npm:@fixture/alpha' }, /plugins\.0\.name/u],
     [{ name: '@fixture/Invalid' }, /plugins\.0\.name/u],
     [{ title: '  ' }, /plugins\.0\.title/u],
+    [{ title: { ru: 'Альфа' } }, /plugins\.0\.title/u],
+    [{ title: { en: 'Alpha', ru: '  ' } }, /plugins\.0\.title/u],
+    [{ title: { en: 'x'.repeat(121) } }, /plugins\.0\.title/u],
     [{ description: 'x'.repeat(2049) }, /plugins\.0\.description/u],
+    [{ description: { ru: 'Фикстурный набор' } }, /plugins\.0\.description/u],
+    [{ description: { en: 'x'.repeat(2049) } }, /plugins\.0\.description/u],
     [{ platforms: [] }, /plugins\.0\.platforms/u],
     [{ platforms: ['linux', 'linux'] }, /plugins\.0\.platforms/u],
     [{ platforms: ['wsl'] }, /plugins\.0\.platforms/u],

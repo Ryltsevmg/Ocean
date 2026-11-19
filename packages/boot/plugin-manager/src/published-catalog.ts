@@ -23,11 +23,15 @@ function exactVersion(value: string): boolean {
   return version !== null && value === version.raw && value === [version.version, version.build.join('.')].filter(Boolean).join('+')
 }
 
+// Offer display text is LocalizedText: one bounded string, or per-locale strings with a required English fallback.
+const publicText = (max: number) => z.string().trim().min(1).max(max)
+const localizedText = (max: number) => z.union([publicText(max), z.object({ en: publicText(max) }).catchall(publicText(max))])
+
 const Entry = z.strictObject({
   name: z.string().min(1).max(214),
   version: z.string().max(128).refine(exactVersion),
-  title: z.string().trim().min(1).max(120),
-  description: z.string().trim().min(1).max(2048),
+  title: localizedText(120),
+  description: localizedText(2048),
   ocean: z.string().min(1).max(128).refine(value => semver.validRange(value) !== null),
   platforms: z.array(z.enum(['darwin', 'linux', 'win32'])).min(1).max(3)
     .refine(values => new Set(values).size === values.length).optional(),

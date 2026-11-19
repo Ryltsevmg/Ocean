@@ -52,7 +52,7 @@ async function fixture(t, { response = { status: 'ready', plugins: [plugin] }, b
       return { application: 'applied' }
     },
   }
-  market = createMarketController(api)
+  market = createMarketController(api, text => typeof text === 'string' ? text : text.en)
   const { MarketTab } = createMarketTab(React, Modal)
   let latestLoad
   const actions = {

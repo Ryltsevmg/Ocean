@@ -15,11 +15,14 @@ const badges = /** @type {const} */ ({
  * Project a release and its matching profile record. Compatibility describes the published release, not the installed copy.
  * @param {PublishedPlugin} plugin a release the Host lists in the catalogue.
  * @param {BundleInfo | undefined} bundle the matching local bundle, if found.
- * @param {{fresh: boolean, inventoryReady: boolean}} options whether installation offers and inventory are current.
+ * @param {{fresh: boolean, inventoryReady: boolean, resolveText: (text: PublishedPlugin['title']) => string}} options
+ * whether installation offers and inventory are current, and how offer text resolves to the active UI language.
  * @returns The card and its available actions.
  */
-export function cardFor(plugin, bundle, { fresh, inventoryReady }) {
-  const { name, title, description, compatible, version: publishedVersion } = plugin
+export function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) {
+  const { name, compatible, version: publishedVersion } = plugin
+  const title = resolveText(plugin.title)
+  const description = resolveText(plugin.description)
   const readable = bundle?.availability === 'installation' || bundle?.availability === 'profile'
   const configured = bundle?.installed === true || bundle?.enabled === true
   const selected = bundle?.enabled === true
@@ -34,7 +37,7 @@ export function cardFor(plugin, bundle, { fresh, inventoryReady }) {
     if (canChange && !selected && readable && error === undefined) actions.push({ kind: 'enable' })
     actions.push({ kind: 'open' })
   } else if (fresh && inventoryReady && compatible && canChange && error === undefined) {
-    actions.push({ kind: 'install', target: installTarget(plugin) })
+    actions.push({ kind: 'install', target: installTarget(plugin, resolveText) })
   }
 
   return {
@@ -63,12 +66,13 @@ export function filterCards(cards, query) {
 
 /**
  * Build cards only for packages from the publication channel; inventory supplies state but cannot add cards.
- * @param {{plugins: readonly PublishedPlugin[], bundles: readonly BundleInfo[], fresh: boolean, inventoryReady: boolean}} input current Host data.
+ * @param {{plugins: readonly PublishedPlugin[], bundles: readonly BundleInfo[], fresh: boolean, inventoryReady: boolean,
+ *   resolveText: (text: PublishedPlugin['title']) => string}} input current Host data and the active-language text resolver.
  * @returns {{cards: ReturnType<typeof cardFor>[], counts: {total: number, installed: number, enabled: number}}} the catalogue view.
  */
-export function buildMarketView({ plugins, bundles, fresh, inventoryReady }) {
+export function buildMarketView({ plugins, bundles, fresh, inventoryReady, resolveText }) {
   const byName = new Map(bundles.map(bundle => [bundle.name, bundle]))
-  const options = { fresh, inventoryReady }
+  const options = { fresh, inventoryReady, resolveText }
   const cards = plugins.map(plugin => cardFor(plugin, byName.get(plugin.name), options))
   const counts = { total: cards.length, installed: 0, enabled: 0 }
   for (const card of cards) {

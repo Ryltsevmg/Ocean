@@ -62,7 +62,7 @@ None; the package does not assemble or send provider requests.
 - The catalogue does not scan Git repositories or registries. Only offers with a reviewed archive in the public release channel appear.
 - Publication and removal do not update or modify packages already installed in profiles.
 - Published-archive upgrades are not automatic.
-- Controls are available in English, Russian and Simplified Chinese. Offer titles and descriptions are the publisher’s text.
+- Controls are available in English, Russian and Simplified Chinese. Offer titles and descriptions are the publisher’s localized text, shown in the active UI language with an English fallback; a language switch re-resolves the visible cards without re-reading the channel.
 
 <a id="dev-note"></a>
 ### Dev Note
