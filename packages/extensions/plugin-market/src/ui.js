@@ -11,7 +11,25 @@ import { filterCards } from './view.js'
 
 const border = '1px solid var(--dsw-alias-border-l2)'
 const errorInk = 'var(--dsw-alias-state-error-primary)'
+const brandInk = 'var(--dsw-alias-brand-primary)'
 const button = { fontSize: 12, padding: '4px 10px', borderRadius: 7, border, background: 'transparent', color: 'inherit' }
+// The primary management actions (install, turn on/off) carry the brand accent; Open and Details stay quiet links.
+const accentButton = { ...button, color: brandInk,
+  border: '1px solid color-mix(in srgb, var(--dsw-alias-brand-primary) 40%, transparent)',
+  background: 'color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent)' }
+const idleInk = 'var(--dsw-alias-state-idle-primary)'
+const warnInk = 'var(--dsw-alias-state-warn-primary)'
+const successInk = 'var(--dsw-alias-state-success-primary)'
+/** Status pill tone per badge, reusing the Plugins page state-color treatment. */
+const badgeTone = { badgeOn: successInk, badgeOff: idleInk, badgeMissing: idleInk, badgeBlocked: warnInk,
+  badgeBroken: errorInk, badgeIncompatible: warnInk, badgeUnknown: idleInk }
+/** @param {string} badge the card's badge key @returns {import('react').CSSProperties} a compact state-colored pill */
+function badgeStyle(badge) {
+  const ink = badgeTone[badge] ?? idleInk
+  return { fontSize: 11, fontWeight: 500, lineHeight: 1.4, padding: '2px 8px', borderRadius: 999,
+    display: 'inline-flex', alignItems: 'center', alignSelf: 'flex-start', whiteSpace: 'nowrap',
+    color: ink, background: `color-mix(in srgb, ${ink} 12%, transparent)`, border: '1px solid transparent' }
+}
 /** @type {Record<string, import('react').CSSProperties>} */
 const styles = {
   root: { display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 },
@@ -26,11 +44,11 @@ const styles = {
   card: { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', border, borderRadius: 10, minWidth: 0 },
   cardHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px 10px', flexWrap: 'wrap' },
   cardTitle: { fontSize: 13, fontWeight: 500, margin: 0, minWidth: 0, overflowWrap: 'anywhere' },
-  badge: { fontSize: 11, padding: '2px 7px', borderRadius: 999, border },
   summary: { fontSize: 12, lineHeight: 1.5, margin: 0, overflowWrap: 'anywhere' },
-  meta: { display: 'flex', alignItems: 'center', gap: '4px 12px', fontSize: 11, flexWrap: 'wrap', overflowWrap: 'anywhere', minWidth: 0 },
+  meta: { display: 'flex', alignItems: 'center', gap: '4px 12px', fontSize: 11, opacity: 0.85, flexWrap: 'wrap', overflowWrap: 'anywhere', minWidth: 0 },
   name: { fontFamily: 'ui-monospace, monospace', minWidth: 0 },
   actions: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
+  dialogBody: { display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 },
   button,
   link: { ...button, borderColor: 'transparent', paddingInline: 4 },
 }
@@ -75,7 +93,7 @@ export function createMarketTab(React, Modal, dialogClass) {
         }
         return h('button', { type: 'button', key: toggle ? 'toggle' : action.kind,
           ref: action.kind === 'install' ? setInstallButton : undefined,
-          style: action.kind === 'open' ? styles.link : styles.button,
+          style: action.kind === 'open' ? styles.link : accentButton,
           'aria-disabled': disabled || undefined, onClick: activate,
         }, t(action.kind))
       }),
@@ -121,16 +139,17 @@ export function createMarketTab(React, Modal, dialogClass) {
         openPackage: name => { onClose(); openPackage(name) },
       }),
     },
-    h('span', { style: styles.badge }, t(card.badge)),
-    h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
-    h('p', { style: styles.summary }, card.description),
-    h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t }))
+    h('div', { style: styles.dialogBody },
+      h('span', { style: badgeStyle(card.badge) }, t(card.badge)),
+      h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
+      h('p', { style: styles.summary }, card.description),
+      h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t })))
   }
 
   /** @param {Controls & {card: Card, onDetails: () => void}} props */
   function MarketCard({ card, t, state, ...rest }) {
     return h('article', { style: styles.card },
-      h('div', { style: styles.cardHead }, h('h3', { style: styles.cardTitle }, card.title), h('span', { style: styles.badge }, t(card.badge))),
+      h('div', { style: styles.cardHead }, h('h3', { style: styles.cardTitle }, card.title), h('span', { style: badgeStyle(card.badge) }, t(card.badge))),
       h('p', { style: styles.summary }, card.description),
       h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
       h(CardNotes, { card, t }),

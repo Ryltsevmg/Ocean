@@ -61,7 +61,8 @@ export function createMarket(React, Modal, dialogClass) {
       ctx.slots.inject('plugins.tab', () => ctx.slots.register({
         name: 'plugins.tab',
         id: 'our-plugins',
-        order: -10,
+        // Installed leads and opens by default; the published catalogue follows it.
+        order: 10,
         label: () => t('tab'),
         locale: NS,
         inject: () => ({ hooks: { market: source }, actions }),

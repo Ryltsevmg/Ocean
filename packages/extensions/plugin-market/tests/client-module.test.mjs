@@ -75,7 +75,8 @@ test('apply registers English, Russian and Chinese UI copy and exactly one Plugi
   }
   assert.deepEqual(registrations.map(entry => entry.name), ['plugins.tab'])
   assert.equal(entry.id, 'our-plugins')
-  assert.equal(entry.order, -10)
+  // Installed leads and opens by default; the catalogue follows it.
+  assert.equal(entry.order, 10)
   assert.equal(entry.locale, 'pluginMarket')
   assert.equal(entry.label(), 'tab')
 })
