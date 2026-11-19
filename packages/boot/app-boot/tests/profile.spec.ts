@@ -422,6 +422,107 @@ describe('loadProfile', () => {
     })
   })
 
+  const reusedBundleNames = [
+    '@ocean/ocean-cua-bundle',
+    '@ocean/ocean-experimental-auto-review',
+    '@ocean/ocean-experimental-forge-bundle',
+    '@ocean/ocean-experimental-inspector-profile',
+    '@ocean/ocean-experimental-session-titles-bundle',
+    '@ocean/ocean-experimental-voice-input-bundle',
+  ]
+
+  function stageProfileBundle(dir: string, name: string, manifest: object, patch = '[]\n'): string {
+    const bundleDir = join(dir, 'node_modules', name)
+    mkdirSync(bundleDir, { recursive: true })
+    writeFileSync(join(bundleDir, 'package.json'), JSON.stringify(manifest))
+    writeFileSync(join(bundleDir, 'cordis.patch.yml'), patch)
+    return bundleDir
+  }
+
+  it('keeps directly installed current bundles that reuse retired names at startup and on recomposition', () => {
+    const anchor = stageInstallation({ base: { patch: '[]\n' } })
+    const home = tmp()
+    const dir = join(home, 'profile')
+    const names = ['base', ...reusedBundleNames]
+    initProfile(dir, names)
+    const linkedBundle = reusedBundleNames[0]!
+    for (const [index, name] of reusedBundleNames.entries()) {
+      const linked = name === linkedBundle
+      const installed = stageProfileBundle(linked ? tmp() : dir, name,
+        { name, version: '1.0.0', ocean: { bundle: { patch: './cordis.patch.yml' } } },
+        `- insert: [{ id: restored-${index}, name: ${JSON.stringify(name)} }]\n`)
+      if (linked) {
+        const link = join(dir, 'node_modules', name)
+        mkdirSync(dirname(link), { recursive: true })
+        symlinkSync(installed, link, 'junction')
+      }
+    }
+    const dependencies = Object.fromEntries(reusedBundleNames.map(name => [name, name === linkedBundle ? 'link:../local-bundle' : '1.0.0']))
+    writeProfileManifest(dir, { ...readProfileManifest('test', dir), dependencies })
+    const before = readFileSync(join(dir, 'package.json'), 'utf8')
+    const profile = loadProfileDirectory('test', dir, anchor)
+    expect(profile.skippedBundles).toEqual([])
+    expect(profile.layers.map(layer => layer.packageName)).toEqual(names)
+    const patches = readProfilePatches('test', {
+      name: 'profile', dir, patchPath: profile.patchPath, installAnchor: anchor, home, cwd: home,
+      startedBundles: names, overlays: [], telemetryDisabledEnv: undefined,
+    })
+    expect(composeEntries([patches]).map(row => row.name)).toEqual(reusedBundleNames)
+    expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
+  })
+
+  it.each([
+    { label: 'legacy dsh declaration', fields: { ocean: undefined, dsh: { bundle: { patch: './cordis.patch.yml' } } } },
+    { label: 'old version with a modern declaration', fields: { version: '0.2.2-rc.2' } },
+    { label: 'different manifest name', fields: { name: '@ocean/ocean-lookalike' } },
+    { label: 'missing patch declaration', fields: { ocean: { bundle: {} } } },
+    { label: 'null bundle declaration', fields: { ocean: { bundle: null } } },
+    { label: 'no direct profile dependency', direct: false },
+    { label: 'no profile copy', placement: 'missing' },
+    { label: 'malformed manifest', placement: 'malformed' },
+    { label: 'only ancestor copy', placement: 'ancestor' },
+    { label: 'installation copy takes precedence', placement: 'shadowed' },
+    { label: 'non-reused retired name', name: '@ocean/ocean-experimental-tool-worktree' },
+  ])('drops a retired selection with $label without loading or removing the package', ({ fields, direct, placement, name = reusedBundleNames[0]! }) => {
+    const anchor = stageInstallation({
+      base: { patch: '[]\n' },
+      ...placement !== 'shadowed' ? {} : { [name]: { patch: '[]\n' } },
+    })
+    const home = tmp()
+    const dir = join(home, 'profile')
+    initProfile(dir, ['base', name])
+    const installed = placement === 'missing' ? undefined : stageProfileBundle(placement === 'ancestor' ? home : dir, name, {
+      name, version: '1.0.0', ocean: { bundle: { patch: './cordis.patch.yml' } }, ...fields,
+    })
+    if (placement === 'malformed' && installed !== undefined) writeFileSync(join(installed, 'package.json'), '{')
+    const dependencies = direct === false ? {} : { [name]: '1.0.0' }
+    writeProfileManifest(dir, { ...readProfileManifest('test', dir), dependencies })
+    const profile = loadProfileDirectory('test', dir, anchor)
+    expect(profile.layers.map(layer => layer.packageName)).toEqual(['base'])
+    expect(profile.skippedBundles).toEqual([])
+    expect(readProfileManifest('test', dir)).toMatchObject({ dependencies, ocean: { profile: { bundles: ['base'] } } })
+    if (installed !== undefined) expect(existsSync(join(installed, 'package.json'))).toBe(true)
+  })
+
+  it.each([
+    { label: 'unsupported platform', declaration: { platforms: [process.platform === 'darwin' ? 'win32' : 'darwin'] }, reason: 'Host is running' },
+    { label: 'incompatible runtime', engines: { ocean: '0.2.2-rc.2' }, reason: 'is incompatible with ocean' },
+    { label: 'invalid patch', patch: '[invalid', reason: 'cordis.patch.yml' },
+  ])('keeps a current selection but skips its layer on $label', ({ declaration, engines, patch, reason }) => {
+    const anchor = stageInstallation({ base: { patch: '[]\n' } })
+    const dir = join(tmp(), 'profile')
+    const name = reusedBundleNames[0]!
+    initProfile(dir, ['base', name])
+    stageProfileBundle(dir, name, { name, version: '1.0.0', engines, ocean: { bundle: { patch: './cordis.patch.yml', ...declaration } } }, patch)
+    writeProfileManifest(dir, { ...readProfileManifest('test', dir), dependencies: { [name]: '1.0.0' } })
+    const before = readFileSync(join(dir, 'package.json'), 'utf8')
+    const profile = loadProfileDirectory('test', dir, anchor)
+    expect(profile.layers.map(layer => layer.packageName)).toEqual(['base'])
+    expect(profile.skippedBundles.map(bundle => bundle.packageName)).toEqual([name])
+    expect(profile.skippedBundles[0]?.reason).toContain(reason)
+    expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
+  })
+
   it.each(['missing package', 'invalid manifest', 'not a bundle', 'missing patch', 'invalid patch'])(
     'skips a bundle with %s, retains selections, and retries it on reread', async (failure) => {
       const anchor = stageInstallation({

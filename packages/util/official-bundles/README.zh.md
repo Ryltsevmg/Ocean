@@ -30,9 +30,10 @@ kind: "package-library"
 
 `PROFILE_TEMPLATES` 把每个随附 profile 名称（`web`、`connect`、`remote-device`、`serve`、`headless`、`acp`、`sdk`、`sdk-minimal`）映射到其有序的组合包层列表。App-boot 用模板初始化缺失的随附 profile，`ocean --profile <name> --from-default-profile <template>` 把某个模板复制为自定义 profile。`DEFAULT_PROFILE_BUNDLES` 是 `ocean plugin` 对没有模板的 profile 名称使用的列表。`INSTALLATION_OWNED_PROFILE_TUPLES` 列出早期版本写入随附 profile 的组合包列表；app-boot 把与之完全一致的列表替换为当前模板。
 
+<a id="optional-and-retired-bundles"></a>
 ### 可选与已退役组合包
 
-`OPTIONAL_BUNDLES` 列出安装随附、供用户开启的组合包。每一项都必须是 `ocean` 应用的运行时依赖，并声明 `ocean.bundle.patch`、图标和 `./locale/*.json` 显示元信息，且不能被任何模板选中；[`optional-bundles`](../../../scripts/optional-bundles.spec.ts) 检查每一项的显示元信息与图标。[插件管理器](../../boot/plugin-manager/README.zh.md#use-this-package)把这些组合包报告为 `optional`。`RETIRED_BUNDLES` 列出安装不再携带的组合包；app-boot 在加载 profile 时将它们从该 profile 的组合包列表中移除。
+`OPTIONAL_BUNDLES` 列出安装随附、供用户开启的组合包。每一项都必须是 `ocean` 应用的运行时依赖，并声明 `ocean.bundle.patch`、图标和 `./locale/*.json` 显示元信息，且不能被任何模板选中；[`optional-bundles`](../../../scripts/optional-bundles.spec.ts) 检查每一项的显示元信息与图标。[插件管理器](../../boot/plugin-manager/README.zh.md#use-this-package)把这些组合包报告为 `optional`。`RETIRED_BUNDLES` 列出 [app-boot 会移除](../../boot/app-boot/README.zh.md#use-this-package)的组合包选择。`REUSED_BUNDLE_VERSIONS` 把已退役包名映射到由 profile 安装、可以保留选择的确切版本；它不安装这些包，也不将其加入官方目录。
 
 <a id="plugin-manager-lists"></a>
 ### 插件管理器列表

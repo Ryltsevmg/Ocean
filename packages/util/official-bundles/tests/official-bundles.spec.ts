@@ -1,7 +1,7 @@
 /** Shipped profile templates, and the offline catalog that does not depend on installed provider packages or registry requests. */
 
 import { describe, expect, it } from 'vitest'
-import { OFFICIAL_ON_DEMAND_CATALOG, ON_DEMAND_BUNDLES, OPTIONAL_BUNDLES, PROFILE_TEMPLATES } from '../src/index.ts'
+import { OFFICIAL_ON_DEMAND_CATALOG, ON_DEMAND_BUNDLES, OPTIONAL_BUNDLES, PROFILE_TEMPLATES, RETIRED_BUNDLES, REUSED_BUNDLE_VERSIONS } from '../src/index.ts'
 
 describe('Official on-demand catalog', () => {
   it('offers only unshipped native integrations with offline localized metadata', () => {
@@ -18,6 +18,16 @@ describe('Official on-demand catalog', () => {
       expect(entry).not.toHaveProperty('version')
     }
   })
+})
+
+it('keeps reused profile bundle names retired without offering their versions as Official packages', () => {
+  expect(REUSED_BUNDLE_VERSIONS.size).toBeGreaterThan(0)
+  for (const [name] of REUSED_BUNDLE_VERSIONS) {
+    expect(RETIRED_BUNDLES.has(name)).toBe(true)
+    expect(ON_DEMAND_BUNDLES).not.toContain(name)
+    expect(OPTIONAL_BUNDLES).not.toContain(name)
+    expect(Object.values(PROFILE_TEMPLATES).flatMap(template => template.bundles)).not.toContain(name)
+  }
 })
 
 describe('Shipped profile templates', () => {

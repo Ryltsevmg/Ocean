@@ -7,7 +7,7 @@ import type { OceanBundleManifest, PluginLocalizedMeta } from '@ocean/ocean-pack
 
 export {
   DEFAULT_PROFILE_BUNDLES, INSTALLATION_OWNED_PROFILE_TUPLES, ON_DEMAND_BUNDLES, OPTIONAL_BUNDLES, PROFILE_TEMPLATES,
-  RETIRED_BUNDLES, type ProfileTemplate,
+  RETIRED_BUNDLES, REUSED_BUNDLE_VERSIONS, type ProfileTemplate,
 } from './bundles.ts'
 export { EXTENSION_BUNDLES, HIDDEN_BUNDLES, MORE_BUNDLES, PROTECTED_PLUGINS } from './plugin-manager.ts'
 

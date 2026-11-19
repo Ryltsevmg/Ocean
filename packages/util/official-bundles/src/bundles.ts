@@ -42,7 +42,7 @@ export const INSTALLATION_OWNED_PROFILE_TUPLES: Readonly<Record<string, readonly
   headless: ['@ocean/ocean-base', '@ocean/ocean-web-app', '@ocean/ocean-headless'],
 }
 
-/** Bundles an earlier release shipped and the installation no longer carries; app-boot removes them from profiles. */
+/** Bundle names app-boot removes from profiles unless the profile holds the version in {@link REUSED_BUNDLE_VERSIONS}. */
 export const RETIRED_BUNDLES: ReadonlySet<string> = new Set([
   // The Web composition mounts Schedule itself
   // ([upgrade guide](../../../../docs/upgrade-guide/v0.2.0-rc.2/schedule-bundle-retired/guide.md)).
@@ -116,6 +116,16 @@ export const RETIRED_BUNDLES: ReadonlySet<string> = new Set([
   '@ocean/ocean-tool-terminal',
   '@ocean/ocean-webhook',
   '@ocean/ocean-webhook-github',
+])
+
+/** Exact package versions eligible to keep a profile selection under a reused {@link RETIRED_BUNDLES} name. */
+export const REUSED_BUNDLE_VERSIONS: ReadonlyMap<string, string> = new Map([
+  ['@ocean/ocean-cua-bundle', '1.0.0'],
+  ['@ocean/ocean-experimental-auto-review', '1.0.0'],
+  ['@ocean/ocean-experimental-forge-bundle', '1.0.0'],
+  ['@ocean/ocean-experimental-inspector-profile', '1.0.0'],
+  ['@ocean/ocean-experimental-session-titles-bundle', '1.0.0'],
+  ['@ocean/ocean-experimental-voice-input-bundle', '1.0.0'],
 ])
 
 /** The bundle list a `ocean plugin` init uses for a name with no shipped template. */

@@ -30,9 +30,10 @@ Edit this package when the installation's bundle selection or the plugin manager
 
 `PROFILE_TEMPLATES` maps each shipped profile name (`web`, `connect`, `remote-device`, `serve`, `headless`, `acp`, `sdk`, `sdk-minimal`) to its ordered bundle layer list. App-boot initializes a missing shipped profile from its template, and `ocean --profile <name> --from-default-profile <template>` copies one into a custom profile. `DEFAULT_PROFILE_BUNDLES` is the list `ocean plugin` uses for a profile name with no template. `INSTALLATION_OWNED_PROFILE_TUPLES` names bundle lists that an earlier release wrote into a shipped profile; app-boot replaces an exact match with the current template.
 
+<a id="optional-and-retired-bundles"></a>
 ### Optional and retired bundles
 
-`OPTIONAL_BUNDLES` names the bundles the installation ships for a person to switch on. Each must be a runtime dependency of the `ocean` app that declares `ocean.bundle.patch`, an icon, and `./locale/*.json` display metadata, and no template may select it; [`optional-bundles`](../../../scripts/optional-bundles.spec.ts) checks each entry's display metadata and icon. The [plugin manager](../../boot/plugin-manager/README.md#use-this-package) reports these bundles as `optional`. `RETIRED_BUNDLES` names bundles the installation no longer carries; app-boot removes them from a profile's bundle list when it loads the profile.
+`OPTIONAL_BUNDLES` names the bundles the installation ships for a person to switch on. Each must be a runtime dependency of the `ocean` app that declares `ocean.bundle.patch`, an icon, and `./locale/*.json` display metadata, and no template may select it; [`optional-bundles`](../../../scripts/optional-bundles.spec.ts) checks each entry's display metadata and icon. The [plugin manager](../../boot/plugin-manager/README.md#use-this-package) reports these bundles as `optional`. `RETIRED_BUNDLES` names the selections [app-boot removes](../../boot/app-boot/README.md#use-this-package). `REUSED_BUNDLE_VERSIONS` maps retired names to the exact profile-installed versions eligible to keep their selection; it neither installs them nor adds them to the Official catalog.
 
 <a id="plugin-manager-lists"></a>
 ### Plugin manager lists

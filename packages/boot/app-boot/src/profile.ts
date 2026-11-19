@@ -28,7 +28,7 @@ import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { applyEntryPatches, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import { resolveOceanHome } from '@ocean/ocean-home-paths'
 import type { OceanBundleManifest, OceanPackageManifest } from '@ocean/ocean-package-manifest'
-import { INSTALLATION_OWNED_PROFILE_TUPLES, PROFILE_TEMPLATES, RETIRED_BUNDLES } from '@ocean/ocean-official-bundles'
+import { INSTALLATION_OWNED_PROFILE_TUPLES, PROFILE_TEMPLATES, RETIRED_BUNDLES, REUSED_BUNDLE_VERSIONS } from '@ocean/ocean-official-bundles'
 import { assertBundlePlatform } from './bundle-platform.ts'
 import { evaluatePluginCompatibility, pluginCompatibilityWarning } from './plugin-compatibility.ts'
 import { readProfileVersionExemptions } from './profile-compatibility.ts'
@@ -547,6 +547,12 @@ function collectProfileScopePackages(
  * @returns the parsed manifest.
  */
 export function readProfileManifest(binName: string, dir: string): ProfileManifest {
+  const parsed = readRawProfileManifest(binName, dir)
+  return Object.hasOwn(parsed, 'ocean') || parsed.dsh === undefined ? parsed : { ...parsed, ocean: parsed.dsh }
+}
+
+/** Read a manifest without promoting its legacy metadata to `ocean`. */
+function readRawProfileManifest(binName: string, dir: string): ProfileManifest {
   const path = join(dir, 'package.json')
   let raw: string
   try {
@@ -559,7 +565,7 @@ export function readProfileManifest(binName: string, dir: string): ProfileManife
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error(`${binName}: profile manifest ${path} must hold a JSON object`)
   }
-  return Object.hasOwn(parsed, 'ocean') || parsed.dsh === undefined ? parsed : { ...parsed, ocean: parsed.dsh }
+  return parsed
 }
 
 /**
@@ -606,17 +612,25 @@ function normalizeShippedProfile(name: string, dir: string, manifest: ProfileMan
   return normalized
 }
 
-/**
- * Remove {@link RETIRED_BUNDLES} from a profile's bundle list, writing the
- * manifest back only when it listed one.
- */
-function dropRetiredBundles(dir: string, manifest: ProfileManifest): ProfileManifest {
-  const bundles = manifest.ocean?.profile?.bundles ?? []
-  const kept = bundles.filter(bundle => !RETIRED_BUNDLES.has(bundle))
-  if (kept.length === bundles.length) return manifest
-  const normalized = withBundles(manifest, kept)
-  writeProfileManifest(dir, normalized)
-  return normalized
+interface ReusedBundle {
+  dir: string
+  manifest: ProfileManifest
+}
+
+/** Keep a reused name only when the ordinary resolver selects its directly installed, modern profile copy. */
+function readReusedBundle(binName: string, dir: string, installAnchor: string, name: string, version: string): ReusedBundle | undefined {
+  try {
+    const packageDir = resolveBundleDir(binName, name, installAnchor, dir)
+    if (packageDir !== resolve(dir, 'node_modules', name)) return undefined
+    const manifest = readRawProfileManifest(binName, packageDir)
+    const bundle: unknown = manifest.ocean?.bundle
+    if (manifest.name !== name || manifest.version !== version || typeof bundle !== 'object' || bundle === null
+      || !Object.hasOwn(bundle, 'patch')) return undefined
+    return { dir: packageDir, manifest }
+  } catch (_error) {
+    // Without readable proof of the replacement's identity, the name stays retired.
+    return undefined
+  }
 }
 
 /**
@@ -666,10 +680,9 @@ export function resolveBundleDir(
  * Load an already initialized profile directory without resolving it through
  * the shared Harness home. This is used by application-owned profiles whose
  * package project and lifecycle belong to that application.
- * Retired bundles are removed from the stored bundle list first, rewriting the
- * manifest when it listed one. Unreadable bundles, unsupported Host platforms, and bundles whose own ocean requirements
- * the profile does not exempt are skipped
- * without changing the manifest and listed in `skippedBundles`; nothing is printed.
+ * Remove retired selections except when a directly installed profile package matches an exact replacement version and
+ * declares its own `ocean.bundle.patch`. Other bundle load failures leave the selection intact and appear in
+ * `skippedBundles`; nothing is printed.
  * @param binName - the diagnostic prefix on thrown errors.
  * @param dir - absolute profile package directory.
  * @param installAnchor - absolute path of the owning ocean app's package.json.
@@ -682,15 +695,27 @@ export function loadProfileDirectory(
   installAnchor: string,
   options: { userLayer?: boolean } = {},
 ): Profile {
-  const manifest = dropRetiredBundles(dir, readProfileManifest(binName, dir))
+  const manifest = readProfileManifest(binName, dir)
   const bundles = manifest.ocean?.profile?.bundles ?? []
+  const reused = new Map<string, ReusedBundle>()
+  const kept = bundles.filter((name) => {
+    if (!RETIRED_BUNDLES.has(name)) return true
+    const version = REUSED_BUNDLE_VERSIONS.get(name)
+    if (version === undefined || !Object.hasOwn(manifest.dependencies ?? {}, name)) return false
+    const bundle = readReusedBundle(binName, dir, installAnchor, name, version)
+    if (bundle === undefined) return false
+    reused.set(name, bundle)
+    return true
+  })
+  if (kept.length !== bundles.length) writeProfileManifest(dir, withBundles(manifest, kept))
   const layers: ProfileLayer[] = []
   const skippedBundles: SkippedBundle[] = []
-  const exemptions = bundles.length === 0 ? {} : readProfileVersionExemptions(dir)
-  for (const packageName of bundles) {
+  const exemptions = kept.length === 0 ? {} : readProfileVersionExemptions(dir)
+  for (const packageName of kept) {
     try {
-      const packageDir = resolveBundleDir(binName, packageName, installAnchor, dir)
-      const bundleManifest = readProfileManifest(binName, packageDir)
+      const replacement = reused.get(packageName)
+      const packageDir = replacement?.dir ?? resolveBundleDir(binName, packageName, installAnchor, dir)
+      const bundleManifest = replacement?.manifest ?? readProfileManifest(binName, packageDir)
       const bundle = bundleManifest.ocean?.bundle
       if (bundle === undefined) {
         throw new Error(`${binName}: profile bundle ${JSON.stringify(packageName)} declares no ocean.bundle in its package.json`)

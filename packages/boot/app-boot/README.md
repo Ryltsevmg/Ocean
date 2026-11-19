@@ -29,7 +29,7 @@ Runtime readers accept legacy `dsh` package metadata and `engines.dsh` when the 
 
 Starting an app with this package is a small, explicit entry point: you give it a config file and it runs the whole boot. This section covers what you can do and what you get; the helper calls behind each outcome are documented in the folded implementation section.
 
-Profile loading removes retired installation-bundle selections from `ocean.profile.bundles` and rewrites the manifest only when needed, preserving other fields. [Team migration](../../../docs/upgrade-guide/v0.2.1-rc.2/session-team-mode/guide.md) describes the default composition and retained row overrides.
+At startup and recomposition, profile loading removes retired selections from `ocean.profile.bundles`, preserving dependency declarations and other manifest fields. A selection survives when the profile directly depends on the package, bundle resolution selects the profile's copy, and its manifest matches an exact [replacement name and version](../../util/official-bundles/README.md#optional-and-retired-bundles) with an explicit `ocean.bundle.patch`. A `dsh`-only manifest does not qualify. Unsupported platforms, incompatible runtime versions, and patch loading errors still skip the replacement's layer and retain its selection. [Team migration](../../../docs/upgrade-guide/v0.2.1-rc.2/session-team-mode/guide.md) describes the default composition and retained row overrides.
 
 ### When to use it
 

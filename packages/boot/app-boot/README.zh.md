@@ -29,7 +29,7 @@ kind: "package-library"
 
 用此包启动应用是一个小而显式的入口：你给它一个配置文件，它运行整个启动过程。本节说明你能做什么、能得到什么；每个结果背后的 helper 调用记录在下方可折叠的实现章节中。
 
-profile 加载时会从 `ocean.profile.bundles` 移除已停用的安装方 bundle 选项，仅在需要时重写 manifest，保留其他字段。[Team 迁移](../../../docs/upgrade-guide/v0.2.1-rc.2/session-team-mode/guide.zh.md)说明默认组合与保留的行覆盖。
+在启动和重新组合时，profile 加载会从 `ocean.profile.bundles` 移除已退役的组合包选择，保留依赖声明和清单的其他字段。只有 profile 直接依赖该包、组合包解析选中 profile 中的副本，且其清单匹配确切的[替代包名和版本](../../util/official-bundles/README.zh.md#optional-and-retired-bundles)并显式声明 `ocean.bundle.patch` 时，才保留该选择。仅声明 `dsh` 的清单不符合条件。平台不受支持、运行时版本不兼容或 patch 加载出错时，仍会跳过替代包的层并保留其选择。[Team 迁移](../../../docs/upgrade-guide/v0.2.1-rc.2/session-team-mode/guide.zh.md)说明默认组合与保留的行覆盖。
 
 Loader 表达式保留 `dshHomePath`，作为 `oceanHomePath` 的别名。
 
