@@ -16,20 +16,22 @@ it('ships a catalog without an overlay and removes its tab on unload', async ({ 
   const client = await start()
   expect(screen.getAllByRole('button', { name: 'Plugins' })).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: 'Plugins' }))
-  await waitFor(() => { expect(screen.getByRole('heading', { name: 'Plugin catalogue' })).toBeTruthy() })
+  await waitFor(() => { expect(screen.getByRole('tab', { name: 'Catalogue' })).toBeTruthy() })
   expect(screen.getAllByRole('tab').map(tab => [tab.textContent, tab.getAttribute('aria-selected')]))
     .toMatchInlineSnapshot(`
       [
         [
-          "Catalogue",
+          "Installed",
           "true",
         ],
         [
-          "Installed",
+          "Catalogue",
           "false",
         ],
       ]
     `)
+  fireEvent.click(screen.getByRole('tab', { name: 'Catalogue' }))
+  await waitFor(() => { expect(screen.getByRole('heading', { name: 'Plugin catalogue' })).toBeTruthy() })
   expect(screen.getByRole('button', { name: 'Choose how to add a plugin' })).toBeTruthy()
   await act(async () => { await client.reload('@ocean/ocean-plugin-market') })
   expect(screen.getAllByRole('tab', { name: 'Catalogue' })).toHaveLength(1)
