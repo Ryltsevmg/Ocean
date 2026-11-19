@@ -86,6 +86,16 @@ const AUTO_PRESET_SPEC: PresetSpec = {
 }
 
 /**
+ * The confined bundle a stored Auto identity restores to when the release no
+ * longer ships the auto-review integration: read-only sandbox with approvals
+ * required, strictly narrower than every bundle the integration could pin.
+ */
+export const LEGACY_AUTO_CONFINED_SPEC: PresetSpec = {
+  sandbox: 'read-only',
+  approval: 'ask',
+}
+
+/**
  * The projection unit's knob state: the last seen value of each knob event,
  * null before an override (composition defaults apply at view time).
  */
@@ -421,19 +431,35 @@ export class PermissionPresetService extends TypertRemoteService {
    * Fill every missing permission fact during Agent creation. A
    * genuinely fresh session uses the current user default; seeded or partially
    * initialized sessions preserve their effective knob values and only gain
-   * the missing durable facts. A stored Auto identity requires its live
-   * integration and passes its admission check before
-   * creation completes. Creation while the permission reader is still registering
-   * fails so the publishing caller can roll back.
+   * the missing durable facts. A stored Auto identity passes its admission
+   * check when the integration is live; without the integration it restores
+   * confined to {@link LEGACY_AUTO_CONFINED_SPEC}. Creation while the
+   * permission reader is still registering fails so the publishing caller can
+   * roll back.
    */
   private pinInitialPermission(session: Session): void {
     const state = this.permissionState(session)
     const { preset, sandbox, approval, seeded } = state
     if (preset === AUTO_PRESET) {
-      if (this.autoAdmit === undefined) {
+      if (this.autoAdmit !== undefined) {
+        this.autoAdmit()
+      } else if (sandbox === LEGACY_AUTO_CONFINED_SPEC.sandbox && approval === LEGACY_AUTO_CONFINED_SPEC.approval) {
+        // Already confined by an earlier restore of the same legacy identity:
+        // the retained preset event still names Auto, nothing left to append.
+      } else if (sandbox === AUTO_PRESET_SPEC.sandbox
+        && (approval === AUTO_PRESET_SPEC.approval || approval === 'never')) {
+        // Auto identity from a release that shipped the retired auto-review
+        // integration, persisted or replayed: while its knobs still carry the
+        // legacy privilege bundle, confine it and record the transition;
+        // retained events stay untouched, and an already confined or
+        // user-changed session restores without further appends. Confinement
+        // strictly narrows privileges, so seeded history gains nothing from
+        // claiming the retired identity.
+        setSandboxMode(session, LEGACY_AUTO_CONFINED_SPEC.sandbox)
+        setApprovalPolicy(session, LEGACY_AUTO_CONFINED_SPEC.approval)
+      } else {
         throw new Error('permission: cannot restore preset "auto" without its active integration')
       }
-      this.autoAdmit()
     }
     if (preset === null && sandbox === null && approval === null && !seeded) {
       const name = this.defaultPreset

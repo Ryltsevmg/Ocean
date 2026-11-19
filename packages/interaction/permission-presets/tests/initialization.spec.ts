@@ -80,16 +80,21 @@ describe('permission admission during activation', () => {
     expect(ctx.sessions.get(id)).toBeUndefined()
 
     if (kind === 'auto') {
-      await expect(ctx.agents.create(options)).rejects.toThrow(/cannot restore preset "auto"/)
-      expect(published).not.toHaveBeenCalled()
-      expect(ctx.agents.get(id)).toBeUndefined()
-      expect(ctx.sessions.get(id)).toBeUndefined()
+      const confined = await ctx.agents.create(options)
+      expect(ctx.sessionProjections.checkpoint(confined.agent.session).permissions?.val).toMatchObject({
+        sandbox: 'read-only',
+        approval: 'ask',
+      })
+      expect(ctx.permissionPresets.current(confined.agent.session)).not.toBe(AUTO_PRESET)
+      expect(published).toHaveBeenCalledTimes(1)
       const admit = vi.fn()
       ctx.permissionPresets.registerAuto(admit)
-      const { agent } = await ctx.agents.create(options)
+      const { agent } = await ctx.agents.create({ sessionId: SessionId('pending-agent-live'), seed: autoSeed() })
       expect(admit).toHaveBeenCalledTimes(1)
       expect(ctx.permissionPresets.current(agent.session)).toBe(AUTO_PRESET)
       expect(ctx.approval.overrideOf(agent.session)).toBe('never')
+      expect(published).toHaveBeenCalledTimes(2)
+      return
     } else {
       const { agent } = await ctx.agents.create(options)
       expect(ctx.permissionPresets.current(agent.session)).toBe('workspace-write')
