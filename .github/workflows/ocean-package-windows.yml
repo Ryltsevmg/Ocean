@@ -1,0 +1,71 @@
+name: Ocean unsigned Windows package
+on:
+  # Register the definition on GitHub; jobs still require a manual dispatch.
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ocean-package-windows.yml']
+  workflow_dispatch:
+    inputs:
+      build_version:
+        description: Extended build version (empty packages the checkout product version)
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'Ryltsevmg/Ocean' && github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    timeout-minutes: 120
+    env:
+      OCEAN_BUILD_VERSION: ${{ inputs.build_version }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.0'
+      - name: Install pinned package manager
+        run: npm install --global pnpm@11.28.5
+      - name: Install locked dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Write the unsigned local settings file
+        shell: bash
+        run: printf 'OCEAN_DESKTOP_APP_ID=app.ocean.chat\n' > apps/desktop/.env.windows
+      - name: Package unsigned native Windows installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p 'process.platform + "-" + process.arch')" = "win32-x64"
+          args=()
+          if [ -n "$OCEAN_BUILD_VERSION" ]; then args+=(--build-version "$OCEAN_BUILD_VERSION"); fi
+          pnpm --filter @ocean/ocean-desktop run package:win:x64:unsigned ${args[@]+"${args[@]}"}
+      - name: Calculate installer checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts"
+          sha256sum *.exe > SHA256SUMS
+          node -e 'require("node:fs").writeFileSync("build-evidence.json", JSON.stringify({repository: process.env.GITHUB_REPOSITORY, commit: process.env.GITHUB_SHA, run: process.env.GITHUB_RUN_ID, version: process.env.OCEAN_BUILD_VERSION || null, platform: process.platform, architecture: process.arch, node: process.version, signed: false}, null, 2) + "\n")'
+      - name: Retain unsigned build for review, not release publication
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ocean-windows-x64-unsigned-${{ github.sha }}
+          path: |
+            apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/*.exe
+            apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/SHA256SUMS
+            apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/build-evidence.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+# Manual-dispatch Windows packaging (Ocean; unsigned by default)

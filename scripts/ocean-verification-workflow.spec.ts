@@ -33,7 +33,9 @@ const directory = new URL('../.github/workflows/', import.meta.url)
 const names = readdirSync(directory).filter(name => /\.ya?ml$/u.test(name)).sort()
 const workflow = yaml.load(readFileSync(new URL('ocean-verify.yml', directory), 'utf8')) as Workflow
 const packaging = yaml.load(readFileSync(new URL('ocean-package-linux.yml', directory), 'utf8')) as Workflow
+const windowsPackaging = yaml.load(readFileSync(new URL('ocean-package-windows.yml', directory), 'utf8')) as Workflow
 const packagingRunner = "${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}"
+const windowsPackagingRunner = 'windows-2025'
 
 function commands(job: Job): string[] {
   return job.steps.flatMap(step => step.run === undefined ? [] : [step.run])
@@ -46,7 +48,7 @@ function assertIsolated(candidate: Workflow): void {
   expect(source).not.toMatch(/secrets\.|release:publish|npm publish|gh release|self-hosted/u)
   for (const job of Object.values(candidate.jobs)) {
     expect(job.if).toContain("github.repository == 'Ryltsevmg/Ocean'")
-    expect(['ubuntu-24.04', packagingRunner]).toContain(job['runs-on'])
+    expect(['ubuntu-24.04', packagingRunner, windowsPackagingRunner]).toContain(job['runs-on'])
     expect(Number.isInteger(job['timeout-minutes'])).toBe(true)
     expect(job['timeout-minutes']).toBeGreaterThan(0)
     expect(job['timeout-minutes']).toBeLessThanOrEqual(240)
@@ -62,9 +64,10 @@ afterEach(() => { vi.unstubAllEnvs() })
 
 describe('Ocean workflow isolation', () => {
   it('contains only verification and manual unsigned packaging definitions', () => {
-    expect(names).toEqual(['ocean-package-linux.yml', 'ocean-verify.yml'])
+    expect(names).toEqual(['ocean-package-linux.yml', 'ocean-package-windows.yml', 'ocean-verify.yml'])
     assertIsolated(workflow)
     assertIsolated(packaging)
+    assertIsolated(windowsPackaging)
   })
 
   it.each([
@@ -98,6 +101,23 @@ describe('Ocean workflow isolation', () => {
     const artifact = job.steps.find(step => step.uses?.startsWith('actions/upload-artifact@'))!
     expect(artifact.with?.['retention-days']).toBe(7)
     expect(artifact.with?.['if-no-files-found']).toBe('error')
+  })
+
+  it('keeps Windows packaging manual on main and retains the unsigned installer without publication', () => {
+    const job = windowsPackaging.jobs.package!
+    expect(job.if).toBe("github.event_name == 'workflow_dispatch' && github.repository == 'Ryltsevmg/Ocean' && github.ref == 'refs/heads/main'")
+    expect(job['runs-on']).toBe(windowsPackagingRunner)
+    expect(job.env?.CSC_IDENTITY_AUTO_DISCOVERY).toBe('false')
+    expect(windowsPackaging.concurrency['cancel-in-progress']).toBe(false)
+    expect(commands(job).some(run => run.includes('pnpm --filter @ocean/ocean-desktop run package:win:x64:unsigned'))).toBe(true)
+    const artifact = job.steps.find(step => step.uses?.startsWith('actions/upload-artifact@'))!
+    expect(artifact.with?.['retention-days']).toBe(7)
+    expect(artifact.with?.['if-no-files-found']).toBe('error')
+    expect(String(artifact.with?.path).trim().split('\n')).toEqual([
+      'apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/*.exe',
+      'apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/SHA256SUMS',
+      'apps/desktop/.desktop-build/targets/win-x64/unsigned-artifacts/build-evidence.json',
+    ])
   })
 })
 
