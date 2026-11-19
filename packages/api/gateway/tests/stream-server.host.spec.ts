@@ -3,8 +3,9 @@ import { createServer, type Server } from 'node:http'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteErrorOf, type PeerId, type PeerScope } from '@ocean/ocean-typert-protocol'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import WebSocket from 'ws'
+import WebSocket, { WebSocketServer } from 'ws'
 import {
+  openDeviceStreamSocket,
   RemoteStreamMuxServer,
   type RemoteStreamFailureMapper,
   type RemoteStreamOpener,
@@ -17,11 +18,18 @@ interface RunningMux {
 }
 
 const running = new Set<RunningMux>()
+const deviceServers = new Set<{ readonly http: Server; readonly wss?: WebSocketServer }>()
 
 afterEach(async () => {
   await Promise.all([...running].map(async (entry) => {
     running.delete(entry)
     await entry.mux.close().catch(() => undefined)
+    await closeHttp(entry.http)
+  }))
+  await Promise.all([...deviceServers].map(async (entry) => {
+    deviceServers.delete(entry)
+    const wss = entry.wss
+    if (wss !== undefined) await new Promise<void>((resolve) => { wss.close(() => { resolve() }) })
     await closeHttp(entry.http)
   }))
 })
@@ -196,6 +204,23 @@ describe('Remote stream mux server carrier lifecycle', () => {
     const closed = once(client, 'close')
     serverSocket.emit('error', new Error('fixture carrier failure'))
     await closed
+  })
+
+  it('drops a frame dispatched while the socket is no longer open', async () => {
+    const open = vi.fn<RemoteStreamOpener>(async (_endpoint, _payload, _uplink, _peer, control) => waitForAbort(control.signal))
+    const entry = await startMux(open)
+    const client = await connect(entry.url)
+    const serverSocket = acceptedSocket(entry.mux)
+    Object.defineProperty(serverSocket, 'readyState', { configurable: true, value: WebSocket.CLOSING })
+    try {
+      serverSocket.emit('message', Buffer.from(openFrame('closing')), false)
+      await new Promise<void>((resolve) => { setImmediate(resolve) })
+      expect(open).not.toHaveBeenCalled()
+    } finally {
+      Reflect.deleteProperty(serverSocket, 'readyState')
+    }
+    client.close()
+    await once(client, 'close')
   })
 
   it('does not send an end frame after clean source cancellation', async () => {
@@ -665,6 +690,48 @@ describe('Remote stream mux server uplink', () => {
   })
 })
 
+describe('Device stream socket opener', () => {
+  it('sends the login cookie on the upgrade and completes the handshake', async () => {
+    const cookies: (string | undefined)[] = []
+    const http = createServer()
+    const wss = new WebSocketServer({ noServer: true })
+    deviceServers.add({ http, wss })
+    http.on('upgrade', (request, socket, head) => {
+      cookies.push(request.headers.cookie)
+      wss.handleUpgrade(request, socket, head, () => {})
+    })
+    const url = await listenHttp(http)
+
+    const socket = openDeviceStreamSocket(url, '__Host-ocean-device=fixture-login')
+    await once(socket, 'open')
+    expect(cookies).toEqual(['__Host-ocean-device=fixture-login'])
+    socket.close()
+    await once(socket, 'close')
+  })
+
+  it('refuses to follow a redirect presented to the upgrade', async () => {
+    let requests = 0
+    const http = createServer()
+    deviceServers.add({ http })
+    http.on('upgrade', (_request, socket) => {
+      requests += 1
+      socket.end('HTTP/1.1 302 Found\r\nLocation: http://127.0.0.1:1/elsewhere\r\nContent-Length: 0\r\nConnection: close\r\n\r\n')
+    })
+    const url = await listenHttp(http)
+
+    const socket = openDeviceStreamSocket(url, '__Host-ocean-device=fixture-login')
+    socket.on('error', () => {})
+    const responseEvent: unknown[] = await once(socket, 'unexpected-response')
+    const response = responseEvent[1] as { statusCode?: number; resume(): void }
+    expect(response.statusCode).toBe(302)
+    expect(requests).toBe(1)
+    response.resume()
+    const closed = new Promise<void>((resolve) => { socket.once('close', () => { resolve() }) })
+    socket.terminate()
+    await closed
+  })
+})
+
 const mapFailure: RemoteStreamFailureMapper = (error) => {
   const remote = remoteErrorOf(error)
   if (remote !== undefined) return { code: remote.code, message: remote.message, details: remote.details }
@@ -692,6 +759,14 @@ async function startMux(
   })
   const http = createServer()
   http.on('upgrade', (request, socket, head) => { mux.handleUpgrade(request, socket, head, admitted) })
+  const url = await listenHttp(http)
+  const entry = { http, mux, url: url.href.replace('http:', 'ws:') }
+  running.add(entry)
+  return entry
+}
+
+/** Bind one fixture HTTP server to an ephemeral loopback port. @returns its loopback URL. */
+async function listenHttp(http: Server): Promise<URL> {
   await new Promise<void>((resolve, reject) => {
     http.once('error', reject)
     http.listen(0, '127.0.0.1', () => {
@@ -701,9 +776,7 @@ async function startMux(
   })
   const address = http.address()
   if (address === null || typeof address === 'string') throw new Error('fixture HTTP server has no TCP port')
-  const entry = { http, mux, url: `ws://127.0.0.1:${String(address.port)}` }
-  running.add(entry)
-  return entry
+  return new URL(`http://127.0.0.1:${String(address.port)}`)
 }
 
 /** A Peer whose scope is a plain Cordis fiber, so `peer.ctx.effect` and `dispose()` behave as the registry's do. */

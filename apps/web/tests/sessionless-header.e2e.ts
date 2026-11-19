@@ -43,14 +43,14 @@ describe('navigation without a selected Session', () => {
       const sessionHeader = page.locator('[data-slot="conversation.session.header"]')
       expect(await sessionHeader.count()).toBe(0)
       const header = page.locator('[data-slot="conversation.header"] > header')
-      expect(await header.evaluate(element => element.getBoundingClientRect().height)).toBe(40)
+      expect(await header.evaluate(element => element.getBoundingClientRect().height)).toBe(54)
       await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).click()
       const reopen = platform === 'darwin'
         ? page.locator('[data-shell-leading]').getByRole('button', { name: 'Open sidebar', exact: true })
         : page.getByRole('button', { name: 'Open sidebar', exact: true })
       await reopen.waitFor({ state: 'visible' })
       expect(await sessionHeader.count()).toBe(0)
-      expect(await header.evaluate(element => element.getBoundingClientRect().height)).toBe(40)
+      expect(await header.evaluate(element => element.getBoundingClientRect().height)).toBe(54)
       if (platform === 'darwin') {
         expect(await page.locator('[data-shell-leading]').getByRole('button', { name: 'New session', exact: true }).isVisible()).toBe(true)
       }

@@ -191,7 +191,8 @@ function expectCode(code: SessionQueryErrorCode): Error {
 
 function rejectUnknown<T>(reason: unknown): Promise<T> {
   // Exercise containment for an implementation that violates the Error rejection convention.
-  return Promise.reject(reason) // oxlint-disable-line typescript/prefer-promise-reject-errors
+  // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- deliberate non-Error rejection.
+  return Promise.reject(reason)
 }
 
 const cancellableSessionListings = [
@@ -1297,6 +1298,18 @@ describe('session-query exact reads', () => {
 
     expect(observed.source).toBe('live')
     expect(observed.header.id).toBe(live.id)
+  })
+
+  it('reads domain state through inspectSession and forwards preparation cancellation', async () => {
+    const ctx = await liveContext()
+    const live = ctx.sessions.create(SessionId('inspect-live'))
+
+    expect(await ctx.sessionQuery.inspectSession(live.id, session => session.id)).toBe(live.id)
+
+    const controller = new AbortController()
+    controller.abort()
+    await expect(ctx.sessionQuery.inspectSession(live.id, session => session.id, controller.signal))
+      .rejects.toThrow(expectCode('SESSION_QUERY_ABORTED'))
   })
 
   it('leaves the optional persistence dependency optional', async () => {

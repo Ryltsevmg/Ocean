@@ -69,7 +69,20 @@ async function expectEditorAlignment(title: Locator): Promise<void> {
       right: Math.max(...Array.from(pane.querySelectorAll('textarea, [class*="_ruleRows"]'))
         .map(node => Math.abs(node.getBoundingClientRect().right - name.right))),
     }
-    return Object.fromEntries(Object.entries(offsets).filter(([, offset]) => offset > 1))
+    const mismatched = Object.fromEntries(Object.entries(offsets).filter(([, offset]) => offset > 1))
+    if (Object.keys(mismatched).length > 0) {
+      // Embed the raw geometry so a host-specific failure identifies the owner in the CI log.
+      const scroller = pane.querySelector('[class*="_detailScroll"]') as HTMLElement | null
+      return {
+        ...mismatched,
+        name: [name.left, name.right],
+        actionRight: action.right,
+        pane: [bounds.left, bounds.right],
+        scroller: scroller === null ? null : [scroller.offsetWidth, scroller.clientWidth, scroller.scrollWidth],
+        scrollbarSpace: getComputedStyle(scroller ?? pane).getPropertyValue('--detail-scrollbar-space'),
+      }
+    }
+    return {}
   })).toEqual({})
 }
 
@@ -180,9 +193,9 @@ it('keeps the automation page on screen with its text fields at the touch step',
       await expect.poll(() => viewFacts(desktopPage)).toEqual({
         width: 1024,
         documentWidth: 1024,
-        smallestField: 14,
+        smallestField: 13,
         name: 'absent',
-        search: '14px',
+        search: '13px',
         instruction: 'absent',
       })
       await desktopPanel.getByRole('button', { name: PHONE_TASK_TITLE, exact: true }).click()
@@ -190,10 +203,10 @@ it('keeps the automation page on screen with its text fields at the touch step',
       await expect.poll(() => viewFacts(desktopPage)).toEqual({
         width: 1024,
         documentWidth: 1024,
-        smallestField: 14,
-        name: '14px',
-        search: '14px',
-        instruction: '14px',
+        smallestField: 13,
+        name: '13px',
+        search: '13px',
+        instruction: '13px',
       })
       await desktop.close()
 
@@ -271,7 +284,9 @@ it.each([
           await editor.getByRole('button', { name: copy.repeat }).click()
           await page.getByRole('menuitem', { name: frequency, exact: true }).click()
           await expectEditorAlignment(title)
-          await expect.poll(() => editor.locator('[class*="_detailScroll"]').evaluate(node => node.scrollWidth - node.clientWidth)).toBe(0)
+          // Integer scrollWidth/clientWidth round independently, so a subpixel content extent can
+          // report one pixel; the element-bounds check below proves nothing actually crosses the pane.
+          await expect.poll(() => editor.locator('[class*="_detailScroll"]').evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1)
           expect(await editor.locator('input, textarea, button').evaluateAll(nodes => nodes.every((node) => {
             const box = node.getBoundingClientRect()
             const pane = node.closest('aside')!.getBoundingClientRect()

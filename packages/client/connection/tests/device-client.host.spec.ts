@@ -128,3 +128,125 @@ it.each(['identify', 'bootstrap'] as const)('requires a new sign-in when %s reje
   expect(() => client.transportCredentials()).toThrow('sign-in is required')
   expect(fetcher).toHaveBeenCalledTimes(3)
 })
+
+/** A compatible login response issuing the named session cookie. */
+function loginResponse(cookie: string): Response {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'ocean-device-protocol': '1', 'ocean-device-host': 'host', 'ocean-device-epoch': 'epoch',
+      'set-cookie': `__Host-ocean-device=${cookie}; Secure; HttpOnly`,
+    },
+  })
+}
+
+it('refuses a login without a compatible identity or exactly one session cookie', async () => {
+  const signal = new AbortController().signal
+  const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'host', 'ocean-device-epoch': 'epoch' }
+  const noIdentity = new DeviceClient('https://ocean.example/', async () => new Response(null, { status: 204 }))
+  await expect(noIdentity.login('fixture-token', signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+  const noCookie = new DeviceClient('https://ocean.example/', async () => new Response(null, { status: 204, headers: identity }))
+  await expect(noCookie.login('fixture-token', signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+  const foreignCookie = new DeviceClient('https://ocean.example/', async () => new Response(null, {
+    status: 204, headers: { ...identity, 'set-cookie': 'other-cookie=value; Secure' },
+  }))
+  await expect(foreignCookie.login('fixture-token', signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+  const twoCookieHeaders = new Headers(identity)
+  twoCookieHeaders.append('set-cookie', '__Host-ocean-device=one; Secure')
+  twoCookieHeaders.append('set-cookie', '__Host-ocean-device=two; Secure')
+  const twoCookies = new DeviceClient('https://ocean.example/', async () => new Response(null, {
+    status: 204, headers: twoCookieHeaders,
+  }))
+  await expect(twoCookies.login('fixture-token', signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+})
+
+it('treats a plain 503 login response as temporary unavailability', async () => {
+  const client = new DeviceClient('https://ocean.example/', async () => new Response(null, { status: 503 }))
+  await expect(client.login('fixture-token', new AbortController().signal))
+    .rejects.toBeInstanceOf(DeviceSessionUnavailableError)
+})
+
+it('reads bootstrap injections and classifies malformed or failed bootstrap responses', async () => {
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(loginResponse('login'))
+    .mockResolvedValueOnce(Response.json([{ kind: 'global', name: 'fixture', value: 1 }]))
+    .mockResolvedValueOnce(new Response('not json', { status: 200 }))
+    .mockResolvedValueOnce(Response.json({ rows: [] }))
+    .mockResolvedValueOnce(new Response('unavailable', { status: 500 }))
+    .mockResolvedValueOnce(new Response(null, { status: 502 }))
+  const client = new DeviceClient('https://ocean.example/mount', fetcher)
+  const signal = new AbortController().signal
+  await client.login('fixture-token', signal)
+  expect(await client.bootstrap(signal)).toEqual([{ kind: 'global', name: 'fixture', value: 1 }])
+  expect(fetcher.mock.calls[1]?.[0]).toEqual(new URL('https://ocean.example/mount/connect/bootstrap'))
+  await expect(client.bootstrap(signal)).rejects.toMatchObject({ code: 'DEVICE_BOOTSTRAP_INVALID' })
+  await expect(client.bootstrap(signal)).rejects.toMatchObject({ code: 'DEVICE_BOOTSTRAP_INVALID' })
+  await expect(client.bootstrap(signal)).rejects.toMatchObject({
+    code: 'DEVICE_BOOTSTRAP_FAILED', message: 'Ocean Host bootstrap failed (HTTP 500)',
+  })
+  await expect(client.bootstrap(signal)).rejects.toMatchObject({ code: 'DEVICE_BOOTSTRAP_FAILED' })
+})
+
+it('sends authenticated unary requests only to canonical endpoints', async () => {
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(loginResponse('login'))
+    .mockResolvedValueOnce(Response.json({ ok: true }))
+  const client = new DeviceClient('https://ocean.example/mount', fetcher)
+  const signal = new AbortController().signal
+  await client.login('fixture-token', signal)
+  expect(() => client.request('session/list extra', '{}', signal)).toThrow('Invalid Ocean RPC endpoint')
+  expect(() => client.request('session', '{}', signal)).toThrow('Invalid Ocean RPC endpoint')
+  const response = await client.request('session/list', '{"args":[]}', signal)
+  expect(response.status).toBe(200)
+  expect(fetcher.mock.calls[1]?.[0]).toEqual(new URL('https://ocean.example/mount/api/session/list'))
+  expect(fetcher.mock.calls[1]?.[1]).toMatchObject({
+    method: 'POST',
+    headers: { cookie: '__Host-ocean-device=login', 'content-type': 'application/json' },
+    body: '{"args":[]}',
+  })
+})
+
+it('logs out once and discards the local cookie even without a login', async () => {
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(loginResponse('login'))
+    .mockResolvedValueOnce(new Response(null, { status: 204 }))
+  const client = new DeviceClient('https://ocean.example/', fetcher)
+  const signal = new AbortController().signal
+  await client.logout(signal)
+  expect(fetcher).not.toHaveBeenCalled()
+  await client.login('fixture-token', signal)
+  await client.logout(signal)
+  expect(fetcher.mock.calls[1]?.[1]).toMatchObject({
+    method: 'DELETE',
+    headers: { cookie: '__Host-ocean-device=login', 'ocean-device-protocol': '1' },
+  })
+  expect(() => client.transportCredentials()).toThrow('sign-in is required')
+})
+
+it('classifies a rejected logout as an authentication failure', async () => {
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(loginResponse('login'))
+    .mockResolvedValueOnce(new Response(null, { status: 401 }))
+  const client = new DeviceClient('https://ocean.example/', fetcher)
+  const signal = new AbortController().signal
+  await client.login('fixture-token', signal)
+  await expect(client.logout(signal)).rejects.toMatchObject({ code: 'DEVICE_AUTH_REJECTED' })
+  expect(() => client.transportCredentials()).toThrow('sign-in is required')
+})
+
+it('keeps a newer login when an older session check is rejected', async () => {
+  const pending = Promise.withResolvers<Response>()
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(loginResponse('first'))
+    .mockImplementationOnce(() => pending.promise)
+    .mockResolvedValueOnce(loginResponse('preflight'))
+    .mockResolvedValueOnce(loginResponse('second'))
+  const client = new DeviceClient('https://ocean.example/', fetcher)
+  const signal = new AbortController().signal
+  await client.login('fixture-token', signal)
+  const stale = client.identify(signal)
+  await client.login('replacement-token', signal)
+  pending.resolve(new Response(null, { status: 401 }))
+  await expect(stale).rejects.toBeInstanceOf(DeviceSessionRejectedError)
+  expect(client.transportCredentials().cookie).toBe('__Host-ocean-device=second')
+})

@@ -199,6 +199,7 @@ export class DeviceLogin {
       origin = new URL(`https://${host}`).origin
     } catch (_error) {
       // The Host header must parse as a URL authority.
+      /* v8 ignore next -- the trust fence already parsed this exact Host under the same https scheme. */
       return undefined
     }
     const incomingOrigin = header(req, 'origin')

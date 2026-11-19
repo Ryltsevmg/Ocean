@@ -64,7 +64,16 @@ describe('web e2e: credential mask in user text', () => {
     await page.getByRole('button', { name: 'Show secret', exact: true }).click()
     await expect.poll(() => text.textContent()).toBe(PROMPT)
     // The monospace run keeps one mask character per original character, so revealing does not move the line.
-    expect({ run: await run.boundingBox(), bubble: await text.boundingBox() }).toEqual(masked)
+    // Mask and revealed glyphs measure apart by up to 1/64px, so compare each box within one pixel.
+    const assertUnmoved = async (target: typeof run, label: 'run' | 'bubble'): Promise<void> => {
+      const box = await target.boundingBox()
+      expect(box, label).not.toBeNull()
+      for (const key of ['x', 'y', 'width', 'height'] as const) {
+        expect(Math.abs(box![key] - masked[label]![key]), `${label}.${key}`).toBeLessThan(1)
+      }
+    }
+    await assertUnmoved(run, 'run')
+    await assertUnmoved(text, 'bubble')
     await page.getByRole('button', { name: 'Hide secret', exact: true }).click()
     await expect.poll(() => text.textContent()).not.toContain(KEY)
     expect(tripwire.pageErrors).toEqual([])

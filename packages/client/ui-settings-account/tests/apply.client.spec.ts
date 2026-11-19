@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, expect, onTestFinished, vi } from 'vitest'
 import { ok } from '@ocean/ocean-remote-mock'
 import { RemoteError } from '@ocean/ocean-typert-protocol'
+import { RemoteStreamCarrierError } from '@ocean/ocean-api-gateway/client'
 import { createClientTest, type TestClient, webApp } from '@ocean/ocean-client-test-runtime/src/assembly/index.ts'
 import type {
   AccountDetails, AccountUserId, AccountView, SignInAttemptId,
@@ -21,6 +22,7 @@ import { AccountPlatformHost } from '../src/client/AccountPlatformHost.tsx'
 import type { AccountPlatformHostInjected } from '../src/client/AccountPlatformHost.tsx'
 import { AccountQuotaNotice } from '../src/client/AccountQuotaNotice.tsx'
 import type { AccountQuotaNoticeInjected } from '../src/client/AccountQuotaNotice.tsx'
+import { DeviceDisconnectButton } from '../src/client/AccountMenu.tsx'
 
 const it = createClientTest({ roster: webApp })
 const withoutAccountAccess = createClientTest({ roster: webApp }, { access: action => action !== 'account/watch' })
@@ -473,6 +475,48 @@ it('publishes a terminal state-stream failure without mistaking it for plugin di
   await c.mock.streams.opened('account/watch', 1)
   c.mock.streams.end('account/watch')
   await vi.waitFor(() => { expect(actions.hooks.account.getSnapshot().failed).toBe(true) })
+}, 60_000)
+
+it('reports a lost account stream carrier and clears it when a later frame arrives', async ({ start, mock }) => {
+  vi.stubGlobal('oceanDesktop', {})
+  const secondOpen = Promise.withResolvers<undefined>()
+  onTestFinished(() => { secondOpen.resolve(undefined) })
+  let opens = 0
+  // The first grant stays silent and the retry's frame is held until the test releases
+  // it, so the carrier failure is observable before any recovery frame clears it.
+  mock.stream('account/watch', (_args, stream) => {
+    opens += 1
+    if (opens === 1) return
+    void secondOpen.promise.then(() => { stream.push({ type: 'snapshot', state: view }) })
+  })
+  const c = await start()
+  const actions = operations(c)
+  await mock.streams.opened('account/watch', 1)
+  expect(actions.hooks.account.getSnapshot().failed).toBe(false)
+  mock.streams.fail('account/watch', new RemoteStreamCarrierError('carrier lost'))
+  await vi.waitFor(() => { expect(actions.hooks.account.getSnapshot().failed).toBe(true) })
+  // The immediate retry reopens a still-silent stream, so the failure stays visible.
+  await mock.streams.opened('account/watch', 2)
+  await c.flush()
+  expect(actions.hooks.account.getSnapshot().failed).toBe(true)
+  secondOpen.resolve(undefined)
+  await vi.waitFor(() => { expect(actions.hooks.account.getSnapshot().failed).toBe(false) })
+}, 60_000)
+
+it('registers the device disconnect action only when the connection offers device sign-out', async ({ start }) => {
+  const c = await start()
+  const hasDisconnect = () => c.ctx.slots.entries('sidebar.footer.action').some(entry => entry.options.id === 'connection.disconnect')
+  // A non-device connection offers no device sign-out, so the footer action is absent.
+  expect(hasDisconnect()).toBe(false)
+  const endDeviceSession = vi.fn(async () => {})
+  c.connection.endDeviceSession = endDeviceSession
+  await c.reload(SELF)
+  const entry = c.ctx.slots.entries('sidebar.footer.action').find(candidate => candidate.options.id === 'connection.disconnect')
+  expect(entry).toBeDefined()
+  expect(entry!.component).toBe(DeviceDisconnectButton)
+  expect(injectedOf(entry!)).toEqual({ endDeviceSession })
+  await c.unload(SELF)
+  expect(hasDisconnect()).toBe(false)
 }, 60_000)
 
 it('ignores a terminal stream error when plugin disposal already owns teardown', async ({ start }) => {

@@ -16,7 +16,7 @@ import {
 } from '../src/client/index.ts'
 
 type Win = {
-  location?: { hostname: string; origin?: string }
+  location?: { hostname: string; origin?: string; reload?: () => void }
   __OCEAN_TRANSPORT__?: ClientTransportHooks
 }
 
@@ -698,4 +698,99 @@ describe('connection client apply', () => {
     }
   })
 
+})
+
+describe('connection device document', () => {
+  /** Install a Connection handle bound to a device sign-in document. */
+  function deviceHandle(signIn: () => void): ConnectionHandle {
+    const ctx = new Context()
+    installConnection(ctx, {
+      location: { hostname: 'device.example' },
+      deviceDocument: { connectUrl: new URL('https://device.example/ocean/connect'), signIn },
+    })
+    const handle = ctx.get('connection') as ConnectionHandle | undefined
+    if (handle === undefined) throw new Error('ctx.connection not provided')
+    return handle
+  }
+
+  it('ends the device session, releases the owned loop, and returns to sign-in', async () => {
+    const signIn = vi.fn()
+    const remove = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', remove)
+    const handle = deviceHandle(signIn)
+    const generation = installGeneration(handle)
+    const loop = handle.start({})
+    try {
+      await vi.waitFor(() => { expect(handle.generation.getSnapshot()?.host.home).toBe('/h') })
+      await handle.endDeviceSession?.()
+      expect(remove).toHaveBeenCalledWith(new URL('https://device.example/ocean/connect'), {
+        method: 'DELETE', credentials: 'same-origin', redirect: 'error',
+        headers: { 'ocean-device-protocol': '1' },
+      })
+      expect(handle.generation.getSnapshot()).toBeUndefined()
+      expect(signIn).toHaveBeenCalledOnce()
+    } finally {
+      loop.stop()
+      generation.end()
+    }
+  })
+
+  it('signs out without an owned loop and surfaces a failed sign-out', async () => {
+    const signIn = vi.fn()
+    const remove = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 503 }))
+    vi.stubGlobal('fetch', remove)
+    const handle = deviceHandle(signIn)
+    await expect(handle.endDeviceSession?.()).rejects.toThrow('Ocean device sign-out failed (HTTP 503)')
+    expect(signIn).not.toHaveBeenCalled()
+    remove.mockResolvedValue(new Response(null, { status: 204 }))
+    await handle.endDeviceSession?.()
+    expect(signIn).toHaveBeenCalledOnce()
+  })
+
+  it('opens a socket through the installed carrier factory', () => {
+    const socket = { readyState: 0, send() {}, close() {}, addEventListener() {}, removeEventListener() {} }
+    const createWebSocket = vi.fn(() => socket)
+    const ctx = new Context()
+    installConnection(ctx, {
+      transport: { createWebSocket, streamBaseUrl: 'https://device.example/ocean/' },
+    })
+    const handle = ctx.get('connection') as ConnectionHandle | undefined
+    if (handle === undefined) throw new Error('ctx.connection not provided')
+    expect(handle.openWebSocket('/api/remote.mux')).toBe(socket)
+    expect(createWebSocket).toHaveBeenCalledWith('wss://device.example/ocean/api/remote.mux')
+  })
+
+  it('apply installs the device document from a served base element and reloads to sign in', async () => {
+    const reload = vi.fn()
+    ;(globalThis as Win).location = { hostname: 'device.example', reload }
+    vi.stubGlobal('document', {
+      querySelector: (selector: string) => selector === 'base[data-ocean-device]'
+        ? { href: 'https://device.example/ocean/' }
+        : null,
+    })
+    const remove = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', remove)
+    const handle = await mount()
+    expect(handle.endDeviceSession).toBeDefined()
+    await handle.endDeviceSession?.()
+    expect(remove).toHaveBeenCalledWith(new URL('https://device.example/ocean/connect'), expect.objectContaining({ method: 'DELETE' }))
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('apply omits the device document when no base element marks the page', async () => {
+    ;(globalThis as Win).location = { hostname: 'device.example' }
+    vi.stubGlobal('document', { querySelector: () => null })
+    const handle = await mount()
+    expect(handle.endDeviceSession).toBeUndefined()
+  })
+
+  it('apply omits the device document without a page location', async () => {
+    delete (globalThis as Win).location
+    vi.stubGlobal('document', {
+      querySelector: () => ({ href: 'https://device.example/ocean/' }),
+    })
+    const handle = await mount()
+    expect(handle.endDeviceSession).toBeUndefined()
+    expect(handle.isLoopback).toBe(true)
+  })
 })

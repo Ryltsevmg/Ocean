@@ -281,6 +281,17 @@ describe('web-app runtime glue', () => {
   })
 
 
+  it('refuses a non-loopback plain-HTTP listener in server mode', () => {
+    stageDist()
+    const ctx = new Context()
+    onTestFinished(() => ctx.fiber.dispose())
+    ctx.provide('webServer', fakeHttpServer('10.1.2.3').server)
+    // The device-authenticated server profile never serves plain HTTP off
+    // loopback: the row fails activation instead of printing a reachable URL.
+    expect(() => { apply(ctx, new Config({ openBrowser: false, printUrl: true, surfaceContext: false, serverMode: true })) })
+      .toThrow('ocean serve: use TLS for a non-loopback listener or bind to loopback behind an HTTPS proxy')
+  })
+
   it('drops an IPv6 zone id from the advertised URL', async () => {
     stageDist()
     const ctx = new Context()

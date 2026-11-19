@@ -658,6 +658,31 @@ describe('UiSession pending interactions', () => {
     await ctx.fiber.dispose()
   })
 
+  it('notifies aggregate subscribers only when the pending roster actually changes', () => {
+    const ctx = new Context()
+    const bench = createSessionsBench(ctx)
+    const service = createUiSession(ctx, bench)
+    const id = sessionId('s1')
+    const listener = vi.fn()
+    const off = service.pendingInteractions.subscribe(listener)
+    const publish = service.registerPendingInteraction<SessionPendingInteractionBase>(() => 1)
+    const interaction = { key: 'question:1', kind: 'question', sessionId: id }
+    const remove = publish(interaction, () => Promise.resolve())
+    expect(listener).toHaveBeenCalledOnce()
+    expect(service.pendingInteractions.getSnapshot()).toEqual([interaction])
+    // Registering an empty domain compares the unchanged roster element by element
+    // and publishes nothing, so subscribers stay quiet.
+    service.registerPendingInteraction<SessionPendingInteractionBase>(() => 2)
+    expect(listener).toHaveBeenCalledOnce()
+    expect(service.pendingInteractions.getSnapshot()).toEqual([interaction])
+    remove()
+    expect(listener).toHaveBeenCalledTimes(2)
+    expect(service.pendingInteractions.getSnapshot()).toEqual([])
+    off()
+    publish({ key: 'question:2', kind: 'question', sessionId: id }, () => Promise.resolve())
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+
   it('rejects duplicate keys and contains a failing aggregate subscriber', () => {
     const ctx = new Context()
     const bench = createSessionsBench(ctx)

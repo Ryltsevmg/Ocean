@@ -75,7 +75,9 @@ it('preserves both header layouts and follows the scroll position without changi
       const consoleWatch = watchConsole(page)
       try {
         await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-        await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+        await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+        // The page lands on the contributed Catalogue tab; the measured header belongs to Installed.
+        await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
         await page.locator('[data-plugin-package]').first().waitFor()
         await page.locator('[data-plugin-bar][data-natural]').waitFor()
         await page.evaluate(() => document.fonts.ready)
@@ -114,7 +116,12 @@ it('preserves both header layouts and follows the scroll position without changi
           const terminal = await geometry(page)
           expect(terminal.toolbar).toEqual(compact.toolbar)
           expect(terminal.paintHeight).toBe(compact.height)
-          expect(terminal.title).toEqual(compact.title)
+          // With tabs the static compact layout keeps a 1px visually-hidden heading
+          // while the natural motion parks the full-size title above the paint box;
+          // both hide the title without removing the page's only heading.
+          expect(compact.title.width).toBeLessThanOrEqual(1)
+          expect(terminal.title.y + terminal.title.height).toBeLessThanOrEqual(0)
+          expect(terminal.title.width).toBe(resting.title.width)
           expect(await refresh.evaluate(element => element.isConnected)).toBe(true)
           await refresh.focus()
           expect(await refresh.evaluate(element => element === document.activeElement)).toBe(true)
@@ -142,7 +149,9 @@ it('preserves the full header width when the list reserves a scrollbar gutter', 
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 480 }, locale: 'en-US' })
       await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+      await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+      // The page lands on the contributed Catalogue tab; the measured header belongs to Installed.
+      await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
       await page.locator('[data-plugin-package]').first().waitFor()
       await page.locator('[data-plugin-bar][data-natural]').waitFor()
       await scrollTo(page, 0)
@@ -170,7 +179,9 @@ it('does not manufacture extra scroll range or clamp a nearly fitting list while
     try {
       const page = await browser.newPage({ viewport: { width: 1000, height: 480 }, locale: 'en-US' })
       await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await page.getByRole('button', { name: 'Plugins', exact: true }).click()
+      await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+      // The page lands on the contributed Catalogue tab; the measured header belongs to Installed.
+      await page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Installed', exact: true }).click()
       await page.locator('[data-plugin-package]').first().waitFor()
       await page.locator('[data-plugin-bar][data-natural]').waitFor()
       await scrollTo(page, 0)

@@ -529,6 +529,7 @@ async function waitForCredential<T>(resolveCredential: () => Promise<T>, signal?
   if (signal?.aborted) throw aborted()
   const operation = resolveCredential()
   if (signal === undefined) return operation
+  /* v8 ignore next -- the Promise executor replaces the placeholder synchronously, before any abort listener can call it. */
   let onAbort: () => void = () => {}
   const cancellation = new Promise<never>((_resolve, reject) => {
     onAbort = (): void => { reject(aborted()) }

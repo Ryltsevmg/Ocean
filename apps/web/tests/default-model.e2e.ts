@@ -213,7 +213,9 @@ describe('web e2e: the composer model switch is the default for later sessions',
       const devicePage = await context.newPage()
       const consoleWatch = watchConsole(devicePage)
       await devicePage.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await devicePage.getByRole('textbox', { name: '选择工作区' }).click()
+      // A fresh device context after the desktop tests cold-renders the picker under load;
+      // give the workspace click a boot-sized budget instead of the default 30s action timeout.
+      await devicePage.getByRole('textbox', { name: '选择工作区' }).click({ timeout: 60_000 })
       const composer = devicePage.locator('[data-composer-input][contenteditable="true"]').first()
       await composer.waitFor()
       expect(await composer.evaluate(element => getComputedStyle(element).fontSize)).toBe(automatic ? '14px' : '16px')
@@ -251,7 +253,9 @@ describe('web e2e: the composer model switch is the default for later sessions',
       const devicePage = await context.newPage()
       const consoleWatch = watchConsole(devicePage)
       await devicePage.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await devicePage.getByRole('textbox', { name: '选择工作区' }).click()
+      // A fresh device context after the desktop tests cold-renders the picker under load;
+      // give the workspace click a boot-sized budget instead of the default 30s action timeout.
+      await devicePage.getByRole('textbox', { name: '选择工作区' }).click({ timeout: 60_000 })
       const trigger = devicePage.getByRole('button', { name: /^选择模型/ })
       const observations: string[] = []
       const observeFocus = async (action: string): Promise<void> => {
@@ -527,7 +531,7 @@ describe('web e2e: the composer model switch is the default for later sessions',
     expect(searchStyle.placeholderColor).toBe(searchStyle.captionColor)
     expect(searchStyle.iconCount).toBe(0)
     expect(searchStyle.background).toBe('rgba(0, 0, 0, 0)')
-    expect(searchStyle.radius).toBe('12px')
+    expect(searchStyle.radius).toBe('8px')
     expect(searchStyle.padding).toBe('5px 7px')
     expect(searchStyle.fontSize).toBe('12px')
     const modelWeights = await page.getByRole('menuitemradio').evaluateAll(rows => rows.map(row =>
@@ -565,7 +569,7 @@ describe('web e2e: the composer model switch is the default for later sessions',
     for (const palette of headingPalettes) {
       expect(palette.headingFills, `${palette.platform}, dark=${String(palette.dark)}`)
         .toEqual(['rgba(0, 0, 0, 0)'])
-      expect(palette.menuFill).toBe(palette.dark ? 'rgba(48, 49, 54, 0.64)' : 'rgba(252, 253, 254, 0.7)')
+      expect(palette.menuFill).toBe(palette.dark ? 'rgb(11, 17, 28)' : 'rgb(255, 255, 255)')
       expect(palette.searchBorder).toBe('rgba(0, 0, 0, 0)')
       expect(palette.positions).toEqual(['sticky'])
       expect(palette.headingRadii).toEqual([palette.platform === 'darwin' ? '0px' : palette.optionRadius])

@@ -26,6 +26,7 @@ function send(socketPath: string, operation: Operation, timeoutMs: number): Prom
         const chunks: Buffer[] = []
         let length = 0
         for await (const chunk of res) {
+          /* v8 ignore next -- node:http without setEncoding yields only Buffer chunks on this transport */
           if (!Buffer.isBuffer(chunk)) throw new Error('invalid administrative response')
           length += chunk.length
           if (length > 1024 * 1024) throw new Error('administrative response exceeds its size limit')
@@ -43,7 +44,11 @@ function send(socketPath: string, operation: Operation, timeoutMs: number): Prom
         if (typeof data !== 'object' || data === null || !('result' in data)) throw new Error('invalid administrative response')
         if (data.result === null || data.result === false) throw new Error('device is absent or inactive')
         resolve({ ok: true, value: JSON.stringify(data.result) })
-      })().catch((error: unknown) => { reject(error instanceof Error ? error : new Error('administrative response failed')) })
+      })().catch((error: unknown) => {
+        reject(error instanceof Error ? error :
+          /* v8 ignore next -- node:http rejects the response iterator only with Error values */
+          new Error('administrative response failed'))
+      })
     })
     req.once('error', reject)
     req.end(payload)

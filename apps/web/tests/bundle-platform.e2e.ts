@@ -27,8 +27,10 @@ it('disables unsupported bundles, shows the Host restriction, and refuses direct
   const page = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: ZH_BROWSER_LOCALE })
   await page.goto(scaffold.authenticatedUrl)
   await connectFreshWorkspaceZh(page, scaffold.workspaceCwd)
-  await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
-  const reason = '此插件不支持运行 OCEAN 的主机操作系统'
+  await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
+  const panel = page.locator('[data-plugin-panel]')
+  await panel.getByRole('tab', { name: '已安装', exact: true }).click()
+  const reason = '此插件不支持运行 Ocean-Chat 的主机操作系统'
   const card = page.locator(`[data-plugin-package="${name}"]`)
   await card.getByText(reason, { exact: true }).waitFor()
   expect(await card.getByRole('switch').isEnabled()).toBe(false)

@@ -111,7 +111,9 @@ describe.skipIf(MODE === 'record')('web e2e: DeepSeek account sign-in in a plain
     root = await mkdtemp(join(tmpdir(), 'ocean-web-account-login-'))
     const overlay = join(root, 'account-login.overlay.yml')
     await writeFile(overlay, (await readFile(OVERLAY_TEMPLATE, 'utf8')).replaceAll('{{origin}}', platform.origin))
-    scaffold = await launchWebScaffold({ extraOverlayPath: overlay })
+    // A signed-out plain browser is offered account sign-in through the first-run
+    // Models onboarding step, which is reached only with no usable credential.
+    scaffold = await launchWebScaffold({ extraOverlayPath: overlay, deepSeekMissingCredential: true })
     browser = await chromium.launch()
   })
 
@@ -129,10 +131,13 @@ describe.skipIf(MODE === 'record')('web e2e: DeepSeek account sign-in in a plain
     const console = watchConsole(page)
     onTestFailed(() => saveFailureShot(page, 'web-e2e-account-login'))
     await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
+    // A signed-out browser gets the 'Account menu' launcher only after a stored
+    // credential lands, so sign-in begins in the first-run 'Get started' dialog.
     const menu = page.getByRole('button', { name: 'Account menu', exact: true })
-    await menu.click()
+    const signIn = page.getByRole('dialog', { name: 'Get started', exact: true })
+    await signIn.waitFor({ timeout: 15_000 })
     const tab = context.waitForEvent('page')
-    await page.getByRole('menuitem', { name: 'Sign in', exact: true }).click()
+    await signIn.getByRole('button', { name: 'Sign in', exact: true }).click()
     const authorization = await tab
     await authorization.waitForURL(url => url.pathname === '/dsh/authorized', { timeout: 30_000 })
     expect(await authorization.evaluate(() => window.opener === null)).toBe(true)

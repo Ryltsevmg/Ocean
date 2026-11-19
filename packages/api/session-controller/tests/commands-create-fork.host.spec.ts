@@ -1,7 +1,7 @@
 import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry, { modelSelectionProjectionDefinition } from '@ocean/ocean-agent'
 import SessionProjectionRegistry from '@ocean/ocean-session-projection'
-import type { Agent, AgentHandle, CreateAgentOptions } from '@ocean/ocean-agent'
+import type { Agent, AgentHandle, CreateAgentOptions, Model, ModelSelection as AgentModelSelection } from '@ocean/ocean-agent'
 import type {} from '@ocean/ocean-agent-preset-registry'
 import { createUserMessage } from '@ocean/ocean-llm'
 import SessionStore, { SessionId } from '@ocean/ocean-session'
@@ -274,6 +274,87 @@ describe('Session fork failures', () => {
     if (options === undefined) throw new Error('Agent creation was not attempted')
     expect(options.meta).not.toHaveProperty('cwd')
     expect(options.meta).not.toHaveProperty('agentPreset')
+    await ctx.fiber.dispose()
+  })
+
+  it('requires the model-selection projection to restore the fork route', async () => {
+    const ctx = new Context()
+    await ctx.plugin(TypertRegistry)
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(SessionProjectionRegistry)
+    await ctx.plugin(AgentRegistry)
+    installSessionReadTestServices(ctx)
+    ctx.provide('agentDefaultModel', {
+      currentSelection: () => ({ provider: 'fixture', model: 'fixture-model' }),
+      saveSelection: () => Promise.resolve(),
+    } as never)
+    ctx.provide('workspaceRegistry', { list: () => [] } as never)
+    const source = completedSession(ctx, 'unprojected-source')
+    const controller = new SessionCommandController(ctx, controllerAgents(ctx), '/default')
+
+    await expect(controller.fork({ sessionId: source.id }))
+      .rejects.toThrow('Session forking requires the model-selection projection')
+    await ctx.fiber.dispose()
+  })
+
+  it.each([
+    { failure: new Error('route resolution failed'), message: 'route resolution failed' },
+    { failure: 'route resolution failed', message: 'route resolution failed' },
+  ])('maps a rejected fork route resolution to model-unavailable: $message', async ({ failure, message }) => {
+    const ctx = await baseContext()
+    ctx.provide('workspaceRegistry', { list: () => [] } as never)
+    ctx.provide('llm', {
+      listProviders: () => [{ id: 'fixture', name: 'Fixture' }],
+      listModels: () => Promise.resolve([{ id: 'fixture-model', name: 'Fixture Model' }]),
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- non-Error sentinel by fixture design.
+      resolveCallConfig: () => Promise.reject(failure),
+    } as never)
+    const source = completedSession(ctx, 'route-failure-source')
+    const controller = new SessionCommandController(ctx, controllerAgents(ctx), '/default')
+
+    await expect(controller.fork({
+      sessionId: source.id,
+      modelSelection: { provider: 'fixture', model: 'fixture-model' },
+    })).rejects.toMatchObject({
+      code: 'session/model-unavailable',
+      message,
+      details: { provider: 'fixture', model: 'fixture-model' },
+    })
+    await ctx.fiber.dispose()
+  })
+
+  it.each([
+    { reasoningEffort: 'high', selected: { provider: 'fixture', model: 'fixture-model', reasoningEffort: 'high' } },
+    { reasoningEffort: undefined, selected: { provider: 'fixture', model: 'fixture-model' } },
+  ])('applies an explicit replacement route during child setup: $reasoningEffort', async ({ reasoningEffort, selected }) => {
+    const ctx = await baseContext()
+    ctx.provide('workspaceRegistry', { list: () => [] } as never)
+    const resolveCallConfig = vi.fn(() => Promise.resolve({}))
+    ctx.provide('llm', {
+      listProviders: () => [{ id: 'fixture', name: 'Fixture' }],
+      listModels: () => Promise.resolve([{ id: 'fixture-model', name: 'Fixture Model' }]),
+      resolveCallConfig,
+    } as never)
+    const source = completedSession(ctx, 'replacement-source')
+    const select = vi.fn<(selection: AgentModelSelection) => void>()
+    const model: Model = { current: () => undefined, select }
+    const create = vi.spyOn(ctx.agents, 'create').mockImplementation(async (options: CreateAgentOptions) => {
+      const session = ctx.sessions.create(options.sessionId)
+      const agent = { id: options.sessionId, session, status: 'idle', ctx, model } as Agent
+      await options.setup?.(ctx, agent)
+      return { agent, dispose: () => Promise.resolve() }
+    })
+    const controller = new SessionCommandController(ctx, controllerAgents(ctx), '/default')
+
+    const forked = await controller.fork({
+      sessionId: source.id,
+      modelSelection: { provider: 'fixture', model: 'fixture-model', ...reasoningEffort === undefined ? {} : { reasoningEffort } },
+    })
+
+    expect(forked.sessionId).toMatch(/^session-/)
+    expect(create).toHaveBeenCalledOnce()
+    expect(resolveCallConfig).toHaveBeenCalledWith(selected)
+    expect(select).toHaveBeenCalledWith(selected)
     await ctx.fiber.dispose()
   })
 

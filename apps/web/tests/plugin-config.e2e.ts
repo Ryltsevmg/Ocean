@@ -66,12 +66,13 @@ describe('web e2e: plugin configuration pages', () => {
       await page.keyboard.press('Escape')
       await expect.poll(() => page.getByRole('dialog', { name: '设置' }).count(), { timeout: 5_000 }).toBe(0)
     }
-    await page.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
+    await page.getByRole('navigation', { name: '工具' }).getByRole('button', { name: '插件', exact: true }).click()
     const panel = page.locator('[data-plugin-panel]')
     await panel.waitFor({ timeout: 10_000 })
     while (await panel.getByRole('button', { name: /^返回/ }).count() > 0) {
       await panel.getByRole('button', { name: /^返回/ }).first().click()
     }
+    await panel.getByRole('tab', { name: '已安装', exact: true }).click()
     await panel.getByRole('heading', { name: '内置插件配置', exact: true }).waitFor({ timeout: 20_000 })
     return panel
   }
@@ -106,12 +107,11 @@ describe('web e2e: plugin configuration pages', () => {
     expect(await panel.getByLabel('命令超时（毫秒）').count()).toBe(0)
 
     const extensions = panel.locator('[data-plugin-group="extensions"]')
-    const more = panel.getByRole('button', { name: '更多', exact: true })
-    expect(await extensions.getByRole('heading', { name: '可选插件', exact: true }).count()).toBe(1)
-    expect(await extensions.getByRole('button', { name: '更多', exact: true }).textContent()).toBe('更多')
+    const more = panel.getByRole('button', { name: '浏览其他插件', exact: true })
+    expect(await more.textContent()).toBe('浏览其他插件')
     // Both subagent bundles are held back to the More list while the profile
-    // leaves them off, so the group shows no card of its own.
-    expect(await extensions.getByRole('list').count()).toBe(0)
+    // leaves them off, so no extensions group renders.
+    expect(await extensions.count()).toBe(0)
     expect(await panel.locator('[data-plugin-group="more"]').count()).toBe(0)
     await more.focus()
     await page.keyboard.press('Enter')
@@ -129,12 +129,12 @@ describe('web e2e: plugin configuration pages', () => {
     await panel.getByRole('heading', { name: '可选插件', exact: true, level: 1 }).waitFor()
     await panel.getByRole('button', { name: '返回插件', exact: true }).focus()
     await page.keyboard.press('Space')
-    expect(await extensions.getByRole('heading', { name: '可选插件', exact: true }).count()).toBe(1)
+    expect(await extensions.count()).toBe(0)
     expect(await panel.locator('[data-plugin-group="more"]').count()).toBe(0)
     await more.click()
     await page.reload({ waitUntil: 'load' })
     await openPlugins()
-    expect(await extensions.getByRole('heading', { name: '可选插件', exact: true }).count()).toBe(1)
+    expect(await extensions.count()).toBe(0)
     expect(await panel.locator('[data-plugin-group="more"]').count()).toBe(0)
 
     const snapshot = await captureStableAria(page, '[data-plugin-panel]', scaffold.workspaceCwd)

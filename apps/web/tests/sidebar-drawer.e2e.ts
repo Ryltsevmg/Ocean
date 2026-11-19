@@ -145,7 +145,7 @@ it('retains the closing slide when an expanded sidebar becomes a collapsed drawe
       await page.goto(scaffold.authenticatedUrl)
       await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).waitFor()
       const sidebarColumn = page.locator('[data-slot="sidebar"]').locator('..')
-      await expect.poll(async () => (await sidebarColumn.boundingBox())?.width).toBe(280)
+      await expect.poll(async () => (await sidebarColumn.boundingBox())?.width).toBe(285)
       await sidebarColumn.evaluate((el) => {
         el.parentElement!.style.setProperty('--ds-transition-duration-slow', '100s')
       })
@@ -280,7 +280,7 @@ it('overlays the conversation and closes after navigation without losing its sid
         label.selectNodeContents(tab)
         return label.getBoundingClientRect().left - tab.closest('header')!.getBoundingClientRect().left
       })
-      expect(await tabInset()).toBeCloseTo(20, 1)
+      expect(await tabInset()).toBeCloseTo(24, 1)
       // Restore CSS-probe markers in the same synchronous task, before rendering.
       const desktopInsets = await chatTab.evaluate((tab) => {
         const root = document.documentElement
@@ -295,10 +295,10 @@ it('overlays the conversation and closes after navigation without losing its sid
           delete root.dataset.platform
         }
       })
-      for (const inset of desktopInsets) expect(inset).toBeCloseTo(28, 1)
+      for (const inset of desktopInsets) expect(inset).toBeCloseTo(32, 1)
       await page.setViewportSize({ width: 768, height: 844 })
       await frame.waitFor({ state: 'detached' })
-      expect(await tabInset()).toBeCloseTo(28, 1)
+      expect(await tabInset()).toBeCloseTo(32, 1)
       await page.setViewportSize({ width: 390, height: 844 })
       await frame.waitFor()
       await opener.click()
@@ -489,19 +489,19 @@ it('overlays the conversation and closes after navigation without losing its sid
         const collapseSidebar = page.getByRole('button', { name: 'Collapse sidebar', exact: true })
         await wideFrame.evaluate((el) => { el.style.setProperty('--ds-transition-duration-slow', '100s') })
         await posture.send('Emulation.clearDevicePostureOverride')
-        await assertFoldResize(collapseSidebar, 475.5, 280)
-        await expect.poll(() => main.boundingBox()).toEqual({ x: 280, y: 0, width: 671, height: 669 })
+        await assertFoldResize(collapseSidebar, 475.5, 285)
+        await expect.poll(() => main.boundingBox()).toEqual({ x: 285, y: 0, width: 666, height: 669 })
         expect(await page.locator('[data-side="sidebar"]').count()).toBe(1)
         expect(await foldSearch.evaluate(el => el === document.activeElement)).toBe(true)
         expect(await foldSearch.inputValue()).toBe('fold search')
         await wideFrame.evaluate((el) => { el.style.setProperty('--ds-transition-duration-slow', '100s') })
         await posture.send('Emulation.setDevicePostureOverride', { posture: { type: 'folded' } })
-        await assertFoldResize(collapseSidebar, 280, 475.5)
+        await assertFoldResize(collapseSidebar, 285, 475.5)
         await expect.poll(async () => (await main.boundingBox())?.x).toBe(475.5)
         expect(await foldSearch.evaluate(el => el === document.activeElement)).toBe(true)
         await page.emulateMedia({ reducedMotion: 'reduce' })
         await posture.send('Emulation.clearDevicePostureOverride')
-        await expect.poll(async () => (await main.boundingBox())?.x).toBe(280)
+        await expect.poll(async () => (await main.boundingBox())?.x).toBe(285)
         // Scroll-driven text fades remain registered even with reduced motion.
         expect(await wideFrame.evaluate(el => el.getAnimations({ subtree: true })
           .filter(animation => animation.timeline === document.timeline).length)).toBe(0)
@@ -512,7 +512,7 @@ it('overlays the conversation and closes after navigation without losing its sid
         await expect.poll(() => frame.getAttribute('data-sidebar-collapsed')).toBe('true')
         await drawer.waitFor({ state: 'hidden' })
         await opener.tap()
-        await expect.poll(async () => (await drawer.boundingBox())?.width).toBe(280)
+        await expect.poll(async () => (await drawer.boundingBox())?.width).toBe(285)
         expect(await main.boundingBox()).toEqual({ x: 0, y: 0, width: 669, height: 951 })
       } finally {
         await posture.detach()
@@ -589,7 +589,7 @@ it('overlays the conversation and closes after navigation without losing its sid
         'keyboard close: layout height stays 844px; sidebar search retained; Settings close remains reachable',
         'shell coverage: drawer backing and mask cover 844px without synthetic safe-area insets',
         'rotation: 844x390 then 390x844 restores shell height and sidebar breakpoint',
-        'folded landscape: 951px frame splits at 475.5px without a resize handle; unfolding restores 280px and search focus; portrait retains the drawer',
+        'folded landscape: 951px frame splits at 475.5px without a resize handle; unfolding restores 285px and search focus; portrait retains the drawer',
         'fold transitions: sidebar controls follow the divider in both directions; reduced motion changes width without animation',
         'drawer mask: opacity transitions from 0 to 1 on open and 1 to 0 on close',
         'reduced motion: drawer and mask settle without transitions',

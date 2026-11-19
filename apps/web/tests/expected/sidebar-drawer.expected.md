@@ -12,7 +12,7 @@ simulated keyboard: homepage and drawer retain 844px layout height without follo
 keyboard close: layout height stays 844px; sidebar search retained; Settings close remains reachable
 shell coverage: drawer backing and mask cover 844px without synthetic safe-area insets
 rotation: 844x390 then 390x844 restores shell height and sidebar breakpoint
-folded landscape: 951px frame splits at 475.5px without a resize handle; unfolding restores 280px and search focus; portrait retains the drawer
+folded landscape: 951px frame splits at 475.5px without a resize handle; unfolding restores 285px and search focus; portrait retains the drawer
 fold transitions: sidebar controls follow the divider in both directions; reduced motion changes width without animation
 drawer mask: opacity transitions from 0 to 1 on open and 1 to 0 on close
 reduced motion: drawer and mask settle without transitions

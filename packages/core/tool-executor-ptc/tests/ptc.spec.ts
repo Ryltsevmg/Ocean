@@ -6,14 +6,14 @@ import { NativeToolExecutor } from '@ocean/ocean-tool-executor-native'
 import { setSandboxMode } from '@ocean/ocean-sandbox-policy'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { provideWorkingDirectoryFixture } from '@ocean/ocean-agent-loop-testkit'
-import { Context } from '@deepseek-ai/cordis'
+import { Context, Service } from '@deepseek-ai/cordis'
 import { createUserMessage, ToolCallId  } from '@ocean/ocean-llm'
 import type { ContextFormed } from '@ocean/ocean-llm'
 import type { ToolSchema } from '@ocean/ocean-llm'
 import { createScope } from '@ocean/ocean-scope'
 import type { Scope } from '@ocean/ocean-scope'
 import SystemPrompt, { renderPrompt } from '@ocean/ocean-system-prompt'
-import { PtcRuntime } from '@ocean/ocean-ptc-runtime'
+import { PtcImage, PtcRuntime } from '@ocean/ocean-ptc-runtime'
 import type { PtcRunFailure, PtcRunRequest, PtcRunResult } from '@ocean/ocean-ptc-runtime'
 import ToolRuntime, { RUN_CODE_NAME, TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH, defineTool } from '@ocean/ocean-tools'
 import { defineContentToolFixture } from '@ocean/ocean-tool-testkit'
@@ -1795,6 +1795,114 @@ describe('the run_code dispatch bridge', () => {
     const result = await runCode(ctx, 'program')
     expect(result.isError).toBe(true)
     expect(result.content).toEqual([{ type: 'text', text: expect.stringContaining('Image storage must expose a readable path') as string }])
+  })
+
+  it('adapts a single-image result through the mounted program filesystem', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    const hostPath = '/host/attachments/objects/aa/object'
+    const programPath = '/program/attachments/objects/aa/object'
+    // The adaptation reads only the attachment host path and the mounted
+    // filesystem's host-to-program mapping.
+    await ctx.plugin(class extends Service {
+      constructor(owner: Context) { super(owner, 'attachments') }
+      imageHostPath(_ref: unknown): string { return hostPath }
+    })
+    await ctx.plugin(class extends Service {
+      constructor(owner: Context) { super(owner, 'fs') }
+      processPathFromHostPath(path: string): string | undefined {
+        return path === hostPath ? programPath : undefined
+      }
+    })
+    const image = {
+      type: 'image' as const,
+      attachment: {
+        attachmentId: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as never,
+        mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+      },
+    }
+    ctx.tools.register(defineContentToolFixture({
+      name: 'cua', description: 'Return image content.', parameters: {}, programImage: true,
+      execute: () => Promise.resolve([image]),
+    }))
+    runtime.behavior = async (request) => {
+      const value = await request.bindings[0]!.functions.cua!({})
+      // The fake runtime hands the binding's value straight to the program.
+      expect(value).toBeInstanceOf(PtcImage)
+      expect(value).toEqual(expect.objectContaining({ path: programPath, attachment: image.attachment }))
+      return { output: [image] }
+    }
+
+    const result = await runCode(ctx, 'await tools.cua({})')
+    expect(result.isError).toBe(false)
+    expect(result.content).toEqual([image])
+  })
+
+  it('records program images on a failed run so the error result keeps them', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    const image = {
+      type: 'image' as const,
+      attachment: {
+        attachmentId: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as never,
+        mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+      },
+    }
+    runtime.behavior = async () => ({ output: [image], error: { kind: 'abort', message: 'program aborted' } })
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(true)
+    expect(result.content).toEqual([
+      { type: 'text', text: 'Error: code run failed (abort): program aborted' },
+      image,
+    ])
+  })
+
+  it('drops a recorded failure projection when the delivered failure differs', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    const image = {
+      type: 'image' as const,
+      attachment: {
+        attachmentId: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as never,
+        mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+      },
+    }
+    ctx.on('tools/execute', async (exec, next) => {
+      const result = await next()
+      if (exec.name !== RUN_CODE_NAME || !result.isError) return result
+      return { ...result, error: { ...result.error, message: 'rewritten failure' } }
+    })
+    runtime.behavior = async () => ({ output: [image], error: { kind: 'abort', message: 'program aborted' } })
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(true)
+    // The recording no longer describes the delivered result, so the projection
+    // declines and the image-bearing output stays out of the error content.
+    expect(result.content).toEqual([{ type: 'text', text: 'Error: code run failed (abort): program aborted' }])
+  })
+
+  it('drops a recorded success projection when the delivered value differs', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
+    onTestFinished(() => ctx.fiber.dispose())
+    const image = {
+      type: 'image' as const,
+      attachment: {
+        attachmentId: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as never,
+        mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
+      },
+    }
+    ctx.on('tools/execute', async (exec, next) => {
+      const result = await next()
+      if (exec.name !== RUN_CODE_NAME || result.isError) return result
+      return { ...result, value: { logs: ['rewritten'] } }
+    })
+    runtime.behavior = async () => ({ output: [image] })
+
+    const result = await runCode(ctx, 'program')
+    expect(result.isError).toBe(false)
+    // The registry renders the delivered value, not the recorded output.
+    expect(result.content).toEqual([{ type: 'text', text: 'rewritten' }])
   })
 
   it('returns non-image tool content as program values', async () => {

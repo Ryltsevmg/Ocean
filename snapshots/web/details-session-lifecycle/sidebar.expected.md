@@ -9,15 +9,15 @@
     1000
   ],
   "columns": [
-    280,
-    644,
-    756
+    285,
+    875,
+    520
   ],
   "columnTransition": "all",
   "expanded": true,
   "mode": "push",
-  "panelContentWidth": 756,
-  "panelOuterWidth": 756,
+  "panelContentWidth": 520,
+  "panelOuterWidth": 520,
   "coversViewport": false,
   "resizeHandleWidth": 8,
   "expandedDirectories": [],
@@ -57,9 +57,9 @@
     1000
   ],
   "columns": [
-    280,
-    644,
-    756
+    285,
+    875,
+    520
   ],
   "columnTransition": "none",
   "expanded": true,
@@ -105,8 +105,8 @@
     1000
   ],
   "columns": [
-    280,
-    1400,
+    285,
+    1395,
     0
   ],
   "columnTransition": "none",
@@ -153,8 +153,8 @@
     1000
   ],
   "columns": [
-    280,
-    1400,
+    285,
+    1395,
     0
   ],
   "columnTransition": "all",
@@ -190,9 +190,9 @@
     1000
   ],
   "columns": [
-    280,
-    644,
-    756
+    285,
+    875,
+    520
   ],
   "columnTransition": "none",
   "expanded": true,
@@ -238,15 +238,15 @@
     1000
   ],
   "columns": [
-    280,
-    644,
-    756
+    285,
+    875,
+    520
   ],
   "columnTransition": "all",
   "expanded": true,
   "mode": "push",
-  "panelContentWidth": 756,
-  "panelOuterWidth": 756,
+  "panelContentWidth": 520,
+  "panelOuterWidth": 520,
   "coversViewport": false,
   "resizeHandleWidth": 8,
   "expandedDirectories": [],
@@ -273,15 +273,15 @@
     1000
   ],
   "columns": [
-    280,
-    644,
-    756
+    285,
+    875,
+    520
   ],
   "columnTransition": "all",
   "expanded": true,
   "mode": "push",
-  "panelContentWidth": 756,
-  "panelOuterWidth": 756,
+  "panelContentWidth": 520,
+  "panelOuterWidth": 520,
   "coversViewport": false,
   "resizeHandleWidth": 8,
   "expandedDirectories": [],

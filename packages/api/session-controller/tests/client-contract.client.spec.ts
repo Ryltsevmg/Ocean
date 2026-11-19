@@ -180,6 +180,17 @@ describe('Client Session contracts', () => {
       kind: 'settle-assistant',
       attemptId: 'attempt-two',
     })
+
+    // A settlement newer than every retained row lands at the window tail.
+    feed.append(transient('attempt-three', 4.5))
+    const tail = assistantSettlement(SessionSeq(5))
+    feed.settleAssistant(LlmAttemptId('attempt-three'), tail)
+    expect(feed.getSnapshot().entries).toEqual([opening, settlement, later, tail])
+    expect(feed.getSnapshot().change).toEqual({
+      kind: 'settle-assistant',
+      attemptId: 'attempt-three',
+      entry: tail,
+    })
   })
 
 })

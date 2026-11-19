@@ -53,6 +53,124 @@ it('keeps a bounded login independent of the device bearer and invalidates it on
   }
 })
 
+it('refuses malformed bearers at every credential entry point', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const { id, token } = await devices.issue('Laptop')
+  const secret = token.slice(37)
+  const origin = 'https://ocean.example'
+  const limits = { lifetimeMs: 60_000, maxSessionsPerDevice: 1 }
+  const malformed = [
+    'short',
+    `${id}X${secret}`,
+    `${'x'.repeat(36)}.${secret}`,
+    `${id}.${'!'.repeat(43)}`,
+  ]
+  for (const bearer of malformed) {
+    expect(await devices.verify(bearer)).toBeUndefined()
+    expect(await devices.exchange(bearer, origin, limits)).toBeUndefined()
+    expect(await devices.verifySession(bearer, origin)).toBeUndefined()
+    expect(await devices.readSession(bearer, origin)).toBeUndefined()
+    expect(await devices.endSession(bearer, origin)).toBeUndefined()
+  }
+  expect(store.reads).toBe(0)
+})
+
+it('fails closed when the registry key holds a foreign record kind', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const { token } = await devices.issue('Laptop')
+  store.record = { kind: 'api-key', key: 'foreign credential' }
+  await expect(devices.verify(token)).rejects.toThrow('invalid remote device credential record')
+})
+
+it('reports issuance that did not commit', async () => {
+  const store = new RecordCredentials()
+  store.discardWrites = true
+  await expect(new DeviceTokens(store).issue('Laptop')).rejects.toThrow('remote device issuance did not commit')
+})
+
+it('rejects invalid login limits before reading or writing storage', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  for (const limits of [
+    { lifetimeMs: 0, maxSessionsPerDevice: 1 },
+    { lifetimeMs: 1.5, maxSessionsPerDevice: 1 },
+    { lifetimeMs: Number.MAX_SAFE_INTEGER + 1, maxSessionsPerDevice: 1 },
+    { lifetimeMs: 100, maxSessionsPerDevice: 0 },
+    { lifetimeMs: 100, maxSessionsPerDevice: -1 },
+  ]) {
+    await expect(devices.exchange('unused', 'https://ocean.example', limits))
+      .rejects.toThrow('invalid device login limits')
+  }
+  expect(store.reads).toBe(0)
+  expect(store.modifies).toBe(0)
+})
+
+it('returns the scoped logout key when no matching login exists and keeps other devices intact', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const laptop = await devices.issue('Laptop')
+  const phone = await devices.issue('Phone')
+  const origin = 'https://ocean.example'
+  const limits = { lifetimeMs: 60_000, maxSessionsPerDevice: 2 }
+  const login = await devices.exchange(laptop.token, origin, limits)
+  if (login === undefined) throw new Error('device login was refused')
+
+  // A parseable bearer for an absent device changes nothing but still names the scoped key.
+  const absent = '00000000-0000-4000-8000-000000000099'
+  expect(await devices.endSession(`${absent}.${'a'.repeat(43)}`, origin))
+    .toEqual({ deviceId: absent, origin, verifier: expect.any(String) as string })
+  // A login at another origin is not removed.
+  const otherOrigin = 'https://other.example'
+  expect(await devices.endSession(login, otherOrigin))
+    .toEqual({ deviceId: laptop.id, origin: otherOrigin, verifier: expect.any(String) as string })
+  expect(await devices.verifySession(login, origin)).toBe(laptop.id)
+
+  // Removing one device's login leaves the other device record untouched.
+  expect(await devices.endSession(login, origin))
+    .toEqual({ deviceId: laptop.id, origin, verifier: expect.any(String) as string })
+  expect(await devices.verifySession(login, origin)).toBeUndefined()
+  expect(await devices.verify(laptop.token)).toBe(laptop.id)
+  expect(await devices.list()).toEqual([
+    { id: laptop.id, label: 'Laptop', revoked: false },
+    { id: phone.id, label: 'Phone', revoked: false },
+  ])
+})
+
+it('reports a logout that did not commit', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const { id, token } = await devices.issue('Laptop')
+  const origin = 'https://ocean.example'
+  const login = await devices.exchange(token, origin, { lifetimeMs: 60_000, maxSessionsPerDevice: 1 })
+  if (login === undefined) throw new Error('device login was refused')
+  const stale = new DeviceTokens(uncommittedWrites(store))
+  await expect(stale.endSession(login, origin)).rejects.toThrow('logout did not commit')
+  expect(await devices.verifySession(login, origin)).toBe(id)
+})
+
+/** A provider that runs the requested update but keeps returning the pre-write record. */
+function uncommittedWrites(store: RecordCredentials): ConstructorParameters<typeof DeviceTokens>[0] {
+  return {
+    readRecord: () => store.readRecord(),
+    modifyRecord: async (_key, update) => {
+      const current = store.record
+      await update(current)
+      return current
+    },
+  }
+}
+
+it('reports a rotation that did not commit', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const { id, token } = await devices.issue('Laptop')
+  const stale = new DeviceTokens(uncommittedWrites(store))
+  await expect(stale.rotate(id)).rejects.toThrow('remote device rotation did not commit')
+  expect(await devices.verify(token)).toBe(id)
+})
+
 it('rotates an active device without changing its identity or preserving old logins', async () => {
   const devices = new DeviceTokens(new RecordCredentials())
   const laptop = await devices.issue('Laptop')

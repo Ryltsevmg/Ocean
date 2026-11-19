@@ -1,5 +1,5 @@
 - listitem:
-  - button "Codex サブエージェントを表示": Codex サブエージェント
+  - button "Codex サブエージェント を表示": Codex サブエージェント
   - text: Codex のネイティブの認証と設定を使用して、単独のタスクを委派します。
   - status
-  - switch "Codex サブエージェントを有効化"
+  - switch "Codex サブエージェント を有効化"

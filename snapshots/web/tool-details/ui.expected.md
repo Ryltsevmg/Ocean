@@ -322,134 +322,23 @@
         - listitem:
           - paragraph: terminal_list
 - button "Inspect"
-- button "Run ralph loop 已检查详情区域的换行和工具名称显示。" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: 已检查详情区域的换行和工具名称显示。 Worker reported completion
-    - term: Rounds
-    - definition: "2"
-    - list:
-      - listitem: 目标、任务清单和定时任务已逐项检查。
-      - listitem: 列表类工具仍显示原始输出。
-    - group:
-      - text: Task
-      - list:
-        - listitem:
-          - paragraph: 检查并整理工具卡片的布局问题
+- button "Tool call ralph · 检查并整理工具卡片的布局问题" [expanded]
+- text: "IN { \"objective\": \"检查并整理工具卡片的布局问题\", \"maxRounds\": 3 } OUT Ralph worker reported completion after 2 rounds. Final report: { \"status\": \"complete\", \"summary\": \"已检查详情区域的换行和工具名称显示。\", \"evidence\": [ \"目标、任务清单和定时任务已逐项检查。\", \"列表类工具仍显示原始输出。\" ], \"nextSteps\": [], \"blocker\": \"\" }"
 - button "Inspect"
-- 'button "Read event tool/call · #5" [expanded]'
-- text: Recorded result
-- list:
-  - listitem:
-    - text: tool/call 任务清单变化示例 · todo-diff-demo
-    - term: Event sequence
-    - definition: "5"
-    - term: Time
-    - definition: Sep 10, 2026, 4:00 PM
-  - listitem:
-    - text: todo_write
-    - term: Turn
-    - definition: "1"
-    - term: Step
-    - definition: "1"
-    - term: Call ID
-    - definition: demo-todo-1
-    - group:
-      - text: IN
-      - list:
-        - listitem:
-          - group:
-            - text: todos
-            - list:
-              - listitem:
-                - text: Result In progress
-                - term: Content
-                - definition: 实现紧凑详情
-  - listitem:
-    - group:
-      - text: Surrounding events
-      - list:
-        - listitem:
-          - paragraph: "Before: - seq 4 | assistant/message | {{timestamp}} 更新任务清单。 After: - seq 6 | tool/result | {{timestamp}} Updated todo list: 0 completed, 1 in progress, 0 pending."
+- button "Tool call session_event_read · todo-diff-demo" [expanded]
+- text: "IN { \"session_id\": \"todo-diff-demo\", \"seq\": 5, \"before\": 1, \"after\": 1 } OUT Session todo-diff-demo — 任务清单变化示例 Target event seq 5: ```json { \"type\": \"tool/call\", \"seq\": 5, \"time\": 1789027200000, \"data\": { \"turn\": 1, \"step\": 1, \"callId\": \"demo-todo-1\", \"name\": \"todo_write\", \"arguments\": \"{\\\"todos\\\":[{\\\"content\\\":\\\"实现紧凑详情\\\",\\\"status\\\":\\\"in_progress\\\"}]}\" } } ``` Before: - seq 4 | assistant/message | {{timestamp}} 更新任务清单。 After: - seq 6 | tool/result | {{timestamp}} Updated todo list: 0 completed, 1 in progress, 0 pending."
 - button "Inspect"
-- button "Search events 2 matches" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: "重新设计任务清单工具卡片。 user/message · #1"
-    - term: Time
-    - definition: Sep 10, 2026, 4:00 PM
-    - term: Record status
-    - definition: current
-  - listitem:
-    - text: "工具卡片现在按新增、修改和删除显示。 assistant/message · #12"
-    - term: Time
-    - definition: Sep 10, 2026, 4:01 PM
-    - term: Record status
-    - definition: current
+- button "Tool call session_event_search · todo-diff-demo" [expanded]
+- text: "IN { \"session_id\": \"todo-diff-demo\", \"query\": \"工具卡片\", \"limit\": 5 } OUT Session todo-diff-demo — 任务清单变化示例 Event search results (2): 1. seq 1 | user/message | current | {{timestamp}} Snippet: 重新设计任务清单工具卡片。 2. seq 12 | assistant/message | current | {{timestamp}} Snippet: 工具卡片现在按新增、修改和删除显示。"
 - button "Inspect"
-- button "Trace event 任务清单变化示例" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: 任务清单变化示例 todo-diff-demo
-    - term: Target event
-    - definition: seq 12 | assistant/message | current | {{timestamp}}
-    - term: Replaced by
-    - definition: None
-    - term: Replacement chain
-    - definition: None
-    - term: Replaced events
-    - definition: None
-    - term: Source events
-    - definition: None
-    - term: Derived events
-    - definition: None
+- button "Tool call session_event_trace · todo-diff-demo" [expanded]
+- text: "IN { \"session_id\": \"todo-diff-demo\", \"seq\": 12 } OUT Session todo-diff-demo — 任务清单变化示例 Target: seq 12 | assistant/message | current | {{timestamp}} Replaced by: none Replacement chain: none Events replaced by target: none Events cited directly as sources: none Direct derived events: none"
 - button "Inspect"
-- button "Search sessions 2 matches" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: 任务清单变化示例 todo-diff-demo
-    - paragraph: 重新设计任务清单工具卡片。
-    - term: Time
-    - definition: Sep 10, 2026, 4:00 PM
-    - term: Parent
-    - definition: root
-    - term: Availability
-    - definition: persisted
-    - term: Best match
-    - definition: seq 1 | user/message | current | {{timestamp}}
-  - listitem:
-    - text: Tool card details demo tool-details-demo
-    - paragraph: Show a goal, a to-do list, and reminders.
-    - term: Time
-    - definition: Sep 10, 2026, 3:00 PM
-    - term: Parent
-    - definition: root
-    - term: Availability
-    - definition: persisted
-    - term: Best match
-    - definition: seq 1 | user/message | current | {{timestamp}}
+- button "Tool call session_search · 工具卡片" [expanded]
+- text: "IN { \"query\": \"工具卡片\", \"limit\": 5 } OUT Session search results (2): 1. Session todo-diff-demo — 任务清单变化示例 Created: {{timestamp}} Parent: root Availability: persisted Best match: seq 1 | user/message | current | {{timestamp}} Snippet: 重新设计任务清单工具卡片。 2. Session tool-details-demo — Tool card details demo Created: {{timestamp}} Parent: root Availability: persisted Best match: seq 1 | user/message | current | {{timestamp}} Snippet: Show a goal, a to-do list, and reminders."
 - button "Inspect"
-- button "Trace session 任务清单变化示例" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: 任务清单变化示例 todo-diff-demo
-    - term: Time
-    - definition: Sep 10, 2026, 4:00 PM
-    - term: Availability
-    - definition: persisted
-  - listitem:
-    - text: Ancestor sessions
-    - paragraph: None
-  - listitem:
-    - text: Descendant sessions
-    - list:
-      - listitem: review-child — Layout review | {{timestamp}} | persisted
-      - listitem: review-grandchild — Narrow layout | {{timestamp}} | persisted
+- button "Tool call session_trace · todo-diff-demo" [expanded]
+- text: "IN { \"session_id\": \"todo-diff-demo\" } OUT Session todo-diff-demo — 任务清单变化示例 Created: {{timestamp}} Availability: persisted Ancestors (nearest first): - none (target is a root session) Descendants: - review-child — Layout review | {{timestamp}} | persisted - review-grandchild — Narrow layout | {{timestamp}} | persisted"
 - button "Inspect"
 - button "List models deepseek" [expanded]
 - text: Recorded result
@@ -525,65 +414,20 @@
     - text: job-demo-preview Cancellation requested
     - paragraph: 演示检查已经结束
 - button "Inspect"
-- button "Open terminal preview" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: preview Started terminal-demo-1
-    - term: Type
-    - definition: shell
-    - text: Code block
-    - button "Wrap lines" [pressed]
-    - button "Copy"
-    - code: /workspace/demo %
+- button "Tool call terminal_open · shell" [expanded]
+- text: "IN { \"type\": \"shell\", \"name\": \"preview\", \"cwd\": \"/workspace/demo\" } OUT started terminal session terminal-demo-1 (preview) [type: shell] /workspace/demo %"
 - button "Inspect"
-- button "Read terminal terminal-demo-1" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: terminal-demo-1 Lines 16–18 of 18 Code block
-    - button "Wrap lines" [pressed]
-    - button "Copy"
-    - code: "VITE v7.0.0 ready in {{duration}} Local: http://localhost:5173/ Watching for file changes…"
+- button "Tool call terminal_read · terminal-demo-1" [expanded]
+- text: "IN { \"sessionId\": \"terminal-demo-1\", \"offset\": 0, \"count\": 20 } OUT VITE v7.0.0 ready in {{duration}} Local: http://localhost:5173/ Watching for file changes… [lines: 16-18 of 18]"
 - button "Inspect"
-- button "List terminals 3 terminals" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: preview Running terminal-demo-1
-    - term: Type
-    - definition: shell
-    - term: Process ID
-    - definition: "43120"
-  - listitem:
-    - text: repl Running terminal-demo-2
-    - term: Type
-    - definition: shell
-    - term: Process ID
-    - definition: "43158"
-  - listitem:
-    - text: build Exited terminal-demo-3
-    - term: Type
-    - definition: shell
-    - term: Process ID
-    - definition: "43210"
-    - term: Exit code
-    - definition: "0"
+- 'button "Tool call terminal_list · {}" [expanded]'
+- text: "IN {} OUT terminal-demo-1 (preview) [shell] running pid=43120 terminal-demo-2 (repl) [shell] running pid=43158 terminal-demo-3 (build) [shell] exited code=0 signal=null pid=43210"
 - button "Inspect"
-- button "Signal terminal terminal-demo-1" [expanded]
-- text: Recorded result
-- list:
-  - listitem:
-    - text: terminal-demo-1 Signal delivered
-    - term: Signal
-    - definition: SIGINT
-    - term: Process group
-    - definition: "43120"
+- button "Tool call terminal_signal · terminal-demo-1" [expanded]
+- text: "IN { \"sessionId\": \"terminal-demo-1\", \"signal\": \"SIGINT\" } OUT delivered SIGINT to foreground process group 43120"
 - button "Inspect"
-- button "Close terminal terminal-demo-1" [expanded]
-- text: Recorded result
-- list:
-  - listitem: terminal-demo-1 Closed
+- button "Tool call terminal_close · terminal-demo-1" [expanded]
+- text: "IN { \"sessionId\": \"terminal-demo-1\" } OUT closed terminal session terminal-demo-1"
 - button "Inspect"
 - button "Find definition src/app.ts · 1 locations" [expanded]
 - text: Recorded result

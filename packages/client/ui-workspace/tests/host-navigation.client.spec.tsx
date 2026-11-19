@@ -17,11 +17,13 @@ const selection: HostSelection = {
     { id: 'loading', label: 'Connecting' },
   ],
 }
-function mount(wide: boolean, error?: 'load' | 'select' | 'publish') {
+/** Mount the control over one Host snapshot; `view.selection: undefined` is the pre-load browser state. */
+function mount(wide: boolean, error?: 'load' | 'select' | 'publish',
+  view: { selection: HostSelection | undefined; address?: string } = { selection }) {
   const select = vi.fn()
   const retry = vi.fn()
   const props: HostNavigationProps = {
-    wide, useHosts: selector => selector({ selection, address: undefined, busy: false, error }), select, retry,
+    wide, useHosts: selector => selector({ selection: view.selection, address: view.address, busy: false, error }), select, retry,
     useContextMenu: contextMenuHook(), useSessions: neverHook, useSessionStatus: neverHook,
     useSessionRetainInfo: neverHook, usePanelInfo: neverHook, useResource: neverHook,
     useWorkspaces: neverHook, ...allowAllAccess, t: makeTranslate(en),
@@ -46,6 +48,54 @@ describe('Host navigation control', () => {
   it('offers a visible retry when Host selection fails', () => {
     const { retry } = mount(true, 'select')
     fireEvent.click(screen.getByRole('button', { name: 'Could not switch hosts. Retry' }))
+    expect(retry).toHaveBeenCalledOnce()
+  })
+
+  it('describes the current Host and navigates to another Host when nothing waits', () => {
+    const calm: HostSelection = {
+      revision: 1, publicationRevision: 0, label: 'Hosts', selected: 'local',
+      entries: [
+        { id: 'local', label: 'Local', pendingApprovals: 0, pendingQuestions: 0 },
+        { id: 'remote', label: 'Remote', pendingApprovals: 0, pendingQuestions: 0 },
+      ],
+    }
+    const { select } = mount(true, undefined, { selection: calm })
+    const trigger = screen.getByRole('button', { name: 'Local. Waiting: 0 approvals, 0 questions' })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Remote. Waiting: 0 approvals, 0 questions' }))
+    expect(select).toHaveBeenCalledExactlyOnceWith('remote', undefined)
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('closes the Host menu without navigating when it is dismissed', () => {
+    const { select } = mount(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Local. Hosts: Waiting: 2 approvals, 3 questions' }))
+    expect(screen.getByRole('menu')).toBeTruthy()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(select).not.toHaveBeenCalled()
+  })
+
+  it('offers the browser address as the only Host before a selection loads', () => {
+    const { select } = mount(true, undefined, { selection: undefined, address: 'https://host.example/' })
+    const trigger = screen.getByRole('button', { name: 'https://host.example/' })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'https://host.example/' }))
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(select).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the local Host label without a selection or a browser address', () => {
+    const { select } = mount(true, undefined, { selection: undefined })
+    fireEvent.click(screen.getByRole('button', { name: 'Local host' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Local host' }))
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(select).not.toHaveBeenCalled()
+  })
+
+  it('offers a compact retry on the collapsed rail', () => {
+    const { retry } = mount(false, 'publish')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(retry).toHaveBeenCalledOnce()
   })
 })

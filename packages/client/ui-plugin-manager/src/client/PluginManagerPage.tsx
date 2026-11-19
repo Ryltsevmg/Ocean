@@ -128,6 +128,7 @@ function pinnedToMainList(pkg: PackageView): boolean {
  */
 function optionalBundleRank(name: string): number {
   const ranked = EXTENSION_BUNDLES.indexOf(name)
+  /* v8 ignore next -- EXTENSION_BUNDLES is empty, so no bundle holds a ranked place; dead-code candidate. */
   if (ranked >= 0) return ranked
   const heldBack = MORE_BUNDLES.indexOf(name)
   return heldBack < 0 ? EXTENSION_BUNDLES.length : EXTENSION_BUNDLES.length + 1 + heldBack
@@ -1676,7 +1677,9 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
           <h3 className={css.groupTitle}>{heading}</h3>
 
         </div>
+        {/* v8 ignore start -- renderGroup returns null for an empty list, so the empty arm never renders; dead-code candidate. */}
         {cards.length > 0 ? <ul className={css.cards}>{cards}</ul> : null}
+        {/* v8 ignore stop */}
       </section>
     )
   }
@@ -1723,9 +1726,12 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
                     </Tooltip>
                   </> : null}
                   {more.length > 0 ? (
-                    <Button size="sm" className={css.groupMore} onClick={() => { setTab(INSTALLED_TAB); setView({ kind: 'more' }) }}>
-                      {t('moreAction')}<IconChevronRightOutlineRegular size={14} aria-hidden="true" />
-                    </Button>
+                    <Tooltip label={t('moreAction')} delayMs={500} focusDelayMs={500} side="bottom" portal>
+                      <Button size="sm" className={css.groupMore} aria-label={t('moreAction')}
+                        onClick={() => { setTab(INSTALLED_TAB); setView({ kind: 'more' }) }}>
+                        <span className={css.toolbarLabel}>{t('moreAction')}</span><IconChevronRightOutlineRegular size={14} aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
                   ) : null}
                   {state.install.requestId === undefined
                     ? <AddPluginMenu t={t} disabled={!loaded} openInstall={props.openInstall} renderSlot={renderSlot} />

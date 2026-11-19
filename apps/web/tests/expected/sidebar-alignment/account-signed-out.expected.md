@@ -1,10 +1,10 @@
 {
   "wide": {
     "height": 32,
-    "width": 264,
+    "width": 253,
     "footerCenterOffset": 0,
-    "leftOffset": -4,
-    "rightOffset": 4,
+    "leftOffset": -1,
+    "rightOffset": 1,
     "paintedLeftOffset": -1,
     "paintedRightOffset": 1
   },

@@ -58,9 +58,10 @@ describe.skipIf(MODE === 'record')('web e2e: compact Tool details', () => {
     expect(await rows.count()).toBe(50)
     for (const row of await rows.all()) {
       await row.getByRole('button', { expanded: false }).first().click()
-      expect(await row.getByRole('listitem').count()).toBeGreaterThan(0)
-      expect(await row.locator('[class*="ioCard"]').count()).toBe(0)
-      expect(await row.getByRole('button', { name: 'Inspect', exact: true }).count()).toBe(1)
+      // Keyed renderers specialize per tool (details list, Read/Search/Web/terminal
+      // blocks, or an input/output card), so assert the disclosure opens; the
+      // per-tool assertions below verify the individual keyed bodies.
+      await expect.poll(() => row.getByRole('button', { expanded: true }).count()).toBeGreaterThan(0)
     }
     const agentRow = page.locator('[data-tool="list_agents"]').getByRole('listitem').first()
     expect(await agentRow.getByRole('button').count()).toBe(0)

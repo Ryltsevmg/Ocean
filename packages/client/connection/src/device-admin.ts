@@ -80,6 +80,7 @@ async function serve(req: IncomingMessage, res: ServerResponse, dispatch: (value
     const chunks: Buffer[] = []
     let bytes = 0
     for await (const chunk of req) {
+      /* v8 ignore next -- node:http IncomingMessage always yields Buffer chunks; no object-mode stream reaches this server. */
       if (!Buffer.isBuffer(chunk)) throw new Error('expected raw bytes')
       bytes += chunk.length
       if (bytes > 1024) {

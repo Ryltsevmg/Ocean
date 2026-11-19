@@ -11,6 +11,7 @@ import {
   canonicalizeWatchPath,
   defaultAgentsHome,
   defaultOceanHome,
+  dshCachePath,
   oceanCachePath,
   oceanHomeDisplay,
   oceanHomePath,
@@ -116,6 +117,18 @@ describe('ocean path helpers', () => {
       expect(oceanCachePath({ oceanHome: './explicit-ocean' }, 'attachments', 'request-images'))
         .toBe(resolve('./explicit-ocean/cache/attachments/request-images'))
       expect(oceanCachePath({}, 'attachments')).toBe(join(homedir(), 'env-ocean', 'cache', 'attachments'))
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('keeps the legacy cache helper on the same resolved home', () => {
+    vi.stubEnv('OCEAN_HOME', '~/env-ocean')
+    try {
+      expect(dshCachePath()).toBe(join(homedir(), 'env-ocean', 'cache'))
+      expect(dshCachePath('models', 'index.json')).toBe(join(homedir(), 'env-ocean', 'cache', 'models', 'index.json'))
+      expect(dshCachePath({ dshHome: '~/explicit-ocean' })).toBe(join(homedir(), 'explicit-ocean', 'cache'))
+      expect(dshCachePath({}, 'attachments')).toBe(join(homedir(), 'env-ocean', 'cache', 'attachments'))
     } finally {
       vi.unstubAllEnvs()
     }

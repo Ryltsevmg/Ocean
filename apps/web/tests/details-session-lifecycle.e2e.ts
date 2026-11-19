@@ -210,7 +210,7 @@ describe.skipIf(MODE === 'record')('web e2e: details panel follows the current S
     } finally {
       await page.setViewportSize(blankViewport)
     }
-    await expect.poll(() => columns(page)).toEqual([280, blankViewport.width - 280, 0])
+    await expect.poll(() => columns(page)).toEqual([285, blankViewport.width - 285, 0])
     await page.locator('[data-sidebar-right-expand]').click()
     await blankColumn.locator('[data-dockkit-add-tab]').click()
     await blankColumn.locator('[data-sidebar-right-guide-entry="terminal"]')
@@ -307,8 +307,8 @@ describe.skipIf(MODE === 'record')('web e2e: details panel follows the current S
     const column = page.locator('[data-rightbar-col]')
     const panel = column.locator('[data-sidebar-right-panel]')
     const panes = column.locator('[data-dockkit-pane]')
-    const normalWidth = Math.round(viewport.width * 0.45)
-    const normalColumns = [280, viewport.width - 280 - normalWidth, normalWidth]
+    const normalWidth = Math.min(520, Math.round(viewport.width * 0.45))
+    const normalColumns = [285, viewport.width - 285 - normalWidth, normalWidth]
     const checkpoints: string[] = ['# Recorded-session Sidebar states']
     const checkpoint = async (label: string): Promise<void> => {
       checkpoints.push(`## ${label}\n\n\`\`\`json\n${JSON.stringify(await sidebarSnapshot(page), null, 2)}\n\`\`\``)
@@ -419,7 +419,7 @@ describe.skipIf(MODE === 'record')('web e2e: details panel follows the current S
     try {
       await page.setViewportSize({ width: 1024, height: viewport.height })
       // Frame measurement and the grid transition can finish after setViewportSize returns.
-      await expect.poll(() => columns(page), { timeout: 5_000 }).toEqual([280, 400, 344])
+      await expect.poll(() => columns(page), { timeout: 5_000 }).toEqual([285, 400, 339])
       await dragSidebar(page, 420)
       await expect.poll(() => columns(page)).toEqual([420, 604, 0])
       expect(await column.locator('[data-sidebar-right-open]').count()).toBe(0)

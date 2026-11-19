@@ -484,7 +484,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     observations.push(`topup.open gets=${String(platform.gets.length - topUpGetsBefore)} summaries=${String(platform.summaries.length - topUpSummariesBefore)}`)
     const callsBefore = (await platformCalls(page)).length
     await topUpSettings.getByRole('link', { name: '充值', exact: true }).click()
-    const topUpOverlay = page.getByRole('dialog', { name: '返回 DeepSeek Harness', exact: true })
+    const topUpOverlay = page.getByRole('dialog', { name: '返回 Ocean', exact: true })
     await topUpOverlay.waitFor()
     // Opening the native view reads nothing by itself.
     expect(platform.gets.length).toBe(topUpGetsBefore + 1)
@@ -496,7 +496,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     platform.grant(ORDER_TOPUP, '11.00')
     // Holding the notice read proves the return does not wait for the refresh it starts.
     platform.holdNextGet()
-    await topUpOverlay.getByRole('button', { name: '返回 DeepSeek Harness', exact: true }).click()
+    await topUpOverlay.getByRole('button', { name: '返回 Ocean', exact: true }).click()
     await topUpOverlay.waitFor({ state: 'detached', timeout: 30_000 })
     const topUpCalls = (await platformCalls(page)).slice(callsBefore).join(',')
     observations.push(`topup.returned bridge=${topUpCalls} cards=${String(await noticeCards(page).count())}`)
@@ -595,9 +595,9 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     // Returning from usage refreshes nothing, because only a payment changes the account.
     for (const index of [0, 1]) {
       await failedLinks.nth(index).click()
-      const usageOverlay = page.getByRole('dialog', { name: '返回 DeepSeek Harness', exact: true })
+      const usageOverlay = page.getByRole('dialog', { name: '返回 Ocean', exact: true })
       await usageOverlay.waitFor()
-      await usageOverlay.getByRole('button', { name: '返回 DeepSeek Harness', exact: true }).click()
+      await usageOverlay.getByRole('button', { name: '返回 Ocean', exact: true }).click()
       await usageOverlay.waitFor({ state: 'detached', timeout: 30_000 })
     }
     const failedUsages = (await platformCalls(page)).filter(call => call === 'open:usage').length - failedUsagesBefore
@@ -656,18 +656,18 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const secondNode = await second.elementHandle()
     const frontBox = await cards.first().boundingBox()
     const backBox = await second.boundingBox()
-    expect(frontBox!.x).toBeCloseTo(10, 0)
-    expect(frontBox!.width).toBeCloseTo(260, 0)
-    expect(frontBox!.x + frontBox!.width).toBeCloseTo(270, 0)
-    expect(backBox!.width).toBeCloseTo(252, 0)
+    expect(frontBox!.x).toBeCloseTo(18, 0)
+    expect(frontBox!.width).toBeCloseTo(249, 0)
+    expect(frontBox!.x + frontBox!.width).toBeCloseTo(267, 0)
+    expect(backBox!.width).toBeCloseTo(241, 0)
     expect(backBox!.y).toBeCloseTo(frontBox!.y - 4, 0)
     const transition = await second.evaluate((element) => {
       const style = getComputedStyle(element)
       return `${style.transitionDuration} ${style.transitionTimingFunction}`
     })
     expect(transition).toBe('0.25s ease-out')
-    observations.push(`stack.initial cards=3 acks=stack-first widths=260,252 inset=10 offset=-4 transition=${transition}`)
-    for (const [delta, width, edge] of [[80, 280, 360], [-80, 260, 280]] as const) {
+    observations.push(`stack.initial cards=3 acks=stack-first widths=249,241 inset=18 offset=-4 transition=${transition}`)
+    for (const [delta, width, edge] of [[80, 280, 365], [-80, 249, 285]] as const) {
       const handle = await stackPage.locator('[data-side="sidebar"]').boundingBox()
       const x = handle!.x + handle!.width / 2
       const y = handle!.y + handle!.height / 2
@@ -679,9 +679,9 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
       const movedHandle = await stackPage.locator('[data-side="sidebar"]').boundingBox()
       expect(movedHandle!.x + movedHandle!.width / 2).toBeCloseTo(edge, 0)
       const resized = await cards.first().boundingBox()
-      expect(resized!.x).toBeCloseTo(10, 0)
-      expect(resized!.x + resized!.width).toBeCloseTo(10 + width, 0)
-      observations.push(`stack.resized sidebar=${edge} card=${width} left-inset=10`)
+      expect(resized!.x).toBeCloseTo(18, 0)
+      expect(resized!.x + resized!.width).toBeCloseTo(18 + width, 0)
+      observations.push(`stack.resized sidebar=${edge} card=${width} left-inset=18`)
     }
     const beforeCollapseAcks = platform.acks.length
     const beforeCollapseDismissals = platform.dismissals.length
@@ -730,12 +730,12 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     expect(promotion.middle.y).toBeLessThan(promotion.start.y)
     expect(promotion.middle.y).toBeGreaterThan(promotion.end.y)
     await expect.poll(() => cards.count()).toBe(2)
-    await expect.poll(async () => Math.round((await second.boundingBox())!.width)).toBe(260)
+    await expect.poll(async () => Math.round((await second.boundingBox())!.width)).toBe(249)
     expect(await second.evaluate((element, previous) => element === previous, secondNode)).toBe(true)
     expect(await second.getAttribute('data-front')).toBe('true')
     await expect.poll(() => platform.acks.length).toBe(ackStart + 2)
     expect(platform.acks.slice(ackStart).map(ack => ack.orderId)).toEqual(['a1111111-1111-4111-8111-111111111111', 'a2222222-2222-4222-8222-222222222222'])
-    observations.push('stack.promoted cards=2 acks=stack-first,stack-second width=260 same-node=true')
+    observations.push('stack.promoted cards=2 acks=stack-first,stack-second width=249 same-node=true')
     await second.getByRole('button', { name: '关闭', exact: true }).click()
     await expect.poll(() => platform.acks.length).toBe(ackStart + 3)
     expect(platform.acks.slice(ackStart).map(ack => ack.orderId)).toEqual(['a1111111-1111-4111-8111-111111111111', 'a2222222-2222-4222-8222-222222222222', 'a3333333-3333-4333-8333-333333333333'])
@@ -809,8 +809,8 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const cardBounds = await refreshCards.first().boundingBox()
     const drawerBounds = await drawer.getByRole('dialog', { name: 'Navigation', exact: true }).boundingBox()
     const actionBounds = await refreshCards.first().getByRole('button', { name: 'View balance', exact: true }).boundingBox()
-    expect(cardBounds!.x - drawerBounds!.x).toBeCloseTo(10, 0)
-    expect(drawerBounds!.width - cardBounds!.width).toBeCloseTo(20, 0)
+    expect(cardBounds!.x - drawerBounds!.x).toBeCloseTo(18, 0)
+    expect(drawerBounds!.width - cardBounds!.width).toBeCloseTo(36, 0)
     expect(cardBounds!.x).toBeGreaterThanOrEqual(0)
     expect(cardBounds!.x + cardBounds!.width).toBeLessThanOrEqual(390)
     expect(actionBounds!.x + actionBounds!.width).toBeLessThanOrEqual(cardBounds!.x + cardBounds!.width)

@@ -3,7 +3,7 @@ import type { Agent } from '@ocean/ocean-agent'
 import { provideWorkingDirectoryFixture } from '@ocean/ocean-agent-loop-testkit'
 import { brandString } from '@ocean/ocean-brand'
 import { createUserMessage, ToolCallId, type ContentBlock } from '@ocean/ocean-llm'
-import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@ocean/ocean-ptc-runtime'
+import { PtcRuntime, type PtcOutput, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@ocean/ocean-ptc-runtime'
 import SandboxPolicy from '@ocean/ocean-sandbox-policy'
 import SessionStore, { SessionId } from '@ocean/ocean-session'
 import SessionProjections from '@ocean/ocean-session-projection'
@@ -149,6 +149,31 @@ describe('registered program tool factory', () => {
     expect(result.isError).toBe(false)
     expect(requested).toEqual(['cua_run_code'])
     expect(JSON.stringify(result.content)).toContain('Nested tools retain their own policies and approvals')
+  })
+
+  it('projects image output with the registered runtime escalation guidance', async () => {
+    type Attachment = Extract<ContentBlock, { type: 'image' }>['attachment']
+    const image: Extract<PtcOutput, { type: 'image' }> = { type: 'image', attachment: {
+      attachmentId: brandString<Attachment['attachmentId']>('sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      mediaType: 'image/png', width: 1, height: 1, bytes: 1,
+    } }
+    const { ctx, runtime, execute } = await setup(privateTool())
+    await ctx.plugin(SandboxPolicy, { mode: 'read-only', workspaceRoot: process.cwd() })
+    vi.spyOn(runtime, 'sandboxMode', 'get').mockReturnValue('read-only')
+    runtime.behavior = async () => ({ output: [image], sandbox: { mode: 'read-only', denied: true } })
+
+    const result = (await execute()).results[0]!.result
+
+    expect(result.isError).toBe(false)
+    // The guidance comes from the registered runtime, not a registry lookup:
+    // this context has no visible ptcRuntime service.
+    expect(ctx.get('ptcRuntime')).toBeUndefined()
+    expect(result.content).toEqual([image, { type: 'text', text: 'The read-only file sandbox denied an operation.'
+      + ' A sandbox escalation approves this complete program for one execution only.'
+      + ' Nested tools retain their own policies and approvals.'
+      + ' Request wider access only after evidence of a denial.'
+      + ' Earlier effects may already have completed: inspect them before explicitly retrying.'
+      + ' Programs are never replayed automatically.' }])
   })
 
   it('records nested results while forwarding images and deferred context from private tools', async () => {

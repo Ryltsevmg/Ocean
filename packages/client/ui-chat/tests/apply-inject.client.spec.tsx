@@ -44,6 +44,7 @@ type ChatActions = ChatInstance['actions']
 function sessionFakeFor() {
   return {
     loadOlder: vi.fn<ISession['loadOlder']>(() => Promise.resolve()),
+    consumeOlder: vi.fn<ISession['consumeOlder']>(() => true),
     loadThrough: vi.fn<ISession['loadThrough']>(() => Promise.resolve()),
     readAttachment: vi.fn<ISession['readAttachment']>(() => Promise.resolve({
       ok: true,
@@ -254,6 +255,10 @@ describe('Chat inject API', () => {
     const { injected } = b.chatViewApi(b.rootReference)
     injected.loadOlder()
     expect(b.session.loadOlder).toHaveBeenCalledExactlyOnceWith({ deferConsumption: true })
+
+    // The deferred page is published only when the view consumes it.
+    expect(injected.consumeOlder()).toBe(true)
+    expect(b.session.consumeOlder).toHaveBeenCalledOnce()
 
     void injected.loadThrough(SessionSeq(42))
     expect(b.session.loadThrough).toHaveBeenCalledWith(42)

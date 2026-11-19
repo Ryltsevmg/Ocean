@@ -156,6 +156,9 @@ describe.skipIf(MODE === 'record')('web e2e: background job list', () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-background-job-right-sidebar'))
     const trigger = page.getByRole('button', { name: '1 background job', exact: true })
     if (await trigger.getAttribute('aria-expanded') === 'true') await trigger.click()
+    // The shipped dock is 520px wide, so the anchored list lands clear of it at the 1680
+    // default. One breakpoint narrower keeps them overlapping, which the hit test below needs.
+    await page.setViewportSize({ width: 1366, height: 1000 })
     await page.getByRole('button', { name: 'Open right sidebar' }).click()
     const sidebar = page.locator('[data-rightbar-col]')
     // A toggle holds data-animating on the frame until its tracks settle.
@@ -199,6 +202,7 @@ describe.skipIf(MODE === 'record')('web e2e: background job list', () => {
     await page.keyboard.press('Escape')
     await list.waitFor({ state: 'detached', timeout: 10_000 })
     expect(await trigger.evaluate(node => node === document.activeElement)).toBe(true)
+    await page.setViewportSize({ width: 1680, height: 1000 })
   }, 60_000)
 
   it('keeps the compact Layers trigger focused and opens jobs only on click or keyboard', async () => {

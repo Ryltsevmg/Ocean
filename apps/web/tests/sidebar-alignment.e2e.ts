@@ -21,11 +21,11 @@ const MODE = webSnapshotMode()
 const ACTION_TARGET_SIZE = 24
 const ACTION_LAYOUT_SIZE = 16
 const ACTION_CENTER_SPACING = 29
-const ACTION_TRAILING_INSET = 7
+const ACTION_TRAILING_INSET = 4
 const SEARCH_HEIGHT = 32
 const SEARCH_TRANSITION_MS = 180
-const HEADER_LABEL_OFFSET = 7
-const HEADER_ACTION_RIGHT_OFFSETS = { search: -61, view: -29, add: 3 }
+const HEADER_LABEL_OFFSET = 10
+const HEADER_ACTION_RIGHT_OFFSETS = { search: -64, view: -32, add: 0 }
 
 /**
  * Measure painted glyphs and pointer targets independently of the row's layout cells.
@@ -262,24 +262,24 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
           element.removeEventListener('transitionrun', pause, true)
         }
       }, { expand, duration: SEARCH_TRANSITION_MS })
-      for (const property of ['margin-right', 'padding-left', 'padding-right', 'column-gap']) {
+      for (const property of ['margin-right', 'padding-left', 'row-gap', 'column-gap']) {
         expect(samples.headerTransitions).toContainEqual({ property, duration: SEARCH_TRANSITION_MS })
       }
       const first = samples.frames[0]!
       const last = samples.frames.at(-1)!
       expect(first).toMatchObject(expand
         ? { marginRight: -4, paddingLeft: 12, paddingRight: 1, gap: 4 }
-        : { marginRight: 0, paddingLeft: 4, paddingRight: 4, gap: 0 })
+        : { marginRight: 0, paddingLeft: 1, paddingRight: 1, gap: 0 })
       expect(last).toMatchObject(expand
-        ? { marginRight: 0, paddingLeft: 4, paddingRight: 4, gap: 0 }
+        ? { marginRight: 0, paddingLeft: 1, paddingRight: 1, gap: 0 }
         : { marginRight: -4, paddingLeft: 12, paddingRight: 1, gap: 4 })
       for (const frame of samples.frames.slice(1, -1)) {
-        for (const key of ['marginRight', 'paddingLeft', 'paddingRight', 'gap', 'width'] as const) {
+        for (const key of ['marginRight', 'paddingLeft', 'gap', 'width'] as const) {
           expect(frame[key]).toBeGreaterThan(Math.min(first[key], last[key]))
           expect(frame[key]).toBeLessThan(Math.max(first[key], last[key]))
         }
         const progress = (frame.marginRight - first.marginRight) / (last.marginRight - first.marginRight)
-        for (const key of ['paddingLeft', 'paddingRight', 'gap'] as const) {
+        for (const key of ['paddingLeft', 'gap'] as const) {
           expect((frame[key] - first[key]) / (last[key] - first[key])).toBeCloseTo(progress, 2)
         }
       }
@@ -357,7 +357,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
     expect(samples.first.transitionDuration).toBe('0s')
     expect(samples.first).toEqual(samples.last)
     expect(samples.first).toMatchObject(entry !== 'toggle'
-      ? { marginRight: 0, paddingLeft: 4, paddingRight: 4, gap: 0, searchExpanded: 'true' }
+      ? { marginRight: 0, paddingLeft: 1, paddingRight: 1, gap: 0, searchExpanded: 'true' }
       : { marginRight: -4, paddingLeft: 12, paddingRight: 1, gap: 4, searchExpanded: 'false' })
     expect(samples.sameHeader).toBe(true)
     expect(samples.sameAdd).toBe(true)
@@ -395,7 +395,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
       }
     })
     expect(geometry).toEqual({
-      clipped: true, labelGap: 6, targetWidth: ACTION_TARGET_SIZE, clearance: 2, titleEdgeHitsTitle: true, overflows: false,
+      clipped: true, labelGap: 12, targetWidth: ACTION_TARGET_SIZE, clearance: 8, titleEdgeHitsTitle: true, overflows: false,
     })
     await compareOrRefreshGolden(GEOMETRY_EXPECTED, [
       '# Sidebar alignment', '',
@@ -546,10 +546,10 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
       })
       const wide = await measure()
       expect(wide.height).toBe(signedIn ? 44 : 32)
-      expect(wide.leftOffset).toBe(signedIn ? -2 : -4)
-      expect(wide.rightOffset).toBe(signedIn ? 2 : 4)
-      expect(wide.paintedLeftOffset).toBe(signedIn ? -2 : -1)
-      expect(wide.paintedRightOffset).toBe(signedIn ? 2 : 1)
+      expect(wide.leftOffset).toBe(signedIn ? 1 : -1)
+      expect(wide.rightOffset).toBe(signedIn ? -1 : 1)
+      expect(wide.paintedLeftOffset).toBe(signedIn ? 1 : -1)
+      expect(wide.paintedRightOffset).toBe(signedIn ? -1 : 1)
       await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).click()
       await expect.poll(() => accountButton.getAttribute('data-collapsed')).toBe('true')
       await expect.poll(async () => {

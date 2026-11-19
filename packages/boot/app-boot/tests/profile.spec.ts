@@ -536,6 +536,29 @@ describe('createRuntimeResolution', () => {
     await expect(resolution.computeLatestResolution()).resolves.toEqual(resolution)
   })
 
+  it('collects packages whose manifests carry legacy dsh metadata without an ocean key', async () => {
+    const anchor = stageInstallation({ 'legacy-bundle': { deps: { 'legacy-dep': '0.0.0' } } })
+    const modules = join(anchor, '..', 'node_modules')
+    mkdirSync(join(modules, 'legacy-dep'), { recursive: true })
+    writeFileSync(join(modules, 'legacy-dep', 'package.json'), JSON.stringify({
+      name: 'legacy-dep', version: '1.2.3', dsh: { bundle: {} },
+    }))
+    const appManifest = JSON.parse(readFileSync(anchor, 'utf8')) as Record<string, unknown>
+    appManifest.dsh = { profile: { bundles: ['legacy-bundle'] } }
+    writeFileSync(anchor, JSON.stringify(appManifest))
+    const bundleManifestPath = join(modules, 'legacy-bundle', 'package.json')
+    const bundleManifest = JSON.parse(readFileSync(bundleManifestPath, 'utf8')) as Record<string, unknown>
+    bundleManifest.dsh = { bundle: { patch: './cordis.patch.yml' } }
+    writeFileSync(bundleManifestPath, JSON.stringify(bundleManifest))
+    const before = readFileSync(bundleManifestPath, 'utf8')
+
+    const resolution = await createRuntimeResolution({ installAnchor: anchor, home: tmp() })
+
+    expect(resolution.entries.map(entry => entry.name)).toEqual(['ocean-app', 'legacy-bundle', 'legacy-dep'])
+    expect(resolution.entries.find(entry => entry.name === 'legacy-dep')?.version).toBe('1.2.3')
+    expect(readFileSync(bundleManifestPath, 'utf8')).toBe(before)
+  })
+
   it('keeps selected bundle closures profile-local without overriding installation packages', async () => {
     const installationAnchor = stageInstallation({ shared: {} })
     const bundleA = stageInstallation({ shared: {}, '@scope/bundle-only': {} }, 'selected-bundle-a')

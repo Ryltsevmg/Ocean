@@ -335,6 +335,7 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
         signal.throwIfAborted()
         if (response.status === 401) {
           const current = owner
+          /* v8 ignore next -- owner replacement or release aborts this generation first, so throwIfAborted already threw. */
           if (current?.token === token) {
             releaseOwner(current)
             deviceDocument.signIn()
