@@ -924,7 +924,7 @@ const SUBJECT_KIND_KEYS = {
   path: 'installSubjectPath',
   git: 'installSubjectGit',
   tarball: 'installSubjectTarball',
-} satisfies Record<InstallSubject['kind'], PluginManagerLocaleKey | undefined>
+} satisfies Record<Exclude<InstallSubject['kind'], 'published'>, PluginManagerLocaleKey | undefined>
 
 /** A check no registry answered names every registry asked; any other refusal reads by its problem. */
 function inputProblemSentence(problem: InstallInputError, t: Translate, resolved: string | null): string {
@@ -953,14 +953,15 @@ function registryOption(registry: Registry, t: Translate, resolved: string | nul
  */
 function failureText(failure: InstallState['failure'], t: Translate, install?: Pick<InstallState, 'attempts' | 'subject' | 'registries'>): string {
   if (failure === null) return t('installFailureGeneric')
-  // A compatibility refusal is the package's own answer, whatever pnpm's exit classified the run as.
-  if (failure.code === 'incompatible-version') {
+  // These Host refusals take precedence over pnpm's exit classification.
+  if (failure.code === 'incompatible-version' || failure.code === 'published-offer-unavailable' || failure.code === 'published-archive-mismatch') {
     const incompatible = failure.incompatible === undefined ? {} : { incompatible: failure.incompatible }
     return managementText({ code: failure.code, installing: true, ...incompatible }, t)
   }
   // Blocked scripts the Host could not name leave the person to allow them in the profile's pnpm settings by hand.
   if (failure.kind === 'build-blocked' && !failure.pendingBuilds?.length) return t('installFailureBuildBlockedManual')
-  const host = install?.subject?.host
+  const subject = install?.subject
+  const host = subject?.kind === 'published' ? undefined : subject?.host
   if (failure.failedAt === 'spec-host' && host !== undefined) return t('installFailureNetworkHost', { host })
   const asked = install?.attempts?.registries ?? []
   if (failure.failedAt === 'registry' && (failure.kind === 'network' || failure.kind === 'timeout') && asked.length > 1) {
@@ -1000,6 +1001,7 @@ function SubjectCard({ subject, confirmed, t }: {
   readonly confirmed: InstallState['confirmed']
   readonly t: Translate
 }): ReactNode {
+  if (subject.kind === 'published') return <SubjectBlock t={t} lines={{ ...subject, showSpec: true }} />
   const kindKey = SUBJECT_KIND_KEYS[subject.kind]
   return (
     <SubjectBlock t={t} lines={{
@@ -1058,7 +1060,8 @@ function InstallDialog({
   const registryErrorId = useId()
   const [guideOpen, setGuideOpen] = useState(false)
   const [customRegistryDraft, setCustomRegistryDraft] = useState('')
-  const { phase } = install
+  const { phase, subject } = install
+  const confirmed = subject?.kind === 'published' ? subject : install.confirmed
   // The registry options float over the dialog from their toggle, so unfolding them never adds to its height;
   // the store folds them when a run starts, so they show at the spec only.
   const registryToggleRef = useRef<HTMLButtonElement | null>(null)
@@ -1112,7 +1115,7 @@ function InstallDialog({
       />
     )
   }
-  if ((phase === 'idle' || phase === 'checking') && install.confirmed !== undefined) {
+  if ((phase === 'idle' || phase === 'checking') && confirmed !== undefined) {
     // A confirmed spec has no form to return to: the dialog names the plugin and version above the spec, with its
     // check, a refusal with a retry, or, after a cancelled run, Install.
     const checking = phase === 'checking'
@@ -1132,7 +1135,7 @@ function InstallDialog({
         )}
       >
         <div className={css.installBody} data-install-phase={phase}>
-          <SubjectBlock t={t} lines={{ spec: install.spec, ...install.confirmed, showSpec: true }} />
+          <SubjectBlock t={t} lines={{ spec: install.spec, title: confirmed.title, version: confirmed.version, showSpec: true }} />
           {checking
             ? <p className={`${css.status} ${css.statusWithDot}`} role="status"><StateDot state="ongoing" />{t('installChecking')}</p>
             : problem === null
@@ -1351,7 +1354,8 @@ function InstallDialog({
       </Modal>
     )
   }
-  const heading = t(phase === 'done' && install.subject?.bundled ? 'installBundledTitle' : SCREEN_TITLE_KEYS[phase])
+  const bundled = subject?.kind !== 'published' && subject?.bundled === true
+  const heading = t(phase === 'done' && bundled ? 'installBundledTitle' : SCREEN_TITLE_KEYS[phase])
   const pending = isInstallPending(phase)
   // A settled screen whose install never reported a run can say the details received no terminal output.
   const settledDetails = phase === 'failed' || phase === 'done' || phase === 'unknown'
@@ -1379,19 +1383,18 @@ function InstallDialog({
     })
     : null
   // Another registry is worth offering only for a failure the Host laid at the one it asked.
-  const changeable = phase === 'failed' && !approvable && install.failure?.failedAt === 'registry' && install.confirmed === undefined
-  const subject = install.subject
+  const changeable = phase === 'failed' && !approvable && install.failure?.failedAt === 'registry' && confirmed === undefined
   return (
     <Modal open={install.open} onClose={onClose} title={heading} headless className={css.installDialog as string}>
       <div className={css.wizard} data-install-phase={phase}>
         <div className={css.wizardHead}>
-          {phase === 'done' || (install.confirmed !== undefined && !pending)
+          {phase === 'done' || (confirmed !== undefined && !pending)
             ? <span />
             : (
-              <button type="button" className={css.wizardBack} aria-label={t(install.confirmed !== undefined ? 'cancel' : pending ? 'installCancelAndEdit' : 'installEditAria')}
+              <button type="button" className={css.wizardBack} aria-label={t(confirmed !== undefined ? 'cancel' : pending ? 'installCancelAndEdit' : 'installEditAria')}
                 disabled={!stoppable} onClick={onCancel}>
                 <IconChevronLeftOutlineMedium aria-hidden="true" />
-                <span>{t(install.confirmed !== undefined ? 'cancel' : pending ? 'installCancelAndEdit' : 'installEdit')}</span>
+                <span>{t(confirmed !== undefined ? 'cancel' : pending ? 'installCancelAndEdit' : 'installEdit')}</span>
               </button>
             )}
           <button
@@ -1413,7 +1416,7 @@ function InstallDialog({
                   : <IconWarningOutlineRegular size={28} />}
             </span>
             <h2 className={css.wizardTitle} role={phase === 'failed' ? 'alert' : 'status'}>{heading}</h2>
-            {phase === 'done' && subject?.bundled ? <p className={css.wizardSub}>{t('installBundledDescription')}</p> : null}
+            {phase === 'done' && bundled ? <p className={css.wizardSub}>{t('installBundledDescription')}</p> : null}
             {phase === 'failed' ? <p className={css.wizardSub}>{failureText(install.failure, t, install)}</p> : null}
             {phase === 'failed' && failure?.stage === 'enable' && failure.enabled === true
               && (failure.code !== undefined || failure.reason !== '')
@@ -1423,9 +1426,13 @@ function InstallDialog({
             {uncertaintyText === null ? null : <p className={css.wizardSub} role="alert">{uncertaintyText}</p>}
             {phase === 'unknown' ? <p className={css.wizardSub}>{t('installUnknownDescription')}</p> : null}
           </div>
-          {subject === null
-            ? null
-            : <SubjectCard subject={phase === 'done' && install.installedVersion !== null ? { ...subject, version: install.installedVersion } : subject} confirmed={install.confirmed} t={t} />}
+          {subject === null ? null : (
+            <SubjectCard
+              subject={subject.kind !== 'published' && phase === 'done' && install.installedVersion !== null
+                ? { ...subject, version: install.installedVersion } : subject}
+              confirmed={install.confirmed} t={t}
+            />
+          )}
           {approvable
             ? (
               <section className={css.approval} role="group" aria-labelledby={approvalId} data-install-approval>
@@ -1462,7 +1469,7 @@ function InstallDialog({
             ? <p className={css.result} role="status">{t('installDoneApproved', { names: install.approvedBuilds.join(', ') })}</p>
             : null}
           <div className={css.wizardFoot}>
-            {subject?.bundled ? null : (
+            {bundled ? null : (
               <button type="button" className={css.detailsToggle} aria-expanded={install.detailsOpen} onClick={onToggleDetails}>
                 <span>{t(install.detailsOpen ? 'installDetailsHide' : 'installDetailsShow')}</span>
                 <IconChevronDownOutlineRegular className={css.detailsChevron} aria-hidden="true" />
@@ -1768,6 +1775,7 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
             <div role="tabpanel" id={`${tabsId}-${tab}-panel`} aria-labelledby={`${tabsId}-${tab}`} className={css.tabPanel}>
               {renderSlot('plugins.tab', {
                 install: props.installFrom,
+                installPublished: props.installPublished,
                 openInstall: props.openInstall,
                 installOfficial: props.installOfficial,
                 update: props.openGitUpdate,

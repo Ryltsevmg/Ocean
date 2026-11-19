@@ -11,6 +11,7 @@ const it = createClientTest({ roster: webApp }, { mount: true })
 it('ships a catalog without an overlay and removes its tab on unload', async ({ start, mock }) => {
   mock.unary('pluginManager/listBundles', { ok: true, value: [] })
   mock.unary('pluginManager/listPlugins', { ok: true, value: [] })
+  mock.unary('pluginManager/listPublishedCatalog', { ok: true, value: { status: 'ready', plugins: [] } })
   mock.unary('pluginInventory/list', { ok: true, value: { entries: [], managementAvailable: true } })
   const client = await start()
   expect(screen.getAllByRole('button', { name: 'Plugins' })).toHaveLength(1)

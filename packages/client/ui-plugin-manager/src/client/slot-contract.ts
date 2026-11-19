@@ -20,6 +20,7 @@
 
 import type {} from '@ocean/ocean-client-ui-slots'
 import type { BundleInfo } from '@ocean/ocean-api-remotes/client'
+import type { PublishedPluginTarget } from '@ocean/ocean-plugin-manager/types'
 import type { ConfigForm, ConfigFormSnapshot } from '@ocean/ocean-client-ui-settings/client'
 
 /** The view the page asks a configuration entry for. */
@@ -101,8 +102,19 @@ export interface PluginTabUpdate {
   readonly spec: string
 }
 
+/** One verified-channel offer, with a localized title for the install dialog. */
+export interface PluginTabPublishedInstall extends PublishedPluginTarget {
+  readonly title: string
+}
+
 /** Owner props of a page tab another plugin contributes. */
 export interface PluginTabProps {
+  /**
+   * Install and enable the confirmed publication without an editable spec or registry. The Host rechecks the offer
+   * on each attempt. An installation already in progress reopens instead.
+   * @param target - the package name, exact version, archive SHA-256, and localized title.
+   */
+  readonly installPublished: (target: PluginTabPublishedInstall) => void
   /**
    * Install an exact version the person already confirmed: the page's install dialog opens at its check and progress
    * screens, without the spec form, and names the plugin and version above the spec.
@@ -146,8 +158,8 @@ declare module '@ocean/ocean-client-ui-slots' {
     /**
      * Page tabs: `label` names the tab and `order` places it relative to Installed at zero. The first
      * negative-order tab opens initially; explicit selections survive later registrations. The
-     * page renders the selected entry under its header and tabs; the entry draws its own content and installs and
-     * updates through the owner's `install` and `update`.
+     * page renders the selected entry under its header and tabs; the entry draws its own content and uses the
+     * owner's installation and update callbacks.
      */
     'plugins.tab': { kind: 'list'; scope: 'root'; owner: PluginTabProps }
     /** Optional guidance after the user enables a bundle from the list, keyed by npm package name. */

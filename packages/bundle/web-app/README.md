@@ -243,4 +243,4 @@ None.
 
 The Web composition includes the account Remote controller and Account settings section.
 
-The shared Plugins page includes the [bundled plugin catalog](../../extensions/plugin-market/README.md) in every Web and Desktop assembly. Its source and browser artifact ship with Ocean; no external checkout or local overlay is required.
+The shared Plugins page includes the [bundled plugin catalog](../../extensions/plugin-market/README.md) in every Web and Desktop assembly. The Host reads approved offers from the public `v1/current.json` on the `plugin-catalog` branch of `Ryltsevmg/Ocean`. The [release procedure](../../../scripts/release/plugin-catalog.md) produces the index without giving users access to the private source repository.

@@ -2027,7 +2027,7 @@ export interface PlanModeConfig {
 
 - `inject`: `loader` · `profileContext`
 - `refs`: [`NpmFileSource`](subsystems/boot.zh.md)
-- `source`: [`packages/boot/plugin-manager/src/index.ts:54`](../packages/boot/plugin-manager/src/index.ts)
+- `source`: [`packages/boot/plugin-manager/src/index.ts:55`](../packages/boot/plugin-manager/src/index.ts)
 
 ```ts config-catalog
 /** The pnpm executable, registries, and limits for diagnostics, lookups and connection checks. */
@@ -2066,6 +2066,10 @@ export interface Config {
   detailFetchTimeoutMs?: number
   /** npm file CDNs that offered bundles are read from, in order; a read's `npmFileSources` moves the CDNs it names first. */
   detailNpmFileSources?: NpmFileSource[]
+  /** Approved catalog channel. Omitted leaves the public catalog disconnected in this composition. */
+  publishedCatalogUrl?: string
+  /** Deadline for a catalog document or package archive request, in milliseconds. */
+  publishedCatalogTimeoutMs?: number
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-plugin-manager -->

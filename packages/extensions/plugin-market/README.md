@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Open Plugins in Ocean Web or Desktop to browse curated entries and manage plugins in the current profile. Search by name, description, or package name. Open Details to read what a plugin does and see its current status. The catalog uses the shared installation dialogs and adds no model tools.
+Open Plugins → Catalogue in Ocean Web or Desktop to find bundles approved and published by the Ocean maintainers. Select Install to install and enable the listed version without entering a source. Installed is a separate view of the active profile, including packages not offered in the catalogue. This package adds no model tools.
 
 ## Table of Contents
 
@@ -23,9 +23,9 @@ Open Plugins in Ocean Web or Desktop to browse curated entries and manage plugin
 <a id="use-this-package"></a>
 ## Use this package
 
-The Web app composition includes this package in Web and Desktop. It needs no separate installation or external checkout. Plugins opens Catalog before Installed; explicit tab selections remain unchanged during catalog updates. The catalog cannot uninstall itself. Build-carried packages follow the Ocean build.
+The catalogue reads the public channel when opened and on Refresh. A newly published offer appears after a successful read without rebuilding Ocean. Removing an offer removes its card from the catalogue but never uninstalls an existing copy.
 
-If the host offers an exact installation target, use **Install**. Otherwise use **Install from source** to open the shared Add plugin form, prefilled with the package name. You can enter another package name, a Git URL, a tarball, or a local directory. Opening the form does not check or install the package.
+**Install** is available only for a current, compatible offer and an absent package. Script approvals and restart notices use the standard installation dialog. Use Installed to manage packages that are not in the catalogue, or Add plugin to provide your own source.
 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
@@ -33,9 +33,9 @@ If the host offers an exact installation target, use **Install**. Otherwise use 
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The Host entry is inert. The Client contributes one `plugins.tab` entry with negative order. `src/catalog.js` lists curated packages; `src/view.js` derives cards; `src/controller.js` owns loading and management operations. The standard Client bundler emits `lib/client.js`; `scripts/build-client.mjs` refreshes the separate source-derived bundle used by the Node tests.
+The Host entry is inert. The Client contributes one `plugins.tab` entry and joins the approved offers with the profile inventory by package name. The shared [plugin manager](../../boot/plugin-manager/README.md) owns network reads, verification and installation.
 
-The catalog reads the inventory on first opening and after host changes, keeping existing cards visible if refresh fails. A plugin referenced in the profile with missing files keeps its diagnostic and the available management actions. Those actions use the existing host connection and permissions.
+If the channel cannot be refreshed, the last successful list stays visible for this process and new installations from it are disabled. A successful empty list means no offers are published. A failure never removes any installed package.
 
 </details>
 
@@ -43,7 +43,7 @@ The catalog reads the inventory on first opening and after host changes, keeping
 ## Further Exploration
 
 - [Plugin manager](../../client/ui-plugin-manager/README.md): page tabs, installation dialogs, and permissions.
-- [Web app](../../bundle/web-app/README.md): shipped composition.
+- [Web app](../../bundle/web-app/README.md): shipped composition and default catalogue channel.
 - [Sidebar migration](../../../docs/upgrade-guide/v1.0.0/sidebar-navigation/guide.md): removing an old standalone market entry.
 
 <a id="model-experience"></a>
@@ -59,10 +59,10 @@ None; the package does not assemble or send provider requests.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- Curated entries do not imply that a package is publicly available. The catalog does not search registries or embed installation paths from a developer checkout.
-- Native Codex and Claude Code subagents, internal components, and individual theme palettes do not appear as separate catalog cards.
-- Git updates start from the package page in Installed. A registry update in the catalog targets only the exact version named by its curated entry.
-- Controls are available in English, Russian, and Simplified Chinese. Curated descriptions are available in English and Russian, with English fallback.
+- The catalogue does not scan Git repositories or registries. Only offers with a reviewed archive in the public release channel appear.
+- Publication and removal do not update or modify packages already installed in profiles.
+- Published-archive upgrades are not automatic.
+- Controls are available in English, Russian and Simplified Chinese. Offer titles and descriptions are the publisher’s text.
 
 <a id="dev-note"></a>
 ### Dev Note
@@ -70,6 +70,6 @@ None; the package does not assemble or send provider requests.
 <details>
 <summary>Working context for maintainers — click to expand</summary>
 
-Run `node scripts/build-client.mjs` from this directory after changing the browser modules, then `node --test tests/*.test.mjs`. The [Web scenario](../../../apps/web/tests/plugin-market.e2e.ts) exercises the shipped tab and shared install form.
+Run `node scripts/build-client.mjs` from this directory after changing the browser modules, then `node --test tests/*.test.mjs`. The [Web scenario](../../../apps/web/tests/plugin-market.e2e.ts) exercises publication, installation and withdrawal through the shipped tab.
 
 </details>

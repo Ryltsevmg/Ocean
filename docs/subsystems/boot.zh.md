@@ -14,6 +14,8 @@
 
 `InstallBundleOptions.saveExact` 向共享包安装器传入 `--save-exact`。`InstallBundleOptions.enabled` 默认为 true，false 表示安装但不选择组合包层。`approvedBuilds` 在安装前向指定的待审批包名授予持久脚本权限。`registry` 指定首先询问的注册表；缺省为配置的那个。`expected` 指定该 spec 必须安装的包与清单版本；安装了其他任何内容的运行会连同其 profile 文件与模块一起被撤销，并以 `unexpected-package` 失败，所安装的包未声明组合包的运行以 `not-bundle` 失败，组合包 patch 无法加载的运行则以操作错误失败。
 
+`PublishedCatalog` 返回当前公开条目，或者仅供展示的过期副本。`PublishedPluginTarget` 按软件包名称、版本和已验证的 SHA-256 标识一个条目，调用方不提供归档 URL。`PublishedPluginInstallOptions` 仅携带请求 ID 和对待审批构建脚本的显式许可。安装行为见[插件管理器](../../packages/boot/plugin-manager/README.zh.md)。
+
 `BundleDetail` 是 profile 中组合包的详细介绍：`{ status: 'found' }` 携带其 `origin`（`locale` 或 `readme`）、在包内的 `path` 和 `markdown`；否则为 `{ status: 'none' }`。[`readBundleDetail`](../../packages/boot/plugin-manager/README.zh.md#bundle-detail-documents) 说明读取顺序和图片路由。`NpmFileSource` 指定一个公共 npm 文件 CDN：`jsdelivr`、`unpkg` 或 `npmmirror`；一次读取的 `npmFileSources` 列出先请求的 CDN。
 
 `PluginRegistries` 携带配置的第一个注册表（`null` 即 pnpm 自身配置指定的那个）、随后依次询问的备选注册表，以及 `resolved`——pnpm 自身配置指向的 URL，未读到时为 `null`。`InspectOptions.registry` 指定一次查询首先询问的注册表。
@@ -179,6 +181,12 @@ Manage profile files and apply their declared reload lifecycle.
  */
 @Remote async listPlugins(): Promise<PluginInfo[]>
 
+/**
+ * Read the approved public catalog independently of local profile packages.
+ * @returns Current offers, or the last complete inventory marked stale after a failed refresh.
+ */
+@Remote async listPublishedCatalog(): Promise<PublishedCatalog>
+
 /** Read installed, installation-provided, and offline Official catalog bundles, plus selected non-bundle names.
  * A dependency without a bundle patch is listed, as a `not-bundle` problem, only while it is selected.
  * @returns Package versions, manifest descriptions, the installable spec of profile dependencies, rows, optional
@@ -258,6 +266,14 @@ Manage profile files and apply their declared reload lifecycle.
  * @returns Package-manager diagnostics, the registries asked, and the observed activation outcome.
  */
 @Remote installBundle(spec: string, options?: InstallBundleOptions): Promise<ChangeResult>
+
+/**
+ * Install and enable an exact approved publication; never pass an unverified archive to the package manager.
+ * @param target - the name, version and digest last confirmed by the user.
+ * @param options - the installation request id and any explicitly approved pending scripts.
+ * @returns The ordinary installation result, including a refusal if the offer or verified bytes are unavailable.
+ */
+@Remote installPublishedBundle(target: PublishedPluginTarget, options?: PublishedPluginInstallOptions): Promise<ChangeResult>
 
 /** Recover the result of an active installation without cancelling it.
  * @param requestId The id supplied when installation started.

@@ -15,6 +15,10 @@
 - id: hmr
   disabled: !!js "!ctx.get('profileContext') || ['serve', 'remote-device', 'connect'].includes(ctx.get('profileContext').name)"
 
+- id: plugin-manager
+  config:
+    publishedCatalogUrl: https://raw.githubusercontent.com/Ryltsevmg/Ocean/plugin-catalog/v1/current.json
+
 - id: typert-gateway
   config:
     approvalTimeoutMs: !!js "ctx.get('profileContext')?.name === 'serve' ? 120000 : 0"

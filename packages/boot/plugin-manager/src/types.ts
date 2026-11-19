@@ -36,7 +36,7 @@ export interface IncompatiblePlugin {
 
 /** Localizable management failure and optional external diagnostic. */
 export interface ManagementError {
-  code: ReadOnlyReason | 'unknown-plugin' | 'invalid-spec' | 'already-installed' | 'ambiguous-install' | 'not-bundle' | 'not-removable' | 'stop-profile' | 'bundle-in-use' | 'stale-approval' | 'incompatible-version' | 'unsupported-platform' | 'unexpected-package' | 'operation-error'
+  code: ReadOnlyReason | 'unknown-plugin' | 'invalid-spec' | 'already-installed' | 'ambiguous-install' | 'not-bundle' | 'not-removable' | 'stop-profile' | 'bundle-in-use' | 'stale-approval' | 'incompatible-version' | 'unsupported-platform' | 'unexpected-package' | 'published-offer-unavailable' | 'published-archive-mismatch' | 'operation-error'
   diagnostic?: string
   /** Present with `incompatible-version`: the packages the running OCEAN version rejects. */
   incompatible?: IncompatiblePlugin[]
@@ -116,6 +116,35 @@ export interface BundleInfo {
   rows: BundleRowInfo[]
   /** Ids of rows the bundle's patch changes without declaring them: the built-in rows it configures or disables. */
   overrides: string[]
+}
+
+/** Identity of one exact publication, bound to the bytes that passed review. */
+export interface PublishedPluginTarget {
+  /** npm package name. */
+  readonly name: string
+  /** Exact package manifest version. */
+  readonly version: string
+  /** Lowercase SHA-256 of the reviewed package archive. */
+  readonly sha256: string
+}
+
+/** One approved listing with the current Host's compatibility decision. */
+export interface PublishedPluginOffer extends PublishedPluginTarget {
+  readonly title: string
+  readonly description: string
+  readonly compatible: boolean
+}
+
+/** Complete channel inventory; only a ready result represents current offers. */
+export interface PublishedCatalog {
+  readonly status: 'ready' | 'stale' | 'unavailable'
+  readonly plugins: readonly PublishedPluginOffer[]
+}
+
+/** Installation controls that do not change a published offer's source or identity. */
+export interface PublishedPluginInstallOptions {
+  readonly requestId?: PluginInstallRequestId
+  readonly approvedBuilds?: string[]
 }
 
 /** A registry to install from: an http(s) URL, or null for the one pnpm's own configuration names. */

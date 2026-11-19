@@ -14,6 +14,8 @@ The [boot package group](../../packages/boot/README.md) owns launcher-provided p
 
 `InstallBundleOptions.saveExact` passes `--save-exact` to the shared package installer. `InstallBundleOptions.enabled` defaults to true. False installs without selecting the bundle layer. `approvedBuilds` grants persistent script permission to the supplied pending package names before installation. `registry` names the registry asked first; absent, the configured one. `expected` names the package and manifest version the spec must install; a run that installs anything else is undone with its profile files and modules and fails with `unexpected-package`, one whose package declares no bundle fails with `not-bundle`, and one whose bundle patches cannot load fails as an operation error.
 
+`PublishedCatalog` reports the current public offers or a stale copy for display. `PublishedPluginTarget` names one offer by package name, version and verified SHA-256; the caller supplies no archive URL. `PublishedPluginInstallOptions` carries only the request id and explicit permission for pending build scripts. See [plugin manager](../../packages/boot/plugin-manager/README.md) for installation behavior.
+
 `BundleDetail` is a profile bundle's long description: `{ status: 'found' }` with its `origin` (`locale` or `readme`), its `path` inside the package, and its `markdown`, or `{ status: 'none' }`; [`readBundleDetail`](../../packages/boot/plugin-manager/README.md#bundle-detail-documents) documents the order and the image route. `NpmFileSource` names a public npm file CDN, `jsdelivr`, `unpkg`, or `npmmirror`; a read's `npmFileSources` lists the ones to ask first.
 
 `PluginRegistries` carries the configured first registry, `null` for the one pnpm's own configuration names, the fallbacks asked after it, and `resolved`, the URL pnpm's own configuration names or `null` while unread. `InspectOptions.registry` names the registry a lookup asks first.
@@ -179,6 +181,12 @@ Manage profile files and apply their declared reload lifecycle.
  */
 @Remote async listPlugins(): Promise<PluginInfo[]>
 
+/**
+ * Read the approved public catalog independently of local profile packages.
+ * @returns Current offers, or the last complete inventory marked stale after a failed refresh.
+ */
+@Remote async listPublishedCatalog(): Promise<PublishedCatalog>
+
 /** Read installed, installation-provided, and offline Official catalog bundles, plus selected non-bundle names.
  * A dependency without a bundle patch is listed, as a `not-bundle` problem, only while it is selected.
  * @returns Package versions, manifest descriptions, the installable spec of profile dependencies, rows, optional
@@ -258,6 +266,14 @@ Manage profile files and apply their declared reload lifecycle.
  * @returns Package-manager diagnostics, the registries asked, and the observed activation outcome.
  */
 @Remote installBundle(spec: string, options?: InstallBundleOptions): Promise<ChangeResult>
+
+/**
+ * Install and enable an exact approved publication; never pass an unverified archive to the package manager.
+ * @param target - the name, version and digest last confirmed by the user.
+ * @param options - the installation request id and any explicitly approved pending scripts.
+ * @returns The ordinary installation result, including a refusal if the offer or verified bytes are unavailable.
+ */
+@Remote installPublishedBundle(target: PublishedPluginTarget, options?: PublishedPluginInstallOptions): Promise<ChangeResult>
 
 /** Recover the result of an active installation without cancelling it.
  * @param requestId The id supplied when installation started.

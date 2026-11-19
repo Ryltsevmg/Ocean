@@ -89,6 +89,7 @@ function bench(overrides: Partial<Record<string, ReturnType<typeof vi.fn>>> = {}
     inspect: vi.fn(() => Promise.resolve(ok(INSPECTED))),
     registries: vi.fn(() => Promise.resolve(ok(REGISTRIES))),
     installBundle: vi.fn(() => Promise.resolve(ok({ ...APPLIED, bundle: 'ocean-new' }))),
+    installPublishedBundle: vi.fn(),
     waitForInstall: vi.fn(() => Promise.resolve(refused('gateway/internal', 'offline'))),
     cancelInstall: vi.fn(() => Promise.resolve(ok({ status: 'cancelled' }))),
     removeBundle: vi.fn(() => Promise.resolve(ok(APPLIED))),
@@ -614,6 +615,95 @@ describe('PluginManagerController', () => {
     await vi.waitFor(() => { expect(plugins.inspect).toHaveBeenLastCalledWith('ocean-other@2.0.0', { registry: null }, expect.any(AbortSignal)) })
     await vi.waitFor(() => { expect(state().install.phase).toBe('done') })
     expect(installBundle).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the exact publication across failures, retries and script approval without checking a spec or registry', async () => {
+    const target = { name: 'ocean-verified', version: '2.1.0', sha256: 'a'.repeat(64) }
+    const offer = { ...target, title: 'Verified plugin' }
+    const first = deferred<ReturnType<typeof ok<ChangeResult>>>()
+    const retry = deferred<ReturnType<typeof ok<ChangeResult>>>()
+    const approval = deferred<ReturnType<typeof ok<ChangeResult>>>()
+    const { face, state, plugins, controller, probe } = bench({
+      installPublishedBundle: vi.fn()
+        .mockReturnValueOnce(first.promise).mockReturnValueOnce(retry.promise).mockReturnValueOnce(approval.promise),
+    })
+
+    face.installPublished(offer)
+    const firstId = state().install.requestId!
+    expect(state().install).toMatchObject({ open: true, phase: 'starting', subject: { ...offer, selection: true } })
+    expect(plugins.installPublishedBundle).toHaveBeenNthCalledWith(1, target, { requestId: firstId })
+    offer.version = '3.0.0'
+    offer.sha256 = 'b'.repeat(64)
+    face.installPublished(offer)
+    controller.installProgress({ requestId: firstId, phase: 'installing' })
+    controller.appendLog({ requestId: firstId, jobId: 'archive-job', argv: ['pnpm', 'add', '/profile/verified.tgz'], cwd: '/profile', stream: 'stdout', text: 'Installing\n' })
+    expect(state().install).toMatchObject({ phase: 'running', runs: [{ jobId: 'archive-job', output: 'Installing\n' }] })
+
+    first.resolve(ok({ ...failed({ code: 'published-archive-mismatch' }), failedAt: 'registry' }))
+    await vi.waitFor(() => { expect(state().install.phase).toBe('failed') })
+    const beforeEdits = state().install
+    face.changeRegistry()
+    face.editInstallSpec('unrelated@9.0.0')
+    face.toggleRegistryOptions()
+    expect(state().install).toBe(beforeEdits)
+    face.runInstall()
+    const retryId = state().install.requestId!
+    expect(retryId).not.toBe(firstId)
+    expect(plugins.installPublishedBundle).toHaveBeenNthCalledWith(2, target, { requestId: retryId })
+    retry.resolve(ok({ ...failed(), pendingBuilds: ['native'] }))
+    await vi.waitFor(() => { expect(state().install.failure?.pendingBuilds).toEqual(['native']) })
+    face.approveBuildsAndRetry()
+    const approvalId = state().install.requestId!
+    expect(approvalId).not.toBe(retryId)
+    expect(plugins.installPublishedBundle).toHaveBeenNthCalledWith(3, target, { requestId: approvalId, approvedBuilds: ['native'] })
+    approval.resolve(ok({ ...APPLIED, bundle: target.name, version: target.version, enabled: true, approvedBuilds: ['native'] }))
+    await vi.waitFor(() => { expect(state().install.phase).toBe('done') })
+    expect(state()).toMatchObject({ highlight: target.name, install: { installed: target.name, approvedBuilds: ['native'] } })
+    expect(plugins.inspect).not.toHaveBeenCalled()
+    expect(plugins.registries).not.toHaveBeenCalled()
+    expect(probe.fastest).not.toHaveBeenCalled()
+    expect(plugins.installBundle).not.toHaveBeenCalled()
+    expect(plugins.setBundleEnabled).not.toHaveBeenCalled()
+  })
+
+  it('reopens and reconciles the pending publication, then cancels by the same request id and keeps the offer pinned', async () => {
+    const original = deferred<ReturnType<typeof refused>>()
+    const recovered = deferred<ReturnType<typeof ok<ChangeResult>>>()
+    const cancel = deferred<ReturnType<typeof ok<{ status: 'cancelled' }>>>()
+    const target = { name: 'ocean-verified', version: '2.1.0', sha256: 'a'.repeat(64) }
+    const offer = { ...target, title: 'Verified plugin' }
+    const { face, state, plugins, controller } = bench({
+      installPublishedBundle: vi.fn().mockReturnValueOnce(original.promise).mockResolvedValueOnce(ok(APPLIED)),
+      waitForInstall: vi.fn().mockReturnValue(recovered.promise),
+      cancelInstall: vi.fn().mockReturnValue(cancel.promise),
+    })
+    face.installPublished(offer)
+    const requestId = state().install.requestId!
+    controller.installProgress({ requestId, phase: 'installing' })
+    face.closeInstall()
+    expect(plugins.cancelInstall).toHaveBeenCalledWith(requestId)
+    expect(state().install.open).toBe(false)
+    original.resolve(refused('gateway/internal', 'response lost'))
+    await vi.waitFor(() => { expect(plugins.waitForInstall).toHaveBeenCalledWith(requestId) })
+    expect(state().install.phase).toBe('unconfirmed')
+    face.installPublished({ ...offer, name: 'other-plugin' })
+    expect(state().install).toMatchObject({ open: true, requestId, subject: offer })
+    expect(plugins.installPublishedBundle).toHaveBeenCalledOnce()
+    expect(plugins.waitForInstall).toHaveBeenCalledOnce()
+
+    cancel.resolve(ok({ status: 'cancelled' }))
+    await vi.waitFor(() => { expect(state().install.phase).toBe('idle') })
+    recovered.resolve(ok({ ...APPLIED, application: 'cancelled' }))
+    await recovered.promise
+    const beforeEdits = state().install
+    face.editInstallSpec('not-a-publication')
+    face.chooseRegistry({ kind: 'custom', url: CORP })
+    expect(state().install).toBe(beforeEdits)
+    face.runInstall()
+    const nextId = state().install.requestId!
+    expect(nextId).not.toBe(requestId)
+    expect(plugins.installPublishedBundle).toHaveBeenNthCalledWith(2, target, { requestId: nextId })
+    await vi.waitFor(() => { expect(state().install.phase).toBe('done') })
   })
 
   it('opens the install form with the spec a tab supplies', () => {
@@ -2194,7 +2284,7 @@ it('installs a source Official entry as a local path through the ordinary instal
     enabled: true, expected: { name: entry.name, version: '2.0.0' }, requestId: state().install.requestId, registry: null,
   })
   expect(state().install.subject).toMatchObject({ kind: 'path', spec, selection: true })
-  expect(state().install.subject?.saveExact).toBeUndefined()
+  expect(state().install.subject).not.toHaveProperty('saveExact')
 })
 
 it.each([true, false])('replaces a same-version registry package with its source link and preserves enabled=%s', async (enabled) => {

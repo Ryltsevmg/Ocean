@@ -1,17 +1,8 @@
-- dialog "Agent Developer Patterns":
-  - heading "Agent Developer Patterns" [level=2]
-  - button "Close"
-  - text: "Not installed @local/ocean-adp Version: Unknown"
-  - paragraph: "Bundles the ocean-adp skill: pick a development phase, get one ready procedure for it."
-  - paragraph: "A dispatcher skill for non-trivial work: it names the phase you are in and hands over one self-contained procedure — plan, interview, TDD, hypothesis-driven debugging, review or handoff."
-  - heading "What it does" [level=3]
-  - list:
-    - listitem: Phase → procedure, with a completion criterion for each
-    - listitem: Works from the bundle alone; extra skill sets are optional
-    - listitem: Any project or user copy of the same name overrides it
-  - paragraph: No install source is listed. Enter a package name, Git URL, tarball, or local directory.
-  - button "Install from source"
-- textbox "Package name or address":
-  - /placeholder: for example ocean-plugin-example
-  - text: "@local/ocean-adp"
-The field accepts a replacement source. Escape returns to the catalogue without inspecting, installing, or changing the profile.
+Cached catalogue:
+Showing the last published list. Refresh to check for new installations.
+After withdrawal before installation:
+This plugin version is not available from the verified channel. Check the catalog for an available version.
+- button "Retry"
+After archive verification fails:
+The downloaded archive does not match the verified release. Check the catalog before trying again.
+- button "Retry"

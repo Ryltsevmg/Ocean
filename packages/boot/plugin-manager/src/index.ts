@@ -31,6 +31,7 @@ import type { ProfileContext, ProfileManifest } from '@ocean/ocean-app-boot'
 import { bundleManifest, readProfileRegistry, registryArguments, runProfilePnpm, saveManifest, viewProfilePackage } from './operations.ts'
 import { classifyInstallFailure } from './install-failure.ts'
 import { officialBundleInstallTarget } from './official-install-target.ts'
+import { PublishedCatalogSource } from './published-catalog.ts'
 import { dependencySpec, InvalidInstallSpecError, parseInstallSpec, pinnedGitOrigin, type ParsedInstallSpec } from './install-spec.ts'
 import { attributeFailure, normalizeRegistry, NPMMIRROR_REGISTRY, registryPlan } from './registry.ts'
 import { flatten, writePluginEnabled } from './patch.ts'
@@ -44,7 +45,7 @@ import type {
   PackageResult, PluginChange, PluginEntryId, PluginInfo, PluginInstallCancellation, PluginInstallProgress, PluginInstallRequestId,
   PluginRegistries, PluginSpecInspection, PluginUpdateResult, PluginUpdateStep, PluginVersion, PluginVersionList, Registry,
   RegistryAttempt, UpdateBundleOptions,
-  PluginOperation, PluginOperationId,
+  PluginOperation, PluginOperationId, PublishedCatalog, PublishedPluginInstallOptions, PublishedPluginTarget,
 } from './types.ts'
 export type * from './types.ts'
 export { classifyInstallFailure, type InstallFailureFacts } from './install-failure.ts'
@@ -86,6 +87,10 @@ export interface Config {
   detailFetchTimeoutMs?: number
   /** npm file CDNs that offered bundles are read from, in order; a read's `npmFileSources` moves the CDNs it names first. */
   detailNpmFileSources?: NpmFileSource[]
+  /** Approved catalog channel. Omitted leaves the public catalog disconnected in this composition. */
+  publishedCatalogUrl?: string
+  /** Deadline for a catalog document or package archive request, in milliseconds. */
+  publishedCatalogTimeoutMs?: number
 }
 
 /** The Fetch route serving images beside bundle detail documents. */
@@ -339,6 +344,8 @@ export class PluginManager extends TypertRemoteService {
     detailImageMaxBytes: z.natural().min(1).default(5 * 1024 * 1024),
     detailFetchTimeoutMs: z.natural().min(1).max(MAX_TIMER_DELAY_MS).default(15000),
     detailNpmFileSources: z.array(z.union(NPM_FILE_SOURCES)).min(1).default([...NPM_FILE_SOURCES]),
+    publishedCatalogUrl: z.string(),
+    publishedCatalogTimeoutMs: z.natural().min(1).max(MAX_TIMER_DELAY_MS).default(30_000),
   })
   /** Management bundles remain protected if their files become unreadable. */
   private readonly managementBundles = new Set<string>()
@@ -365,6 +372,7 @@ export class PluginManager extends TypertRemoteService {
   /** Installations by request id, from their call until it settles. */
   private readonly installs = new Map<PluginInstallRequestId, InstallControl>()
   private readonly detail: BundleDetailOptions
+  private readonly publishedCatalog: PublishedCatalogSource | undefined
 
   constructor(ctx: Context, config: Config) {
     super(ctx, 'pluginManager')
@@ -389,6 +397,12 @@ export class PluginManager extends TypertRemoteService {
     this.detail = {
       profile: this.profile, maxDocumentBytes: required.detailMaxBytes, maxImageBytes: required.detailImageMaxBytes,
       npmFileSources: required.detailNpmFileSources, timeoutMs: required.detailFetchTimeoutMs, lifetime: this.abort.signal,
+    }
+    if (config.publishedCatalogUrl !== undefined) {
+      this.publishedCatalog = new PublishedCatalogSource({
+        url: config.publishedCatalogUrl, timeoutMs: required.publishedCatalogTimeoutMs,
+        runtimeVersion: getOceanRuntimeVersion(), profileDir: this.profile.dir, lifetime: this.abort.signal,
+      })
     }
     ctx.effect(() => async () => {
       this.abort.abort()
@@ -490,6 +504,15 @@ export class PluginManager extends TypertRemoteService {
       }
       return { ...entry, patchId: candidate.id }
     })
+  }
+
+  /**
+   * Read the approved public catalog independently of local profile packages.
+   * @returns Current offers, or the last complete inventory marked stale after a failed refresh.
+   */
+  @Remote
+  async listPublishedCatalog(): Promise<PublishedCatalog> {
+    return this.publishedCatalog?.list() ?? { status: 'unavailable', plugins: [] }
   }
 
   /** Read installed, installation-provided, and offline Official catalog bundles, plus selected non-bundle names.
@@ -968,6 +991,25 @@ export class PluginManager extends TypertRemoteService {
    */
   @Remote
   installBundle(spec: string, options?: InstallBundleOptions): Promise<ChangeResult> {
+    return this.startInstall(spec, options)
+  }
+
+  /**
+   * Install and enable an exact approved publication; never pass an unverified archive to the package manager.
+   * @param target - the name, version and digest last confirmed by the user.
+   * @param options - the installation request id and any explicitly approved pending scripts.
+   * @returns The ordinary installation result, including a refusal if the offer or verified bytes are unavailable.
+   */
+  @Remote
+  installPublishedBundle(target: PublishedPluginTarget, options?: PublishedPluginInstallOptions): Promise<ChangeResult> {
+    return this.startInstall(target.name, {
+      enabled: true, expected: { name: target.name, version: target.version },
+      ...options?.requestId === undefined ? {} : { requestId: options.requestId },
+      ...options?.approvedBuilds === undefined ? {} : { approvedBuilds: options.approvedBuilds },
+    }, target)
+  }
+
+  private startInstall(input: string, options?: InstallBundleOptions, published?: PublishedPluginTarget): Promise<ChangeResult> {
     const requestId = options?.requestId
     const control: InstallControl = { abort: new AbortController(), phase: 'installing', result: Promise.resolve(null) }
     const stopped = (): boolean => control.abort.signal.aborted || this.abort.signal.aborted
@@ -976,14 +1018,36 @@ export class PluginManager extends TypertRemoteService {
       if (requestId !== undefined) this.ownerContext.emit('plugin-manager/install-state', { requestId, phase, ...attempt === undefined ? {} : { attempt } })
     }
     const result = this.change(async (result) => {
-      if (spec.trim() === '' || spec.startsWith('-')) throw new ManagementFailure('invalid-spec')
+      if (input.trim() === '' || input.startsWith('-')) throw new ManagementFailure('invalid-spec')
       if (stopped()) throw new InstallCancelledError()
       const before = readProfileManifest('ocean', this.profile.dir).dependencies ?? {}
-      // With HMR, an installed package is removed before another version is installed, so its plugins stop first.
-      const known = specPackageName(spec, before, this.profile.dir)
-      if (this.ownerContext.get('hmr') !== undefined && known !== undefined && Object.hasOwn(before, known)) {
-        throw new ManagementFailure('already-installed')
+      const checkPublished = (): void => {
+        if (published === undefined) return
+        if (this.publishedCatalog === undefined) throw new ManagementFailure('published-offer-unavailable')
+        this.publishedCatalog.assertCurrent(published)
       }
+      let spec = input
+      if (published !== undefined) {
+        if (this.publishedCatalog === undefined) throw new ManagementFailure('published-offer-unavailable')
+        if (Object.hasOwn(before, published.name) || this.readBundles().some(bundle => bundle.name === published.name
+          && (bundle.availability !== 'missing' || bundle.enabled))) throw new ManagementFailure('already-installed')
+        const signal = AbortSignal.any([this.abort.signal, control.abort.signal])
+        const preparation = this.publishedCatalog.prepare(published, signal)
+        this.packageOperations.add(preparation)
+        try { spec = await preparation }
+        catch (error) {
+          if (stopped()) throw new InstallCancelledError()
+          throw error
+        } finally { this.packageOperations.delete(preparation) }
+      } else {
+        // With HMR, an installed package must stop before another version replaces it.
+        const known = specPackageName(spec, before, this.profile.dir)
+        if (this.ownerContext.get('hmr') !== undefined && known !== undefined && Object.hasOwn(before, known)) {
+          throw new ManagementFailure('already-installed')
+        }
+      }
+      if (stopped()) throw new InstallCancelledError()
+      checkPublished()
       if (options?.approvedBuilds !== undefined) {
         await approveBuilds(this.profile.dir, options.approvedBuilds)
         result.approvedBuilds = options.approvedBuilds
@@ -1033,6 +1097,7 @@ export class PluginManager extends TypertRemoteService {
           if (index > 0) await this.restoreFiles(files)
           // A stop that landed while the files went back, or before the first run, starts no run with a dead signal.
           if (stopped()) throw new InstallCancelledError()
+          checkPublished()
           result.registries.push(registry)
           used = registry
           announce('installing', { registry, index: index + 1, total: plan.length })
@@ -1108,7 +1173,8 @@ export class PluginManager extends TypertRemoteService {
         const selected = bundleSelection(readProfileManifest('ocean', this.profile.dir)).includes(name)
         Object.assign(result, await this.publishAndReload(selected ? this.bundleRows(name).map(row => row.id) : []))
       })
-    }, { stage: 'install', target: spec, enabled: options?.enabled !== false }, 'install')
+    }, { stage: 'install', target: input, enabled: options?.enabled !== false }, 'install',
+    published === undefined ? undefined : { target: installOperationTarget(published.name), version: diagnosticVersion(published.version) })
     control.result = result
     return result.finally(() => { if (requestId !== undefined) this.installs.delete(requestId) })
   }

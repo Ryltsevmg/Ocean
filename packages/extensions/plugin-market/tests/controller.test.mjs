@@ -1,149 +1,184 @@
-/** Behaviour of the market controller against a fake plugin-manager Remote. */
+/** Independent catalogue and inventory reads and guarded install gestures. */
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createMarketController } from '../src/controller.js'
-import { buildMarketView } from '../src/view.js'
 
-/** Resolve catalogue strings the way the browser does. */
-const text = localized => localized.ru ?? localized.en
+const plugin = { name: '@ocean/published', version: '2.1.0', title: 'Published plugin', description: 'From the channel', sha256: '2'.repeat(64), compatible: true }
+const local = { name: plugin.name, availability: 'profile', enabled: false, installed: true }
+const publication = (status, plugins = [plugin]) => ({ status, plugins })
 
-/** Two catalogue entries; only the first is registered as a registry-updatable bundle. */
-const catalog = [
-  { name: '@local/pkg-a', availability: 'profile', version: '0.2.0', title: { en: 'A', ru: 'А' }, summary: { en: 'a', ru: 'а' } },
-  { name: '@local/pkg-b', version: '1.0.0', title: { en: 'B', ru: 'Б' }, summary: { en: 'b', ru: 'б' } },
-]
-
-/** A Remote stand-in that records calls and keeps its own bundle list. */
-function fakeApi(bundles) {
-  return {
-    bundles,
-    calls: [],
-    failure: undefined,
-    async listBundles() {
-      this.calls.push(['listBundles'])
-      if (this.failure !== undefined) throw this.failure
-      return this.bundles
-    },
+function harness({ plugins = [plugin], bundles = [] } = {}) {
+  const api = {
+    catalog: publication('ready', plugins), bundles, calls: [],
+    async listPublishedCatalog() { this.calls.push('catalog'); return this.catalog },
+    async listBundles() { this.calls.push('inventory'); return this.bundles },
     async setBundleEnabled(name, enabled) {
       this.calls.push(['setBundleEnabled', name, enabled])
       this.bundles = this.bundles.map(bundle => bundle.name === name ? { ...bundle, enabled } : bundle)
       return { application: 'applied' }
     },
-    async removeBundle(name) {
-      this.calls.push(['removeBundle', name])
-      this.bundles = this.bundles.filter(bundle => bundle.name !== name)
-      return { application: 'applied' }
-    },
-    async updateBundle(name, version) {
-      this.calls.push(['updateBundle', name, version])
-      return { application: 'applied' }
-    },
   }
+  const market = createMarketController(api)
+  const card = () => market.getSnapshot().cards[0]
+  return { market, api, card }
 }
 
-/** The controller under test with its real projection. */
-function controllerFor(api) {
-  return createMarketController({ api, catalog, text, buildView: buildMarketView })
-}
-
-test('load publishes the projected cards and clears the busy marker', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: false, installed: false, removable: false }])
-  const controller = controllerFor(api)
-  assert.equal(controller.getSnapshot().status, 'loading')
-  await controller.load()
-  const snapshot = controller.getSnapshot()
-  assert.equal(snapshot.status, 'ready')
-  assert.deepEqual(snapshot.counts, { total: 2, installed: 1, enabled: 0 })
-  assert.deepEqual(snapshot.cards.map(card => card.state), ['off', 'missing'])
-  assert.equal(snapshot.busy, undefined)
-})
-
-test('a failing load is reported, kept as a retryable error, and does not throw', async () => {
-  const api = fakeApi([])
-  api.failure = new Error('profile not writable')
-  const controller = controllerFor(api)
-  await controller.load()
-  assert.equal(controller.getSnapshot().status, 'error')
-  assert.equal(controller.getSnapshot().error, 'profile not writable')
-})
-
-test('subscribe observes publishes and stops after unsubscribe', async () => {
-  const controller = controllerFor(fakeApi([]))
-  let notifications = 0
-  const unsubscribe = controller.subscribe(() => { notifications += 1 })
-  await controller.load()
-  assert.ok(notifications > 0)
-  const seen = notifications
-  unsubscribe()
-  await controller.load()
-  assert.equal(notifications, seen)
-})
-
-test('setEnabled calls the Remote and re-reads the list', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: false, installed: false, removable: false }])
-  const controller = controllerFor(api)
-  await controller.load()
-  await controller.setEnabled('@local/pkg-a', true)
-  assert.deepEqual(api.calls.filter(call => call[0] === 'setBundleEnabled'), [['setBundleEnabled', '@local/pkg-a', true]])
-  assert.equal(api.calls.filter(call => call[0] === 'listBundles').length, 2)
-  assert.equal(controller.getSnapshot().cards[0].state, 'on')
-})
-
-test('a failed action refetches and reports when the Host cannot confirm a change', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: false, installed: false, removable: false }])
-  api.setBundleEnabled = async () => { throw new Error('locked') }
-  const controller = controllerFor(api)
-  await controller.load()
-  await controller.setEnabled('@local/pkg-a', true)
-  const snapshot = controller.getSnapshot()
-  assert.deepEqual(snapshot.notice, { title: 'transportError', diagnostic: 'locked' })
-  assert.equal(snapshot.cards[0].state, 'off')
-  assert.equal(snapshot.busy, undefined)
-})
-
-test('remove and update forward their targets', async () => {
-  const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', version: '0.2.0', enabled: true, installed: true, removable: true, update: 'registry' }])
-  const controller = controllerFor(api)
-  await controller.load()
-  await controller.remove('@local/pkg-a')
-  assert.deepEqual(api.calls.filter(call => call[0] === 'removeBundle'), [['removeBundle', '@local/pkg-a']])
-  await controller.update('@local/pkg-a', '0.3.0')
-  assert.deepEqual(api.calls.filter(call => call[0] === 'updateBundle'), [['updateBundle', '@local/pkg-a', '0.3.0']])
-})
-
-test('invalidations do not read the Host before the catalog opens', async () => {
-  let reads = 0
-  const market = createMarketController({ api: { listBundles: async () => { reads += 1; return [] } }, catalog, text, buildView: buildMarketView })
-  market.invalidate()
-  assert.equal(reads, 0)
-  await market.load()
-  market.invalidate()
-  assert.equal(reads, 2)
+test('opening and invalidation read both Remote lists with no reads before opening or after disposal', async () => {
+  const { market, api } = harness()
+  await market.invalidate()
+  assert.deepEqual(api.calls, [])
+  const first = market.load()
+  assert.deepEqual(api.calls, ['catalog', 'inventory'])
+  await first
+  await market.invalidate()
+  assert.deepEqual(api.calls, ['catalog', 'inventory', 'catalog', 'inventory'])
   market.dispose()
-  market.invalidate()
-  assert.equal(reads, 2)
+  await market.invalidate()
+  await market.load()
+  assert.equal(api.calls.length, 4)
 })
 
-for (const application of ['failed', 'restart-required', 'overridden', 'cancelled']) {
-  test(`the catalogue distinguishes the Host's ${application} outcome from success`, async () => {
-    const api = fakeApi([{ name: '@local/pkg-a', availability: 'profile', enabled: false }])
-    api.setBundleEnabled = async () => ({ application, error: { code: 'operation-error' } })
-    const controller = controllerFor(api)
-    await controller.load()
-    await controller.setEnabled('@local/pkg-a', true)
-    assert.equal(controller.getSnapshot().cards[0].state, 'off')
-    assert.deepEqual(controller.getSnapshot().notice, { title: application, diagnostic: 'operation-error' })
-  })
-}
+test('the last valid list stays visible offline but offers no installation', async () => {
+  const { market, api, card } = harness()
+  await market.load()
+  const target = card().actions[0].target
+  assert.deepEqual(market.getInstallTarget(target), target)
 
-test('a successful empty inventory still relocalizes curated cards', async () => {
-  let language = 'en'
-  const api = fakeApi([])
-  const controller = createMarketController({ api, catalog, text: value => value[language], buildView: buildMarketView })
-  await controller.load()
-  assert.equal(controller.getSnapshot().cards[0].title, 'A')
-  language = 'ru'
-  controller.relocalize()
-  assert.equal(controller.getSnapshot().cards[0].title, 'А')
-  assert.deepEqual(api.calls, [['listBundles']])
+  const cached = { ...plugin, title: 'Later title in Host cache' }
+  api.catalog = publication('stale', [cached])
+  const pending = market.load()
+  assert.equal(card().title, plugin.title)
+  assert.equal(market.getInstallTarget(target), undefined)
+  await pending
+  assert.equal(market.getSnapshot().status, 'stale')
+  assert.equal(card().title, cached.title)
+  assert.deepEqual(card().actions, [])
+
+  api.catalog = publication('unavailable', [])
+  await market.load()
+  assert.equal(market.getSnapshot().status, 'unavailable')
+  assert.equal(market.getSnapshot().hasCatalog, true)
+  assert.equal(card().title, cached.title)
+  assert.equal(market.getInstallTarget(target), undefined)
+})
+
+test('the Host stale cache can seed a first open or replace a prior list with an authoritative empty cache', async () => {
+  const { market, api, card } = harness()
+  api.catalog = publication('stale')
+  await market.load()
+  assert.equal(card().title, plugin.title)
+  assert.deepEqual(card().actions, [])
+  api.catalog = publication('stale', [])
+  await market.load()
+  assert.equal(market.getSnapshot().hasCatalog, true)
+  assert.deepEqual(market.getSnapshot().cards, [])
+  api.catalog = publication('unavailable', [])
+  await market.load()
+  assert.equal(market.getSnapshot().hasCatalog, true)
+})
+
+test('an initial Remote rejection is unavailable, not an empty catalogue', async () => {
+  const { market, api } = harness()
+  api.listPublishedCatalog = async () => { throw new Error('offline') }
+  await market.load()
+  assert.equal(market.getSnapshot().status, 'unavailable')
+  assert.equal(market.getSnapshot().hasCatalog, false)
+  assert.deepEqual(market.getSnapshot().cards, [])
+})
+
+test('a withdrawn publication disappears without changing the profile', async () => {
+  const { market, api } = harness({ bundles: [local] })
+  await market.load()
+  api.catalog = publication('ready', [])
+  await market.invalidate()
+  assert.equal(market.getSnapshot().status, 'ready')
+  assert.deepEqual(market.getSnapshot().cards, [])
+  assert.deepEqual(api.bundles, [local])
+  assert.deepEqual(api.calls, ['catalog', 'inventory', 'catalog', 'inventory'])
+})
+
+test('an obsolete rendered click cannot install an offer whose version, hash, or approval changed', async () => {
+  const { market, api, card } = harness()
+  await market.load()
+  const target = card().actions[0].target
+  for (const plugins of [[{ ...plugin, sha256: '3'.repeat(64) }], [{ ...plugin, version: '2.2.0' }], []]) {
+    api.catalog = publication('ready', plugins)
+    await market.load()
+    assert.equal(market.getInstallTarget(target), undefined)
+  }
+})
+
+test('inventory rejection leaves published cards visible but prevents installs until a successful inventory read', async () => {
+  const { market, api, card } = harness()
+  const inventory = api.listBundles
+  api.listBundles = async () => { throw new Error('offline') }
+  await market.load()
+  assert.equal(market.getSnapshot().status, 'ready')
+  assert.equal(market.getSnapshot().inventory, 'unavailable')
+  assert.equal(card().state, 'unknown')
+  assert.deepEqual(card().actions, [])
+  api.listBundles = inventory
+  await market.load()
+  assert.equal(market.getSnapshot().inventory, 'ready')
+  assert.equal(card().actions[0].kind, 'install')
+})
+
+test('older in-flight answers cannot resurrect a withdrawn release or overwrite newer inventory', async () => {
+  const { market, api } = harness()
+  const oldCatalog = Promise.withResolvers()
+  const oldInventory = Promise.withResolvers()
+  const listCatalog = api.listPublishedCatalog
+  const listInventory = api.listBundles
+  api.listPublishedCatalog = () => oldCatalog.promise
+  api.listBundles = () => oldInventory.promise
+  const older = market.load()
+  api.listPublishedCatalog = listCatalog
+  api.listBundles = listInventory
+  api.catalog = publication('ready', [])
+  await market.invalidate()
+  const newer = market.getSnapshot()
+  oldCatalog.resolve(publication('ready'))
+  oldInventory.resolve([local])
+  await older
+  assert.equal(market.getSnapshot(), newer)
+  assert.deepEqual(newer.cards, [])
+})
+
+test('available local bundles can be toggled while the publication channel is cached', async () => {
+  const { market, api, card } = harness({ bundles: [local] })
+  api.catalog = publication('stale')
+  await market.load()
+  assert.equal(card().state, 'off')
+  await market.setEnabled(plugin.name, true)
+  assert.deepEqual(api.calls, ['catalog', 'inventory', ['setBundleEnabled', plugin.name, true], 'inventory'])
+  assert.equal(card().state, 'on')
+  assert.equal(market.getSnapshot().busy, undefined)
+})
+
+test('an unconfirmed change retains the card, rereads inventory, and reports the stable diagnostic code', async () => {
+  const { market, api, card } = harness({ bundles: [local] })
+  api.setBundleEnabled = async () => { throw Object.assign(new Error('internal transport detail'), { code: 'offline' }) }
+  await market.load()
+  await market.setEnabled(plugin.name, true)
+  assert.equal(card().state, 'off')
+  assert.deepEqual(api.calls, ['catalog', 'inventory', 'inventory'])
+  assert.deepEqual(market.getSnapshot().notice, { title: 'transportError', diagnostic: 'offline' })
+})
+
+test('a disposed controller discards pending Remote answers', async () => {
+  const { market, api } = harness()
+  const channel = Promise.withResolvers()
+  const inventory = Promise.withResolvers()
+  api.listPublishedCatalog = () => channel.promise
+  api.listBundles = () => inventory.promise
+  const pending = market.load()
+  const snapshot = market.getSnapshot()
+  let publications = 0
+  market.subscribe(() => { publications += 1 })
+  market.dispose()
+  channel.resolve(publication('ready'))
+  inventory.resolve([local])
+  await pending
+  assert.equal(market.getSnapshot(), snapshot)
+  assert.equal(publications, 0)
 })

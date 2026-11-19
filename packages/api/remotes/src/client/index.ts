@@ -41,7 +41,7 @@ export type {
   PluginChange, PluginEntryId, PluginInfo, PluginInspectProblem, PluginInstallCancellation, PluginInstallFailureKind,
   PluginInstallLogChunk, PluginInstallProgress, PluginInstallRequestId, PluginRegistries, PluginSpecInspection,
   PluginUpdateProgress, PluginUpdateResult, PluginUpdateStep, PluginVersion, PluginVersionList, RegistryAttempt,
-  ReadOnlyReason, Registry, RestartReason,
+  PublishedCatalog, PublishedPluginInstallOptions, PublishedPluginOffer, PublishedPluginTarget, ReadOnlyReason, Registry, RestartReason,
 } from '@ocean/ocean-plugin-manager/types'
 export type { McpManagedServerStatus, McpManagedServerView } from '@ocean/ocean-mcp-manager/types'
 export type {} from '@ocean/ocean-plugin-manager/remote'

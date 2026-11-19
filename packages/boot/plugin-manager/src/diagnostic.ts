@@ -58,6 +58,8 @@ const operation: z.ZodType<PluginOperation> = z.discriminatedUnion('phase', [
       'incompatible-version': 'incompatible-version',
       'unsupported-platform': 'unsupported-platform',
       'unexpected-package': 'unexpected-package',
+      'published-offer-unavailable': 'published-offer-unavailable',
+      'published-archive-mismatch': 'published-archive-mismatch',
       'operation-error': 'operation-error',
     } satisfies { [K in ManagementError['code']]: K }).optional(),
     restartReason: z.enum({

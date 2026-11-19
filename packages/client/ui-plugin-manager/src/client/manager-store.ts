@@ -39,7 +39,7 @@ import type { HostObservable } from '@ocean/ocean-client-ui-slots'
 import type { LocalizedText, PluginLocalizedMeta } from '@ocean/ocean-package-manifest'
 import type { SettingsDescribeFace, ConfigForms } from '@ocean/ocean-client-ui-settings/client'
 import type { ConfigLedger } from './config-ledger.ts'
-import type { PluginTabInstall, PluginTabUpdate } from './slot-contract.ts'
+import type { PluginTabInstall, PluginTabProps, PluginTabPublishedInstall, PluginTabUpdate } from './slot-contract.ts'
 import type { PluginTab } from './tab-ledger.ts'
 import { shortName } from './presentation.ts'
 import { BundleDetailController, type BundleDetailsState } from './detail-store.ts'
@@ -135,8 +135,10 @@ export interface PackageView {
   readonly rows: readonly PackageRow[]
 }
 
-/** The typed spec as the Host read it, on the installing, installed, and failed screens. */
-export type InstallSubject = Extract<PluginSpecInspection, { status: 'accepted' }> & {
+/** What is being installed, from a generic spec or a confirmed publication. */
+export type InstallSubject = InspectedInstallSubject | PublishedInstallSubject
+
+type InspectedInstallSubject = Extract<PluginSpecInspection, { status: 'accepted' }> & {
   readonly spec: string
   /** The installation already provides this bundle; only explicit enablement remains. */
   readonly bundled?: true
@@ -146,6 +148,13 @@ export type InstallSubject = Extract<PluginSpecInspection, { status: 'accepted' 
   readonly saveExact?: boolean
   /** Exact package identity the Host must verify before applying an Official catalogue installation. */
   readonly expected?: NonNullable<InstallBundleOptions['expected']>
+}
+
+type PublishedInstallSubject = PluginTabPublishedInstall & {
+  readonly kind: 'published'
+  /** Display-only name and version; never an install spec. */
+  readonly spec: string
+  readonly selection: true
 }
 
 /** The registry the person picked for an install: one the Host offers, or a typed URL. */
@@ -222,11 +231,11 @@ export interface InstallRun {
  * an unresolved request pending; `unknown` releases it after the Host reports
  * no active request and its original reply is lost. Neither means cancellation.
  * Closing any pending phase preserves its request and output for reopening.
- * Confirmed cancellation and returning from an outcome keep the spec for editing.
+ * Confirmed cancellation and returning from an outcome keep the spec or the pinned publication.
  */
 export interface InstallState {
   readonly open: boolean
-  /** The package spec as typed. */
+  /** Editable package spec, or the display-only name and version of a publication. */
   readonly spec: string
   /** The spec form was reopened after switching away from a failed GitHub address. */
   readonly mirrorRecovery?: boolean
@@ -314,10 +323,11 @@ export function isInstallPending(phase: InstallState['phase']): boolean {
  * this recovery does not apply; test for undefined, because null is a valid entry.
  */
 export function githubRecoveryRegistry(install: InstallState): Registry | undefined {
-  // The mirror recovery reopens the spec form, which a confirmed spec does not have.
-  if (install.confirmed !== undefined || install.phase !== 'failed' || install.failure?.failedAt !== 'spec-host'
+  // The mirror recovery reopens the editable spec form.
+  const subject = install.subject
+  if (subject?.kind === 'published' || install.confirmed !== undefined || install.phase !== 'failed' || install.failure?.failedAt !== 'spec-host'
     || (install.failure.kind !== 'network' && install.failure.kind !== 'timeout')) return undefined
-  const host = install.subject?.host?.toLowerCase().split(':')[0]
+  const host = subject?.host?.toLowerCase().split(':')[0]
   if (host !== 'github.com' && !host?.endsWith('.github.com')) return undefined
   const resolved = install.registries?.resolved ?? null
   return offeredRegistries(install.registries).find(registry => registryKey(registry, resolved) === NPMMIRROR_REGISTRY)
@@ -457,6 +467,8 @@ export interface PluginManagerFace {
    * @param target - the exact spec, optional registry, and the name and version the dialog shows.
    */
   installFrom: (target: PluginTabInstall) => void
+  /** Install and enable a confirmed publication through the shared dialog. */
+  installPublished: PluginTabProps['installPublished']
   /** Hide immediately, abort a check, or request cancellation while retaining the Host-owned installation. */
   closeInstall: () => void
   editInstallSpec: (text: string) => void
@@ -789,13 +801,15 @@ export class PluginManagerController {
         this.patchInstall({ spec, confirmed: { title, version }, ...registry === undefined ? {} : { registry: { kind: 'custom', url: registry } } })
         void this.runInstall()
       },
+      installPublished: (target) => { this.openPublishedInstall(target) },
       closeInstall: () => {
-        if (isInstallPending(this.getSnapshot().install.phase)) {
+        const { phase, subject } = this.getSnapshot().install
+        if (isInstallPending(phase)) {
           this.patchInstall({ open: false })
           void this.cancelInstall()
           return
         }
-        if (this.getSnapshot().install.phase === 'checking' || this.getSnapshot().install.subject?.bundled) this.finishAnalytics('cancelled')
+        if (phase === 'checking' || (subject?.kind !== 'published' && subject?.bundled)) this.finishAnalytics('cancelled')
         this.abortInspect()
         this.registryRead = undefined
         this.patch({ install: IDLE_INSTALL })
@@ -803,20 +817,24 @@ export class PluginManagerController {
       editInstallSpec: (text) => {
         const install = this.getSnapshot().install
         // Typing while the Host checks or installs is not possible; a new spec after an outcome starts over.
-        if (install.phase === 'checking' || isInstallPending(install.phase)) return
+        if (install.subject?.kind === 'published' || install.phase === 'checking' || isInstallPending(install.phase)) return
         this.patchInstall(install.phase === 'idle' ? { spec: text, inputError: null, subject: null }
           : { ...specAgain(install), spec: text, subject: null })
       },
       runInstall: () => { void this.runInstall() },
-      toggleRegistryOptions: () => { this.patchInstall({ registryOpen: !this.getSnapshot().install.registryOpen }) },
+      toggleRegistryOptions: () => {
+        const install = this.getSnapshot().install
+        if (install.subject?.kind !== 'published') this.patchInstall({ registryOpen: !install.registryOpen })
+      },
       chooseRegistry: (choice) => {
-        if (this.getSnapshot().install.phase !== 'idle') return
+        const install = this.getSnapshot().install
+        if (install.subject?.kind === 'published' || install.phase !== 'idle') return
         this.transientRegistry = false
         this.patchInstall({ registry: choice, registryError: false })
       },
       changeRegistry: () => {
         const install = this.getSnapshot().install
-        if (install.phase === 'failed') this.patch({ install: { ...specAgain(install), registryOpen: true } })
+        if (install.subject?.kind !== 'published' && install.phase === 'failed') this.patch({ install: { ...specAgain(install), registryOpen: true } })
       },
       useGithubMirror: () => {
         const install = this.getSnapshot().install
@@ -1187,6 +1205,22 @@ export class PluginManagerController {
     return this.disposed || signal.aborted
   }
 
+  /** Open the shared dialog without consulting registries or inspecting a spec. */
+  private openPublishedInstall({ name, version, sha256, title }: PluginTabPublishedInstall): void {
+    if (this.disposed) return
+    const { phase } = this.getSnapshot().install
+    if (phase === 'checking' || isInstallPending(phase)) {
+      this.patchInstall({ open: true })
+      void this.reconcileInstall()
+      return
+    }
+    this.registryRead = undefined
+    const spec = `${name}@${version}`
+    const subject: PublishedInstallSubject = { kind: 'published', name, version, sha256, title, spec, selection: true }
+    this.patch({ install: { ...IDLE_INSTALL, open: true, spec, subject } })
+    void this.runInstall()
+  }
+
   /** Reuse the install dialog with an exact catalog target and an explicit selection outcome. */
   private openCatalogInstall(pkg: PackageView, target: NonNullable<BundleInfo['installTarget']>, enabled: boolean): void {
     if (this.disposed) return
@@ -1218,10 +1252,21 @@ export class PluginManagerController {
   private async runInstall(): Promise<void> {
     const state = this.getSnapshot()
     const install = state.install
-    const spec = install.spec.trim()
-    if (install.phase === 'checking' || isInstallPending(install.phase) || spec === '') return
+    if (install.phase === 'checking' || isInstallPending(install.phase)) return
+    const subject = install.subject
+    const spec = subject?.kind === 'published' ? subject.spec : install.spec.trim()
+    if (spec === '') return
+    if (this.ctx.get('productAnalytics')?.enabled) {
+      const input = sanitizeInstallInput(spec)
+      this.analyticsAttempt = { input, started: Date.now() }
+      this.ctx.get('productAnalytics')?.track('plugin_install_click', { input_value: input })
+    }
+    if (subject?.kind === 'published') {
+      await this.startInstall(subject)
+      return
+    }
     const listed = state.packages.find(pkg => pkg.name === spec)
-    let catalogSubject = install.subject?.selection === undefined || install.subject.spec !== spec ? undefined : install.subject
+    let catalogSubject = subject?.selection === undefined || subject.spec !== spec ? undefined : subject
     if (listed?.availability === 'missing' && listed.installTarget !== undefined
       && listed.error === undefined && catalogSubject === undefined) {
       const target = listed.installTarget
@@ -1230,10 +1275,6 @@ export class PluginManagerController {
         status: 'accepted', kind: local ? 'path' : 'registry', name: listed.name, version: target.version, bundle: true,
         spec: target.spec, registry: null, ...local ? {} : { saveExact: true },
       }
-    }
-    if (this.ctx.get('productAnalytics')?.enabled) {
-      this.analyticsAttempt = { input: sanitizeInstallInput(spec), started: Date.now() }
-      this.ctx.get('productAnalytics')?.track('plugin_install_click', { input_value: sanitizeInstallInput(spec) })
     }
     if (listed?.availability === 'installation' && listed.optional && listed.listedByDefault === false
       && !listed.enabled && listed.error === undefined && listed.readOnlyReason === undefined) {
@@ -1297,13 +1338,8 @@ export class PluginManagerController {
     await this.startInstall({ spec, ...inspected.value })
   }
 
-  /**
-   * Hand the checked spec to the Host and settle the dialog from its answer.
-   * `approvedBuilds` names the pending install scripts the person allowed;
-   * the Host saves that permission for this profile before pnpm runs.
-   */
+  /** Start a tracked attempt; script approvals apply to the same target. */
   private async startInstall(subject: InstallSubject, approvedBuilds?: readonly string[]): Promise<void> {
-    const { spec, registry } = subject
     const requestId = randomUUID() as PluginInstallRequestId
     const request: InstallRequest = { requestId, acknowledged: false, replyLost: false, recovering: false }
     this.request = request
@@ -1314,12 +1350,15 @@ export class PluginManagerController {
     // The Host announces `plugin-manager/changed` while the run is still on
     // the wire, and every such event reads again; those reads must not cancel
     // the run's settlement.
-    const result = await this.ctx.remote.pluginManager.installBundle(spec, {
-      enabled: subject.selection ?? false, requestId, registry,
-      ...subject.saveExact === undefined ? {} : { saveExact: subject.saveExact },
-      ...subject.expected === undefined ? {} : { expected: subject.expected },
-      ...approvedBuilds === undefined ? {} : { approvedBuilds: [...approvedBuilds] },
-    })
+    const options = { requestId, ...approvedBuilds === undefined ? {} : { approvedBuilds: [...approvedBuilds] } }
+    const manager = this.ctx.remote.pluginManager
+    const result = subject.kind === 'published'
+      ? await manager.installPublishedBundle({ name: subject.name, version: subject.version, sha256: subject.sha256 }, options)
+      : await manager.installBundle(subject.spec, {
+        ...options, enabled: subject.selection ?? false, registry: subject.registry,
+        ...subject.saveExact === undefined ? {} : { saveExact: subject.saveExact },
+        ...subject.expected === undefined ? {} : { expected: subject.expected },
+      })
     if (this.disposed || this.request !== request) return
     if (!result.ok) {
       request.replyLost = true

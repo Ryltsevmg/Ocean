@@ -25,6 +25,8 @@ const ERROR_STEPS: Record<ManagementError['code'], string> = {
   'incompatible-version': 'Install a version compatible with the running OCEAN. A version exemption needs the user\'s explicit acceptance of crash and data-loss risk.',
   'unsupported-platform': 'This bundle cannot run on the current Host platform; ask the user to use a supported Host.',
   'unexpected-package': 'The source installed another package or version than requested and was rolled back; report this to the user.',
+  'published-offer-unavailable': 'Refresh the catalogue before retrying the installation.',
+  'published-archive-mismatch': 'Do not install the package; report the archive mismatch to the maintainer.',
   'operation-error': 'Report the diagnostic to the user; retry only after its cause is addressed.',
 }
 

@@ -65,8 +65,8 @@ export type { ConfigLedger, OfficialItem } from './config-ledger.ts'
 export type { PluginManagerFace } from './manager-store.ts'
 export type { PluginManagerLocaleKey } from './locales.ts'
 export type {
-  ConfigPageForm, PluginActivationOwnerProps, PluginAddActionsProps, PluginTabInstall, PluginTabProps, PluginTabUpdate,
-  PluginConfigViewProps, PluginDetailProps, PluginPackageRef, PluginRowRef, PluginsSubject,
+  ConfigPageForm, PluginActivationOwnerProps, PluginAddActionsProps, PluginConfigViewProps, PluginDetailProps,
+  PluginPackageRef, PluginRowRef, PluginsSubject, PluginTabInstall, PluginTabProps, PluginTabPublishedInstall, PluginTabUpdate,
 } from './slot-contract.ts'
 
 declare module '@ocean/ocean-client-ui-slots' {

@@ -1,125 +1,120 @@
-/**
- * Market controller: owns the tab snapshot and performs every management
- * action through the injected Host API. React-free, so the browser bundle can
- * inline it and `tests/` can exercise its rules without a DOM.
- */
+/** Own the latest catalogue and inventory reads independently of the mounted tab. */
+import { readPublishedCatalog } from './catalog.js'
+import { buildMarketView } from './view.js'
 
-/** Rejection text for a snapshot, including a non-Error rejection. */
-function messageOf(error) {
-  return error instanceof Error ? error.message : String(error)
-}
+/** @typedef {import('./catalog.js').PublishedInstallTarget} PublishedInstallTarget */
+/** @typedef {import('@ocean/ocean-api-remotes/client').BundleInfo} BundleInfo */
+/** @typedef {import('@ocean/ocean-api-remotes/client').ChangeResult} ChangeResult */
+/** @typedef {'loading' | 'ready' | 'stale' | 'unavailable'} CatalogStatus */
+/** @typedef {'loading' | 'ready' | 'unavailable'} InventoryStatus */
+/** @typedef {{title: Exclude<ChangeResult['application'], 'applied'> | 'transportError', diagnostic?: string}} ChangeNotice */
 
 /**
- * @param {{ api: { listBundles: () => Promise<object[]>,
- *   setBundleEnabled: (name: string, enabled: boolean) => Promise<unknown>,
- *   removeBundle: (name: string) => Promise<unknown>,
- *   updateBundle: (name: string, version: string) => Promise<unknown> },
- *   catalog: readonly object[], text: (localized: unknown) => string,
- *   buildView: (input: object) => object }} options
- *   `api` is the Host's `pluginManager` Remote; `text` resolves the catalogue's localized strings; `buildView` is the
- *   pure projection from `src/view.js`, passed in so this module stays import-free for the inline bundle.
- * @returns {object} the tab controller.
+ * Create a controller scoped to one plugin application. A failed read retains its last usable data, but only current
+ * publication and inventory data can offer a new install.
+ * @param {{listPublishedCatalog: () => Promise<unknown>, listBundles: () => Promise<BundleInfo[]>,
+ *   setBundleEnabled: (name: string, enabled: boolean) => Promise<ChangeResult>}} api the Host's plugin manager.
+ * @returns The catalogue state source and tab actions.
  */
-export function createMarketController(options) {
-  const { api, catalog, text, buildView } = options
+export function createMarketController(api) {
+  /** @type {Set<() => void>} */
   const listeners = new Set()
-  let bundles
+  /** @type {readonly import('./catalog.js').PublishedPlugin[] | undefined} */
+  let plugins
+  /** @type {BundleInfo[]} */
+  let bundles = []
   let disposed = false
-  let loadToken = 0
+  let catalogRequest = 0
+  let inventoryRequest = 0
   let snapshot = Object.freeze({
-    status: 'loading',
-    cards: [],
-    counts: { total: catalog.length, installed: 0, enabled: 0 },
-    error: undefined,
-    busy: undefined,
-    notice: undefined,
+    status: /** @type {CatalogStatus} */ ('loading'),
+    inventory: /** @type {InventoryStatus} */ ('loading'),
+    hasCatalog: false,
+    ...buildMarketView({ plugins: [], bundles, fresh: false, inventoryReady: false }),
+    busy: /** @type {{name: string} | undefined} */ (undefined),
+    notice: /** @type {ChangeNotice | undefined} */ (undefined),
   })
 
-  function emit() {
+  /** @param {Partial<typeof snapshot>} patch changes to publish in the same snapshot as the projected cards. */
+  function publish(patch) {
+    const next = { ...snapshot, ...patch }
+    const view = buildMarketView({
+      plugins: plugins ?? [], bundles, fresh: next.status === 'ready', inventoryReady: next.inventory === 'ready',
+    })
+    snapshot = Object.freeze({ ...next, ...view, hasCatalog: plugins !== undefined })
     for (const listener of listeners) listener()
   }
 
-  function publish(patch) {
-    snapshot = Object.freeze({ ...snapshot, ...patch })
-    emit()
+  async function readCatalog() {
+    const token = ++catalogRequest
+    publish({ status: 'loading' })
+    const result = await api.listPublishedCatalog().then(readPublishedCatalog, () => ({ status: /** @type {const} */ ('unavailable') }))
+    if (disposed || token !== catalogRequest) return
+    if (result.status !== 'unavailable') plugins = result.plugins
+    publish({ status: result.status })
   }
 
-  /** Rebuild the cards from the last Host list. */
-  function rebuild(overrides) {
-    const view = buildView({ catalog, bundles, text })
-    publish({ cards: view.cards, counts: view.counts, ...overrides })
+  async function readInventory() {
+    const token = ++inventoryRequest
+    publish({ inventory: 'loading' })
+    const result = await api.listBundles().then(value => Array.isArray(value) ? value : undefined, () => undefined)
+    if (disposed || token !== inventoryRequest) return
+    if (result !== undefined) bundles = result
+    publish({ inventory: result === undefined ? 'unavailable' : 'ready' })
   }
 
   async function load() {
-    const token = loadToken + 1
-    loadToken = token
-    try {
-      const listed = await api.listBundles()
-      if (disposed || token !== loadToken) return
-      bundles = listed
-      rebuild({ status: 'ready', error: undefined })
-    } catch (error) {
-      if (disposed || token !== loadToken) return
-      publish({ status: snapshot.cards.length > 0 ? 'ready' : 'error', error: messageOf(error) })
-    }
-  }
-
-  async function perform(name, kind, work) {
-    if (disposed || snapshot.busy !== undefined) return
-    publish({ busy: { name, kind }, notice: undefined })
-    let notice
-    try {
-      const result = await work()
-      if (result.application !== 'applied') {
-        notice = { title: result.application, diagnostic: result.error?.diagnostic ?? result.error?.code }
-      }
-    } catch (error) {
-      notice = { title: 'transportError', diagnostic: messageOf(error) }
-    }
     if (disposed) return
-    await load()
-    if (disposed) return
-    publish({ busy: undefined, notice })
+    await Promise.all([readCatalog(), readInventory()])
   }
 
   return {
-    /** @param {() => void} listener @returns {() => void} unsubscribe */
+    /** @param {() => void} listener observes each new snapshot. @returns {() => void} unsubscribe. */
     subscribe(listener) {
       listeners.add(listener)
       return () => { listeners.delete(listener) }
     },
-    /** @returns {object} the current immutable snapshot. */
+    /** @returns {typeof snapshot} the current catalogue and inventory presentation state. */
     getSnapshot() {
       return snapshot
     },
-    /** Read the Host's bundle list and republish the cards. */
+    /** Read publication and inventory together, without coupling their results. */
     load,
-    /** Refresh an already opened catalog; unopened catalogs issue no Host requests. */
+    /** Refresh only after the catalogue was opened at least once. */
     invalidate() {
-      if (!disposed && loadToken > 0) void load()
-    },
-    /** @param {string} name bundle package name @param {boolean} enabled target selection */
-    setEnabled(name, enabled) {
-      return perform(name, enabled ? 'enable' : 'disable', () => api.setBundleEnabled(name, enabled))
-    },
-    /** @param {string} name bundle package name */
-    remove(name) {
-      return perform(name, 'remove', () => api.removeBundle(name))
+      if (catalogRequest > 0) return load()
     },
     /**
-     * Update one installed bundle to the version this catalogue curates.
-     * @param {string} name bundle package name
-     * @param {string} version target version, from the catalogue entry
+     * Recheck an install gesture against the latest card before opening the Plugins page's installation dialog.
+     * @param {PublishedInstallTarget} target the release displayed when the install handler was rendered.
+     * @returns {PublishedInstallTarget | undefined} the current target, only if the release still matches and is installable.
      */
-    update(name, version) {
-      return perform(name, 'update', () => api.updateBundle(name, version))
+    getInstallTarget(target) {
+      if (disposed || snapshot.busy !== undefined) return undefined
+      const action = snapshot.cards.find(card => card.name === target.name)?.actions.find(action => action.kind === 'install')
+      return action?.kind === 'install' && action.target.version === target.version && action.target.sha256 === target.sha256
+        ? action.target : undefined
     },
-    /** Rebuild the cards after a language switch, without asking the Host. */
-    relocalize() {
-      if (disposed || bundles === undefined) return
-      rebuild({})
+    /** @param {string} name package name. @param {boolean} enabled target selection for a managed local copy. */
+    async setEnabled(name, enabled) {
+      if (disposed || snapshot.busy !== undefined || snapshot.inventory !== 'ready') return
+      const allowed = snapshot.cards.find(card => card.name === name)?.actions.some(action => action.kind === (enabled ? 'enable' : 'disable'))
+      if (!allowed) return
+      publish({ busy: { name }, notice: undefined })
+      /** @type {ChangeNotice | undefined} */
+      let notice
+      try {
+        const result = await api.setBundleEnabled(name, enabled)
+        if (result.application !== 'applied') notice = { title: result.application, diagnostic: result.error?.code }
+      } catch (error) {
+        // A lost response does not establish whether the Host applied the change.
+        notice = { title: 'transportError', diagnostic: typeof error?.code === 'string' ? error.code : undefined }
+      }
+      if (disposed) return
+      await readInventory()
+      if (!disposed) publish({ busy: undefined, notice })
     },
-    /** Stop publishing; later Host answers are dropped. */
+    /** Stop publishing; in-flight answers cannot update a disposed controller. */
     dispose() {
       disposed = true
       listeners.clear()

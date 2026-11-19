@@ -1,7 +1,11 @@
-390 px / dark — open details after enabling:
-On
-- button "Turn off"
-Selected bundle with missing files:
-- paragraph: The profile still references this plugin, but its files are missing.
-- button "Turn off"
-- button "Remove"
+Before publication:
+No plugins have been published.
+After publication and refresh:
+- heading "Approved fixture plugin" [level=3]
+- button "Install"
+After installation:
+- button "Done"
+- switch "Enable e2e-published-catalog-bundle" [checked]
+After withdrawal and refresh:
+No plugins have been published.
+- switch "Enable e2e-published-catalog-bundle" [checked]

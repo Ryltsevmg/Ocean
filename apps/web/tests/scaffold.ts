@@ -589,6 +589,8 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     ...options.profile?.hmr === false ? [{ id: 'hmr', disabled: true }] : [],
     { id: 'session-log-deepseek', config: { enabled: false } },
     { id: 'ui-plugin-manager', config: { registryProbeEnabled: false } },
+    // Tests that exercise publication supply a loopback channel through extraOverlayPath.
+    { id: 'plugin-manager', config: {} },
     ...mode === 'record' || options.deepSeekMissingCredential === true
       ? []
       : [{ id: 'agent-default-model', config: { provider: 'deepseek-official', model: 'deepseek-v4-flash' } }],

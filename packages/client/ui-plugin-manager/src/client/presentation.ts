@@ -60,6 +60,8 @@ const CODE_KEYS = {
   'incompatible-version': 'reasonIncompatibleVersionUnnamed',
   'unsupported-platform': 'reasonUnsupportedPlatform',
   'unexpected-package': 'reasonUnexpectedPackage',
+  'published-offer-unavailable': 'reasonPublishedOfferUnavailable',
+  'published-archive-mismatch': 'reasonPublishedArchiveMismatch',
   'operation-error': 'reasonOperationError',
 } satisfies Record<ManagementError['code'], PluginManagerLocaleKey>
 

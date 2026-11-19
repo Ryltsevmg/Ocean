@@ -1,169 +1,253 @@
-import { mkdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { createHash } from 'node:crypto'
+import { once } from 'node:events'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { Locator, Page } from 'playwright'
-import { chromium } from 'playwright'
-import { expect, it, vi } from 'vitest'
-import { compareOrRefreshGolden, launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold } from './scaffold.ts'
-import { newEnglishPage, PLUGIN_TOGGLE_SETTLE_MS } from './support.ts'
+import { readProfileManifest } from '@ocean/ocean-app-boot'
+import { chromium, type Page } from 'playwright'
+import { create as createTar } from 'tar'
+import { expect, it, onTestFinished } from 'vitest'
+import { compareOrRefreshGolden, launchWebScaffold, watchConsole, webSnapshotMode } from './scaffold.ts'
+import { newEnglishPage } from './support.ts'
 
-const MODE = webSnapshotMode()
 const EXPECTED = fileURLToPath(new URL('./expected/plugin-market/', import.meta.url))
-const FIXTURE_BUNDLE = fileURLToPath(new URL('./fixtures/plugins/fixture-bundle/', import.meta.url))
-const MISSING = '@fixture/missing-bundle'
+const INDEX = '/v1/current.json'
+const EMPTY = 'No plugins have been published.'
+const NAME = 'e2e-published-catalog-bundle'
+const PRIVATE_NAME = 'e2e-private-catalog-bundle'
+const VERSION = '1.2.3'
+const TITLE = 'Approved fixture plugin'
+const DESCRIPTION = 'A public install offer for the test catalogue.'
 
-async function withCatalogue(run: (page: Page, catalogue: Locator, scaffold: WebScaffold) => Promise<void>): Promise<void> {
-  const scaffold = await launchWebScaffold({ profile: { packages: [{ dir: FIXTURE_BUNDLE }], bundles: [MISSING] } })
-  try {
-    const browser = await chromium.launch()
-    try {
-      const page = await newEnglishPage(browser)
-      const consoleWatch = watchConsole(page)
-      await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-      await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
-      const tab = page.locator('[data-plugin-panel]').getByRole('tab', { name: 'Catalogue', exact: true })
-      await tab.click()
-      const catalogue = page.getByRole('tabpanel', { name: 'Catalogue', exact: true })
-      await catalogue.getByRole('searchbox', { name: 'Search', exact: true }).waitFor()
-      await run(page, catalogue, scaffold)
-      expect(consoleWatch.pageErrors).toEqual([])
-    } finally {
-      await browser.close()
+async function bundle(dir: string, name: string, version: string, entry = false): Promise<void> {
+  await mkdir(dir)
+  await writeFile(join(dir, 'package.json'), JSON.stringify({
+    name, version, ocean: { bundle: { patch: './cordis.patch.yml' } },
+    ...entry ? { type: 'module', main: './index.js' } : {},
+  }))
+  await writeFile(join(dir, 'cordis.patch.yml'), entry ? `- insert:\n    - id: ${name}\n      name: ${name}\n` : '[]\n')
+  if (entry) await writeFile(join(dir, 'index.js'), `export const name = ${JSON.stringify(name)}\nexport function apply() {}\n`)
+}
+
+async function catalogueFixture() {
+  const scratch = await mkdtemp(join(tmpdir(), 'ocean-web-plugin-catalog-'))
+  onTestFinished(() => rm(scratch, { recursive: true, force: true }))
+  await bundle(join(scratch, 'package'), NAME, VERSION, true)
+  const archiveFile = join(scratch, 'fixture.tgz')
+  await createTar({ cwd: scratch, file: archiveFile, gzip: true, portable: true, noMtime: true }, ['package'])
+  const bytes = await readFile(archiveFile)
+  const sha256 = createHash('sha256').update(bytes).digest('hex')
+  const wrongDigest = `${sha256[0] === '0' ? '1' : '0'}${sha256.slice(1)}`
+  const archivePath = (digest: string) => `/archives/${digest}/plugin.tgz`
+  const archiveRequests: string[] = []
+  let indexRequests = 0
+  let index: { schemaVersion: 1; plugins: ReturnType<typeof offer>[] } | undefined = { schemaVersion: 1, plugins: [] }
+  const server = createServer((request, response) => {
+    if (request.method === 'GET' && request.url === INDEX) {
+      indexRequests++
+      if (index === undefined) {
+        response.writeHead(503).end()
+      } else {
+        response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(index))
+      }
+    } else if (request.method === 'GET' && request.url?.startsWith('/archives/')) {
+      archiveRequests.push(request.url)
+      if (request.url === archivePath(sha256) || request.url === archivePath(wrongDigest)) {
+        response.writeHead(200, { 'content-type': 'application/gzip' }).end(bytes)
+      } else {
+        response.writeHead(404).end()
+      }
+    } else {
+      response.writeHead(404).end()
     }
-  } finally {
-    await scaffold.close()
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  onTestFinished(() => server[Symbol.asyncDispose]())
+  const address = server.address()
+  if (address === null || typeof address === 'string') throw new Error('The test catalogue has no TCP listener')
+  const origin = `http://127.0.0.1:${address.port}`
+  function offer(digest = sha256) {
+    return { name: NAME, version: VERSION, title: TITLE, description: DESCRIPTION, ocean: '*', archive: origin + archivePath(digest), sha256: digest }
+  }
+
+  const overlay = join(scratch, 'catalogue.overlay.yml')
+  const privateBundle = join(scratch, 'private-bundle')
+  await writeFile(overlay, `- id: plugin-manager\n  config:\n    publishedCatalogUrl: ${origin}${INDEX}\n`)
+  await bundle(privateBundle, PRIVATE_NAME, VERSION)
+  const scaffold = await launchWebScaffold({
+    extraOverlayPath: overlay,
+    profile: {
+      packages: [{ dir: privateBundle }],
+      packageManager: {
+        command: 'pnpm', args: [],
+        env: {
+          pnpm_config_store_dir: join(scratch, 'pnpm-store'),
+          pnpm_config_cache_dir: join(scratch, 'pnpm-cache'),
+          pnpm_config_offline: 'true',
+        },
+      },
+    },
+  })
+  onTestFinished(() => scaffold.close())
+  const browser = await chromium.launch()
+  onTestFinished(() => browser.close())
+  const page = await newEnglishPage(browser)
+  const consoleWatch = watchConsole(page)
+  await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
+  await page.getByRole('navigation', { name: 'Tools' }).getByRole('button', { name: 'Plugins', exact: true }).click()
+  const panel = page.locator('[data-plugin-panel]')
+  const catalogue = panel.getByRole('tabpanel', { name: 'Catalogue', exact: true })
+  const installed = panel.getByRole('tabpanel', { name: 'Installed', exact: true })
+  const profileDir = join(scaffold.harnessHome, 'profiles', 'scaffold')
+  return {
+    page, consoleWatch, catalogue, installed, profileDir, bytes, archivePath, sha256, wrongDigest, archiveRequests,
+    indexRequests: () => indexRequests,
+    publish(plugins: ReturnType<typeof offer>[]) { index = { schemaVersion: 1, plugins } },
+    takeOffline() { index = undefined },
+    offer,
+    openTab: async (name: 'Catalogue' | 'Installed') => panel.getByRole('tab', { name, exact: true }).click(),
+    refresh: async () => catalogue.getByRole('button', { name: 'Refresh', exact: true }).click(),
   }
 }
 
-async function saveGolden(name: string, lines: string[]): Promise<void> {
-  if (MODE === 'refresh') await mkdir(EXPECTED, { recursive: true })
-  await compareOrRefreshGolden(join(EXPECTED, `${name}.expected.md`), lines.join('\n'), MODE)
+async function refusal(page: Page, reason: string): Promise<string[]> {
+  const dialog = page.getByRole('dialog', { name: 'The plugin could not be installed', exact: true })
+  const message = dialog.getByText(reason, { exact: true })
+  await message.waitFor()
+  expect(await dialog.getByRole('textbox', { name: 'Package name or address', exact: true }).count()).toBe(0)
+  const snapshot = [await message.innerText(), await dialog.getByRole('button', { name: 'Retry', exact: true }).ariaSnapshot()]
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+  await dialog.waitFor({ state: 'hidden' })
+  return snapshot
 }
 
-it('offers an editable source for an unpublished catalogue entry without starting an installation', async () => {
-  await withCatalogue(async (page, catalogue, scaffold) => {
-    const manager = scaffold.ctx.pluginManager
-    const manifest = join(scaffold.harnessHome, 'profiles', 'scaffold', 'package.json')
-    const before = await readFile(manifest, 'utf8')
-    // Do not let a regression contact a registry or run a real installer.
-    const registries = vi.spyOn(manager, 'registries').mockResolvedValue({ registry: null, fallbackRegistries: [], resolved: null })
-    const inspect = vi.spyOn(manager, 'inspect').mockRejectedValue(new Error('Unexpected plugin inspection'))
-    const install = vi.spyOn(manager, 'installBundle').mockRejectedValue(new Error('Unexpected plugin installation'))
-    try {
-      const title = 'Agent Developer Patterns'
-      const search = catalogue.getByRole('searchbox', { name: 'Search', exact: true })
-      await search.fill(title)
-      await expect.poll(() => catalogue.getByRole('article').count()).toBe(1)
-      const card = catalogue.getByRole('article').filter({ has: page.getByRole('heading', { name: title, exact: true }) })
-      await card.getByText('Not installed', { exact: true }).waitFor()
-      const trigger = card.getByRole('button', { name: 'Details', exact: true })
-      await trigger.focus()
-      await page.keyboard.press('Enter')
-      const details = page.getByRole('dialog', { name: title, exact: true })
-      await details.getByText('No install source is listed. Enter a package name, Git URL, tarball, or local directory.', { exact: true }).waitFor()
-      const focusedInDetails = () => details.evaluate(dialog => dialog.contains(document.activeElement))
-      await expect.poll(focusedInDetails).toBe(true)
-      await page.keyboard.press('Shift+Tab')
-      expect(await focusedInDetails()).toBe(true)
-      await page.keyboard.press('Tab')
-      expect(await focusedInDetails()).toBe(true)
-      const detailsAria = await details.ariaSnapshot()
-      await page.setViewportSize({ width: 590, height: 310 })
-      const detailsBounds = await details.boundingBox()
-      if (detailsBounds === null) throw new Error('The details dialog has no layout box')
-      expect(detailsBounds.y).toBeGreaterThanOrEqual(0)
-      expect(detailsBounds.y + detailsBounds.height).toBeLessThanOrEqual(310)
+it('installs only a published offer and leaves it installed after withdrawal', async () => {
+  const f = await catalogueFixture()
+  await f.openTab('Installed')
+  const privateCard = f.installed.locator(`[data-plugin-package="${PRIVATE_NAME}"]`)
+  await privateCard.waitFor()
 
-      await details.getByRole('button', { name: 'Install from source', exact: true }).click()
-      await page.setViewportSize({ width: 1440, height: 900 })
-      const form = page.getByRole('dialog', { name: 'Add plugin', exact: true })
-      const source = form.getByRole('textbox', { name: 'Package name or address', exact: true })
-      await source.waitFor()
-      await details.waitFor({ state: 'hidden' })
-      await expect.poll(() => source.evaluate(field => document.activeElement === field)).toBe(true)
-      expect(await source.inputValue()).toBe('@local/ocean-adp')
-      expect(await source.isEditable()).toBe(true)
-      const fieldAria = await source.ariaSnapshot()
-      await source.fill('https://example.test/my-plugin.tgz')
-      expect(await source.inputValue()).toBe('https://example.test/my-plugin.tgz')
+  await f.openTab('Catalogue')
+  const empty = f.catalogue.getByText(EMPTY, { exact: true })
+  await empty.waitFor()
+  expect(await f.catalogue.getByRole('article').count()).toBe(0)
+  const emptyBeforePublication = await empty.innerText()
+  const initialReads = f.indexRequests()
+  expect(initialReads).toBeGreaterThan(0)
 
-      await page.keyboard.press('Escape')
-      await form.waitFor({ state: 'hidden' })
-      await expect.poll(() => catalogue.evaluate(panel => panel.contains(document.activeElement))).toBe(true)
-      await trigger.click()
-      await details.waitFor()
-      await page.keyboard.press('Escape')
-      await details.waitFor({ state: 'hidden' })
-      await expect.poll(() => trigger.evaluate(button => document.activeElement === button)).toBe(true)
-      expect(await search.inputValue()).toBe(title)
-      expect(inspect).not.toHaveBeenCalled()
-      expect(install).not.toHaveBeenCalled()
-      expect(await readFile(manifest, 'utf8')).toBe(before)
-      await saveGolden('source-form', [detailsAria, fieldAria, 'The field accepts a replacement source. Escape returns to the catalogue without inspecting, installing, or changing the profile.'])
-    } finally {
-      registries.mockRestore()
-      inspect.mockRestore()
-      install.mockRestore()
-    }
-  })
+  f.publish([f.offer()])
+  await f.refresh()
+  const card = f.catalogue.getByRole('article')
+  const heading = card.getByRole('heading', { name: TITLE, exact: true })
+  await heading.waitFor()
+  expect(await card.count()).toBe(1)
+  expect(f.indexRequests()).toBeGreaterThan(initialReads)
+  await card.getByText(DESCRIPTION, { exact: true }).waitFor()
+  const install = card.getByRole('button', { name: 'Install', exact: true })
+  const offerAria = [await heading.ariaSnapshot(), await install.ariaSnapshot()]
+  await install.click()
+  const done = f.page.getByRole('dialog', { name: 'Installed', exact: true })
+  const dismiss = done.getByRole('button', { name: 'Done', exact: true })
+  await dismiss.waitFor({ timeout: 60_000 })
+  expect(await done.getByRole('textbox', { name: 'Package name or address', exact: true }).count()).toBe(0)
+  const doneAria = await dismiss.ariaSnapshot()
+  await dismiss.click()
+  await done.waitFor({ state: 'hidden' })
+  expect(f.archiveRequests).toEqual([f.archivePath(f.sha256)])
+
+  const manifestPath = join(f.profileDir, 'package.json')
+  const installedPath = join(f.profileDir, 'node_modules', NAME, 'package.json')
+  const approvedArchive = join(f.profileDir, 'published-plugins', f.sha256, 'plugin.tgz')
+  const savedProfile = await readFile(manifestPath, 'utf8')
+  const profile = readProfileManifest('web catalog test', f.profileDir)
+  const spec = profile.dependencies?.[NAME]
+  if (spec === undefined || !spec.startsWith('file:')) throw new Error(`Expected a local archive dependency, got ${String(spec)}`)
+  expect(resolve(f.profileDir, spec.slice('file:'.length))).toBe(approvedArchive)
+  expect(profile.ocean?.profile?.bundles).toContain(NAME)
+  expect(await readFile(approvedArchive)).toEqual(f.bytes)
+  const savedPackage = await readFile(installedPath, 'utf8')
+  expect(JSON.parse(savedPackage)).toMatchObject({ name: NAME, version: VERSION, ocean: { bundle: { patch: './cordis.patch.yml' } } })
+  const lockfile = join(f.profileDir, 'pnpm-lock.yaml')
+  const savedLockfile = await readFile(lockfile, 'utf8')
+
+  await f.openTab('Installed')
+  const installedCard = f.installed.locator(`[data-plugin-package="${NAME}"]`)
+  const enabled = installedCard.getByRole('switch', { checked: true })
+  await enabled.waitFor()
+  const installedAria = await enabled.ariaSnapshot()
+  await f.openTab('Catalogue')
+  await heading.waitFor()
+  f.publish([])
+  await f.refresh()
+  await empty.waitFor()
+  expect(await card.count()).toBe(0)
+  const emptyAfterWithdrawal = await empty.innerText()
+
+  await f.openTab('Installed')
+  await enabled.waitFor()
+  await privateCard.waitFor()
+  expect(await readFile(manifestPath, 'utf8')).toBe(savedProfile)
+  expect(await readFile(lockfile, 'utf8')).toBe(savedLockfile)
+  expect(await readFile(installedPath, 'utf8')).toBe(savedPackage)
+  expect(await readFile(approvedArchive)).toEqual(f.bytes)
+  expect(f.consoleWatch.pageErrors).toEqual([])
+  await compareOrRefreshGolden(join(EXPECTED, 'live-details.expected.md'), [
+    'Before publication:', emptyBeforePublication,
+    'After publication and refresh:', ...offerAria,
+    'After installation:', doneAria, installedAria,
+    'After withdrawal and refresh:', emptyAfterWithdrawal, await enabled.ariaSnapshot(),
+  ].join('\n'), webSnapshotMode())
 })
 
-it('keeps catalogue details in sync with Host selection and exposes missing selected bundles', async () => {
-  await withCatalogue(async (page, catalogue, scaffold) => {
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.emulateMedia({ colorScheme: 'dark' })
-    await expect.poll(() => page.locator('body').evaluate(body => body.hasAttribute('data-ds-dark-theme'))).toBe(true)
+it('does not install a stale or withdrawn offer or an archive with the wrong digest', async () => {
+  const f = await catalogueFixture()
+  const manifest = join(f.profileDir, 'package.json')
+  const before = await readFile(manifest, 'utf8')
+  const card = f.catalogue.getByRole('article').filter({ has: f.page.getByRole('heading', { name: TITLE, exact: true }) })
+  const install = card.getByRole('button', { name: 'Install', exact: true })
 
-    const name = '@fixture/bundle'
-    const search = catalogue.getByRole('searchbox', { name: 'Search', exact: true })
-    await search.fill(name)
-    const card = catalogue.getByRole('article').filter({ has: page.getByRole('heading', { name, exact: true }) })
-    await card.getByRole('button', { name: 'Details', exact: true }).click()
-    const details = page.getByRole('dialog', { name, exact: true })
-    await details.getByText('Off', { exact: true }).waitFor()
-    const turnOn = details.getByRole('button', { name: 'Turn on', exact: true })
-    await turnOn.focus()
-    await page.keyboard.press('Enter')
-    const bundles = () => scaffold.ctx.pluginManager.listBundles()
-    await expect.poll(async () => (await bundles()).find(bundle => bundle.name === name)?.enabled, {
-      timeout: PLUGIN_TOGGLE_SETTLE_MS,
-    }).toBe(true)
-    const badge = details.getByText('On', { exact: true })
-    const turnOff = details.getByRole('button', { name: 'Turn off', exact: true })
-    await badge.waitFor()
-    await expect.poll(() => turnOff.isEnabled()).toBe(true)
-    await expect.poll(() => turnOff.evaluate(button => document.activeElement === button)).toBe(true)
-    const liveAria = [await badge.textContent(), await turnOff.ariaSnapshot()].join('\n')
-    const bounds = await details.boundingBox()
-    if (bounds === null) throw new Error('The details dialog has no layout box')
-    expect(bounds.x).toBeGreaterThanOrEqual(0)
-    expect(bounds.x + bounds.width).toBeLessThanOrEqual(390)
-    await page.keyboard.press('Escape')
-    await details.waitFor({ state: 'hidden' })
-    await card.getByText('On', { exact: true }).waitFor()
+  await f.catalogue.getByText(EMPTY, { exact: true }).waitFor()
+  f.publish([f.offer()])
+  await f.refresh()
+  await install.waitFor()
+  f.takeOffline()
+  await f.refresh()
+  const stale = f.catalogue.getByText('Showing the last published list. Refresh to check for new installations.', { exact: true })
+  await stale.waitFor()
+  expect(await card.isVisible()).toBe(true)
+  expect(await install.count()).toBe(0)
+  expect(f.archiveRequests).toEqual([])
+  const staleText = await stale.innerText()
 
-    await search.fill(MISSING)
-    const broken = catalogue.getByRole('article').filter({ has: page.getByRole('heading', { name: MISSING, exact: true }) })
-    await broken.getByText('Files missing', { exact: true }).waitFor()
-    const note = broken.getByText('The profile still references this plugin, but its files are missing.', { exact: true })
-    await note.waitFor()
-    const brokenTurnOff = broken.getByRole('button', { name: 'Turn off', exact: true })
-    const remove = broken.getByRole('button', { name: 'Remove', exact: true })
-    await brokenTurnOff.waitFor()
-    await remove.focus()
-    await page.keyboard.press('Enter')
-    const cancel = broken.getByRole('button', { name: 'Cancel', exact: true })
-    await expect.poll(() => cancel.evaluate(button => document.activeElement === button)).toBe(true)
-    await page.keyboard.press('Enter')
-    await expect.poll(() => remove.evaluate(button => document.activeElement === button)).toBe(true)
-    expect((await bundles()).find(bundle => bundle.name === MISSING)).toMatchObject({ availability: 'missing', enabled: true, removable: true })
-    await saveGolden('live-details', [
-      '390 px / dark — open details after enabling:',
-      liveAria,
-      'Selected bundle with missing files:',
-      await note.ariaSnapshot(),
-      await brokenTurnOff.ariaSnapshot(),
-      await remove.ariaSnapshot(),
-    ])
-  })
+  f.publish([f.offer()])
+  await f.refresh()
+  await install.waitFor()
+  // The card was fresh when rendered, but the Host must check publication again at the install click.
+  f.publish([])
+  await install.click()
+  const withdrawnAria = await refusal(f.page, 'This plugin version is not available from the verified channel. Check the catalog for an available version.')
+  expect(f.archiveRequests).toEqual([])
+  expect(await readFile(manifest, 'utf8')).toBe(before)
+  // Let the Catalogue observe an empty result before replacing the withdrawn offer with the digest-mismatch fixture.
+  await f.refresh()
+  await f.catalogue.getByText(EMPTY, { exact: true }).waitFor()
+  expect(await install.count()).toBe(0)
+
+  f.publish([f.offer(f.wrongDigest)])
+  await f.refresh()
+  await install.click()
+  const mismatchAria = await refusal(f.page, 'The downloaded archive does not match the verified release. Check the catalog before trying again.')
+  expect(f.archiveRequests).toEqual([f.archivePath(f.wrongDigest)])
+  await expect(readFile(join(f.profileDir, 'published-plugins', f.wrongDigest, 'plugin.tgz'))).rejects.toMatchObject({ code: 'ENOENT' })
+  await expect(readFile(join(f.profileDir, 'pnpm-lock.yaml'))).rejects.toMatchObject({ code: 'ENOENT' })
+  expect(await readFile(manifest, 'utf8')).toBe(before)
+  expect(f.consoleWatch.pageErrors).toEqual([])
+  await compareOrRefreshGolden(join(EXPECTED, 'source-form.expected.md'), [
+    'Cached catalogue:', staleText,
+    'After withdrawal before installation:', ...withdrawnAria,
+    'After archive verification fails:', ...mismatchAria,
+  ].join('\n'), webSnapshotMode())
 })

@@ -120,6 +120,7 @@ function renderTab(
     openInstall: vi.fn(),
     installOfficial: vi.fn(),
     installFrom: vi.fn(),
+    installPublished: vi.fn(),
     closeInstall: vi.fn(),
     editInstallSpec: vi.fn(),
     runInstall: vi.fn(),
@@ -427,6 +428,48 @@ describe('PluginManagerPage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: en.cancel }))
     expect(actions.cancelInstall).toHaveBeenCalledOnce()
+  })
+
+  it('opens the shared installation flow for a verified offer without exposing spec or registry controls', () => {
+    const offer = { name: '@acme/verified', version: '2.1.0', sha256: 'a'.repeat(64), title: 'Verified plugin' }
+    const pinned = { ...IDLE_INSTALL, open: true, spec: '@acme/verified@2.1.0', subject: {
+      ...offer, kind: 'published' as const, spec: '@acme/verified@2.1.0', selection: true as const,
+    } }
+    const { actions, set } = renderTab({}, {}, {
+      'plugins.tab:catalog': (_view, owner) => (
+        <button type="button" onClick={() => { (owner as PluginTabProps).installPublished(offer) }}>Install verified plugin</button>
+      ),
+    }, {}, [{ id: 'catalog', label: 'Catalog', order: -1 }])
+    fireEvent.click(screen.getByRole('button', { name: 'Install verified plugin' }))
+    expect(actions.installPublished).toHaveBeenCalledWith(offer)
+
+    set({ install: { ...pinned, phase: 'starting' } })
+    const dialog = () => within(screen.getByRole('dialog'))
+    expect(dialog().getByText(offer.title)).toBeTruthy()
+    expect(dialog().getByText(en.installVersion.replace('{version}', offer.version))).toBeTruthy()
+    expect(dialog().queryByText(offer.sha256)).toBeNull()
+    fireEvent.click(dialog().getByRole('button', { name: en.installCancel }))
+    expect(actions.cancelInstall).toHaveBeenCalledOnce()
+
+    set({ install: { ...pinned, phase: 'failed', failure: { reason: '', code: 'published-offer-unavailable', failedAt: 'registry' } } })
+    expect(dialog().getByText(en.reasonPublishedOfferUnavailable)).toBeTruthy()
+    expect(dialog().queryByRole('button', { name: en.installChangeRegistry })).toBeNull()
+    expect(dialog().queryByRole('button', { name: en.installEditAria })).toBeNull()
+    fireEvent.click(dialog().getByRole('button', { name: en.installRetry }))
+    expect(actions.runInstall).toHaveBeenCalledOnce()
+    set({ install: { ...pinned, phase: 'failed', failure: { reason: '', code: 'published-archive-mismatch', kind: 'integrity' } } })
+    expect(dialog().getByText(en.reasonPublishedArchiveMismatch)).toBeTruthy()
+    expect(dialog().queryByText(en.installFailureIntegrity)).toBeNull()
+
+    set({ install: pinned })
+    expect(dialog().queryByRole('textbox')).toBeNull()
+    expect(dialog().getByText(offer.title)).toBeTruthy()
+    fireEvent.click(dialog().getByRole('button', { name: en.installRun }))
+    expect(actions.runInstall).toHaveBeenCalledTimes(2)
+    set({ install: { ...pinned, phase: 'done', installed: offer.name, installedVersion: offer.version } })
+    expect(dialog().queryByRole('button', { name: en.installEnableNow })).toBeNull()
+    fireEvent.click(dialog().getByRole('button', { name: en.installClose }))
+    expect(actions.closeInstall).toHaveBeenCalledOnce()
   })
 
   it('opens the add-plugin menu with ArrowDown and returns focus to its trigger on Escape', () => {

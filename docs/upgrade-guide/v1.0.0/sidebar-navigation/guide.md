@@ -13,6 +13,8 @@ Main-sidebar navigation shows schedules, Plugins, and other contributed panels a
 
 The `sidebar.panellist.actions` slot and the sidebar pin-action props are removed. Conversation View and right-sidebar guide menus keep their customization slots. `BrandWordmark` now requires a locale-owned `name` prop. Plugins tabs with negative `order` appear before Installed and become the initial page; explicit selections remain unchanged.
 
+Catalogue shows only offers from Ocean’s approved publication channel. Packages from local paths, Git, or other registries remain manageable in Installed; removing an offer does not uninstall its existing copies.
+
 ## Migration
 
 1. Keep each main panel in `sidebar.panellist` with its matching `main` key. Remove duplicate footer and settings launchers, and remove registrations into `sidebar.panellist.actions`. Do not supply sidebar pin-state or pin-action props to custom sidebar shells.

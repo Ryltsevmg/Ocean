@@ -13,6 +13,8 @@ description: "主导航移出设置，侧边栏面板固定控件被移除，Bra
 
 `sidebar.panellist.actions` slot 及侧栏固定操作 props 已移除。会话视图与右侧栏引导菜单保留各自的自定义 slot。`BrandWordmark` 现在必须接收由 locale 提供的 `name` prop。负数 `order` 的插件标签排在已安装之前，并成为初始页面；明确选择的标签保持不变。
 
+目录只显示 Ocean 审核发布渠道的条目。从本地路径、Git 或其他注册表安装的软件包仍可在「已安装」中管理；撤下条目不会卸载已有副本。
+
 ## 迁移
 
 1. 将每个主面板保留在 `sidebar.panellist` 中，并提供对应的 `main` key。移除页脚和设置中的重复入口，以及 `sidebar.panellist.actions` 注册。自定义侧栏不再接收面板固定状态或固定操作 props。

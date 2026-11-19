@@ -1,64 +1,24 @@
-/** Shape of the curated catalogue: only our bundles, localized, and one self entry. */
+/** Published list receipt and URL-free install intent. */
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
 import test from 'node:test'
-import { CATALOG } from '../src/catalog.js'
+import { installTarget, readPublishedCatalog } from '../src/catalog.js'
 
-const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+const release = { name: '@ocean/approved', version: '1.0.0', title: 'Approved', description: 'An approved release.', sha256: '1'.repeat(64), compatible: true }
 
-/** Bundles this market is expected to show, in catalogue order. */
-const EXPECTED = [
-  '@ocean/ocean-super-agent',
-  '@ocean/ocean-remotion-studio',
-  '@local/ocean-adp',
-  '@ocean/ocean-browser-control',
-  '@ocean/ocean-cua-bundle',
-  '@local/ocean-theme-picker',
-  '@ocean/ocean-codex',
-  '@ocean/ocean-experimental-auto-review',
-  '@ocean/ocean-experimental-inspector-profile',
-  '@ocean/ocean-experimental-forge-bundle',
-  '@ocean/ocean-experimental-session-titles-bundle',
-  '@ocean/ocean-experimental-voice-input-bundle',
-  '@ocean/ocean-plugin-market',
-]
-
-test('the catalogue lists exactly our bundles in display order', () => {
-  assert.deepEqual(CATALOG.map(entry => entry.name), EXPECTED)
+test('fresh and cached Host lists retain their distinct statuses, including an empty cached list', () => {
+  const ready = { status: 'ready', plugins: [release] }
+  const stale = { status: 'stale', plugins: [] }
+  assert.deepEqual(readPublishedCatalog(ready), ready)
+  assert.deepEqual(readPublishedCatalog(stale), stale)
 })
 
-test('every entry is a localized, versioned package record', () => {
-  assert.ok(Array.isArray(CATALOG))
-  const names = new Set()
-  for (const entry of CATALOG) {
-    assert.match(entry.name, /^@[a-z0-9-]+\/[a-z0-9-]+$/u, `bad package name: ${entry.name}`)
-    assert.equal(names.has(entry.name), false, `duplicate entry: ${entry.name}`)
-    names.add(entry.name)
-    assert.match(entry.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u, `bad version: ${entry.name}`)
-    for (const field of ['title', 'summary']) {
-      const localized = entry[field]
-      assert.equal(typeof localized, 'object', `${entry.name}.${field} must be localized`)
-      assert.ok(localized.en.length > 0, `${entry.name}.${field} needs English`)
-      assert.ok(localized.ru.length > 0, `${entry.name}.${field} needs Russian`)
-      assert.equal(Object.keys(localized).sort().join(','), 'en,ru', `${entry.name}.${field} carries unexpected languages`)
-    }
-    assert.equal(Object.hasOwn(entry, 'spec'), false, `${entry.name}: install targets come from the Host`)
-    for (const alias of entry.aliases ?? []) assert.match(alias, /^@[a-z0-9-]+\/[a-z0-9-]+$/u)
-    const { details } = entry
-    assert.equal(typeof details, 'object', `${entry.name}.details must exist for the popup`)
-    for (const language of ['en', 'ru']) {
-      assert.ok(details.about[language].length > 0, `${entry.name}.details.about needs ${language}`)
-      assert.ok(details.points.length > 0, `${entry.name}.details.points must not be empty`)
-    }
-    for (const point of details.points) {
-      assert.equal(Object.keys(point).sort().join(','), 'en,ru', `${entry.name}: every point is bilingual`)
-      assert.ok(point.en.length > 0 && point.ru.length > 0)
-    }
+test('an unavailable or unknown response cannot become a usable list', () => {
+  for (const value of [undefined, { status: 'unavailable', plugins: [release] }, { status: 'ready' }, { status: 'other', plugins: [release] }]) {
+    assert.deepEqual(readPublishedCatalog(value), { status: 'unavailable' })
   }
 })
 
-test('exactly the market itself is marked self, under this package name', () => {
-  const selves = CATALOG.filter(entry => entry.self === true)
-  assert.equal(selves.length, 1)
-  assert.equal(selves[0].name, pkg.name)
+test('a published install passes only the exact identity and display title', () => {
+  const { name, version, title, sha256 } = release
+  assert.deepEqual(installTarget({ ...release, url: 'https://example.test/archive.tgz' }), { name, version, title, sha256 })
 })

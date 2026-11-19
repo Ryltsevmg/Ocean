@@ -128,6 +128,16 @@ export const REUSED_BUNDLE_VERSIONS: ReadonlyMap<string, string> = new Map([
   ['@ocean/ocean-experimental-voice-input-bundle', '1.0.0'],
 ])
 
+/**
+ * Check the package identity against profile startup's retirement policy.
+ * @param name - Bare package name.
+ * @param version - Exact package version.
+ * @returns Whether an installed bundle with this identity may be selected by the profile.
+ */
+export function canSelectBundleVersion(name: string, version: string): boolean {
+  return !RETIRED_BUNDLES.has(name) || REUSED_BUNDLE_VERSIONS.get(name) === version
+}
+
 /** The bundle list a `ocean plugin` init uses for a name with no shipped template. */
 export const DEFAULT_PROFILE_BUNDLES: readonly string[] = ['@ocean/ocean-base']
 

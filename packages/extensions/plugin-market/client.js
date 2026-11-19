@@ -6,500 +6,109 @@ window.__ModuleLoader__.load({
     const { Modal } = require('@ocean/ocean-client-ui-primitives')
 
     // ---- src/catalog.js ----
-/** Curated plugin descriptions. The Host supplies install targets separately from this editorial list. */
+/** Client projection of the Host's verified publication metadata. */
 
 /**
- * @typedef {object} MarketEntry
- * @property {string} name npm package name of the plugin's primary bundle; the key the plugin manager lists it under.
- * @property {string[]} [aliases] Alternate package names for a complete copy of the same plugin.
- * @property {string} version Version this catalogue expects; shown when the bundle is not installed and used to
- *   recognise a build that carries an older copy.
- * @property {Record<string, string>} title Localized card title, English fallback required.
- * @property {Record<string, string>} summary Localized one-liner, English fallback required.
- * @property {{ about: Record<string, string>, points: Record<string, string>[] }} details Localized popup copy: one
- *   paragraph and a short list of what the bundle does.
- * @property {boolean} [self] The market itself; its card carries no management actions.
+ * @typedef {import('@ocean/ocean-api-remotes/client').PublishedPluginTarget & {title: string}} PublishedInstallTarget
+ * Exact publication the Plugins page asks the Host to install.
  */
 
-/** Catalogue order is display order. */
-const CATALOG = /** @type {readonly MarketEntry[]} */ ([
-  {
-    name: '@ocean/ocean-super-agent',
-    version: '0.2.5',
-    title: { en: 'Super Agent', ru: 'Super Agent' },
-    summary: {
-      en: 'Persistent developer task board: a shared board, a repository executor and the preset that runs issues end to end.',
-      ru: 'Постоянная доска задач разработки: общая доска, исполнитель репозитория и пресет, проводящий задачу от issue до проверки.',
-    },
-    details: {
-      about: {
-        en: 'A task board that outlives the session: work stays on the board, and an executor picks an issue up in an isolated Git worktree, runs the repository checks and reports the result.',
-        ru: 'Доска задач, которая живёт дольше сессии: работа остаётся на доске, а исполнитель берёт задачу в изолированном git-ворктри, прогоняет проверки репозитория и сообщает результат.',
-      },
-      points: [
-        { en: 'Board shared between the Web panel and the agent', ru: 'Доска, общая для веб-панели и агента' },
-        { en: 'One issue per worktree, with the repository checks as the acceptance gate', ru: 'Одна задача — один ворктри, приёмка по проверкам репозитория' },
-        { en: 'Brings its own agent preset for end-to-end runs', ru: 'Свой пресет агента для сквозного прогона' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-remotion-studio',
-    version: '1.0.0',
-    title: { en: 'Remotion studio', ru: 'Remotion studio' },
-    summary: {
-      en: 'Reel studio: scaffold a Remotion project, preview it in Studio and render an MP4.',
-      ru: 'Студия роликов: развернуть проект Remotion, посмотреть в Studio и отрендерить MP4.',
-    },
-    details: {
-      about: {
-        en: 'Bundles the reel skills with the tools they drive: a project is scaffolded from a template, previewed in Remotion Studio and rendered to a file without leaving the conversation.',
-        ru: 'Поставляет навыки для роликов вместе с инструментами: проект разворачивается из шаблона, смотрится в Remotion Studio и рендерится в файл, не выходя из диалога.',
-      },
-      points: [
-        { en: 'Template project scaffolded without running a script', ru: 'Проект из шаблона без запуска скриптов' },
-        { en: 'Studio started as a managed child and served locally', ru: 'Studio запускается управляемым процессом локально' },
-        { en: 'Render returns a job id, so a long encode never blocks', ru: 'Рендер возвращает id задачи и не блокирует диалог' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-adp',
-    version: '1.0.0',
-    title: { en: 'Agent Developer Patterns', ru: 'Паттерны разработки агентов' },
-    summary: {
-      en: 'Bundles the ocean-adp skill: pick a development phase, get one ready procedure for it.',
-      ru: 'Поставляет навык ocean-adp: определяет фазу задачи и даёт готовую процедуру под неё.',
-    },
-    details: {
-      about: {
-        en: 'A dispatcher skill for non-trivial work: it names the phase you are in and hands over one self-contained procedure — plan, interview, TDD, hypothesis-driven debugging, review or handoff.',
-        ru: 'Навык-диспетчер для нетривиальной работы: определяет фазу задачи и выдаёт одну самодостаточную процедуру — план, интервью, TDD, отладку через гипотезы, ревью или handoff.',
-      },
-      points: [
-        { en: 'Phase → procedure, with a completion criterion for each', ru: 'Фаза → процедура, у каждой свой критерий завершения' },
-        { en: 'Works from the bundle alone; extra skill sets are optional', ru: 'Работает из самого бандла; внешние наборы скиллов необязательны' },
-        { en: 'Any project or user copy of the same name overrides it', ru: 'Проектная или пользовательская копия с тем же именем переопределяет его' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-browser-control',
-    version: '1.0.0',
-    title: { en: 'Browser control', ru: 'Управление браузером' },
-    summary: {
-      en: 'Session-owned tabs in a paired Chromium through a local relay, with a setup panel and an Ocean-branded extension.',
-      ru: 'Вкладки сессии в привязанном Chromium через локальный релей, панель настройки и расширение под брендом Ocean.',
-    },
-    details: {
-      about: {
-        en: 'Gives each session its own tabs in a paired Chromium: navigation, snapshots and actions travel over a local relay, and the panel pairs the browser and accepts only the origins you allow.',
-        ru: 'Даёт каждой сессии собственные вкладки в привязанном Chromium: навигация, снимки и действия идут через локальный релей, а панель привязывает браузер и принимает только разрешённые вами источники.',
-      },
-      points: [
-        { en: 'Tabs belong to one session, not to the whole profile', ru: 'Вкладки принадлежат одной сессии, а не всему профилю' },
-        { en: 'Allowed origins are an explicit allowlist', ru: 'Разрешённые источники — явный список' },
-        { en: 'Ships the Ocean-branded Chrome extension fork', ru: 'В комплекте форк расширения Chrome под брендом Ocean' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-cua-bundle',
-    aliases: ['@ocean/ocean-computer-use-bundle'],
-    version: '1.0.0',
-    title: { en: 'Computer Use', ru: 'Computer Use' },
-    summary: {
-      en: 'Desktop control on macOS, Windows and Linux AT-SPI: observe the screen and operate native applications.',
-      ru: 'Управление рабочим столом на macOS, Windows и Linux AT-SPI: наблюдение за экраном и работа с нативными приложениями.',
-    },
-    details: {
-      about: {
-        en: 'Drives native applications: it reads windows and accessibility trees, then clicks, types and scrolls where the task says. Screen access and input are separate permissions, and both are requested from the system.',
-        ru: 'Управляет нативными приложениями: читает окна и деревья доступности, затем кликает, печатает и прокручивает там, где требует задача. Доступ к экрану и вводу — разные разрешения, оба запрашиваются у системы.',
-      },
-      points: [
-        { en: 'macOS accessibility and screen recording, Windows UIA, Linux AT-SPI', ru: 'macOS accessibility и запись экрана, Windows UIA, Linux AT-SPI' },
-        { en: 'Typed, structured observations instead of blind coordinate clicks', ru: 'Структурированные наблюдения вместо слепых кликов по координатам' },
-        { en: 'Permission prompts stay with the operating system', ru: 'Разрешения выдаются средствами системы' },
-      ],
-    },
-  },
-  {
-    name: '@local/ocean-theme-picker',
-    version: '1.0.0',
-    title: { en: 'Theme picker', ru: 'Выбор темы' },
-    summary: {
-      en: 'One page for every palette: switch themes from the bundle settings and the interface repaints immediately.',
-      ru: 'Одна страница для всех палитр: тема переключается в настройках бандла, и интерфейс сразу перекрашивается.',
-    },
-    details: {
-      about: {
-        en: 'Embeds every palette under plugins/theme-* at build time, lists them on the bundle page in Plugins, and applies the choice through one override-token layer that is replaced on each switch.',
-        ru: 'Встраивает все палитры из plugins/theme-* при сборке, показывает их на странице бандла в Plugins и применяет выбор через один слой override-токенов, который заменяется при каждом переключении.',
-      },
-      points: [
-        { en: 'Every palette in one bundle instead of one bundle per palette', ru: 'Все палитры в одном бандле вместо бандла на палитру' },
-        { en: 'Light and dark variants switch with Appearance', ru: 'Светлый и тёмный варианты следуют за «Оформлением»' },
-        { en: 'The chosen layer replaces the previous one instead of stacking', ru: 'Выбранный слой заменяет предыдущий, а не наслаивается' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-codex',
-    version: '0.1.0',
-    title: { en: 'Codex', ru: 'Codex' },
-    summary: {
-      en: 'ChatGPT plan accounts as a native provider: OAuth sign-in, account catalog and model discovery.',
-      ru: 'Аккаунты ChatGPT Plan как нативный провайдер: вход по OAuth, каталог аккаунта и обнаружение моделей.',
-    },
-    details: {
-      about: {
-        en: 'Registers ChatGPT plan accounts through the verified plan OAuth flow, reads the visible model catalog and routes inference through Ocean\'s native LLM services.',
-        ru: 'Подключает аккаунты ChatGPT Plan через проверенный OAuth-поток, читает каталог видимых моделей и направляет инференс через нативные LLM-сервисы Ocean.',
-      },
-      points: [
-        { en: 'Recoverable OAuth sign-in with PKCE, state and nonce', ru: 'Восстанавливаемый вход по OAuth с PKCE, state и nonce' },
-        { en: 'Account model catalog with duplicate and hidden-row handling', ru: 'Каталог моделей аккаунта с обработкой дублей и скрытых строк' },
-        { en: 'Usage link, never invented quota percentages', ru: 'Ссылка на Usage без выдуманных процентов квоты' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-experimental-auto-review',
-    version: '1.0.0',
-    title: { en: 'Auto review', ru: 'Авто-ревью' },
-    summary: {
-      en: 'Reviews each tool call against the user\'s request in the Auto preset before the loop continues.',
-      ru: 'Проверяет каждый вызов инструмента на соответствие запросу пользователя в пресете Auto до продолжения цикла.',
-    },
-    details: {
-      about: {
-        en: 'Runs a review pass after a tool call: a mismatch between the request and what the tool is about to do can stop the loop and report the concern.',
-        ru: 'Выполняет проверку после вызова инструмента: расхождение между запросом и тем, что делает инструмент, может остановить цикл и сообщить о проблеме.',
-      },
-      points: [
-        { en: 'Works with the Auto agent preset', ru: 'Работает с пресетом агента Auto' },
-        { en: 'Reviews the tool call against the active request', ru: 'Сверяет вызов инструмента с активным запросом' },
-        { en: 'Offline tests cover allowed and refused calls', ru: 'Офлайн-тесты покрывают разрешённые и отклонённые вызовы' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-experimental-inspector-profile',
-    version: '1.0.0',
-    title: { en: 'Developer tools', ru: 'Инструменты разработчика' },
-    summary: {
-      en: 'Session and Chat inspectors, a CDP hub and per-turn context and cost statistics.',
-      ru: 'Инспекторы сессий и Chat-узлов, CDP-hub и статистика контекста и стоимости по ходам.',
-    },
-    details: {
-      about: {
-        en: 'Adds the inspection surface used while developing Ocean plugins: raw session logs, Chat node inspection and per-turn context and cost figures. The CDP hub starts only when explicitly enabled.',
-        ru: 'Добавляет инструменты для разработки плагинов Ocean: сырые логи сессий, инспекцию Chat-узлов и статистику контекста и стоимости по ходам. CDP-hub запускается только при явном включении.',
-      },
-      points: [
-        { en: 'Session logs and Chat node inspection', ru: 'Логи сессий и инспекция Chat-узлов' },
-        { en: 'Context and cost statistics per turn', ru: 'Статистика контекста и стоимости по ходам' },
-        { en: 'CDP hub behind an explicit switch', ru: 'CDP-hub за явным переключателем' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-experimental-forge-bundle',
-    version: '1.0.0',
-    title: { en: 'Forge', ru: 'Forge' },
-    summary: {
-      en: 'Change-request panel and Git worktrees for Sessions, with GitHub through the CLI.',
-      ru: 'Панель запросов на изменение и git-ворктри для сессий, GitHub через CLI.',
-    },
-    details: {
-      about: {
-        en: 'Turns a Session in a Git repository into a change request: a task gets its own worktree, the changes are prepared and GitHub is reached through the authenticated CLI.',
-        ru: 'Превращает сессию в git-репозитории в запрос на изменение: задача получает собственный ворктри, изменения готовятся, а GitHub доступен через авторизованный CLI.',
-      },
-      points: [
-        { en: 'One issue per Git worktree', ru: 'Одна задача — один git-ворктри' },
-        { en: 'Change-request panel beside the Session', ru: 'Панель запроса на изменение рядом с сессией' },
-        { en: 'GitHub operations through the authenticated CLI', ru: 'Операции GitHub через авторизованный CLI' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-experimental-session-titles-bundle',
-    version: '1.0.0',
-    title: { en: 'Session titles', ru: 'Заголовки сессий' },
-    summary: {
-      en: 'Session titles that follow every prompt instead of only the first one.',
-      ru: 'Заголовки сессий, которые следуют за каждым промптом, а не только за первым.',
-    },
-    details: {
-      about: {
-        en: 'Replaces the core first-prompt title with a title refreshed from the conversation, so a session keeps a name that matches its current work.',
-        ru: 'Заменяет базовый заголовок по первому промпту на заголовок, обновляемый по разговору, чтобы имя сессии соответствовало текущей работе.',
-      },
-      points: [
-        { en: 'Titles follow every prompt, not only the first', ru: 'Заголовки следуют за каждым промптом, а не только за первым' },
-        { en: 'Uses the configured language model', ru: 'Использует настроенную языковую модель' },
-        { en: 'Offline provider tests cover refresh and fallback', ru: 'Офлайн-тесты провайдера покрывают обновление и fallback' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-experimental-voice-input-bundle',
-    version: '1.0.0',
-    title: { en: 'Voice input', ru: 'Голосовой ввод' },
-    summary: {
-      en: 'Voice input through a local SenseVoice runtime; model weights download on first use.',
-      ru: 'Голосовой ввод через локальный runtime SenseVoice; веса модели скачиваются при первом использовании.',
-    },
-    details: {
-      about: {
-        en: 'Adds dictation to the composer with a locally managed SenseVoice process. Audio stays on the machine; the runtime and its weights are prepared on first use.',
-        ru: 'Добавляет диктовку в композер с локально управляемым процессом SenseVoice. Аудио остаётся на машине; runtime и веса готовятся при первом использовании.',
-      },
-      points: [
-        { en: 'Local speech-to-text with SenseVoice', ru: 'Локальное распознавание речи на SenseVoice' },
-        { en: 'Audio never leaves the machine', ru: 'Аудио не покидает машину' },
-        { en: 'Weights download on first use, not at install', ru: 'Веса скачиваются при первом использовании, а не при установке' },
-      ],
-    },
-  },
-  {
-    name: '@ocean/ocean-plugin-market',
-    version: '1.0.0',
-    title: { en: 'Plugin market', ru: 'Маркет плагинов' },
-    summary: {
-      en: 'This market: one card per available plugin, with install, enable, remove and update.',
-      ru: 'Этот маркет: одна карточка на доступный плагин, с установкой, включением, удалением и обновлением.',
-    },
-    details: {
-      about: {
-        en: 'The catalogue you are reading: it shows the plugins this file names plus every other manageable plugin the Host reports, one card per plugin; every action goes through the profile plugin manager, so it writes the same records the Plugins page writes.',
-        ru: 'Каталог, который вы читаете: он показывает плагины из этого файла и остальные управляемые плагины, о которых сообщает Host, по одной карточке на плагин; все действия идут через менеджер плагинов профиля, то есть пишут те же записи, что и страница Plugins.',
-      },
-      points: [
-        { en: 'Search across titles, descriptions and package names', ru: 'Поиск по названиям, описаниям и именам пакетов' },
-        { en: 'Updates target the version this catalogue declares', ru: 'Обновление ставит версию, объявленную каталогом' },
-        { en: 'No network requests and no third-party index', ru: 'Никаких сетевых запросов и чужих индексов' },
-      ],
-    },
-    self: true,
-  },
-])
+/** @typedef {import('@ocean/ocean-api-remotes/client').PublishedPluginOffer} PublishedPlugin */
+
+/**
+ * Read the status of the catalogue response; individual releases are verified by the Host.
+ * @param {unknown} value the unwrapped Remote response.
+ * @returns {{status: 'ready' | 'stale', plugins: readonly PublishedPlugin[]} | {status: 'unavailable'}} the displayable list or its absence.
+ */
+function readPublishedCatalog(value) {
+  if (value !== null && typeof value === 'object' && 'status' in value && 'plugins' in value
+    && (value.status === 'ready' || value.status === 'stale') && Array.isArray(value.plugins)) {
+    return { status: value.status, plugins: value.plugins }
+  }
+  return { status: 'unavailable' }
+}
+
+/**
+ * Select only the release identity and display name requested by the Plugins page.
+ * @param {PublishedPlugin} plugin the published record.
+ * @returns {PublishedInstallTarget} the install intent, with no download location.
+ */
+function installTarget({ name, version, sha256, title }) {
+  return { name, version, sha256, title }
+}
 
     // ---- src/view.js ----
-/**
- * Pure projection of the curated catalogue onto the Host's bundle list. It
- * decides what each card says and which management action it offers; it reads
- * no service, keeps no state, and is exercised directly by `tests/view.test.mjs`.
- */
+/** Join published releases to local bundle state by exact package name. */
 
-/** Numeric ordering of two semver strings; an unparseable operand compares equal. */
-function compareVersions(left, right) {
-  const a = parseVersion(left)
-  const b = parseVersion(right)
-  if (a === undefined || b === undefined) return 0
-  for (const part of ['major', 'minor', 'patch']) {
-    if (a[part] !== b[part]) return a[part] < b[part] ? -1 : 1
-  }
-  if (a.pre === undefined && b.pre === undefined) return 0
-  // A release outranks any prerelease of the same version.
-  if (a.pre === undefined) return 1
-  if (b.pre === undefined) return -1
-  const length = Math.max(a.pre.length, b.pre.length)
-  for (let index = 0; index < length; index += 1) {
-    const one = a.pre[index]
-    const other = b.pre[index]
-    if (one === undefined) return -1
-    if (other === undefined) return 1
-    if (one === other) continue
-    const oneNumeric = /^\d+$/u.test(one)
-    const otherNumeric = /^\d+$/u.test(other)
-    if (oneNumeric !== otherNumeric) return oneNumeric ? -1 : 1
-    if (oneNumeric && one.length !== other.length) return one.length < other.length ? -1 : 1
-    return one < other ? -1 : 1
-  }
-  return 0
-}
+/** @typedef {import('./catalog.js').PublishedPlugin} PublishedPlugin */
+/** @typedef {import('./catalog.js').PublishedInstallTarget} PublishedInstallTarget */
+/** @typedef {import('@ocean/ocean-api-remotes/client').BundleInfo} BundleInfo */
+/** @typedef {{ kind: 'install', target: PublishedInstallTarget } | { kind: 'enable' | 'disable' | 'open' }} CardAction */
+
+const badges = /** @type {const} */ ({
+  on: 'badgeOn', off: 'badgeOff', blocked: 'badgeBlocked', broken: 'badgeBroken',
+  incompatible: 'badgeIncompatible', missing: 'badgeMissing', unknown: 'badgeUnknown',
+})
 
 /**
- * @param {string} value
- * @returns {{ major: number, minor: number, patch: number, pre?: string[] } | undefined} parsed parts, or undefined.
+ * Project a release and its matching profile record. Compatibility describes the published release, not the installed copy.
+ * @param {PublishedPlugin} plugin a release the Host lists in the catalogue.
+ * @param {BundleInfo | undefined} bundle the matching local bundle, if found.
+ * @param {{fresh: boolean, inventoryReady: boolean}} options whether installation offers and inventory are current.
+ * @returns The card and its available actions.
  */
-function parseVersion(value) {
-  if (typeof value !== 'string') return undefined
-  const match = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u.exec(value.trim())
-  if (match === null) return undefined
-  const parsed = { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]) }
-  return match[4] === undefined ? parsed : { ...parsed, pre: match[4].split('.') }
-}
-
-/** Management error text a card shows verbatim beside the Host's code. */
-function errorText(error) {
-  if (error === undefined) return undefined
-  const code = typeof error.code === 'string' ? error.code : 'unknown'
-  return typeof error.diagnostic === 'string' && error.diagnostic.length > 0 ? `${code}: ${error.diagnostic}` : code
-}
-
-/**
- * Project one catalogue entry into a card.
- * @param {object} entry catalogue entry.
- * @param {object | undefined} bundle the Host's record for that package name, if it lists one.
- * @param {{ text: (localized: unknown) => string }} options `text` resolves the catalogue's localized strings.
- * @returns {object} card model consumed by the tab.
- */
-function cardFor(entry, bundle, options) {
-  const text = options.text
-  const details = entry.details
-  const about = details === undefined ? '' : text(details.about)
-  const points = details === undefined ? [] : details.points.map(point => text(point))
-  const readable = isReadable(bundle)
+function cardFor(plugin, bundle, { fresh, inventoryReady }) {
+  const { name, title, description, compatible, version: publishedVersion } = plugin
+  const readable = bundle?.availability === 'installation' || bundle?.availability === 'profile'
   const configured = bundle?.installed === true || bundle?.enabled === true
   const selected = bundle?.enabled === true
-  const installedVersion = readable ? bundle.version : undefined
-  const target = bundle?.installTarget
-  const error = errorText(bundle?.error)
+  const error = bundle?.error?.code
   const canChange = bundle?.readOnlyReason === undefined
-  const isSelf = entry.self === true
-  const state = isSelf ? 'self' : readable ? (error !== undefined ? 'blocked' : selected ? 'on' : 'off') : configured ? 'broken' : 'missing'
+  const state = readable ? (error !== undefined ? 'blocked' : selected ? 'on' : 'off')
+    : configured ? 'broken' : !compatible ? 'incompatible' : bundle !== undefined || inventoryReady ? 'missing' : 'unknown'
+  /** @type {CardAction[]} */
   const actions = []
-  let note
-
-  if (state === 'missing' && error === undefined && canChange) {
-    if (bundle?.official === true) {
-      if (target !== undefined) actions.push({ kind: 'installOfficial' })
-    } else {
-      actions.push({ kind: 'installForm', spec: entry.name })
-      note = 'noteNoSource'
-    }
-  }
-  if (!isSelf && (readable || configured)) {
+  if (readable || configured) {
     if (canChange && selected) actions.push({ kind: 'disable' })
     if (canChange && !selected && readable && error === undefined) actions.push({ kind: 'enable' })
-    if (canChange && bundle.removable === true) actions.push({ kind: 'remove' })
     actions.push({ kind: 'open' })
+  } else if (fresh && inventoryReady && compatible && canChange && error === undefined) {
+    actions.push({ kind: 'install', target: installTarget(plugin) })
   }
 
-  if (state === 'broken') {
-    // Adding over a recorded dependency is refused by the Host; its profile entry must be removed first.
-    note = 'noteBroken'
-  } else if (error !== undefined) {
-    note = bundle.error.code === 'unsupported-platform' ? 'noteUnsupported' : 'noteError'
-  } else if (!isSelf && readable) {
-    const curatedNewer = typeof entry.version === 'string' && typeof installedVersion === 'string'
-      && compareVersions(entry.version, installedVersion) > 0
-    if (bundle.update === 'git') {
-      note = 'noteGitUpdate'
-    } else if (curatedNewer && bundle.update === 'registry' && canChange) {
-      actions.unshift({ kind: 'update', version: entry.version })
-    } else if (curatedNewer) {
-      note = bundle.availability === 'installation' ? 'noteBuildCarried' : 'noteSourceUpdate'
-    } else if (bundle.optional === true) {
-      note = 'noteShipped'
-    }
-  }
-
-  const title = text(entry.title)
-  const summary = text(entry.summary)
-  const bundleName = bundle?.name ?? entry.name
   return {
-    id: entry.name,
-    name: bundleName,
-    title,
-    summary,
-    about,
-    points,
-    // One lowercased haystack per card: the search matches what the card and its popup show, and the package name.
-    search: [title, summary, entry.name, ...(entry.aliases ?? []), about, ...points].join(' ').toLowerCase(),
-    version: installedVersion ?? (!configured && error === undefined ? target?.version : undefined),
+    name, title, description, compatible, publishedVersion, state, actions, error,
+    search: [title, description, name].join(' ').toLowerCase(),
+    version: readable ? bundle.version : undefined,
     installed: readable,
-    enabled: selected && readable && error === undefined,
-    state,
-    badge: `badge${state[0].toUpperCase()}${state.slice(1)}`,
-    actions,
-    note,
-    error,
-  }
-}
-
-/** Native subagents and internal components are managed from Installed, not as catalogue products. */
-const HIDDEN_HOST_BUNDLES = new Set([
-  '@ocean/ocean-subagent-codex',
-  '@ocean/ocean-subagent-claude-code',
-  '@ocean/ocean-experimental-inspector',
-  '@ocean/ocean-experimental-session-inspector',
-  '@ocean/ocean-experimental-tool-worktree',
-])
-
-const THEME_PALETTE_PREFIX = '@local/ocean-theme-'
-
-/** Whether the Host can read the bundle's files. */
-function isReadable(bundle) {
-  return bundle?.availability === 'installation' || bundle?.availability === 'profile'
-}
-
-/**
- * Choose a bundle for the card, preferring a usable copy over failed or unavailable alternatives.
- * @param {object} entry catalogue entry.
- * @param {Map<string, object>} byName Host bundles by package name.
- * @returns {object | undefined} the bundle the card acts on.
- */
-function bundleFor(entry, byName) {
-  const candidates = [entry.name, ...(entry.aliases ?? [])].map(name => byName.get(name)).filter(Boolean)
-  const usable = candidates.filter(bundle => isReadable(bundle) && bundle.error === undefined)
-  return usable.find(bundle => bundle.enabled) ?? usable.find(bundle => bundle.installed) ?? usable[0]
-    ?? candidates.find(bundle => bundle.enabled || bundle.installed) ?? candidates[0]
-}
-
-/** Build a card entry for a Host bundle the curated catalogue does not name. */
-function entryForBundle(bundle) {
-  return {
-    name: bundle.name,
-    title: bundle.meta?.title ?? bundle.name,
-    summary: bundle.meta?.description ?? bundle.description ?? '',
+    enabled: readable && selected && error === undefined,
+    badge: badges[state],
+    note: state === 'broken' ? /** @type {const} */ ('noteBroken')
+      : error === 'unsupported-platform' ? /** @type {const} */ ('noteUnsupported')
+        : error !== undefined ? /** @type {const} */ ('noteError') : undefined,
   }
 }
 
 /**
- * Filter the cards by one case-insensitive substring over titles, summaries, popup copy and package names.
- * @param {readonly object[]} cards the card models.
- * @param {string} query what the person typed; an empty or blank query keeps every card.
- * @returns {object[]} the cards that match, in their original order.
+ * Filter by a case-insensitive substring of the title, description or package name.
+ * @param {ReturnType<typeof cardFor>[]} cards the card models in display order.
+ * @param {string} query the search text; a blank query keeps every card.
+ * @returns {ReturnType<typeof cardFor>[]} the matching cards, in their original order.
  */
 function filterCards(cards, query) {
-  const needle = typeof query === 'string' ? query.trim().toLowerCase() : ''
-  if (needle.length === 0) return cards
-  return cards.filter(card => card.search.includes(needle))
+  const needle = query.trim().toLowerCase()
+  return needle.length === 0 ? cards : cards.filter(card => card.search.includes(needle))
 }
 
 /**
- * Build the whole tab view.
- * @param {{ catalog: readonly object[], bundles: readonly object[], text: (localized: unknown) => string }} input
- *   current Host state and resolvers.
- * @returns {{ cards: object[], counts: { total: number, installed: number, enabled: number } }} the tab model.
+ * Build cards only for packages from the publication channel; inventory supplies state but cannot add cards.
+ * @param {{plugins: readonly PublishedPlugin[], bundles: readonly BundleInfo[], fresh: boolean, inventoryReady: boolean}} input current Host data.
+ * @returns {{cards: ReturnType<typeof cardFor>[], counts: {total: number, installed: number, enabled: number}}} the catalogue view.
  */
-function buildMarketView(input) {
-  const byName = new Map(input.bundles.map(bundle => [bundle.name, bundle]))
-  const options = { text: input.text }
-  // The curated list keeps its order; every other bundle the Host manages joins after it, so an installed plugin the
-  // catalogue never named (and an official bundle offered on demand) is still visible here.
-  const entries = [...input.catalog]
-  const covered = new Set()
-  for (const entry of entries) {
-    covered.add(entry.name)
-    for (const name of entry.aliases ?? []) covered.add(name)
-  }
-  for (const bundle of input.bundles) {
-    if (covered.has(bundle.name) || HIDDEN_HOST_BUNDLES.has(bundle.name)) continue
-    if (bundle.name.startsWith(THEME_PALETTE_PREFIX) && bundle.name !== '@local/ocean-theme-picker') continue
-    const offered = bundle.official === true && (bundle.installTarget !== undefined || bundle.optional === true)
-    // The Host also lists composition-owned layers, not just plugins managed from this page.
-    const configured = (bundle.installed || bundle.enabled) && bundle.removable
-    if (!configured && !(offered && bundle.listedByDefault !== false)) continue
-    entries.push(entryForBundle(bundle))
-    covered.add(bundle.name)
-  }
-  const cards = entries.map(entry => cardFor(entry, bundleFor(entry, byName), options))
+function buildMarketView({ plugins, bundles, fresh, inventoryReady }) {
+  const byName = new Map(bundles.map(bundle => [bundle.name, bundle]))
+  const options = { fresh, inventoryReady }
+  const cards = plugins.map(plugin => cardFor(plugin, byName.get(plugin.name), options))
   const counts = { total: cards.length, installed: 0, enabled: 0 }
   for (const card of cards) {
     if (card.installed) counts.installed += 1
@@ -509,128 +118,121 @@ function buildMarketView(input) {
 }
 
     // ---- src/controller.js ----
-/**
- * Market controller: owns the tab snapshot and performs every management
- * action through the injected Host API. React-free, so the browser bundle can
- * inline it and `tests/` can exercise its rules without a DOM.
- */
+/** Own the latest catalogue and inventory reads independently of the mounted tab. */
 
-/** Rejection text for a snapshot, including a non-Error rejection. */
-function messageOf(error) {
-  return error instanceof Error ? error.message : String(error)
-}
+/** @typedef {import('./catalog.js').PublishedInstallTarget} PublishedInstallTarget */
+/** @typedef {import('@ocean/ocean-api-remotes/client').BundleInfo} BundleInfo */
+/** @typedef {import('@ocean/ocean-api-remotes/client').ChangeResult} ChangeResult */
+/** @typedef {'loading' | 'ready' | 'stale' | 'unavailable'} CatalogStatus */
+/** @typedef {'loading' | 'ready' | 'unavailable'} InventoryStatus */
+/** @typedef {{title: Exclude<ChangeResult['application'], 'applied'> | 'transportError', diagnostic?: string}} ChangeNotice */
 
 /**
- * @param {{ api: { listBundles: () => Promise<object[]>,
- *   setBundleEnabled: (name: string, enabled: boolean) => Promise<unknown>,
- *   removeBundle: (name: string) => Promise<unknown>,
- *   updateBundle: (name: string, version: string) => Promise<unknown> },
- *   catalog: readonly object[], text: (localized: unknown) => string,
- *   buildView: (input: object) => object }} options
- *   `api` is the Host's `pluginManager` Remote; `text` resolves the catalogue's localized strings; `buildView` is the
- *   pure projection from `src/view.js`, passed in so this module stays import-free for the inline bundle.
- * @returns {object} the tab controller.
+ * Create a controller scoped to one plugin application. A failed read retains its last usable data, but only current
+ * publication and inventory data can offer a new install.
+ * @param {{listPublishedCatalog: () => Promise<unknown>, listBundles: () => Promise<BundleInfo[]>,
+ *   setBundleEnabled: (name: string, enabled: boolean) => Promise<ChangeResult>}} api the Host's plugin manager.
+ * @returns The catalogue state source and tab actions.
  */
-function createMarketController(options) {
-  const { api, catalog, text, buildView } = options
+function createMarketController(api) {
+  /** @type {Set<() => void>} */
   const listeners = new Set()
-  let bundles
+  /** @type {readonly import('./catalog.js').PublishedPlugin[] | undefined} */
+  let plugins
+  /** @type {BundleInfo[]} */
+  let bundles = []
   let disposed = false
-  let loadToken = 0
+  let catalogRequest = 0
+  let inventoryRequest = 0
   let snapshot = Object.freeze({
-    status: 'loading',
-    cards: [],
-    counts: { total: catalog.length, installed: 0, enabled: 0 },
-    error: undefined,
-    busy: undefined,
-    notice: undefined,
+    status: /** @type {CatalogStatus} */ ('loading'),
+    inventory: /** @type {InventoryStatus} */ ('loading'),
+    hasCatalog: false,
+    ...buildMarketView({ plugins: [], bundles, fresh: false, inventoryReady: false }),
+    busy: /** @type {{name: string} | undefined} */ (undefined),
+    notice: /** @type {ChangeNotice | undefined} */ (undefined),
   })
 
-  function emit() {
+  /** @param {Partial<typeof snapshot>} patch changes to publish in the same snapshot as the projected cards. */
+  function publish(patch) {
+    const next = { ...snapshot, ...patch }
+    const view = buildMarketView({
+      plugins: plugins ?? [], bundles, fresh: next.status === 'ready', inventoryReady: next.inventory === 'ready',
+    })
+    snapshot = Object.freeze({ ...next, ...view, hasCatalog: plugins !== undefined })
     for (const listener of listeners) listener()
   }
 
-  function publish(patch) {
-    snapshot = Object.freeze({ ...snapshot, ...patch })
-    emit()
+  async function readCatalog() {
+    const token = ++catalogRequest
+    publish({ status: 'loading' })
+    const result = await api.listPublishedCatalog().then(readPublishedCatalog, () => ({ status: /** @type {const} */ ('unavailable') }))
+    if (disposed || token !== catalogRequest) return
+    if (result.status !== 'unavailable') plugins = result.plugins
+    publish({ status: result.status })
   }
 
-  /** Rebuild the cards from the last Host list. */
-  function rebuild(overrides) {
-    const view = buildView({ catalog, bundles, text })
-    publish({ cards: view.cards, counts: view.counts, ...overrides })
+  async function readInventory() {
+    const token = ++inventoryRequest
+    publish({ inventory: 'loading' })
+    const result = await api.listBundles().then(value => Array.isArray(value) ? value : undefined, () => undefined)
+    if (disposed || token !== inventoryRequest) return
+    if (result !== undefined) bundles = result
+    publish({ inventory: result === undefined ? 'unavailable' : 'ready' })
   }
 
   async function load() {
-    const token = loadToken + 1
-    loadToken = token
-    try {
-      const listed = await api.listBundles()
-      if (disposed || token !== loadToken) return
-      bundles = listed
-      rebuild({ status: 'ready', error: undefined })
-    } catch (error) {
-      if (disposed || token !== loadToken) return
-      publish({ status: snapshot.cards.length > 0 ? 'ready' : 'error', error: messageOf(error) })
-    }
-  }
-
-  async function perform(name, kind, work) {
-    if (disposed || snapshot.busy !== undefined) return
-    publish({ busy: { name, kind }, notice: undefined })
-    let notice
-    try {
-      const result = await work()
-      if (result.application !== 'applied') {
-        notice = { title: result.application, diagnostic: result.error?.diagnostic ?? result.error?.code }
-      }
-    } catch (error) {
-      notice = { title: 'transportError', diagnostic: messageOf(error) }
-    }
     if (disposed) return
-    await load()
-    if (disposed) return
-    publish({ busy: undefined, notice })
+    await Promise.all([readCatalog(), readInventory()])
   }
 
   return {
-    /** @param {() => void} listener @returns {() => void} unsubscribe */
+    /** @param {() => void} listener observes each new snapshot. @returns {() => void} unsubscribe. */
     subscribe(listener) {
       listeners.add(listener)
       return () => { listeners.delete(listener) }
     },
-    /** @returns {object} the current immutable snapshot. */
+    /** @returns {typeof snapshot} the current catalogue and inventory presentation state. */
     getSnapshot() {
       return snapshot
     },
-    /** Read the Host's bundle list and republish the cards. */
+    /** Read publication and inventory together, without coupling their results. */
     load,
-    /** Refresh an already opened catalog; unopened catalogs issue no Host requests. */
+    /** Refresh only after the catalogue was opened at least once. */
     invalidate() {
-      if (!disposed && loadToken > 0) void load()
-    },
-    /** @param {string} name bundle package name @param {boolean} enabled target selection */
-    setEnabled(name, enabled) {
-      return perform(name, enabled ? 'enable' : 'disable', () => api.setBundleEnabled(name, enabled))
-    },
-    /** @param {string} name bundle package name */
-    remove(name) {
-      return perform(name, 'remove', () => api.removeBundle(name))
+      if (catalogRequest > 0) return load()
     },
     /**
-     * Update one installed bundle to the version this catalogue curates.
-     * @param {string} name bundle package name
-     * @param {string} version target version, from the catalogue entry
+     * Recheck an install gesture against the latest card before opening the Plugins page's installation dialog.
+     * @param {PublishedInstallTarget} target the release displayed when the install handler was rendered.
+     * @returns {PublishedInstallTarget | undefined} the current target, only if the release still matches and is installable.
      */
-    update(name, version) {
-      return perform(name, 'update', () => api.updateBundle(name, version))
+    getInstallTarget(target) {
+      if (disposed || snapshot.busy !== undefined) return undefined
+      const action = snapshot.cards.find(card => card.name === target.name)?.actions.find(action => action.kind === 'install')
+      return action?.kind === 'install' && action.target.version === target.version && action.target.sha256 === target.sha256
+        ? action.target : undefined
     },
-    /** Rebuild the cards after a language switch, without asking the Host. */
-    relocalize() {
-      if (disposed || bundles === undefined) return
-      rebuild({})
+    /** @param {string} name package name. @param {boolean} enabled target selection for a managed local copy. */
+    async setEnabled(name, enabled) {
+      if (disposed || snapshot.busy !== undefined || snapshot.inventory !== 'ready') return
+      const allowed = snapshot.cards.find(card => card.name === name)?.actions.some(action => action.kind === (enabled ? 'enable' : 'disable'))
+      if (!allowed) return
+      publish({ busy: { name }, notice: undefined })
+      /** @type {ChangeNotice | undefined} */
+      let notice
+      try {
+        const result = await api.setBundleEnabled(name, enabled)
+        if (result.application !== 'applied') notice = { title: result.application, diagnostic: result.error?.code }
+      } catch (error) {
+        // A lost response does not establish whether the Host applied the change.
+        notice = { title: 'transportError', diagnostic: typeof error?.code === 'string' ? error.code : undefined }
+      }
+      if (disposed) return
+      await readInventory()
+      if (!disposed) publish({ busy: undefined, notice })
     },
-    /** Stop publishing; later Host answers are dropped. */
+    /** Stop publishing; in-flight answers cannot update a disposed controller. */
     dispose() {
       disposed = true
       listeners.clear()
@@ -639,46 +241,39 @@ function createMarketController(options) {
 }
 
     // ---- src/locales.js ----
-/** Catalogue controls. Curated descriptions are localized separately in `catalog.js`. */
+/** Catalogue controls and states; published titles and descriptions arrive as Host data. */
 const en = {
   tab: 'Catalogue',
   title: 'Plugin catalogue',
-  hint: 'Browse curated plugins and manage plugins in this profile.',
+  hint: 'Browse published plugins for Ocean.',
   refresh: 'Refresh',
   search: 'Search',
   searchPlaceholder: 'Search by name, description or package',
-  foundLabel: 'found',
+  counts: 'Installed: {installed} / {total} · On: {enabled}',
   noMatches: 'Nothing matches the search.',
   details: 'Details',
   close: 'Close',
-  whatItDoes: 'What it does',
-  loading: 'Reading the plugin list…',
-  retry: 'Retry',
-  empty: 'The catalogue is empty.',
-  installedLabel: 'Installed',
-  enabledLabel: 'on',
-  versionLabel: 'Version',
+  loading: 'Reading the published catalogue…',
+  changing: 'Applying the change…',
+  empty: 'No plugins have been published.',
+  cached: 'Showing the last published list. Refresh to check for new installations.',
+  unavailable: 'The published catalogue is unavailable. Try refreshing.',
+  inventoryUnavailable: 'Ocean could not check which plugins are installed. Try refreshing.',
+  installedVersion: 'Installed version: {version}',
+  publishedVersion: 'Published version: {version}',
   unknownVersion: 'Unknown',
   install: 'Install',
-  installForm: 'Install from source',
   enable: 'Turn on',
   disable: 'Turn off',
-  remove: 'Remove',
-  confirm: 'Yes, remove',
-  cancel: 'Cancel',
   open: 'Open',
-  update: 'Update to',
   badgeOn: 'On',
   badgeOff: 'Off',
-  badgeSelf: 'This catalogue',
   badgeMissing: 'Not installed',
   badgeBroken: 'Files missing',
   badgeBlocked: 'Not running',
-  noteBuildCarried: 'Updates together with the build.',
-  noteGitUpdate: 'Open the plugin in Installed to update it from Git.',
-  noteSourceUpdate: 'To update, reinstall this plugin from its source.',
-  noteShipped: 'Included with this build.',
-  noteNoSource: 'No install source is listed. Enter a package name, Git URL, tarball, or local directory.',
+  badgeIncompatible: 'Incompatible',
+  badgeUnknown: 'Install state unknown',
+  noteIncompatible: 'The published version is not compatible with this Ocean version.',
   noteBroken: 'The profile still references this plugin, but its files are missing.',
   noteUnsupported: 'This plugin does not support the host platform.',
   noteError: 'The plugin could not be loaded or enabled.',
@@ -687,48 +282,44 @@ const en = {
   overridden: 'Another profile setting overrides this change.',
   cancelled: 'The plugin change was cancelled.',
   transportError: 'Ocean could not confirm the change. Check the plugin state before trying again.',
+  changeDiagnostic: '{message} ({diagnostic})',
 }
 
-/** Russian catalogue controls. */
+/** @typedef {keyof typeof en} MarketKey */
+
+/** @type {Record<MarketKey, string>} */
 const ru = {
   tab: 'Каталог',
   title: 'Каталог плагинов',
-  hint: 'Просматривайте подборку и управляйте плагинами этого профиля.',
+  hint: 'Здесь собраны опубликованные плагины для Ocean.',
   refresh: 'Обновить список',
   search: 'Поиск',
   searchPlaceholder: 'Поиск по названию, описанию или пакету',
-  foundLabel: 'найдено',
+  counts: 'Установлено: {installed} / {total} · Включено: {enabled}',
   noMatches: 'По запросу ничего не найдено.',
   details: 'Подробнее',
   close: 'Закрыть',
-  whatItDoes: 'Что делает',
-  loading: 'Загрузка списка плагинов…',
-  retry: 'Повторить',
-  empty: 'Каталог пуст.',
-  installedLabel: 'Установлено',
-  enabledLabel: 'включено',
-  versionLabel: 'Версия',
+  loading: 'Загрузка опубликованного каталога…',
+  changing: 'Применение изменения…',
+  empty: 'Пока ни один плагин не опубликован.',
+  cached: 'Показан последний опубликованный список. Обновите его, чтобы проверить, что можно установить.',
+  unavailable: 'Опубликованный каталог недоступен. Попробуйте обновить список.',
+  inventoryUnavailable: 'Не удалось проверить, какие плагины установлены. Попробуйте обновить список.',
+  installedVersion: 'Установленная версия: {version}',
+  publishedVersion: 'Опубликованная версия: {version}',
   unknownVersion: 'Неизвестна',
   install: 'Установить',
-  installForm: 'Установить из источника',
   enable: 'Включить',
-  disable: 'Отключить',
-  remove: 'Удалить',
-  confirm: 'Да, удалить',
-  cancel: 'Отмена',
+  disable: 'Выключить',
   open: 'Открыть',
-  update: 'Обновить до',
   badgeOn: 'Включён',
-  badgeOff: 'Отключён',
-  badgeSelf: 'Этот каталог',
+  badgeOff: 'Выключен',
   badgeMissing: 'Не установлен',
   badgeBroken: 'Файлы отсутствуют',
   badgeBlocked: 'Не запущен',
-  noteBuildCarried: 'Обновляется вместе со сборкой.',
-  noteGitUpdate: 'Откройте плагин на вкладке «Установленные», чтобы обновить его из Git.',
-  noteSourceUpdate: 'Для обновления переустановите плагин из его источника.',
-  noteShipped: 'Входит в эту сборку.',
-  noteNoSource: 'Источник установки не указан. Введите имя пакета, адрес Git, архив или локальный каталог.',
+  badgeIncompatible: 'Несовместим',
+  badgeUnknown: 'Состояние установки неизвестно',
+  noteIncompatible: 'Опубликованная версия не совместима с этой версией Ocean.',
   noteBroken: 'В профиле есть запись об этом плагине, но его файлы отсутствуют.',
   noteUnsupported: 'Плагин не поддерживает платформу хоста.',
   noteError: 'Не удалось загрузить или включить плагин.',
@@ -737,48 +328,42 @@ const ru = {
   overridden: 'Другая настройка профиля переопределяет это изменение.',
   cancelled: 'Изменение плагина отменено.',
   transportError: 'Ocean не смог подтвердить изменение. Проверьте состояние плагина перед повторной попыткой.',
+  changeDiagnostic: '{message} ({diagnostic})',
 }
 
-/** Simplified Chinese catalogue controls. */
+/** @type {Record<MarketKey, string>} */
 const zh = {
   tab: '目录',
   title: '插件目录',
-  hint: '浏览精选插件，管理当前配置中的插件',
+  hint: '浏览为 Ocean 发布的插件',
   refresh: '刷新',
   search: '搜索',
   searchPlaceholder: '按名称、说明或软件包搜索',
-  foundLabel: '找到',
+  counts: '已安装：{installed} / {total} · 已启用：{enabled}',
   noMatches: '没有匹配的插件',
   details: '详情',
   close: '关闭',
-  whatItDoes: '功能',
-  loading: '正在读取插件列表…',
-  retry: '重试',
-  empty: '插件目录为空',
-  installedLabel: '已安装',
-  enabledLabel: '已启用',
-  versionLabel: '版本',
+  loading: '正在读取已发布的插件目录…',
+  changing: '正在应用更改…',
+  empty: '尚无已发布的插件',
+  cached: '当前显示上次获取的发布列表。请刷新以查看可安装的插件',
+  unavailable: '无法获取已发布的插件目录，请尝试刷新',
+  inventoryUnavailable: 'Ocean 无法确定已安装的插件，请尝试刷新',
+  installedVersion: '已安装版本：{version}',
+  publishedVersion: '发布版本：{version}',
   unknownVersion: '未知',
   install: '安装',
-  installForm: '从来源安装',
   enable: '启用',
   disable: '停用',
-  remove: '移除',
-  confirm: '确认移除',
-  cancel: '取消',
   open: '打开',
-  update: '更新至',
   badgeOn: '已启用',
   badgeOff: '已停用',
-  badgeSelf: '此目录',
   badgeMissing: '未安装',
   badgeBroken: '文件缺失',
   badgeBlocked: '未运行',
-  noteBuildCarried: '随 Ocean 一起更新',
-  noteGitUpdate: '在「已安装」中打开插件，从 Git 更新',
-  noteSourceUpdate: '要更新此插件，请从原始来源重新安装',
-  noteShipped: '此版本已内置',
-  noteNoSource: '目录未提供安装来源。请输入软件包名称、Git 地址、归档文件或本地目录',
+  badgeIncompatible: '不兼容',
+  badgeUnknown: '安装状态未知',
+  noteIncompatible: '此插件的发布版本与当前 Ocean 版本不兼容',
   noteBroken: '当前配置仍引用此插件，但其文件缺失',
   noteUnsupported: '此插件不支持主机平台',
   noteError: '无法加载或启用此插件',
@@ -787,24 +372,33 @@ const zh = {
   overridden: '此更改被另一项配置覆盖',
   cancelled: '插件更改已取消',
   transportError: 'Ocean 未能确认更改。请先检查插件状态，再重试',
+  changeDiagnostic: '{message}（{diagnostic}）',
 }
 
     // ---- src/ui.js ----
-/** Plugin catalogue tab and its live details. The Plugins page owns installation dialogs. */
+/** Published catalogue, its live details, and navigation to the page-owned installer and Installed tab. */
+
+/** @typedef {ReturnType<typeof import('./controller.js').createMarketController>} Market */
+/** @typedef {ReturnType<Market['getSnapshot']>} MarketSnapshot */
+/** @typedef {MarketSnapshot['cards'][number]} Card */
+/** @typedef {import('@ocean/ocean-client-ui-plugin-manager/client').PluginTabProps} PluginTabProps */
+/** @typedef {Pick<Market, 'load' | 'setEnabled' | 'getInstallTarget'>} MarketActions */
+/** @typedef {(key: import('./locales.js').MarketKey, params?: Record<string, string | number>) => string} MarketTranslate */
+/** @typedef {Pick<PluginTabProps, 'installPublished' | 'openPackage'> & {t: MarketTranslate, state: MarketSnapshot, actions: MarketActions}} Controls */
 
 const border = '1px solid var(--dsw-alias-border-l2)'
 const errorInk = 'var(--dsw-alias-state-error-primary)'
 const button = { fontSize: 12, padding: '4px 10px', borderRadius: 7, border, background: 'transparent', color: 'inherit' }
+/** @type {Record<string, import('react').CSSProperties>} */
 const styles = {
   root: { display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 },
   head: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
   title: { fontSize: 15, fontWeight: 500, margin: '0 0 4px' },
   hint: { fontSize: 12, lineHeight: 1.45, opacity: 0.75, margin: '0 0 6px' },
   note: { fontSize: 12, lineHeight: 1.45, margin: '6px 0 0', overflowWrap: 'anywhere' },
-  paragraph: { fontSize: 13, lineHeight: 1.6, margin: '8px 0 0' },
   error: { fontSize: 12, lineHeight: 1.45, color: errorInk, margin: '6px 0 0', overflowWrap: 'anywhere' },
   toolbar: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', minWidth: 0, maxWidth: '100%' },
-  search: { fontSize: 12, padding: '5px 10px', borderRadius: 7, width: 240, maxWidth: '100%', border, background: 'transparent', color: 'inherit' },
+  search: { fontSize: 'max(1em, var(--dsw-font-base-16-font-size))', padding: '5px 10px', borderRadius: 7, width: 240, maxWidth: '100%', border, background: 'transparent', color: 'inherit' },
   list: { display: 'flex', flexDirection: 'column', gap: 10 },
   card: { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', border, borderRadius: 10, minWidth: 0 },
   cardHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px 10px', flexWrap: 'wrap' },
@@ -815,177 +409,156 @@ const styles = {
   name: { fontFamily: 'ui-monospace, monospace', minWidth: 0 },
   actions: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   button,
-  danger: { ...button, color: errorInk },
   link: { ...button, borderColor: 'transparent', paddingInline: 4 },
-  subhead: { fontSize: 13, fontWeight: 500, margin: '10px 0 4px' },
-  bullets: { margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 },
-  bullet: { fontSize: 12, lineHeight: 1.5 },
 }
 
 /**
- * Build the catalogue tab using the shared modal.
- * @param {object} React the shared React instance.
- * @param {Function} Modal the shared client modal.
- * @param {string} [dialogClass] the scrollable details styling when assembled by the Client bundler.
- * @returns {{ MarketTab: Function }} the catalogue tab component.
+ * Build the catalogue tab with the shared modal, which owns initial focus and normal return focus.
+ * @param {typeof import('react')} React the shared React instance.
+ * @param {typeof import('@ocean/ocean-client-ui-primitives').Modal} Modal the shared client modal.
+ * @param {string} [dialogClass] the scrollable details styling; absent uses the shared modal alone.
+ * @returns The catalogue tab component, ready to register in the Plugins page.
  */
 function createMarketTab(React, Modal, dialogClass) {
   const h = React.createElement
 
-  /** Remove confirmation applies only to the currently rendered bundle identity. */
-  function CardActions({ card, t, state, actions, openInstall, installOfficial, openPackage, onDetails }) {
-    const [confirming, setConfirming] = React.useState(false)
-    const focusNext = React.useRef(false)
-    const removeControl = React.useRef(null)
-    React.useLayoutEffect(() => {
-      if (focusNext.current) removeControl.current?.focus()
-      focusNext.current = false
-    }, [confirming])
-    function showConfirmation(next) {
-      focusNext.current = true
-      setConfirming(next)
-    }
-    const busy = state.busy !== undefined
+  /** @param {Controls & {card: Card, onDetails?: () => void}} props */
+  function CardActions({ card, t, state, actions, installPublished, openPackage, onDetails }) {
+    const detailsButton = React.useRef(/** @type {HTMLButtonElement | null} */ (null))
+    const installButton = React.useRef(/** @type {HTMLButtonElement | null} */ (null))
+    const setInstallButton = React.useCallback(/** @param {HTMLButtonElement | null} next */ next => {
+      const previous = installButton.current
+      if (next === null && previous !== null && previous === previous.ownerDocument.activeElement) {
+        const fallback = detailsButton.current ?? previous.closest('[role="dialog"]')
+        if (fallback instanceof HTMLElement) fallback.focus({ preventScroll: true })
+      }
+      installButton.current = next
+    }, [])
     return h('div', { style: styles.actions },
-      onDetails === undefined ? null : h('button', { type: 'button', style: styles.link, onClick: onDetails }, t('details')),
+      onDetails === undefined ? null : h('button', { ref: detailsButton, type: 'button', style: styles.link, onClick: onDetails }, t('details')),
       card.actions.map(action => {
-        if (action.kind === 'remove' && confirming) {
-          return h('span', { key: 'remove', style: styles.actions },
-            h('button', { type: 'button', style: styles.danger, disabled: busy, onClick: () => {
-              showConfirmation(false)
-              void actions.remove(card.name)
-            } }, t('confirm')),
-            h('button', { ref: removeControl, type: 'button', style: styles.button, onClick: () => showConfirmation(false) }, t('cancel')),
-          )
-        }
-        const activate = () => {
-          if (busy && action.kind !== 'open') return
-          switch (action.kind) {
-            case 'installForm': openInstall(action.spec); break
-            case 'installOfficial': installOfficial(card.name); break
-            case 'enable': case 'disable': void actions.setEnabled(card.name, action.kind === 'enable'); break
-            case 'update': void actions.update(card.name, action.version); break
-            case 'open': openPackage(card.name); break
-            case 'remove': showConfirmation(true); break
+        const toggle = action.kind === 'enable' || action.kind === 'disable'
+        const disabled = (action.kind !== 'open' && state.busy !== undefined) || (toggle && state.inventory !== 'ready')
+        function activate() {
+          if (disabled) return
+          if (action.kind === 'install') {
+            const target = actions.getInstallTarget(action.target)
+            if (target !== undefined) installPublished(target)
+          } else if (action.kind === 'open') {
+            openPackage(card.name)
+          } else {
+            void actions.setEnabled(card.name, action.kind === 'enable')
           }
         }
-        const label = action.kind === 'update' ? `${t('update')} ${action.version}`
-          : action.kind === 'installOfficial' ? t('install') : t(action.kind)
-        const toggle = action.kind === 'enable' || action.kind === 'disable'
         return h('button', { type: 'button', key: toggle ? 'toggle' : action.kind,
-          ref: action.kind === 'remove' ? removeControl : undefined,
-          style: action.kind === 'remove' ? styles.danger : action.kind === 'open' ? styles.link : styles.button,
-          'aria-disabled': busy && toggle ? true : undefined,
-          disabled: busy && !toggle && action.kind !== 'open', onClick: activate,
-        }, label)
+          ref: action.kind === 'install' ? setInstallButton : undefined,
+          style: action.kind === 'open' ? styles.link : styles.button,
+          'aria-disabled': disabled || undefined, onClick: activate,
+        }, t(action.kind))
       }),
     )
   }
 
-  /** A settled change remains visible on the page and in open details. */
+  /** @param {{notice: MarketSnapshot['notice'], t: MarketTranslate}} props */
   function ChangeNotice({ notice, t }) {
     if (notice === undefined) return null
     const failed = notice.title === 'failed' || notice.title === 'transportError'
+    const message = t(notice.title)
     return h('p', { role: failed ? 'alert' : 'status', style: failed ? styles.error : styles.note },
-      t(notice.title), notice.diagnostic === undefined ? null : ` (${notice.diagnostic})`)
+      notice.diagnostic === undefined ? message : t('changeDiagnostic', { message, diagnostic: notice.diagnostic }))
   }
 
+  /** @param {{card: Card, t: MarketTranslate, pending: boolean}} props */
   function BundleMeta({ card, t, pending }) {
     return h('div', { style: styles.meta },
       h('span', { style: styles.name }, card.name),
-      h('span', null, `${t('versionLabel')}: ${card.version ?? t('unknownVersion')}`),
-      pending ? h('span', { role: 'status' }, t('loading')) : null,
+      card.installed ? h('span', null, t('installedVersion', { version: card.version ?? t('unknownVersion') })) : null,
+      card.version === card.publishedVersion ? null : h('span', null, t('publishedVersion', { version: card.publishedVersion })),
+      pending ? h('span', { role: 'status' }, t('changing')) : null,
     )
   }
 
+  /** @param {{card: Card, t: MarketTranslate}} props */
   function CardNotes({ card, t }) {
     return h(React.Fragment, null,
+      !card.compatible ? h('p', { style: styles.note }, t('noteIncompatible')) : null,
       card.note === undefined ? null : h('p', { style: styles.note }, t(card.note)),
       card.error === undefined ? null : h('p', { style: styles.error }, card.error),
     )
   }
 
-  function DetailsDialog({ card, t, state, onClose, openInstall, installOfficial, openPackage, ...rest }) {
+  /** @param {Controls & {card: Card | undefined, onClose: () => void}} props */
+  function DetailsDialog({ card, t, state, onClose, installPublished, openPackage, actions }) {
     if (card === undefined) return null
-    function leave(next) {
-      onClose()
-      next()
-    }
     return h(Modal, {
       open: true, onClose, title: card.title, closeLabel: t('close'), className: dialogClass,
-      footer: h(CardActions, {
-        ...rest, card, t, state, key: card.name,
-        openInstall: spec => leave(() => openInstall(spec)),
-        installOfficial: name => leave(() => installOfficial(name)),
-        openPackage: name => leave(() => openPackage(name)),
+      footer: card.actions.length === 0 ? undefined : h(CardActions, {
+        card, t, state, actions,
+        installPublished: target => { onClose(); installPublished(target) },
+        openPackage: name => { onClose(); openPackage(name) },
       }),
     },
     h('span', { style: styles.badge }, t(card.badge)),
     h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
-    h('p', { style: styles.summary }, card.summary),
-    card.about.length === 0 ? null : h('p', { style: styles.paragraph }, card.about),
-    card.points.length === 0 ? null : h('div', null,
-      h('h3', { style: styles.subhead }, t('whatItDoes')),
-      h('ul', { style: styles.bullets }, card.points.map(point => h('li', { key: point, style: styles.bullet }, point))),
-    ),
+    h('p', { style: styles.summary }, card.description),
     h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t }))
   }
 
-  function Card({ card, t, state, ...rest }) {
+  /** @param {Controls & {card: Card, onDetails: () => void}} props */
+  function MarketCard({ card, t, state, ...rest }) {
     return h('article', { style: styles.card },
       h('div', { style: styles.cardHead }, h('h3', { style: styles.cardTitle }, card.title), h('span', { style: styles.badge }, t(card.badge))),
-      h('p', { style: styles.summary }, card.summary),
+      h('p', { style: styles.summary }, card.description),
       h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
       h(CardNotes, { card, t }),
-      h(CardActions, { ...rest, card, t, state, key: card.name }),
+      h(CardActions, { ...rest, card, t, state }),
     )
   }
 
-  function MarketTab({ useMarket, t, actions, openInstall, installOfficial, openPackage }) {
+  /** @param {Controls & {useMarket: <T>(select: (snapshot: MarketSnapshot) => T) => T}} props */
+  function MarketTab({ useMarket, t, actions, installPublished, openPackage }) {
     const state = useMarket(snapshot => snapshot)
     const [query, setQuery] = React.useState('')
-    const [detailsId, setDetailsId] = React.useState(undefined)
-    const search = React.useRef(null)
-    const activeCard = state.cards.find(card => card.id === detailsId)
+    const [detailsName, setDetailsName] = React.useState(/** @type {string | undefined} */ (undefined))
+    const refresh = React.useRef(/** @type {HTMLButtonElement | null} */ (null))
+    const activeCard = state.cards.find(card => card.name === detailsName)
+    const detailsRemoved = detailsName !== undefined && activeCard === undefined
     React.useEffect(() => { void actions.load() }, [actions])
-    React.useLayoutEffect(() => {
-      if (detailsId !== undefined && activeCard === undefined) {
-        setDetailsId(undefined)
-        search.current?.focus()
+    React.useEffect(() => {
+      if (detailsRemoved) {
+        setDetailsName(undefined)
+        // The detached card's Details button is no longer a return-focus target for the shared modal.
+        refresh.current?.focus({ preventScroll: true })
       }
-    }, [detailsId, activeCard])
+    }, [detailsRemoved])
 
-    if (state.status === 'loading') return h('p', { style: styles.note, role: 'status' }, t('loading'))
-    if (state.status === 'error') {
-      return h('div', null,
-        h('p', { style: styles.error, role: 'alert' }, state.error),
-        h('button', { type: 'button', style: styles.button, onClick: () => { void actions.load() } }, t('retry')),
-      )
-    }
     const visible = filterCards(state.cards, query)
-    const controls = { t, state, actions, openInstall, installOfficial, openPackage }
+    const controls = { t, state, actions, installPublished, openPackage }
+    const degraded = state.status === 'stale' || state.status === 'unavailable'
     return h('div', { style: styles.root },
       h('div', { style: styles.head },
         h('div', null,
           h('h2', { style: styles.title }, t('title')),
           h('p', { style: styles.hint }, t('hint')),
-          h('p', { style: styles.note }, `${t('installedLabel')}: ${state.counts.installed} / ${state.counts.total} · ${t('enabledLabel')}: ${state.counts.enabled}`
-            + (query.trim().length === 0 ? '' : ` · ${t('foundLabel')}: ${visible.length}`)),
+          state.hasCatalog && state.inventory === 'ready' ? h('p', { style: styles.note }, t('counts', state.counts)) : null,
         ),
         h('div', { style: styles.toolbar },
-          h('input', { ref: search, type: 'search', style: styles.search, value: query,
-            placeholder: t('searchPlaceholder'), 'aria-label': t('search'), onChange: event => setQuery(event.target.value),
+          h('input', { type: 'search', style: styles.search, value: query,
+            placeholder: t('searchPlaceholder'), 'aria-label': t('search'), onChange: event => setQuery(event.currentTarget.value),
           }),
-          h('button', { type: 'button', style: styles.button, onClick: () => { void actions.load() } }, t('refresh')),
+          h('button', { ref: refresh, type: 'button', style: styles.button, onClick: () => { void actions.load() } }, t('refresh')),
         ),
       ),
-      state.error === undefined ? null : h('p', { style: styles.error, role: 'alert' }, state.error),
+      state.status === 'loading' ? h('p', { style: styles.note, role: 'status' }, t('loading')) : null,
+      degraded ? h('p', { style: state.hasCatalog ? styles.note : styles.error, role: state.hasCatalog ? 'status' : 'alert' },
+        t(state.hasCatalog ? 'cached' : 'unavailable')) : null,
+      state.inventory === 'unavailable' ? h('p', { style: styles.error, role: 'alert' }, t('inventoryUnavailable')) : null,
       activeCard === undefined ? h(ChangeNotice, { notice: state.notice, t }) : null,
-      visible.length === 0 ? h('p', { style: styles.note }, t(state.cards.length === 0 ? 'empty' : 'noMatches'))
-        : h('div', { style: styles.list }, visible.map(card => h(Card, {
-          ...controls, key: card.id, card, onDetails: () => setDetailsId(card.id),
+      !state.hasCatalog ? null : visible.length === 0 ? h('p', { style: styles.note }, t(state.cards.length === 0 ? 'empty' : 'noMatches'))
+        : h('div', { style: styles.list }, visible.map(card => h(MarketCard, {
+          ...controls, key: card.name, card, onDetails: () => setDetailsName(card.name),
         }))),
-      h(DetailsDialog, { ...controls, card: activeCard, onClose: () => setDetailsId(undefined) }),
+      h(DetailsDialog, { ...controls, card: activeCard, onClose: () => setDetailsName(undefined) }),
     )
   }
 
@@ -993,23 +566,17 @@ function createMarketTab(React, Modal, dialogClass) {
 }
 
     // ---- src/entry.js ----
-
-/**
- * Browser entry: registers the market's dictionaries and contributes the
- * «Каталог» tab to the Plugins page. The Host API is read lazily on each
- * call, so a Host without the `pluginManager` Remote shows a readable error in
- * the tab instead of never applying.
- */
+/** Register the published catalogue tab and its Host invalidation listeners. */
 
 /** Dictionary namespace owned by this plugin. */
 const NS = 'pluginMarket'
 
 /**
- * Unwrap one Remote answer. The Client Remote returns `{ ok: true, value }` or `{ ok: false, error }`; a refusal becomes
- * a thrown error carrying its stable code, so the tab reports the Host's own words instead of a shape mismatch.
- * @param {Promise<object>} answer the Remote call's promise.
- * @returns {Promise<unknown>} the unwrapped value.
- * @throws {Error} when the Host refuses the call.
+ * Unwrap an answer from the Host. Preserve only a refusal's stable diagnostic code for display by the controller.
+ * @template T
+ * @param {Promise<{ok: true, value: T} | {ok: false, error: {code?: string}}>} answer the Remote call's result.
+ * @returns {Promise<T>} the unwrapped value.
+ * @throws {Error} when the Host refuses the call or the envelope is invalid.
  */
 async function remoteValue(answer) {
   const result = await answer
@@ -1017,66 +584,45 @@ async function remoteValue(answer) {
     throw new Error('The pluginManager Remote answered without a result envelope')
   }
   if (result.ok === true) return result.value
-  const failure = result.error ?? {}
-  const error = new Error(`${failure.code ?? 'remote-error'}: ${failure.message ?? 'the Host refused the call'}`)
-  error.code = failure.code
-  throw error
+  throw Object.assign(new Error('The pluginManager Remote refused the call'), { code: result.error?.code })
 }
 
 /**
- * Wrap the client's `pluginManager` Remote behind the controller's small API.
- * @param {object} ctx browser plugin context.
- * @returns {object} API the controller calls, each method resolving to a plain value.
+ * Wrap the client's plugin manager in the calls used by the catalogue controller.
+ * @param {import('@deepseek-ai/cordis').Context} ctx browser plugin context.
+ * @returns The Remote calls, with their results unwrapped.
  */
 function remoteApi(ctx) {
-  const manager = () => {
-    const remote = ctx.remote
-    if (remote === undefined || remote.pluginManager === undefined) {
-      throw new Error('The pluginManager Remote is not available in this composition')
-    }
-    return remote.pluginManager
-  }
   return {
-    listBundles: async () => remoteValue(manager().listBundles()),
-    setBundleEnabled: (name, enabled) => remoteValue(manager().setBundleEnabled(name, enabled)),
-    removeBundle: name => remoteValue(manager().removeBundle(name)),
-    updateBundle: async (name, version) => (await remoteValue(manager().updateBundle(name, version))).result,
+    listPublishedCatalog: async () => remoteValue(ctx.remote.pluginManager.listPublishedCatalog()),
+    listBundles: async () => remoteValue(ctx.remote.pluginManager.listBundles()),
+    setBundleEnabled: async (name, enabled) => remoteValue(ctx.remote.pluginManager.setBundleEnabled(name, enabled)),
   }
 }
 
 /**
- * Build the browser plugin.
- * @param {object} React the module loader's React.
- * @param {Function} Modal the shared client modal.
- * @param {string} [dialogClass] the built catalogue's scrollable details styling.
- * @returns {{ inject: string[], apply: (ctx: object) => void }} the Cordis client plugin.
+ * Build the browser plugin from the shared React and modal implementations.
+ * @param {typeof import('react')} React the module loader's React.
+ * @param {typeof import('@ocean/ocean-client-ui-primitives').Modal} Modal the shared client modal.
+ * @param {string} [dialogClass] the scrollable details styling; absent uses the shared modal alone.
+ * @returns {{ inject: string[], apply: (ctx: import('@deepseek-ai/cordis').Context) => void }} the Cordis client plugin.
  */
 function createMarket(React, Modal, dialogClass) {
   const { MarketTab } = createMarketTab(React, Modal, dialogClass)
   return {
-    // `remote.pluginManager` is a scoped service: Cordis refuses to read it unless the plugin declares it, and the
-    // declaration also keeps the tab from applying before the Remote face exists.
     inject: ['slots', 'locale', 'remote', 'remote.pluginManager'],
     apply(ctx) {
       ctx.effect(() => ctx.locale.register(NS, { en, ru, zh }), 'plugin-market: dictionaries')
-      const market = createMarketController({
-        api: remoteApi(ctx),
-        catalog: CATALOG,
-        buildView: buildMarketView,
-        text: localized => ctx.locale.resolveText(localized),
-      })
-      ctx.effect(() => () => { market.dispose() }, 'plugin-market: controller')
+      const market = createMarketController(remoteApi(ctx))
+      ctx.effect(() => market.dispose, 'plugin-market: controller')
       ctx.effect(() => {
-        const disposers = [
-          ctx.remote.$on('plugin-manager/changed', () => { market.invalidate() }),
-          ctx.on('connection/reset', () => { market.invalidate() }),
-          ctx.locale.subscribe(() => { market.relocalize() }),
-        ]
-        return () => { for (const dispose of disposers) dispose() }
+        const stopChanged = ctx.remote.$on('plugin-manager/changed', () => { void market.invalidate() })
+        const stopReset = ctx.on('connection/reset', () => { void market.invalidate() })
+        return () => { stopChanged(); stopReset() }
       }, 'plugin-market: host invalidations')
       const t = ctx.locale.bind(NS)
       const source = { subscribe: market.subscribe, getSnapshot: market.getSnapshot }
-      const actions = { load: market.load, setEnabled: market.setEnabled, remove: market.remove, update: market.update }
+      const actions = { load: market.load, setEnabled: market.setEnabled, getInstallTarget: market.getInstallTarget }
       ctx.slots.inject('plugins.tab', () => ctx.slots.register({
         name: 'plugins.tab',
         id: 'our-plugins',
