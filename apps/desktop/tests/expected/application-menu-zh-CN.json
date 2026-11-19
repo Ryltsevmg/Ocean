@@ -1,6 +1,6 @@
 [
   {
-    "label": "关于 Ocean-Chat",
+    "label": "关于 Ocean",
     "role": "about"
   },
   {
@@ -32,7 +32,7 @@
   },
   {
     "role": "hide",
-    "label": "隐藏 Ocean-Chat"
+    "label": "隐藏 Ocean"
   },
   {
     "role": "hideOthers",
@@ -47,6 +47,6 @@
   },
   {
     "role": "quit",
-    "label": "退出 Ocean-Chat"
+    "label": "退出 Ocean"
   }
 ]

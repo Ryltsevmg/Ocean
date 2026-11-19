@@ -43,8 +43,8 @@ it('shows the application icon with its name as the tooltip and an Open / Quit m
   const f = setup()
   expect(native.createFromPath).toHaveBeenCalledWith('C:/app/resources/tray.ico')
   expect(f.native.image).toEqual({ path: 'C:/app/resources/tray.ico' })
-  expect(f.native.setToolTip).toHaveBeenCalledWith('Ocean-Chat')
-  expect(labels(native.menus[0]!)).toEqual(['Open Ocean-Chat', 'separator', 'Quit Ocean-Chat'])
+  expect(f.native.setToolTip).toHaveBeenCalledWith('Ocean')
+  expect(labels(native.menus[0]!)).toEqual(['Open Ocean', 'separator', 'Quit Ocean'])
   expect(f.native.setContextMenu).toHaveBeenCalledWith({ template: native.menus[0] })
 })
 
@@ -63,7 +63,7 @@ it('relabels the menu in the current locale and ignores relabel after disposal',
   const f = setup()
   f.setLocale('zh')
   f.tray.relabel()
-  expect(labels(native.menus[1]!)).toEqual(['打开 Ocean-Chat', 'separator', '退出 Ocean-Chat'])
+  expect(labels(native.menus[1]!)).toEqual(['打开 Ocean', 'separator', '退出 Ocean'])
   f.tray.dispose()
   f.tray.dispose()
   expect(f.native.destroy).toHaveBeenCalledOnce()
@@ -73,7 +73,7 @@ it('relabels the menu in the current locale and ignores relabel after disposal',
 
 it('uses the requested Russian full-exit label and invokes the quit path', () => {
   const f = setup('ru')
-  expect(labels(native.menus[0]!)).toContain('Закрыть Ocean-Chat')
+  expect(labels(native.menus[0]!)).toContain('Закрыть Ocean')
   ;(native.menus[0]![2] as { click: () => void }).click()
   expect(f.quit).toHaveBeenCalledOnce()
 })

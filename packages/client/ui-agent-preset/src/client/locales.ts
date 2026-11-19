@@ -38,7 +38,7 @@ export type AgentPresetSettingsKey =
 export const en: Record<AgentPresetSettingsKey, string> = {
   ...guideEn,
   builtInGroup: 'Built-in', customGroup: 'Custom',
-  sectionIntro: 'Choose the agent’s tools and how it works. Use Standard mode for everyday tasks, or Creator mode to add capabilities to Ocean-Chat.',
+  sectionIntro: 'Choose the agent’s tools and how it works. Use Standard mode for everyday tasks, or Creator mode to add capabilities to Ocean.',
 
   seatHint: 'Choose the agent preset for your new task',
   headerHint: 'The agent preset chosen when this task started',
@@ -58,7 +58,7 @@ export const en: Record<AgentPresetSettingsKey, string> = {
     'The agent uses a terminal and image reading, with context compaction. Useful for testing and comparing its basic performance.',
   presetCordisName: 'Creator mode',
   presetCordisDescription:
-    'Customize Ocean-Chat through conversation. Let the agent write plugins that add features or UI, or combine tools and prompts to create your own mode.',
+    'Customize Ocean through conversation. Let the agent write plugins that add features or UI, or combine tools and prompts to create your own mode.',
 
   inUse: 'New task default',
 
@@ -72,7 +72,7 @@ export const en: Record<AgentPresetSettingsKey, string> = {
 
   creatorDraft: 'Let the agent help me create a preset',
   createPlugin: 'Let the agent create a plugin',
-  createPluginDescription: 'Enter Creator mode and make your own Ocean-Chat plugin',
+  createPluginDescription: 'Enter Creator mode and make your own Ocean plugin',
   createPluginChecking: 'Checking whether Creator mode is available',
   createPluginUnavailable: 'Temporarily unavailable. Reopen this menu to retry',
   createPluginMissing: 'Creator mode is not included in this configuration',
@@ -83,7 +83,7 @@ export const en: Record<AgentPresetSettingsKey, string> = {
 export const zh: Record<AgentPresetSettingsKey, string> = {
   ...guideZh,
   builtInGroup: '内置', customGroup: '自定义',
-  sectionIntro: '选择 Agent 的工具和工作方式。日常任务用「标准模式」，扩展 Ocean-Chat 的能力用「创造模式」。',
+  sectionIntro: '选择 Agent 的工具和工作方式。日常任务用「标准模式」，扩展 Ocean 的能力用「创造模式」。',
 
   seatHint: '选择新任务使用的 Agent 预设',
   headerHint: '本任务的 Agent 预设，在任务开始时确定',
@@ -99,7 +99,7 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   presetMinimalName: '极简模式',
   presetMinimalDescription: 'Agent 使用终端和图片读取工具，并支持上下文压缩，适合测试和对比其基础表现。',
   presetCordisName: '创造模式',
-  presetCordisDescription: '用对话定制 Ocean-Chat：让 Agent 编写插件，添加新功能或界面；也能组合工具和提示词，创建自己的模式。',
+  presetCordisDescription: '用对话定制 Ocean：让 Agent 编写插件，添加新功能或界面；也能组合工具和提示词，创建自己的模式。',
 
   inUse: '新任务默认',
 
@@ -113,7 +113,7 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
 
   creatorDraft: '让 Agent 帮我创建预设模式',
   createPlugin: '让 Agent 创建插件',
-  createPluginDescription: '进入创造模式，制作属于你的 Ocean-Chat 插件',
+  createPluginDescription: '进入创造模式，制作属于你的 Ocean 插件',
   createPluginChecking: '正在确认创造模式是否可用',
   createPluginUnavailable: '暂时不可用，请重新打开菜单重试',
   createPluginMissing: '当前配置未提供创造模式',
@@ -131,7 +131,7 @@ export const ja = {
   ...guideJa,
   'builtInGroup': '組み込み',
   'customGroup': 'カスタム',
-  'sectionIntro': 'エージェントのツールと動作を選択します。日常的なタスクには標準モードを、Ocean-Chatに機能を追加するにはクリエイターモードを使用してください。',
+  'sectionIntro': 'エージェントのツールと動作を選択します。日常的なタスクには標準モードを、Oceanに機能を追加するにはクリエイターモードを使用してください。',
   'seatHint': '新しいタスクのエージェントプリセットを選択',
   'headerHint': 'このタスクの開始時に選択されたエージェントプリセット',
   'nav': 'エージェントプリセット',
@@ -144,7 +144,7 @@ export const ja = {
   'presetMinimalName': '最小構成モード',
   'presetMinimalDescription': 'エージェントはターミナルツールのみで作業します。基本性能のテストや比較に役立ちます。',
   'presetCordisName': 'クリエイターモード',
-  'presetCordisDescription': '対話を通じてOcean-Chatをカスタマイズします。機能やUIを追加するプラグインの作成や、ツールとプロンプトを組み合わせた独自モードの作成をエージェントに依頼できます。',
+  'presetCordisDescription': '対話を通じてOceanをカスタマイズします。機能やUIを追加するプラグインの作成や、ツールとプロンプトを組み合わせた独自モードの作成をエージェントに依頼できます。',
   'inUse': '新しいタスクの既定',
   'noDescription': '説明はありません。',
   'brokenBadge': '読み込みに失敗しました',
@@ -153,7 +153,7 @@ export const ja = {
   'close': '閉じる',
   'creatorDraft': 'エージェントにプリセットの作成を依頼',
   'createPlugin': 'エージェントにプラグインを作成してもらう',
-  'createPluginDescription': 'クリエイターモードに入り、独自の Ocean-Chat プラグインを作成',
+  'createPluginDescription': 'クリエイターモードに入り、独自の Ocean プラグインを作成',
   'createPluginChecking': 'クリエイターモードが利用可能か確認中',
   'createPluginUnavailable': '一時的に利用できません。このメニューを開き直して再試行してください',
   'createPluginMissing': 'この構成にはクリエイターモードが含まれていません',
@@ -163,7 +163,7 @@ export const ja = {
 export const es = {
   ...guideEs,
   builtInGroup: 'Integrados', customGroup: 'Personalizados',
-  sectionIntro: 'Elige las herramientas del agente y cómo trabaja. Usa el modo estándar para tareas cotidianas o el modo creador para añadir capacidades a Ocean-Chat.',
+  sectionIntro: 'Elige las herramientas del agente y cómo trabaja. Usa el modo estándar para tareas cotidianas o el modo creador para añadir capacidades a Ocean.',
 
   seatHint: 'Elige el ajuste predefinido de agente para tu tarea nueva',
   headerHint: 'El ajuste predefinido de agente elegido al iniciar esta tarea',
@@ -183,7 +183,7 @@ export const es = {
     'El agente trabaja solo con una herramienta de terminal. Útil para probar y comparar su rendimiento básico.',
   presetCordisName: 'Modo creador',
   presetCordisDescription:
-    'Personaliza Ocean-Chat mediante conversación. Deja que el agente escriba plugins que añadan funciones o interfaces, o combina herramientas y prompts para crear tu propio modo.',
+    'Personaliza Ocean mediante conversación. Deja que el agente escriba plugins que añadan funciones o interfaces, o combina herramientas y prompts para crear tu propio modo.',
 
   inUse: 'Predet.',
 
@@ -197,7 +197,7 @@ export const es = {
 
   creatorDraft: 'Que el agente me ayude a crear un ajuste predefinido',
   createPlugin: 'Deje que el agente cree un complemento',
-  createPluginDescription: 'Ingrese al modo Creador y cree su propio complemento Ocean-Chat',
+  createPluginDescription: 'Ingrese al modo Creador y cree su propio complemento Ocean',
   createPluginChecking: 'Comprobando si el modo Creador está disponible',
   createPluginUnavailable: 'Temporalmente no disponible. Vuelve a abrir este menú para volver a intentarlo.',
   createPluginMissing: 'El modo creador no está incluido en esta configuración.',
@@ -208,7 +208,7 @@ export const es = {
 export const fr = {
   ...guideFr,
   builtInGroup: 'Intégrés', customGroup: 'Personnalisés',
-  sectionIntro: 'Choisissez les outils de l’agent et sa façon de travailler. Utilisez le mode Standard pour les tâches courantes, ou le mode Créateur pour ajouter des fonctionnalités à Ocean-Chat.',
+  sectionIntro: 'Choisissez les outils de l’agent et sa façon de travailler. Utilisez le mode Standard pour les tâches courantes, ou le mode Créateur pour ajouter des fonctionnalités à Ocean.',
 
   seatHint: 'Choisir le préréglage d’agent pour votre nouvelle tâche',
   headerHint: 'Le préréglage d’agent choisi au démarrage de cette tâche',
@@ -228,7 +228,7 @@ export const fr = {
     'L’agent travaille uniquement avec un outil de terminal. Utile pour tester et comparer ses performances de base.',
   presetCordisName: 'Mode Créateur',
   presetCordisDescription:
-    'Personnalisez Ocean-Chat par la conversation. Laissez l’agent écrire des plugins qui ajoutent des fonctionnalités ou une interface, ou combiner outils et invites pour créer votre propre mode.',
+    'Personnalisez Ocean par la conversation. Laissez l’agent écrire des plugins qui ajoutent des fonctionnalités ou une interface, ou combiner outils et invites pour créer votre propre mode.',
 
   inUse: 'Par défaut',
 
@@ -242,7 +242,7 @@ export const fr = {
 
   creatorDraft: 'Demander à l’agent de m’aider à créer un préréglage',
   createPlugin: "Laissez l'agent créer un plugin",
-  createPluginDescription: 'Entrez en mode Créateur et créez votre propre plugin Ocean-Chat',
+  createPluginDescription: 'Entrez en mode Créateur et créez votre propre plugin Ocean',
   createPluginChecking: 'Vérifier si le mode Créateur est disponible',
   createPluginUnavailable: 'Temporairement indisponible. Rouvrez ce menu pour réessayer',
   createPluginMissing: "Le mode Créateur n'est pas inclus dans cette configuration",
@@ -253,7 +253,7 @@ export const fr = {
 export const de = {
   ...guideDe,
   builtInGroup: 'Integriert', customGroup: 'Benutzerdefiniert',
-  sectionIntro: 'Wähle die Werkzeuge des Agenten und seine Arbeitsweise. Verwende den Standard-Modus für alltägliche Aufgaben oder den Creator-Modus, um Ocean-Chat um Funktionen zu erweitern.',
+  sectionIntro: 'Wähle die Werkzeuge des Agenten und seine Arbeitsweise. Verwende den Standard-Modus für alltägliche Aufgaben oder den Creator-Modus, um Ocean um Funktionen zu erweitern.',
 
   seatHint: 'Wähle die Agent-Voreinstellung für deine neue Aufgabe',
   headerHint: 'Die beim Start dieser Aufgabe gewählte Agent-Voreinstellung',
@@ -273,7 +273,7 @@ export const de = {
     'Der Agent arbeitet ausschließlich mit einem Terminalwerkzeug. Nützlich zum Testen und Vergleichen seiner grundlegenden Leistung.',
   presetCordisName: 'Creator-Modus',
   presetCordisDescription:
-    'Passe Ocean-Chat im Gespräch an. Lass den Agenten Plugins schreiben, die Funktionen oder Benutzeroberflächen hinzufügen, oder Werkzeuge und Prompts zu deinem eigenen Modus kombinieren.',
+    'Passe Ocean im Gespräch an. Lass den Agenten Plugins schreiben, die Funktionen oder Benutzeroberflächen hinzufügen, oder Werkzeuge und Prompts zu deinem eigenen Modus kombinieren.',
 
   inUse: 'Vorgabe',
 
@@ -287,7 +287,7 @@ export const de = {
 
   creatorDraft: 'Der Agent soll mir beim Erstellen einer Voreinstellung helfen',
   createPlugin: 'Lassen Sie den Agenten ein Plugin erstellen',
-  createPluginDescription: 'Wechseln Sie in den Erstellermodus und erstellen Sie Ihr eigenes Ocean-Chat-Plugin',
+  createPluginDescription: 'Wechseln Sie in den Erstellermodus und erstellen Sie Ihr eigenes Ocean-Plugin',
   createPluginChecking: 'Prüfen, ob der Creator-Modus verfügbar ist',
   createPluginUnavailable: 'Vorübergehend nicht verfügbar. Öffnen Sie dieses Menü erneut, um es erneut zu versuchen',
   createPluginMissing: 'Der Creator-Modus ist in dieser Konfiguration nicht enthalten',
@@ -298,7 +298,7 @@ export const de = {
 export const ru = {
   ...guideRu,
   builtInGroup: 'Встроенные', customGroup: 'Пользовательские',
-  sectionIntro: 'Выберите инструменты агента и способ его работы. Для повседневных задач используйте стандартный режим, а для расширения Ocean-Chat — режим создания.',
+  sectionIntro: 'Выберите инструменты агента и способ его работы. Для повседневных задач используйте стандартный режим, а для расширения Ocean — режим создания.',
 
   seatHint: 'Выберите пресет агента для новой задачи',
   headerHint: 'Пресет агента, выбранный при запуске этой задачи',
@@ -318,7 +318,7 @@ export const ru = {
     'Агент работает только с инструментом терминала. Полезно для проверки и сравнения его базовых возможностей.',
   presetCordisName: 'Режим создания',
   presetCordisDescription:
-    'Настраивайте Ocean-Chat через диалог. Поручите агенту написать плагины с новыми функциями или интерфейсом либо объединить инструменты и промпты в собственный режим.',
+    'Настраивайте Ocean через диалог. Поручите агенту написать плагины с новыми функциями или интерфейсом либо объединить инструменты и промпты в собственный режим.',
 
   inUse: 'По умолч.',
 
@@ -332,7 +332,7 @@ export const ru = {
 
   creatorDraft: 'Пусть агент поможет создать пресет',
   createPlugin: 'Позвольте агенту создать плагин',
-  createPluginDescription: 'Войдите в режим Creator и создайте свой собственный плагин Ocean-Chat.',
+  createPluginDescription: 'Войдите в режим Creator и создайте свой собственный плагин Ocean.',
   createPluginChecking: 'Проверка доступности режима Creator',
   createPluginUnavailable: 'Временно недоступен. Откройте это меню еще раз, чтобы повторить попытку.',
   createPluginMissing: 'Режим Creator не включен в эту конфигурацию.',
@@ -343,7 +343,7 @@ export const ru = {
 export const pt = {
   ...guidePt,
   builtInGroup: 'Integradas', customGroup: 'Personalizadas',
-  sectionIntro: 'Escolha as ferramentas do agente e como ele trabalha. Use o modo padrão para tarefas cotidianas ou o modo criador para adicionar capacidades ao Ocean-Chat.',
+  sectionIntro: 'Escolha as ferramentas do agente e como ele trabalha. Use o modo padrão para tarefas cotidianas ou o modo criador para adicionar capacidades ao Ocean.',
 
   seatHint: 'Escolha a predefinição de agente para sua nova tarefa',
   headerHint: 'A predefinição de agente escolhida quando esta tarefa começou',
@@ -363,7 +363,7 @@ export const pt = {
     'O agente trabalha usando apenas uma ferramenta de terminal. Útil para testar e comparar seu desempenho básico.',
   presetCordisName: 'Modo criador',
   presetCordisDescription:
-    'Personalize o Ocean-Chat por conversa. Deixe o agente escrever plugins que adicionem recursos ou interfaces, ou combine ferramentas e prompts para criar seu próprio modo.',
+    'Personalize o Ocean por conversa. Deixe o agente escrever plugins que adicionem recursos ou interfaces, ou combine ferramentas e prompts para criar seu próprio modo.',
 
   inUse: 'Padrão',
 
@@ -377,7 +377,7 @@ export const pt = {
 
   creatorDraft: 'Deixar o agente me ajudar a criar uma predefinição',
   createPlugin: 'Deixe o agente criar um plugin',
-  createPluginDescription: 'Entre no modo Criador e crie seu próprio plug-in Ocean-Chat',
+  createPluginDescription: 'Entre no modo Criador e crie seu próprio plug-in Ocean',
   createPluginChecking: 'Verificando se o modo Criador está disponível',
   createPluginUnavailable: 'Temporariamente indisponível. Reabra este menu para tentar novamente',
   createPluginMissing: 'O modo criador não está incluído nesta configuração',

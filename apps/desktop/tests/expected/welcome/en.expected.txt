@@ -1,6 +1,6 @@
-Ocean-Chat
-Ocean-Chat
-Welcome to Ocean-Chat
+Ocean
+Ocean
+Welcome to Ocean
 Build potential. Explore intelligence.
 Sign in
 Add API Key

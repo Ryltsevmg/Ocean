@@ -18,8 +18,8 @@ it.each([
 })
 
 it('retains Windows/macOS layouts and rejects unsupported targets', () => {
-  expect(desktopPackagedPaths('/out', 'win-x64').executable).toBe(join('/out', 'win-unpacked', 'Ocean-Chat.exe'))
-  expect(desktopPackagedPaths('/out', 'mac-arm64').resources).toBe(join('/out', 'mac-arm64', 'Ocean-Chat.app', 'Contents', 'Resources'))
+  expect(desktopPackagedPaths('/out', 'win-x64').executable).toBe(join('/out', 'win-unpacked', 'Ocean.exe'))
+  expect(desktopPackagedPaths('/out', 'mac-arm64').resources).toBe(join('/out', 'mac-arm64', 'Ocean.app', 'Contents', 'Resources'))
   expect(() => desktopPackagedPaths('/out', 'freebsd-x64')).toThrow(/unsupported/u)
   expect(() => desktopElectronExecutable('/out', 'freebsd')).toThrow(/unsupported/u)
 })

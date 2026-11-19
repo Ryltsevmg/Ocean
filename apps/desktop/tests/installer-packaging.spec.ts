@@ -55,9 +55,9 @@ describe('installer preparation preserves application dependencies', () => {
       })
       const appInfo = new AppInfo(metadataPackager, undefined)
       expect(appInfo.companyName).toBe('Hangzhou DeepSeek Artificial Intelligence Co., Ltd.')
-      expect(appInfo.copyright).toBe(`Copyright © ${new Date().getFullYear()} Ocean-Chat`)
+      expect(appInfo.copyright).toBe(`Copyright © ${new Date().getFullYear()} Ocean`)
       if (platform === 'win32') {
-        expect(expandMacro(config.nsis.uninstallDisplayName, null, appInfo, {}, false)).toBe('Ocean-Chat')
+        expect(expandMacro(config.nsis.uninstallDisplayName, null, appInfo, {}, false)).toBe('Ocean')
         expect(config.nsis.installerLanguages).toEqual(readInstallerLocales().map(locale => locale.id))
       }
       const aboutIcon = config.extraResources.find(resource => resource.to === 'icon.png')
@@ -102,7 +102,7 @@ describe('installer preparation preserves application dependencies', () => {
       OCEAN_DESKTOP_TARGET_ARCH: 'x64',
       OCEAN_DESKTOP_UNSIGNED: '1',
     }, 'win32', 'x64')
-    expect(config.artifactName).toBe('ocean-chat-${version}-${os}-${arch}-unsigned.${ext}')
+    expect(config.artifactName).toBe('ocean-${version}-${os}-${arch}-unsigned.${ext}')
   })
 
   it('packages every preload entry point the shell loads', async () => {

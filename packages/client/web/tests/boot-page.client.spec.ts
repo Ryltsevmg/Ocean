@@ -14,7 +14,7 @@ describe('BootPage', () => {
   it('draws the loading skeleton before any plugin state arrives', () => {
     const { el } = mount()
     expect(el.firstElementChild?.getAttribute('data-ocean-boot')).toBe('')
-    expect(el.textContent).toContain('Ocean-Chat')
+    expect(el.textContent).toContain('Ocean')
     expect(el.textContent).toContain('Loading plugins…')
   })
 

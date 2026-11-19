@@ -1,4 +1,4 @@
-Ocean-Chat is unavailable
+Ocean is unavailable
 The application could not start or stopped unexpectedly.
 Desktop Host failed
 Plugin initialization failed

@@ -34,7 +34,7 @@ export class BootPage {
     this.root = div(css.boot)
     this.root.dataset.oceanBoot = ''
     this.card = div(css.card)
-    this.wordmark = div(css.wordmark, 'Ocean-Chat')
+    this.wordmark = div(css.wordmark, 'Ocean')
     this.spinner = div(css.spinner)
     this.spinner.dataset.oceanBootSpinner = ''
     this.hint = div(css.hint, 'Loading plugins…')

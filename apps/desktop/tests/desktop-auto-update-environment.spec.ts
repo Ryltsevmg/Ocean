@@ -140,7 +140,7 @@ it.each([['darwin', 'arm64', 'mac-arm64', 'stable-mac.yml'], ['darwin', 'x64', '
 })
 
 
-it('requires an Ocean-Chat production origin and rejects upstream update infrastructure', () => {
+it('requires an Ocean production origin and rejects upstream update infrastructure', () => {
   expect(() => resolveDesktopAutoUpdateConfig({ OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production' }, 'darwin', 'arm64'))
     .toThrow(/OCEAN_DOWNLOAD_ORIGIN/u)
   expect(() => resolveDesktopAutoUpdateConfig({ OCEAN_DESKTOP_AUTO_UPDATE_ENV: 'production',

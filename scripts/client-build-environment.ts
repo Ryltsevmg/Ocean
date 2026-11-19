@@ -19,7 +19,7 @@ export const CLIENT_BUILD_PROFILE_SELECTOR = 'OCEAN_BUILD_CLIENT_PROFILE'
 /** Public client environment required by official OCEAN artifacts. */
 const OFFICIAL_CLIENT_BUILD_ENVIRONMENT = {
   OCEAN_CLIENT_BUILD_PROFILE: 'official',
-  OCEAN_CLIENT_TITLE: 'Ocean-Chat',
+  OCEAN_CLIENT_TITLE: 'Ocean',
 } as const
 
 /** Public variable carrying the source commit embedded in client artifacts. */

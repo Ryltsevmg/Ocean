@@ -1,7 +1,7 @@
 vi.mock('../src/web-document.ts', () => ({
   authenticateWebHost: async () => 'test-cookie', serveWebDocument: vi.fn(), forwardWebRequest: vi.fn(), removeLegacyHostCookies: async () => {},
 }))
-/** Ocean-Chat opens the workspace without a provider-account onboarding gate. */
+/** Ocean opens the workspace without a provider-account onboarding gate. */
 
 import { afterEach, expect, it, vi } from 'vitest'
 import type { BrowserWindowConstructorOptions } from 'electron'

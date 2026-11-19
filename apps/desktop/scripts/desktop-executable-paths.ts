@@ -1,4 +1,4 @@
-/** Platform-owned paths for downloaded Electron and packaged Ocean-Chat executables. */
+/** Platform-owned paths for downloaded Electron and packaged Ocean executables. */
 import { join } from 'node:path'
 
 /**
@@ -27,11 +27,11 @@ export function desktopPackagedPaths(artifacts: string, target: string): { appli
   }
   if (target === 'win-x64') {
     const application = join(artifacts, 'win-unpacked')
-    return { application, resources: join(application, 'resources'), executable: join(application, 'Ocean-Chat.exe') }
+    return { application, resources: join(application, 'resources'), executable: join(application, 'Ocean.exe') }
   }
   if (target === 'mac-arm64' || target === 'mac-x64') {
-    const application = join(artifacts, target === 'mac-arm64' ? 'mac-arm64' : 'mac', 'Ocean-Chat.app', 'Contents')
-    return { application, resources: join(application, 'Resources'), executable: join(application, 'MacOS', 'Ocean-Chat') }
+    const application = join(artifacts, target === 'mac-arm64' ? 'mac-arm64' : 'mac', 'Ocean.app', 'Contents')
+    return { application, resources: join(application, 'Resources'), executable: join(application, 'MacOS', 'Ocean') }
   }
   throw new Error(`desktop runtime: unsupported packaged target ${target}`)
 }

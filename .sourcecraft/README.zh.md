@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-本参考文档说明尚未启用的 Ocean-Chat CI 模板。`ci.yaml.example` 不会启用工作流。其语法参照现有的 Runne SourceCraft 配置，尚未通过 SourceCraft 实际运行验证。官方工作流参考文档为 https://sourcecraft.dev/portal/docs/ru/sourcecraft/operations/ci-cd/create-workflow。
+本参考文档说明尚未启用的 Ocean CI 模板。`ci.yaml.example` 不会启用工作流。其语法参照现有的 Runne SourceCraft 配置，尚未通过 SourceCraft 实际运行验证。官方工作流参考文档为 https://sourcecraft.dev/portal/docs/ru/sourcecraft/operations/ci-cd/create-workflow。
 
 ## 启用检查清单
 

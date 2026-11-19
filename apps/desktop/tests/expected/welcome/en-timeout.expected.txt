@@ -1,5 +1,5 @@
-Ocean-Chat
-Ocean-Chat
+Ocean
+Ocean
 Sign in timed out
 Sign in again
 Add API Key

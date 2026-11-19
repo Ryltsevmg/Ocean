@@ -11,9 +11,9 @@ kind: "package-reference"
 
 使用 `ocean-client-locale` 可在 web GUI 中切换内置的英文、中文、日语、西班牙语、法语、德语、俄语和巴西葡萄牙语（`pt`，也匹配 `pt-PT` 浏览器请求）locale，或 client 插件添加的语言。用户选择会立即生效；每个已认证浏览器都通过 Host settings 服务把选择以 `locale.preference` 持久化到 `$OCEAN_HOME/cordis.patch.yml`。全新浏览器会使用浏览器请求的第一个受支持语言，直到 Host 读取送达已存储偏好。插件作者可添加类型化命名空间字典，并通过公开 locale API 翻译；经 slot 渲染的文案无需重新加载即可随语言切换更新。
 
-## Ocean-Chat 翻译迁移
+## Ocean 翻译迁移
 
-Ocean-Chat 从 OCEAN Ocean `@ocean-ocean/builtin-locales` 0.4.0 导入兼容的用户编写字典。俄语、西班牙语、巴西葡萄牙语（映射到现有 `pt` id）、德语、法语和日语保留较新的上游键。韩语包含当前已审查的客户端和 Electron 字典；新增键及未翻译的插件元数据仍回退到英文。结构覆盖不代表已通过母语审阅或视觉检查。源字典、MIT 许可证、校验和、变更键计数，以及因标记不匹配而拒绝的条目保留在 [imported-ocean-ocean](imported-ocean-ocean/README.zh.md) 中。
+Ocean 从 OCEAN Ocean `@ocean-ocean/builtin-locales` 0.4.0 导入兼容的用户编写字典。俄语、西班牙语、巴西葡萄牙语（映射到现有 `pt` id）、德语、法语和日语保留较新的上游键。韩语包含当前已审查的客户端和 Electron 字典；新增键及未翻译的插件元数据仍回退到英文。结构覆盖不代表已通过母语审阅或视觉检查。源字典、MIT 许可证、校验和、变更键计数，以及因标记不匹配而拒绝的条目保留在 [imported-ocean-ocean](imported-ocean-ocean/README.zh.md) 中。
 
 ## 目录
 

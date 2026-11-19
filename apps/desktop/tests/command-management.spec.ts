@@ -24,7 +24,7 @@ it.each([
   ['darwin', 'en-US', en], ['darwin', 'zh-CN', zh],
   ['win32', 'en-US', en], ['win32', 'zh-CN', zh],
 ] as const)('records command status on %s in %s', async (platform, language, messages) => {
-  const destination = platform === 'darwin' ? '/usr/local/bin/ocean' : 'C:\\Users\\user\\AppData\\Local\\Programs\\Ocean-Chat\\resources\\runtime\\cli\\bin\\ocean.cmd'
+  const destination = platform === 'darwin' ? '/usr/local/bin/ocean' : 'C:\\Users\\user\\AppData\\Local\\Programs\\Ocean\\resources\\runtime\\cli\\bin\\ocean.cmd'
   const other = platform === 'darwin' ? '/opt/homebrew/bin/ocean' : 'C:\\Program Files\\nodejs\\ocean.cmd'
   const states = [
     { managed: false, available: false, destination },

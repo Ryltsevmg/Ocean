@@ -11,7 +11,7 @@ Source: installed `@ocean-ocean/builtin-locales` version **0.4.0**, containing t
 - Match by current namespace and key, never by a similar label in another namespace.
 - Preserve the current English placeholders, slash commands and API-field tokens. Do not import unmatched/obsolete keys or invisible Unicode markers.
 - Keep current translations for new keys. Map the old `pt-BR` dictionary to the existing `pt` language (the application already resolves Brazilian Portuguese browser tags).
-- Replace the product token `OCEAN` with `Ocean-Chat`, but keep DeepSeek provider/model names and legal attribution.
+- Replace the product token `OCEAN` with `Ocean`, but keep DeepSeek provider/model names and legal attribution.
 - Korean registers only matched keys through the existing locale service, with English fallback. It is intentionally not listed as a complete language in the upstream parity gate.
 - The full upstream interface is larger than the old pack. Presence of a language in Settings is not proof that every current screen is translated by this import.
 

@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-### Ocean-Chat 隐私默认值
+### Ocean 隐私默认值
 
 必须显式配置接收地址；未设置 `OCEAN_PRODUCT_ANALYTICS_OTLP_URL` 时不装配导出器。产品采集另行默认关闭，配置地址并不等于允许采集。
 

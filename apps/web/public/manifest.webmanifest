@@ -1,6 +1,6 @@
 {
-  "name": "Ocean-Chat",
-  "short_name": "Ocean-Chat",
+  "name": "Ocean",
+  "short_name": "Ocean",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

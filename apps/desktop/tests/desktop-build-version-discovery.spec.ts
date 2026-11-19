@@ -36,16 +36,16 @@ describe('desktop build version discovery', () => {
   })
 
   it('numbers a stable product version under the documented test prerelease', async () => {
-    const artifactsRoot = await artifactsWith([`ocean-chat-${STABLE}-test.${DATE}.4-win-x64.exe`])
+    const artifactsRoot = await artifactsWith([`ocean-${STABLE}-test.${DATE}.4-win-x64.exe`])
     await expect(suggestDesktopBuildVersion({ productVersion: STABLE, target: 'win-x64', environment: {}, date: DATE, artifactsRoot }))
       .resolves.toBe(`${STABLE}-test.${DATE}.5`)
   })
 
   it('numbers after the highest local artifact for the same date', async () => {
     const artifactsRoot = await artifactsWith([
-      `ocean-chat-${PRERELEASE}.${DATE}.1-win-x64.exe`,
-      `ocean-chat-${PRERELEASE}.${DATE}.2-win-x64.exe`,
-      `ocean-chat-${PRERELEASE}.${DATE}.10-win-x64.exe`,
+      `ocean-${PRERELEASE}.${DATE}.1-win-x64.exe`,
+      `ocean-${PRERELEASE}.${DATE}.2-win-x64.exe`,
+      `ocean-${PRERELEASE}.${DATE}.10-win-x64.exe`,
     ])
     await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'win-x64', environment: {}, date: DATE, artifactsRoot }))
       .resolves.toBe(`${PRERELEASE}.${DATE}.11`)
@@ -53,9 +53,9 @@ describe('desktop build version discovery', () => {
 
   it('ignores artifacts from another date or product version', async () => {
     const artifactsRoot = await artifactsWith([
-      `ocean-chat-${PRERELEASE}.20260920.7-win-x64.exe`,
-      `ocean-chat-0.1.5-alpha.1.${DATE}.9-win-x64.exe`,
-      `ocean-chat-${PRERELEASE}-win-x64.exe`,
+      `ocean-${PRERELEASE}.20260920.7-win-x64.exe`,
+      `ocean-0.1.5-alpha.1.${DATE}.9-win-x64.exe`,
+      `ocean-${PRERELEASE}-win-x64.exe`,
       'unrelated.exe',
     ])
     await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'win-x64', environment: {}, date: DATE, artifactsRoot }))
@@ -64,8 +64,8 @@ describe('desktop build version discovery', () => {
 
   it('reads macOS artifact names too', async () => {
     const artifactsRoot = await artifactsWith([
-      `ocean-chat-${PRERELEASE}.${DATE}.3-mac-arm64.dmg`,
-      `ocean-chat-${PRERELEASE}.${DATE}.3-mac-arm64.zip`,
+      `ocean-${PRERELEASE}.${DATE}.3-mac-arm64.dmg`,
+      `ocean-${PRERELEASE}.${DATE}.3-mac-arm64.zip`,
     ])
     await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'mac-arm64', environment: {}, date: DATE, artifactsRoot }))
       .resolves.toBe(`${PRERELEASE}.${DATE}.4`)
@@ -73,9 +73,9 @@ describe('desktop build version discovery', () => {
 
   it('numbers after existing unnotarized DMG and ZIP artifacts', async () => {
     const artifactsRoot = await artifactsWith([
-      `ocean-chat-${PRERELEASE}.${DATE}.2-mac-arm64-unnotarized.dmg`,
-      `ocean-chat-${PRERELEASE}.${DATE}.4-mac-arm64-unnotarized.zip`,
-      `ocean-chat-${PRERELEASE}.${DATE}.9-mac-arm64-unnotarized.zip.blockmap`,
+      `ocean-${PRERELEASE}.${DATE}.2-mac-arm64-unnotarized.dmg`,
+      `ocean-${PRERELEASE}.${DATE}.4-mac-arm64-unnotarized.zip`,
+      `ocean-${PRERELEASE}.${DATE}.9-mac-arm64-unnotarized.zip.blockmap`,
     ])
     await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'mac-arm64', environment: {}, date: DATE, artifactsRoot }))
       .resolves.toBe(`${PRERELEASE}.${DATE}.5`)
@@ -83,10 +83,19 @@ describe('desktop build version discovery', () => {
 
   it('counts unsigned Windows artifacts written under their own suffix', async () => {
     const artifactsRoot = await artifactsWith([
-      `ocean-chat-${PRERELEASE}.${DATE}.2-win-x64-unsigned.exe`,
-      `ocean-chat-${PRERELEASE}.${DATE}.5-win-x64-unsigned.exe.blockmap`,
+      `ocean-${PRERELEASE}.${DATE}.2-win-x64-unsigned.exe`,
+      `ocean-${PRERELEASE}.${DATE}.5-win-x64-unsigned.exe.blockmap`,
     ])
     await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'win-x64', environment: {}, date: DATE, artifactsRoot }))
       .resolves.toBe(`${PRERELEASE}.${DATE}.3`)
+  })
+
+  it('counts artifacts published under the legacy ocean-chat prefix', async () => {
+    const artifactsRoot = await artifactsWith([
+      `ocean-chat-${PRERELEASE}.${DATE}.1-win-x64.exe`,
+      `ocean-chat-${PRERELEASE}.${DATE}.4-win-x64.exe`,
+    ])
+    await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, target: 'win-x64', environment: {}, date: DATE, artifactsRoot }))
+      .resolves.toBe(`${PRERELEASE}.${DATE}.5`)
   })
 })

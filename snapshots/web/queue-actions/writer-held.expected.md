@@ -1,4 +1,4 @@
-- alert: This session is already in use, possibly by another running Ocean-Chat instance (such as ocean web or the desktop app). Quit other running Ocean-Chat instances and try again.
+- alert: This session is already in use, possibly by another running Ocean instance (such as ocean web or the desktop app). Quit other running Ocean instances and try again.
 - textbox "Message or run a task, / commands, @ files or sessions":
   - paragraph: Queue submission to retry
 - button "Add files or run commands"
