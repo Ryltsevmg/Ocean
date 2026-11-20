@@ -46,6 +46,32 @@ jobs:
       - name: Check localization
         run: pnpm run check:i18n
 
+  security:
+    if: github.repository == 'Ryltsevmg/Ocean'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Gitleaks diffs the event's commit range, which needs full history.
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.0'
+      - name: Install pinned package manager
+        run: npm install --global pnpm@11.28.5
+      - name: Install locked dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Audit dependencies for high and critical advisories
+        run: pnpm audit --audit-level=high
+      - name: Scan the event diff for secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+
   unit-coverage:
     if: github.repository == 'Ryltsevmg/Ocean'
     runs-on: ubuntu-24.04
