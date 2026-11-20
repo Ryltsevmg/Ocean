@@ -8,6 +8,7 @@
 
 import { lookup } from 'node:dns/promises'
 import { WebError } from '@ocean/ocean-web'
+import { proxyRouteFor } from '@ocean/ocean-http-proxy'
 import type { WebFetchBody, WebFetchProvider, WebFetchRequest, WebFetchResult } from '@ocean/ocean-web'
 import { deadline, timeoutOf } from '@ocean/ocean-timeout'
 import type { Response } from 'undici'
@@ -114,10 +115,12 @@ export class HttpFetchProvider implements WebFetchProvider {
    * Resolve the host and refuse link-local or metadata destinations before a
    * connection is attempted. Resolution runs on every hop, so a same-origin
    * redirect cannot swap the host; the address a request connects to still
-   * comes from the system resolver.
+   * comes from the system resolver. A proxied hop resolves at the proxy: the
+   * local resolver cannot see that split horizon, so the check is skipped.
    * @param url - validated request URL whose host is resolved.
    */
   private async assertFetchableDestination(url: URL): Promise<void> {
+    if (proxyRouteFor(url).proxied) return
     const hostname = url.hostname.startsWith('[') ? url.hostname.slice(1, -1) : url.hostname
     let addresses: Array<{ address: string }>
     try {

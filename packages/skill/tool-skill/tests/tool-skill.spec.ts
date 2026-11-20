@@ -310,9 +310,9 @@ describe('ocean-tool-skill', () => {
           kind: 'skill-catalog',
           form: 'catalog',
           entries: [
-            { name: 'a-skill', description: 'Use {{placeholder}} <safely> & carefully.' },
-            { name: 'model-only-skill', description: 'Model-only skill.' },
-            { name: 'z-skill', description: 'Long description Long description Long descript...' },
+            { name: 'a-skill', description: 'Use {{placeholder}} <safely> & carefully.', source: 'runtime' },
+            { name: 'model-only-skill', description: 'Model-only skill.', source: 'runtime' },
+            { name: 'z-skill', description: 'Long description Long description Long descript...', source: 'secret-source' },
           ],
         },
         content: [{
@@ -322,9 +322,9 @@ describe('ocean-tool-skill', () => {
             'A skill is a reusable set of task-specific instructions. The following skills are available in this session:',
             '',
             '<available_skills>',
-            '- `a-skill`: Use {{placeholder}} &lt;safely&gt; &amp; carefully.',
-            '- `model-only-skill`: Model-only skill.',
-            '- `z-skill`: Long description Long description Long descript...',
+            '- `a-skill` [runtime]: Use {{placeholder}} &lt;safely&gt; &amp; carefully.',
+            '- `model-only-skill` [runtime]: Model-only skill.',
+            '- `z-skill` [secret-source]: Long description Long description Long descript...',
             '</available_skills>',
             '',
             "If the user names a skill, or the task clearly matches a skill's description, call the `skill` tool with the exact skill name before taking task actions. Load all applicable skills, then follow their full instructions. This catalog contains summaries only; do not infer or follow a skill's instructions until it has been loaded.",
@@ -336,7 +336,8 @@ describe('ocean-tool-skill', () => {
     ])
     const rendered = JSON.stringify(prefix[1])
     expect(rendered).not.toContain('whenToUse')
-    expect(rendered).not.toContain('secret-source')
+    // The discovery source is published deliberately; provider paths and bodies stay out.
+    expect(rendered).toContain('[secret-source]')
     expect(rendered).not.toContain('/secret/path')
     expect(rendered).not.toContain('Secret body')
     expect(rendered).not.toContain('user-only-skill')
@@ -434,7 +435,7 @@ describe('ocean-tool-skill', () => {
     await fireStep(ctx, agent, 1, 3)
     expect(catalogMessages(session)[2]?.data.source).toEqual({
       kind: 'skill-catalog', form: 'catalog', update: true,
-      entries: [{ name: 'recovering-skill', description: 'Recovering skill' }],
+      entries: [{ name: 'recovering-skill', description: 'Recovering skill', source: 'runtime' }],
     })
   })
 
@@ -922,6 +923,7 @@ describe('ocean-tool-skill', () => {
     if (result.isError) throw new Error('expected skill success')
     expect(result.value).toEqual({
       name: 'project-skill',
+      source: 'project-ocean',
       provider: 'filesystem',
       resourceBase: { kind: 'directory', path: join(project, '.ocean/skills/project-skill') },
       content: 'Project instructions.',
@@ -930,7 +932,7 @@ describe('ocean-tool-skill', () => {
     expect(block?.type).toBe('text')
     if (block?.type !== 'text') throw new Error('expected text skill result')
     expect(block.text).toBe([
-      '<skill_content name="project-skill">',
+      '<skill_content name="project-skill" source="project-ocean">',
       '<skill_resources>',
       `Base directory for this skill: ${join(project, '.ocean/skills/project-skill')}`,
       'Resolve relative paths mentioned by this skill against the base directory before using them. Load referenced resources only as needed.',
@@ -1137,7 +1139,7 @@ describe('user-explicit invocation injection', () => {
     expect(injection.source).toMatchObject({ kind: 'skill-invocation', name: 'hidden-demo', form: 'instructions' })
     const block = injection.content[0]
     if (block?.type !== 'text') throw new Error('expected text injection')
-    expect(block.text).toContain('<skill_content name="hidden-demo">')
+    expect(block.text).toContain('<skill_content name="hidden-demo" source="project-agents">')
     expect(block.text).toContain('Say the magic word: PINEAPPLE.')
     expect(block.text).not.toContain('what does this do')
   })

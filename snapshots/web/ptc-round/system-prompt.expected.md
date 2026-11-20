@@ -1425,6 +1425,7 @@ interface ToolOutputMap {
   };
   skill: {
     name: string;
+    source?: string;
     provider: string;
     resourceBase?: {
       kind: "directory";

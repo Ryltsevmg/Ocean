@@ -141,7 +141,7 @@ describe.skipIf(MODE === 'record')('web e2e: user-explicit skill invocation thro
     const injected = session.snapshotEvents().flatMap(event => event.type === 'user/message'
       && event.data.source.kind === 'skill-invocation'
       ? event.data.content.flatMap(block => block.type === 'text' ? [block.text] : []) : []).join('')
-    expect(injected).toContain(`<skill_content name="${SKILL_NAME}">`)
+    expect(injected).toContain(`<skill_content name="${SKILL_NAME}" source="project-agents">`)
     expect(injected).toContain('Reply with the fixture acknowledgement line.')
     expect(injected).not.toContain(ARGS_TEXT)
 

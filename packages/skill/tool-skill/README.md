@@ -110,7 +110,7 @@ Read these pages when the package-level contract is not enough. They move from t
 
 #### What the model sees
 
-If this exact `skill` tool is visible and either model-invocable skills exist or discovery is incomplete, the agent receives the catalog template below as a durable user-role message before the first request, with one data-dependent entry per sorted skill. Later membership, description, visibility, or completeness changes append a replacement using the same `<available_skills>` envelope; deleting every skill appends an empty envelope with an explicit instruction not to use older names. The template's closing sentence is the rule against double-loading: the user-explicit gesture boundary (the pre-step listener below) injects the same `renderSkillContent` output (shared from `@ocean/ocean-skill`) inline, and the catalog tells the model to follow that block instead of re-loading the skill through the tool; the replacement-catalog template carries the same anti-double-loading rule in both arms, including the emptied catalog.
+If this exact `skill` tool is visible and either model-invocable skills exist or discovery is incomplete, the agent receives the catalog template below as a durable user-role message before the first request, with one data-dependent entry per sorted skill. Later membership, description, visibility, or completeness changes append a replacement using the same `<available_skills>` envelope; deleting every skill appends an empty envelope with an explicit instruction not to use older names. The template's closing sentence is the rule against double-loading: the user-explicit gesture boundary (the pre-step listener below) injects the same `renderSkillContent` output (shared from `@ocean/ocean-skill`) inline, and the catalog tells the model to follow that block instead of re-loading the skill through the tool; the replacement-catalog template carries the same anti-double-loading rule in both arms, including the emptied catalog. Each line brackets the winning skill's discovery source (`project-ocean`, `project-agents`, `user-ocean`, `user-agents`, `custom`, `bundled`, or a runtime label) so the model can tell repository content from user and bundled skills; the loaded `<skill_content>` block carries the same source as an attribute. Catalogs restored from logs written before source marking keep unbracketed lines.
 
 ##### Incomplete discovery notice
 
@@ -138,7 +138,7 @@ No skills could be confirmed in this discovery attempt. Do not use names from ea
 A skill is a reusable set of task-specific instructions. The following skills are available in this session:
 
 <available_skills>
-- `<name>`: <normalized-and-capped-description>
+- `<name>` [<discovery-source>]: <normalized-and-capped-description>
 </available_skills>
 
 If the user names a skill, or the task clearly matches a skill's description, call the `skill` tool with the exact skill name before taking task actions. Load all applicable skills, then follow their full instructions. This catalog contains summaries only; do not infer or follow a skill's instructions until it has been loaded.

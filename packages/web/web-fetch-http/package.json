@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "workspace:~",
+    "@ocean/ocean-http-proxy": "workspace:*",
     "undici": "8.12.2"
   },
   "devDependencies": {
