@@ -264,6 +264,7 @@ it('broadcasts the desired graph without waiting for Host activation or cleanup'
   const routes: WebRoute[] = []
   ctx.provide('clientModules', host)
   ctx.provide('webServer', fakeHttpServer(routes))
+  ctx.provide('connection', { requestRejection: () => undefined } as never)
   let release!: () => void
   let cleaned!: () => void
   let started!: () => void
@@ -336,4 +337,42 @@ it('broadcasts the desired graph without waiting for Host activation or cleanup'
     await fiber.dispose()
     await ctx.fiber.dispose()
   }
+})
+
+it('refuses the stream when Connection rejects the request', async () => {
+  const ctx = new Context()
+  const routes: WebRoute[] = []
+  ctx.provide('clientModules', fakeClientModuleHost(new Map()))
+  ctx.provide('webServer', fakeHttpServer(routes))
+  ctx.provide('connection', { requestRejection: () => 403 } as never)
+  const fiber = ctx.plugin({ inject, Config, apply }, { pollIntervalMs: POLL_MS })
+  await fiber.await()
+  const response = Object.assign(new EventEmitter(), {
+    writeHead: vi.fn(), write: vi.fn(), destroy: vi.fn(), end: vi.fn(),
+  })
+  await routes[0]!.handler(
+    { method: 'GET', headers: { origin: 'https://evil.example' } } as IncomingMessage,
+    response as unknown as ServerResponse,
+  )
+  expect(response.writeHead).toHaveBeenCalledWith(403)
+  expect(response.write).not.toHaveBeenCalled()
+  expect(response.end).toHaveBeenCalledOnce()
+  await fiber.dispose()
+})
+
+it('refuses the stream without a Connection service', async () => {
+  const ctx = new Context()
+  const routes: WebRoute[] = []
+  ctx.provide('clientModules', fakeClientModuleHost(new Map()))
+  ctx.provide('webServer', fakeHttpServer(routes))
+  const fiber = ctx.plugin({ inject, Config, apply }, { pollIntervalMs: POLL_MS })
+  await fiber.await()
+  const response = Object.assign(new EventEmitter(), {
+    writeHead: vi.fn(), write: vi.fn(), destroy: vi.fn(), end: vi.fn(),
+  })
+  await routes[0]!.handler({ method: 'GET', headers: {} } as IncomingMessage, response as unknown as ServerResponse)
+  expect(response.writeHead).toHaveBeenCalledWith(401)
+  expect(response.write).not.toHaveBeenCalled()
+  expect(response.end).toHaveBeenCalledOnce()
+  await fiber.dispose()
 })

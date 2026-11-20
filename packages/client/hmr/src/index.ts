@@ -8,11 +8,12 @@
  * a development rebuild watcher also supplies bundle changes.
  */
 import { statSync } from 'node:fs'
-import type { ServerResponse } from 'node:http'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 // Type imports carry the clientModules/webServer Context merges.
 import type { ClientArtifactBaseline } from '@ocean/ocean-client-modules'
+import type {} from '@ocean/ocean-client-connection'
 import type {} from '@ocean/ocean-host-webserver'
 import type { PluginsEventFrame } from './events.ts'
 import { EVENTS_ENDPOINT } from './events.ts'
@@ -177,6 +178,28 @@ export function apply(ctx: Context, config: Config): void {
     res.on('close', () => { connections.delete(res) })
   }
 
+  /**
+   * Apply Connection's Host/Origin fence and browser authentication before the
+   * stream opens. The channel serves graph metadata, so a request the fence
+   * refuses — or one that arrives without the service — must fail closed.
+   * @param request - incoming request carrying Host/Origin and credential headers.
+   * @param response - response completed with the rejection status when refused.
+   * @returns whether the request was refused and the response finished.
+   */
+  const refuseUntrusted = (request: IncomingMessage, response: ServerResponse): boolean => {
+    const connection = ctx.get('connection')
+    if (connection === undefined) {
+      response.writeHead(401)
+      response.end()
+      return true
+    }
+    const rejection = connection.requestRejection({ headers: request.headers })
+    if (rejection === undefined) return false
+    response.writeHead(rejection)
+    response.end()
+    return true
+  }
+
   ctx.effect(() => {
     const disposeRoute = ctx.webServer.register({
       kind: 'exact',
@@ -189,6 +212,7 @@ export function apply(ctx: Context, config: Config): void {
           res.end()
           return
         }
+        if (refuseUntrusted(req, res)) return
         connect(res)
       },
     })
