@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`ocean-fs-sandbox` 按各会话的沙箱模式限制模型对文件的写入、编辑、打补丁、删除与移动，同时保留本地文件系统的读取行为。`read-only` 拒绝所有变更；`workspace-write` 只允许目标位于会话工作区或平台临时根目录内；`danger-full-access` 不限制变更。当会话需要将文件变更限制在工作区内时，使用它代替 `fs-local`，并加载 `ctx.sandboxPolicy`。被拒绝的操作返回 `FS_SANDBOX_DENIED`，文件系统工具会显示当前模式和同轮次升级提示。
+`ocean-fs-sandbox` 按各会话的沙箱模式限制模型对文件的写入、编辑、打补丁、删除与移动，同时保留本地文件系统的读取行为，但 harness 凭据存储除外——其内容在任何模式下都不会返回。`read-only` 拒绝所有变更；`workspace-write` 只允许目标位于会话工作区或平台临时根目录内；`danger-full-access` 不限制变更。当会话需要将文件变更限制在工作区内时，使用它代替 `fs-local`，并加载 `ctx.sandboxPolicy`。被拒绝的操作返回 `FS_SANDBOX_DENIED`，文件系统工具会显示当前模式和同轮次升级提示。
 
 ## 目录
 
@@ -27,7 +27,7 @@ kind: "package-reference"
 
 围栏覆盖 `writeText`、`editText`、`patchText`、`deleteFile` 和 `moveFile`。移动在任何效果发生前检查源与目标，因此任一路径被拒都会使两端文件保持不变。
 
-当模型的文件写入与编辑必须受会话沙箱模式约束、而读取保持不受约束时，挂载此后端以替代 `fs-local`。围栏按调用生效：工具层把调用会话的模式与工作区根目录解析为与 bash runner 收到的相同策略，因此文件系统与 shell 两个能力族绝不会约束到不同根目录。
+当模型的文件写入与编辑必须受会话沙箱模式约束、而读取除 harness 凭据存储（见下文）外保持不受约束时，挂载此后端以替代 `fs-local`。围栏按调用生效：工具层把调用会话的模式与工作区根目录解析为与 bash runner 收到的相同策略，因此文件系统与 shell 两个能力族绝不会约束到不同根目录。
 
 ### 最小组合
 
@@ -49,7 +49,7 @@ kind: "package-reference"
 
 ### 可观察的成功与失败
 
-读取、列出、元数据操作与只读监听均与 `fs-local` 完全一致；变更围栏不限制观察。被拒绝的变更返回携带有效模式的 `FS_SANDBOX_DENIED` 错误；经工具，模型会看到 `[sandbox: file access denied under <mode> mode]` 及唯一一次获批更宽权限的重试提示，与 bash 的拒绝完全相同。获得批准升级的会话可以在该次调用中以严格更宽的模式重试同一操作。
+读取、列出、元数据操作与只读监听均与 `fs-local` 完全一致，唯一例外是对 harness 凭据存储（`$OCEAN_HOME/.credentials.yaml`）的读取在任何模式下都以 `FS_SANDBOX_DENIED` 拒绝；变更围栏不限制其他观察。被拒绝的变更返回携带有效模式的 `FS_SANDBOX_DENIED` 错误；经工具，模型会看到 `[sandbox: file access denied under <mode> mode]` 及唯一一次获批更宽权限的重试提示，与 bash 的拒绝完全相同。获得批准升级的会话可以在该次调用中以严格更宽的模式重试同一操作。
 
 -----
 
