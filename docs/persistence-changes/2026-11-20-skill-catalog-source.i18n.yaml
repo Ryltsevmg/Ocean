@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-11-20-skill-catalog-source.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-11-20-skill-catalog-source.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: c22a8e4a62d8cc1a
+/2026-11-20-skill-catalog-source:
+  en: dc870a056d9ef8d3
+  zh: d9ed9515b44735e2
+/2026-11-20-skill-catalog-source/summary:
+  en: fa6889a6937a780c
+  zh: c5225f48a7afb09c
+/2026-11-20-skill-catalog-source/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-11-20-skill-catalog-source/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-11-20-skill-catalog-source/compatibility:
+  en: 7f538c135705270a
+  zh: 480c066bf66781e9
+/2026-11-20-skill-catalog-source/verification:
+  en: 3b6fcf3f07fde4bb
+  zh: c7873d950deeb8a9
+/2026-11-20-skill-catalog-source/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269
