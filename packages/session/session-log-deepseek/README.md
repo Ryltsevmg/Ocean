@@ -94,6 +94,7 @@ None; the model-visible request prefix remains unchanged.
 - **No live Session means no field** — direct or stale-session calls have no canonical log to snapshot; explicit absence semantics remain deferred.
 - **An oversized event stalls upload** — an event whose field alone exceeds `maxBytes` is not sent, and later events wait behind it until the limit increases; an event too large to serialize at all stays blocked.
 - **Provider rejection fails the request** — a provider that rejects the request because of this field fails the model request and leaves the cursor unchanged instead of truncating the log.
+- **No secret redaction** — the field carries canonical event data verbatim, including tool results: a secret the model read into the session (for example a key file) is uploaded to the official route as-is. Upload is enabled by default; deployments handling sensitive material should disable it or register exclusions. A redaction seam and an opt-in default are deferred pending a product decision.
 
 <a id="dev-note"></a>
 ### Dev Note
