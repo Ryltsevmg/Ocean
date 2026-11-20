@@ -72,6 +72,7 @@ vi.mock('@modelcontextprotocol/client/stdio', () => ({
 // vi.mock is hoisted above static imports, so the module under test sees the
 // mocked SDK even through a static import.
 import { apply, name, inject, Config as ConfigSchema } from '@ocean/ocean-mcp-client/src/index.ts'
+import { renderServerInstructions } from '@ocean/ocean-mcp-client/src/instructions.ts'
 
 // ---- Helpers ----
 
@@ -483,7 +484,7 @@ describe('server instruction limits', () => {
     const ctx = await mountRegistry()
     const text = '服务器指南'
     const spy = vi.spyOn(MockClient.prototype, 'getInstructions').mockReturnValue(text)
-    const exactBytes = Buffer.byteLength(`### MCP server: srv\n\n${text}`)
+    const exactBytes = Buffer.byteLength(renderServerInstructions('srv', text))
     try {
       const failure: unknown = await apply(ctx, {
         ...stdioConfig, failOnStartupError: true, reconnect: { enabled: false },
@@ -504,6 +505,10 @@ describe('server instruction limits', () => {
         ...stdioConfig, failOnStartupError: true, reconnect: { enabled: false },
         maxInstructionBytes: exactBytes,
       })
+      const prompt = renderPrompt(await valid.systemPrompt.assemble())
+      expect(prompt).toContain('### MCP server: srv')
+      expect(prompt).toContain('Untrusted instructions supplied by this server')
+      expect(prompt).toContain(text)
     } finally {
       validSpy.mockRestore()
       await valid.fiber.dispose()

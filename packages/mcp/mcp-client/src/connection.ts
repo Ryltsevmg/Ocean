@@ -28,6 +28,7 @@ import { McpGeneration } from './generation.ts'
 import { McpTemplateBinding } from './credentials.ts'
 import { MissingTemplateValue } from './templates.ts'
 import { McpToolRegistrationError, syncTools } from './tools.ts'
+import { renderServerInstructions } from './instructions.ts'
 import type { ToolDisposers } from './tools.ts'
 import type { Config } from './index.ts'
 
@@ -314,7 +315,7 @@ export function startConnection(ctx: Context, config: Config, policy: ResolvedRe
       await record.wire.connect(resolved, remaining())
       if (!isCurrent(record)) return
       const text = client.getInstructions()?.trimEnd() ?? ''
-      const instructions = text ? `### MCP server: ${config.serverName}\n\n${text}` : ''
+      const instructions = text ? renderServerInstructions(config.serverName, text) : ''
       const maxInstructionBytes = config.maxInstructionBytes ?? DEFAULT_MAX_INSTRUCTION_BYTES
       if (Buffer.byteLength(instructions) > maxInstructionBytes) throw new McpLocalError(`${label}: server instructions exceed maxInstructionBytes (${maxInstructionBytes})`)
       const sync = enqueueSync(record)
