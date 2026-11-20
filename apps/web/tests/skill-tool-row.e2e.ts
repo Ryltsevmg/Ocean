@@ -65,7 +65,7 @@ describe.skipIf(MODE === 'record')('web e2e: dedicated Skill tool row', () => {
     await call.getByText('Instructions', { exact: true }).waitFor()
     const output = call.locator('pre')
     await output.waitFor()
-    expect(await output.textContent()).toContain('<skill_content name="editing-cordis-compositions">')
+    expect(await output.textContent()).toContain('<skill_content name="editing-cordis-compositions" source="project-ocean">')
     expect(await output.textContent()).toContain('Agent presets are ordinary `@ocean/ocean-agent-preset` declarations carried by bundle patches.')
     expect(await output.evaluate(element => getComputedStyle(element.parentElement!).maxHeight)).toBe('260px')
 
