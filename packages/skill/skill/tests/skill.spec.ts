@@ -1113,6 +1113,18 @@ describe('renderSkillContent', () => {
     expect(text.match(/<\/skill_content>/g)).toHaveLength(1)
   })
 
+  it('rides the discovery source as an escaped attribute when present', () => {
+    const text = renderSkillContent({
+      name: 'project-skill',
+      source: 'project-agents',
+      provider: 'filesystem',
+      content: 'Body.',
+    })
+    expect(text).toContain('<skill_content name="project-skill" source="project-agents">')
+    const legacy = renderSkillContent({ name: 'legacy', provider: 'memory', content: 'Body.' })
+    expect(legacy).toContain('<skill_content name="legacy">')
+  })
+
   it('escapes hostile attribute names and wrapper closing tags in the body', () => {
     const text = renderSkillContent({
       name: 'x"&<y',

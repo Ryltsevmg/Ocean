@@ -40,7 +40,12 @@ export interface SkillCatalogSource {
   /** Some discovery failed; entries contain only skills found in this observation. Absence means complete. */
   readonly incomplete?: true
   /** Exactly the entries this message published, in catalog order. */
-  readonly entries: readonly { readonly name: string; readonly description: string }[]
+  readonly entries: readonly {
+    readonly name: string
+    readonly description: string
+    /** Discovery source at publication; absent in catalogs restored from logs written before source marking. */
+    readonly source?: string
+  }[]
 }
 
 declare module '@ocean/ocean-llm' {
@@ -57,6 +62,7 @@ function catalogSourceEntries(
   return skills.map(skill => ({
     name: skill.name,
     description: catalogDescription(skill.description, descriptionMaxLength),
+    source: skill.source,
   }))
 }
 
@@ -93,6 +99,7 @@ export function apply(ctx: Context, config: Config = {}): void {
         additionalProperties: false,
         properties: {
           name: { type: 'string', required: true },
+          source: { type: 'string' },
           provider: { type: 'string', required: true },
           resourceBase: {
             oneOf: [
@@ -151,6 +158,7 @@ export function apply(ctx: Context, config: Config = {}): void {
       }
       return {
         name: skill.name,
+        source: skill.source,
         provider: skill.provider,
         ...skill.resourceBase !== undefined ? {
           resourceBase: { ...skill.resourceBase },
@@ -334,10 +342,12 @@ function incompleteCatalogNotice(): string {
  * Model-facing catalog lines, projected from the same entries the source records.
  * The pseudo-XML escaping belongs to this frame, not to the published fact, so it
  * is applied here and never stored. Names are `isSkillName`-validated and carry
- * no escapable character.
+ * no escapable character. The bracketed discovery source tells project content
+ * apart from user and bundled skills; restored entries without a source keep
+ * the unbracketed line.
  */
 function renderCatalogEntries(entries: SkillCatalogSource['entries']): string[] {
-  return entries.map(entry => `- \`${entry.name}\`: ${escapeText(entry.description)}`)
+  return entries.map(entry => `- \`${entry.name}\`${entry.source === undefined ? '' : ` [${escapeText(entry.source)}]`}: ${escapeText(entry.description)}`)
 }
 
 /**

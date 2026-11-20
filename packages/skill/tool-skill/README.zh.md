@@ -110,7 +110,7 @@ agent 可以在会话期间发现并加载 skill。当 `skill` 工具可见时�
 
 #### 模型看到什么
 
-如果可见的正是这个 `skill` 工具，且存在模型可调用 skill 或发现不完整，agent 会在第一个请求之前收到下方目录模板，其中包含每个已排序 skill 的一条随数据而定的条目。该目录是一条持久的用户角色消息。后续成员关系、描述、可见性或完整性的变化会使用同一个 `<available_skills>` 信封追加替换；删除所有 skill 时，会追加一个空信封，并明确指示不得使用旧名称。模板的结尾一句是防止双重加载的规则：用户显式的手势边界（下文的 pre-step 监听器）会把同一份 `renderSkillContent` 输出（共享自 `@ocean/ocean-skill`）内联注入，目录则告诉模型遵循该块，而不是再经工具重新加载该 skill；替换目录模板的两个分支——包括清空后的目录——都携带同一条防双重加载规则。
+如果可见的正是这个 `skill` 工具，且存在模型可调用 skill 或发现不完整，agent 会在第一个请求之前收到下方目录模板，其中包含每个已排序 skill 的一条随数据而定的条目。该目录是一条持久的用户角色消息。后续成员关系、描述、可见性或完整性的变化会使用同一个 `<available_skills>` 信封追加替换；删除所有 skill 时，会追加一个空信封，并明确指示不得使用旧名称。模板的结尾一句是防止双重加载的规则：用户显式的手势边界（下文的 pre-step 监听器）会把同一份 `renderSkillContent` 输出（共享自 `@ocean/ocean-skill`）内联注入，目录则告诉模型遵循该块，而不是再经工具重新加载该 skill；替换目录模板的两个分支——包括清空后的目录——都携带同一条防双重加载规则。每行用方括号标出胜出 skill 的发现来源（`project-ocean`、`project-agents`、`user-ocean`、`user-agents`、`custom`、`bundled` 或运行时标签），让模型区分仓库内容与用户、随附 skill；加载后的 `<skill_content>` 块以属性携带同一来源。从引入来源标记之前的日志恢复的目录保留不带方括号的行。
 
 ##### 发现不完整提示
 
@@ -138,7 +138,7 @@ No skills could be confirmed in this discovery attempt. Do not use names from ea
 A skill is a reusable set of task-specific instructions. The following skills are available in this session:
 
 <available_skills>
-- `<name>`: <normalized-and-capped-description>
+- `<name>` [<discovery-source>]: <normalized-and-capped-description>
 </available_skills>
 
 If the user names a skill, or the task clearly matches a skill's description, call the `skill` tool with the exact skill name before taking task actions. Load all applicable skills, then follow their full instructions. This catalog contains summaries only; do not infer or follow a skill's instructions until it has been loaded.

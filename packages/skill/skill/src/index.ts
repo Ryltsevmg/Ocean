@@ -161,17 +161,19 @@ declare module '@ocean/ocean-llm' {
 /**
  * Render one loaded skill for the model. The output is shared verbatim by the
  * `skill` tool result and the user-explicit invocation injection, so the model
- * sees one canonical `<skill_content>` shape on both paths. The name rides an
- * escaped attribute; the body is repository or user content, so wrapper
- * closing tags inside it are escaped and it cannot terminate the block
- * (user-supplied invocation text stays outside this wrapper).
- * @param skill - name, provider, optional resource base, and body to render.
+ * sees one canonical `<skill_content>` shape on both paths. The name and the
+ * discovery source ride escaped attributes; project sources are repository
+ * content, not harness-vetted instructions. The body is repository or user
+ * content, so wrapper closing tags inside it are escaped and it cannot
+ * terminate the block (user-supplied invocation text stays outside this
+ * wrapper).
+ * @param skill - name, optional discovery source, provider, optional resource base, and body to render.
  * @returns the complete model-facing `<skill_content>` block.
  */
-export function renderSkillContent(skill: Pick<SkillDefinition, 'name' | 'provider' | 'resourceBase' | 'content'>): string {
+export function renderSkillContent(skill: Pick<SkillDefinition, 'name' | 'provider' | 'resourceBase' | 'content'> & { readonly source?: SkillSource }): string {
   const resourceHint = renderResourceHint(skill)
   return [
-    `<skill_content name="${escapeAttr(skill.name)}">`,
+    `<skill_content name="${escapeAttr(skill.name)}"${skill.source === undefined ? '' : ` source="${escapeAttr(skill.source)}"`}>`,
     '<skill_resources>',
     ...resourceHint,
     '</skill_resources>',
