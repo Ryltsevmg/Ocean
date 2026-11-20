@@ -1,16 +1,17 @@
 /**
  * Bounded HTTP(S) retrieval for `ctx.web`: validates URLs, follows only same-origin redirects,
- * enforces time and size limits, classifies and decodes text, and leaves presentation to
- * `@ocean/ocean-tool-web`. Requests carry no browser cookies
- * or ambient credentials.
+ * refuses link-local and metadata destinations, enforces time and size limits, classifies and
+ * decodes text, and leaves presentation to `@ocean/ocean-tool-web`. Requests carry no browser
+ * cookies or ambient credentials.
  * @module @ocean/ocean-web-fetch-http/provider
  */
 
+import { lookup } from 'node:dns/promises'
 import { WebError } from '@ocean/ocean-web'
 import type { WebFetchBody, WebFetchProvider, WebFetchRequest, WebFetchResult } from '@ocean/ocean-web'
 import { deadline, timeoutOf } from '@ocean/ocean-timeout'
 import type { Response } from 'undici'
-import { classifyContentType, decoderForCharset, isSameOrigin, parseCharset, validateFetchUrl } from './policy.ts'
+import { classifyContentType, decoderForCharset, isBlockedFetchAddress, isSameOrigin, parseCharset, validateFetchUrl } from './policy.ts'
 
 /** Resolved provider limits (the plugin's schemastery Config supplies defaults). */
 export interface HttpFetchLimits {
@@ -67,6 +68,7 @@ export class HttpFetchProvider implements WebFetchProvider {
     let redirectsFollowed = 0
 
     for (;;) {
+      await this.assertFetchableDestination(currentUrl)
       const response = await this.requestOnce(currentUrl, signal)
       if (isRedirectStatus(response.status)) {
         // Enforce the redirect budget before validating the next hop.
@@ -105,6 +107,28 @@ export class HttpFetchProvider implements WebFetchProvider {
       }
 
       return await this.readBody(response, currentUrl, signal)
+    }
+  }
+
+  /**
+   * Resolve the host and refuse link-local or metadata destinations before a
+   * connection is attempted. Resolution runs on every hop, so a same-origin
+   * redirect cannot swap the host; the address a request connects to still
+   * comes from the system resolver.
+   * @param url - validated request URL whose host is resolved.
+   */
+  private async assertFetchableDestination(url: URL): Promise<void> {
+    const hostname = url.hostname.startsWith('[') ? url.hostname.slice(1, -1) : url.hostname
+    let addresses: Array<{ address: string }>
+    try {
+      addresses = await lookup(hostname, { all: true })
+    } catch (error: unknown) {
+      throw new WebError(`could not resolve ${hostname}`, 'WEB_PROVIDER_ERROR', { cause: error })
+    }
+    if (addresses.length === 0) throw new WebError(`could not resolve ${hostname}`, 'WEB_PROVIDER_ERROR')
+    const blocked = addresses.find(entry => isBlockedFetchAddress(entry.address))
+    if (blocked !== undefined) {
+      throw new WebError(`refusing link-local destination ${hostname} (${blocked.address})`, 'WEB_BLOCKED_URL')
     }
   }
 

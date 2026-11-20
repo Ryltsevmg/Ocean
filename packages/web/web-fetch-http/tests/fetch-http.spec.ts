@@ -9,6 +9,7 @@ import * as fetchPlugin from '@ocean/ocean-web-fetch-http'
 import {
   classifyContentType,
   decoderForCharset,
+  isBlockedFetchAddress,
   isSameOrigin,
   parseCharset,
   parseFetchUrl,
@@ -410,6 +411,26 @@ describe('HttpFetchProvider invalid URLs and abort', () => {
   it('rejects a non-http scheme before any network access', async () => {
     await expect(provider().fetch({ url: 'ftp://example.com' }))
       .rejects.toThrow(expect.objectContaining({ code: 'WEB_INVALID_URL' }))
+  })
+
+  it('identifies link-local and metadata addresses', () => {
+    expect(isBlockedFetchAddress('169.254.169.254')).toBe(true)
+    expect(isBlockedFetchAddress('169.254.1.1')).toBe(true)
+    expect(isBlockedFetchAddress('::ffff:169.254.169.254')).toBe(true)
+    expect(isBlockedFetchAddress('fe80::1')).toBe(true)
+    expect(isBlockedFetchAddress('febf::1')).toBe(true)
+    expect(isBlockedFetchAddress('fd00:ec2::254')).toBe(true)
+    expect(isBlockedFetchAddress('127.0.0.1')).toBe(false)
+    expect(isBlockedFetchAddress('10.0.0.1')).toBe(false)
+    expect(isBlockedFetchAddress('93.184.216.34')).toBe(false)
+    expect(isBlockedFetchAddress('2001:db8::1')).toBe(false)
+  })
+
+  it('refuses link-local and metadata destinations before connecting', async () => {
+    await expect(provider().fetch({ url: 'http://169.254.169.254/latest/meta-data/' }))
+      .rejects.toThrow(expect.objectContaining({ code: 'WEB_BLOCKED_URL' }))
+    await expect(provider().fetch({ url: 'http://[fe80::1]/' }))
+      .rejects.toThrow(expect.objectContaining({ code: 'WEB_BLOCKED_URL' }))
   })
 
   it('rejects credentials in the URL', async () => {

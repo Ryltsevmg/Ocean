@@ -42,7 +42,8 @@ export function parseFetchUrl(input: string): URL {
 /**
  * Validate a request URL against the provider's complete pre-network policy:
  * bounded length plus the restrictions enforced by {@link parseFetchUrl}.
- * Public-address resolution and connection pinning run after this check.
+ * The provider resolves the host after this check and refuses link-local and
+ * metadata addresses before it connects.
  *
  * @param input - the raw URL string from the fetch request.
  * @returns the parsed `URL`.
@@ -52,6 +53,23 @@ export function validateFetchUrl(input: string): URL {
     throw new WebError(`URL exceeds the maximum length of ${WEB_FETCH_MAX_URL_LENGTH}`, 'WEB_INVALID_URL')
   }
   return parseFetchUrl(input)
+}
+
+/**
+ * Whether a resolved address is link-local or a cloud metadata endpoint. The
+ * anonymous fetcher refuses these destinations: they reach host-local services
+ * and instance credentials rather than public content.
+ *
+ * @param address - an IPv4 or IPv6 literal, including IPv4-mapped forms.
+ * @returns true for 169.254.0.0/16, fe80::/10, and the ECS IPv6 metadata address.
+ */
+export function isBlockedFetchAddress(address: string): boolean {
+  const normalized = address.toLowerCase()
+  // ::ffff:169.254.169.254 reaches the same host as the mapped IPv4 literal.
+  const ipv4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(normalized)?.[1] ?? normalized
+  if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(ipv4)) return true
+  if (/^fe[89ab][0-9a-f]?:/.test(normalized)) return true
+  return normalized === 'fd00:ec2::254' || normalized === 'fd00:ec2:0:0:0:0:0:254'
 }
 
 /**
