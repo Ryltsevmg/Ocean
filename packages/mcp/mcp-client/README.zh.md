@@ -135,6 +135,7 @@ Streamable HTTP 重定向仅限配置端点的同源地址，但 SDK 允许一�
 | [`src/credentials.ts`](src/credentials.ts) | 运行时模板绑定，并替换每个已解析的值 |
 | [`src/templates.ts`](src/templates.ts) | 凭据模板语法、替换与引用发现 |
 | [`src/server-context.ts`](src/server-context.ts) | 资源提供方注册与字面服务器指令 |
+| [`src/instructions.ts`](src/instructions.ts) | 服务器提供指令的不可信声明框架 |
 | [`src/tools.ts`](src/tools.ts) | 工具桥接：发现、命名、注册交换、执行、图片投影 |
 | [`src/transport.ts`](src/transport.ts) | 传输工厂：带清洗环境的 stdio spawn、Streamable HTTP |
 | [`src/status.ts`](src/status.ts) | 以 Fiber 为键的状态单元，保留最终清理结果 |
@@ -214,7 +215,7 @@ SDK 通过旧版通知或现代协议订阅接收工具列表变化。监督器�
 
 #### 模型看到什么
 
-每个成功连接返回的非空白指令保存在一个带服务器名称的段落中。未返回指令或指令仅含空白时，不向提示词添加文本。花括号保持字面值。替代连接仅在发现成功后发布其指令；释放或耗尽恢复预算时移除该段落。
+每个成功连接返回的非空白指令保存在一个带服务器名称的段落中，段首声明该文本是不可信的服务器内容，而非系统或用户指令。未返回指令或指令仅含空白时，不向提示词添加文本。花括号保持字面值。替代连接仅在发现成功后发布其指令；释放或耗尽恢复预算时移除该段落。
 
 #### Token 影响
 

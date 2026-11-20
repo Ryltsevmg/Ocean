@@ -135,6 +135,7 @@ This section explains the design decisions behind the bridge and points at the c
 | [`src/credentials.ts`](src/credentials.ts) | Runtime template binding and redaction of every resolved value |
 | [`src/templates.ts`](src/templates.ts) | Credential template syntax, substitution, and reference discovery |
 | [`src/server-context.ts`](src/server-context.ts) | Resource-provider registration and literal server instructions |
+| [`src/instructions.ts`](src/instructions.ts) | Untrusted framing for server-supplied instructions |
 | [`src/tools.ts`](src/tools.ts) | Tool bridge: discovery, naming, registration swap, execution, image projection |
 | [`src/transport.ts`](src/transport.ts) | Transport factory: stdio spawn with scrubbed env, Streamable HTTP |
 | [`src/status.ts`](src/status.ts) | Status cell keyed by Fiber, retaining its final cleanup result |
@@ -214,7 +215,7 @@ Append-only; newly visible content follows the reusable request prefix and does 
 
 #### What the model sees
 
-One server-labeled section contains the nonblank instructions returned by each successful connection. Absent or blank instructions add no prompt text. Braces remain literal. A replacement connection publishes its instructions only after discovery succeeds; disposal or exhausted recovery removes the section.
+One server-labeled section contains the nonblank instructions returned by each successful connection, prefixed with a notice that the text is untrusted server content, not system or user instructions. Absent or blank instructions add no prompt text. Braces remain literal. A replacement connection publishes its instructions only after discovery succeeds; disposal or exhausted recovery removes the section.
 
 #### Token effect
 
