@@ -552,7 +552,7 @@ export interface ConnectionRecoveryConfig {
 ## `@ocean/ocean-client-hmr`
 
 - `inject`: `clientModules` · `webServer`
-- `source`: [`packages/client/hmr/src/index.ts:30`](../packages/client/hmr/src/index.ts)
+- `source`: [`packages/client/hmr/src/index.ts:31`](../packages/client/hmr/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config, validated by the same-named schemastery schema. */
@@ -989,7 +989,7 @@ export interface Config {
 
 - `inject`: `sandboxPolicy`
 - `refs`: [`LocalConfig`](#oceanocean-fs-local)
-- `source`: [`packages/fs/fs-sandbox/src/index.ts:45`](../packages/fs/fs-sandbox/src/index.ts)
+- `source`: [`packages/fs/fs-sandbox/src/index.ts:57`](../packages/fs/fs-sandbox/src/index.ts)
 
 ```ts config-catalog
 /**
@@ -2664,7 +2664,7 @@ export interface Config {
 
 ## `@ocean/ocean-skill`
 
-- `source`: [`packages/skill/skill/src/index.ts:278`](../packages/skill/skill/src/index.ts)
+- `source`: [`packages/skill/skill/src/index.ts:293`](../packages/skill/skill/src/index.ts)
 
 ```ts config-catalog
 /** Skill registry configuration. */
@@ -3646,7 +3646,7 @@ export interface Config {
 ## `@ocean/ocean-tool-skill`
 
 - `inject`: `agents` · `tools` · `skills` · `workingDirectory`
-- `source`: [`packages/skill/tool-skill/src/index.ts:64`](../packages/skill/tool-skill/src/index.ts)
+- `source`: [`packages/skill/tool-skill/src/index.ts:70`](../packages/skill/tool-skill/src/index.ts)
 
 ```ts config-catalog
 /** Model-facing skill catalog configuration. */
