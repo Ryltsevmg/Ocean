@@ -162,8 +162,9 @@ declare module '@ocean/ocean-llm' {
  * Render one loaded skill for the model. The output is shared verbatim by the
  * `skill` tool result and the user-explicit invocation injection, so the model
  * sees one canonical `<skill_content>` shape on both paths. The name rides an
- * escaped attribute; the body is embedded verbatim (skills are trusted local
- * content, and user-supplied invocation text stays outside this wrapper).
+ * escaped attribute; the body is repository or user content, so wrapper
+ * closing tags inside it are escaped and it cannot terminate the block
+ * (user-supplied invocation text stays outside this wrapper).
  * @param skill - name, provider, optional resource base, and body to render.
  * @returns the complete model-facing `<skill_content>` block.
  */
@@ -176,10 +177,22 @@ export function renderSkillContent(skill: Pick<SkillDefinition, 'name' | 'provid
     '</skill_resources>',
     '',
     '<skill_instructions>',
-    skill.content,
+    escapeSkillFrameBody(skill.content),
     '</skill_instructions>',
     '</skill_content>',
   ].join('\n')
+}
+
+/**
+ * Neutralize wrapper closing tags inside a skill body so the body cannot end
+ * the block early and impersonate a later frame.
+ * @param body - the raw skill instruction body.
+ * @returns the body with wrapper closing tags escaped.
+ */
+function escapeSkillFrameBody(body: string): string {
+  return body
+    .replaceAll('</skill_instructions>', '<\\/skill_instructions>')
+    .replaceAll('</skill_content>', '<\\/skill_content>')
 }
 
 function renderResourceHint(skill: Pick<SkillDefinition, 'provider' | 'resourceBase'>): string[] {
