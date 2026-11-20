@@ -1253,6 +1253,9 @@ export async function boot(
     ctx.baseUrl = pathToFileURL(dirname(absoluteConfigPath)).href + '/'
     ctx.provide('oceanHomePath', oceanHomePath)
     ctx.provide('dshHomePath', oceanHomePath)
+    // A bundle entry interpolates its `!!js` config in an isolated fiber scope that
+    // cannot reach these root provisions; expose the helpers globally so patches resolve them.
+    Object.assign(globalThis, { oceanHomePath, dshHomePath: oceanHomePath })
     await ctx.plugin(Loader)
     await prepare?.(ctx)
     stage = 'plugin tree failed to load'
