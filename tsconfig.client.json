@@ -40,6 +40,7 @@
     "packages/*/*/tests/**/*.client.ts",
     // Client package outside packages/client with a local CSS module face.
     "packages/extensions/ui-cordis/src/css-modules.d.ts",
+    "packages/extensions/plugin-market/src/css-modules.d.ts",
     "packages/client/tsdown.client.ts",
     "scripts/client-build-environment.ts",
     "scripts/shipped-locales.ts",
