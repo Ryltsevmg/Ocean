@@ -4,8 +4,8 @@
  * text-storage mechanics — resolve, stat, read/stream, list, the atomic
  * write and the read-match-write edit critical section — are the local
  * implementation's, verbatim; this package adds only the per-call POLICY fence
- * on all five mutations. Reads pass through untouched: every mode permits
- * reading.
+ * on all five mutations. Reads pass through, except the harness credential
+ * store, which no mode ever returns to a model-facing read.
  *
  * The fence is a policy check in TRUSTED code over a MODEL-CONTROLLED path,
  * NOT a kernel boundary — the operations are the seam's own (open, rename),
@@ -26,6 +26,8 @@
  * @module @ocean/ocean-fs-sandbox
  */
 
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { LocalFileSystem } from '@ocean/ocean-fs-local'
 import type { Config as LocalConfig } from '@ocean/ocean-fs-local'
@@ -35,6 +37,16 @@ import { writableRoots } from '@ocean/ocean-sandbox'
 import type { SandboxExecutionPolicy, SandboxMode } from '@ocean/ocean-sandbox'
 import type {} from '@ocean/ocean-sandbox-policy'
 import { isPathUnder } from './containment.ts'
+
+/**
+ * The harness credential store, resolved like `@ocean/ocean-home-paths`:
+ * `$OCEAN_HOME`, then `$DSH_HOME`, else `~/.ocean`.
+ * @returns the absolute credential-store path.
+ */
+function credentialsStorePath(): string {
+  const home = process.env['OCEAN_HOME']?.trim() || process.env['DSH_HOME']?.trim() || join(homedir(), '.ocean')
+  return join(home, '.credentials.yaml')
+}
 
 /**
  * Plugin config: the local backend's knobs verbatim (`cwd` resolution default
@@ -56,9 +68,60 @@ export class SandboxedFileSystem extends LocalFileSystem {
   static inject = ['sandboxPolicy']
 
   private readonly defaultMode: SandboxMode
+  /** Paths whose contents no read operation returns, whatever the mode. */
+  private readonly deniedReadRoots: string[] = [credentialsStorePath()]
   constructor(ctx: Context, config: Config) {
     super(ctx, config)
     this.defaultMode = ctx.sandboxPolicy.defaultMode
+  }
+
+  /**
+   * Refuse a read of the harness credential store before any bytes are read.
+   * The fence covers the model-facing read tools; confined shell processes see
+   * the kernel sandbox, not this check.
+   * @param target - the resolved target about to be read.
+   */
+  private async assertReadable(target: FsTarget): Promise<void> {
+    for (const root of this.deniedReadRoots) {
+      if (await isPathUnder(target.targetKey, root)) {
+        throw new FsError(`cannot read "${target.displayPath}": file access denied under the sandbox read policy`, 'FS_SANDBOX_DENIED')
+      }
+    }
+  }
+
+  /**
+   * Fence the read, then delegate to the inherited text read.
+   * @param target - the resolved target to read.
+   * @param signal - aborts the read.
+   * @returns the decoded file content.
+   */
+  override async readText(target: FsTarget, signal?: AbortSignal): Promise<string> {
+    await this.assertReadable(target)
+    return await super.readText(target, signal)
+  }
+
+  /**
+   * Fence the read, then delegate to the inherited bounded byte read.
+   * @param target - the resolved target to read.
+   * @param signal - aborts the read.
+   * @param maxBytes - inclusive byte cap on the complete content.
+   * @returns the raw file content.
+   */
+  override async readBytes(target: FsTarget, signal: AbortSignal | undefined, maxBytes: number): Promise<Uint8Array> {
+    await this.assertReadable(target)
+    return await super.readBytes(target, signal, maxBytes)
+  }
+
+  /**
+   * Fence the read, then delegate to the inherited byte-window read.
+   * @param target - the resolved target to read.
+   * @param range - offset and length of the requested window.
+   * @param signal - aborts the read.
+   * @returns the window's bytes.
+   */
+  override async readByteRange(target: FsTarget, range: { offset: number; length: number }, signal?: AbortSignal): Promise<Uint8Array> {
+    await this.assertReadable(target)
+    return await super.readByteRange(target, range, signal)
   }
 
   /** The deployment default mode — the capability fact the tool layer reads to advertise escalation. */
