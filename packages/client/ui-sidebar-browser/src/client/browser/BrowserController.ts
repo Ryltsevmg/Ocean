@@ -135,7 +135,9 @@ export class BrowserController implements HostObservable<BrowserControllerState>
     if (sandbox !== undefined) this.command(() => { sandbox.setEnabled(enabled) })
   }
 
-  /** @param enabled - whether the Session's Agent may read and act on this tab. */
+  /** Forward the sharing toggle to the carrier's Agent control, when it has one.
+   * @param enabled - whether the Session's Agent may read and act on this tab.
+   */
   setAgentEnabled(enabled: boolean): void {
     const agent = this.page.frame.agent
     if (agent !== undefined) agent.setEnabled(enabled)
