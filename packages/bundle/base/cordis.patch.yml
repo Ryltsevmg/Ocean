@@ -464,8 +464,10 @@
     # The shared base enables the stable model-facing web_search and web_fetch
     # tools. The Web app disables this host row and composes both tools per agent
     # preset; products with a stricter network policy override tool-web. Search
-    # defaults to the DeepSeek Search API (deepseek-search-api) and fetch to the
-    # anonymous local fetcher (http). The DeepSeek Search and Fetch APIs
+    # follows the model route unless pinned: server-side Messages search
+    # (deepseek-official) for DeepSeek model routes and the DeepSeek Search API
+    # (deepseek-search-api) for other routes. Fetch defaults to the anonymous
+    # local fetcher (http). The DeepSeek Search and Fetch APIs
     # (deepseek-search-api, deepseek-fetch-api) follow the conversation: on the
     # deepseek-account route they send the account token to that route's
     # origin, and otherwise the API key of the DeepSeek API-key route to its
@@ -485,7 +487,6 @@
     - id: web
       name: '@ocean/ocean-web'
       config:
-        searchProvider: deepseek-search-api
         fetchProvider: http
 
     - id: web-search-deepseek

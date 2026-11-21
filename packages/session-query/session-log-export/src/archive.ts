@@ -8,8 +8,9 @@
  * descendant uses `subagents/<id>/session[.vN].jsonl`; each image referenced by any included log
  * under `media/<attachmentId>.<ext>` (content-addressed, so one archive never
  * duplicates a shared image); each generic file sits under
- * `files/<prefix>/<digest>/<name>` and streams from the attachment store. No
- * manifest is written. Before each live session's log read, the SessionStore
+ * `files/<prefix>/<digest>/<name>` and streams from the attachment store.
+ * Missing objects and rejected references are listed in `attachments-missing.txt`.
+ * Before each live session's log read, the SessionStore
  * flush barrier makes the current in-memory log durable; cold sessions need no
  * barrier. Request abort and response-consumer cancellation share one producer
  * signal and terminate the active compressor.
@@ -334,8 +335,9 @@ export function sessionLogZipFilename(sessionId: string): string {
  * through a persistence read handle right before it is yielded, and dropped
  * after the consumer moves on), then every distinct attachment referenced by
  * the included logs. Images are read and verified as bounded stored objects;
- * generic files remain streamed through the ZIP writer. The host holds at most
- * one descendant log, one image, and one file chunk beyond the root.
+ * file chunks may be consumed after entry enumeration completes. The consumer
+ * owns each file iterator once started and must exhaust or close it. Attachment
+ * read failures propagate from entry enumeration (images) or chunk reads (files).
  * @param deps - the mounted export services (the caller answered 500 before this runs).
  * @param rootContent - the already-serialized root log (read by the caller so
  * the missing-session path can answer cleanly before streaming starts).
@@ -344,12 +346,23 @@ export function sessionLogZipFilename(sessionId: string): string {
  * @param signal - optional cancellation forwarded to lineage, persistence, and attachment reads.
  * @returns the export entries in zip order.
  */
-export async function* sessionLogZipEntries(
+export function sessionLogZipEntries(
   deps: SessionLogExportReady,
   rootContent: string,
   sessionId: SessionId,
   includeDescendants: boolean,
   signal?: AbortSignal,
+): AsyncGenerator<SessionLogZipEntry> {
+  return collectZipEntries(deps, rootContent, sessionId, includeDescendants, { signal, preflightAttachments: false })
+}
+
+/** Collect entries; only the ZIP producer preflights files and records recoverable failures. */
+async function* collectZipEntries(
+  deps: SessionLogExportReady,
+  rootContent: string,
+  sessionId: SessionId,
+  includeDescendants: boolean,
+  { signal, preflightAttachments }: { signal: AbortSignal | undefined; preflightAttachments: boolean },
 ): AsyncGenerator<SessionLogZipEntry> {
   const media = new Map<string, ImageAttachmentRef>()
   const files = new Map<string, FileAttachmentRef>()
@@ -388,19 +401,94 @@ export async function* sessionLogZipEntries(
     signal?.throwIfAborted()
     yield* collect(lineage.descendants)
   }
+  const missing: string[] = []
   for (const ref of media.values()) {
     signal?.throwIfAborted()
-    const stored = await deps.attachments.readImage(ref, signal)
+    const path = mediaEntryPath(ref)
+    let stored: Awaited<ReturnType<AttachmentStore['readImage']>>
+    try {
+      stored = await deps.attachments.readImage(ref, signal)
+    } catch (error) {
+      if (!preflightAttachments) throw error
+      recordMissingAttachment(deps.attachments, missing, path, error, signal)
+      continue
+    }
     signal?.throwIfAborted()
-    yield { path: mediaEntryPath(ref), data: stored.data }
+    yield { path, data: stored.data }
   }
   for (const ref of files.values()) {
     signal?.throwIfAborted()
-    yield {
-      path: fileEntryPath(ref),
-      chunks: deps.attachments.readFileStream(ref, signal),
+    const path = fileEntryPath(ref)
+    if (!preflightAttachments) {
+      yield { path, chunks: deps.attachments.readFileStream(ref, signal) }
+      continue
+    }
+    let primed: Awaited<ReturnType<typeof primeFileStream>>
+    try {
+      primed = await primeFileStream(deps.attachments.readFileStream(ref, signal))
+    } catch (error) {
+      recordMissingAttachment(deps.attachments, missing, path, error, signal)
+      continue
+    }
+    try {
+      signal?.throwIfAborted()
+      yield { path, chunks: primed.chunks }
+    } finally {
+      // The ZIP writer consumes chunks before requesting the next entry.
+      await Promise.allSettled([primed.close()])
     }
   }
+  signal?.throwIfAborted()
+  if (missing.length > 0) {
+    yield { path: 'attachments-missing.txt', content: `${missing.join('\n')}\n` }
+  }
+}
+
+/** Record a recoverable attachment failure; propagate cancellation and other failures. */
+function recordMissingAttachment(
+  attachments: AttachmentStore,
+  missing: string[],
+  path: string,
+  error: unknown,
+  signal?: AbortSignal,
+): void {
+  signal?.throwIfAborted()
+  if (!attachments.isAttachmentError(error) || (error.code !== 'ATTACHMENT_NOT_FOUND' && error.code !== 'INVALID_ATTACHMENT_REF')) {
+    throw error
+  }
+  missing.push(`${path}\t${error.message}`)
+}
+
+/** Read the first chunk before emitting its ZIP entry; the export owns any unconsumed iterator. */
+async function primeFileStream(
+  stream: AsyncIterable<Uint8Array>,
+): Promise<{ chunks: AsyncIterable<Uint8Array>; close: () => Promise<void> }> {
+  const iterator = stream[Symbol.asyncIterator]()
+  let closed = false
+  const close = async (): Promise<void> => {
+    if (closed) return
+    closed = true
+    await iterator.return?.()
+  }
+  const next = async (): Promise<IteratorResult<Uint8Array>> => {
+    try {
+      const result = await iterator.next()
+      if (result.done === true) closed = true
+      return result
+    } catch (error) {
+      await Promise.allSettled([close()])
+      throw error
+    }
+  }
+  const first = await next()
+  const chunks = (async function* () {
+    try {
+      for (let chunk = first; chunk.done !== true; chunk = await next()) yield chunk.value
+    } finally {
+      await close()
+    }
+  })()
+  return { chunks, close }
 }
 
 /** How many code units of Session-log text one zip push carries (bounded encode memory). */
@@ -579,7 +667,10 @@ export function streamSessionLogZip(
       zip = archive
       void (async () => {
         try {
-          for await (const entry of sessionLogZipEntries(deps, rootContent, sessionId, includeDescendants, producerSignal)) {
+          for await (const entry of collectZipEntries(deps, rootContent, sessionId, includeDescendants, {
+            signal: producerSignal,
+            preflightAttachments: true,
+          })) {
             const deflate = new ZipDeflate(entry.path, { level: compressionLevel })
             archive.add(deflate)
             if ('content' in entry) {

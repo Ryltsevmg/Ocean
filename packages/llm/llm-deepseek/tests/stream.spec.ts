@@ -39,6 +39,29 @@ describe('Messages stream', () => {
     expect(result.at(-1)).toMatchObject({ reason: { kind: 'stop' } })
   })
 
+  it('emits billed usage once before rejecting a refused response', async () => {
+    const [settlement, stop] = end('refusal')
+    if (!settlement || !stop) throw new Error('Expected message_delta and message_stop fixtures')
+    const refusal = { ...settlement, delta: { stop_reason: 'refusal', stop_details: { explanation: 'blocked image' } } }
+    const stream = translate(events([...textEvents.slice(0, 4), refusal, stop]), MODEL)
+    await expect(stream.next()).resolves.toMatchObject({ value: { type: 'block-start' } })
+    await expect(stream.next()).resolves.toMatchObject({ value: { type: 'text-delta' } })
+    await expect(stream.next()).resolves.toMatchObject({ value: { type: 'block-end' } })
+    await expect(stream.next()).resolves.toEqual({ done: false, value: { type: 'usage', usage: { inputTokens: 12, outputTokens: 5, totalTokens: 17 } } })
+    await expect(stream.next()).rejects.toMatchObject({ code: 'CONTENT_REFUSED', message: 'DeepSeek refused to answer under its content safety review: blocked image' })
+    await expect(stream.next()).resolves.toMatchObject({ done: true })
+  })
+
+  it('does not turn a refusal into a successful response on a later stop reason', async () => {
+    const stream = translate(events([...textEvents.slice(0, 4), ...end('refusal').slice(0, 1), ...end('end_turn')]), MODEL)
+    await expect(chunks(stream)).rejects.toMatchObject({ code: 'CONTENT_REFUSED' })
+  })
+
+  it('reports an interrupted refusal stream as closed before message_stop', async () => {
+    await expect(chunks(translate(events([start, ...end('refusal').slice(0, 1)]), MODEL)))
+      .rejects.toMatchObject({ code: 'STREAM_CLOSED' })
+  })
+
   it.each([{}, { key: 'initial' }])('preserves initial tool input %j without JSON deltas', async (input) => {
     const result = await assemble(translate(events([start,
       { type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'a', name: 'read', input } },

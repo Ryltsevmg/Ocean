@@ -24,7 +24,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用此包
 
-将插件与 `ocean-web` 一起挂载，并选择它的提供方。内置配置挂载此插件，为搜索选择它的 Search API（`deepseek-search-api`），为抓取选择本地 HTTP 抓取。在**插件 > 内置插件配置 > 网页搜索与获取**中，在**搜索**下拉框选择 **DeepSeek Search API** 会选中 `deepseek-search-api`，在**获取**下拉框选择 **DeepSeek Fetch API** 会选中 `deepseek-fetch-api`；两个下拉框分别保存，选择其他条目即改用其他提供方。下拉框选中这两个提供方之一时，其下方的**计费方式**下拉框写入 `searchBilling` 或 `fetchBilling`：**自动**、**已登录的 DeepSeek 账号**或 **DeepSeek API Key**。保存的选择从下一次操作开始生效。
+将插件与 `ocean-web` 一起挂载，并选择它的提供方。内置配置挂载此插件，不配置搜索提供方，并为抓取选择本地 HTTP 抓取；未配置时搜索使用它的 Search API（`deepseek-search-api`），但为 DeepSeek 模型路由上的模型请求发起的搜索使用[旧版 Messages 搜索](../web/README.zh.md#provider-selection)。在**插件 > 内置插件配置 > 网页搜索与获取**中，在**搜索**下拉框选择 **DeepSeek Search API** 会选中 `deepseek-search-api`，在**获取**下拉框选择 **DeepSeek Fetch API** 会选中 `deepseek-fetch-api`；两个下拉框分别保存，选择其他条目即改用其他提供方。下拉框选中这两个提供方之一时，其下方的**计费方式**下拉框写入 `searchBilling` 或 `fetchBilling`：**自动**、**已登录的 DeepSeek 账号**或 **DeepSeek API Key**。保存的选择从下一次操作开始生效。
 
 ```yaml
 - name: '@ocean/ocean-web'
@@ -56,7 +56,7 @@ kind: "package-reference"
 <a id="authentication"></a>
 ### 鉴权
 
-Search 与 Fetch 每次操作各自从同一份设置快照解析端点和凭据，因此保存的设置、模型提供方变更、登录或存入的密钥从下一次操作开始生效。会话的路由是发起会话最近一次请求上下文的 `provider`；`ready()` 使用正在准备的模型请求的路由。
+Search 与 Fetch 每次操作各自从同一份设置快照解析端点和凭据，因此保存的设置、模型提供方变更、登录或存入的密钥从下一次操作开始生效。Search 使用[网页服务](../web/README.zh.md#provider-selection)提供的路由；Fetch 使用发起会话最近一次请求上下文的 `provider`。`ready()` 使用正在准备的模型请求的路由。
 
 - **单独配置。** 设置了非空 `*BaseURL` 或 `*ApiKeyEnv` 的能力在任何路由上都只以 `Authorization: Bearer` 把其 `*ApiKeyEnv`（未设置时为 `DEEPSEEK_API_KEY`）下的密钥发往其 `*BaseURL`（未设置时为 `https://api.deepseek.com/v1/tools`），从不发送账号令牌。没有该密钥时，操作失败，诊断信息点名该引用和 `*ApiKeyEnv` 字段。
 - **账号令牌。** 操作通过 `x-dsh-auth-token` 发送 `ctx.deepseekAccount` 为请求端点给出的令牌；2026-10-16 公网 Search 与 Fetch 路由已接受该令牌。端点位于模型提供方目录为 `deepseek-account` 列出的、入口根部活动的 `@ocean/ocean-llm-deepseek-account` Loader 条目的 origin 下；没有该条目时，位于该路由默认基础地址的 origin（`https://api.deepseek.com`，或 `DEEPSEEK_BASE_URL` 的 origin）下。没有登录、没有账号服务或令牌为空都算没有令牌。账号令牌读取失败时操作失败，不再尝试其他凭据。条目活动但其设置被该路由自身的解析器拒绝时，操作在轮到该来源时失败，不读取该账号令牌。
