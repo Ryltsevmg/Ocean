@@ -81,6 +81,7 @@ function packageIdentity(offer: Offer): boolean {
     const identity = parseInstallSpec(offer.name)
     return identity.kind === 'registry' && identity.name === offer.name && identity.range === undefined
   } catch (error) {
+    /* v8 ignore next -- parseInstallSpec throws nothing but its own refusal */
     if (!(error instanceof InvalidInstallSpecError)) throw error
     return false
   }
@@ -180,7 +181,8 @@ export class PublishedCatalogSource {
 
   private refresh(): Promise<readonly Offer[]> {
     if (this.reading !== undefined) return this.reading
-    const read = this.read().then(entries => this.cached ?? entries).finally(() => { this.reading = undefined })
+    // A successful read leaves the newest catalogue cached, even when an older in-flight read answers later.
+    const read = this.read().then(() => this.cached as readonly Offer[]).finally(() => { this.reading = undefined })
     this.reading = read
     return read
   }

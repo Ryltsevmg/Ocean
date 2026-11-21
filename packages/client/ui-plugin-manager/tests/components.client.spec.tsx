@@ -2153,6 +2153,21 @@ describe('PluginManagerPage', () => {
     expect(screen.getByText(en.installSubjectTarball)).toBeTruthy()
   })
 
+  it('words a failed published install by its kind without a Git host', () => {
+    const subject = {
+      kind: 'published', name: '@ocean/example', version: '1.0.0', sha256: 'a'.repeat(64), title: 'Example',
+      spec: '@ocean/example@1.0.0', selection: true,
+    } as const
+    renderTab({
+      install: {
+        ...IDLE_INSTALL, open: true, spec: subject.spec, phase: 'failed', subject, detailsOpen: true,
+        failure: { reason: 'offline', kind: 'network', failedAt: 'spec-host' },
+      },
+    })
+    expect(screen.getByText(en.installFailureNetwork)).toBeTruthy()
+    expect(screen.queryByText(en.installFailureNetworkHost.replace('{host}', 'github.com'))).toBeNull()
+  })
+
   it('names an enable-stage failure and points the details at the complete Host log', () => {
     const subject = { spec: 'ocean-x', status: 'accepted', kind: 'registry', name: 'ocean-x', bundle: true, registry: null } as const
     const logPath = '/home/u/.ocean/profiles/web/plugin-manager/runs/install.log'

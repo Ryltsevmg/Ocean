@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { createServer, type ServerResponse } from 'node:http'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { once } from 'node:events'
@@ -96,6 +96,21 @@ it.each([
 ])('refuses display text without a usable English fallback or beyond its bounds (%j)', async (change) => {
   const c = await channel()
   c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, ...change }] })
+  expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
+  expect(c.downloads()).toBe(0)
+})
+
+it('accepts a platform list and refuses repeated platforms', async () => {
+  const c = await channel()
+  c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, platforms: [process.platform, process.platform] }] })
+  expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
+  c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, platforms: [process.platform] }] })
+  expect((await c.source.list()).plugins[0]).toMatchObject({ compatible: true })
+})
+
+it('refuses an offer whose name the registry cannot accept', async () => {
+  const c = await channel()
+  c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, name: 'Not A Package' }] })
   expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
   expect(c.downloads()).toBe(0)
 })
@@ -210,4 +225,72 @@ it('verifies bytes before retaining them, and rechecks the offer before reusing 
   await expect(c.source.prepare(target, c.abort.signal)).rejects.toMatchObject({ code: 'published-offer-unavailable' })
   expect(await readFile(path)).toEqual(bytes)
   expect(c.downloads()).toBe(2)
+})
+
+it('refuses a catalogue response beyond its byte limit', async () => {
+  const c = await channel()
+  vi.stubGlobal('fetch', vi.fn(async () => new Response('x'.repeat(600 * 1024), { status: 200 })))
+  onTestFinished(() => { vi.unstubAllGlobals() })
+  expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
+})
+
+it('rejects an invalid published catalogue URL before any request', async () => {
+  const profileDir = await mkdtemp(join(tmpdir(), 'ocean-published-catalog-'))
+  onTestFinished(() => rm(profileDir, { force: true, recursive: true }))
+  const abort = new AbortController()
+  expect(() => new PublishedCatalogSource({
+    url: 'https://example.com/v1/current.json', profileDir, timeoutMs: 1_000, runtimeVersion: '1.0.0', lifetime: abort.signal,
+  })).toThrow('invalid publishedCatalogUrl')
+})
+
+it('turns a non-ENOENT archive stat failure into an unavailable offer', async () => {
+  const c = await channel()
+  await writeFile(join(c.profileDir, 'published-plugins'), 'blocked')
+  await expect(c.source.prepare(target, c.abort.signal)).rejects.toMatchObject({ code: 'published-offer-unavailable' })
+  expect(c.downloads()).toBe(0)
+})
+
+it('shares one in-flight catalogue read between concurrent readers', async () => {
+  let release: ((response: ServerResponse) => void) | undefined
+  const waiting = new Promise<ServerResponse>((resolve) => { release = resolve })
+  let first = true
+  const c = await channel((response) => {
+    if (!first) return false
+    first = false
+    release?.(response)
+    return true
+  })
+  const one = c.source.list()
+  const two = c.source.list()
+  ;(await waiting).end(JSON.stringify({ schemaVersion: 1, plugins: [c.offer] }))
+  expect(await one).toMatchObject({ status: 'ready' })
+  expect(await two).toMatchObject({ status: 'ready' })
+})
+
+it('validates a remote offer against the release-assets archive location', async () => {
+  const { source } = await remoteSource()
+  const archive = `https://github.com/Ryltsevmg/Ocean/releases/download/plugin-${sha256}/plugin.tgz`
+  const offer = { ...target, ocean: '^1.0.0', title: 'Remote', description: 'Remote offer', archive }
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ schemaVersion: 1, plugins: [offer] }), { status: 200 })))
+  onTestFinished(() => { vi.unstubAllGlobals() })
+  expect(await source.list()).toEqual({ status: 'ready', plugins: [
+    { ...target, title: 'Remote', description: 'Remote offer', compatible: true },
+  ] })
+})
+
+it('refuses a redirect without a location header', async () => {
+  const { source, abort } = await remoteSource()
+  const fetcher = source as never as { fetchArchive(url: string, signal: AbortSignal): Promise<Response> }
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 307 })))
+  onTestFinished(() => { vi.unstubAllGlobals() })
+  await expect(fetcher.fetchArchive('https://github.com/Ryltsevmg/Ocean/plugin.tgz', abort.signal))
+    .rejects.toMatchObject({ code: 'published-offer-unavailable' })
+})
+
+it('marks an offer for another platform incompatible', async () => {
+  const other = process.platform === 'darwin' ? 'win32' : 'darwin'
+  const c = await channel()
+  c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, platforms: [other] }] })
+  expect((await c.source.list()).plugins[0]).toMatchObject({ compatible: false })
+  await expect(c.source.prepare(target, c.abort.signal)).rejects.toMatchObject({ code: 'published-offer-unavailable' })
 })

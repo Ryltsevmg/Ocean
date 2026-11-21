@@ -464,6 +464,14 @@ describe('PluginManagerController', () => {
     expect(plugins.listBundles).toHaveBeenCalledTimes(2)
   })
 
+  it('ignores a published install request after disposal', () => {
+    const { controller, face, state } = bench()
+    const before = state()
+    controller.dispose()
+    face.installPublished({ name: '@ocean/example', version: '1.0.0', sha256: 'a'.repeat(64), title: 'Example' })
+    expect(state()).toBe(before)
+  })
+
   it('reports a Host without a managed profile as unavailable and keeps the last packages across a failed read', async () => {
     vi.useFakeTimers()
     onTestFinished(() => { vi.useRealTimers() })
