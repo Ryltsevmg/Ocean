@@ -4,14 +4,14 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { once } from 'node:events'
-import { expect, it, onTestFinished } from 'vitest'
+import { expect, it, onTestFinished, vi } from 'vitest'
 import { isPublishedCatalogUrl, PublishedCatalogSource } from '../src/published-catalog.ts'
 
 const bytes = Buffer.from('archive fixture')
 const sha256 = createHash('sha256').update(bytes).digest('hex')
 const target = { name: '@ocean/example', version: '1.2.3', sha256 }
 
-async function channel(onIndex?: (response: ServerResponse) => boolean) {
+async function channel(onIndex?: (response: ServerResponse) => boolean, redirect?: string) {
   let index: unknown
   let archive: Buffer = bytes
   let available = true
@@ -23,6 +23,7 @@ async function channel(onIndex?: (response: ServerResponse) => boolean) {
       res.end(JSON.stringify(index))
     } else if (req.url === `/archives/${sha256}/plugin.tgz`) {
       downloads++
+      if (redirect !== undefined) { res.writeHead(307, { location: redirect }).end(); return }
       res.end(archive)
     } else {
       res.writeHead(404).end()
@@ -137,6 +138,61 @@ it.each([false, true])('refuses installation if either concurrent read withdraws
   }
   await denied
   expect(c.downloads()).toBe(0)
+})
+
+it('refuses an archive redirect outside the release-assets origin', async () => {
+  const c = await channel(undefined, 'https://evil.example/plugin.tgz')
+  await expect(c.source.prepare(target, c.abort.signal)).rejects.toMatchObject({ code: 'published-offer-unavailable' })
+  expect(c.downloads()).toBe(1)
+})
+
+/** A non-loopback source whose feed origin only affects the redirect policy. */
+async function remoteSource() {
+  const profileDir = await mkdtemp(join(tmpdir(), 'ocean-published-catalog-'))
+  onTestFinished(() => rm(profileDir, { force: true, recursive: true }))
+  const abort = new AbortController()
+  onTestFinished(() => { abort.abort() })
+  const source = new PublishedCatalogSource({
+    url: 'https://raw.githubusercontent.com/Ryltsevmg/Ocean/plugin-catalog/v1/current.json',
+    profileDir, timeoutMs: 5_000, runtimeVersion: '1.0.0', lifetime: abort.signal,
+  })
+  return { source, abort }
+}
+
+it('follows a release-assets redirect with redirect: error', async () => {
+  const { source, abort } = await remoteSource()
+  const fetcher = source as never as { fetchArchive(url: string, signal: AbortSignal): Promise<Response> }
+  const original = globalThis.fetch
+  const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    if (url.startsWith('https://release-assets.githubusercontent.com/')) return new Response(bytes, { status: 200 })
+    if (init?.redirect === 'manual') {
+      return new Response(null, { status: 307, headers: { location: 'https://release-assets.githubusercontent.com/archives/plugin.tgz' } })
+    }
+    return original(input, init)
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  onTestFinished(() => { vi.unstubAllGlobals() })
+  const response = await fetcher.fetchArchive('https://github.com/Ryltsevmg/Ocean/plugin.tgz', abort.signal)
+  expect(Buffer.from(await response.arrayBuffer())).toEqual(bytes)
+  expect(fetchMock.mock.lastCall?.[0]).toHaveProperty('href', 'https://release-assets.githubusercontent.com/archives/plugin.tgz')
+  expect(fetchMock.mock.lastCall?.[1]).toMatchObject({ redirect: 'error' })
+})
+
+it('refuses a redirect outside the release-assets origin', async () => {
+  const { source, abort } = await remoteSource()
+  const fetcher = source as never as { fetchArchive(url: string, signal: AbortSignal): Promise<Response> }
+  const original = globalThis.fetch
+  const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+    if (init?.redirect === 'manual') {
+      return new Response(null, { status: 307, headers: { location: 'https://evil.example/archives/plugin.tgz' } })
+    }
+    return original(input, init)
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  onTestFinished(() => { vi.unstubAllGlobals() })
+  await expect(fetcher.fetchArchive('https://github.com/Ryltsevmg/Ocean/plugin.tgz', abort.signal))
+    .rejects.toMatchObject({ code: 'published-offer-unavailable' })
 })
 
 it('verifies bytes before retaining them, and rechecks the offer before reusing them', async () => {
