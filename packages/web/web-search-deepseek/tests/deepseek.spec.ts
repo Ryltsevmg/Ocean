@@ -932,11 +932,67 @@ describe('web-search-deepseek search readiness', () => {
     expect(await ctx.web.searchReady('deepseek-official')).toBe(true)
   })
 
-  it('is ready on the account route when the account authenticates the search endpoint', async () => {
+  it.each([{}, { apiKey: 'unused-key' }])('uses the account outside an Agent on the account route with config %j', async (config) => {
+    const endpoint = 'https://api.deepseek.com/anthropic/v1/messages'
     const asked: string[] = []
-    const ctx = await compose({ account: officialOriginAccount(asked) })
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init: RequestInit = {}) => jsonResponse(searchResponse()))
+    vi.stubGlobal('fetch', fetchMock)
+    const ctx = await compose({ account: officialOriginAccount(asked), config })
     expect(await ctx.web.searchReady('deepseek-account')).toBe(true)
-    expect(asked).toEqual(['https://api.deepseek.com/anthropic/v1/messages'])
+    expect(fetchMock).not.toHaveBeenCalled()
+    const result = await ctx.web.search({ query: 'q', llmProvider: 'deepseek-account' })
+    expect(result.sources.length).toBeGreaterThan(0)
+    const [url, init] = fetchMock.mock.calls[0] ?? []
+    const headers = new Headers(init?.headers)
+    expect(url).toBe(endpoint)
+    expect(headers.get('x-dsh-auth-token')).toBe('account-token')
+    expect(headers.has('x-api-key')).toBe(false)
+    expect(asked).toEqual([endpoint, endpoint])
+  })
+
+  it('uses the initiating Session route for selection and authentication when the request names another route', async () => {
+    const ctx = new Context()
+    mounted.push(ctx)
+    await ctx.plugin(WebRuntime)
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(SessionProjectionRegistry)
+    await ctx.plugin(AgentRegistry)
+    ctx.provide('deepseekAccount', officialOriginAccount() as DeepSeekAccount)
+    await ctx.plugin(deepseekPlugin, {})
+    const searchApi = vi.fn(async () => ({ sources: [], truncated: false }))
+    ctx.web.registerSearchProvider({ id: 'deepseek-search-api', available: () => true, search: searchApi })
+    const session = ctx.sessions.create(SessionId('web-search-authoritative-route'))
+    await ctx.agents.withInitiator({ session } as Agent, () => ctx.web.search({ query: 'q', maxResults: 1, llmProvider: 'deepseek-account' }))
+    expect(searchApi).toHaveBeenCalledExactlyOnceWith({ query: 'q', maxResults: 1 }, undefined)
+    session.append('turn/start', { turn: 1 })
+    session.append('request/context', { provider: 'deepseek-account', model: 'deepseek-v4-flash' })
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init: RequestInit = {}) => jsonResponse(searchResponse()))
+    vi.stubGlobal('fetch', fetchMock)
+    await ctx.agents.withInitiator({ session } as Agent, () => ctx.web.search({ query: 'q', llmProvider: 'openai' }))
+    const [, init] = fetchMock.mock.calls[0] ?? []
+    expect(new Headers(init?.headers).get('x-dsh-auth-token')).toBe('account-token')
+  })
+
+  it('uses the citation when a native search result contains a non-string snippet', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ content: [
+      { type: 'text', citations: [{ url: 'https://a.test', cited_text: 'usable excerpt' }] },
+      { type: 'web_search_tool_result', content: [{ type: 'web_search_result', url: 'https://a.test', snippet: ['bad'] }] },
+    ] })))
+    const ctx = await compose({ config: { apiKey: 'test-key' } })
+    const result = await ctx.web.search({ query: 'q' })
+    expect(result.sources).toEqual([{ url: 'https://a.test', snippet: 'usable excerpt' }])
+  })
+
+  it('does not dispatch a search outside the account origin without an API key', async () => {
+    const asked: string[] = []
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const ctx = await compose({ account: officialOriginAccount(asked), config: { baseURL: 'https://gateway.test/v1' } })
+    expect(await ctx.web.searchReady('deepseek-account')).toBe(false)
+    const failure = await rejectedWebError(ctx.web.search({ query: 'q', llmProvider: 'deepseek-account' }))
+    expect(failure.code).toBe('WEB_PROVIDER_CREDENTIAL_MISSING')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(asked).toEqual(['https://gateway.test/v1/messages', 'https://gateway.test/v1/messages'])
   })
 
   it('asks the account only for the account route', async () => {

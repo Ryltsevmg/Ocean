@@ -62,7 +62,7 @@ const result = await ctx.web.search({ query: 'deepseek harness', maxResults: 8 }
 const page = await ctx.web.fetch({ url: 'https://example.com' })
 ```
 
-A search made for a model request also carries that request's provider route as `llmProvider`, which [provider selection](#provider-selection) reads. Both calls accept an optional `AbortSignal` that is forwarded to the provider for cancellation. The normalized request and result shapes are the contract callers build on; the vocabulary section of the [web subsystem](../../../docs/subsystems/web.md) reference describes them exhaustively.
+The initiating Session's latest request context supplies the route for search when an Agent is in scope, even if the caller passes a different route. Otherwise `search()` takes the route from `llmProvider`. The same route is used for [provider selection](#provider-selection) and passed to the provider. Both calls accept an optional `AbortSignal` that is forwarded to the provider for cancellation. The normalized request and result shapes are the contract callers build on; the vocabulary section of the [web subsystem](../../../docs/subsystems/web.md) reference describes them exhaustively.
 
 <a id="provider-selection"></a>
 ### Provider selection

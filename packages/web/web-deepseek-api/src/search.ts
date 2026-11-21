@@ -87,7 +87,7 @@ export class DeepSeekSearchApiProvider implements WebSearchProvider {
    * @param resolveOptions - the options for the NEXT search, read once at each
    * search's entry so one search never mixes two settings sections.
    */
-  constructor(private readonly resolveOptions: () => DeepSeekSearchApiOptions) {}
+  constructor(private readonly resolveOptions: (llmProvider?: string) => DeepSeekSearchApiOptions) {}
 
   available(): boolean {
     const options = this.resolveOptions()
@@ -97,7 +97,7 @@ export class DeepSeekSearchApiProvider implements WebSearchProvider {
   }
 
   async search(request: WebSearchRequest, signal?: AbortSignal): Promise<WebSearchResult> {
-    const options = this.resolveOptions()
+    const options = this.resolveOptions(request.llmProvider)
     const question = boundedQuestion(options.originalQuestion?.())
     return dispatchDeepSeekWeb(options.auth, {
       path: '/search',

@@ -102,10 +102,11 @@ type SearchOptions = DeepSeekSearchProviderOptions & { readonly apiKeyEnv: Crede
  * every value it reads is already fully defaulted.
  * @param ctx - plugin context supplying the credential and environment planes.
  * @param config - the currently authoritative section.
+ * @param route - provider route of the model request the search serves.
  * @returns options for one search.
  */
 function resolveOptions(
-  ctx: Context, config: { [K in keyof Config]: ReturnType<Config[K]['get']> },
+  ctx: Context, config: { [K in keyof Config]: ReturnType<Config[K]['get']> }, route: string | undefined,
 ): SearchOptions {
   const apiKeyEnv = credentialRef(config.apiKeyEnv)
   const literalApiKey = config.apiKey !== undefined && config.apiKey.length > 0
@@ -113,13 +114,7 @@ function resolveOptions(
     : undefined
   return {
     ...literalApiKey === undefined ? {} : { apiKey: literalApiKey },
-    resolveAccountToken: async (endpoint) => {
-      // The latest request context names the route that served the model
-      // request which called this search, as account sign-out reads it.
-      const provider = ctx.get('agents')?.currentInitiator()?.session.requestContext()?.provider
-      if (provider !== ACCOUNT_PROVIDER) return undefined
-      return await resolveDeepSeekAccountToken(ctx, endpoint)
-    },
+    ...route === ACCOUNT_PROVIDER ? { resolveAccountToken: endpoint => resolveDeepSeekAccountToken(ctx, endpoint) } : {},
     rejectAccountToken: token => rejectDeepSeekAccountToken(ctx, token),
     resolveApiKey: () => resolveDeepSeekApiKey(ctx, apiKeyEnv),
     apiKeyEnv,
@@ -140,23 +135,21 @@ function resolveOptions(
 }
 
 /**
- * Whether the search a model request on `route` would make has a credential, checked in the order
+ * Whether the search configured by `options` has a credential, checked in the order
  * the search resolves them: the account token first on the account route, then the API key. A failed
  * read answers false, because the search fails on that read instead of trying the next credential.
  * Only presence is checked: the API key's value is not read and the endpoint is not contacted, so a
  * wrong key or an endpoint without native search still counts as configured.
  * @param ctx - plugin context supplying the account, credential, and environment planes.
  * @param options - options the next search would use.
- * @param route - provider route of the model request being assembled.
  * @returns whether the account token or an API key is available to that search.
  */
 async function searchConfigured(
-  ctx: Context, options: SearchOptions, route: string | undefined,
+  ctx: Context, options: SearchOptions,
 ): Promise<boolean> {
-  const account = ctx.get('deepseekAccount')
-  if (route === ACCOUNT_PROVIDER && account !== undefined) {
+  if (options.resolveAccountToken !== undefined) {
     let token: string | undefined
-    try { token = await account.resolveToken(`${options.baseURL}/messages`) }
+    try { token = await options.resolveAccountToken(`${options.baseURL}/messages`) }
     catch (_unreadableGrant) { return false /* The search fails on this read before it tries the API key. */ }
     if (token !== undefined && token.length > 0) return true
   }
@@ -170,16 +163,16 @@ async function searchConfigured(
  * search for a model request on the given route would have a credential to send.
  */
 export function apply(ctx: Context, config: Config): void {
-  const options = () => resolveOptions(ctx, {
+  const options = (route?: string) => resolveOptions(ctx, {
     apiKey: config.apiKey.get(), apiKeyEnv: config.apiKeyEnv.get(), baseURL: config.baseURL.get(), model: config.model.get(),
     apiVersion: config.apiVersion.get(), maxTokens: config.maxTokens.get(), maxUses: config.maxUses.get(),
-  })
+  }, route)
   const provider = new DeepSeekSearchProvider(options)
   ctx.web.registerSearchProvider({
     id: provider.id,
     description: provider.description,
     available: () => provider.available(),
-    ready: llmProvider => searchConfigured(ctx, options(), llmProvider),
+    ready: llmProvider => searchConfigured(ctx, options(llmProvider)),
     search: (request, signal) => provider.search(request, signal),
   })
 }

@@ -206,7 +206,8 @@ registerFetchProvider(provider: WebFetchProvider): () => void
  * time with the selection rules above; throws {@link WebError} when the
  * capability cannot run. The seam enforces `request.maxResults` on the result:
  * if the provider over-returns, `sources[]` is truncated and `truncated` set.
- * @param request - the query, the optional result limit, and the route of the model request the search serves.
+ * The initiating Session's latest request supplies the route when there is an Agent initiator.
+ * @param request - the query, optional result limit, and model route to use outside an Agent.
  * @param signal - optional cancellation signal forwarded to the provider.
  * @returns the provider's results, capped to `request.maxResults`.
  */

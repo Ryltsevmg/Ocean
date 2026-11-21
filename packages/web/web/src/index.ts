@@ -8,6 +8,7 @@
  */
 
 import { Context, type Volatile } from '@deepseek-ai/cordis'
+import type {} from '@ocean/ocean-agent'
 import { Remote, TypertRemoteService } from '@ocean/ocean-typert-protocol'
 import z from '@deepseek-ai/schemastery'
 import type {
@@ -200,12 +201,20 @@ export class WebRuntime extends TypertRemoteService {
    * time with the selection rules above; throws {@link WebError} when the
    * capability cannot run. The seam enforces `request.maxResults` on the result:
    * if the provider over-returns, `sources[]` is truncated and `truncated` set.
-   * @param request - the query, the optional result limit, and the route of the model request the search serves.
+   * The initiating Session's latest request supplies the route when there is an Agent initiator.
+   * @param request - the query, optional result limit, and model route to use outside an Agent.
    * @param signal - optional cancellation signal forwarded to the provider.
    * @returns the provider's results, capped to `request.maxResults`.
    */
   async search(request: WebSearchRequest, signal?: AbortSignal): Promise<WebSearchResult> {
-    const result = await this.selectSearchProvider(request.llmProvider).search(request, signal)
+    const initiator = this.ctx.get('agents')?.currentInitiator()
+    const llmProvider = initiator === undefined ? request.llmProvider : initiator.session.requestContext()?.provider
+    const resolved = llmProvider === request.llmProvider ? request : {
+      query: request.query,
+      ...request.maxResults === undefined ? {} : { maxResults: request.maxResults },
+      ...llmProvider === undefined ? {} : { llmProvider },
+    }
+    const result = await this.selectSearchProvider(llmProvider).search(resolved, signal)
     return capSources(result, request.maxResults)
   }
 

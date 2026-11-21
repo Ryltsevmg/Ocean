@@ -62,7 +62,7 @@ const result = await ctx.web.search({ query: 'deepseek harness', maxResults: 8 }
 const page = await ctx.web.fetch({ url: 'https://example.com' })
 ```
 
-为模型请求发起的搜索还会在 `llmProvider` 中携带该请求的提供方路由，供[提供方选择](#provider-selection)读取。两个调用都接受可选的 `AbortSignal`，用于把取消转发给提供方。规范化的请求与结果形状是调用方赖以构建的约定；[web 子系统](../../../docs/subsystems/web.zh.md) 参考中的词汇章节对其有穷尽式描述。
+有发起 agent（智能体）时，搜索使用发起会话最近一次请求上下文的路由，即使调用方传入其他路由。否则，`search()` 使用 `llmProvider` 指定的路由。同一路由用于[提供方选择](#provider-selection)，并传递给提供方。两个调用都接受可选的 `AbortSignal`，用于把取消转发给提供方。规范化的请求与结果形状是调用方赖以构建的约定；[web 子系统](../../../docs/subsystems/web.zh.md) 参考中的词汇章节对其有穷尽式描述。
 
 <a id="provider-selection"></a>
 ### 提供方选择

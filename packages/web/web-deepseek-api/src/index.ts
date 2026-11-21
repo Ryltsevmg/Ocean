@@ -176,8 +176,8 @@ export function apply(ctx: Context, config: Config): void {
     target(capability, ctx.get('agents')?.currentInitiator()?.session.requestContext()?.provider)
   const ready = (capability: Capability) => (llmProvider: string | undefined): Promise<boolean> =>
     isDeepSeekWebAuthReady(target(capability, llmProvider).auth, CAPABILITY[capability].path)
-  const searchApi = new DeepSeekSearchApiProvider(() => ({
-    ...current('search'),
+  const searchApi = new DeepSeekSearchApiProvider(llmProvider => ({
+    ...target('search', llmProvider),
     count: config.count.get(),
     requestsPerSecond: config.searchRequestsPerSecond.get(),
     ...config.sendOriginalQuestion.get() ? {

@@ -14317,6 +14317,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-agent':
+        specifier: workspace:*
+        version: link:../../core/agent
       '@ocean/ocean-llm':
         specifier: workspace:*
         version: link:../../llm/llm

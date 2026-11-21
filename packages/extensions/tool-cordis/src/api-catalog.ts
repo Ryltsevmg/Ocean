@@ -3766,8 +3766,8 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: 'async search(request: WebSearchRequest, signal?: AbortSignal): Promise<WebSearchResult>',
-        description: 'Run one search through the selected provider. Resolves the provider at call time with the selection rules above; throws WebError when the capability cannot run. The seam enforces `request.maxResults` on the result: if the provider over-returns, `sources[]` is truncated and `truncated` set.',
-        parameters: [{ name: 'request', description: 'the query, the optional result limit, and the route of the model request the search serves.' }, { name: 'signal', description: 'optional cancellation signal forwarded to the provider.' }],
+        description: 'Run one search through the selected provider. Resolves the provider at call time with the selection rules above; throws WebError when the capability cannot run. The seam enforces `request.maxResults` on the result: if the provider over-returns, `sources[]` is truncated and `truncated` set. The initiating Session\'s latest request supplies the route when there is an Agent initiator.',
+        parameters: [{ name: 'request', description: 'the query, optional result limit, and model route to use outside an Agent.' }, { name: 'signal', description: 'optional cancellation signal forwarded to the provider.' }],
         returns: 'the provider\'s results, capped to `request.maxResults`.',
       },
       {

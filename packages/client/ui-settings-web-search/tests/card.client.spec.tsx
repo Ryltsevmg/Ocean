@@ -3,6 +3,8 @@
 
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Context } from '@deepseek-ai/cordis'
+import { WebRuntime } from '@ocean/ocean-web'
 import { bindSnapshotSelector } from '@ocean/ocean-client-test-runtime'
 import { createSnapshotStore } from '@ocean/ocean-client-store'
 import type { SettingsFieldState, SettingsFormShell } from '@ocean/ocean-client-ui-primitives'
@@ -402,6 +404,26 @@ describe('WebSearchCard', () => {
     expect(screen.getByText(en.searchAutoHint)).toBeTruthy()
     expect(screen.getByRole('link', { name: en.searchGuide }).getAttribute('href')).toBe(en.searchGuideUrl)
     expect(screen.queryByLabelText(en.count)).toBeNull()
+  })
+
+  it('reports that the host can specify a provider when the automatic selection is pinned by the environment', async () => {
+    vi.stubEnv('OCEAN_WEB_SEARCH_PROVIDER', 'deepseek-search-api')
+    const ctx = new Context()
+    try {
+      await ctx.plugin(WebRuntime)
+      ctx.web.registerSearchProvider({ id: 'deepseek-official', available: () => true, search: () => Promise.reject(new Error('wrong provider')) })
+      const result = { sources: [{ url: 'https://example.test' }], truncated: false }
+      ctx.web.registerSearchProvider({ id: 'deepseek-search-api', available: () => true, search: () => Promise.resolve(result) })
+      await expect(ctx.web.search({ query: 'q', llmProvider: 'deepseek-account' })).resolves.toEqual(result)
+      const base = shipped()
+      renderPage({ ...base, search: { ...base.search, selected: '', kind: 'none', auto: true } })
+      expect(searchMenu().textContent).toBe(en.providerAuto)
+      expect(screen.getByText(/the host may specify a provider/i)).toBeTruthy()
+      expect(screen.queryByText(/no per-search charge/i)).toBeNull()
+    } finally {
+      vi.unstubAllEnvs()
+      await ctx.fiber.dispose()
+    }
   })
 
   it('does not explain automatic Search selection while a provider is selected or under automatic Fetch selection', () => {

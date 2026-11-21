@@ -3912,7 +3912,7 @@ export type ApprovalPolicy = 'ask' | 'never'
 ## `@ocean/ocean-web`
 
 - `refs`: `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/web/web/src/index.ts:77`](../packages/web/web/src/index.ts)
+- `source`: [`packages/web/web/src/index.ts:78`](../packages/web/web/src/index.ts)
 
 ```ts config-catalog
 /**

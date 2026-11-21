@@ -175,7 +175,7 @@ export function mapAnthropicResponse(response: AnthropicResponse): WebSearchResu
     for (const item of block.content ?? []) {
       if (item.type !== 'web_search_result' || item.url.length === 0 || seen.has(item.url)) continue
       seen.add(item.url)
-      const snippet = item.snippet != null && item.snippet.length > 0 ? item.snippet : snippets.get(item.url)
+      const snippet = typeof item.snippet === 'string' && item.snippet.length > 0 ? item.snippet : snippets.get(item.url)
       sources.push({
         url: item.url,
         ...item.title != null && item.title.length > 0 ? { title: item.title } : {},
@@ -222,7 +222,7 @@ export class DeepSeekSearchProvider implements WebSearchProvider {
    * between searches, and re-registering the provider to carry a new endpoint
    * would make the seam's selection observable to the user as a flicker.
    */
-  constructor(private readonly resolveOptions: () => DeepSeekSearchProviderOptions) {}
+  constructor(private readonly resolveOptions: (llmProvider?: string) => DeepSeekSearchProviderOptions) {}
 
   available(): boolean {
     const options = this.resolveOptions()
@@ -236,7 +236,7 @@ export class DeepSeekSearchProvider implements WebSearchProvider {
     // One snapshot for the whole operation: credential resolution awaits, and a
     // settings write landing inside that await must not send the key resolved
     // from the old section to the endpoint named by the new one.
-    const options = this.resolveOptions()
+    const options = this.resolveOptions(request.llmProvider)
     const endpoint = `${options.baseURL}/messages`
     const auth = await this.authHeaders(options, endpoint, signal)
     throwIfSearchAborted(signal)

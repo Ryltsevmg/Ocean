@@ -50,6 +50,7 @@
   ],
   "license": "MIT",
   "peerDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
     "@ocean/ocean-llm": "workspace:*",
     "@deepseek-ai/cordis": "workspace:~"
   },
@@ -59,6 +60,7 @@
     "@ocean/ocean-typert-protocol": "workspace:*"
   },
   "devDependencies": {
+    "@ocean/ocean-agent": "workspace:*",
     "@ocean/ocean-llm": "workspace:*",
     "@deepseek-ai/cordis": "workspace:~"
   }
