@@ -11,6 +11,7 @@ import { randomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { unzipSync, strFromU8 } from 'fflate'
+import { AttachmentError, isAttachmentError } from '@ocean/ocean-attachment'
 import type { FileAttachmentRef, ImageAttachmentRef } from '@ocean/ocean-attachment'
 import type { SessionEvent, SessionHeader, SessionId, ToolResultMessage, UserMessage } from '@ocean/ocean-session'
 import type { SessionLineageNode } from '@ocean/ocean-session-query'
@@ -165,6 +166,7 @@ async function buildApi(
       validateImage: async () => {},
       saveImage: async () => { throw new Error('export never saves images') },
       readImage,
+      isAttachmentError,
       readFileStream: services.readFileStream ?? (async function* () {
         throw new Error('fixture has no files')
       }),
@@ -803,13 +805,122 @@ describe('session.export download endpoint', () => {
     const api = await buildApi({ 'session-root': root }, [], {
       readFileStream: () => (async function* (): AsyncIterable<Uint8Array> {
         yield Uint8Array.of(1)
-        throw new Error('file bytes missing')
+        throw new AttachmentError('file bytes missing', 'ATTACHMENT_NOT_FOUND')
       })(),
     })
     const response = await toFetchHandler(api).fetch(
       new Request('http://host/api/session.export?sessionId=session-root'),
     )
     await expect(response.arrayBuffer()).rejects.toThrow('file bytes missing')
+  })
+
+  it('reports missing images and invalid files while preserving the log and empty files', async () => {
+    const invalid = 'a'.repeat(64)
+    const empty = 'b'.repeat(64)
+    const missing = 'd'.repeat(64)
+    const image = `sha256:${'c'.repeat(64)}`
+    const root = log('session-root', undefined, [
+      imageEvent(image),
+      fileEvent(`sha256:${invalid}`, 'bad?name.txt', 5, SessionSeq(2)),
+      fileEvent(`sha256:${empty}`, 'empty.txt', 0, SessionSeq(3)),
+      fileEvent(`sha256:${missing}`, 'gone.txt', 5, SessionSeq(4)),
+    ])
+    const api = await buildApi({ 'session-root': root }, [], {
+      attachments: async () => { throw new AttachmentError('Image missing.', 'ATTACHMENT_NOT_FOUND') },
+      readFileStream: async function* (ref) {
+        if (ref.attachmentId === `sha256:${invalid}`) {
+          throw new AttachmentError('File reference invalid.', 'INVALID_ATTACHMENT_REF')
+        }
+        if (ref.attachmentId === `sha256:${missing}`) {
+          throw new AttachmentError('File missing.', 'ATTACHMENT_NOT_FOUND')
+        }
+      },
+    })
+    const response = await toFetchHandler(api).fetch(new Request('http://host/api/session.export?sessionId=session-root'))
+    const files = unzipSync(await responseBytes(response))
+    const emptyPath = `files/bb/${empty}/empty.txt`
+    expect(Object.keys(files)).toEqual([exportLogName, emptyPath, 'attachments-missing.txt'])
+    expect(strFromU8(files[exportLogName]!)).toBe(logText(root))
+    expect(files[emptyPath]).toEqual(new Uint8Array())
+    expect(strFromU8(files['attachments-missing.txt']!)).toBe([
+      `media/${image}.png\tImage missing.`,
+      `files/aa/${invalid}/bad?name.txt\tFile reference invalid.`,
+      `files/dd/${missing}/gone.txt\tFile missing.`,
+      '',
+    ].join('\n'))
+  })
+
+  it('retains an unexpected first-read failure if closing the file iterator fails too', async () => {
+    const root = log('session-root', undefined, [fileEvent(`sha256:${'a'.repeat(64)}`)])
+    const failure = new AttachmentError('Integrity check failed.', 'ATTACHMENT_CORRUPT')
+    const close = vi.fn().mockRejectedValue(new Error('close failed'))
+    const api = await buildApi({ 'session-root': root }, [], {
+      readFileStream: () => ({
+        [Symbol.asyncIterator]: () => ({ next: async () => { throw failure }, return: close }),
+      }),
+    })
+    const response = await toFetchHandler(api).fetch(new Request('http://host/api/session.export?sessionId=session-root'))
+    await expect(response.arrayBuffer()).rejects.toBe(failure)
+    expect(close).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes the preflighted file when the request aborts before its ZIP entry starts', async () => {
+    const root = log('session-root', undefined, [fileEvent(`sha256:${'a'.repeat(64)}`)])
+    const controller = new AbortController()
+    const cancellation = new Error('cancel during file preflight')
+    const close = vi.fn(async () => ({ done: true as const, value: undefined }))
+    const api = await buildApi({ 'session-root': root }, [], {
+      readFileStream: () => ({
+        [Symbol.asyncIterator]: () => ({
+          next: async () => {
+            controller.abort(cancellation)
+            return { done: false as const, value: Uint8Array.of(1) }
+          },
+          return: close,
+        }),
+      }),
+    })
+    const response = await api.downloads.sessionLog(
+      { sessionId: root.header.id, includeDescendants: false }, controller.signal,
+    )
+    await expect(response.arrayBuffer()).rejects.toBe(cancellation)
+    expect(close).toHaveBeenCalledTimes(1)
+  })
+
+  it('propagates a missing image from the public entry iterator', async () => {
+    const root = log('session-root', undefined, [imageEvent('missing-img')])
+    const failure = new AttachmentError('Image missing.', 'ATTACHMENT_NOT_FOUND')
+    const deps = { attachments: { readImage: async () => { throw failure } } } as never
+    const entries = SessionLogExport.sessionLogZipEntries(deps, logText(root), root.header.id, false)
+    expect((await entries.next()).done).toBe(false)
+    await expect(entries.next()).rejects.toBe(failure)
+  })
+
+  it('reads every file chunk after the public entry iterator finishes', async () => {
+    const digest = 'a'.repeat(64)
+    const root = log('session-root', undefined, [fileEvent(`sha256:${digest}`)])
+    const opened = vi.fn()
+    const deps = {
+      attachments: {
+        async *readFileStream() {
+          opened()
+          yield Uint8Array.of(1, 2)
+          yield Uint8Array.of(3, 4, 5)
+        },
+      },
+    } as never
+    const entries: SessionLogExport.SessionLogZipEntry[] = []
+    for await (const entry of SessionLogExport.sessionLogZipEntries(deps, logText(root), root.header.id, false)) {
+      entries.push(entry)
+    }
+    const file = entries[1]
+    if (file === undefined || !('chunks' in file)) throw new Error('missing file entry')
+    expect(file.path).toBe(`files/aa/${digest}/notes.txt`)
+    expect(opened).not.toHaveBeenCalled()
+    const chunks: Uint8Array[] = []
+    for await (const chunk of file.chunks) chunks.push(chunk)
+    expect(chunks).toEqual([Uint8Array.of(1, 2), Uint8Array.of(3, 4, 5)])
+    expect(opened).toHaveBeenCalledTimes(1)
   })
 
   it.each([

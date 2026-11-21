@@ -15,26 +15,26 @@
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /ocean-ocean-web-search-deepseek/use-this-package:
-  en: e0d352d6402d9d3b
-  zh: a449234557ef8bd6
+  en: 6d77985320d4d3aa
+  zh: b32c6cf3ae37b39b
 /ocean-ocean-web-search-deepseek/use-this-package/when-to-choose-it:
-  en: 0187c8af8d2d98c5
-  zh: 1c9607b3a662bcaa
+  en: 60c58e847abc01ab
+  zh: 730e65a38783002a
 /ocean-ocean-web-search-deepseek/use-this-package/minimal-configuration:
   en: 9582eab634912297
   zh: 613b13fd34a3d492
 /ocean-ocean-web-search-deepseek/use-this-package/authentication:
-  en: 70827bc1bc1c2f52
-  zh: b8e4cb71ed6c1d7e
+  en: 020a9fba5701b844
+  zh: 62c7d7a7c89f96df
 /ocean-ocean-web-search-deepseek/use-this-package/what-a-search-returns:
-  en: e30442c90365357b
-  zh: 9c9e2f1182963a8a
+  en: 8f852321e5c111a7
+  zh: ae43d88540e0ccde
 /ocean-ocean-web-search-deepseek/use-this-package/request-logging:
   en: 467b8238cf7e140c
   zh: 85a519c8811557aa
 /ocean-ocean-web-search-deepseek/use-this-package/failures-and-recovery:
-  en: 8e69cf009b707c49
-  zh: f7d50bfc06b01b6d
+  en: 64814d2b8679eb05
+  zh: 0234a8494663fc4e
 /ocean-ocean-web-search-deepseek/understand-the-implementation:
   en: 9842c69ad3636bb3
   zh: 3cdc3f816cbdd0cb
@@ -45,8 +45,8 @@
   en: 6488e1c85646339f
   zh: 2b5ca1c6b5939a8c
 /ocean-ocean-web-search-deepseek/understand-the-implementation/request-flow:
-  en: d6c3f30b70a5f4b5
-  zh: ab7c5b7d6fc3cae6
+  en: 9918bcc18ad1cf49
+  zh: ba0a08146f74bdd2
 /ocean-ocean-web-search-deepseek/further-exploration:
   en: 3c1feb9045a317ea
   zh: b33d76656f4cd869
@@ -69,8 +69,8 @@
   en: 666f5753c99783ab
   zh: b44328e99bcc45c9
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-result-indirectly/what-the-model-sees:
-  en: fbc10ff2fe624934
-  zh: 6b4aa496dbeb0718
+  en: b76cdecbb9d894d5
+  zh: 82f2cc932f355f9c
 /ocean-ocean-web-search-deepseek/model-experience/conversation-tool-result-indirectly/token-effect:
   en: 01ec43a9b616139d
   zh: 0a5b7c28fde34bcf
@@ -90,11 +90,11 @@
   en: bb098f5753105660
   zh: fad684eefb80d65b
 /ocean-ocean-web-search-deepseek/known-limitations-and-deferred-work:
-  en: 3f2728c85860cf05
-  zh: d9eb6517679cc79c
+  en: 54d07145509824d9
+  zh: 526cf9a029577692
 /ocean-ocean-web-search-deepseek/known-limitations-and-deferred-work/dev-note:
   en: 64ee46559b704be8
   zh: 29e47b77c4e476e1
 /ocean-ocean-web-search-deepseek/known-limitations-and-deferred-work/dev-note/dedicated-retrieval-endpoint:
-  en: 4b62a1f2455550a9
-  zh: 199045c32a1f7740
+  en: 8fd65fca4d47c293
+  zh: 7cad552277979718
