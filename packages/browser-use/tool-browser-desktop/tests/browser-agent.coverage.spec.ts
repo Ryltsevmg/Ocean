@@ -32,14 +32,18 @@ function execution(agent = true): ToolRunContext {
   }
 }
 
-function fakeContext(providerName?: string) {
+function fakeContext(providerName?: string, options: { attachments?: boolean; emptyStore?: boolean } = {}) {
   const registered = new Map<string, ToolDefinition>()
+  const saveImages = vi.fn(async (inputs: { data: Uint8Array }[]) => options.emptyStore
+    ? []
+    : inputs.map(input => ({ attachmentId: 'att-1', mediaType: 'image/png' as const, bytes: input.data.byteLength, width: 10, height: 10 })))
+  const attachments = options.attachments === false ? undefined : { saveImages }
   const browserUse = {
     providerName,
     register: vi.fn(() => async () => {}),
   }
   const ctx = {
-    get: vi.fn((name: string) => name === 'browserUse' ? browserUse : undefined),
+    get: vi.fn((name: string) => name === 'browserUse' ? browserUse : name === 'attachments' ? attachments : undefined),
     browserUse,
     systemPrompt: { section: vi.fn(() => () => {}), getSectionOrder: vi.fn(() => 0) },
     tools: { register: vi.fn((tool: ToolDefinition) => { registered.set(tool.name, tool); return () => {} }) },
@@ -51,7 +55,7 @@ function fakeContext(providerName?: string) {
       return () => {}
     }),
   }
-  return { ctx, registered }
+  return { ctx, registered, saveImages }
 }
 
 function channel() {
@@ -154,7 +158,7 @@ describe('requester edge paths', () => {
     const listener = [...listeners][0]!
     listener({ type: 'browser-agent-result', requestId: 999, ok: true, text: 'stray' })
     listener({ type: 'browser-agent-result', requestId: 1, ok: true, text: 'settled' })
-    await expect(pending).resolves.toBe('settled')
+    await expect(pending).resolves.toMatchObject({ text: 'settled' })
     await vi.advanceTimersByTimeAsync(30_000)
     requester.dispose()
   })
@@ -238,5 +242,74 @@ describe('process transport', () => {
       Object.defineProperty(process, 'send', { value: originalSend, configurable: true })
       Object.defineProperty(process, 'connected', { value: originalConnected, configurable: true })
     }
+  })
+})
+
+describe('browser_screenshot', () => {
+  const image = { data: Buffer.from([1, 2, 3]).toString('base64'), mediaType: 'image/png' as const, width: 10, height: 10 }
+  function screenshotChannel(withImage = true) {
+    const channel0 = channel()
+    channel0.transport.send = async (command) => {
+      channel0.commands.push(command)
+      for (const listener of channel0.listeners) {
+        listener({ type: 'browser-agent-result', requestId: command.requestId, ok: true, text: 'screenshot 10x10',
+          ...withImage ? { image } : {} })
+      }
+    }
+    return channel0
+  }
+
+  it('stores the raster durably and renders an image block', async () => {
+    const { ctx, registered, saveImages } = fakeContext()
+    const ch = screenshotChannel()
+    installDesktopBrowserAgent(ctx as never, ch.transport)
+    const tool = registered.get('browser_screenshot')!
+    const value = await tool.execute({}, execution()) as { attachment: { attachmentId: string }; width: number }
+    expect(value.attachment.attachmentId).toBe('att-1')
+    expect(saveImages).toHaveBeenCalledOnce()
+    expect(saveImages.mock.calls[0]![0][0]!.data).toBeInstanceOf(Uint8Array)
+    expect(ch.commands[0]!.args).toMatchObject({ maxWidth: 1280, maxBytes: 4_000_000 })
+    expect(tool.output.render({}, value as never)).toEqual([{ type: 'image', attachment: expect.objectContaining({ attachmentId: 'att-1' }) }])
+    expect(tool.presentCall?.({})).toBeDefined()
+  })
+
+  it('honours configured bounds and refuses missing storage or image', async () => {
+    const bounded = fakeContext()
+    const ch = screenshotChannel()
+    installDesktopBrowserAgent(bounded.ctx as never, ch.transport, { screenshotMaxWidth: 200, screenshotMaxBytes: 2048 })
+    await bounded.registered.get('browser_screenshot')!.execute({}, execution())
+    expect(ch.commands[0]!.args).toMatchObject({ maxWidth: 200, maxBytes: 2048 })
+
+    const noImage = fakeContext()
+    installDesktopBrowserAgent(noImage.ctx as never, screenshotChannel(false).transport)
+    await expect(noImage.registered.get('browser_screenshot')!.execute({}, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_SCREENSHOT_MISSING' })
+
+    const noStore = fakeContext(undefined, { attachments: false })
+    installDesktopBrowserAgent(noStore.ctx as never, screenshotChannel().transport)
+    await expect(noStore.registered.get('browser_screenshot')!.execute({}, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_ATTACHMENTS_UNAVAILABLE' })
+
+    const empty = fakeContext(undefined, { emptyStore: true })
+    installDesktopBrowserAgent(empty.ctx as never, screenshotChannel().transport)
+    await expect(empty.registered.get('browser_screenshot')!.execute({}, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_SCREENSHOT_MISSING' })
+  })
+
+  it('ignores results whose image payload is malformed', async () => {
+    const { transport, listeners } = channel()
+    transport.send = async () => {}
+    const requester = new BrowserAgentRequester(transport)
+    const pending = requester.request('session-1', 'screenshot', {}, new AbortController().signal)
+    const listener = [...listeners][0]!
+    for (const badImage of [{ data: 1, mediaType: 'image/png', width: 1, height: 1 },
+      { data: 'x', mediaType: 'image/jpeg', width: 1, height: 1 },
+      { data: 'x', mediaType: 'image/png', width: 1.5, height: 1 },
+      { data: 'x', mediaType: 'image/png', width: 1, height: '2' }]) {
+      listener({ type: 'browser-agent-result', requestId: 1, ok: true, text: 't', image: badImage })
+    }
+    listener({ type: 'browser-agent-result', requestId: 1, ok: true, text: 't', image })
+    await expect(pending).resolves.toMatchObject({ text: 't', image: { width: 10 } })
+    requester.dispose()
   })
 })

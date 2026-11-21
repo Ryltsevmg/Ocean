@@ -16,7 +16,7 @@ The Desktop application installs `browser_*` tools after its profile starts. The
 
 ## Desktop roadmap
 
-Phase 1 is implemented: one explicitly shared Sidebar tab per Session, semantic snapshots with element refs, click and ordinary text fill, navigate/back/forward/reload, secret-field refusal, and bounded observations. Phase 2 adds screenshots and visual verification, keyboard/scroll/drag/select primitives, JavaScript dialog handling, multi-tab management, and an enforced confirmation step for consequential actions. Phase 3 adds allowlisted downloads and uploads, scoped console/network inspection, and annotation/handoff parity with the Codex in-app browser. Each phase keeps the per-tab opt-in and the Host/main separation; no phase exposes arbitrary JavaScript to the model.
+Phase 1 is implemented: one explicitly shared Sidebar tab per Session, semantic snapshots with element refs, click and ordinary text fill, navigate/back/forward/reload, secret-field refusal, and bounded observations. Phase 2.1 is implemented: `browser_screenshot` captures one bounded viewport PNG, downscaled and byte-capped by plugin config, stored through the attachment service and returned as a durable image reference. Phase 2 continues with keyboard/scroll/drag/select primitives, JavaScript dialog handling, multi-tab management, and an enforced confirmation step for consequential actions. Phase 3 adds allowlisted downloads and uploads, scoped console/network inspection, and annotation/handoff parity with the Codex in-app browser. Each phase keeps the per-tab opt-in and the Host/main separation; no phase exposes arbitrary JavaScript to the model.
 
 ## Lifetime
 

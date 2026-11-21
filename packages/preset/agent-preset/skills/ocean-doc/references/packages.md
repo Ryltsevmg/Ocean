@@ -43,7 +43,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | Package | Config | Description |
 |---|---|---|
 | `@ocean/ocean-browser-use` | no | Exclusive named browser-use provider registration |
-| `@ocean/ocean-tool-browser-desktop` | no | Desktop-only Agent browser tools over the Session-shared Sidebar webview |
+| `@ocean/ocean-tool-browser-desktop` | yes | Desktop-only Agent browser tools over the Session-shared Sidebar webview |
 
 ## bundle
 

@@ -1,6 +1,6 @@
 /** Main-process operations for one Agent-shared Sidebar browser guest. */
 import type { WebContents } from 'electron'
-import type { BrowserAgentCommand, BrowserAgentMethod } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
+import type { BrowserAgentCommand, BrowserAgentImage, BrowserAgentMethod } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
 
 /** Longest text one observation may return to the Host. */
 const MAX_OBSERVATION_CHARS = 60_000
@@ -11,7 +11,7 @@ const SETTLE_TIMEOUT_MS = 8_000
 /** Quiet period after an action that did not start a navigation. */
 const QUIET_DELAY_MS = 350
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot']
 
 /**
  * Validate one Host command before it reaches the guest.
@@ -386,4 +386,30 @@ async function waitForStop(guest: WebContents): Promise<void> {
 /** Resolve after one non-unref'd delay. */
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds) })
+}
+
+/** Read one bounded viewport raster from the guest without touching page content. */
+export async function captureBrowserScreenshot(guest: WebContents,
+  args: Readonly<Record<string, string | number>>): Promise<{ text: string; image: BrowserAgentImage }> {
+  if (guest.isDestroyed()) throw new BrowserAgentError('The shared tab is closed.', 'BROWSER_GUEST_CLOSED')
+  const maxWidth = boundedInteger(args.maxWidth, 1280, 64, 4096)
+  const maxBytes = boundedInteger(args.maxBytes, 4_000_000, 1024, 16_000_000)
+  const captured = await guest.capturePage()
+  const size = captured.getSize()
+  const scaled = size.width > maxWidth ? captured.resize({ width: maxWidth }) : captured
+  const png = scaled.toPNG()
+  if (png.byteLength > maxBytes) {
+    throw new BrowserAgentError('The page screenshot exceeds the configured byte limit.', 'BROWSER_SCREENSHOT_TOO_LARGE')
+  }
+  const dims = scaled.getSize()
+  return {
+    text: `screenshot ${String(dims.width)}x${String(dims.height)}`,
+    image: { data: png.toString('base64'), mediaType: 'image/png', width: dims.width, height: dims.height },
+  }
+}
+
+/** Validate one numeric screenshot bound, falling back to the deployment default. */
+function boundedInteger(value: string | number | undefined, fallback: number, min: number, max: number): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value)) return fallback
+  return Math.min(max, Math.max(min, value))
 }

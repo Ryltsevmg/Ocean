@@ -114,6 +114,14 @@
       }
     },
     {
+      "name": "browser_screenshot",
+      "description": "Capture the shared browser tab viewport as one bounded PNG image.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
       "name": "browser_snapshot",
       "description": "Read the shared browser tab as a compact page tree with element refs. Call before acting.",
       "parameters": {

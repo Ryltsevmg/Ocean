@@ -16,7 +16,7 @@ Desktop 应用在 profile 启动后安装 `browser_*` 工具。它们作用于�
 
 ## Desktop 路线图
 
-第一阶段已实现：每个 Session 一个显式共享的 Sidebar tab、带元素 ref 的语义 snapshot、click 与普通文本 fill、navigate/back/forward/reload、敏感字段拒绝以及有界观察。第二阶段加入截图与视觉校验、键盘/滚动/拖拽/选择原语、JavaScript 对话框处理、多 tab 管理，以及重大操作的强制确认步骤。第三阶段加入白名单下载/上传、受限 console/network 检查，以及与 Codex 应用内浏览器对齐的标注/handoff。每个阶段都保留逐 tab 显式开启与 Host/main 分离；任何阶段都不向模型暴露任意 JavaScript。
+第一阶段已实现：每个 Session 一个显式共享的 Sidebar tab、带元素 ref 的语义 snapshot、click 与普通文本 fill、navigate/back/forward/reload、敏感字段拒绝以及有界观察。阶段 2.1 已实现：`browser_screenshot` 捕获一张有界视口 PNG，按插件配置缩放并限制字节，经 attachment 服务存储并以持久 image 引用返回。第二阶段继续加入键盘/滚动/拖拽/选择原语、JavaScript 对话框处理、多 tab 管理，以及重大操作的强制确认步骤。第三阶段加入白名单下载/上传、受限 console/network 检查，以及与 Codex 应用内浏览器对齐的标注/handoff。每个阶段都保留逐 tab 显式开启与 Host/main 分离；任何阶段都不向模型暴露任意 JavaScript。
 
 ## 生命周期
 

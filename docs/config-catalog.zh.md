@@ -3377,6 +3377,25 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-tool-bash-persistent -->
 
+<!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-browser-desktop -->
+<a id="oceanocean-tool-browser-desktop"></a>
+
+## `@ocean/ocean-tool-browser-desktop`
+
+- `inject`: `tools` · `systemPrompt`
+- `source`: [`packages/browser-use/tool-browser-desktop/src/index.ts:169`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+```ts config-catalog
+/** Deployment bounds for the raster observation the Desktop main process returns. */
+export interface Config {
+  /** Maximum screenshot width in pixels before the main process downscales. */
+  screenshotMaxWidth?: number
+  /** Maximum encoded screenshot bytes accepted from the main process. */
+  screenshotMaxBytes?: number
+}
+```
+<!-- END GENERATED config-catalog:@ocean/ocean-tool-browser-desktop -->
+
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-executor-ptc -->
 <a id="oceanocean-tool-executor-ptc"></a>
 
@@ -4248,7 +4267,6 @@ export interface Config {
 | `@ocean/ocean-subprocess-local` | — | [`packages/subprocess/subprocess-local/src/index.ts`](../packages/subprocess/subprocess-local/src/index.ts) |
 | `@ocean/ocean-subprocess-ssh` | `ssh` | [`packages/ssh/subprocess-ssh/src/index.ts`](../packages/ssh/subprocess-ssh/src/index.ts) |
 | `@ocean/ocean-terminal` | — | [`packages/terminal/terminal/src/index.ts`](../packages/terminal/terminal/src/index.ts) |
-| `@ocean/ocean-tool-browser-desktop` | `tools` · `systemPrompt` | [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts) |
 | `@ocean/ocean-tool-call-timeout-policy` | `tools` | [`packages/guard/timeout-policy/src/index.ts`](../packages/guard/timeout-policy/src/index.ts) |
 | `@ocean/ocean-tool-cordis` | `tools` · `cordisInspect` | [`packages/extensions/tool-cordis/src/index.ts`](../packages/extensions/tool-cordis/src/index.ts) |
 | `@ocean/ocean-tool-executor-native` | `tools` | [`packages/core/tool-executor-native/src/index.ts`](../packages/core/tool-executor-native/src/index.ts) |

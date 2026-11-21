@@ -4,6 +4,8 @@
  * @module @ocean/ocean-tool-browser-desktop
  */
 import type { Context } from '@deepseek-ai/cordis'
+import z from '@deepseek-ai/schemastery'
+import type { ImageAttachmentRef } from '@ocean/ocean-attachment'
 import type { ToolRunContext } from '@ocean/ocean-tools'
 import { defineTool } from '@ocean/ocean-tools'
 import BrowserUseRegistry from '@ocean/ocean-browser-use'
@@ -11,6 +13,7 @@ import { BrowserUseProviderName } from '@ocean/ocean-browser-use/brand'
 import { HarnessError } from '@ocean/ocean-error'
 import type {
   BrowserAgentCommand,
+  BrowserAgentImage,
   BrowserAgentMethod,
   BrowserAgentResult,
 } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
@@ -49,7 +52,13 @@ function isResult(value: unknown): value is BrowserAgentResult {
   if (typeof value !== 'object' || value === null || !('type' in value) || value.type !== 'browser-agent-result') return false
   const result = value as Record<string, unknown>
   if (!Number.isSafeInteger(result.requestId) || (result.requestId as number) < 0) return false
-  if (result.ok === true) return typeof result.text === 'string'
+  if (result.ok === true) {
+    if (typeof result.text !== 'string') return false
+    if (result.image === undefined) return true
+    const image = result.image as Record<string, unknown>
+    return typeof image.data === 'string' && image.mediaType === 'image/png'
+      && Number.isSafeInteger(image.width) && Number.isSafeInteger(image.height)
+  }
   if (result.ok !== false) return false
   const error = result.error
   return typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
@@ -59,7 +68,7 @@ function isResult(value: unknown): value is BrowserAgentResult {
 /** One request/response bridge with a bounded wait per command. */
 export class BrowserAgentRequester {
   private readonly pending = new Map<number, {
-    readonly resolve: (text: string) => void
+    readonly resolve: (observation: { text: string; image?: BrowserAgentImage }) => void
     readonly reject: (error: Error) => void
     readonly timer: ReturnType<typeof setTimeout>
     readonly abort: () => void
@@ -75,7 +84,7 @@ export class BrowserAgentRequester {
       const entry = this.pending.get(message.requestId)
       if (entry === undefined) return
       this.settle(message.requestId, entry)
-      if (message.ok) entry.resolve(message.text)
+      if (message.ok) entry.resolve({ text: message.text, ...message.image === undefined ? {} : { image: message.image } })
       else entry.reject(new HarnessError(message.error.message, message.error.code))
     })
   }
@@ -89,7 +98,7 @@ export class BrowserAgentRequester {
    * @returns model-facing text.
    */
   async request(session: string, method: BrowserAgentMethod,
-    args: Readonly<Record<string, string | number>>, signal: AbortSignal): Promise<string> {
+    args: Readonly<Record<string, string | number>>, signal: AbortSignal): Promise<{ text: string; image?: BrowserAgentImage }> {
     if (signal.aborted) throw new HarnessError('The browser action was canceled.', 'ABORTED')
     const requestId = this.next++
     const timer = setTimeout(() => {
@@ -101,7 +110,7 @@ export class BrowserAgentRequester {
       entry.reject(new HarnessError('The shared tab did not answer in time.', 'BROWSER_TIMEOUT'))
     }, 30_000)
     timer.unref()
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<{ text: string; image?: BrowserAgentImage }>((resolve, reject) => {
       const abort = (): void => {
         this.pending.delete(requestId)
         clearTimeout(timer)
@@ -156,6 +165,20 @@ function processTransport(): DesktopBrowserTransport {
   }
 }
 
+/** Deployment bounds for the raster observation the Desktop main process returns. */
+export interface Config {
+  /** Maximum screenshot width in pixels before the main process downscales. */
+  screenshotMaxWidth?: number
+  /** Maximum encoded screenshot bytes accepted from the main process. */
+  screenshotMaxBytes?: number
+}
+
+/** Schemastery config for the screenshot bounds. */
+export const Config: z<Config> = z.object({
+  screenshotMaxWidth: z.number().step(1).min(64).max(4096).default(1280),
+  screenshotMaxBytes: z.number().step(1).min(1024).max(16_000_000).default(4_000_000),
+})
+
 /** Loader plugin name. */
 export const name = 'tool-browser-desktop'
 
@@ -165,9 +188,11 @@ export const inject = ['tools', 'systemPrompt']
 /** Register the Desktop browser provider, tools, and policy section once.
  * @param ctx - plugin context owning browser admission, tools, and policy.
  * @param transport - private Host-to-main channel; defaults to the Desktop IPC.
+ * @param config - screenshot bounds; omitted fields use the schema defaults.
  */
 export function installDesktopBrowserAgent(ctx: Context,
-  transport: DesktopBrowserTransport = processTransport()): void {
+  transport: DesktopBrowserTransport = processTransport(), config: Config = {}): void {
+  const bounds = Config(config)
   const registry = ctx.get('browserUse') ?? new BrowserUseRegistry(ctx)
   if (registry.providerName !== undefined) {
     ctx.logger.warn(`desktop browser agent shares the process with browser provider "${registry.providerName}"; its own in-app tools remain available`)
@@ -175,7 +200,7 @@ export function installDesktopBrowserAgent(ctx: Context,
   const requester = new BrowserAgentRequester(transport)
   const run = (exec: ToolRunContext, method: BrowserAgentMethod,
     args: Readonly<Record<string, string | number>>): Promise<{ text: string }> =>
-    requester.request(sessionId(exec), method, args, exec.signal).then(text => ({ text }))
+    requester.request(sessionId(exec), method, args, exec.signal).then(observation => ({ text: observation.text }))
   ctx.effect(function* () {
     if (registry.providerName === undefined) yield registry.register(BrowserUseProviderName(PROVIDER))
     yield ctx.systemPrompt.section({
@@ -254,11 +279,75 @@ export function installDesktopBrowserAgent(ctx: Context,
       execute: (_args, exec) => run(exec, 'reload', {}),
       presentCall: () => ({ card: 'generic', title: 'Reload shared browser', kind: 'other' }),
     }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_screenshot',
+      description: 'Capture the shared browser tab viewport as one bounded PNG image.',
+      parameters: {},
+      output: {
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            attachment: {
+              type: 'object',
+              additionalProperties: false,
+              required: true,
+              properties: {
+                attachmentId: { type: 'string', required: true },
+                mediaType: { type: 'string', required: true },
+                bytes: { type: 'integer', required: true },
+                width: { type: 'integer', required: true },
+                height: { type: 'integer', required: true },
+              },
+            },
+            width: { type: 'integer', required: true },
+            height: { type: 'integer', required: true },
+          },
+        },
+        render: (_args, value) => [{
+          type: 'image' as const,
+          attachment: {
+            attachmentId: value.attachment.attachmentId as ImageAttachmentRef['attachmentId'],
+            mediaType: value.attachment.mediaType as ImageAttachmentRef['mediaType'],
+            bytes: value.attachment.bytes,
+            width: value.attachment.width,
+            height: value.attachment.height,
+          },
+        }],
+        programImage: true,
+      },
+      async execute(_args, exec) {
+        const observation = await requester.request(sessionId(exec), 'screenshot', {
+          maxWidth: bounds.screenshotMaxWidth ?? 1280, maxBytes: bounds.screenshotMaxBytes ?? 4_000_000,
+        }, exec.signal)
+        if (observation.image === undefined) {
+          throw new HarnessError('The shared tab returned no image.', 'BROWSER_SCREENSHOT_MISSING')
+        }
+        const attachments = ctx.get('attachments')
+        if (attachments === undefined) {
+          throw new HarnessError('Image storage is unavailable in this profile.', 'BROWSER_ATTACHMENTS_UNAVAILABLE')
+        }
+        const [ref] = await attachments.saveImages([{
+          data: Buffer.from(observation.image.data, 'base64'),
+          mediaType: observation.image.mediaType,
+          name: 'browser-screenshot.png',
+        }])
+        if (ref === undefined) throw new HarnessError('Image storage returned no reference.', 'BROWSER_SCREENSHOT_MISSING')
+        return {
+          attachment: {
+            attachmentId: ref.attachmentId, mediaType: ref.mediaType, bytes: ref.bytes,
+            width: ref.width, height: ref.height,
+          },
+          width: observation.image.width, height: observation.image.height,
+        }
+      },
+      presentCall: () => ({ card: 'generic', title: 'Screenshot shared browser', kind: 'read' }),
+    }))
     yield () => { requester.dispose() }
   }, 'desktop-browser-agent')
 }
 
 /** Loader entry: mount the Desktop browser tools over the default Desktop IPC. */
-export function apply(ctx: Context): void {
-  installDesktopBrowserAgent(ctx)
+export function apply(ctx: Context, config: Config = {}): void {
+  installDesktopBrowserAgent(ctx, processTransport(), config)
 }

@@ -15,6 +15,7 @@ export type BrowserAgentMethod =
   | 'back'
   | 'forward'
   | 'reload'
+  | 'screenshot'
 
 /** Host-to-main request for one operation on the Session's shared tab. */
 export interface BrowserAgentCommand {
@@ -31,6 +32,14 @@ export interface BrowserAgentFailure {
   readonly message: string
 }
 
+/** One bounded raster observation carried beside the text of a successful result. */
+export interface BrowserAgentImage {
+  readonly data: string
+  readonly mediaType: 'image/png'
+  readonly width: number
+  readonly height: number
+}
+
 /** Main-to-Host answer for one command; text is the model-facing observation. */
 export type BrowserAgentResult =
   | {
@@ -38,6 +47,7 @@ export type BrowserAgentResult =
     readonly requestId: number
     readonly ok: true
     readonly text: string
+    readonly image?: BrowserAgentImage
   }
   | {
     readonly type: 'browser-agent-result'

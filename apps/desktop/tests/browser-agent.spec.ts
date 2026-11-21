@@ -4,6 +4,7 @@ import {
   assertAgentRef,
   assertAgentUrl,
   BrowserAgentError,
+  captureBrowserScreenshot,
   executeBrowserAgent,
   isBrowserAgentCommand,
 } from '../src/browser-agent.ts'
@@ -96,5 +97,43 @@ describe('browser agent executor', () => {
     vi.mocked(missingExecute).mockResolvedValueOnce({ ok: false, reason: 'missing' })
     await expect(executeBrowserAgent(missing, 'click', { ref: 'e9' }))
       .rejects.toMatchObject({ code: 'BROWSER_REF_STALE' })
+  })
+})
+
+describe('browser screenshot capture', () => {
+  function raster(width: number, bytes: number) {
+    const png = Buffer.alloc(bytes, 7)
+    const image = {
+      getSize: () => ({ width, height: 100 }),
+      resize: vi.fn(() => ({ getSize: () => ({ width: 64, height: 8 }), toPNG: () => png })),
+      toPNG: () => png,
+    }
+    return image
+  }
+  function guestWith(image: unknown, destroyed = false) {
+    return { isDestroyed: () => destroyed, capturePage: vi.fn(async () => image) } as never
+  }
+
+  it('returns the viewport raster without downscaling when it fits', async () => {
+    const image = raster(100, 32)
+    const out = await captureBrowserScreenshot(guestWith(image), {})
+    expect(out.text).toBe('screenshot 100x100')
+    expect(out.image).toMatchObject({ mediaType: 'image/png', width: 100, height: 100 })
+    expect(out.image.data).toBe(Buffer.alloc(32, 7).toString('base64'))
+    expect(image.resize).not.toHaveBeenCalled()
+  })
+
+  it('downscales wide pages and clamps the requested bounds', async () => {
+    const image = raster(4000, 16)
+    const out = await captureBrowserScreenshot(guestWith(image), { maxWidth: 10, maxBytes: 1 })
+    expect(image.resize).toHaveBeenCalledWith({ width: 64 })
+    expect(out.image.width).toBe(64)
+  })
+
+  it('refuses an oversized raster and a closed guest', async () => {
+    await expect(captureBrowserScreenshot(guestWith(raster(100, 64)), { maxBytes: 1024 }))
+      .rejects.toMatchObject({ code: 'BROWSER_SCREENSHOT_TOO_LARGE' })
+    await expect(captureBrowserScreenshot(guestWith(raster(100, 8), true), {}))
+      .rejects.toMatchObject({ code: 'BROWSER_GUEST_CLOSED' })
   })
 })

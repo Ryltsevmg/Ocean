@@ -26,7 +26,7 @@ kind: "package-reference"
 
 Desktop bundle 仅为 `desktop` profile 挂载本行。每个浏览器 tab 默认不共享；用户在 tab 工具栏开启 **与 Agent 共享**，一个 Session 同时只能共享一个 tab。关闭 tab 或停用共享即撤销访问。
 
-工具：`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`。`browser_snapshot` 返回带元素 ref 的紧凑语义树；操作接受最新 snapshot 的 ref 并返回结果树。`browser_fill` 拒绝 password、one-time-code 与卡片字段；`browser_navigate` 只接受不含凭据的 HTTP(S) 地址，包括 loopback。
+工具：`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`。`browser_snapshot` 返回带元素 ref 的紧凑语义树；操作接受最新 snapshot 的 ref 并返回结果树。`browser_fill` 拒绝 password、one-time-code 与卡片字段；`browser_navigate` 只接受不含凭据的 HTTP(S) 地址，包括 loopback。`browser_screenshot` 将视口捕获为一张有界 PNG，按 `screenshotMaxWidth`（默认 1280）缩放，超过 `screenshotMaxBytes`（默认 4000000）即拒绝；Host 通过 attachment 服务存储并返回持久 image 引用，Session log 中不出现 base64。
 
 -----
 
@@ -79,7 +79,7 @@ section 在 scope 内的每个 Desktop profile 请求上的小额固定输入成
 
 #### What the model sees
 
-[八个工具 schema](../../../docs/tool-catalog.zh.md#oceanocean-tool-browser-desktop)（`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`）。成功结果是一条有界文本观察：tab 事实或带元素 ref 的紧凑语义页面树。失败携带稳定码，如 `BROWSER_NOT_SHARED`、`BROWSER_SECRET_FIELD`。
+[八个工具 schema](../../../docs/tool-catalog.zh.md#oceanocean-tool-browser-desktop)（`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`）。成功结果是一条有界文本观察——tab 事实或带元素 ref 的紧凑语义页面树——`browser_screenshot` 除外：其规范值携带持久 attachment 引用与固有尺寸，并渲染为一个 image block。失败携带稳定码，如 `BROWSER_NOT_SHARED`、`BROWSER_SECRET_FIELD`。
 
 #### Token effect
 
@@ -95,7 +95,7 @@ section 在 scope 内的每个 Desktop profile 请求上的小额固定输入成
 
 - Desktop Host 之外没有 main 进程通道，因此每次调用都以传输或未共享错误失败；非 Desktop profile 禁用本行。
 - 元素 ref 是页面可修改或伪造的 best-effort 标识，不是授权。Agent 必须在导航后重新读取。
-- 重大操作依赖用户在场与模型策略，而非强制确认步骤；截图、键盘/滚动/拖拽/选择、对话框、多 tab、文件与 CDP 延期到路线图后续阶段。
+- 重大操作依赖用户在场与模型策略，而非强制确认步骤；键盘/滚动/拖拽/选择、对话框、多 tab、文件与 CDP 延期到路线图后续阶段。
 
 <a id="dev-note"></a>
 ### 开发备注

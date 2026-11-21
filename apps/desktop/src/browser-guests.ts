@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { app, session, type BrowserWindow, type Session, type WebContents } from 'electron'
 import type { DesktopBrowserLeaseId, DesktopBrowserOpenRequest, DesktopBrowserReservation } from '@ocean/ocean-client-ui-sidebar-browser/types'
 import type { BrowserAgentMethod, BrowserAgentResult } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
-import { BrowserAgentError, executeBrowserAgent } from './browser-agent.ts'
+import { BrowserAgentError, captureBrowserScreenshot, executeBrowserAgent } from './browser-agent.ts'
 import { DESKTOP_IPC } from './ipc.ts'
 
 interface GuestLease {
@@ -18,7 +18,7 @@ interface GuestLease {
   agentTail?: Promise<void>
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot']
 
 /** Build one result whose request id is filled in by the IPC dispatcher. */
 function agentFailure(code: string, message: string): BrowserAgentResult {
@@ -142,7 +142,13 @@ export class DesktopBrowserGuests {
         return
       }
       try {
-        result = { type: 'browser-agent-result', requestId: 0, ok: true, text: await executeBrowserAgent(guest, method, args) }
+        const observation = method === 'screenshot'
+          ? await captureBrowserScreenshot(guest, args)
+          : { text: await executeBrowserAgent(guest, method, args) }
+        result = {
+          type: 'browser-agent-result', requestId: 0, ok: true, text: observation.text,
+          ...'image' in observation ? { image: observation.image } : {},
+        }
       } catch (error) {
         result = error instanceof BrowserAgentError
           ? agentFailure(error.code, error.message)
