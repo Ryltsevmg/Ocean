@@ -3648,7 +3648,7 @@ export interface Config {
 ## `@ocean/ocean-tool-skill`
 
 - `inject`: `agents` · `tools` · `skills` · `workingDirectory`
-- `source`: [`packages/skill/tool-skill/src/index.ts:70`](../packages/skill/tool-skill/src/index.ts)
+- `source`: [`packages/skill/tool-skill/src/index.ts:73`](../packages/skill/tool-skill/src/index.ts)
 
 ```ts config-catalog
 /** Model-facing skill catalog configuration. */

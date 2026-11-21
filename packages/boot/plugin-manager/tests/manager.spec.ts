@@ -1,5 +1,6 @@
 /** Persistent manager behavior through a real profile Include and Loader. */
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { realpath } from 'node:fs/promises'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
@@ -203,6 +204,70 @@ it('cancels an active GitHub check before starting pnpm', async () => {
   await entered.promise
   expect(await manager.cancelInstall(requestId)).toEqual({ status: 'cancelled' })
   expect(await installing).toMatchObject({ application: 'cancelled', changed: false })
+  expect(pnpm).not.toHaveBeenCalled()
+})
+
+/** Serve one published offer whose archive may deliberately mismatch its digest. */
+async function publishedChannel(options: { name?: string; version?: string; mismatch?: boolean } = {}) {
+  const archive = Buffer.from('published archive fixture')
+  const digest = createHash('sha256').update(archive).digest('hex')
+  let downloads = 0
+  const server = createServer((req, res) => {
+    const port = (server.address() as { port: number }).port
+    if (req.url === '/v1/current.json') {
+      res.end(JSON.stringify({
+        schemaVersion: 1,
+        plugins: [{
+          name: options.name ?? '@ocean/example', version: options.version ?? '1.2.3', sha256: digest, ocean: '^1.0.0',
+          title: { en: 'Example' }, description: { en: 'Example' },
+          archive: `http://127.0.0.1:${port}/archives/${digest}/plugin.tgz`,
+        }],
+      }))
+    } else if (req.url === `/archives/${digest}/plugin.tgz`) {
+      downloads++
+      res.end(options.mismatch === true ? Buffer.from('other bytes') : archive)
+    } else res.writeHead(404).end()
+  }).listen(0, '127.0.0.1')
+  onTestFinished(() => new Promise<void>((resolve, reject) => {
+    server.close((error) => { if (error === undefined) resolve(); else reject(error) })
+  }))
+  await once(server, 'listening')
+  const port = (server.address() as { port: number }).port
+  return { url: `http://127.0.0.1:${port}/v1/current.json`, digest, downloads: () => downloads }
+}
+
+it('prepares an approved published offer before installing it', async () => {
+  const channel = await publishedChannel()
+  const { manager } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm').mockResolvedValue({ exitCode: 1, output: 'stop', truncated: false, logPath: 'pnpm.log', kind: 'unknown' })
+  onTestFinished(() => { pnpm.mockRestore() })
+  const result = await manager.installPublishedBundle({ name: '@ocean/example', version: '1.2.3', sha256: channel.digest })
+  expect(channel.downloads()).toBe(1)
+  expect(pnpm).toHaveBeenCalledOnce()
+  expect(result.application).toBe('failed')
+})
+
+it('refuses a published offer already present in the profile', async () => {
+  const channel = await publishedChannel({ name: 'extra', version: '1.0.0' })
+  const { manager } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm')
+  onTestFinished(() => { pnpm.mockRestore() })
+  expect(await manager.installPublishedBundle({ name: 'extra', version: '1.0.0', sha256: channel.digest }))
+    .toMatchObject({ changed: false })
+  expect(pnpm).not.toHaveBeenCalled()
+})
+
+it('refuses a published install without a configured catalogue and on archive mismatch', async () => {
+  const { manager: bare } = await fixture('startup')
+  expect(await bare.installPublishedBundle({ name: '@ocean/example', version: '1.2.3', sha256: 'a'.repeat(64) }))
+    .toMatchObject({ changed: false })
+  expect(await bare.listPublishedCatalog()).toEqual({ status: 'unavailable', plugins: [] })
+  const channel = await publishedChannel({ mismatch: true })
+  const { manager } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm')
+  onTestFinished(() => { pnpm.mockRestore() })
+  expect(await manager.installPublishedBundle({ name: '@ocean/example', version: '1.2.3', sha256: channel.digest }))
+    .toMatchObject({ changed: false })
   expect(pnpm).not.toHaveBeenCalled()
 })
 
