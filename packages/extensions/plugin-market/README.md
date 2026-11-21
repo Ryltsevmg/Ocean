@@ -25,7 +25,7 @@ Open Plugins → Catalogue in Ocean Web or Desktop to find bundles approved and 
 
 The catalogue reads the public channel when opened and on Refresh. A newly published offer appears after a successful read without rebuilding Ocean. Removing an offer removes its card from the catalogue but never uninstalls an existing copy.
 
-**Install** is available only for a current, compatible offer and an absent package. Script approvals and restart notices use the standard installation dialog. Use Installed to manage packages that are not in the catalogue, or Add plugin to provide your own source.
+**Install** is available only for a current, compatible offer that neither has its own bundle nor is mounted by an installed one; a mounted offer names its bundle and opens it instead. Script approvals and restart notices use the standard installation dialog. Use Installed to manage packages that are not in the catalogue, or Add plugin to provide your own source.
 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
@@ -33,7 +33,7 @@ The catalogue reads the public channel when opened and on Refresh. A newly publi
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The Host entry is inert. The Client contributes one `plugins.tab` entry and joins the approved offers with the profile inventory by package name. The shared [plugin manager](../../boot/plugin-manager/README.md) owns network reads, verification and installation.
+The Host entry is inert. The Client contributes one `plugins.tab` entry and joins each approved offer to the profile inventory by exact package name, or to the installed bundle that mounts the offer as one of its rows. The shared [plugin manager](../../boot/plugin-manager/README.md) owns network reads, verification and installation.
 
 If the channel cannot be refreshed, the last successful list stays visible for this process and new installations from it are disabled. A successful empty list means no offers are published. A failure never removes any installed package.
 

@@ -22,7 +22,7 @@ const warnInk = 'var(--dsw-alias-state-warn-primary)'
 const successInk = 'var(--dsw-alias-state-success-primary)'
 /** Status pill tone per badge, reusing the Plugins page state-color treatment. */
 const badgeTone = { badgeOn: successInk, badgeOff: idleInk, badgeMissing: idleInk, badgeBlocked: warnInk,
-  badgeBroken: errorInk, badgeIncompatible: warnInk, badgeUnknown: idleInk }
+  badgeBroken: errorInk, badgeContained: idleInk, badgeIncompatible: warnInk, badgeUnknown: idleInk }
 /** @param {string} badge the card's badge key @returns {import('react').CSSProperties} a compact state-colored pill */
 function badgeStyle(badge) {
   const ink = badgeTone[badge] ?? idleInk
@@ -86,7 +86,7 @@ export function createMarketTab(React, Modal, dialogClass) {
             const target = actions.getInstallTarget(action.target)
             if (target !== undefined) installPublished(target)
           } else if (action.kind === 'open') {
-            openPackage(card.name)
+            openPackage(action.name ?? card.name)
           } else {
             void actions.setEnabled(card.name, action.kind === 'enable')
           }
@@ -113,7 +113,8 @@ export function createMarketTab(React, Modal, dialogClass) {
   function BundleMeta({ card, t, pending }) {
     return h('div', { style: styles.meta },
       h('span', { style: styles.name }, card.name),
-      card.installed ? h('span', null, t('installedVersion', { version: card.version ?? t('unknownVersion') })) : null,
+      card.containedBy === undefined ? null : h('span', null, t('containedIn', { bundle: card.containedBy, version: card.containedVersion ?? t('unknownVersion') })),
+      card.containedBy === undefined && card.installed ? h('span', null, t('installedVersion', { version: card.version ?? t('unknownVersion') })) : null,
       card.version === card.publishedVersion ? null : h('span', null, t('publishedVersion', { version: card.publishedVersion })),
       pending ? h('span', { role: 'status' }, t('changing')) : null,
     )
@@ -123,7 +124,8 @@ export function createMarketTab(React, Modal, dialogClass) {
   function CardNotes({ card, t }) {
     return h(React.Fragment, null,
       !card.compatible ? h('p', { style: styles.note }, t('noteIncompatible')) : null,
-      card.note === undefined ? null : h('p', { style: styles.note }, t(card.note)),
+      card.note === undefined ? null : h('p', { style: styles.note },
+        t(card.note, card.containedBy === undefined ? undefined : { bundle: card.containedBy })),
       card.error === undefined ? null : h('p', { style: styles.error }, card.error),
     )
   }
