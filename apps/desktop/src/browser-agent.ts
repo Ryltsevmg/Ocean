@@ -1,6 +1,7 @@
 /** Main-process operations for one Agent-shared Sidebar browser guest. */
 import { stat } from 'node:fs/promises'
-import type { WebContents } from 'electron'
+
+import type { KeyboardInputEvent, MouseInputEvent, MouseWheelInputEvent } from 'electron'
 import type { BrowserAgentCommand, BrowserAgentImage, BrowserAgentMethod } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
 
 /** Longest text one observation may return to the Host. */
@@ -28,6 +29,41 @@ export function isBrowserAgentCommand(value: unknown): value is BrowserAgentComm
   if (typeof command.args !== 'object' || command.args === null || Array.isArray(command.args)) return false
   return Object.values(command.args).every(item => typeof item === 'string'
     || (typeof item === 'number' && Number.isFinite(item)))
+}
+
+
+/** One pointer or key event accepted by the executor; a subset of Electron's input events. */
+/** One viewport raster the screenshot path reads. */
+export interface GuestRaster {
+  getSize(): { width: number; height: number }
+  resize(options: { width: number }): GuestRaster
+  toPNG(): Buffer
+}
+
+/** The subset of a guest the Agent executor uses; tests provide plain objects. */
+export interface GuestLike {
+  isDestroyed(): boolean
+  getTitle(): string
+  getURL(): string
+  isLoading(): boolean
+  executeJavaScript(script: string, userGesture?: boolean): Promise<unknown>
+  sendInputEvent(event: MouseInputEvent | MouseWheelInputEvent | KeyboardInputEvent): void
+  insertText(text: string): Promise<void>
+  loadURL(url: string): Promise<void>
+  reload(): void
+  on(event: string, listener: (...args: never[]) => void): void
+  once(event: string, listener: (...args: never[]) => void): void
+  removeListener(event: string, listener: (...args: never[]) => void): void
+  navigationHistory: { canGoBack(): boolean; canGoForward(): boolean; goBack(): void; goForward(): void }
+  debugger: {
+    attach(protocol: string): void
+    isAttached(): boolean
+    detach(): void
+    on(event: 'message', listener: (...args: [unknown, string, Record<string, unknown>]) => void): void
+    removeListener(event: 'message', listener: (...args: [unknown, string, Record<string, unknown>]) => void): void
+    sendCommand(method: string, params?: Record<string, unknown>): Promise<unknown>
+  }
+  capturePage(): Promise<GuestRaster>
 }
 
 /** One failure that is safe to show to the model. */
@@ -230,7 +266,7 @@ export function assertAgentRef(value: unknown): string {
 }
 
 /** Run one command against the guest; the caller serializes commands per Session. */
-export async function executeBrowserAgent(guest: WebContents, method: BrowserAgentMethod,
+export async function executeBrowserAgent(guest: GuestLike, method: BrowserAgentMethod,
   args: Readonly<Record<string, string | number>>): Promise<string> {
   if (guest.isDestroyed()) throw new BrowserAgentError('The shared tab is closed.', 'BROWSER_GUEST_CLOSED')
   switch (method) {
@@ -378,25 +414,25 @@ export async function executeBrowserAgent(guest: WebContents, method: BrowserAge
 }
 
 /** Read the current page as a bounded semantic tree. */
-async function observe(guest: WebContents): Promise<string> {
+async function observe(guest: GuestLike): Promise<string> {
   const value = await guest.executeJavaScript(SNAPSHOT_SCRIPT, true) as SnapshotValue
   const truncated = value.truncated ? '\n… snapshot truncated; narrow the page or use a smaller target.' : ''
   return `${value.title || '(untitled)'}\n${value.url}\n\n${value.text}${truncated}`
 }
 
 /** Read basic tab facts without touching page content. */
-function information(guest: WebContents): string {
+function information(guest: GuestLike): string {
   return `title: ${guest.getTitle() || '(untitled)'}\nurl: ${guest.getURL() || '(none)'}\nloading: ${String(guest.isLoading())}`
 }
 
 /** Load one address and wait for its document to settle. */
-async function load(guest: WebContents, url: string): Promise<void> {
+async function load(guest: GuestLike, url: string): Promise<void> {
   await guest.loadURL(url)
   await settle(guest)
 }
 
 /** Resolve a snapshot reference to a clickable viewport point. */
-async function clickPoint(guest: WebContents, ref: string): Promise<ClickPoint> {
+async function clickPoint(guest: GuestLike, ref: string): Promise<ClickPoint> {
   const selector = JSON.stringify(`[data-ocean-agent-ref="${ref}"]`)
   const script = `(() => {
     const el = document.querySelector(${selector})
@@ -416,7 +452,7 @@ async function clickPoint(guest: WebContents, ref: string): Promise<ClickPoint> 
 }
 
 /** Focus one text control and select its current value. */
-async function fillTarget(guest: WebContents,
+async function fillTarget(guest: GuestLike,
   ref: string): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
   const selector = JSON.stringify(`[data-ocean-agent-ref="${ref}"]`)
   const script = `(() => {
@@ -453,7 +489,7 @@ async function fillTarget(guest: WebContents,
 }
 
 /** Wait for a navigation that the action started, or a bounded quiet period. */
-async function settle(guest: WebContents): Promise<void> {
+async function settle(guest: GuestLike): Promise<void> {
   const navigation = { started: false }
   const start = (): void => { navigation.started = true }
   guest.on('did-start-navigation', start)
@@ -467,7 +503,7 @@ async function settle(guest: WebContents): Promise<void> {
 }
 
 /** Wait until the guest stops loading, fails, or disappears. */
-async function waitForStop(guest: WebContents): Promise<void> {
+async function waitForStop(guest: GuestLike): Promise<void> {
   await new Promise<void>((resolve) => {
     const cleanup = (): void => {
       guest.removeListener('did-stop-loading', finish)
@@ -488,7 +524,7 @@ function delay(milliseconds: number): Promise<void> {
 }
 
 /** Read one bounded viewport raster from the guest without touching page content. */
-export async function captureBrowserScreenshot(guest: WebContents,
+export async function captureBrowserScreenshot(guest: GuestLike,
   args: Readonly<Record<string, string | number>>): Promise<{ text: string; image: BrowserAgentImage }> {
   if (guest.isDestroyed()) throw new BrowserAgentError('The shared tab is closed.', 'BROWSER_GUEST_CLOSED')
   const maxWidth = boundedInteger(args.maxWidth, 1280, 64, 4096)
@@ -567,7 +603,7 @@ export interface DialogWatch {
 /** Attach the Page, Runtime, and Network domains for dialogs, console, and requests; a foreign debugger leaves the watch inert. */
 const DEV_BUFFER_LIMIT = 60
 
-export function watchDialogs(guest: WebContents): DialogWatch {
+export function watchDialogs(guest: GuestLike): DialogWatch {
   let pending: PendingDialog | undefined
   let active = true
   const consoleLines: string[] = []

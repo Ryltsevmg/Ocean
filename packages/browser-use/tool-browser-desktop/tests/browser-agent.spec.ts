@@ -2,11 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ToolDefinition } from '@ocean/ocean-tools'
 import type { ToolRunContext } from '@ocean/ocean-tools'
 import type { BrowserAgentCommand } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
-import {
-  BrowserAgentRequester,
-  installDesktopBrowserAgent,
-  type DesktopBrowserTransport,
-} from '../src/index.ts'
+import { installDesktopBrowserAgent } from '../src/install.ts'
+import { BrowserAgentRequester, type DesktopBrowserTransport } from '../src/bridge.ts'
 
 function transport() {
   const listeners = new Set<(message: unknown) => void>()

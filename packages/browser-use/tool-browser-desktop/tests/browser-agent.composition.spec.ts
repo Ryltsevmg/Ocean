@@ -15,7 +15,8 @@ import * as NativeToolExecutor from '@ocean/ocean-tool-executor-native'
 import { executeToolFixture } from '@ocean/ocean-tool-testkit'
 import { describe, expect, it } from 'vitest'
 import type { BrowserAgentCommand } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
-import { installDesktopBrowserAgent, type DesktopBrowserTransport } from '../src/index.ts'
+import { installDesktopBrowserAgent } from '../src/install.ts'
+import type { DesktopBrowserTransport } from '../src/bridge.ts'
 
 /** Boot the real services plus the Desktop installer over a fake Electron channel. */
 async function composition() {

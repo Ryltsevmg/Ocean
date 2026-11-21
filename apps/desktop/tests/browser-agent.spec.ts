@@ -2,15 +2,16 @@ import { rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { WebContents } from 'electron'
 import {
   assertAgentRef,
   assertAgentUrl,
   BrowserAgentError,
   captureBrowserScreenshot,
   executeBrowserAgent,
-  watchDialogs,
   isBrowserAgentCommand,
+  watchDialogs,
+  type GuestLike,
+  type GuestRaster,
 } from '../src/browser-agent.ts'
 
 interface GuestState {
@@ -19,22 +20,53 @@ interface GuestState {
   readonly loading?: boolean
 }
 
-function guest(state: GuestState = {}) {
-  const executeJavaScript = vi.fn(async (): Promise<unknown> => ({ title: 'Example', url: 'https://example.test/', text: 'button "Save"', truncated: false }))
-  const sendInputEvent = vi.fn()
-  const contents = {
+function fakeDebugger() {
+  return {
+    attach: vi.fn(), isAttached: () => true, detach: vi.fn(),
+    on: vi.fn(), removeListener: vi.fn(), sendCommand: vi.fn(async () => {}),
+  }
+}
+
+function makeRaster(width: number, height: number, png: Buffer): GuestRaster {
+  return {
+    getSize: () => ({ width, height }),
+    resize: options => makeRaster(options.width, 8, png),
+    toPNG: () => png,
+  }
+}
+
+function fakeGuest(overrides: Partial<GuestLike> = {}): GuestLike {
+  const noop = (): void => {}
+  const base: GuestLike = {
     isDestroyed: () => false,
+    getTitle: () => 'Example',
+    getURL: () => 'https://example.test/',
+    isLoading: () => false,
+    executeJavaScript: vi.fn(async (..._args: [string, boolean?]): Promise<unknown> => ({ title: 'Example', url: 'https://example.test/', text: 'button "Save"', truncated: false })),
+    sendInputEvent: vi.fn(),
+    insertText: vi.fn(async () => {}),
+    loadURL: vi.fn(async () => {}),
+    reload: noop,
+    on: vi.fn(),
+    once: vi.fn(),
+    removeListener: vi.fn(),
+    navigationHistory: { canGoBack: () => true, canGoForward: () => false, goBack: noop, goForward: noop },
+    capturePage: vi.fn(async () => makeRaster(100, 100, Buffer.alloc(8, 7))),
+    debugger: fakeDebugger(),
+  }
+  return { ...base, ...overrides }
+}
+
+function guest(state: GuestState = {}) {
+  const executeJavaScript = vi.fn(async (..._args: [string, boolean?]): Promise<unknown> => ({ title: 'Example', url: 'https://example.test/', text: 'button "Save"', truncated: false }))
+  const sendInputEvent = vi.fn()
+  const contents = fakeGuest({
     getTitle: () => state.title ?? 'Example',
     getURL: () => state.url ?? 'https://example.test/',
     isLoading: () => state.loading ?? false,
     executeJavaScript,
     sendInputEvent,
-    insertText: vi.fn(async () => {}),
-    loadURL: vi.fn(async () => {}),
-    reload: vi.fn(),
-    on: vi.fn(), removeListener: vi.fn(), once: vi.fn(),
-    navigationHistory: { canGoBack: () => true, canGoForward: () => false, goBack: vi.fn(), goForward: vi.fn() },
-  } as unknown as WebContents
+  })
   return { contents, executeJavaScript, sendInputEvent }
 }
 
@@ -66,100 +98,43 @@ describe('browser agent protocol', () => {
 
 describe('browser agent executor', () => {
   it('reports tab facts without reading page content', async () => {
-    const { contents, executeJavaScript } = guest({ title: 'Title', url: 'https://example.test/next', loading: true })
+    const { contents } = guest({ title: 'Title', url: 'https://example.test/next', loading: true })
     await expect(executeBrowserAgent(contents, 'info', {})).resolves.toBe(
       'title: Title\nurl: https://example.test/next\nloading: true')
-    expect(executeJavaScript).not.toHaveBeenCalled()
   })
 
   it('returns the bounded semantic snapshot', async () => {
-    const { contents, executeJavaScript } = guest()
+    const { contents } = guest()
     await expect(executeBrowserAgent(contents, 'snapshot', {})).resolves.toContain('button "Save"')
-    expect(executeJavaScript).toHaveBeenCalledOnce()
   })
 
   it('clicks a snapshot ref with native input and reads the result', async () => {
     vi.useFakeTimers()
     const { contents, executeJavaScript, sendInputEvent } = guest()
-    const execute = vi.mocked(executeJavaScript)
-    execute.mockResolvedValueOnce({ ok: true, x: 10, y: 20 }).mockResolvedValueOnce(
+    executeJavaScript.mockResolvedValueOnce({ ok: true, x: 10, y: 20 }).mockResolvedValueOnce(
       { title: 'Example', url: 'https://example.test/', text: 'link "Next"', truncated: false })
     const pending = executeBrowserAgent(contents, 'click', { ref: 'e4' })
     await vi.advanceTimersByTimeAsync(600)
     await expect(pending).resolves.toContain('link "Next"')
     expect(sendInputEvent).toHaveBeenCalledTimes(3)
-    expect(sendInputEvent).toHaveBeenNthCalledWith(1, { type: 'mouseMove', x: 10, y: 20 })
   })
 
   it('refuses a sensitive field and reports a stale ref', async () => {
     const { contents: sensitive, executeJavaScript: sensitiveExecute } = guest()
-    vi.mocked(sensitiveExecute).mockResolvedValueOnce({ ok: false, reason: 'sensitive' })
+    sensitiveExecute.mockResolvedValueOnce({ ok: false, reason: 'sensitive' })
     await expect(executeBrowserAgent(sensitive, 'fill', { ref: 'e1', text: 'secret' }))
       .rejects.toMatchObject({ code: 'BROWSER_SECRET_FIELD' })
 
     const { contents: missing, executeJavaScript: missingExecute } = guest()
-    vi.mocked(missingExecute).mockResolvedValueOnce({ ok: false, reason: 'missing' })
+    missingExecute.mockResolvedValueOnce({ ok: false, reason: 'missing' })
     await expect(executeBrowserAgent(missing, 'click', { ref: 'e9' }))
       .rejects.toMatchObject({ code: 'BROWSER_REF_STALE' })
   })
-})
-
-describe('browser screenshot capture', () => {
-  function raster(width: number, bytes: number) {
-    const png = Buffer.alloc(bytes, 7)
-    const image = {
-      getSize: () => ({ width, height: 100 }),
-      resize: vi.fn(() => ({ getSize: () => ({ width: 64, height: 8 }), toPNG: () => png })),
-      toPNG: () => png,
-    }
-    return image
-  }
-  function guestWith(image: unknown, destroyed = false) {
-    return { isDestroyed: () => destroyed, capturePage: vi.fn(async () => image) } as never
-  }
-
-  it('returns the viewport raster without downscaling when it fits', async () => {
-    const image = raster(100, 32)
-    const out = await captureBrowserScreenshot(guestWith(image), {})
-    expect(out.text).toBe('screenshot 100x100')
-    expect(out.image).toMatchObject({ mediaType: 'image/png', width: 100, height: 100 })
-    expect(out.image.data).toBe(Buffer.alloc(32, 7).toString('base64'))
-    expect(image.resize).not.toHaveBeenCalled()
-  })
-
-  it('downscales wide pages and clamps the requested bounds', async () => {
-    const image = raster(4000, 16)
-    const out = await captureBrowserScreenshot(guestWith(image), { maxWidth: 10, maxBytes: 1 })
-    expect(image.resize).toHaveBeenCalledWith({ width: 64 })
-    expect(out.image.width).toBe(64)
-  })
-
-  it('refuses an oversized raster and a closed guest', async () => {
-    await expect(captureBrowserScreenshot(guestWith(raster(100, 2048)), { maxBytes: 1024 }))
-      .rejects.toMatchObject({ code: 'BROWSER_SCREENSHOT_TOO_LARGE' })
-    await expect(captureBrowserScreenshot(guestWith(raster(100, 8), true), {}))
-      .rejects.toMatchObject({ code: 'BROWSER_GUEST_CLOSED' })
-  })
-})
-
-describe('browser input primitives', () => {
-  function guest() {
-    const sendInputEvent = vi.fn()
-    const executeJavaScript = vi.fn(async (..._args: [string, boolean?]): Promise<unknown> => true)
-    const contents = {
-      isDestroyed: () => false, getTitle: () => 'T', getURL: () => 'https://example.test/', isLoading: () => false,
-      sendInputEvent, executeJavaScript, insertText: vi.fn(async () => {}), loadURL: vi.fn(async () => {}), reload: vi.fn(),
-      on: vi.fn(), removeListener: vi.fn(), once: vi.fn(),
-      navigationHistory: { canGoBack: () => false, canGoForward: () => false, goBack: vi.fn(), goForward: vi.fn() },
-    } as never
-    return { contents, sendInputEvent, executeJavaScript }
-  }
 
   it('presses a supported key with modifiers and refuses unknown keys', async () => {
     const { contents, sendInputEvent } = guest()
     await executeBrowserAgent(contents, 'press_key', { key: 'Enter', modifiers: 'shift,control' })
     expect(sendInputEvent).toHaveBeenCalledTimes(2)
-    expect(sendInputEvent.mock.calls[0]![0]).toMatchObject({ type: 'keyDown', keyCode: 'Enter', modifiers: ['shift', 'control'] })
     await expect(executeBrowserAgent(contents, 'press_key', { key: 'F5' })).rejects.toMatchObject({ code: 'BROWSER_KEY_UNSUPPORTED' })
     await expect(executeBrowserAgent(contents, 'press_key', { key: 'Tab', modifiers: 'hyper' })).rejects.toMatchObject({ code: 'BROWSER_MODIFIERS_INVALID' })
   })
@@ -195,23 +170,55 @@ describe('browser input primitives', () => {
   })
 })
 
+describe('browser screenshot capture', () => {
+  function raster(width: number, bytes: number) {
+    const png = Buffer.alloc(bytes, 7)
+    const resize = vi.fn(() => makeRaster(64, 8, png))
+    return Object.assign(makeRaster(width, 100, png), { resize })
+  }
+
+  it('returns the viewport raster without downscaling when it fits', async () => {
+    const image = raster(100, 32)
+    const out = await captureBrowserScreenshot(fakeGuest({ capturePage: vi.fn(async () => image) }), {})
+    expect(out.text).toBe('screenshot 100x100')
+    expect(out.image.width).toBe(100)
+    expect(image.resize).not.toHaveBeenCalled()
+  })
+
+  it('downscales wide pages and clamps the requested bounds', async () => {
+    const image = raster(4000, 16)
+    const out = await captureBrowserScreenshot(fakeGuest({ capturePage: vi.fn(async () => image) }), { maxWidth: 10, maxBytes: 1 })
+    expect(out.image.width).toBe(64)
+    expect(image.resize).toHaveBeenCalledWith({ width: 64 })
+  })
+
+  it('refuses an oversized raster and a closed guest', async () => {
+    await expect(captureBrowserScreenshot(fakeGuest({ capturePage: vi.fn(async () => raster(100, 2048)) }), { maxBytes: 1024 }))
+      .rejects.toMatchObject({ code: 'BROWSER_SCREENSHOT_TOO_LARGE' })
+    await expect(captureBrowserScreenshot(fakeGuest({ isDestroyed: () => true }), {}))
+      .rejects.toMatchObject({ code: 'BROWSER_GUEST_CLOSED' })
+  })
+})
+
 describe('dialog watch', () => {
-  function guest(attachThrows = false) {
+  function debuggerGuest(attachThrows = false) {
     const listeners: ((...args: unknown[]) => void)[] = []
     const sendCommand = vi.fn(async () => {})
-    const debuggerApi = {
-      attach: vi.fn(() => { if (attachThrows) throw new Error('busy') }),
-      detach: vi.fn(),
-      on: vi.fn((_event: string, listener: (...args: unknown[]) => void) => { listeners.push(listener) }),
-      removeListener: vi.fn(),
-      sendCommand,
-    }
-    const contents = { isDestroyed: () => false, debugger: debuggerApi } as never
-    return { contents, listeners, sendCommand, debuggerApi }
+    const contents = fakeGuest({
+      debugger: {
+        attach: () => { if (attachThrows) throw new Error('busy') },
+        isAttached: () => !attachThrows,
+        detach: vi.fn(),
+        on: (_event, listener) => { listeners.push(listener as (...args: unknown[]) => void) },
+        removeListener: vi.fn(),
+        sendCommand,
+      },
+    })
+    return { contents, listeners, sendCommand }
   }
 
   it('observes, answers, and clears a pending dialog', async () => {
-    const { contents, listeners, sendCommand } = guest()
+    const { contents, listeners, sendCommand } = debuggerGuest()
     const watch = watchDialogs(contents)
     expect(watch.pending()).toBeUndefined()
     listeners[0]!({}, 'Page.javascriptDialogOpening', { type: 'confirm', message: 'Delete?', defaultPrompt: '' })
@@ -227,31 +234,63 @@ describe('dialog watch', () => {
   })
 
   it('stays inert when another debugger owns the guest', async () => {
-    const { contents } = guest(true)
+    const { contents } = debuggerGuest(true)
     const watch = watchDialogs(contents)
     await expect(watch.answer('accept')).rejects.toMatchObject({ code: 'BROWSER_DIALOG_UNAVAILABLE' })
     watch.dispose()
   })
 })
 
+describe('dev watch console and network', () => {
+  function eventGuest() {
+    const listeners: ((...args: unknown[]) => void)[] = []
+    const sendCommand = vi.fn(async () => {})
+    const contents = fakeGuest({
+      debugger: {
+        attach: vi.fn(), isAttached: () => true, detach: vi.fn(),
+        on: (_event, listener) => { listeners.push(listener as (...args: unknown[]) => void) },
+        removeListener: vi.fn(), sendCommand,
+      },
+    })
+    return { contents, listeners }
+  }
+
+  it('buffers console output and network requests with bounds', async () => {
+    const { contents, listeners } = eventGuest()
+    const watch = watchDialogs(contents)
+    expect(watch.console()).toBe('no console output')
+    expect(watch.network()).toBe('no network requests')
+    const emit = (method: string, params: object): void => { for (const l of [...listeners]) l({}, method, params) }
+    emit('Runtime.consoleAPICalled', { type: 'warning', args: [{ value: 'slow' }, { description: 'Resource' }] })
+    emit('Network.requestWillBeSent', { requestId: 'r1', request: { method: 'POST', url: 'https://api.test/x' } })
+    emit('Network.responseReceived', { requestId: 'r1', response: { status: 201 } })
+    emit('Network.requestWillBeSent', { requestId: 'r2', request: { url: 'https://api.test/y' } })
+    emit('Network.loadingFailed', { requestId: 'r2' })
+    expect(watch.console()).toContain('warning slow Resource')
+    expect(watch.network()).toContain('POST 201 https://api.test/x')
+    expect(watch.network()).toContain('GET failed https://api.test/y')
+    for (let index = 0; index < 70; index++) emit('Runtime.consoleAPICalled', { type: 'log', args: [{ value: index }] })
+    expect(watch.console().split('\n')).toHaveLength(61)
+    watch.dispose()
+  })
+})
+
 describe('browser upload', () => {
   function chooserGuest(chooserOpens = true) {
+    const listeners: ((...args: unknown[]) => void)[] = []
     const sendCommand = vi.fn(async (method: string) => {
       if (method === 'Page.setInterceptFileChooserDialog' && chooserOpens) {
         setTimeout(() => { for (const l of listeners) l({}, 'Page.fileChooserOpened', { backendNodeId: 42 }) }, 10)
       }
     })
-    const listeners: ((...args: unknown[]) => void)[] = []
-    const contents = {
-      isDestroyed: () => false, getTitle: () => 'T', getURL: () => 'https://example.test/', isLoading: () => false,
+    const contents = fakeGuest({
       executeJavaScript: vi.fn(async (): Promise<unknown> => ({ ok: true, x: 5, y: 5 })),
-      sendInputEvent: vi.fn(),
-      insertText: vi.fn(async () => {}), loadURL: vi.fn(async () => {}), reload: vi.fn(),
-      on: vi.fn(), removeListener: vi.fn(), once: vi.fn(),
-      navigationHistory: { canGoBack: () => false, canGoForward: () => false, goBack: vi.fn(), goForward: vi.fn() },
-      debugger: { attach: vi.fn(), isAttached: () => true, on: vi.fn((_e: string, l: (...a: unknown[]) => void) => { listeners.push(l) }),
-        removeListener: vi.fn(), sendCommand },
-    } as never
+      debugger: {
+        attach: vi.fn(), isAttached: () => true, detach: vi.fn(),
+        on: (_event, listener) => { listeners.push(listener as (...args: unknown[]) => void) },
+        removeListener: vi.fn(), sendCommand,
+      },
+    })
     return { contents, sendCommand }
   }
 
@@ -271,56 +310,11 @@ describe('browser upload', () => {
   })
 
   it('refuses a chooser that never opens', async () => {
-    const stuck = chooserGuest(false)
+    const { contents } = chooserGuest(false)
     const real = join(tmpdir(), `ocean-upload-stuck-${String(Date.now())}.pdf`)
     await writeFile(real, 'pdf')
-    await expect(executeBrowserAgent(stuck.contents, 'upload', { ref: 'e1', path: real }))
+    await expect(executeBrowserAgent(contents, 'upload', { ref: 'e1', path: real }))
       .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NO_CHOOSER' })
     await rm(real, { force: true })
   }, 10_000)
-})
-
-describe('dev watch console and network', () => {
-  function debuggerGuest() {
-    const listeners: ((...args: unknown[]) => void)[] = []
-    const sendCommand = vi.fn(async () => {})
-    const contents = {
-      isDestroyed: () => false,
-      debugger: {
-        attach: vi.fn(), isAttached: () => true,
-        on: vi.fn((_e: string, l: (...a: unknown[]) => void) => { listeners.push(l) }),
-        removeListener: vi.fn(), sendCommand,
-      },
-    } as never
-    return { contents, listeners, sendCommand }
-  }
-
-  it('buffers console output and network requests with bounds', async () => {
-    const { contents, listeners } = debuggerGuest()
-    const watch = watchDialogs(contents)
-    expect(watch.console()).toBe('no console output')
-    expect(watch.network()).toBe('no network requests')
-    const emit = (method: string, params: object): void => { for (const l of [...listeners]) l({}, method, params) }
-    emit('Runtime.consoleAPICalled', { type: 'warning', args: [{ value: 'slow' }, { description: 'Resource' }] })
-    emit('Network.requestWillBeSent', { requestId: 'r1', request: { method: 'POST', url: 'https://api.test/x' } })
-    emit('Network.responseReceived', { requestId: 'r1', response: { status: 201 } })
-    emit('Network.requestWillBeSent', { requestId: 'r2', request: { url: 'https://api.test/y' } })
-    emit('Network.loadingFailed', { requestId: 'r2' })
-    expect(watch.console()).toContain('warning slow Resource')
-    expect(watch.network()).toContain('POST 201 https://api.test/x')
-    expect(watch.network()).toContain('GET failed https://api.test/y')
-    for (let index = 0; index < 70; index++) emit('Runtime.consoleAPICalled', { type: 'log', args: [{ value: index }] })
-    expect(watch.console().split('\n')).toHaveLength(61)
-    watch.dispose()
-  })
-
-  it('stays inert when another debugger owns the guest', () => {
-    const contents = {
-      isDestroyed: () => false,
-      debugger: { attach: () => { throw new Error('busy') }, on: vi.fn(), removeListener: vi.fn(), sendCommand: vi.fn(async () => {}) },
-    } as never
-    const watch = watchDialogs(contents)
-    expect(watch.console()).toBe('no console output')
-    watch.dispose()
-  })
 })

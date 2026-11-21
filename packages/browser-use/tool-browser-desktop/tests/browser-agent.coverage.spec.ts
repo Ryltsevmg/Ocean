@@ -15,8 +15,9 @@ import { ToolCallId } from '@ocean/ocean-llm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ToolDefinition, ToolRunContext } from '@ocean/ocean-tools'
 import type { BrowserAgentCommand } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
-import * as plugin from '../src/index.ts'
-import { BrowserAgentRequester, installDesktopBrowserAgent, type DesktopBrowserTransport } from '../src/index.ts'
+import * as plugin from '../src/install.ts'
+import { installDesktopBrowserAgent } from '../src/install.ts'
+import { BrowserAgentRequester, type DesktopBrowserTransport } from '../src/bridge.ts'
 
 function execution(agent = true): ToolRunContext {
   return {

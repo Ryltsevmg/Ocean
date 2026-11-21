@@ -3377,29 +3377,6 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-tool-bash-persistent -->
 
-<!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-browser-desktop -->
-<a id="oceanocean-tool-browser-desktop"></a>
-
-## `@ocean/ocean-tool-browser-desktop`
-
-- `inject`: `tools` · `systemPrompt`
-- `source`: [`packages/browser-use/tool-browser-desktop/src/index.ts:171`](../packages/browser-use/tool-browser-desktop/src/index.ts)
-
-```ts config-catalog
-/** Deployment bounds for the raster observation the Desktop main process returns. */
-export interface Config {
-  /** Maximum screenshot width in pixels before the main process downscales. */
-  screenshotMaxWidth?: number
-  /** Maximum encoded screenshot bytes accepted from the main process. */
-  screenshotMaxBytes?: number
-  /** Require a person's approval before each mutating browser action. */
-  confirmActions?: boolean
-  /** Absolute directory prefixes whose files `browser_upload` may send to a page. */
-  uploadAllowedRoots?: string[]
-}
-```
-<!-- END GENERATED config-catalog:@ocean/ocean-tool-browser-desktop -->
-
 <!-- BEGIN GENERATED config-catalog:@ocean/ocean-tool-executor-ptc -->
 <a id="oceanocean-tool-executor-ptc"></a>
 
@@ -4358,6 +4335,7 @@ export interface Config {
 | `@ocean/ocean-session-title-llm` | — | [`packages/session/session-title-llm/src/index.ts`](../packages/session/session-title-llm/src/index.ts) |
 | `@ocean/ocean-ssh-helper-runtime` | — | [`packages/ssh/ssh-helper-runtime/src/index.ts`](../packages/ssh/ssh-helper-runtime/src/index.ts) |
 | `@ocean/ocean-timeout` | — | [`packages/util/timeout/src/index.ts`](../packages/util/timeout/src/index.ts) |
+| `@ocean/ocean-tool-browser-desktop` | — | [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts) |
 | `@ocean/ocean-tool-testkit` | — | [`packages/test-support/tool-testkit/src/index.ts`](../packages/test-support/tool-testkit/src/index.ts) |
 | `@ocean/ocean-typert-generator` | — | [`packages/typert/generator/src/index.ts`](../packages/typert/generator/src/index.ts) |
 | `@ocean/ocean-typert-protocol` | — | [`packages/typert/protocol/src/index.ts`](../packages/typert/protocol/src/index.ts) |
