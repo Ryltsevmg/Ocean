@@ -20,7 +20,10 @@ interface GuestLease {
   dialogWatch?: DialogWatch
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'tabs', 'tab_select']
+
+/** Upper bound on tabs one Session may share at once. */
+const MAX_SHARED_TABS = 8
 
 /** Build one result whose request id is filled in by the IPC dispatcher. */
 function agentFailure(code: string, message: string): BrowserAgentResult {
@@ -31,7 +34,7 @@ function agentFailure(code: string, message: string): BrowserAgentResult {
 export class DesktopBrowserGuests {
   private readonly partitions = new Map<string, string>()
   private readonly leases = new Map<DesktopBrowserLeaseId, GuestLease>()
-  private readonly agentSessions = new Map<string, DesktopBrowserLeaseId>()
+  private readonly agentSessions = new Map<string, DesktopBrowserLeaseId[]>()
 
   /** @param hostUrl - current authenticated OCEAN Host, which guests cannot request. */
   constructor(private readonly hostUrl: () => string | undefined) {}
@@ -93,12 +96,12 @@ export class DesktopBrowserGuests {
     const key = id as DesktopBrowserLeaseId
     const lease = this.leases.get(key)
     if (lease === undefined || lease.owner !== owner) throw new Error('desktop browser: guest belongs to another window')
-    const previous = this.agentSessions.get(sessionId)
-    if (previous !== undefined && previous !== key) {
-      throw new Error('desktop browser: this Session already shares another tab')
-    }
+    const shared = this.agentSessions.get(sessionId) ?? []
+    if (shared.includes(key)) return
+    if (shared.length >= MAX_SHARED_TABS) throw new Error('desktop browser: this Session already shares the maximum number of tabs')
     lease.agentSessionId = sessionId
-    this.agentSessions.set(sessionId, key)
+    // The newest shared tab becomes active; browser_tab_select switches.
+    this.agentSessions.set(sessionId, [key, ...shared])
   }
 
   /**
@@ -128,13 +131,31 @@ export class DesktopBrowserGuests {
       return { type: 'browser-agent-result', requestId: 0, ok: false,
         error: { code: 'BROWSER_METHOD_UNKNOWN', message: 'Unknown browser operation.' } }
     }
-    const key = this.agentSessions.get(sessionId)
-    if (key === undefined) return agentFailure('BROWSER_NOT_SHARED',
+    const shared = this.agentSessions.get(sessionId)
+    if (shared === undefined) return agentFailure('BROWSER_NOT_SHARED',
       'No Browser tab is shared with this agent. Open the Browser panel and enable Share with agent.')
+    if (method === 'tabs') {
+      const rows: string[] = []
+      for (const [index, key] of shared.entries()) {
+        const guest = this.leases.get(key)?.guest
+        const label = guest === undefined || guest.isDestroyed() ? '(closed)' : `${guest.getTitle() || '(untitled)'} ${guest.getURL() || ''}`.trim()
+        rows.push(`${index === 0 ? '*' : ' '} ${String(index)} ${label}`)
+      }
+      return { type: 'browser-agent-result', requestId: 0, ok: true,
+        text: `shared tabs (* active):\n${rows.join('\n')}` }
+    }
+    if (method === 'tab_select') {
+      const index = typeof args.index === 'number' && Number.isSafeInteger(args.index) ? args.index : -1
+      const key = shared[index]
+      if (key === undefined) return agentFailure('BROWSER_TAB_INVALID', 'No shared tab at that index; call browser_tabs.')
+      this.agentSessions.set(sessionId, [key, ...shared.filter(other => other !== key)])
+      return { type: 'browser-agent-result', requestId: 0, ok: true, text: `active tab ${String(index)}` }
+    }
+    const key = shared[0] as DesktopBrowserLeaseId
     const lease = this.leases.get(key)
     const guest = lease?.guest
     if (lease === undefined || guest === undefined || guest.isDestroyed()) {
-      return agentFailure('BROWSER_NOT_READY', 'The shared tab is not ready yet; try again after it finishes loading.')
+      return agentFailure('BROWSER_NOT_READY', 'The active shared tab is not ready; select another tab with browser_tab_select.')
     }
     let result: BrowserAgentResult = agentFailure('BROWSER_ACTION_FAILED', 'The browser action failed.')
     const previous = lease.agentTail ?? Promise.resolve()
@@ -199,7 +220,12 @@ export class DesktopBrowserGuests {
   private forgetAgent(id: DesktopBrowserLeaseId, lease: GuestLease): void {
     const sessionId = lease.agentSessionId
     lease.agentSessionId = undefined
-    if (sessionId !== undefined && this.agentSessions.get(sessionId) === id) this.agentSessions.delete(sessionId)
+    if (sessionId === undefined) return
+    const shared = this.agentSessions.get(sessionId)
+    if (shared === undefined) return
+    const rest = shared.filter(key => key !== id)
+    if (rest.length === 0) this.agentSessions.delete(sessionId)
+    else this.agentSessions.set(sessionId, rest)
   }
 
   /**

@@ -3383,7 +3383,7 @@ export interface Config {
 ## `@ocean/ocean-tool-browser-desktop`
 
 - `inject`: `tools` · `systemPrompt`
-- `source`: [`packages/browser-use/tool-browser-desktop/src/index.ts:169`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+- `source`: [`packages/browser-use/tool-browser-desktop/src/index.ts:170`](../packages/browser-use/tool-browser-desktop/src/index.ts)
 
 ```ts config-catalog
 /** Deployment bounds for the raster observation the Desktop main process returns. */

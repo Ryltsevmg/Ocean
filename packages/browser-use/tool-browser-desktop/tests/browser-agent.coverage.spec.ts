@@ -336,6 +336,8 @@ describe('input tools and enforced confirmation', () => {
       browser_press_key: { key: 'Enter' }, browser_scroll: { deltaY: 100 },
       browser_select: { ref: 'e1', value: 'b' }, browser_check: { ref: 'e1', checked: 'true' },
       browser_dialog: { action: 'accept' },
+      browser_tabs: {},
+      browser_tab_select: { index: 0 },
     }
     for (const [name, toolArgs] of Object.entries(args)) {
       const tool = registered.get(name)!

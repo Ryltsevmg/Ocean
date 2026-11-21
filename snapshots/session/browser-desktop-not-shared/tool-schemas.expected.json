@@ -258,6 +258,30 @@
       }
     },
     {
+      "name": "browser_tab_select",
+      "description": "Make one shared Browser tab active for the other browser tools.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Tab index from browser_tabs."
+          }
+        },
+        "required": [
+          "index"
+        ]
+      }
+    },
+    {
+      "name": "browser_tabs",
+      "description": "List the Browser tabs shared with this Session and mark the active one.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
       "name": "create_goal",
       "description": "Create a persisted goal that keeps this session working across automatic continuation rounds. Use it when the direct human request is a long-running objective, even if the user did not say \"goal\"; not for single-turn work.",
       "parameters": {

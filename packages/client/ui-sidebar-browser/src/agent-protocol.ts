@@ -21,6 +21,8 @@ export type BrowserAgentMethod =
   | 'select'
   | 'check'
   | 'dialog'
+  | 'tabs'
+  | 'tab_select'
 
 /** Host-to-main request for one operation on the Session's shared tab. */
 export interface BrowserAgentCommand {

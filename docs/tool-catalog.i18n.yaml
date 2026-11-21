@@ -9,8 +9,8 @@
   en: 54defb17781cb25b
   zh: 750693b8cdec5fa0
 /tool-schema-catalog/tool-package-map:
-  en: ff8ad7bd1976d527
-  zh: 7a5610f7331fd23e
+  en: ffff208b4cd9e75c
+  zh: 90e585cf1373b609
 /tool-schema-catalog/ocean-ocean-plugin-manager:
   en: a512df99f80ea0d3
   zh: a512df99f80ea0d3
@@ -174,8 +174,14 @@
   en: f4270eba2a4144e1
   zh: 790dee5e27783f9f
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-snapshot:
-  en: cac99fe592587848
-  zh: f88e8935ea8b01b0
+  en: f514dcb88c4c90f5
+  zh: f94e891ecd7149f9
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-tab-select:
+  en: 4b4722ba02d220c9
+  zh: 188a73c6ae75e55f
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-tabs:
+  en: 2801d4253aec0001
+  zh: 4f1ac6721abc7e2d
 /tool-schema-catalog/ocean-ocean-tool-goal:
   en: 7ee6376d0bdd888b
   zh: 7ee6376d0bdd888b

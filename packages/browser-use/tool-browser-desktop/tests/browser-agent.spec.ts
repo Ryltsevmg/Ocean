@@ -85,13 +85,14 @@ describe('desktop browser tools', () => {
       'browser_info', 'browser_snapshot', 'browser_navigate', 'browser_click', 'browser_fill',
       'browser_back', 'browser_forward', 'browser_reload', 'browser_screenshot',
       'browser_press_key', 'browser_scroll', 'browser_select', 'browser_check', 'browser_dialog',
+      'browser_tabs', 'browser_tab_select',
     ])
   })
 
   it('keeps its tools when another browser provider already owns the slot', () => {
     const fake = fakeContext('chrome')
     installDesktopBrowserAgent(fake.ctx as never, transport().value)
-    expect(fake.registered.size).toBe(14)
+    expect(fake.registered.size).toBe(16)
     expect(fake.ctx.browserUse.register).not.toHaveBeenCalled()
     expect(fake.ctx.logger.warn).toHaveBeenCalledOnce()
   })

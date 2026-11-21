@@ -427,6 +427,24 @@ export function installDesktopBrowserAgent(ctx: Context,
       execute: (args, exec) => run(exec, 'dialog', args),
       presentCall: args => ({ card: 'generic', title: 'Answer shared browser dialog', kind: 'other', rawInput: args.action }),
     }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_tabs',
+      description: 'List the Browser tabs shared with this Session and mark the active one.',
+      parameters: {},
+      output: TEXT_OUTPUT,
+      execute: (_args, exec) => run(exec, 'tabs', {}),
+      presentCall: () => ({ card: 'generic', title: 'List shared browser tabs', kind: 'read' }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_tab_select',
+      description: 'Make one shared Browser tab active for the other browser tools.',
+      parameters: {
+        index: { type: 'number', required: true, description: 'Tab index from browser_tabs.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => run(exec, 'tab_select', { index: args.index }),
+      presentCall: args => ({ card: 'generic', title: 'Select shared browser tab', kind: 'other', rawInput: args.index }),
+    }))
     yield () => { requester.dispose() }
   }, 'desktop-browser-agent')
 }
