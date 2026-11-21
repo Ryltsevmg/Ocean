@@ -35,6 +35,8 @@ export const DESKTOP_IPC = {
   bootFailed: 'ocean-desktop:boot-failed',
   browserAcquire: 'ocean-desktop:browser-acquire',
   browserRelease: 'ocean-desktop:browser-release',
+  browserAgentBind: 'ocean-desktop:browser-agent-bind',
+  browserAgentUnbind: 'ocean-desktop:browser-agent-unbind',
   browserOpenRequested: 'ocean-desktop:browser-open-requested',
   directoryPick: 'ocean-desktop:directory-pick',
   fileDragPrepare: 'ocean-desktop:file-drag-prepare',

@@ -345,6 +345,7 @@
       "@ocean/ocean-bash-sandbox": ["./packages/shell/bash-sandbox/src"],
       "@ocean/ocean-brand": ["./packages/util/brand/src"],
       "@ocean/ocean-browser-use": ["./packages/browser-use/browser-use/src"],
+      "@ocean/ocean-tool-browser-desktop": ["./packages/browser-use/tool-browser-desktop/src"],
       "@ocean/ocean-chunked-list": ["./packages/util/chunked-list/src"],
       "@ocean/ocean-cmdline": ["./packages/boot/cmdline/src"],
       "@ocean/ocean-command-compact": ["./packages/compaction/command-compact/src"],

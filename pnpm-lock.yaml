@@ -2102,6 +2102,45 @@ importers:
         specifier: workspace:*
         version: link:../../util/brand
 
+  packages/browser-use/tool-browser-desktop:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/cordis-plugin-include':
+        specifier: workspace:~
+        version: link:../../../vendor/include
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: workspace:~
+        version: link:../../../vendor/loader
+      '@ocean/ocean-agent':
+        specifier: workspace:*
+        version: link:../../core/agent
+      '@ocean/ocean-browser-use':
+        specifier: workspace:*
+        version: link:../browser-use
+      '@ocean/ocean-client-ui-sidebar-browser':
+        specifier: workspace:*
+        version: link:../../client/ui-sidebar-browser
+      '@ocean/ocean-error':
+        specifier: workspace:*
+        version: link:../../util/error
+      '@ocean/ocean-llm':
+        specifier: workspace:*
+        version: link:../../llm/llm
+      '@ocean/ocean-system-prompt':
+        specifier: workspace:*
+        version: link:../../core/system-prompt
+      '@ocean/ocean-tool-executor-native':
+        specifier: workspace:*
+        version: link:../../core/tool-executor-native
+      '@ocean/ocean-tool-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/tool-testkit
+      '@ocean/ocean-tools':
+        specifier: workspace:*
+        version: link:../../core/tools
+
   packages/bundle/acp-app:
     dependencies:
       '@ocean/ocean-acp':
@@ -3033,6 +3072,9 @@ importers:
       '@ocean/ocean-tool-bash-persistent':
         specifier: workspace:*
         version: link:../../shell/tool-bash-persistent
+      '@ocean/ocean-tool-browser-desktop':
+        specifier: workspace:*
+        version: link:../../browser-use/tool-browser-desktop
       '@ocean/ocean-tool-cordis':
         specifier: workspace:*
         version: link:../../extensions/tool-cordis

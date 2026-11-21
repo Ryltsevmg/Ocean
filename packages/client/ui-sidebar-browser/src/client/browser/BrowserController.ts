@@ -21,6 +21,7 @@ export interface BrowserControllerState {
 export interface BrowserControllerOptions {
   readonly tabId: TabId
   readonly signal: AbortSignal
+  readonly sessionId?: string | undefined
   readonly applicationOrigin: string
   readonly initial: BrowserTabState | undefined
   readonly actions: BoundActions<BrowserStore>
@@ -45,6 +46,7 @@ export class BrowserController implements HostObservable<BrowserControllerState>
     this.actions = options.actions
     this.checkpoint = options.initial
     this.page = options.createPage({
+      sessionId: options.sessionId,
       initial: options.initial,
       persist: (state) => {
         if (this.disposed) return
@@ -133,6 +135,12 @@ export class BrowserController implements HostObservable<BrowserControllerState>
     if (sandbox !== undefined) this.command(() => { sandbox.setEnabled(enabled) })
   }
 
+  /** @param enabled - whether the Session's Agent may read and act on this tab. */
+  setAgentEnabled(enabled: boolean): void {
+    const agent = this.page.frame.agent
+    if (agent !== undefined) agent.setEnabled(enabled)
+  }
+
   /**
    * Redirect future checkpoint writes to a replacement Session binding.
    * @param actions - replacement persistence writer.
@@ -172,6 +180,7 @@ export class BrowserController implements HostObservable<BrowserControllerState>
 export interface BrowserMountRequest {
   readonly tabId: TabId
   readonly signal: AbortSignal
+  readonly sessionId?: string | undefined
   readonly viewportId: string
   readonly applicationOrigin: string
   readonly initial: BrowserTabState | undefined
@@ -202,6 +211,8 @@ export interface BrowserInjected {
   reload(tabId: TabId): void
   /** @param tabId - owning tab. @param enabled - provider's optional sandbox control. */
   setSandbox(tabId: TabId, enabled: boolean): void
+  /** @param tabId - owning tab. @param enabled - Agent access to that tab. */
+  setAgentEnabled(tabId: TabId, enabled: boolean): void
 }
 
 /**
@@ -263,5 +274,6 @@ export function createBrowserControllers(actions: BoundActions<BrowserStore>, cr
     goForward: (id) => { controller(id)?.goForward() },
     reload: (id) => { controller(id)?.reload() },
     setSandbox: (id, enabled) => { controller(id)?.setSandbox(enabled) },
+    setAgentEnabled: (id, enabled) => { controller(id)?.setAgentEnabled(enabled) },
   }
 }

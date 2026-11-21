@@ -2,7 +2,7 @@
 import { createSnapshotStore, type SnapshotStore } from '@ocean/ocean-client-store'
 import type { DesktopBrowserBridge, DesktopBrowserLeaseId } from '../../../types.ts'
 import type { ElectronWebviewPresentation, WebviewElement } from './ElectronWebviewPresentation.ts'
-import { emptyBrowserFrame, type BrowserFrame, type BrowserFrameState, type BrowserLoadError } from '../BrowserFrame.ts'
+import { emptyBrowserFrame, type BrowserAgentControl, type BrowserFrame, type BrowserFrameState, type BrowserLoadError } from '../BrowserFrame.ts'
 import type { BrowserPageOptions } from '../BrowserPage.ts'
 import { browserAddressCheckpoint, currentBrowserTarget } from '../BrowserPersistence.ts'
 import { parseBrowserAddress, type BrowserTarget } from '../url.ts'
@@ -15,7 +15,10 @@ interface LoadFailureEvent extends NavigationEvent {
 
 /** Owns native history and translates Electron observations into common frame state. */
 export class ElectronWebViewImpl implements BrowserFrame {
+  readonly agent: BrowserAgentControl | undefined
   private readonly store: SnapshotStore<BrowserFrameState>
+  private agentDesired = false
+  private agentEnabled = false
   private readonly lifetime = new AbortController()
   private guestLifetime: AbortController | undefined
   private element: WebviewElement | undefined
@@ -41,7 +44,12 @@ export class ElectronWebViewImpl implements BrowserFrame {
     private readonly workspace: (signal: AbortSignal) => Promise<string>,
     private readonly presentation: ElectronWebviewPresentation) {
     this.checkpoint = currentBrowserTarget(options.initial)
-    this.store = createSnapshotStore(emptyBrowserFrame())
+    this.agent = options.sessionId === undefined ? undefined : {
+      setEnabled: (enabled) => { void this.setAgentEnabled(enabled) },
+    }
+    this.store = createSnapshotStore({ ...emptyBrowserFrame(),
+      agentEnabled: this.agent === undefined ? undefined : false,
+      agentBusy: false, agentFailure: this.agent === undefined ? 'unavailable' : undefined })
   }
 
   /** @returns immutable carrier-neutral navigation state. */
@@ -128,6 +136,65 @@ export class ElectronWebViewImpl implements BrowserFrame {
     catch (error) { this.commandFailed(error) }
   }
 
+  /**
+   * Apply one Agent-access request; a request before the guest exists waits for
+   * the reservation and then binds.
+   * @param enabled - whether the Agent may read and act on this tab.
+   */
+  private async setAgentEnabled(enabled: boolean): Promise<void> {
+    if (this.lifetime.signal.aborted) return
+    if (this.agent === undefined) {
+      this.publishAgent({ agentEnabled: false, agentBusy: false, agentFailure: 'unavailable' })
+      return
+    }
+    this.agentDesired = enabled
+    if (!enabled) {
+      this.agentEnabled = false
+      const lease = this.lease
+      this.publishAgent({ agentEnabled: false, agentBusy: lease !== undefined, agentFailure: undefined })
+      if (lease !== undefined) {
+        try { await this.bridge.unbindAgent(lease) }
+        catch { if (!this.lifetime.signal.aborted) this.publishAgent({ agentBusy: false, agentFailure: 'bind' }); return }
+      }
+      if (!this.lifetime.signal.aborted) this.publishAgent({ agentBusy: false, agentFailure: undefined })
+      return
+    }
+    if (this.agentEnabled) return
+    if (this.lease === undefined) {
+      this.publishAgent({ agentEnabled: false, agentBusy: true, agentFailure: undefined })
+      return
+    }
+    await this.bindAgent()
+  }
+
+  /** Bind the mounted guest to the owning Session; failure disables the toggle. */
+  private async bindAgent(): Promise<void> {
+    const lease = this.lease
+    const sessionId = this.options.sessionId
+    if (lease === undefined || sessionId === undefined) {
+      if (!this.lifetime.signal.aborted) this.publishAgent({ agentEnabled: false, agentBusy: false, agentFailure: 'unavailable' })
+      return
+    }
+    this.publishAgent({ agentBusy: true, agentFailure: undefined })
+    try {
+      await this.bridge.bindAgent(lease, sessionId)
+      if (this.lifetime.signal.aborted) return
+      this.agentEnabled = true
+      this.publishAgent({ agentEnabled: true, agentBusy: false, agentFailure: undefined })
+    } catch {
+      if (this.lifetime.signal.aborted) return
+      this.agentEnabled = false
+      this.agentDesired = false
+      this.publishAgent({ agentEnabled: false, agentBusy: false, agentFailure: 'bind' })
+    }
+  }
+
+  /** Publish one partial Agent state without disturbing navigation state. */
+  private publishAgent(patch: Partial<Pick<BrowserFrameState, 'agentEnabled' | 'agentBusy' | 'agentFailure'>>): void {
+    if (this.lifetime.signal.aborted) return
+    this.store.set({ ...this.store.getSnapshot(), ...patch })
+  }
+
   private initialize(): void {
     const attachment = this.attachment
     if (attachment === undefined || this.initializing !== undefined || this.element !== undefined || this.lifetime.signal.aborted) return
@@ -148,6 +215,7 @@ export class ElectronWebViewImpl implements BrowserFrame {
     // oxlint-disable-next-line typescript/no-unnecessary-condition -- The signal can abort while acquire is pending.
     if (attachmentSignal.aborted) { await this.release(reservation.lease); return }
     this.lease = reservation.lease
+    if (this.agentDesired) void this.bindAgent()
     this.guestLifetime = new AbortController()
     const signal = AbortSignal.any([attachmentSignal, this.guestLifetime.signal])
     const element = this.presentation.createElement(reservation)
@@ -250,6 +318,9 @@ export class ElectronWebViewImpl implements BrowserFrame {
   }
 
   private dropGuest(): Promise<void> {
+    this.agentEnabled = false
+    this.agentDesired = false
+    this.publishAgent({ agentEnabled: this.agent === undefined ? undefined : false, agentBusy: false, agentFailure: undefined })
     this.guestLifetime?.abort()
     this.guestLifetime = undefined
     this.presentation.clear()

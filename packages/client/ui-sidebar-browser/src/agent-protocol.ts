@@ -1,0 +1,47 @@
+/**
+ * Type-only wire vocabulary between the Desktop Host tools and the Electron
+ * main-process browser executor. Both processes implement their own runtime
+ * validation so the shared contract stays free of executable code.
+ * @module
+ */
+
+/** One operation the Desktop main process performs on a shared guest. */
+export type BrowserAgentMethod =
+  | 'info'
+  | 'snapshot'
+  | 'click'
+  | 'fill'
+  | 'navigate'
+  | 'back'
+  | 'forward'
+  | 'reload'
+
+/** Host-to-main request for one operation on the Session's shared tab. */
+export interface BrowserAgentCommand {
+  readonly type: 'browser-agent-command'
+  readonly requestId: number
+  readonly sessionId: string
+  readonly method: BrowserAgentMethod
+  readonly args: Readonly<Record<string, string | number>>
+}
+
+/** Stable failure reported by the Desktop browser executor. */
+export interface BrowserAgentFailure {
+  readonly code: string
+  readonly message: string
+}
+
+/** Main-to-Host answer for one command; text is the model-facing observation. */
+export type BrowserAgentResult =
+  | {
+    readonly type: 'browser-agent-result'
+    readonly requestId: number
+    readonly ok: true
+    readonly text: string
+  }
+  | {
+    readonly type: 'browser-agent-result'
+    readonly requestId: number
+    readonly ok: false
+    readonly error: BrowserAgentFailure
+  }

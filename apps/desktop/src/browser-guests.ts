@@ -2,6 +2,8 @@
 import { randomUUID } from 'node:crypto'
 import { app, session, type BrowserWindow, type Session, type WebContents } from 'electron'
 import type { DesktopBrowserLeaseId, DesktopBrowserOpenRequest, DesktopBrowserReservation } from '@ocean/ocean-client-ui-sidebar-browser/types'
+import type { BrowserAgentMethod, BrowserAgentResult } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
+import { BrowserAgentError, executeBrowserAgent } from './browser-agent.ts'
 import { DESKTOP_IPC } from './ipc.ts'
 
 interface GuestLease {
@@ -10,12 +12,24 @@ interface GuestLease {
   attached: boolean
   guest?: WebContents
   releaseInput?: () => void
+  /** Exact Session whose Agent may read and act on this guest. */
+  agentSessionId?: string | undefined
+  /** Serializes Agent commands for this guest in arrival order. */
+  agentTail?: Promise<void>
+}
+
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload']
+
+/** Build one result whose request id is filled in by the IPC dispatcher. */
+function agentFailure(code: string, message: string): BrowserAgentResult {
+  return { type: 'browser-agent-result', requestId: 0, ok: false, error: { code, message } }
 }
 
 /** Owns workspace storage partitions independently from individual tab guests. */
 export class DesktopBrowserGuests {
   private readonly partitions = new Map<string, string>()
   private readonly leases = new Map<DesktopBrowserLeaseId, GuestLease>()
+  private readonly agentSessions = new Map<string, DesktopBrowserLeaseId>()
 
   /** @param hostUrl - current authenticated OCEAN Host, which guests cannot request. */
   constructor(private readonly hostUrl: () => string | undefined) {}
@@ -53,6 +67,7 @@ export class DesktopBrowserGuests {
     if (lease === undefined) return
     if (lease.owner !== owner) throw new Error('desktop browser: guest belongs to another window')
     lease.releaseInput?.()
+    this.forgetAgent(key, lease)
     this.leases.delete(key)
     const guest = lease.guest
     if (guest !== undefined && !guest.isDestroyed()) {
@@ -60,6 +75,90 @@ export class DesktopBrowserGuests {
       guest.close({ waitForBeforeUnload: false })
       await destroyed
     }
+  }
+
+  /**
+   * Let one Session's Agent read and act on a mounted guest.
+   * @param owner - authenticated IPC sender.
+   * @param id - lease received over IPC.
+   * @param sessionId - exact Session that owns the requesting Agent.
+   */
+  bindAgent(owner: WebContents, id: unknown, sessionId: unknown): void {
+    if (typeof id !== 'string' || typeof sessionId !== 'string' || sessionId.length === 0 || sessionId.length > 256) {
+      throw new Error('desktop browser: invalid Agent binding')
+    }
+    const key = id as DesktopBrowserLeaseId
+    const lease = this.leases.get(key)
+    if (lease === undefined || lease.owner !== owner) throw new Error('desktop browser: guest belongs to another window')
+    const previous = this.agentSessions.get(sessionId)
+    if (previous !== undefined && previous !== key) {
+      throw new Error('desktop browser: this Session already shares another tab')
+    }
+    lease.agentSessionId = sessionId
+    this.agentSessions.set(sessionId, key)
+  }
+
+  /**
+   * Revoke Agent access to one mounted guest. Idempotent.
+   * @param owner - authenticated IPC sender.
+   * @param id - lease received over IPC.
+   */
+  unbindAgent(owner: WebContents, id: unknown): void {
+    if (typeof id !== 'string') return
+    const key = id as DesktopBrowserLeaseId
+    const lease = this.leases.get(key)
+    if (lease === undefined) return
+    if (lease.owner !== owner) throw new Error('desktop browser: guest belongs to another window')
+    this.forgetAgent(key, lease)
+  }
+
+  /**
+   * Run one bounded command for the Session's shared guest.
+   * @param sessionId - Session whose Agent issued the command.
+   * @param method - validated operation name.
+   * @param args - JSON arguments validated by the executor.
+   * @returns a model-facing observation or a stable failure.
+   */
+  async executeAgent(sessionId: string, method: BrowserAgentMethod,
+    args: Readonly<Record<string, string | number>>): Promise<BrowserAgentResult> {
+    if (!AGENT_METHODS.includes(method)) {
+      return { type: 'browser-agent-result', requestId: 0, ok: false,
+        error: { code: 'BROWSER_METHOD_UNKNOWN', message: 'Unknown browser operation.' } }
+    }
+    const key = this.agentSessions.get(sessionId)
+    if (key === undefined) return agentFailure('BROWSER_NOT_SHARED',
+      'No Browser tab is shared with this agent. Open the Browser panel and enable Share with agent.')
+    const lease = this.leases.get(key)
+    const guest = lease?.guest
+    if (lease === undefined || guest === undefined || guest.isDestroyed()) {
+      return agentFailure('BROWSER_NOT_READY', 'The shared tab is not ready yet; try again after it finishes loading.')
+    }
+    let result: BrowserAgentResult = agentFailure('BROWSER_ACTION_FAILED', 'The browser action failed.')
+    const previous = lease.agentTail ?? Promise.resolve()
+    const next = previous.catch(() => {}).then(async () => {
+      const current = this.leases.get(key)
+      if (current?.guest !== guest || guest.isDestroyed()) {
+        result = agentFailure('BROWSER_GUEST_CLOSED', 'The shared tab is closed.')
+        return
+      }
+      try {
+        result = { type: 'browser-agent-result', requestId: 0, ok: true, text: await executeBrowserAgent(guest, method, args) }
+      } catch (error) {
+        result = error instanceof BrowserAgentError
+          ? agentFailure(error.code, error.message)
+          : agentFailure('BROWSER_ACTION_FAILED', 'The browser action failed; inspect the page before continuing.')
+      }
+    })
+    lease.agentTail = next.then(() => {}, () => {})
+    await next
+    return result
+  }
+
+  /** Clear one lease's Agent binding without touching the guest. */
+  private forgetAgent(id: DesktopBrowserLeaseId, lease: GuestLease): void {
+    const sessionId = lease.agentSessionId
+    lease.agentSessionId = undefined
+    if (sessionId !== undefined && this.agentSessions.get(sessionId) === id) this.agentSessions.delete(sessionId)
   }
 
   /**
@@ -106,7 +205,7 @@ export class DesktopBrowserGuests {
         lease.guest = guest
         attachedLease = id
         lease.releaseInput = attachInput(guest, id)
-        guest.once('destroyed', () => { lease.releaseInput?.(); this.leases.delete(id) })
+        guest.once('destroyed', () => { lease.releaseInput?.(); if (attachedLease !== undefined) this.forgetAgent(attachedLease, lease); this.leases.delete(id) })
       })
       guest.setWindowOpenHandler(({ url, postBody }) => {
         const lease = attachedLease === undefined ? undefined : this.leases.get(attachedLease)

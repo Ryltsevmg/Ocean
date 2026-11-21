@@ -30,6 +30,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@ocean/ocean-tool-str-replace-editor` | `str_replace_editor` | `ctx.tools`, `ctx.fs` | `tool/call`, `fs/observed after view presence/absence, edit absence, or successful mutation`, `tool/result` | - | Standalone view/create/unique literal replace/line insert tool over the filesystem seam; it composes with any shell or terminal API. |
 | `@ocean/ocean-tool-fs` | `apply_patch`, `edit`, `read`, `read_image`, `write` | `ctx.workingDirectory`, `ctx.tools`, `ctx.fs`, `ctx.systemPrompt`, `ctx.attachments (image-tool registration)`, `ctx.llm + an image-capable route (image-tool execution)` | `tool/call`, `fs/write-intent, fs/edit-intent, or fs/delete-intent for mutations`, `fs/observed after read presence/absence or successful file operation`, `durable attachment (read_image)`, `tool/result` | - | The read-before-write/edit policy is added by `@ocean/ocean-fs-observation-policy` (an `fs/*` event-gate plugin, no schema change); the shipped compositions leave its row disabled, so mutations are unconditional unless a deployment enables it. The image tool is not registered without `ctx.attachments`; its schema is route-independent, and execution refuses unless the exact routed model declares image input. `apply_patch` registers only with `applyPatch: true`; the catalog sets it so the schema is documented. `ocean-base` and the Web `standard` preset enable it; the Web `ptc` and `cordis` presets and the PTC overlay state `applyPatch: false`. |
 | `@ocean/ocean-tool-fs-search` | `glob`, `grep` | `ctx.workingDirectory`, `ctx.tools`, `ctx.subprocess`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | glob and grep are unconditional discovery tools that spawn the packaged ripgrep binary (`@vscode/ripgrep`) through ctx.subprocess as ordinary foreground calls (never background jobs) — no host `rg` install and no shell layer. The catalog uses `sampleOverCapGlobResults: true`; deployments must choose that behavior explicitly. Capped results save the complete formatted list through the optional ctx.spillStore backend; returned locators are follow-up-readable/searchable when the backend exposes local paths in co-located deployments. |
+| `@ocean/ocean-tool-browser-desktop` | `browser_back`, `browser_click`, `browser_fill`, `browser_forward`, `browser_info`, `browser_navigate`, `browser_reload`, `browser_snapshot` | `ctx.tools`, `ctx.browserUse`, `ctx.systemPrompt`, `the Desktop Host-to-main IPC channel` | `tool/call`, `tool/result` | - | Desktop-only: the desktop profile mounts this row; outside the Desktop Host there is no main-process channel, so every call fails with a transport or not-shared error. |
 | `@ocean/ocean-tool-goal` | `create_goal`, `get_goal`, `update_goal` | `ctx.tools`, `ctx.agents`, `ctx.goals`, `ctx.systemPrompt`, `a calling Agent in an authorized open turn` | `tool/call`, `goal/change for mutations`, `tool/result` | - | create, edit, pause, and resume require direct-human root authority; complete and blocked also accept the exact current goal round. The default blocked lower bound is three admitted rounds. |
 | `@ocean/ocean-tool-schedule` | `schedule_create`, `schedule_edit`, `schedule_list`, `schedule_view` | `ctx.tools`, `ctx.schedule`, `ctx.systemPrompt` | `tool/call`, `Schedule storage domain create, update, or delete`, `tool/result` | - | A preset or Agent scope mounts this package and decides which agents receive its tools. Management reads and writes Host tasks by id across Sessions. Tasks store an RFC 5545 recurrence and an existing, first-created-and-reused, or per-run-new Session target. Delegated subagents cannot call these tools. |
 | `@ocean/ocean-tool-lsp` | `lsp` | `ctx.workingDirectory`, `ctx.tools`, `ctx.lsp`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | The lsp tool keeps provider selection and language-server subprocesses behind ctx.lsp, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@ocean/ocean-lsp-stdio`) at runtime; without one, a query returns the structured `LSP_UNAVAILABLE` error rather than changing the schema. |
@@ -1006,6 +1007,145 @@ Search file contents with a ripgrep regular expression. Returns matching lines w
 Source: [`packages/fs/tool-fs-search/src/index.ts`](../packages/fs/tool-fs-search/src/index.ts)
 
 glob and grep are unconditional discovery tools that spawn the packaged ripgrep binary (`@vscode/ripgrep`) through ctx.subprocess as ordinary foreground calls (never background jobs) — no host `rg` install and no shell layer. The catalog uses `sampleOverCapGlobResults: true`; deployments must choose that behavior explicitly. Capped results save the complete formatted list through the optional ctx.spillStore backend; returned locators are follow-up-readable/searchable when the backend exposes local paths in co-located deployments.
+
+<a id="oceanocean-tool-browser-desktop"></a>
+
+## `@ocean/ocean-tool-browser-desktop`
+
+### `browser_back`
+
+Go back in the shared browser tab and return the resulting page tree.
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_click`
+
+Click one element ref from the latest browser snapshot and return the resulting page tree.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "ref": {
+      "type": "string",
+      "description": "Element ref such as e12 from browser_snapshot."
+    }
+  },
+  "required": [
+    "ref"
+  ]
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_fill`
+
+Fill ordinary text into one element ref in the shared browser tab and return the resulting page tree.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "ref": {
+      "type": "string",
+      "description": "Text field ref from browser_snapshot."
+    },
+    "text": {
+      "type": "string",
+      "description": "Ordinary non-secret text to enter."
+    }
+  },
+  "required": [
+    "ref",
+    "text"
+  ]
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_forward`
+
+Go forward in the shared browser tab and return the resulting page tree.
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_info`
+
+Report the title, URL, and loading state of the Shared browser tab.
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_navigate`
+
+Open an HTTP(S) address in the shared browser tab and return the resulting page tree.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "Absolute HTTP(S) address without credentials."
+    }
+  },
+  "required": [
+    "url"
+  ]
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_reload`
+
+Reload the shared browser tab and return the resulting page tree.
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+### `browser_snapshot`
+
+Read the shared browser tab as a compact page tree with element refs. Call before acting.
+
+```json
+{
+  "type": "object",
+  "properties": {}
+}
+```
+
+Source: [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+
+Desktop-only: the desktop profile mounts this row; outside the Desktop Host there is no main-process channel, so every call fails with a transport or not-shared error.
 
 <a id="oceanocean-tool-goal"></a>
 

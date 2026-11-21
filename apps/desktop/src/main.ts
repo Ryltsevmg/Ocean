@@ -75,6 +75,7 @@ import { readDesktopLocaleCache, writeDesktopLocaleCache } from './locale-cache.
 import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 import { DesktopBrowserGuests } from './browser-guests.ts'
+import { isBrowserAgentCommand } from './browser-agent.ts'
 import { installDesktopShortcuts } from './keyboard.ts'
 import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
@@ -222,10 +223,14 @@ interface RuntimeResources {
 
 function runtimeResources(): RuntimeResources {
   const development = !app.isPackaged
-  // Linux Electron leaks GLib symbols into native addons such as sharp.
-  const node = process.platform === 'linux'
-    ? join(development ? developmentPrimaryRuntime() : join(process.resourcesPath, 'runtime', 'primary-runtime'), 'dependencies', 'node', 'bin', 'node')
-    : process.execPath
+  // Linux Electron leaks GLib symbols into native addons such as sharp. In development every
+  // platform runs the Host under the bundled plain Node: the internal-module addon validates the
+  // runtime fingerprint, and an unpackaged Electron can be ahead of its supported matrix.
+  const node = development
+    ? join(developmentPrimaryRuntime(), 'dependencies', 'node', 'bin', 'node')
+    : process.platform === 'linux'
+      ? join(process.resourcesPath, 'runtime', 'primary-runtime', 'dependencies', 'node', 'bin', 'node')
+      : process.execPath
   const nodeBin = development ? join(app.getAppPath(), 'scripts', 'node-bin') : join(process.resourcesPath, 'runtime', 'bin')
   const pnpm = (development ? process.env.OCEAN_DESKTOP_PNPM_ENTRY : undefined)
     ?? (development ? join(app.getAppPath(), 'node_modules', 'pnpm', 'bin', 'pnpm.mjs')
@@ -593,6 +598,17 @@ async function main(): Promise<void> {
         })
         operationJournal.enqueue(JSON.stringify(record))
       })
+    host.onMessage((message) => {
+      if (!isBrowserAgentCommand(message)) return false
+      void browserGuests.executeAgent(message.sessionId, message.method, message.args).then(
+        result => host.send({ ...result, requestId: message.requestId }),
+        () => host.send({
+          type: 'browser-agent-result', requestId: message.requestId, ok: false,
+          error: { code: 'BROWSER_ACTION_FAILED', message: 'The browser action failed; inspect the page before continuing.' },
+        }),
+      ).catch((error: unknown) => { console.error('desktop browser agent result delivery failed', error) })
+      return true
+    })
     return {
       start: async () => {
         const ready = await host.start()
@@ -892,6 +908,14 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.browserRelease, (event, lease: unknown) => {
     assertProductSender(event)
     return browserGuests.release(event.sender, lease)
+  })
+  ipcMain.handle(DESKTOP_IPC.browserAgentBind, (event, lease: unknown, sessionId: unknown) => {
+    assertProductSender(event)
+    browserGuests.bindAgent(event.sender, lease, sessionId)
+  })
+  ipcMain.handle(DESKTOP_IPC.browserAgentUnbind, (event, lease: unknown) => {
+    assertProductSender(event)
+    browserGuests.unbindAgent(event.sender, lease)
   })
 
   const installHostSockets = (browserSession: Session, connection?: RemoteConnection): void => {

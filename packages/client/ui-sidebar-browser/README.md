@@ -46,6 +46,11 @@ The `browser.new` command opens a separate Browser page in the focused dock pane
 
 The toolbar provides Back, Forward, Reload, Go, and Open in system browser. Web also offers a per-tab sandbox toggle; disabling it is temporary and displays an amber warning with neutral text. Desktop shows the observed page title. After a restart, Browser shows the saved title and URL; Restore or Reload opens that address only when requested.
 
+<a id="desktop-agent-sharing"></a>
+### Desktop Agent sharing
+
+Desktop adds a per-tab **Share with agent** control. Sharing binds the mounted guest to the current Session's Agent; the Desktop Host then exposes `browser_info`, `browser_snapshot`, `browser_navigate`, `browser_click`, `browser_fill`, `browser_back`, `browser_forward`, and `browser_reload` over a private Host-to-main channel. The Agent receives a compact semantic tree with element refs, never arbitrary JavaScript or raw HTML. Sharing starts off for every tab, can be revoked from the toolbar at any time, and is limited to one shared tab per Session. Closing the tab or disabling sharing revokes access; the next tab starts private.
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -89,11 +94,11 @@ The page refresh shortcut calls the same reload operation as the toolbar. Its to
 <a id="model-experience"></a>
 ## Model Experience
 
-None, as Browser tabs are user-facing presentation state and register no tool, prompt section, or Session event.
+None, as this package registers no tool, prompt section, or Session event; the Desktop Host's optional `browser_*` tools are described under [Desktop Agent sharing](#desktop-agent-sharing).
 
 #### KV Cache effect
 
-None; browsing does not enter a model request.
+No effect from this package; a browser tool result from the Desktop Host is ordinary Session content and enters the next model request once appended.
 
 ## Known Limitations and Deferred Work
 
@@ -108,6 +113,9 @@ The isolation policy deliberately gives up some browser compatibility:
 - Saved title and URL survive reloads and plugin unload while the tab remains in Sidebar's layout. Closing the tab removes its checkpoint. Restart restoration does not recover page memory, unsaved forms or Chromium's history stack.
 - Local files are rejected and remain owned by Document Preview.
 - Desktop shares process-local storage partitions by canonical workspace CWD; Sessions without a resolved Workspace are isolated separately. Cookies and Web storage do not survive application restart. Guest permissions, downloads and native popups are denied; approved HTTP(S) popup requests open Sidebar tabs. Host-address filtering is not a general private-network or DNS-rebinding firewall.
+- Agent sharing is Desktop-only and explicit per tab. A new tab starts private, closing the tab or disabling sharing revokes access, and a Session can share only one tab at a time. The first share attempt after a bind failure requires another user action.
+- Desktop Agent tools expose semantic observations plus a single click and ordinary text fill. Screenshots, uploads and downloads, tab management, console/network inspection, CDP, dialogs, and keyboard or drag primitives remain deferred.
+- A page can change or spoof `data-ocean-agent-ref`; refs are best-effort identifiers, not authorization. The Agent must re-read after navigation, and consequential actions still rely on the person's awareness rather than an enforced confirmation step.
 
 <a id="dev-note"></a>
 ### Dev Note

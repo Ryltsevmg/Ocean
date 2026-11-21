@@ -21,8 +21,11 @@
   en: 12472b3e2908c776
   zh: 182c80bf8707fe73
 /ocean-ocean-client-ui-sidebar-browser/use-this-package/minimal-configuration:
-  en: c0570d47c10e516f
-  zh: 5e345b36a74e3010
+  en: 5c25ffa09b4c57c9
+  zh: b2f23aa60d6ac485
+/ocean-ocean-client-ui-sidebar-browser/use-this-package/desktop-agent-sharing:
+  en: 4adff01c0a75353a
+  zh: e8095485350d3101
 /ocean-ocean-client-ui-sidebar-browser/understand-the-implementation:
   en: 42b15ac6321706aa
   zh: e15901d8462ec7c7
@@ -39,14 +42,14 @@
   en: de2090538ce6a721
   zh: 5d48e74fb2ed1acf
 /ocean-ocean-client-ui-sidebar-browser/model-experience:
-  en: 69e711858e7d9ebc
-  zh: d84610491e69a35b
+  en: 59ff50ca4b7112a7
+  zh: 80cc3d61d093eca7
 /ocean-ocean-client-ui-sidebar-browser/model-experience/kv-cache-effect:
-  en: e17a5fd3d5405745
-  zh: db957a16dddce770
+  en: 43f9c6eda073dd07
+  zh: 9fe71e9fdcbf50f9
 /ocean-ocean-client-ui-sidebar-browser/known-limitations-and-deferred-work:
-  en: 307604babbe74f38
-  zh: 7d7a5aa4b99964d0
+  en: 885a7b265b0378f4
+  zh: 58a1f7f7d7b24683
 /ocean-ocean-client-ui-sidebar-browser/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

@@ -18,6 +18,12 @@ export interface BrowserFrameState {
   readonly error: BrowserLoadError | undefined
   /** Undefined when this provider does not expose a sandbox control. */
   readonly sandboxEnabled: boolean | undefined
+  /** Undefined when this carrier cannot expose a tab to the Agent. */
+  readonly agentEnabled: boolean | undefined
+  /** A bind or unbind is in flight; the toggle stays disabled until it settles. */
+  readonly agentBusy: boolean
+  /** Localized by the tab; carries the failure class rather than prose. */
+  readonly agentFailure: 'bind' | 'unavailable' | undefined
 }
 
 /** Optional iframe policy control, not an Electron process-sandbox switch. */
@@ -26,9 +32,16 @@ export interface BrowserSandboxControl {
   setEnabled(enabled: boolean): void
 }
 
+/** Desktop-only control over the Session's Agent access to this tab. */
+export interface BrowserAgentControl {
+  /** @param enabled - whether the Agent may read and act on this tab. */
+  setEnabled(enabled: boolean): void
+}
+
 /** Navigation owns page lifetime; mounting and hiding belong to BrowserPresentation. */
 export interface BrowserFrame extends HostObservable<BrowserFrameState> {
   readonly sandbox?: BrowserSandboxControl
+  readonly agent?: BrowserAgentControl | undefined
   /** @param target - validated HTTP(S) address; loading failures are published in state. */
   loadUrl(target: BrowserTarget): void
   /** Move backward when the provider reports an available entry. */
@@ -47,5 +60,5 @@ export interface BrowserFrame extends HostObservable<BrowserFrameState> {
  */
 export function emptyBrowserFrame(): BrowserFrameState {
   return { target: undefined, address: 'empty', loading: false, canGoBack: false, canGoForward: false,
-    error: undefined, sandboxEnabled: undefined }
+    error: undefined, sandboxEnabled: undefined, agentEnabled: undefined, agentBusy: false, agentFailure: undefined }
 }

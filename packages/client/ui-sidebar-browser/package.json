@@ -25,6 +25,9 @@
     "./types": {
       "types": "./lib/types/types.d.ts"
     },
+    "./agent-protocol": {
+      "types": "./lib/types/agent-protocol.d.ts"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"

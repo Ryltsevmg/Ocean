@@ -252,3 +252,25 @@
 .failureTitle { margin: 0; font-size: 15px; font-weight: 500; }
 .failureDescription { margin: 0; color: var(--dsw-alias-label-secondary); font: var(--dsw-font-xs-13); overflow-wrap: anywhere; }
 .failureActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+.agentOn {
+  color: var(--dsw-alias-state-business-primary);
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 10%, transparent);
+}
+
+.agentNotice {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  color: var(--dsw-alias-label-secondary);
+  font: var(--dsw-font-xxs-12);
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, transparent);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.agentFailure {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  color: var(--dsw-alias-state-error-primary);
+  font: var(--dsw-font-xxs-12);
+  background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, transparent);
+}

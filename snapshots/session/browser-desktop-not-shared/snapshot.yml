@@ -1,0 +1,8 @@
+version: 1
+scenario: browser-desktop-not-shared
+profile: headless
+composition: browser-desktop-not-shared
+recording: authored
+header:
+  class: browser-desktop-not-shared
+  pin: true
