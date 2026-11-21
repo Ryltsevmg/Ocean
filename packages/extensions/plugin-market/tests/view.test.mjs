@@ -78,6 +78,50 @@ test('read-only and failed local bundles do not get an enable action', () => {
   }
 })
 
+const holder = {
+  name: '@ocean/holder', version: '0.2.2', availability: 'profile', installed: true, enabled: true,
+  rows: [{ rowId: 'holder-row', moduleName: plugin.name }],
+}
+
+test('a package an installed bundle mounts is contained by it instead of missing an install', () => {
+  const view = buildMarketView({ plugins: [plugin], bundles: [holder], ...ready })
+  const [card] = view.cards
+  assert.equal(card.badge, 'badgeContained')
+  assert.equal(card.note, 'noteContained')
+  assert.equal(card.containedBy, holder.name)
+  assert.equal(card.containedVersion, holder.version)
+  assert.equal(card.installed, true)
+  assert.equal(card.enabled, true)
+  assert.deepEqual(card.actions, [{ kind: 'open', name: holder.name }])
+  assert.deepEqual(view.counts, { total: 1, installed: 1, enabled: 1 })
+})
+
+test('a disabled holder still contains the package, reported installed but off', () => {
+  const [card] = buildMarketView({ plugins: [plugin], bundles: [{ ...holder, enabled: false }], ...ready }).cards
+  assert.equal(card.badge, 'badgeContained')
+  assert.equal(card.enabled, false)
+  assert.deepEqual(card.actions, [{ kind: 'open', name: holder.name }])
+})
+
+test('an unreadable or unselected bundle cannot claim the package it would mount', () => {
+  const { name, version, sha256 } = plugin
+  for (const bundles of [[{ ...holder, availability: 'missing' }], [{ ...holder, installed: false, enabled: false }]]) {
+    const [card] = buildMarketView({ plugins: [plugin], bundles, ...ready }).cards
+    assert.equal(card.badge, 'badgeMissing')
+    assert.equal(card.containedBy, undefined)
+    assert.deepEqual(card.actions, [{ kind: 'install', target: { name, version, title: 'Approved plugin', sha256 } }])
+  }
+})
+
+test('an enabled holder wins over a disabled one, and an own bundle entry wins over every holder', () => {
+  const disabled = { ...holder, name: '@ocean/disabled', enabled: false }
+  const [contained] = buildMarketView({ plugins: [plugin], bundles: [disabled, holder], ...ready }).cards
+  assert.equal(contained.containedBy, holder.name)
+  const [own] = buildMarketView({ plugins: [plugin], bundles: [holder, bundle], ...ready }).cards
+  assert.equal(own.badge, 'badgeOn')
+  assert.equal(own.containedBy, undefined)
+})
+
 test('search uses the resolved title, description and name in the active language', () => {
   const { cards } = buildMarketView({ plugins: [plugin], bundles: [], ...ready })
   for (const query of ['  ', 'Approved Plugin', 'by description', '@ocean/approved']) assert.deepEqual(filterCards(cards, query), cards)
