@@ -78,6 +78,14 @@
       }
     },
     {
+      "name": "browser_console",
+      "description": "Read the bounded recent console output of the active shared browser tab.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
       "name": "browser_dialog",
       "description": "Read the pending JavaScript dialog of the shared browser tab, or accept or dismiss it.",
       "parameters": {
@@ -161,6 +169,14 @@
         "required": [
           "url"
         ]
+      }
+    },
+    {
+      "name": "browser_network",
+      "description": "Read the bounded recent network requests of the active shared browser tab.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
       }
     },
     {

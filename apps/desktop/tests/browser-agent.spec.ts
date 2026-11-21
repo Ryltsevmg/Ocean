@@ -279,3 +279,48 @@ describe('browser upload', () => {
     await rm(real, { force: true })
   }, 10_000)
 })
+
+describe('dev watch console and network', () => {
+  function debuggerGuest() {
+    const listeners: ((...args: unknown[]) => void)[] = []
+    const sendCommand = vi.fn(async () => {})
+    const contents = {
+      isDestroyed: () => false,
+      debugger: {
+        attach: vi.fn(), isAttached: () => true,
+        on: vi.fn((_e: string, l: (...a: unknown[]) => void) => { listeners.push(l) }),
+        removeListener: vi.fn(), sendCommand,
+      },
+    } as never
+    return { contents, listeners, sendCommand }
+  }
+
+  it('buffers console output and network requests with bounds', async () => {
+    const { contents, listeners } = debuggerGuest()
+    const watch = watchDialogs(contents)
+    expect(watch.console()).toBe('no console output')
+    expect(watch.network()).toBe('no network requests')
+    const emit = (method: string, params: object): void => { for (const l of [...listeners]) l({}, method, params) }
+    emit('Runtime.consoleAPICalled', { type: 'warning', args: [{ value: 'slow' }, { description: 'Resource' }] })
+    emit('Network.requestWillBeSent', { requestId: 'r1', request: { method: 'POST', url: 'https://api.test/x' } })
+    emit('Network.responseReceived', { requestId: 'r1', response: { status: 201 } })
+    emit('Network.requestWillBeSent', { requestId: 'r2', request: { url: 'https://api.test/y' } })
+    emit('Network.loadingFailed', { requestId: 'r2' })
+    expect(watch.console()).toContain('warning slow Resource')
+    expect(watch.network()).toContain('POST 201 https://api.test/x')
+    expect(watch.network()).toContain('GET failed https://api.test/y')
+    for (let index = 0; index < 70; index++) emit('Runtime.consoleAPICalled', { type: 'log', args: [{ value: index }] })
+    expect(watch.console().split('\n')).toHaveLength(61)
+    watch.dispose()
+  })
+
+  it('stays inert when another debugger owns the guest', () => {
+    const contents = {
+      isDestroyed: () => false,
+      debugger: { attach: () => { throw new Error('busy') }, on: vi.fn(), removeListener: vi.fn(), sendCommand: vi.fn(async () => {}) },
+    } as never
+    const watch = watchDialogs(contents)
+    expect(watch.console()).toBe('no console output')
+    watch.dispose()
+  })
+})

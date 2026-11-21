@@ -30,7 +30,7 @@ interface DownloadRecord {
   state: 'saving' | 'done' | 'interrupted'
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'tabs', 'tab_select']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'console', 'network', 'tabs', 'tab_select']
 
 /** Upper bound on tabs one Session may share at once. */
 const MAX_SHARED_TABS = 8
@@ -163,6 +163,11 @@ export class DesktopBrowserGuests {
     }
     const key = shared[0] as DesktopBrowserLeaseId
     const lease = this.leases.get(key)
+    if (method === 'console' || method === 'network') {
+      const read = lease?.dialogWatch?.[method]
+      if (read === undefined) return agentFailure('BROWSER_NOT_READY', 'The active shared tab is not ready; select another tab with browser_tab_select.')
+      return { type: 'browser-agent-result', requestId: 0, ok: true, text: read() }
+    }
     if (method === 'downloads') {
       const rows = (lease?.downloads ?? []).map((item, index) =>
         `${String(index)} ${item.state} ${item.filename} ${item.path}`)

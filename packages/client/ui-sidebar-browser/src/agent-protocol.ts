@@ -23,6 +23,8 @@ export type BrowserAgentMethod =
   | 'dialog'
   | 'tabs'
   | 'downloads'
+  | 'console'
+  | 'network'
   | 'upload'
   | 'tab_select'
 

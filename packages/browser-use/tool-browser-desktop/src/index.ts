@@ -478,6 +478,22 @@ export function installDesktopBrowserAgent(ctx: Context,
       },
       presentCall: args => ({ card: 'generic', title: 'Upload file in shared browser', kind: 'other', rawInput: args.ref }),
     }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_console',
+      description: 'Read the bounded recent console output of the active shared browser tab.',
+      parameters: {},
+      output: TEXT_OUTPUT,
+      execute: (_args, exec) => run(exec, 'console', {}),
+      presentCall: () => ({ card: 'generic', title: 'Read shared browser console', kind: 'read' }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_network',
+      description: 'Read the bounded recent network requests of the active shared browser tab.',
+      parameters: {},
+      output: TEXT_OUTPUT,
+      execute: (_args, exec) => run(exec, 'network', {}),
+      presentCall: () => ({ card: 'generic', title: 'Read shared browser network', kind: 'read' }),
+    }))
     yield () => { requester.dispose() }
   }, 'desktop-browser-agent')
 }

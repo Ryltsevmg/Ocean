@@ -16,7 +16,7 @@ Desktop 应用在 profile 启动后安装 `browser_*` 工具。它们作用于�
 
 ## Desktop 路线图
 
-第一阶段已实现：每个 Session 一个显式共享的 Sidebar tab、带元素 ref 的语义 snapshot、click 与普通文本 fill、navigate/back/forward/reload、敏感字段拒绝以及有界观察。阶段 2.1 已实现：`browser_screenshot` 捕获一张有界视口 PNG，按插件配置缩放并限制字节，经 attachment 服务存储并以持久 image 引用返回。阶段 2.2 已实现：有界的 press_key/scroll/select/check 原语、仅 Page domain 的 JavaScript 对话框观察与应答，以及变更操作可选的 `confirmActions` 审批屏障。阶段 2.3 已实现：每个 Session 最多八个共享 tab，browser_tabs/browser_tab_select 在活动 tab 上操作；关闭与取消共享仍仅限用户。阶段 3.1 已实现：共享 tab 的下载被捕获到应用 userData 目录并由 `browser_downloads` 列出（私有 tab 仍禁止下载），`browser_upload` 只为 `uploadAllowedRoots` 下的路径应答文件选择器（默认为空）。第三阶段继续加入受限 console/network 与标注/handoff 对齐。第三阶段加入白名单下载/上传、受限 console/network 检查，以及与 Codex 应用内浏览器对齐的标注/handoff。每个阶段都保留逐 tab 显式开启与 Host/main 分离；任何阶段都不向模型暴露任意 JavaScript。
+第一阶段已实现：每个 Session 一个显式共享的 Sidebar tab、带元素 ref 的语义 snapshot、click 与普通文本 fill、navigate/back/forward/reload、敏感字段拒绝以及有界观察。阶段 2.1 已实现：`browser_screenshot` 捕获一张有界视口 PNG，按插件配置缩放并限制字节，经 attachment 服务存储并以持久 image 引用返回。阶段 2.2 已实现：有界的 press_key/scroll/select/check 原语、仅 Page domain 的 JavaScript 对话框观察与应答，以及变更操作可选的 `confirmActions` 审批屏障。阶段 2.3 已实现：每个 Session 最多八个共享 tab，browser_tabs/browser_tab_select 在活动 tab 上操作；关闭与取消共享仍仅限用户。阶段 3.1 已实现：共享 tab 的下载被捕获到应用 userData 目录并由 `browser_downloads` 列出（私有 tab 仍禁止下载），`browser_upload` 只为 `uploadAllowedRoots` 下的路径应答文件选择器（默认为空）。阶段 3.2 已实现：`browser_console` 与 `browser_network` 读取通过共享 guest 唯一 debugger 的 Page、Runtime、Network CDP domain 收集的有界近期 console 行与请求记录。第三阶段继续加入标注/handoff 对齐。第三阶段加入白名单下载/上传、受限 console/network 检查，以及与 Codex 应用内浏览器对齐的标注/handoff。每个阶段都保留逐 tab 显式开启与 Host/main 分离；任何阶段都不向模型暴露任意 JavaScript。
 
 ## 生命周期
 

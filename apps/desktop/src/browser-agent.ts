@@ -557,13 +557,21 @@ export interface PendingDialog {
 export interface DialogWatch {
   pending(): PendingDialog | undefined
   answer(action: 'accept' | 'dismiss', promptText?: string): Promise<void>
+  /** Bounded recent console output of the guest. */
+  console(): string
+  /** Bounded recent network requests of the guest. */
+  network(): string
   dispose(): void
 }
 
-/** Attach only the Page domain needed for JavaScript dialogs; a foreign debugger leaves the watch inert. */
+/** Attach the Page, Runtime, and Network domains for dialogs, console, and requests; a foreign debugger leaves the watch inert. */
+const DEV_BUFFER_LIMIT = 60
+
 export function watchDialogs(guest: WebContents): DialogWatch {
   let pending: PendingDialog | undefined
   let active = true
+  const consoleLines: string[] = []
+  const requests = new Map<string, { method: string; url: string; outcome: string }>()
   const onMessage = (_event: unknown, method: string, params: Record<string, unknown>): void => {
     if (method === 'Page.javascriptDialogOpening') {
       pending = {
@@ -571,11 +579,39 @@ export function watchDialogs(guest: WebContents): DialogWatch {
         ...typeof params.defaultPrompt === 'string' ? { defaultPrompt: params.defaultPrompt } : {},
       }
     } else if (method === 'Page.javascriptDialogClosed') pending = undefined
+    else if (method === 'Runtime.consoleAPICalled') {
+      const args = Array.isArray(params.args) ? params.args as { type?: string; value?: unknown; description?: string }[] : []
+      const text = args.map((arg) => {
+        const value = arg.value ?? arg.description ?? arg.type ?? ''
+        return typeof value === 'string' ? value : typeof value === 'number' || typeof value === 'boolean' ? String(value) : ''
+      }).join(' ')
+      consoleLines.push(`${String(params.type)} ${text}`.slice(0, 500))
+      if (consoleLines.length > DEV_BUFFER_LIMIT) consoleLines.shift()
+    } else if (method === 'Network.requestWillBeSent') {
+      const request = params.request as { method?: string; url?: string } | undefined
+      const id = String(params.requestId)
+      requests.set(id, { method: request?.method ?? 'GET', url: request?.url ?? '', outcome: 'pending' })
+      if (requests.size > DEV_BUFFER_LIMIT) {
+        const oldest = requests.keys().next().value as string
+        requests.delete(oldest)
+      }
+    } else if (method === 'Network.responseReceived') {
+      const entry = requests.get(String(params.requestId))
+      const response = params.response as { status?: number } | undefined
+      if (entry !== undefined) entry.outcome = String(response?.status ?? 'responded')
+    } else if (method === 'Network.loadingFailed') {
+      const entry = requests.get(String(params.requestId))
+      if (entry !== undefined) entry.outcome = 'failed'
+    }
   }
   try {
     guest.debugger.attach('1.3')
     guest.debugger.on('message', onMessage)
-    void guest.debugger.sendCommand('Page.enable').catch(() => { active = false })
+    void Promise.all([
+      guest.debugger.sendCommand('Page.enable'),
+      guest.debugger.sendCommand('Runtime.enable'),
+      guest.debugger.sendCommand('Network.enable'),
+    ]).catch(() => { active = false })
   } catch {
     active = false
   }
@@ -589,11 +625,23 @@ export function watchDialogs(guest: WebContents): DialogWatch {
       })
       pending = undefined
     },
+    console() {
+      return consoleLines.length === 0 ? 'no console output' : `console (last ${String(consoleLines.length)}):\n${consoleLines.join('\n')}`
+    },
+    network() {
+      if (requests.size === 0) return 'no network requests'
+      const rows = [...requests.values()].map(entry => `${entry.method} ${entry.outcome} ${entry.url}`)
+      return `network (last ${String(rows.length)}):\n${rows.join('\n')}`
+    },
     dispose() {
       pending = undefined
+      consoleLines.length = 0
+      requests.clear()
       guest.debugger.removeListener('message', onMessage)
       if (active && !guest.isDestroyed()) {
-        void guest.debugger.sendCommand('Page.disable').catch(() => {})
+        for (const domain of ['Page', 'Runtime', 'Network']) {
+          void guest.debugger.sendCommand(`${domain}.disable`).catch(() => {})
+        }
         try { guest.debugger.detach() } catch { /* already detached by the guest teardown */ }
       }
       active = false
