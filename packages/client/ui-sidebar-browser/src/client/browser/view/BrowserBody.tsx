@@ -3,6 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import {
   Button,
+  IconAgentPresetOutlineRegular,
   IconChevronLeftOutlineRegular,
   IconChevronRightOutlineRegular,
   IconLinkOutlineRegular,
@@ -45,7 +46,8 @@ function useBrowserDraft(url: string | undefined, revision: number): readonly [s
 
 /** Render provider-neutral navigation state and optional controls. */
 export function BrowserBody(props: BrowserBodyProps): ReactNode {
-  const { mount, loadUrl, restore, goBack, goForward, reload, setSandbox, useBrowserState, useStore, useTabInfo, t } = props
+  const { mount, loadUrl, restore, goBack, goForward, reload, setSandbox, setAgentEnabled, resumeAgent,
+    useBrowserState, useStore, useTabInfo, t } = props
   const { tab } = useTabInfo()
   useEffect(() => tab.actions.bindCommands({ refresh: () => { reload(tab.id) } }), [tab.actions, tab.id, reload])
   const saved = useStore(state => state.byTab[tab.id])
@@ -61,7 +63,7 @@ export function BrowserBody(props: BrowserBodyProps): ReactNode {
 
   useLayoutEffect(() => {
     const hide = mount({
-      tabId: tab.id, signal: tab.signal, viewportId, applicationOrigin: window.location.origin,
+      tabId: tab.id, signal: tab.signal, sessionId: props.sessionId, viewportId, applicationOrigin: window.location.origin,
       initial: initial.current, initialUrl: initialUrl.current,
       openTab: (url) => { tab.actions.openTab('browser', { params: { url }, revealIfOpened: false }) },
     })
@@ -99,6 +101,15 @@ export function BrowserBody(props: BrowserBodyProps): ReactNode {
         <button type="button" className={css.tool} aria-label={t('external')} title={t('external')} disabled={externalUrl === undefined}
           onClick={externalUrl === undefined ? undefined : () => { window.open(externalUrl, '_blank', 'noopener,noreferrer') }}
         ><IconRightUpOutlineRegular size={14} /></button>
+        {frame.agentEnabled !== undefined && <button
+          type="button"
+          className={[css.tool, frame.agentEnabled ? css.agentOn : ''].join(' ')}
+          aria-label={t(frame.agentEnabled ? 'agent.disable' : 'agent.enable')}
+          title={t(frame.agentEnabled ? 'agent.disable' : 'agent.enable')}
+          aria-pressed={frame.agentEnabled}
+          disabled={frame.agentBusy}
+          onClick={() => { setAgentEnabled(tab.id, !frame.agentEnabled) }}
+        ><IconAgentPresetOutlineRegular /></button>}
         {sandboxed !== undefined && <button
           type="button"
           className={[css.tool, sandboxed ? '' : css.sandboxOff].join(' ')}
@@ -108,6 +119,12 @@ export function BrowserBody(props: BrowserBodyProps): ReactNode {
           onClick={() => { setSandbox(tab.id, !sandboxed) }}
         ><SandboxPolicyIcon sandboxed={sandboxed} /></button>}
       </form>
+      {frame.agentEnabled && !frame.handoffActive && <div className={css.agentNotice} role="status">{t('agent.notice')}</div>}
+      {frame.handoffActive && <div className={css.handoff} role="status">
+        <span className={css.handoffText}>{frame.handoffMessage === undefined ? t('handoff.waiting') : `${t('handoff.waiting')} — ${frame.handoffMessage}`}</span>
+        <Button variant="primary" size="sm" onClick={() => { resumeAgent(tab.id) }}>{t('handoff.resume')}</Button>
+      </div>}
+      {frame.agentFailure !== undefined && <div className={css.agentFailure} role="alert">{t(`agent.${frame.agentFailure}`)}</div>}
       {sandboxed === false && <div className={css.sandboxWarning} role="status">{t('sandbox.warning')}</div>}
       {failure !== undefined && <div className={css.failure} role="alert">{t(`error.${failure}`)}</div>}
       <div className={css.content} aria-busy={frame.loading}>

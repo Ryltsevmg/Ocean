@@ -10,6 +10,14 @@
 
 配置选择提供方；模型无法在运行时切换提供方。提供方拥有自己的工具、结果渲染、图像支持、配置与浏览器资源，并为其持有的浏览器执行 Session 隔离。提供方工具使用常规 OCEAN 执行管线与 Session 日志。
 
+## Desktop 应用内提供方
+
+Desktop 应用在 profile 启动后安装 `browser_*` 工具。它们作用于用户显式共享给当前 Session Agent 的右侧 Sidebar 浏览器 tab：`browser_snapshot` 返回带元素 ref 的紧凑语义树，`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward` 和 `browser_reload` 作用于该 tab。Electron main 拥有 guest 并校验每条命令；Host 只收到文本观察。共享按 tab 生效、默认关闭，且一个 Session 同时只能共享一个 tab。Desktop 提供方在槽位空闲时注册自身；如果槽位已被其他提供方占用，应用内工具仍会与该提供方并存。
+
+## Desktop 路线图
+
+第一阶段已实现：每个 Session 一个显式共享的 Sidebar tab、带元素 ref 的语义 snapshot、click 与普通文本 fill、navigate/back/forward/reload、敏感字段拒绝以及有界观察。阶段 2.1 已实现：`browser_screenshot` 捕获一张有界视口 PNG，按插件配置缩放并限制字节，经 attachment 服务存储并以持久 image 引用返回。阶段 2.2 已实现：有界的 press_key/scroll/select/check 原语、仅 Page domain 的 JavaScript 对话框观察与应答，以及变更操作可选的 `confirmActions` 审批屏障。阶段 2.3 已实现：每个 Session 最多八个共享 tab，browser_tabs/browser_tab_select 在活动 tab 上操作；关闭与取消共享仍仅限用户。阶段 3.1 已实现：共享 tab 的下载被捕获到应用 userData 目录并由 `browser_downloads` 列出（私有 tab 仍禁止下载），`browser_upload` 只为 `uploadAllowedRoots` 下的路径应答文件选择器（默认为空）。阶段 3.2 已实现：`browser_console` 与 `browser_network` 读取通过共享 guest 唯一 debugger 的 Page、Runtime、Network CDP domain 收集的有界近期 console 行与请求记录。阶段 3.3 已实现：`browser_handoff` 将活动 tab 连同消息交还用户，在按下恢复前拒绝其他操作，并在完成后以页面树返回。元素级标注对齐仍作为需设计评审的 UI 功能开放。第三阶段加入白名单下载/上传、受限 console/network 检查，以及与 Codex 应用内浏览器对齐的标注/handoff。每个阶段都保留逐 tab 显式开启与 Host/main 分离；任何阶段都不向模型暴露任意 JavaScript。
+
 ## 生命周期
 
 提供方在停止接收工具调用、关闭资源并等待自有工作期间保留注册；`ctx.browserUse.providerName` 在释放前一直报告该名称。启动失败的插件会释放其尝试的注册。取消无法撤销已交付的浏览器操作，独立 OCEAN 进程也不受某一提供方保留的约束。

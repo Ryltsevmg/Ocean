@@ -57,6 +57,8 @@ import * as ToolFs from '@ocean/ocean-tool-fs'
 import * as ToolFsSearch from '@ocean/ocean-tool-fs-search'
 import * as ToolStrReplaceEditor from '@ocean/ocean-tool-str-replace-editor'
 import TerminalSessionService from '@ocean/ocean-terminal'
+import * as ToolBrowserDesktop from '@ocean/ocean-tool-browser-desktop'
+import BrowserUseRegistry from '@ocean/ocean-browser-use'
 import * as ToolGoal from '@ocean/ocean-tool-goal'
 import * as ToolSchedule from '@ocean/ocean-tool-schedule'
 import ScheduleService from '@ocean/ocean-schedule'
@@ -408,6 +410,19 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'glob and grep are unconditional discovery tools that spawn the packaged ripgrep binary (`@vscode/ripgrep`) through ctx.subprocess as ordinary foreground calls (never background jobs) — no host `rg` install and no shell layer. The catalog uses `sampleOverCapGlobResults: true`; deployments must choose that behavior explicitly. Capped results save the complete formatted list through the optional ctx.spillStore backend; returned locators are follow-up-readable/searchable when the backend exposes local paths in co-located deployments.',
+  },
+  {
+    pkg: '@ocean/ocean-tool-browser-desktop',
+    dir: 'tool-browser-desktop',
+    source: 'packages/browser-use/tool-browser-desktop/src/index.ts',
+    requires: ['ctx.tools', 'ctx.browserUse', 'ctx.systemPrompt', 'the Desktop Host-to-main IPC channel'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(BrowserUseRegistry)
+      await ctx.plugin(ToolBrowserDesktop)
+    },
+    note:
+      'Desktop-only: the desktop profile mounts this row; outside the Desktop Host there is no main-process channel, so every call fails with a transport or not-shared error.',
   },
   {
     pkg: '@ocean/ocean-tool-goal',

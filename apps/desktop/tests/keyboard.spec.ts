@@ -78,7 +78,7 @@ function browserGuest(reservation: DesktopBrowserReservation) {
   const guest = Object.assign(new EventEmitter(), { mainFrame: frame, focusedFrame: frame,
     getURL: () => frame.url, isDestroyed: () => false, isFocused: vi.fn(() => true),
     setWindowOpenHandler: vi.fn(), setIgnoreMenuShortcuts: vi.fn(), send: vi.fn(), close: vi.fn(),
-    focus: vi.fn(), sendInputEvent: vi.fn() })
+    focus: vi.fn(), sendInputEvent: vi.fn(), session: new EventEmitter() })
   onTestFinished(() => { guest.emit('destroyed') })
   return { frame, guest }
 }

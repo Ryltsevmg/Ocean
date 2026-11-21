@@ -1,0 +1,33 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../browser-use/browser-use"
+    },
+    {
+      "path": "../../util/error"
+    },
+    {
+      "path": "../../core/system-prompt"
+    },
+    {
+      "path": "../../core/tools"
+    },
+    {
+      "path": "../../client/ui-sidebar-browser/tsconfig.host.json"
+    },
+    {
+      "path": "../../interaction/user-approval"
+    }
+  ]
+}

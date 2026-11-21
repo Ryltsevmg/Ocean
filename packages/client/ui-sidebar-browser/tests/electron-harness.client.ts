@@ -9,7 +9,7 @@ import { ElectronWebviewPresentation } from '../src/client/browser/electron/Elec
 let sequence = 0
 
 /** @returns one isolated, explicitly mounted page with native operations replaced by spies. */
-export function electronFixture(initial?: BrowserTabState) {
+export function electronFixture(initial?: BrowserTabState, sessionId?: string) {
   const opens = new Set<(url: string) => void>()
   const reservation: DesktopBrowserReservation = { lease: `lease-${++sequence}` as DesktopBrowserLeaseId, partition: 'partition' }
   const bridge = {
@@ -19,11 +19,15 @@ export function electronFixture(initial?: BrowserTabState) {
       opens.add(listener)
       return () => { opens.delete(listener) }
     }),
+    bindAgent: vi.fn(async (_lease: DesktopBrowserLeaseId, _sessionId: string) => {}),
+    unbindAgent: vi.fn(async (_lease: DesktopBrowserLeaseId) => {}),
+    onHandoff: vi.fn((_listener: (lease: string, message: string) => void) => () => {}),
+    resumeAgent: vi.fn(async (_lease: DesktopBrowserLeaseId) => {}),
   } satisfies DesktopBrowserBridge
   const workspace = vi.fn(async (_signal: AbortSignal) => 'cwd:/workspace')
   const persist = vi.fn<BrowserPageOptions['persist']>()
   const openRequested = vi.fn<BrowserPageOptions['openRequested']>()
-  const page = createElectronPage({ initial, persist, openRequested }, bridge, workspace)
+  const page = createElectronPage({ initial, sessionId, persist, openRequested }, bridge, workspace)
   const presentation = page.presentation
   if (!(presentation instanceof ElectronWebviewPresentation)) throw new Error('expected the Electron presentation')
   const create = presentation.createElement.bind(presentation)

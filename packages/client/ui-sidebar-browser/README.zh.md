@@ -46,6 +46,11 @@ Client 插件可以调用 `ctx.sidebarRight.openTab('browser', { params: { url }
 
 工具栏提供后退、前进、刷新、前往和在系统浏览器中打开。Web 还提供逐 tab sandbox 开关；关闭它是临时选择，并会显示灰字、琥珀色底的警告。Desktop 显示观察到的页面标题。重启后，Browser 展示保存的标题和 URL；只有点击恢复或刷新才打开该地址。
 
+<a id="desktop-agent-sharing"></a>
+### Desktop 的 Agent 共享
+
+Desktop 为每个 tab 增加 **与 Agent 共享** 控件。开启后，已挂载的 guest 会绑定到当前 Session 的 Agent；Desktop Host 通过私有 Host 到 main 通道提供 `browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward` 和 `browser_reload`。Agent 只会收到带元素 ref 的紧凑语义树，不会获得任意 JavaScript 或原始 HTML。每个新 tab 默认关闭共享；可随时从工具栏撤销；一个 Session 同时只能共享一个 tab。关闭 tab 或停用共享都会撤销访问，下一个 tab 仍从私有状态开始。
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -89,11 +94,11 @@ Desktop 主进程批准 guest 租约，并执行挂载、导航和权限策略�
 <a id="model-experience"></a>
 ## 模型体验
 
-无。Browser tab 是用户侧呈现状态，不注册工具、prompt section 或 Session event。
+无。本包不注册工具、prompt section 或 Session event；Desktop Host 的可选 `browser_*` 工具见 [Desktop 的 Agent 共享](#desktop-agent-sharing)。
 
 #### KV Cache 影响
 
-无；浏览内容不进入模型请求。
+本包无影响；Desktop Host 的 browser 工具结果属于普通 Session 内容，写入后会进入下一次模型请求。
 
 ## 已知限制与延期工作
 
@@ -108,6 +113,9 @@ Desktop 主进程批准 guest 租约，并执行挂载、导航和权限策略�
 - 只要 tab 仍在 Sidebar 布局中，保存的标题和 URL 就会跨刷新与插件卸载保留。关闭 tab 会删除其检查点。重启恢复不恢复页面内存、未保存的表单或 Chromium history 栈。
 - 本地文件会被拒绝，并继续由 Document Preview 负责。
 - Desktop 按规范化的工作区 CWD 共享进程内存储分区；没有解析到 Workspace 的 Session 单独隔离。Cookie 与 Web storage 不跨应用重启保留。guest 权限、下载与原生 popup 均被拒绝；通过检查的 HTTP(S) popup 请求会打开 Sidebar tab。Host 地址过滤不是通用私网或 DNS-rebinding 防火墙。
+- Agent 共享仅限 Desktop，且按 tab 显式开启。新 tab 默认私有，关闭 tab 或停用共享会撤销访问，一个 Session 同时只能共享一个 tab。绑定失败后需要用户再次操作。
+- Desktop Agent 工具只提供语义观察、单次 click 与普通文本 fill。截图、上传/下载、tab 管理、console/network、CDP、对话框以及键盘/拖拽原语仍延期。
+- 页面可以修改或伪造 `data-ocean-agent-ref`；ref 只是 best-effort 标识，不是授权。Agent 必须在导航后重新读取，重大操作仍依赖用户在场，而不是强制确认步骤。
 
 <a id="dev-note"></a>
 ### 开发备注

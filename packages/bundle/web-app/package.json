@@ -203,7 +203,8 @@
     "@deepseek-ai/schemastery": "workspace:~",
     "commander": "^15.0.0",
     "open": "^11.0.2",
-    "@ocean/ocean-plugin-market": "workspace:*"
+    "@ocean/ocean-plugin-market": "workspace:*",
+    "@ocean/ocean-tool-browser-desktop": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:~",

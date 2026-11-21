@@ -9,8 +9,8 @@
   en: 54defb17781cb25b
   zh: 750693b8cdec5fa0
 /tool-schema-catalog/tool-package-map:
-  en: 9c0c694bf4ca0246
-  zh: 137c81543fa9bbf4
+  en: 23f3bbdeadb84d73
+  zh: 632df1e4308d1e74
 /tool-schema-catalog/ocean-ocean-plugin-manager:
   en: a512df99f80ea0d3
   zh: a512df99f80ea0d3
@@ -129,8 +129,74 @@
   en: 3ba734ba7852cdd5
   zh: c6ce31ff2c195520
 /tool-schema-catalog/ocean-ocean-tool-fs-search/grep:
-  en: 99e23cf3f57db80a
-  zh: 678f06febb5c45ad
+  en: 596663cd00558068
+  zh: d9e3e29587662c64
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop:
+  en: a3d1309979bc52e9
+  zh: a3d1309979bc52e9
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-back:
+  en: ead805bcaed5e4ac
+  zh: aeaf58a6f85259b6
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-check:
+  en: e14f8bcac43cad45
+  zh: 463c4099e852d776
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-click:
+  en: fc6cef2c065ce71b
+  zh: e343d335acc28811
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-console:
+  en: 8c8476272216d70c
+  zh: 04c89f1f23b404bc
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-dialog:
+  en: 7a8eb17e9f117624
+  zh: 8c0cfd2c900f54f9
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-downloads:
+  en: 464bbac500b1b1c2
+  zh: c76a7bf6d789e062
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-fill:
+  en: 75bf1ff676cfec06
+  zh: 2df11e61d47af270
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-forward:
+  en: 11af61106f38b2d5
+  zh: 0e9b9593d9ee978b
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-handoff:
+  en: 9f4961fcd68decc4
+  zh: e8800acdedd0cc3b
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-info:
+  en: 1d7423e32c27bacc
+  zh: c1e80dff3295ddf3
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-navigate:
+  en: 4c9a0af02e713c2f
+  zh: 2f70d2691a291e2b
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-network:
+  en: 3e2c1a9bbee58030
+  zh: 9ee4b9618b95fdbf
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-press-key:
+  en: c225afc1a5e3fa6d
+  zh: 60df4a0b23eccb3b
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-reload:
+  en: 9a60ca4a06519172
+  zh: 892eeb5bb75056b2
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-screenshot:
+  en: 8bfd67ad9db3e911
+  zh: 4c28b042091c24b1
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-scroll:
+  en: 3e9a77d9b48ddc45
+  zh: 3097dfd730fd6e25
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-select:
+  en: f4270eba2a4144e1
+  zh: 790dee5e27783f9f
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-snapshot:
+  en: f514dcb88c4c90f5
+  zh: f94e891ecd7149f9
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-tab-select:
+  en: 4b4722ba02d220c9
+  zh: e68ba308e8f16710
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-tabs:
+  en: 76e1467a68fd5a77
+  zh: 692140c564498089
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-upload:
+  en: c3be17fd979c005c
+  zh: 4b50c6b2750efcf4
 /tool-schema-catalog/ocean-ocean-tool-goal:
   en: 7ee6376d0bdd888b
   zh: 7ee6376d0bdd888b

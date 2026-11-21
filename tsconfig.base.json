@@ -490,6 +490,7 @@
       "@ocean/ocean-tool-ask-user": ["./packages/interaction/tool-ask-user/src"],
       "@ocean/ocean-tool-bash": ["./packages/shell/tool-bash/src"],
       "@ocean/ocean-tool-bash-persistent": ["./packages/shell/tool-bash-persistent/src"],
+      "@ocean/ocean-tool-browser-desktop": ["./packages/browser-use/tool-browser-desktop/src"],
       "@ocean/ocean-tool-cordis": ["./packages/extensions/tool-cordis/src"],
       "@ocean/ocean-tool-executor-native": ["./packages/core/tool-executor-native/src"],
       "@ocean/ocean-tool-executor-ptc": ["./packages/core/tool-executor-ptc/src"],

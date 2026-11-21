@@ -4333,6 +4333,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@ocean/ocean-session-title-llm` | — | [`packages/session/session-title-llm/src/index.ts`](../packages/session/session-title-llm/src/index.ts) |
 | `@ocean/ocean-ssh-helper-runtime` | — | [`packages/ssh/ssh-helper-runtime/src/index.ts`](../packages/ssh/ssh-helper-runtime/src/index.ts) |
 | `@ocean/ocean-timeout` | — | [`packages/util/timeout/src/index.ts`](../packages/util/timeout/src/index.ts) |
+| `@ocean/ocean-tool-browser-desktop` | — | [`packages/browser-use/tool-browser-desktop/src/index.ts`](../packages/browser-use/tool-browser-desktop/src/index.ts) |
 | `@ocean/ocean-tool-testkit` | — | [`packages/test-support/tool-testkit/src/index.ts`](../packages/test-support/tool-testkit/src/index.ts) |
 | `@ocean/ocean-typert-generator` | — | [`packages/typert/generator/src/index.ts`](../packages/typert/generator/src/index.ts) |
 | `@ocean/ocean-typert-protocol` | — | [`packages/typert/protocol/src/index.ts`](../packages/typert/protocol/src/index.ts) |

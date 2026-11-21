@@ -174,6 +174,7 @@ export class DesktopHostProcess {
     resolve: (response: DesktopHostControlResponse) => void
     reject: (error: Error) => void
   }>()
+  private readonly messageListeners = new Set<(message: unknown) => boolean>()
 
   /**
    * @param node - Absolute Electron executable in Node mode.
@@ -202,6 +203,28 @@ export class DesktopHostProcess {
   ) {}
 
   /**
+   * Subscribe to Host messages a caller owns before the shell's own event set.
+   * @param listener - returns true when it consumed the message.
+   * @returns unsubscribe callback.
+   */
+  onMessage(listener: (message: unknown) => boolean): () => void {
+    this.messageListeners.add(listener)
+    return () => { this.messageListeners.delete(listener) }
+  }
+
+  /**
+   * Send one private IPC message to the running Host.
+   * @param message - JSON-safe message owned by the caller.
+   */
+  async send(message: object): Promise<void> {
+    const child = this.child
+    if (child === undefined || !child.connected) throw new Error('ocean desktop: Host is not running')
+    await new Promise<void>((resolve, reject) => {
+      child.send(message, (error) => { if (error === null) resolve(); else reject(error) })
+    })
+  }
+
+  /**
    * Start this child once and await its Web application URL.
    * @returns Ready facts supplied by the child after application startup.
    */
@@ -227,6 +250,9 @@ export class DesktopHostProcess {
     child.stderr?.on('data', (chunk: string) => { this.stderr = (this.stderr + chunk).slice(-MAX_HOST_DIAGNOSTIC_CHARS) })
     child.stdout?.pipe(process.stdout)
     child.on('message', (message: unknown) => {
+      for (const listener of this.messageListeners) {
+        if (listener(message)) return
+      }
       if (typeof message === 'object' && message !== null && 'type' in message && message.type === 'plugin-operation') {
         const record = 'record' in message ? parsePluginOperationRecord(message.record) : undefined
         if (record !== undefined && record.runId === this.runId) {

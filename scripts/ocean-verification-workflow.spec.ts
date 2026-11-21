@@ -42,7 +42,12 @@ function commands(job: Job): string[] {
 }
 
 function assertIsolated(candidate: Workflow): void {
-  expect(candidate.permissions).toEqual({ contents: 'read' })
+  // Read scopes are safe; any write scope or secret-bearing permission is not.
+  const assertReadScopes = (permissions: Record<string, string>): void => {
+    expect(permissions.contents).toBe('read')
+    for (const [scope, level] of Object.entries(permissions)) expect(level, scope).toBe('read')
+  }
+  assertReadScopes(candidate.permissions)
   expect(candidate.on).not.toHaveProperty('pull_request_target')
   const source = JSON.stringify(candidate)
   expect(source).not.toMatch(/secrets\.|release:publish|npm publish|gh release|self-hosted/u)
@@ -52,7 +57,7 @@ function assertIsolated(candidate: Workflow): void {
     expect(Number.isInteger(job['timeout-minutes'])).toBe(true)
     expect(job['timeout-minutes']).toBeGreaterThan(0)
     expect(job['timeout-minutes']).toBeLessThanOrEqual(240)
-    if (job.permissions !== undefined) expect(job.permissions).toEqual({ contents: 'read' })
+    if (job.permissions !== undefined) assertReadScopes(job.permissions)
     for (const step of job.steps) if (step.uses) expect(step.uses).toMatch(/@[a-f0-9]{40}$/u)
     expect(job.steps.find(step => step.uses?.startsWith('actions/checkout@'))?.with?.['persist-credentials']).toBe(false)
     expect(commands(job)).toContain('npm install --global pnpm@11.28.5')
