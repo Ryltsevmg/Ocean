@@ -54,11 +54,14 @@ declare module '@ocean/ocean-llm' {
   }
 }
 
+/** One catalog line's model-facing fields; a fresh observation always carries a source. */
+type RenderedCatalogEntry = { readonly name: string; readonly description: string; readonly source: string }
+
 /** Durable entry list mirroring the rendered catalog lines, for non-model consumers. */
 function catalogSourceEntries(
   skills: SkillSummary[],
   descriptionMaxLength: number,
-): SkillCatalogSource['entries'] {
+): RenderedCatalogEntry[] {
   return skills.map(skill => ({
     name: skill.name,
     description: catalogDescription(skill.description, descriptionMaxLength),
@@ -263,7 +266,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   })
 }
 
-function renderCatalogMessage(entries: SkillCatalogSource['entries'], incomplete: boolean): UserMessage {
+function renderCatalogMessage(entries: readonly RenderedCatalogEntry[], incomplete: boolean): UserMessage {
   return createUserMessage({
     content: [{
       type: 'text',
@@ -294,7 +297,7 @@ function renderCatalogMessage(entries: SkillCatalogSource['entries'], incomplete
   })
 }
 
-function renderCatalogUpdate(entries: SkillCatalogSource['entries'], incomplete: boolean): UserMessage {
+function renderCatalogUpdate(entries: readonly RenderedCatalogEntry[], incomplete: boolean): UserMessage {
   const availability = entries.length === 0
     ? [
       incomplete
@@ -343,11 +346,11 @@ function incompleteCatalogNotice(): string {
  * The pseudo-XML escaping belongs to this frame, not to the published fact, so it
  * is applied here and never stored. Names are `isSkillName`-validated and carry
  * no escapable character. The bracketed discovery source tells project content
- * apart from user and bundled skills; restored entries without a source keep
- * the unbracketed line.
+ * apart from user and bundled skills. Restored catalogs replay their persisted
+ * text verbatim, so this renderer only ever sees fresh observations.
  */
-function renderCatalogEntries(entries: SkillCatalogSource['entries']): string[] {
-  return entries.map(entry => `- \`${entry.name}\`${entry.source === undefined ? '' : ` [${escapeText(entry.source)}]`}: ${escapeText(entry.description)}`)
+function renderCatalogEntries(entries: readonly RenderedCatalogEntry[]): string[] {
+  return entries.map(entry => `- \`${entry.name}\` [${escapeText(entry.source)}]: ${escapeText(entry.description)}`)
 }
 
 /**
