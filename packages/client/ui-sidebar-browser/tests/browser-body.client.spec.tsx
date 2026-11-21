@@ -87,6 +87,16 @@ afterEach(async () => {
 })
 
 describe('BrowserBody', () => {
+  it('renders an Agent bind failure as an alert', () => {
+    const state = createSnapshotStore<BrowserFrameState>({ ...emptyBrowserFrame(), agentEnabled: false, agentFailure: 'bind' })
+    const mounted = mountBrowser(undefined, { createPage: () => ({
+      presentation: { mount: () => () => {} },
+      frame: { getSnapshot: () => state.getSnapshot(), subscribe: listener => state.subscribe(listener),
+        loadUrl: vi.fn(), goBack: vi.fn(), goForward: vi.fn(), reload: vi.fn(), dispose: async () => {},
+        agent: { setEnabled: vi.fn() } },
+    }) })
+    expect(mounted.view.getByRole('alert').textContent).toContain(zh['agent.bind'])
+  })
   it('offers Agent sharing only when the carrier supports it', () => {
     const state = createSnapshotStore<BrowserFrameState>({ ...emptyBrowserFrame(), agentEnabled: false })
     const setEnabled = vi.fn()

@@ -94,6 +94,7 @@ export class BrowserAgentRequester {
     const requestId = this.next++
     const timer = setTimeout(() => {
       const entry = this.pending.get(requestId)
+      /* v8 ignore next 2 -- every settlement path clears this timer; the guard only covers a raced fire. */
       if (entry === undefined) return
       this.pending.delete(requestId)
       entry.signal.removeEventListener('abort', entry.abort)
