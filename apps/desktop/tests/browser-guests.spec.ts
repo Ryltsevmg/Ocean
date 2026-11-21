@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events'
 
 const sessions = new Map<string, unknown>()
 vi.mock('electron', () => ({
-  app: { isPackaged: false },
+  app: { isPackaged: false, getPath: () => '/tmp/ocean-test-userdata' },
   session: { fromPartition: (partition: string) => {
     const value = {
       setPermissionRequestHandler: vi.fn(), setPermissionCheckHandler: vi.fn(),
@@ -21,6 +21,7 @@ function owner(): EventEmitter & { isDestroyed: () => boolean } {
   return Object.assign(new EventEmitter(), { isDestroyed: () => false })
 }
 
+let lastGuest: EventEmitter & { session: EventEmitter }
 function attach(guests: DesktopBrowserGuests, ownerWebContents: ReturnType<typeof owner>, index: number): string {
   const { lease, partition } = guests.acquire(ownerWebContents as never, 'workspace')
   const guest = Object.assign(new EventEmitter(), {
@@ -28,7 +29,9 @@ function attach(guests: DesktopBrowserGuests, ownerWebContents: ReturnType<typeo
     isDestroyed: () => false, close: vi.fn(),
     debugger: { attach: vi.fn(), on: vi.fn(), removeListener: vi.fn(), sendCommand: vi.fn(async () => {}) },
     setWindowOpenHandler: vi.fn(),
+    session: new EventEmitter(),
   })
+  lastGuest = guest
   ownerWebContents.emit('will-attach-webview', { preventDefault: vi.fn() }, {}, { src: `about:blank#${lease}`, partition })
   ownerWebContents.emit('did-attach-webview', {}, guest)
   guest.emit('dom-ready')
@@ -72,6 +75,25 @@ describe('DesktopBrowserGuests multi-tab sharing', () => {
     const result = await guests.executeAgent('session-2', 'tabs', {})
     if (!result.ok) throw new Error('tabs listing failed')
     expect(result.text).toContain('* 0 Page 6')
+  })
+
+  it('lists downloads captured while the tab is shared', async () => {
+    const key = attach(guests, ownerWebContents, 1)
+    guests.bindAgent(ownerWebContents as never, key, 'session-3')
+    const empty = await guests.executeAgent('session-3', 'downloads', {})
+    if (!empty.ok) throw new Error('downloads failed')
+    expect(empty.text).toBe('no downloads')
+    const item = Object.assign(new EventEmitter(), {
+      getFilename: () => 'report.pdf', setSavePath: vi.fn(), isDestroyed: () => false,
+    })
+    lastGuest.session.emit('will-download', { preventDefault: vi.fn() }, item, lastGuest)
+    const listed = await guests.executeAgent('session-3', 'downloads', {})
+    if (!listed.ok) throw new Error('downloads failed')
+    expect(listed.text).toContain('0 saving report.pdf')
+    item.emit('done', {}, 'completed')
+    const done = await guests.executeAgent('session-3', 'downloads', {})
+    if (!done.ok) throw new Error('downloads failed')
+    expect(done.text).toContain('0 done report.pdf')
   })
 
   it('reports not-shared for an unknown Session', async () => {

@@ -3381,7 +3381,7 @@ export interface Config {
 ## `@ocean/ocean-tool-browser-desktop`
 
 - `inject`: `tools` · `systemPrompt`
-- `source`: [`packages/browser-use/tool-browser-desktop/src/index.ts:170`](../packages/browser-use/tool-browser-desktop/src/index.ts)
+- `source`: [`packages/browser-use/tool-browser-desktop/src/index.ts:171`](../packages/browser-use/tool-browser-desktop/src/index.ts)
 
 ```ts config-catalog
 /** Deployment bounds for the raster observation the Desktop main process returns. */
@@ -3392,6 +3392,8 @@ export interface Config {
   screenshotMaxBytes?: number
   /** Require a person's approval before each mutating browser action. */
   confirmActions?: boolean
+  /** Absolute directory prefixes whose files `browser_upload` may send to a page. */
+  uploadAllowedRoots?: string[]
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-tool-browser-desktop -->

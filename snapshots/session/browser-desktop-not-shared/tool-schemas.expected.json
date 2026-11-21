@@ -103,6 +103,14 @@
       }
     },
     {
+      "name": "browser_downloads",
+      "description": "List files the active shared browser tab downloaded while shared, with their saved paths.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
       "name": "browser_fill",
       "description": "Fill ordinary text into one element ref in the shared browser tab and return the resulting page tree.",
       "parameters": {
@@ -279,6 +287,27 @@
       "parameters": {
         "type": "object",
         "properties": {}
+      }
+    },
+    {
+      "name": "browser_upload",
+      "description": "Choose a local file for a file input in the active shared browser tab and return the resulting page tree.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "File input ref from browser_snapshot."
+          },
+          "path": {
+            "type": "string",
+            "description": "Absolute path of the file to upload."
+          }
+        },
+        "required": [
+          "ref",
+          "path"
+        ]
       }
     },
     {

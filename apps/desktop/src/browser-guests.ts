@@ -1,5 +1,6 @@
 /** Main-process ownership and fixed isolation policy for Sidebar webview guests. */
 import { randomUUID } from 'node:crypto'
+import { join } from 'node:path'
 import { app, session, type BrowserWindow, type Session, type WebContents } from 'electron'
 import type { DesktopBrowserLeaseId, DesktopBrowserOpenRequest, DesktopBrowserReservation } from '@ocean/ocean-client-ui-sidebar-browser/types'
 import type { BrowserAgentMethod, BrowserAgentResult } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
@@ -18,9 +19,18 @@ interface GuestLease {
   agentTail?: Promise<void>
   /** Scoped JavaScript-dialog observation owned by this lease. */
   dialogWatch?: DialogWatch
+  /** Files the Agent-shared guest downloaded while shared; empty for private tabs. */
+  downloads: DownloadRecord[]
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'tabs', 'tab_select']
+/** One captured download; the saved file lives under this application's userData. */
+interface DownloadRecord {
+  filename: string
+  path: string
+  state: 'saving' | 'done' | 'interrupted'
+}
+
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'tabs', 'tab_select']
 
 /** Upper bound on tabs one Session may share at once. */
 const MAX_SHARED_TABS = 8
@@ -56,7 +66,7 @@ export class DesktopBrowserGuests {
       this.partitions.set(workspace, partition)
     }
     const lease = randomUUID() as DesktopBrowserLeaseId
-    this.leases.set(lease, { owner, partition, attached: false })
+    this.leases.set(lease, { owner, partition, attached: false, downloads: [] })
     return { lease, partition }
   }
 
@@ -153,6 +163,12 @@ export class DesktopBrowserGuests {
     }
     const key = shared[0] as DesktopBrowserLeaseId
     const lease = this.leases.get(key)
+    if (method === 'downloads') {
+      const rows = (lease?.downloads ?? []).map((item, index) =>
+        `${String(index)} ${item.state} ${item.filename} ${item.path}`)
+      return { type: 'browser-agent-result', requestId: 0, ok: true,
+        text: rows.length === 0 ? 'no downloads' : `downloads of the active tab:\n${rows.join('\n')}` }
+    }
     const guest = lease?.guest
     if (lease === undefined || guest === undefined || guest.isDestroyed()) {
       return agentFailure('BROWSER_NOT_READY', 'The active shared tab is not ready; select another tab with browser_tab_select.')
@@ -272,6 +288,18 @@ export class DesktopBrowserGuests {
         lease.guest = guest
         lease.dialogWatch = watchDialogs(guest)
         attachedLease = id
+        guest.session.on('will-download', (downloadEvent, item, source) => {
+          const shared = lease.agentSessionId
+          if (shared === undefined || source !== guest) {
+            downloadEvent.preventDefault()
+            return
+          }
+          const savePath = join(app.getPath('userData'), 'sidebar-browser-downloads', shared, item.getFilename())
+          item.setSavePath(savePath)
+          const record: DownloadRecord = { filename: item.getFilename(), path: savePath, state: 'saving' }
+          lease.downloads.push(record)
+          item.once('done', (_doneEvent, state) => { record.state = state === 'completed' ? 'done' : 'interrupted' })
+        })
         lease.releaseInput = attachInput(guest, id)
         guest.once('destroyed', () => { lease.releaseInput?.(); lease.dialogWatch?.dispose(); if (attachedLease !== undefined) this.forgetAgent(attachedLease, lease); this.leases.delete(id) })
       })
@@ -310,7 +338,6 @@ export class DesktopBrowserGuests {
     browserSession.setPermissionCheckHandler(() => false)
     browserSession.setDevicePermissionHandler(() => false)
     browserSession.setDisplayMediaRequestHandler((_request, callback) => { callback({}) })
-    browserSession.on('will-download', (event) => { event.preventDefault() })
     browserSession.webRequest.onBeforeRequest((details, callback) => {
       const url = new URL(details.url)
       const network = ['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol)

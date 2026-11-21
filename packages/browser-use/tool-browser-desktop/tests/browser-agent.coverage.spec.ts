@@ -386,3 +386,34 @@ describe('input tools and enforced confirmation', () => {
       .rejects.toMatchObject({ code: 'BROWSER_APPROVAL_UNAVAILABLE' })
   })
 })
+
+describe('downloads and upload allowlist', () => {
+  it('lists downloads through the tool', async () => {
+    const { ctx, registered } = fakeContext()
+    installDesktopBrowserAgent(ctx as never, channel().transport)
+    const tool = registered.get('browser_downloads')!
+    await expect(tool.execute({}, execution())).resolves.toEqual({ text: 'ok' })
+    expect(tool.presentCall?.({})).toBeDefined()
+  })
+
+  it('refuses uploads outside uploadAllowedRoots', async () => {
+    const { ctx, registered } = fakeContext()
+    const ch = channel()
+    installDesktopBrowserAgent(ctx as never, ch.transport, { uploadAllowedRoots: ['/allowed/deep'] })
+    const tool = registered.get('browser_upload')!
+    await expect(tool.execute({ ref: 'e1', path: '/other/file.pdf' }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
+    await expect(tool.execute({ ref: 'e1', path: '/allowed/deep/file.pdf' }, execution())).resolves.toEqual({ text: 'ok' })
+    expect(tool.presentCall?.({ ref: 'e1', path: '/allowed/deep/file.pdf' })).toBeDefined()
+    expect(ch.commands.at(-1)!.args).toMatchObject({ ref: 'e1', path: '/allowed/deep/file.pdf' })
+    await expect(tool.execute({ ref: 'e1', path: '/allowed/deep' }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
+  })
+
+  it('refuses every upload when no roots are configured', async () => {
+    const { ctx, registered } = fakeContext()
+    installDesktopBrowserAgent(ctx as never, channel().transport)
+    await expect(registered.get('browser_upload')!.execute({ ref: 'e1', path: '/tmp/x.pdf' }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
+  })
+})

@@ -1,3 +1,6 @@
+import { rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { WebContents } from 'electron'
 import {
@@ -229,4 +232,50 @@ describe('dialog watch', () => {
     await expect(watch.answer('accept')).rejects.toMatchObject({ code: 'BROWSER_DIALOG_UNAVAILABLE' })
     watch.dispose()
   })
+})
+
+describe('browser upload', () => {
+  function chooserGuest(chooserOpens = true) {
+    const sendCommand = vi.fn(async (method: string) => {
+      if (method === 'Page.setInterceptFileChooserDialog' && chooserOpens) {
+        setTimeout(() => { for (const l of listeners) l({}, 'Page.fileChooserOpened', { backendNodeId: 42 }) }, 10)
+      }
+    })
+    const listeners: ((...args: unknown[]) => void)[] = []
+    const contents = {
+      isDestroyed: () => false, getTitle: () => 'T', getURL: () => 'https://example.test/', isLoading: () => false,
+      executeJavaScript: vi.fn(async (): Promise<unknown> => ({ ok: true, x: 5, y: 5 })),
+      sendInputEvent: vi.fn(),
+      insertText: vi.fn(async () => {}), loadURL: vi.fn(async () => {}), reload: vi.fn(),
+      on: vi.fn(), removeListener: vi.fn(), once: vi.fn(),
+      navigationHistory: { canGoBack: () => false, canGoForward: () => false, goBack: vi.fn(), goForward: vi.fn() },
+      debugger: { attach: vi.fn(), isAttached: () => true, on: vi.fn((_e: string, l: (...a: unknown[]) => void) => { listeners.push(l) }),
+        removeListener: vi.fn(), sendCommand },
+    } as never
+    return { contents, sendCommand }
+  }
+
+  it('intercepts the chooser and answers with the file', async () => {
+    const { contents, sendCommand } = chooserGuest()
+    const file = join(tmpdir(), `ocean-upload-${String(Date.now())}.pdf`)
+    await writeFile(file, 'pdf')
+    await executeBrowserAgent(contents, 'upload', { ref: 'e1', path: file })
+    expect(sendCommand).toHaveBeenCalledWith('DOM.setFileInputFiles', { files: [file], backendNodeId: 42 })
+    await rm(file, { force: true })
+  })
+
+  it('refuses a missing file', async () => {
+    const { contents } = chooserGuest()
+    await expect(executeBrowserAgent(contents, 'upload', { ref: 'e1', path: '/tmp/ocean-upload-none' }))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_FILE_MISSING' })
+  })
+
+  it('refuses a chooser that never opens', async () => {
+    const stuck = chooserGuest(false)
+    const real = join(tmpdir(), `ocean-upload-stuck-${String(Date.now())}.pdf`)
+    await writeFile(real, 'pdf')
+    await expect(executeBrowserAgent(stuck.contents, 'upload', { ref: 'e1', path: real }))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NO_CHOOSER' })
+    await rm(real, { force: true })
+  }, 10_000)
 })

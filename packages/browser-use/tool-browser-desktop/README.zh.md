@@ -26,7 +26,7 @@ kind: "package-reference"
 
 Desktop bundle 仅为 `desktop` profile 挂载本行。每个浏览器 tab 默认不共享；用户在 tab 工具栏开启 **与 Agent 共享**。一个 Session 最多可同时共享八个 tab；最新共享的 tab 为活动 tab，`browser_tab_select` 负责切换，其余工具作用于活动 tab。关闭 tab 或停用共享即撤销访问。
 
-工具：`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`、`browser_press_key`、`browser_scroll`、`browser_select`、`browser_check`、`browser_dialog`、`browser_tabs`、`browser_tab_select`。`browser_snapshot` 返回带元素 ref 的紧凑语义树；操作接受最新 snapshot 的 ref 并返回结果树。`browser_fill` 拒绝 password、one-time-code 与卡片字段；`browser_navigate` 只接受不含凭据的 HTTP(S) 地址，包括 loopback。`browser_screenshot` 将视口捕获为一张有界 PNG，按 `screenshotMaxWidth`（默认 1280）缩放，超过 `screenshotMaxBytes`（默认 4000000）即拒绝；Host 通过 attachment 服务存储并返回持久 image 引用，Session log 中不出现 base64。`browser_press_key` 按下受限按键集中的一个键并可带修饰键；`browser_scroll` 以截断后的增量滚动视口或某个元素；`browser_select` 与 `browser_check` 驱动 select/checkbox/radio 控件；`browser_dialog` 读取、接受或关闭仅通过 Page domain debugger 观察到的待处理 JavaScript 对话框，对话框打开期间其他操作拒绝执行。`confirmActions: true` 时每个变更操作先经 approval seam 询问用户，未获授权即 fail closed。
+工具：`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`、`browser_press_key`、`browser_scroll`、`browser_select`、`browser_check`、`browser_dialog`、`browser_tabs`、`browser_tab_select`、`browser_downloads`、`browser_upload`。`browser_snapshot` 返回带元素 ref 的紧凑语义树；操作接受最新 snapshot 的 ref 并返回结果树。`browser_fill` 拒绝 password、one-time-code 与卡片字段；`browser_navigate` 只接受不含凭据的 HTTP(S) 地址，包括 loopback。`browser_screenshot` 将视口捕获为一张有界 PNG，按 `screenshotMaxWidth`（默认 1280）缩放，超过 `screenshotMaxBytes`（默认 4000000）即拒绝；Host 通过 attachment 服务存储并返回持久 image 引用，Session log 中不出现 base64。`browser_press_key` 按下受限按键集中的一个键并可带修饰键；`browser_scroll` 以截断后的增量滚动视口或某个元素；`browser_select` 与 `browser_check` 驱动 select/checkbox/radio 控件；`browser_dialog` 读取、接受或关闭仅通过 Page domain debugger 观察到的待处理 JavaScript 对话框，对话框打开期间其他操作拒绝执行。`confirmActions: true` 时每个变更操作先经 approval seam 询问用户，未获授权即 fail closed。
 
 -----
 
@@ -79,7 +79,7 @@ section 在 scope 内的每个 Desktop profile 请求上的小额固定输入成
 
 #### What the model sees
 
-[八个工具 schema](../../../docs/tool-catalog.zh.md#oceanocean-tool-browser-desktop)（`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`、`browser_press_key`、`browser_scroll`、`browser_select`、`browser_check`、`browser_dialog`、`browser_tabs`、`browser_tab_select`）。成功结果是一条有界文本观察——tab 事实或带元素 ref 的紧凑语义页面树——`browser_screenshot` 除外：其规范值携带持久 attachment 引用与固有尺寸，并渲染为一个 image block。失败携带稳定码，如 `BROWSER_NOT_SHARED`、`BROWSER_SECRET_FIELD`。
+[八个工具 schema](../../../docs/tool-catalog.zh.md#oceanocean-tool-browser-desktop)（`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`、`browser_press_key`、`browser_scroll`、`browser_select`、`browser_check`、`browser_dialog`、`browser_tabs`、`browser_tab_select`、`browser_downloads`、`browser_upload`）。成功结果是一条有界文本观察——tab 事实或带元素 ref 的紧凑语义页面树——`browser_screenshot` 除外：其规范值携带持久 attachment 引用与固有尺寸，并渲染为一个 image block。失败携带稳定码，如 `BROWSER_NOT_SHARED`、`BROWSER_SECRET_FIELD`。
 
 #### Token effect
 

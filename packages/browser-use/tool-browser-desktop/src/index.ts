@@ -3,6 +3,7 @@
  * The Host owns model-facing policy; Electron main owns the guest and its DOM.
  * @module @ocean/ocean-tool-browser-desktop
  */
+import { relative, resolve } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@ocean/ocean-user-approval'
 import z from '@deepseek-ai/schemastery'
@@ -174,6 +175,8 @@ export interface Config {
   screenshotMaxBytes?: number
   /** Require a person's approval before each mutating browser action. */
   confirmActions?: boolean
+  /** Absolute directory prefixes whose files `browser_upload` may send to a page. */
+  uploadAllowedRoots?: string[]
 }
 
 /** Schemastery config for the screenshot bounds. */
@@ -181,6 +184,7 @@ export const Config: z<Config> = z.object({
   screenshotMaxWidth: z.number().step(1).min(64).max(4096).default(1280),
   screenshotMaxBytes: z.number().step(1).min(1024).max(16_000_000).default(4_000_000),
   confirmActions: z.boolean().default(false),
+  uploadAllowedRoots: z.array(z.string()).default([]),
 })
 
 /** Loader plugin name. */
@@ -203,7 +207,7 @@ export function installDesktopBrowserAgent(ctx: Context,
     ctx.logger.warn(`desktop browser agent shares the process with browser provider "${registry.providerName}"; its own in-app tools remain available`)
   }
   const requester = new BrowserAgentRequester(transport)
-  const mutating = new Set<BrowserAgentMethod>(['click', 'fill', 'navigate', 'press_key', 'scroll', 'select', 'check', 'dialog'])
+  const mutating = new Set<BrowserAgentMethod>(['click', 'fill', 'navigate', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload'])
   const confirm = async (exec: ToolRunContext, method: BrowserAgentMethod): Promise<void> => {
     const approval = ctx.get('approval')
     const agent = exec.agent
@@ -444,6 +448,35 @@ export function installDesktopBrowserAgent(ctx: Context,
       output: TEXT_OUTPUT,
       execute: (args, exec) => run(exec, 'tab_select', { index: args.index }),
       presentCall: args => ({ card: 'generic', title: 'Select shared browser tab', kind: 'other', rawInput: args.index }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_downloads',
+      description: 'List files the active shared browser tab downloaded while shared, with their saved paths.',
+      parameters: {},
+      output: TEXT_OUTPUT,
+      execute: (_args, exec) => run(exec, 'downloads', {}),
+      presentCall: () => ({ card: 'generic', title: 'List shared browser downloads', kind: 'read' }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_upload',
+      description: 'Choose a local file for a file input in the active shared browser tab and return the resulting page tree.',
+      parameters: {
+        ref: { type: 'string', required: true, description: 'File input ref from browser_snapshot.' },
+        path: { type: 'string', required: true, description: 'Absolute path of the file to upload.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => {
+        const path = resolve(args.path)
+        const allowed = bounds.uploadAllowedRoots.some((root) => {
+          const rel = relative(resolve(root), path)
+          return rel !== '' && !rel.startsWith('..') && !rel.startsWith('/')
+        })
+        if (!allowed) {
+          return Promise.reject(new HarnessError('The file is outside uploadAllowedRoots.', 'BROWSER_UPLOAD_NOT_ALLOWED'))
+        }
+        return run(exec, 'upload', { ref: args.ref, path })
+      },
+      presentCall: args => ({ card: 'generic', title: 'Upload file in shared browser', kind: 'other', rawInput: args.ref }),
     }))
     yield () => { requester.dispose() }
   }, 'desktop-browser-agent')

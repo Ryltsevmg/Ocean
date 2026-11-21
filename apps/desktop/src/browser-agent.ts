@@ -1,4 +1,5 @@
 /** Main-process operations for one Agent-shared Sidebar browser guest. */
+import { stat } from 'node:fs/promises'
 import type { WebContents } from 'electron'
 import type { BrowserAgentCommand, BrowserAgentImage, BrowserAgentMethod } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
 
@@ -11,7 +12,7 @@ const SETTLE_TIMEOUT_MS = 8_000
 /** Quiet period after an action that did not start a navigation. */
 const QUIET_DELAY_MS = 350
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload']
 
 /**
  * Validate one Host command before it reaches the guest.
@@ -328,6 +329,46 @@ export async function executeBrowserAgent(guest: WebContents, method: BrowserAge
       if (outcome === 'missing') throw new BrowserAgentError('The element is no longer on the page; read the page again.', 'BROWSER_REF_STALE')
       if (outcome === 'unsupported') throw new BrowserAgentError('This element is not a checkbox or radio.', 'BROWSER_CHECK_UNSUPPORTED')
       if (outcome === 'blocked') throw new BrowserAgentError('The page refused the state change.', 'BROWSER_CHECK_BLOCKED')
+      await delay(QUIET_DELAY_MS)
+      return observe(guest)
+    }
+    case 'upload': {
+      const ref = assertAgentRef(args.ref)
+      if (typeof args.path !== 'string' || args.path.length === 0) {
+        throw new BrowserAgentError('The upload file path is missing.', 'BROWSER_UPLOAD_PATH_INVALID')
+      }
+      try { await stat(args.path) } catch {
+        throw new BrowserAgentError('The upload file does not exist.', 'BROWSER_UPLOAD_FILE_MISSING')
+      }
+      if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
+      const point = await clickPoint(guest, ref)
+      try {
+        await guest.debugger.sendCommand('Page.enable')
+        await guest.debugger.sendCommand('Page.setInterceptFileChooserDialog', { enabled: true })
+      } catch {
+        throw new BrowserAgentError('File-chooser control is unavailable for this tab.', 'BROWSER_UPLOAD_UNAVAILABLE')
+      }
+      const opened = new Promise<number>((resolve, reject) => {
+        const timer = setTimeout(() => { guest.debugger.removeListener('message', onMessage); reject(new BrowserAgentError('The file chooser did not open.', 'BROWSER_UPLOAD_NO_CHOOSER')) }, 5_000)
+        timer.unref()
+        const onMessage = (_event: unknown, method: string, params: Record<string, unknown>): void => {
+          if (method === 'Page.fileChooserOpened') {
+            clearTimeout(timer); guest.debugger.removeListener('message', onMessage)
+            resolve(typeof params.backendNodeId === 'number' ? params.backendNodeId : -1)
+          } else if (method === 'Page.javascriptDialogOpening') {
+            clearTimeout(timer); guest.debugger.removeListener('message', onMessage)
+            reject(new BrowserAgentError('A dialog opened instead of the file chooser.', 'BROWSER_DIALOG_PENDING'))
+          }
+        }
+        guest.debugger.on('message', onMessage)
+      })
+      guest.sendInputEvent({ type: 'mouseMove', x: point.x, y: point.y })
+      guest.sendInputEvent({ type: 'mouseDown', x: point.x, y: point.y, button: 'left', clickCount: 1 })
+      guest.sendInputEvent({ type: 'mouseUp', x: point.x, y: point.y, button: 'left', clickCount: 1 })
+      const backendNodeId = await opened
+      if (backendNodeId < 0) throw new BrowserAgentError('The file chooser did not report its node.', 'BROWSER_UPLOAD_NO_CHOOSER')
+      await guest.debugger.sendCommand('DOM.setFileInputFiles', { files: [args.path], backendNodeId })
+      await guest.debugger.sendCommand('Page.setInterceptFileChooserDialog', { enabled: false }).catch(() => {})
       await delay(QUIET_DELAY_MS)
       return observe(guest)
     }
