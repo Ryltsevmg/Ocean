@@ -148,6 +148,22 @@
       }
     },
     {
+      "name": "browser_handoff",
+      "description": "Hand the active shared browser tab to the person and wait until they resume it; returns the page tree after they finish.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "What the person should do in the tab, such as completing a login or payment."
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    },
+    {
       "name": "browser_info",
       "description": "Report the title, URL, and loading state of the Shared browser tab.",
       "parameters": {

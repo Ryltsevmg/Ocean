@@ -143,6 +143,12 @@ export class BrowserController implements HostObservable<BrowserControllerState>
     if (agent !== undefined) agent.setEnabled(enabled)
   }
 
+  /** Release a pending Agent handoff for this tab. */
+  resumeAgent(): void {
+    const agent = this.page.frame.agent
+    if (agent !== undefined) agent.resume()
+  }
+
   /**
    * Redirect future checkpoint writes to a replacement Session binding.
    * @param actions - replacement persistence writer.
@@ -215,6 +221,8 @@ export interface BrowserInjected {
   setSandbox(tabId: TabId, enabled: boolean): void
   /** @param tabId - owning tab. @param enabled - Agent access to that tab. */
   setAgentEnabled(tabId: TabId, enabled: boolean): void
+  /** @param tabId - the tab whose pending handoff the person releases. */
+  resumeAgent(tabId: TabId): void
 }
 
 /**
@@ -277,5 +285,6 @@ export function createBrowserControllers(actions: BoundActions<BrowserStore>, cr
     reload: (id) => { controller(id)?.reload() },
     setSandbox: (id, enabled) => { controller(id)?.setSandbox(enabled) },
     setAgentEnabled: (id, enabled) => { controller(id)?.setAgentEnabled(enabled) },
+    resumeAgent: (id) => { controller(id)?.resumeAgent() },
   }
 }

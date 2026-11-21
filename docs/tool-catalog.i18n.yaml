@@ -9,8 +9,8 @@
   en: 54defb17781cb25b
   zh: 750693b8cdec5fa0
 /tool-schema-catalog/tool-package-map:
-  en: 0bcff6992f34aafb
-  zh: 460e4213fee6294c
+  en: 23f3bbdeadb84d73
+  zh: 632df1e4308d1e74
 /tool-schema-catalog/ocean-ocean-plugin-manager:
   en: a512df99f80ea0d3
   zh: a512df99f80ea0d3
@@ -158,6 +158,9 @@
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-forward:
   en: 11af61106f38b2d5
   zh: 0e9b9593d9ee978b
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-handoff:
+  en: 9f4961fcd68decc4
+  zh: e8800acdedd0cc3b
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-info:
   en: 1d7423e32c27bacc
   zh: c1e80dff3295ddf3

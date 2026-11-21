@@ -340,6 +340,7 @@ describe('input tools and enforced confirmation', () => {
       browser_tab_select: { index: 0 },
       browser_console: {},
       browser_network: {},
+      browser_handoff: { message: 'log in' },
     }
     for (const [name, toolArgs] of Object.entries(args)) {
       const tool = registered.get(name)!

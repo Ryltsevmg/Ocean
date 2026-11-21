@@ -24,6 +24,10 @@ export interface BrowserFrameState {
   readonly agentBusy: boolean
   /** Localized by the tab; carries the failure class rather than prose. */
   readonly agentFailure: 'bind' | 'unavailable' | undefined
+  /** The Agent handed the tab back to the person and waits for resume. */
+  readonly handoffActive: boolean
+  /** The Agent's handoff message; user data, never localized. */
+  readonly handoffMessage: string | undefined
 }
 
 /** Optional iframe policy control, not an Electron process-sandbox switch. */
@@ -36,6 +40,8 @@ export interface BrowserSandboxControl {
 export interface BrowserAgentControl {
   /** @param enabled - whether the Agent may read and act on this tab. */
   setEnabled(enabled: boolean): void
+  /** Release a pending handoff so the Agent may act again. */
+  resume(): void
 }
 
 /** Navigation owns page lifetime; mounting and hiding belong to BrowserPresentation. */
@@ -60,5 +66,6 @@ export interface BrowserFrame extends HostObservable<BrowserFrameState> {
  */
 export function emptyBrowserFrame(): BrowserFrameState {
   return { target: undefined, address: 'empty', loading: false, canGoBack: false, canGoForward: false,
-    error: undefined, sandboxEnabled: undefined, agentEnabled: undefined, agentBusy: false, agentFailure: undefined }
+    error: undefined, sandboxEnabled: undefined, agentEnabled: undefined, agentBusy: false,
+    agentFailure: undefined, handoffActive: false, handoffMessage: undefined }
 }

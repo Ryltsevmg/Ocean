@@ -12,7 +12,7 @@ const SETTLE_TIMEOUT_MS = 8_000
 /** Quiet period after an action that did not start a navigation. */
 const QUIET_DELAY_MS = 350
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'handoff']
 
 /**
  * Validate one Host command before it reaches the guest.

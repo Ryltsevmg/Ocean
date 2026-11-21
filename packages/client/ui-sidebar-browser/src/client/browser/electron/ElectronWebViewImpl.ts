@@ -19,6 +19,7 @@ export class ElectronWebViewImpl implements BrowserFrame {
   private readonly store: SnapshotStore<BrowserFrameState>
   private agentDesired = false
   private agentEnabled = false
+  private handoffOff: (() => void) | undefined
   private readonly lifetime = new AbortController()
   private guestLifetime: AbortController | undefined
   private element: WebviewElement | undefined
@@ -46,6 +47,7 @@ export class ElectronWebViewImpl implements BrowserFrame {
     this.checkpoint = currentBrowserTarget(options.initial)
     this.agent = options.sessionId === undefined ? undefined : {
       setEnabled: (enabled) => { void this.setAgentEnabled(enabled) },
+      resume: () => { void this.resumeHandoff() },
     }
     this.store = createSnapshotStore({ ...emptyBrowserFrame(),
       agentEnabled: this.agent === undefined ? undefined : false,
@@ -194,8 +196,17 @@ export class ElectronWebViewImpl implements BrowserFrame {
     return !this.lifetime.signal.aborted
   }
 
+  /** Clear the pending handoff and let the Agent act on this tab again. */
+  private async resumeHandoff(): Promise<void> {
+    const lease = this.lease
+    if (lease === undefined || !this.store.getSnapshot().handoffActive) return
+    this.publishAgent({ handoffActive: false, handoffMessage: undefined })
+    try { await this.bridge.resumeAgent(lease) }
+    catch { if (this.alive()) this.publishAgent({ handoffActive: true, handoffMessage: this.store.getSnapshot().handoffMessage }) }
+  }
+
   /** Publish one partial Agent state without disturbing navigation state. */
-  private publishAgent(patch: Partial<Pick<BrowserFrameState, 'agentEnabled' | 'agentBusy' | 'agentFailure'>>): void {
+  private publishAgent(patch: Partial<Pick<BrowserFrameState, 'agentEnabled' | 'agentBusy' | 'agentFailure' | 'handoffActive' | 'handoffMessage'>>): void {
     if (this.lifetime.signal.aborted) return
     this.store.set({ ...this.store.getSnapshot(), ...patch })
   }
@@ -220,6 +231,12 @@ export class ElectronWebViewImpl implements BrowserFrame {
     // oxlint-disable-next-line typescript/no-unnecessary-condition -- The signal can abort while acquire is pending.
     if (attachmentSignal.aborted) { await this.release(reservation.lease); return }
     this.lease = reservation.lease
+    if (this.handoffOff === undefined) {
+      this.handoffOff = this.bridge.onHandoff((lease, message) => {
+        if (this.lifetime.signal.aborted || lease !== this.lease) return
+        this.publishAgent({ handoffActive: true, handoffMessage: message })
+      })
+    }
     if (this.agentDesired) void this.bindAgent()
     this.guestLifetime = new AbortController()
     const signal = AbortSignal.any([attachmentSignal, this.guestLifetime.signal])
@@ -325,6 +342,8 @@ export class ElectronWebViewImpl implements BrowserFrame {
   private dropGuest(): Promise<void> {
     this.agentEnabled = false
     this.agentDesired = false
+    this.handoffOff?.()
+    this.handoffOff = undefined
     this.publishAgent({ agentEnabled: this.agent === undefined ? undefined : false, agentBusy: false, agentFailure: undefined })
     this.guestLifetime?.abort()
     this.guestLifetime = undefined

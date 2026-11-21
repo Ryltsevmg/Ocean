@@ -21,6 +21,8 @@ interface GuestLease {
   dialogWatch?: DialogWatch
   /** Files the Agent-shared guest downloaded while shared; empty for private tabs. */
   downloads: DownloadRecord[]
+  /** The person holds the tab until they resume the Agent. */
+  handedOff?: { readonly resolve: () => void } | undefined
 }
 
 /** One captured download; the saved file lives under this application's userData. */
@@ -30,10 +32,16 @@ interface DownloadRecord {
   state: 'saving' | 'done' | 'interrupted'
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'console', 'network', 'tabs', 'tab_select']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'console', 'network', 'handoff', 'tabs', 'tab_select']
 
 /** Upper bound on tabs one Session may share at once. */
 const MAX_SHARED_TABS = 8
+
+/** One bounded failure for a command whose delivery itself broke. */
+export function browserFallbackResult(requestId: number): BrowserAgentResult {
+  return { type: 'browser-agent-result', requestId, ok: false,
+    error: { code: 'BROWSER_ACTION_FAILED', message: 'The browser action failed; inspect the page before continuing.' } }
+}
 
 /** Build one result whose request id is filled in by the IPC dispatcher. */
 function agentFailure(code: string, message: string): BrowserAgentResult {
@@ -46,8 +54,10 @@ export class DesktopBrowserGuests {
   private readonly leases = new Map<DesktopBrowserLeaseId, GuestLease>()
   private readonly agentSessions = new Map<string, DesktopBrowserLeaseId[]>()
 
-  /** @param hostUrl - current authenticated OCEAN Host, which guests cannot request. */
-  constructor(private readonly hostUrl: () => string | undefined) {}
+  /** @param hostUrl - current authenticated OCEAN Host, which guests cannot request.
+   * @param ownerSend - delivers one handoff notice to the owning application window. */
+  constructor(private readonly hostUrl: () => string | undefined,
+    private readonly ownerSend: (request: { lease: DesktopBrowserLeaseId; message: string }) => void = () => {}) {}
 
   /**
    * Reserve one guest in a workspace's process-lifetime partition.
@@ -128,6 +138,19 @@ export class DesktopBrowserGuests {
     this.forgetAgent(key, lease)
   }
 
+  /** Release a handoff so the Agent may act again. Idempotent.
+   * @param id - lease received over IPC.
+   */
+  resumeAgent(id: unknown): void {
+    if (typeof id !== 'string') return
+    const lease = this.leases.get(id as DesktopBrowserLeaseId)
+    const handoff = lease?.handedOff
+    if (lease !== undefined && handoff !== undefined) {
+      delete lease.handedOff
+      handoff.resolve()
+    }
+  }
+
   /**
    * Run one bounded command for the Session's shared guest.
    * @param sessionId - Session whose Agent issued the command.
@@ -163,6 +186,30 @@ export class DesktopBrowserGuests {
     }
     const key = shared[0] as DesktopBrowserLeaseId
     const lease = this.leases.get(key)
+    if (method !== 'handoff' && lease?.handedOff !== undefined) {
+      return agentFailure('BROWSER_HANDOFF_ACTIVE', 'The person is working in the tab; wait for browser_handoff to return.')
+    }
+    if (method === 'handoff') {
+      if (lease === undefined) return agentFailure('BROWSER_NOT_READY', 'The active shared tab is not ready.')
+      if (lease.handedOff !== undefined) return agentFailure('BROWSER_HANDOFF_ACTIVE', 'A handoff is already waiting for the person.')
+      const message = typeof args.message === 'string' ? args.message.slice(0, 1000) : ''
+      const settled = Promise.withResolvers<void>()
+      lease.handedOff = { resolve: settled.resolve }
+      this.ownerSend({ lease: key, message })
+      const answered = await Promise.race([
+        settled.promise.then(() => true),
+        new Promise<boolean>((resolve) => {
+          const timer = setTimeout(() => { resolve(false) }, 300_000)
+          timer.unref()
+        }),
+      ])
+      delete lease.handedOff
+      const guest = lease.guest
+      if (!answered || guest === undefined || guest.isDestroyed()) {
+        return agentFailure('BROWSER_HANDOFF_TIMEOUT', 'The person did not resume the tab within five minutes.')
+      }
+      return { type: 'browser-agent-result', requestId: 0, ok: true, text: await executeBrowserAgent(guest, 'snapshot', {}) }
+    }
     if (method === 'console' || method === 'network') {
       const read = lease?.dialogWatch?.[method]
       if (read === undefined) return agentFailure('BROWSER_NOT_READY', 'The active shared tab is not ready; select another tab with browser_tab_select.')

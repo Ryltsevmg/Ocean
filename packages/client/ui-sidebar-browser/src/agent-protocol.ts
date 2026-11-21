@@ -24,6 +24,7 @@ export type BrowserAgentMethod =
   | 'tabs'
   | 'downloads'
   | 'console'
+  | 'handoff'
   | 'network'
   | 'upload'
   | 'tab_select'

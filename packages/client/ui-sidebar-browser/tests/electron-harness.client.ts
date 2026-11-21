@@ -21,6 +21,8 @@ export function electronFixture(initial?: BrowserTabState, sessionId?: string) {
     }),
     bindAgent: vi.fn(async (_lease: DesktopBrowserLeaseId, _sessionId: string) => {}),
     unbindAgent: vi.fn(async (_lease: DesktopBrowserLeaseId) => {}),
+    onHandoff: vi.fn((_listener: (lease: string, message: string) => void) => () => {}),
+    resumeAgent: vi.fn(async (_lease: DesktopBrowserLeaseId) => {}),
   } satisfies DesktopBrowserBridge
   const workspace = vi.fn(async (_signal: AbortSignal) => 'cwd:/workspace')
   const persist = vi.fn<BrowserPageOptions['persist']>()

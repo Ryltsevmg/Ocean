@@ -16,7 +16,18 @@ export function createDesktopBrowserBridge(): DesktopBrowserBridge {
       catch (error) { console.error('Desktop browser link handler failed', error) }
     }
   })
+  const handoffListeners = new Set<(lease: string, message: string) => void>()
+  ipcRenderer.on(DESKTOP_IPC.browserAgentHandoff, (_event, request: unknown) => {
+    if (typeof request !== 'object' || request === null || !('lease' in request) || !('message' in request)
+      || typeof request.lease !== 'string' || typeof request.message !== 'string') return
+    for (const listener of [...handoffListeners]) listener(request.lease, request.message)
+  })
   return {
+    onHandoff: (listener) => {
+      handoffListeners.add(listener)
+      return () => { handoffListeners.delete(listener) }
+    },
+    resumeAgent: lease => ipcRenderer.invoke(DESKTOP_IPC.browserAgentResume, lease) as Promise<void>,
     acquire: workspace => ipcRenderer.invoke(DESKTOP_IPC.browserAcquire, workspace) as ReturnType<DesktopBrowserBridge['acquire']>,
     release: lease => ipcRenderer.invoke(DESKTOP_IPC.browserRelease, lease) as Promise<void>,
     bindAgent: (lease, sessionId) => ipcRenderer.invoke(DESKTOP_IPC.browserAgentBind, lease, sessionId) as Promise<void>,

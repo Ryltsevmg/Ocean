@@ -78,6 +78,8 @@ describe('ui-sidebar-browser apply', () => {
       onOpenRequested: vi.fn(() => () => {}),
       bindAgent: vi.fn(async () => {}),
       unbindAgent: vi.fn(async () => {}),
+      onHandoff: vi.fn(() => () => {}),
+      resumeAgent: vi.fn(async () => {}),
     }
     vi.stubGlobal('oceanDesktop', { protocolVersion, browser: bridge })
     const h = await boot()

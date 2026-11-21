@@ -24,6 +24,8 @@ export interface DesktopBrowserBridge {
   release(lease: DesktopBrowserLeaseId): Promise<void>
   /** @param lease - originating guest. @param listener - approved URL consumer. @returns unsubscribe callback. */
   onOpenRequested(lease: DesktopBrowserLeaseId, listener: (url: string) => void): () => void
+  /** @param listener - one Agent handoff for a lease. @returns unsubscribe callback. */
+  onHandoff(listener: (lease: string, message: string) => void): () => void
   /**
    * Let the Session's Agent read and act on one mounted guest.
    * @param lease - the caller's reservation.
@@ -31,6 +33,11 @@ export interface DesktopBrowserBridge {
    * @returns after the main process records the binding.
    */
   bindAgent(lease: DesktopBrowserLeaseId, sessionId: string): Promise<void>
+  /**
+   * Release a handoff so the Agent may act on the tab again.
+   * @param lease - the caller's reservation.
+   */
+  resumeAgent(lease: DesktopBrowserLeaseId): Promise<void>
   /**
    * Revoke Agent access to one guest. Idempotent.
    * @param lease - the caller's reservation.

@@ -87,13 +87,28 @@ afterEach(async () => {
 })
 
 describe('BrowserBody', () => {
+  it('shows the handoff banner and resumes the agent', () => {
+    const state = createSnapshotStore<BrowserFrameState>({ ...emptyBrowserFrame(), agentEnabled: true,
+      handoffActive: true, handoffMessage: 'log in please' })
+    const resume = vi.fn()
+    const mounted = mountBrowser(undefined, { createPage: () => ({
+      presentation: { mount: () => () => {} },
+      frame: { getSnapshot: () => state.getSnapshot(), subscribe: listener => state.subscribe(listener),
+        loadUrl: vi.fn(), goBack: vi.fn(), goForward: vi.fn(), reload: vi.fn(), dispose: async () => {},
+        agent: { setEnabled: vi.fn(), resume } },
+    }) })
+    expect(mounted.view.getByRole('status').textContent).toContain('log in please')
+    expect(mounted.view.queryByText(zh['agent.notice'])).toBeNull()
+    fireEvent.click(mounted.view.getByRole('button', { name: zh['handoff.resume'] }))
+    expect(resume).toHaveBeenCalledOnce()
+  })
   it('renders an Agent bind failure as an alert', () => {
     const state = createSnapshotStore<BrowserFrameState>({ ...emptyBrowserFrame(), agentEnabled: false, agentFailure: 'bind' })
     const mounted = mountBrowser(undefined, { createPage: () => ({
       presentation: { mount: () => () => {} },
       frame: { getSnapshot: () => state.getSnapshot(), subscribe: listener => state.subscribe(listener),
         loadUrl: vi.fn(), goBack: vi.fn(), goForward: vi.fn(), reload: vi.fn(), dispose: async () => {},
-        agent: { setEnabled: vi.fn() } },
+        agent: { setEnabled: vi.fn(), resume: vi.fn() } },
     }) })
     expect(mounted.view.getByRole('alert').textContent).toContain(zh['agent.bind'])
   })
@@ -104,7 +119,7 @@ describe('BrowserBody', () => {
       presentation: { mount: () => () => {} },
       frame: { getSnapshot: () => state.getSnapshot(), subscribe: listener => state.subscribe(listener),
         loadUrl: vi.fn(), goBack: vi.fn(), goForward: vi.fn(), reload: vi.fn(), dispose: async () => {},
-        agent: { setEnabled } },
+        agent: { setEnabled, resume: vi.fn() } },
     }) })
     expect(mounted.view.queryByRole('button', { name: zh['agent.enable'] })).not.toBeNull()
     fireEvent.click(mounted.view.getByRole('button', { name: zh['agent.enable'] }))

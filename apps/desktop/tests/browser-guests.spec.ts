@@ -17,6 +17,7 @@ vi.mock('electron', () => ({
 
 import { DesktopBrowserGuests } from '../src/browser-guests.ts'
 
+const handoffs: { lease: string; message: string }[] = []
 function owner(): EventEmitter & { isDestroyed: () => boolean } {
   return Object.assign(new EventEmitter(), { isDestroyed: () => false })
 }
@@ -27,6 +28,7 @@ function attach(guests: DesktopBrowserGuests, ownerWebContents: ReturnType<typeo
   const guest = Object.assign(new EventEmitter(), {
     getTitle: () => `Page ${String(index)}`, getURL: () => `about:blank#${lease}`,
     isDestroyed: () => false, close: vi.fn(),
+    executeJavaScript: vi.fn(async (): Promise<unknown> => ({ title: 'T', url: 'https://example.test/1', text: 'snapshot', truncated: false })),
     debugger: { attach: vi.fn(), on: vi.fn(), removeListener: vi.fn(), sendCommand: vi.fn(async () => {}) },
     setWindowOpenHandler: vi.fn(),
     session: new EventEmitter(),
@@ -42,7 +44,8 @@ describe('DesktopBrowserGuests multi-tab sharing', () => {
   let guests: DesktopBrowserGuests
   let ownerWebContents: ReturnType<typeof owner>
   beforeEach(() => {
-    guests = new DesktopBrowserGuests(() => 'http://127.0.0.1:4000/')
+    handoffs.length = 0
+    guests = new DesktopBrowserGuests(() => 'http://127.0.0.1:4000/', (request) => { handoffs.push(request) })
     ownerWebContents = owner()
     guests.bind({ webContents: ownerWebContents } as never, () => () => {})
   })
@@ -94,6 +97,23 @@ describe('DesktopBrowserGuests multi-tab sharing', () => {
     const done = await guests.executeAgent('session-3', 'downloads', {})
     if (!done.ok) throw new Error('downloads failed')
     expect(done.text).toContain('0 done report.pdf')
+  })
+
+  it('holds the tab during a handoff until the person resumes', async () => {
+    const key = attach(guests, ownerWebContents, 1)
+    guests.bindAgent(ownerWebContents as never, key, 'session-4')
+    let handoffMessage: string | undefined
+    const pending = guests.executeAgent('session-4', 'handoff', { message: 'log in' }).then((result) => {
+      handoffMessage = result.ok ? result.text : result.error.code
+      return handoffMessage
+    })
+    await vi.waitFor(() => { expect(handoffs).toHaveLength(1) })
+    expect(handoffs[0]).toMatchObject({ lease: key, message: 'log in' })
+    const blocked = await guests.executeAgent('session-4', 'snapshot', {})
+    if (blocked.ok) throw new Error('snapshot accepted during handoff')
+    expect(blocked.error.code).toBe('BROWSER_HANDOFF_ACTIVE')
+    guests.resumeAgent(key)
+    await expect(pending).resolves.toContain('snapshot')
   })
 
   it('reports not-shared for an unknown Session', async () => {

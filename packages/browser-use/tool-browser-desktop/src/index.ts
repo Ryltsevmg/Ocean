@@ -494,6 +494,17 @@ export function installDesktopBrowserAgent(ctx: Context,
       execute: (_args, exec) => run(exec, 'network', {}),
       presentCall: () => ({ card: 'generic', title: 'Read shared browser network', kind: 'read' }),
     }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_handoff',
+      description: 'Hand the active shared browser tab to the person and wait until they resume it; returns the page tree after they finish.',
+      parameters: {
+        message: { type: 'string', required: true, description: 'What the person should do in the tab, such as completing a login or payment.' },
+      },
+      output: TEXT_OUTPUT,
+      timeoutMs: 310_000,
+      execute: (args, exec) => run(exec, 'handoff', { message: args.message }),
+      presentCall: args => ({ card: 'generic', title: 'Hand tab to the person', kind: 'other', rawInput: args.message }),
+    }))
     yield () => { requester.dispose() }
   }, 'desktop-browser-agent')
 }

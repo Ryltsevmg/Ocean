@@ -76,6 +76,7 @@ import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.t
 import { readDesktopRuntime } from './runtime-tree.ts'
 import { DesktopBrowserGuests } from './browser-guests.ts'
 import { isBrowserAgentCommand } from './browser-agent.ts'
+import { browserFallbackResult } from './browser-guests.ts'
 import { installDesktopShortcuts } from './keyboard.ts'
 import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
@@ -541,7 +542,11 @@ async function main(): Promise<void> {
   const remoteStore = new RemoteConnectionStore(app.getPath('userData'), safeStorage)
   const remoteConfig = resolveDesktopRemoteConfig(process.env)
   const activeHostAddress = (): string | undefined => remoteConnection?.host.address ?? hostUrl
-  const browserGuests = new DesktopBrowserGuests(activeHostAddress)
+  const browserGuests = new DesktopBrowserGuests(activeHostAddress, (request) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window.isDestroyed()) window.webContents.send(DESKTOP_IPC.browserAgentHandoff, request)
+    }
+  })
   let injections: readonly unknown[] = []
   let welcomeBackend: DesktopWelcomeBackend | undefined
   let reportedLaunch = false
@@ -602,10 +607,7 @@ async function main(): Promise<void> {
       if (!isBrowserAgentCommand(message)) return false
       void browserGuests.executeAgent(message.sessionId, message.method, message.args).then(
         result => host.send({ ...result, requestId: message.requestId }),
-        () => host.send({
-          type: 'browser-agent-result', requestId: message.requestId, ok: false,
-          error: { code: 'BROWSER_ACTION_FAILED', message: 'The browser action failed; inspect the page before continuing.' },
-        }),
+        () => host.send(browserFallbackResult(message.requestId)),
       ).catch((error: unknown) => { console.error('desktop browser agent result delivery failed', error) })
       return true
     })

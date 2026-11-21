@@ -95,7 +95,7 @@ export class IframeImpl implements BrowserFrame {
       loading: state.navigation.status === 'loading' && this.error === undefined,
       canGoBack: this.navigation.canGoBack, canGoForward: this.navigation.canGoForward,
       error: this.error, sandboxEnabled: this.sandboxed,
-      agentEnabled: undefined, agentBusy: false, agentFailure: undefined }
+      agentEnabled: undefined, agentBusy: false, agentFailure: undefined, handoffActive: false, handoffMessage: undefined }
   }
 
   private publish(): void {
