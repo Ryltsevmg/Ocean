@@ -8,8 +8,9 @@
  * descendant uses `subagents/<id>/session[.vN].jsonl`; each image referenced by any included log
  * under `media/<attachmentId>.<ext>` (content-addressed, so one archive never
  * duplicates a shared image); each generic file sits under
- * `files/<prefix>/<digest>/<name>` and streams from the attachment store. No
- * manifest is written. Before each live session's log read, the SessionStore
+ * `files/<prefix>/<digest>/<name>` and streams from the attachment store.
+ * Missing objects and rejected references are listed in `attachments-missing.txt`.
+ * Before each live session's log read, the SessionStore
  * flush barrier makes the current in-memory log durable; cold sessions need no
  * barrier. Request abort and response-consumer cancellation share one producer
  * signal and terminate the active compressor.
@@ -388,19 +389,88 @@ export async function* sessionLogZipEntries(
     signal?.throwIfAborted()
     yield* collect(lineage.descendants)
   }
+  const missing: string[] = []
   for (const ref of media.values()) {
     signal?.throwIfAborted()
-    const stored = await deps.attachments.readImage(ref, signal)
+    const path = mediaEntryPath(ref)
+    let stored: Awaited<ReturnType<AttachmentStore['readImage']>>
+    try {
+      stored = await deps.attachments.readImage(ref, signal)
+    } catch (error) {
+      recordMissingAttachment(deps.attachments, missing, path, error, signal)
+      continue
+    }
     signal?.throwIfAborted()
-    yield { path: mediaEntryPath(ref), data: stored.data }
+    yield { path, data: stored.data }
   }
-  for (const ref of files.values()) {
-    signal?.throwIfAborted()
-    yield {
-      path: fileEntryPath(ref),
-      chunks: deps.attachments.readFileStream(ref, signal),
+  const open = new Set<() => Promise<void>>()
+  try {
+    for (const ref of files.values()) {
+      signal?.throwIfAborted()
+      const path = fileEntryPath(ref)
+      let chunks: AsyncIterable<Uint8Array>
+      try {
+        chunks = await primeFileStream(deps.attachments.readFileStream(ref, signal), open)
+      } catch (error) {
+        recordMissingAttachment(deps.attachments, missing, path, error, signal)
+        continue
+      }
+      signal?.throwIfAborted()
+      yield { path, chunks }
+    }
+  } finally {
+    // Close even streams whose consumers never started, without masking a failure in flight.
+    await Promise.allSettled([...open].map(close => close()))
+  }
+  signal?.throwIfAborted()
+  if (missing.length > 0) {
+    yield { path: 'attachments-missing.txt', content: `${missing.join('\n')}\n` }
+  }
+}
+
+/** Record a recoverable attachment failure; propagate cancellation and other failures. */
+function recordMissingAttachment(
+  attachments: AttachmentStore,
+  missing: string[],
+  path: string,
+  error: unknown,
+  signal?: AbortSignal,
+): void {
+  signal?.throwIfAborted()
+  if (!attachments.isAttachmentError(error) || (error.code !== 'ATTACHMENT_NOT_FOUND' && error.code !== 'INVALID_ATTACHMENT_REF')) {
+    throw error
+  }
+  missing.push(`${path}\t${error.message}`)
+}
+
+/** Read the first chunk before emitting its ZIP entry; the export owns any unconsumed iterator. */
+async function primeFileStream(
+  stream: AsyncIterable<Uint8Array>,
+  open: Set<() => Promise<void>>,
+): Promise<AsyncIterable<Uint8Array>> {
+  const iterator = stream[Symbol.asyncIterator]()
+  const close = async (): Promise<void> => {
+    if (open.delete(close)) await iterator.return?.()
+  }
+  open.add(close)
+  const next = async (): Promise<IteratorResult<Uint8Array>> => {
+    try {
+      const result = await iterator.next()
+      if (result.done === true) open.delete(close)
+      return result
+    } catch (error) {
+      await Promise.allSettled([close()])
+      throw error
     }
   }
+  const first = await next()
+  return (async function* () {
+    try {
+      for (let chunk = first; chunk.done !== true; chunk = await next()) yield chunk.value
+    } finally {
+      await close()
+    }
+  })()
 }
 
 /** How many code units of Session-log text one zip push carries (bounded encode memory). */

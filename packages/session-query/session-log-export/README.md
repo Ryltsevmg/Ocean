@@ -82,9 +82,10 @@ The root dialog identifies the exported Session by ID and reports preparing, dow
 
 Attachment collection reads declared content fields of built-in Session events and completed assistant stream blocks, including flat V4 tool-role messages. Unknown event payloads and unrelated fields remain unchanged in the exported log but do not cause attachment reads.
 
+<a id="failures"></a>
 ### Failures
 
-The dialog shows a preparation error when the preflight fails before ZIP streaming starts — for example an unreachable or misconfigured host endpoint. A descendant or attachment read failure after the browser accepts the GET is reported by the browser download manager, not by the dialog. A Markdown preparation failure reports a toast asking the user to retry the Session read; a clipboard write failure reports a separate toast asking the user to check clipboard permission. Neither reports success for a partial or missing transcript, and no pending toast is shown.
+The dialog shows a preparation error when the preflight fails before ZIP streaming starts — for example an unreachable or misconfigured host endpoint. If the attachment store reports a missing object or rejects a reference before the ZIP entry starts, the export omits that entry and lists its archive path and the reason in `attachments-missing.txt`. Other attachment failures, including failures after file streaming starts, and descendant read failures are reported by the browser download manager after the browser accepts the GET, not by the dialog. A Markdown preparation failure reports a toast asking the user to retry the Session read; a clipboard write failure reports a separate toast asking the user to check clipboard permission. Neither reports success for a partial or missing transcript, and no pending toast is shown.
 
 -----
 
@@ -155,7 +156,7 @@ None. The log-only command lifecycle, browser download, and clipboard write do n
 These limits define when this package is a poor fit or needs special operational care. They are current package constraints, not a task backlog.
 
 - **Browser download, not a Host-path writer** — the browser chooses the local destination; no Host path or native folder action is returned.
-- **Preflight reports only pre-stream failures** — a descendant or attachment failure after the browser accepts the GET is reported by the browser download manager, not by the dialog.
+- **Preflight reports only pre-stream failures** — see [Failures](#failures) for how the export reports issues after the browser accepts the GET.
 - **Markdown contains committed history only** — an unsettled live token chunk has no committed text, so it is absent from the copied transcript. Compaction and fork inheritance follow the raw log rather than the current model context.
 - **Markdown copy is the selected Session only** — descendant Session logs are exported by the ZIP download, not by the Markdown copy.
 - **Transcript text is buffered in memory** — the complete Markdown string and its Blob are held before the clipboard accepts them. Browser clipboard limits can reject a large export; this package does not add a byte cap or truncate the requested complete transcript.
