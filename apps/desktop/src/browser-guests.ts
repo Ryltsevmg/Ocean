@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { app, session, type BrowserWindow, type Session, type WebContents } from 'electron'
 import type { DesktopBrowserLeaseId, DesktopBrowserOpenRequest, DesktopBrowserReservation } from '@ocean/ocean-client-ui-sidebar-browser/types'
 import type { BrowserAgentMethod, BrowserAgentResult } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
-import { BrowserAgentError, captureBrowserScreenshot, executeBrowserAgent, watchDialogs, type DialogWatch } from './browser-agent.ts'
+import { AGENT_METHODS, BrowserAgentError, captureBrowserScreenshot, executeBrowserAgent, watchDialogs, type DialogWatch } from './browser-agent.ts'
 import { DESKTOP_IPC } from './ipc.ts'
 
 interface GuestLease {
@@ -17,8 +17,8 @@ interface GuestLease {
   agentSessionId?: string | undefined
   /** Serializes Agent commands for this guest in arrival order. */
   agentTail?: Promise<void>
-  /** Scoped JavaScript-dialog observation owned by this lease. */
-  dialogWatch?: DialogWatch
+  /** Scoped CDP watch owned by the lease; present only while its Agent binding is active. */
+  dialogWatch?: DialogWatch | undefined
   /** Files the Agent-shared guest downloaded while shared; empty for private tabs. */
   downloads: DownloadRecord[]
   /** The person holds the tab until they resume the Agent. */
@@ -32,7 +32,6 @@ interface DownloadRecord {
   state: 'saving' | 'done' | 'interrupted'
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'console', 'network', 'handoff', 'tabs', 'tab_select']
 
 /** Upper bound on tabs one Session may share at once. */
 const MAX_SHARED_TABS = 8
@@ -53,6 +52,7 @@ export class DesktopBrowserGuests {
   private readonly partitions = new Map<string, string>()
   private readonly leases = new Map<DesktopBrowserLeaseId, GuestLease>()
   private readonly agentSessions = new Map<string, DesktopBrowserLeaseId[]>()
+  private readonly guestLeases = new Map<number, GuestLease>()
 
   /** @param hostUrl - current authenticated OCEAN Host, which guests cannot request.
    * @param ownerSend - delivers one handoff notice to the owning application window. */
@@ -118,6 +118,9 @@ export class DesktopBrowserGuests {
     if (lease === undefined || lease.owner !== owner) throw new Error('desktop browser: guest belongs to another window')
     const shared = this.agentSessions.get(sessionId) ?? []
     if (shared.includes(key)) return
+    if (lease.guest !== undefined && !lease.guest.isDestroyed() && lease.dialogWatch === undefined) {
+      lease.dialogWatch = watchDialogs(lease.guest)
+    }
     if (shared.length >= MAX_SHARED_TABS) throw new Error('desktop browser: this Session already shares the maximum number of tabs')
     lease.agentSessionId = sessionId
     // The newest shared tab becomes active; browser_tab_select switches.
@@ -287,6 +290,10 @@ export class DesktopBrowserGuests {
   /** Clear one lease's Agent binding without touching the guest. */
   private forgetAgent(id: DesktopBrowserLeaseId, lease: GuestLease): void {
     const sessionId = lease.agentSessionId
+    if (lease.dialogWatch !== undefined) {
+      lease.dialogWatch.dispose()
+      delete lease.dialogWatch
+    }
     lease.agentSessionId = undefined
     if (sessionId === undefined) return
     const shared = this.agentSessions.get(sessionId)
@@ -338,22 +345,16 @@ export class DesktopBrowserGuests {
           return
         }
         lease.guest = guest
-        lease.dialogWatch = watchDialogs(guest)
         attachedLease = id
-        guest.session.on('will-download', (downloadEvent, item, source) => {
-          const shared = lease.agentSessionId
-          if (shared === undefined || source !== guest) {
-            downloadEvent.preventDefault()
-            return
-          }
-          const savePath = join(app.getPath('userData'), 'sidebar-browser-downloads', shared, item.getFilename())
-          item.setSavePath(savePath)
-          const record: DownloadRecord = { filename: item.getFilename(), path: savePath, state: 'saving' }
-          lease.downloads.push(record)
-          item.once('done', (_doneEvent, state) => { record.state = state === 'completed' ? 'done' : 'interrupted' })
-        })
+        this.guestLeases.set(guest.id, lease)
         lease.releaseInput = attachInput(guest, id)
-        guest.once('destroyed', () => { lease.releaseInput?.(); lease.dialogWatch?.dispose(); if (attachedLease !== undefined) this.forgetAgent(attachedLease, lease); this.leases.delete(id) })
+        guest.once('destroyed', () => {
+          lease.releaseInput?.()
+          lease.dialogWatch?.dispose()
+          this.guestLeases.delete(guest.id)
+          if (attachedLease !== undefined) this.forgetAgent(attachedLease, lease)
+          this.leases.delete(id)
+        })
       })
       guest.setWindowOpenHandler(({ url, postBody }) => {
         const lease = attachedLease === undefined ? undefined : this.leases.get(attachedLease)
@@ -386,6 +387,22 @@ export class DesktopBrowserGuests {
   }
 
   private configureSession(browserSession: Session): void {
+    // One partition-level handler instead of a per-guest listener: webviews in the same
+    // workspace share the Session object, and each new guest must not stack listeners.
+    browserSession.on('will-download', (event, item, source) => {
+      const lease = this.guestLeases.get(source.id)
+      const shared = lease?.agentSessionId
+      if (lease === undefined || shared === undefined) {
+        // Sidebar browsing never writes to disk: private tabs keep downloads blocked.
+        event.preventDefault()
+        return
+      }
+      const savePath = join(app.getPath('userData'), 'sidebar-browser-downloads', shared, item.getFilename())
+      item.setSavePath(savePath)
+      const record: DownloadRecord = { filename: item.getFilename(), path: savePath, state: 'saving' }
+      lease.downloads.push(record)
+      item.once('done', (_doneEvent, state) => { record.state = state === 'completed' ? 'done' : 'interrupted' })
+    })
     browserSession.setPermissionRequestHandler((_contents, _permission, callback) => { callback(false) })
     browserSession.setPermissionCheckHandler(() => false)
     browserSession.setDevicePermissionHandler(() => false)

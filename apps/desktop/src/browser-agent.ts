@@ -13,7 +13,10 @@ const SETTLE_TIMEOUT_MS = 8_000
 /** Quiet period after an action that did not start a navigation. */
 const QUIET_DELAY_MS = 350
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'handoff']
+/** Every method the Host may send over the private bridge; the validator and the dispatcher share it.
+ * @returns the closed set of wire methods.
+ */
+export const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog', 'upload', 'downloads', 'console', 'network', 'handoff', 'tabs', 'tab_select']
 
 /**
  * Validate one Host command before it reaches the guest.
@@ -265,7 +268,13 @@ export function assertAgentRef(value: unknown): string {
   return value
 }
 
-/** Run one command against the guest; the caller serializes commands per Session. */
+/**
+ * Run one command against the guest; the caller serializes commands per Session.
+ * @param guest - the shared webview contents.
+ * @param method - validated wire method.
+ * @param args - validated JSON arguments.
+ * @returns model-facing observation text for the resulting page.
+ */
 export async function executeBrowserAgent(guest: GuestLike, method: BrowserAgentMethod,
   args: Readonly<Record<string, string | number>>): Promise<string> {
   if (guest.isDestroyed()) throw new BrowserAgentError('The shared tab is closed.', 'BROWSER_GUEST_CLOSED')
@@ -523,7 +532,12 @@ function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds) })
 }
 
-/** Read one bounded viewport raster from the guest without touching page content. */
+/**
+ * Read one bounded viewport raster from the guest without touching page content.
+ * @param guest - the shared webview contents.
+ * @param args - numeric `maxWidth` and `maxBytes` bounds.
+ * @returns caption text and the PNG raster encoded for the wire.
+ */
 export async function captureBrowserScreenshot(guest: GuestLike,
   args: Readonly<Record<string, string | number>>): Promise<{ text: string; image: BrowserAgentImage }> {
   if (guest.isDestroyed()) throw new BrowserAgentError('The shared tab is closed.', 'BROWSER_GUEST_CLOSED')
@@ -600,9 +614,14 @@ export interface DialogWatch {
   dispose(): void
 }
 
-/** Attach the Page, Runtime, and Network domains for dialogs, console, and requests; a foreign debugger leaves the watch inert. */
+/** Upper bound on retained console lines and request records per watched guest. */
 const DEV_BUFFER_LIMIT = 60
 
+/**
+ * Attach the Page, Runtime, and Network domains for dialogs, console, and requests; a foreign debugger leaves the watch inert.
+ * @param guest - the webview contents to observe.
+ * @returns scoped watch with bounded buffers and a dispose that reverses the attachment.
+ */
 export function watchDialogs(guest: GuestLike): DialogWatch {
   let pending: PendingDialog | undefined
   let active = true
@@ -676,9 +695,11 @@ export function watchDialogs(guest: GuestLike): DialogWatch {
       consoleLines.length = 0
       requests.clear()
       if (attached) guest.debugger.removeListener('message', onMessage)
-      if (attached && active && !guest.isDestroyed()) {
-        for (const domain of ['Page', 'Runtime', 'Network']) {
-          void guest.debugger.sendCommand(`${domain}.disable`).catch(() => {})
+      if (attached && !guest.isDestroyed()) {
+        if (active) {
+          for (const domain of ['Page', 'Runtime', 'Network']) {
+            void guest.debugger.sendCommand(`${domain}.disable`).catch(() => {})
+          }
         }
         try { guest.debugger.detach() } catch { /* already detached by the guest teardown */ }
       }

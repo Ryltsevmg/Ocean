@@ -66,10 +66,12 @@ export class BrowserAgentRequester {
    * @param method - operation name.
    * @param args - validated JSON arguments.
    * @param signal - caller cancellation.
+   * @param timeoutMs - how long the main process may take; handoff outlives the actions.
    * @returns model-facing text.
    */
   async request(session: string, method: BrowserAgentMethod,
-    args: Readonly<Record<string, string | number>>, signal: AbortSignal): Promise<{ text: string; image?: BrowserAgentImage }> {
+    args: Readonly<Record<string, string | number>>, signal: AbortSignal,
+    timeoutMs = 30_000): Promise<{ text: string; image?: BrowserAgentImage }> {
     if (signal.aborted) throw new HarnessError('The browser action was canceled.', 'ABORTED')
     const requestId = this.next++
     const timer = setTimeout(() => {
@@ -79,7 +81,7 @@ export class BrowserAgentRequester {
       this.pending.delete(requestId)
       entry.signal.removeEventListener('abort', entry.abort)
       entry.reject(new HarnessError('The shared tab did not answer in time.', 'BROWSER_TIMEOUT'))
-    }, 30_000)
+    }, timeoutMs)
     timer.unref()
     return new Promise<{ text: string; image?: BrowserAgentImage }>((resolve, reject) => {
       const abort = (): void => {

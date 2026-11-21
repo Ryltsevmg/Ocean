@@ -96,13 +96,14 @@ export function installDesktopBrowserAgent(ctx: Context,
     }
   }
   const run = async (exec: ToolRunContext, method: BrowserAgentMethod,
-    args: Readonly<Record<string, string | number>>): Promise<{ text: string }> => {
+    args: Readonly<Record<string, string | number>>,
+    timeoutMs = method === 'handoff' ? 310_000 : 30_000): Promise<{ text: string }> => {
     const session = sessionId(exec)
     if (bounds.confirmActions && mutating.has(method)
       && !(method === 'dialog' && args.action === 'read')) {
       await confirm(exec, method)
     }
-    const observation = await requester.request(session, method, args, exec.signal)
+    const observation = await requester.request(session, method, args, exec.signal, timeoutMs)
     return { text: observation.text }
   }
   ctx.effect(function* () {

@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventEmitter } from 'node:events'
 
-const sessions = new Map<string, unknown>()
+const sessions = new Map<string, EventEmitter>()
 vi.mock('electron', () => ({
   app: { isPackaged: false, getPath: () => '/tmp/ocean-test-userdata' },
   session: { fromPartition: (partition: string) => {
-    const value = {
+    const value = Object.assign(new EventEmitter(), {
       setPermissionRequestHandler: vi.fn(), setPermissionCheckHandler: vi.fn(),
       setDevicePermissionHandler: vi.fn(), setDisplayMediaRequestHandler: vi.fn(),
-      on: vi.fn(), webRequest: { onBeforeRequest: vi.fn() },
-    }
-    sessions.set(partition, value)
-    return value
+      webRequest: { onBeforeRequest: vi.fn() },
+    })
+    if (!sessions.has(partition)) sessions.set(partition, value)
+    return sessions.get(partition)
   } },
 }))
 
@@ -22,10 +22,12 @@ function owner(): EventEmitter & { isDestroyed: () => boolean } {
   return Object.assign(new EventEmitter(), { isDestroyed: () => false })
 }
 
-let lastGuest: EventEmitter & { session: EventEmitter }
+let nextGuestId = 1
+const guestObjects: EventEmitter[] = []
 function attach(guests: DesktopBrowserGuests, ownerWebContents: ReturnType<typeof owner>, index: number): string {
   const { lease, partition } = guests.acquire(ownerWebContents as never, 'workspace')
   const guest = Object.assign(new EventEmitter(), {
+    id: nextGuestId++,
     getTitle: () => `Page ${String(index)}`, getURL: () => `about:blank#${lease}`,
     isDestroyed: () => false, close: vi.fn(),
     executeJavaScript: vi.fn(async (): Promise<unknown> => ({ title: 'T', url: 'https://example.test/1', text: 'snapshot', truncated: false })),
@@ -33,7 +35,7 @@ function attach(guests: DesktopBrowserGuests, ownerWebContents: ReturnType<typeo
     setWindowOpenHandler: vi.fn(),
     session: new EventEmitter(),
   })
-  lastGuest = guest
+  guestObjects.push(guest)
   ownerWebContents.emit('will-attach-webview', { preventDefault: vi.fn() }, {}, { src: `about:blank#${lease}`, partition })
   ownerWebContents.emit('did-attach-webview', {}, guest)
   guest.emit('dom-ready')
@@ -45,6 +47,7 @@ describe('DesktopBrowserGuests multi-tab sharing', () => {
   let ownerWebContents: ReturnType<typeof owner>
   beforeEach(() => {
     handoffs.length = 0
+    guestObjects.length = 0
     guests = new DesktopBrowserGuests(() => 'http://127.0.0.1:4000/', (request) => { handoffs.push(request) })
     ownerWebContents = owner()
     guests.bind({ webContents: ownerWebContents } as never, () => () => {})
@@ -80,23 +83,34 @@ describe('DesktopBrowserGuests multi-tab sharing', () => {
     expect(result.text).toContain('* 0 Page 6')
   })
 
-  it('lists downloads captured while the tab is shared', async () => {
-    const key = attach(guests, ownerWebContents, 1)
-    guests.bindAgent(ownerWebContents as never, key, 'session-3')
-    const empty = await guests.executeAgent('session-3', 'downloads', {})
-    if (!empty.ok) throw new Error('downloads failed')
-    expect(empty.text).toBe('no downloads')
-    const item = Object.assign(new EventEmitter(), {
-      getFilename: () => 'report.pdf', setSavePath: vi.fn(), isDestroyed: () => false,
-    })
-    lastGuest.session.emit('will-download', { preventDefault: vi.fn() }, item, lastGuest)
+  it('captures downloads once per partition and attributes them by source guest', async () => {
+    const first = attach(guests, ownerWebContents, 1)
+    const second = attach(guests, ownerWebContents, 2)
+    guests.bindAgent(ownerWebContents as never, first, 'session-3')
+    guests.bindAgent(ownerWebContents as never, second, 'session-3')
+    const sharedSession = [...sessions.values()].at(-1)!
+    const [firstGuest] = guestObjects
+    // The active tab is the newest (second); a download from the inactive shared tab belongs to it.
+    const item = Object.assign(new EventEmitter(), { getFilename: () => 'report.pdf', setSavePath: vi.fn() })
+    sharedSession.emit('will-download', { preventDefault: vi.fn() }, item, firstGuest)
+    const activeList = await guests.executeAgent('session-3', 'downloads', {})
+    if (!activeList.ok) throw new Error('downloads failed')
+    expect(activeList.text).toBe('no downloads')
+    // One handler must not cancel a shared download because a newer listener ran first.
+    expect(item.setSavePath).toHaveBeenCalled()
+    const switchedList = await guests.executeAgent('session-3', 'tab_select', { index: 1 })
+    expect(switchedList.ok).toBe(true)
     const listed = await guests.executeAgent('session-3', 'downloads', {})
     if (!listed.ok) throw new Error('downloads failed')
-    expect(listed.text).toContain('0 saving report.pdf')
-    item.emit('done', {}, 'completed')
-    const done = await guests.executeAgent('session-3', 'downloads', {})
-    if (!done.ok) throw new Error('downloads failed')
-    expect(done.text).toContain('0 done report.pdf')
+    expect(listed.text).toContain('report.pdf')
+  })
+
+  it('cancels downloads from sources with no lease', async () => {
+    attach(guests, ownerWebContents, 1)
+    const sharedSession = [...sessions.values()].at(-1)!
+    const blocked = { preventDefault: vi.fn() }
+    sharedSession.emit('will-download', blocked, Object.assign(new EventEmitter(), { getFilename: () => 'x.bin', setSavePath: vi.fn() }), { id: 999 })
+    expect(blocked.preventDefault).toHaveBeenCalled()
   })
 
   it('holds the tab during a handoff until the person resumes', async () => {

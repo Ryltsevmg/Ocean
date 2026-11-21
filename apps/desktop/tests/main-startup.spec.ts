@@ -572,6 +572,13 @@ describe('desktop main startup', () => {
     expect(host.send.mock.calls[0]![0]).toMatchObject({
       type: 'browser-agent-result', requestId: 7, ok: false, error: { code: 'BROWSER_NOT_SHARED' },
     })
+    host.send.mockClear()
+    expect(host.emit({ type: 'browser-agent-command', requestId: 8, sessionId: 'session-x', method: 'tabs', args: {} })).toBe(true)
+    await vi.waitFor(() => { expect(host.send).toHaveBeenCalled() })
+    expect(host.send.mock.calls[0]![0]).toMatchObject({
+      type: 'browser-agent-result', requestId: 8, ok: false, error: { code: 'BROWSER_NOT_SHARED' },
+    })
+    expect(harness.handlers.has(DESKTOP_IPC.browserAgentResume)).toBe(true)
     expect(host.emit({ type: 'ready', url: 'http://127.0.0.1:1/' })).toBe(false)
   })
 

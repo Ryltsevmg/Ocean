@@ -919,6 +919,10 @@ async function main(): Promise<void> {
     assertProductSender(event)
     browserGuests.unbindAgent(event.sender, lease)
   })
+  ipcMain.handle(DESKTOP_IPC.browserAgentResume, (event, lease: unknown) => {
+    assertProductSender(event)
+    browserGuests.resumeAgent(lease)
+  })
 
   const installHostSockets = (browserSession: Session, connection?: RemoteConnection): void => {
     browserSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://*/*'] }, (details, callback) => {

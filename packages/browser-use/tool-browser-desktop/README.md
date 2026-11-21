@@ -95,7 +95,7 @@ Schemas are prefix-stable while definitions and visibility are unchanged; observ
 
 - Outside the Desktop Host there is no main-process channel, so every call fails with a transport or not-shared error; the row is disabled for non-Desktop profiles.
 - Element refs are best-effort identifiers a page can change or spoof; they are not authorization. The Agent must re-read after navigation.
-- Consequential actions rely on the person's awareness and the model policy unless `confirmActions` is enabled. Element-targeted annotations (click-on-page comments like Codex IAB) remain deferred: they need a design-reviewed overlay UI in the guest and are not part of this bridge. The Agent can list and select shared tabs but cannot close or unshare one; that stays a human action. Dialog observation attaches only the CDP Page domain and stays inert when another debugger owns the guest.
+- Consequential actions rely on the person's awareness and the model policy unless `confirmActions` is enabled. Element-targeted annotations (click-on-page comments like Codex IAB) remain deferred: they need a design-reviewed overlay UI in the guest and are not part of this bridge. The Agent can list and select shared tabs but cannot close or unshare one; that stays a human action. Dialog, console, and network observation attaches the CDP debugger when a tab starts sharing and detaches when sharing ends; it stays inert when another debugger owns the guest. Private tabs never get an attachment and keep downloads blocked.
 
 <a id="dev-note"></a>
 ### Dev Note

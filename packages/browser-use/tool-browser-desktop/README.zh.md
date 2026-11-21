@@ -95,7 +95,7 @@ section 在 scope 内的每个 Desktop profile 请求上的小额固定输入成
 
 - Desktop Host 之外没有 main 进程通道，因此每次调用都以传输或未共享错误失败；非 Desktop profile 禁用本行。
 - 元素 ref 是页面可修改或伪造的 best-effort 标识，不是授权。Agent 必须在导航后重新读取。
-- 重大操作依赖用户在场与模型策略，除非启用 `confirmActions`。元素级标注（像 Codex IAB 的点选评论）仍延期：它需要经设计评审的 guest 覆盖层 UI，不属于本桥接。Agent 可以列出和选择共享 tab，但不能关闭或取消共享——这仍是用户的操作。对话框观察仅附加 CDP Page domain，guest 被其他 debugger 占用时保持惰性。
+- 重大操作依赖用户在场与模型策略，除非启用 `confirmActions`。元素级标注（像 Codex IAB 的点选评论）仍延期：它需要经设计评审的 guest 覆盖层 UI，不属于本桥接。Agent 可以列出和选择共享 tab，但不能关闭或取消共享——这仍是用户的操作。对话框、console 与 network 观察在 tab 开始共享时附加 CDP debugger，在共享结束时分离；guest 被其他 debugger 占用时保持惰性。私有 tab 从不附加，下载保持被阻止。
 
 <a id="dev-note"></a>
 ### 开发备注
