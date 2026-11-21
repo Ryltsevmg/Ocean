@@ -640,8 +640,10 @@ export function watchDialogs(guest: GuestLike): DialogWatch {
       if (entry !== undefined) entry.outcome = 'failed'
     }
   }
+  let attached = false
   try {
     guest.debugger.attach('1.3')
+    attached = true
     guest.debugger.on('message', onMessage)
     void Promise.all([
       guest.debugger.sendCommand('Page.enable'),
@@ -673,8 +675,8 @@ export function watchDialogs(guest: GuestLike): DialogWatch {
       pending = undefined
       consoleLines.length = 0
       requests.clear()
-      guest.debugger.removeListener('message', onMessage)
-      if (active && !guest.isDestroyed()) {
+      if (attached) guest.debugger.removeListener('message', onMessage)
+      if (attached && active && !guest.isDestroyed()) {
         for (const domain of ['Page', 'Runtime', 'Network']) {
           void guest.debugger.sendCommand(`${domain}.disable`).catch(() => {})
         }
