@@ -12,7 +12,7 @@ function transport() {
   const listeners = new Set<(message: unknown) => void>()
   const commands: BrowserAgentCommand[] = []
   const value: DesktopBrowserTransport = {
-    send: vi.fn(async (command) => {
+    send: vi.fn(async (command: BrowserAgentCommand) => {
       commands.push(command)
       for (const listener of listeners) {
         listener({ type: 'browser-agent-result', requestId: command.requestId, ok: true, text: 'button "Save"' })
@@ -107,7 +107,7 @@ describe('desktop browser tools', () => {
 
   it('propagates a typed main-process failure', async () => {
     const channel = transport()
-    channel.value.send = vi.fn(async (command) => {
+    channel.value.send = vi.fn(async (command: BrowserAgentCommand) => {
       for (const listener of channel.listeners) {
         listener({ type: 'browser-agent-result', requestId: command.requestId, ok: false,
           error: { code: 'BROWSER_NOT_SHARED', message: 'No shared tab.' } })

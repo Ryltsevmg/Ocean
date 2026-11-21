@@ -185,7 +185,7 @@ describe('requester edge paths', () => {
 
 describe('process transport', () => {
   it('creates the registry when absent and exercises the default IPC transport', async () => {
-    const originalSend = process.send
+    const originalSend = Object.getOwnPropertyDescriptor(process, 'send')?.value as typeof process.send
     const originalConnected = process.connected
     const directory = await mkdtemp(join(tmpdir(), 'ocean-desktop-transport-'))
     const ctx = new Context()

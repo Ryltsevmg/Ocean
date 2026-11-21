@@ -100,7 +100,7 @@ export class BrowserAgentRequester {
       entry.signal.removeEventListener('abort', entry.abort)
       entry.reject(new HarnessError('The shared tab did not answer in time.', 'BROWSER_TIMEOUT'))
     }, 30_000)
-    timer.unref?.()
+    timer.unref()
     return new Promise<string>((resolve, reject) => {
       const abort = (): void => {
         this.pending.delete(requestId)

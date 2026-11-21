@@ -286,7 +286,7 @@ async function observe(guest: WebContents): Promise<string> {
 }
 
 /** Read basic tab facts without touching page content. */
-async function information(guest: WebContents): Promise<string> {
+function information(guest: WebContents): string {
   return `title: ${guest.getTitle() || '(untitled)'}\nurl: ${guest.getURL() || '(none)'}\nloading: ${String(guest.isLoading())}`
 }
 
@@ -355,12 +355,12 @@ async function fillTarget(guest: WebContents,
 
 /** Wait for a navigation that the action started, or a bounded quiet period. */
 async function settle(guest: WebContents): Promise<void> {
-  let started = false
-  const start = (): void => { started = true }
+  const navigation = { started: false }
+  const start = (): void => { navigation.started = true }
   guest.on('did-start-navigation', start)
   await delay(100)
   guest.removeListener('did-start-navigation', start)
-  if (started || guest.isLoading()) {
+  if (navigation.started || guest.isLoading()) {
     await waitForStop(guest)
     return
   }

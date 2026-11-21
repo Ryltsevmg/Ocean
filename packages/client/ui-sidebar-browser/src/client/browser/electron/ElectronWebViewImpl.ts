@@ -154,9 +154,9 @@ export class ElectronWebViewImpl implements BrowserFrame {
       this.publishAgent({ agentEnabled: false, agentBusy: lease !== undefined, agentFailure: undefined })
       if (lease !== undefined) {
         try { await this.bridge.unbindAgent(lease) }
-        catch { if (!this.lifetime.signal.aborted) this.publishAgent({ agentBusy: false, agentFailure: 'bind' }); return }
+        catch { if (this.alive()) this.publishAgent({ agentBusy: false, agentFailure: 'bind' }); return }
       }
-      if (!this.lifetime.signal.aborted) this.publishAgent({ agentBusy: false, agentFailure: undefined })
+      if (this.alive()) this.publishAgent({ agentBusy: false, agentFailure: undefined })
       return
     }
     if (this.agentEnabled) return
@@ -187,6 +187,11 @@ export class ElectronWebViewImpl implements BrowserFrame {
       this.agentDesired = false
       this.publishAgent({ agentEnabled: false, agentBusy: false, agentFailure: 'bind' })
     }
+  }
+
+  /** @returns whether this frame lifetime is still active; a call TS cannot narrow away. */
+  private alive(): boolean {
+    return !this.lifetime.signal.aborted
   }
 
   /** Publish one partial Agent state without disturbing navigation state. */
