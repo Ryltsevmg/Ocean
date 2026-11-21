@@ -471,6 +471,18 @@ describe('loadProfile', () => {
     expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
   })
 
+  it('drops a reused retired selection when the profile manifest declares no dependencies', () => {
+    const anchor = stageInstallation({ base: { patch: '[]\n' } })
+    const dir = join(tmp(), 'profile')
+    initProfile(dir, ['base', reusedBundleNames[0]!])
+    const manifest = readProfileManifest('test', dir)
+    delete (manifest as { dependencies?: unknown }).dependencies
+    writeProfileManifest(dir, manifest)
+    const profile = loadProfileDirectory('test', dir, anchor)
+    expect(profile.layers.map(layer => layer.packageName)).toEqual(['base'])
+    expect(readProfileManifest('test', dir).ocean?.profile?.bundles).toEqual(['base'])
+  })
+
   it.each([
     { label: 'legacy dsh declaration', fields: { ocean: undefined, dsh: { bundle: { patch: './cordis.patch.yml' } } } },
     { label: 'old version with a modern declaration', fields: { version: '0.2.2-rc.2' } },
