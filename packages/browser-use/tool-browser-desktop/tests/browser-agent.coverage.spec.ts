@@ -225,7 +225,7 @@ describe('process transport', () => {
       })
       const online = call('online')
       await vi.waitFor(() => { expect(sent).toHaveLength(1) })
-      process.emit('message', { type: 'browser-agent-result', requestId: 2, ok: true, text: 'via ipc' })
+      for (const listener of process.listeners('message')) listener({ type: 'browser-agent-result', requestId: 2, ok: true, text: 'via ipc' }, undefined)
       const settled = await online
       expect(settled.isError).toBe(false)
       expect(settled.content).toEqual([{ type: 'text', text: 'via ipc' }])
