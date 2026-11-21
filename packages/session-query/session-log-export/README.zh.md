@@ -109,6 +109,8 @@ Web bundle 将本包与 Connection、`ocean-commands`、`ocean-client-ui-command
 
 Host 路由是由该功能拥有的精确 Fetch 路由贡献。Connection 应用 Host/Origin 与 owner 或 remote-device 会话检查并桥接流式 `Response`；两个导出路由只接受 GET 与 HEAD。本包拥有查询校验、活动会话 flush、基于句柄的日志读取与附件读取、ZIP 生成和 HTTP 状态语义。
 
+ZIP 写入器在添加文件条目前检查首次读取结果。直接调用 `sessionLogZipEntries` 时，可以先枚举条目，再读取文件块；附件读取错误会直接传给调用方，而不会生成 `attachments-missing.txt` 条目。
+
 ### Markdown 复制流程
 
 Header 向 Markdown 复制控制器请求被点击的 Session。点击期间，控制器在加载文档相对的 `api/session.markdown?sessionId=<id>` 路由的同时请求延迟的 `ClipboardItem` 写入；其他宿主在准备完成后回退到共享剪贴板助手。Host 路由通过 `ctx.sessionQuery.readSession` 读取完整的 live-preferred 逻辑日志，并把事件交给纯格式化器。它另外通过 `ctx.get('sessionPersistence')?.stat` 获取选中已物化产物的路径，并把可选路径传给格式化器；元数据读取失败属于经过清理的准备失败。该读取是分离的导出观察：不创建 Agent、不保留 Session，也不写入 Session 数据。Session 不存在时返回 404，其他读取失败返回经过清理的 500。

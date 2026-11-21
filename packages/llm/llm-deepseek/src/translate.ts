@@ -142,12 +142,12 @@ export async function* translate(events: AsyncIterable<Record<string, unknown>>,
       }
     } else if (event.type === 'message_delta') {
       const delta = object(event.delta)
-      if (delta.stop_reason === 'refusal') {
+      if (!(reason instanceof LlmError) && delta.stop_reason === 'refusal') {
         const details = delta.stop_details
         const explanation = typeof details === 'object' && details !== null && 'explanation' in details ? details.explanation : undefined
         const suffix = typeof explanation === 'string' && explanation ? `: ${explanation}` : ''
         reason = new LlmError(`DeepSeek refused to answer under its content safety review${suffix}`, 'CONTENT_REFUSED')
-      } else if (delta.stop_reason != null) {
+      } else if (!(reason instanceof LlmError) && delta.stop_reason != null) {
         reason = stopReason(delta.stop_reason)
       }
       if (event.usage !== undefined) updateUsage(usage, event.usage)
