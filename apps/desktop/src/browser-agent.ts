@@ -11,7 +11,7 @@ const SETTLE_TIMEOUT_MS = 8_000
 /** Quiet period after an action that did not start a navigation. */
 const QUIET_DELAY_MS = 350
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog']
 
 /**
  * Validate one Host command before it reaches the guest.
@@ -273,6 +273,64 @@ export async function executeBrowserAgent(guest: WebContents, method: BrowserAge
       await delay(QUIET_DELAY_MS)
       return observe(guest)
     }
+    case 'press_key': {
+      const key = assertKey(args.key)
+      const modifiers = assertModifiers(args.modifiers)
+      guest.sendInputEvent({ type: 'keyDown', keyCode: key, modifiers })
+      guest.sendInputEvent({ type: 'keyUp', keyCode: key, modifiers })
+      await settle(guest)
+      return observe(guest)
+    }
+    case 'scroll': {
+      const deltaX = boundedDelta(args.deltaX)
+      const deltaY = boundedDelta(args.deltaY)
+      const ref = args.ref === undefined ? undefined : assertAgentRef(args.ref)
+      const script = ref === undefined
+        ? `(() => { window.scrollBy(${String(deltaX)}, ${String(deltaY)}); return true })()`
+        : `(() => { const el = document.querySelector(${JSON.stringify(`[data-ocean-agent-ref="${ref}"]`)}); if (!el) return false; el.scrollBy(${String(deltaX)}, ${String(deltaY)}); return true })()`
+      const ok = await guest.executeJavaScript(script, true) as boolean
+      if (!ok) throw new BrowserAgentError('The element is no longer on the page; read the page again.', 'BROWSER_REF_STALE')
+      await delay(QUIET_DELAY_MS)
+      return observe(guest)
+    }
+    case 'select': {
+      const ref = assertAgentRef(args.ref)
+      if (typeof args.value !== 'string') throw new BrowserAgentError('The option value is missing.', 'BROWSER_VALUE_INVALID')
+      const script = `(() => {
+        const el = document.querySelector(${JSON.stringify(`[data-ocean-agent-ref="${ref}"]`)})
+        if (!el || el.tagName.toLowerCase() !== 'select') return 'unsupported'
+        const option = [...el.options].find(item => item.value === ${JSON.stringify(args.value)})
+        if (!option) return 'missing'
+        el.value = option.value
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+        return 'ok'
+      })()`
+      const outcome = await guest.executeJavaScript(script, true) as string
+      if (outcome === 'unsupported') throw new BrowserAgentError('This element is not a select control.', 'BROWSER_SELECT_UNSUPPORTED')
+      if (outcome === 'missing') throw new BrowserAgentError('The option is not present; read the page again.', 'BROWSER_OPTION_MISSING')
+      await delay(QUIET_DELAY_MS)
+      return observe(guest)
+    }
+    case 'check': {
+      const ref = assertAgentRef(args.ref)
+      const desired = args.checked === 'true'
+      const script = `(() => {
+        const el = document.querySelector(${JSON.stringify(`[data-ocean-agent-ref="${ref}"]`)})
+        if (!el) return 'missing'
+        const type = (el.getAttribute('type') || '').toLowerCase()
+        if (el.tagName.toLowerCase() !== 'input' || (type !== 'checkbox' && type !== 'radio')) return 'unsupported'
+        if (el.checked !== ${String(desired)}) el.click()
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+        return el.checked === ${String(desired)} ? 'ok' : 'blocked'
+      })()`
+      const outcome = await guest.executeJavaScript(script, true) as string
+      if (outcome === 'missing') throw new BrowserAgentError('The element is no longer on the page; read the page again.', 'BROWSER_REF_STALE')
+      if (outcome === 'unsupported') throw new BrowserAgentError('This element is not a checkbox or radio.', 'BROWSER_CHECK_UNSUPPORTED')
+      if (outcome === 'blocked') throw new BrowserAgentError('The page refused the state change.', 'BROWSER_CHECK_BLOCKED')
+      await delay(QUIET_DELAY_MS)
+      return observe(guest)
+    }
     default:
       throw new BrowserAgentError('Unknown browser operation.', 'BROWSER_METHOD_UNKNOWN')
   }
@@ -412,4 +470,92 @@ export async function captureBrowserScreenshot(guest: WebContents,
 function boundedInteger(value: string | number | undefined, fallback: number, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value)) return fallback
   return Math.min(max, Math.max(min, value))
+}
+
+/** The bounded key set the Agent may press, mapped to Electron key codes. */
+const KEY_CODES: Readonly<Record<string, string>> = {
+  Enter: 'Enter', Tab: 'Tab', Escape: 'Escape', Backspace: 'Backspace', Delete: 'Delete',
+  ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right',
+  Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown', Space: 'Space',
+}
+
+/** Validate one pressable key name. */
+function assertKey(value: string | number | undefined): string {
+  if (typeof value !== 'string' || KEY_CODES[value] === undefined) {
+    throw new BrowserAgentError('The key is not supported.', 'BROWSER_KEY_UNSUPPORTED')
+  }
+  return KEY_CODES[value]
+}
+
+/** Validate the modifier list carried as a comma-separated string. */
+function assertModifiers(value: string | number | undefined): ('shift' | 'control' | 'alt' | 'meta')[] {
+  if (value === undefined || value === '') return []
+  if (typeof value !== 'string') throw new BrowserAgentError('The modifiers are invalid.', 'BROWSER_MODIFIERS_INVALID')
+  const allowed = ['shift', 'control', 'alt', 'meta'] as const
+  const parts = value.split(',')
+  if (parts.some(part => !(allowed as readonly string[]).includes(part))) {
+    throw new BrowserAgentError('The modifiers are invalid.', 'BROWSER_MODIFIERS_INVALID')
+  }
+  return parts as ('shift' | 'control' | 'alt' | 'meta')[]
+}
+
+/** Clamp one scroll delta to a bounded viewport movement. */
+function boundedDelta(value: string | number | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0
+  return Math.max(-10_000, Math.min(10_000, Math.round(value)))
+}
+
+/** One pending JavaScript dialog observed through the scoped Page domain. */
+export interface PendingDialog {
+  readonly type: string
+  readonly message: string
+  readonly defaultPrompt?: string
+}
+
+/** Scoped dialog observation and answering for one guest; no other CDP domain is enabled. */
+export interface DialogWatch {
+  pending(): PendingDialog | undefined
+  answer(action: 'accept' | 'dismiss', promptText?: string): Promise<void>
+  dispose(): void
+}
+
+/** Attach only the Page domain needed for JavaScript dialogs; a foreign debugger leaves the watch inert. */
+export function watchDialogs(guest: WebContents): DialogWatch {
+  let pending: PendingDialog | undefined
+  let active = true
+  const onMessage = (_event: unknown, method: string, params: Record<string, unknown>): void => {
+    if (method === 'Page.javascriptDialogOpening') {
+      pending = {
+        type: String(params.type), message: String(params.message),
+        ...typeof params.defaultPrompt === 'string' ? { defaultPrompt: params.defaultPrompt } : {},
+      }
+    } else if (method === 'Page.javascriptDialogClosed') pending = undefined
+  }
+  try {
+    guest.debugger.attach('1.3')
+    guest.debugger.on('message', onMessage)
+    void guest.debugger.sendCommand('Page.enable').catch(() => { active = false })
+  } catch {
+    active = false
+  }
+  return {
+    pending: () => pending,
+    async answer(action, promptText) {
+      if (!active) throw new BrowserAgentError('Dialog control is unavailable for this tab.', 'BROWSER_DIALOG_UNAVAILABLE')
+      if (pending === undefined) throw new BrowserAgentError('No JavaScript dialog is open.', 'BROWSER_DIALOG_NONE')
+      await guest.debugger.sendCommand('Page.handleJavaScriptDialog', {
+        accept: action === 'accept', ...promptText === undefined ? {} : { promptText },
+      })
+      pending = undefined
+    },
+    dispose() {
+      pending = undefined
+      guest.debugger.removeListener('message', onMessage)
+      if (active && !guest.isDestroyed()) {
+        void guest.debugger.sendCommand('Page.disable').catch(() => {})
+        try { guest.debugger.detach() } catch { /* already detached by the guest teardown */ }
+      }
+      active = false
+    },
+  }
 }

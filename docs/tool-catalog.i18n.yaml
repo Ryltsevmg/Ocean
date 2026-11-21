@@ -9,8 +9,8 @@
   en: 54defb17781cb25b
   zh: 750693b8cdec5fa0
 /tool-schema-catalog/tool-package-map:
-  en: 8f8b8110bc0c4bc1
-  zh: 5990db81223da8d2
+  en: ff8ad7bd1976d527
+  zh: 7a5610f7331fd23e
 /tool-schema-catalog/ocean-ocean-plugin-manager:
   en: a512df99f80ea0d3
   zh: a512df99f80ea0d3
@@ -137,9 +137,15 @@
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-back:
   en: ead805bcaed5e4ac
   zh: aeaf58a6f85259b6
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-check:
+  en: e14f8bcac43cad45
+  zh: 463c4099e852d776
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-click:
   en: fc6cef2c065ce71b
   zh: e343d335acc28811
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-dialog:
+  en: 7a8eb17e9f117624
+  zh: 8c0cfd2c900f54f9
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-fill:
   en: 75bf1ff676cfec06
   zh: 2df11e61d47af270
@@ -152,12 +158,21 @@
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-navigate:
   en: 4c9a0af02e713c2f
   zh: 2f70d2691a291e2b
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-press-key:
+  en: c225afc1a5e3fa6d
+  zh: 60df4a0b23eccb3b
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-reload:
   en: 9a60ca4a06519172
   zh: 892eeb5bb75056b2
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-screenshot:
   en: 8bfd67ad9db3e911
   zh: 4c28b042091c24b1
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-scroll:
+  en: 3e9a77d9b48ddc45
+  zh: 3097dfd730fd6e25
+/tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-select:
+  en: f4270eba2a4144e1
+  zh: 790dee5e27783f9f
 /tool-schema-catalog/ocean-ocean-tool-browser-desktop/browser-snapshot:
   en: cac99fe592587848
   zh: f88e8935ea8b01b0

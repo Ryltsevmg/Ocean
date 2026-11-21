@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { app, session, type BrowserWindow, type Session, type WebContents } from 'electron'
 import type { DesktopBrowserLeaseId, DesktopBrowserOpenRequest, DesktopBrowserReservation } from '@ocean/ocean-client-ui-sidebar-browser/types'
 import type { BrowserAgentMethod, BrowserAgentResult } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
-import { BrowserAgentError, captureBrowserScreenshot, executeBrowserAgent } from './browser-agent.ts'
+import { BrowserAgentError, captureBrowserScreenshot, executeBrowserAgent, watchDialogs, type DialogWatch } from './browser-agent.ts'
 import { DESKTOP_IPC } from './ipc.ts'
 
 interface GuestLease {
@@ -16,9 +16,11 @@ interface GuestLease {
   agentSessionId?: string | undefined
   /** Serializes Agent commands for this guest in arrival order. */
   agentTail?: Promise<void>
+  /** Scoped JavaScript-dialog observation owned by this lease. */
+  dialogWatch?: DialogWatch
 }
 
-const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot']
+const AGENT_METHODS: readonly BrowserAgentMethod[] = ['info', 'snapshot', 'click', 'fill', 'navigate', 'back', 'forward', 'reload', 'screenshot', 'press_key', 'scroll', 'select', 'check', 'dialog']
 
 /** Build one result whose request id is filled in by the IPC dispatcher. */
 function agentFailure(code: string, message: string): BrowserAgentResult {
@@ -67,6 +69,7 @@ export class DesktopBrowserGuests {
     if (lease === undefined) return
     if (lease.owner !== owner) throw new Error('desktop browser: guest belongs to another window')
     lease.releaseInput?.()
+    lease.dialogWatch?.dispose()
     this.forgetAgent(key, lease)
     this.leases.delete(key)
     const guest = lease.guest
@@ -141,6 +144,38 @@ export class DesktopBrowserGuests {
         result = agentFailure('BROWSER_GUEST_CLOSED', 'The shared tab is closed.')
         return
       }
+      const watch = current.dialogWatch
+      if (method !== 'dialog' && watch?.pending() !== undefined) {
+        result = agentFailure('BROWSER_DIALOG_PENDING',
+          'A JavaScript dialog is open; answer it with browser_dialog before acting.')
+        return
+      }
+      if (method === 'dialog') {
+        const action = args.action
+        if (action === 'read') {
+          const pending = watch?.pending()
+          result = { type: 'browser-agent-result', requestId: 0, ok: true,
+            text: pending === undefined ? 'no dialog' : JSON.stringify(pending) }
+          return
+        }
+        if (action !== 'accept' && action !== 'dismiss') {
+          result = agentFailure('BROWSER_DIALOG_ACTION_INVALID', 'The dialog action must be read, accept, or dismiss.')
+          return
+        }
+        if (watch === undefined) {
+          result = agentFailure('BROWSER_DIALOG_UNAVAILABLE', 'Dialog control is unavailable for this tab.')
+          return
+        }
+        try {
+          await watch.answer(action, typeof args.promptText === 'string' ? args.promptText : undefined)
+          result = { type: 'browser-agent-result', requestId: 0, ok: true, text: await executeBrowserAgent(guest, 'snapshot', {}) }
+        } catch (error) {
+          result = error instanceof BrowserAgentError
+            ? agentFailure(error.code, error.message)
+            : agentFailure('BROWSER_ACTION_FAILED', 'The dialog answer failed.')
+        }
+        return
+      }
       try {
         const observation = method === 'screenshot'
           ? await captureBrowserScreenshot(guest, args)
@@ -191,7 +226,7 @@ export class DesktopBrowserGuests {
         partition: lease.partition,
         nodeIntegration: false, nodeIntegrationInWorker: false, nodeIntegrationInSubFrames: false,
         contextIsolation: true, sandbox: true, webSecurity: true, allowRunningInsecureContent: false,
-        webviewTag: false, plugins: false, navigateOnDragDrop: false, disableDialogs: true,
+        webviewTag: false, plugins: false, navigateOnDragDrop: false, disableDialogs: false,
         devTools: !app.isPackaged,
       })
       params.httpreferrer = ''
@@ -209,9 +244,10 @@ export class DesktopBrowserGuests {
           return
         }
         lease.guest = guest
+        lease.dialogWatch = watchDialogs(guest)
         attachedLease = id
         lease.releaseInput = attachInput(guest, id)
-        guest.once('destroyed', () => { lease.releaseInput?.(); if (attachedLease !== undefined) this.forgetAgent(attachedLease, lease); this.leases.delete(id) })
+        guest.once('destroyed', () => { lease.releaseInput?.(); lease.dialogWatch?.dispose(); if (attachedLease !== undefined) this.forgetAgent(attachedLease, lease); this.leases.delete(id) })
       })
       guest.setWindowOpenHandler(({ url, postBody }) => {
         const lease = attachedLease === undefined ? undefined : this.leases.get(attachedLease)

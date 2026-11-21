@@ -16,6 +16,11 @@ export type BrowserAgentMethod =
   | 'forward'
   | 'reload'
   | 'screenshot'
+  | 'press_key'
+  | 'scroll'
+  | 'select'
+  | 'check'
+  | 'dialog'
 
 /** Host-to-main request for one operation on the Session's shared tab. */
 export interface BrowserAgentCommand {

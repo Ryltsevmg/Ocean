@@ -3392,6 +3392,8 @@ export interface Config {
   screenshotMaxWidth?: number
   /** Maximum encoded screenshot bytes accepted from the main process. */
   screenshotMaxBytes?: number
+  /** Require a person's approval before each mutating browser action. */
+  confirmActions?: boolean
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-tool-browser-desktop -->

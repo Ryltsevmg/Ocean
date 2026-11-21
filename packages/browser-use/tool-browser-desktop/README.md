@@ -26,7 +26,7 @@ Model-facing `browser_*` tools that read and act on one right-Sidebar Browser ta
 
 The Desktop bundle mounts this row only for the `desktop` profile. Sharing starts off for every Browser tab; the person enables **Share with agent** in the tab toolbar, and one Session may share one tab at a time. Closing the tab or disabling sharing revokes access.
 
-Tools: `browser_info`, `browser_snapshot`, `browser_navigate`, `browser_click`, `browser_fill`, `browser_back`, `browser_forward`, `browser_reload`, `browser_screenshot`. `browser_snapshot` returns a compact semantic tree with element refs; actions take a ref from the latest snapshot and return the resulting tree. `browser_fill` refuses password, one-time-code, and card fields; `browser_navigate` accepts only HTTP(S) addresses without credentials, including loopback. `browser_screenshot` captures the viewport as one bounded PNG, downscaled to `screenshotMaxWidth` (default 1280) and refused above `screenshotMaxBytes` (default 4000000); the Host stores it through the attachment service and returns a durable image reference, never base64 in the Session log.
+Tools: `browser_info`, `browser_snapshot`, `browser_navigate`, `browser_click`, `browser_fill`, `browser_back`, `browser_forward`, `browser_reload`, `browser_screenshot`, `browser_press_key`, `browser_scroll`, `browser_select`, `browser_check`, `browser_dialog`. `browser_snapshot` returns a compact semantic tree with element refs; actions take a ref from the latest snapshot and return the resulting tree. `browser_fill` refuses password, one-time-code, and card fields; `browser_navigate` accepts only HTTP(S) addresses without credentials, including loopback. `browser_screenshot` captures the viewport as one bounded PNG, downscaled to `screenshotMaxWidth` (default 1280) and refused above `screenshotMaxBytes` (default 4000000); the Host stores it through the attachment service and returns a durable image reference, never base64 in the Session log. `browser_press_key` presses one bounded key set with optional modifiers; `browser_scroll` moves the viewport or one element by clamped deltas; `browser_select` and `browser_check` drive select/checkbox/radio controls; `browser_dialog` reads, accepts, or dismisses the pending JavaScript dialog observed through a Page-only debugger attachment, and other actions refuse while a dialog is open. With `confirmActions: true` every mutating action first asks the person through the approval seam and fails closed without a grant.
 
 -----
 
@@ -79,7 +79,7 @@ Prefix-stable while the plugin scope and guidance text are unchanged; mounting o
 
 #### What the model sees
 
-The [eight tool schemas](../../../docs/tool-catalog.md#oceanocean-tool-browser-desktop) (`browser_info`, `browser_snapshot`, `browser_navigate`, `browser_click`, `browser_fill`, `browser_back`, `browser_forward`, `browser_reload`, `browser_screenshot`). Successful results are one bounded text observation — tab facts or a compact semantic page tree with element refs — except `browser_screenshot`, whose canonical value carries the durable attachment reference and intrinsic dimensions and renders as one image block. Failures carry stable codes such as `BROWSER_NOT_SHARED` and `BROWSER_SECRET_FIELD`.
+The [eight tool schemas](../../../docs/tool-catalog.md#oceanocean-tool-browser-desktop) (`browser_info`, `browser_snapshot`, `browser_navigate`, `browser_click`, `browser_fill`, `browser_back`, `browser_forward`, `browser_reload`, `browser_screenshot`, `browser_press_key`, `browser_scroll`, `browser_select`, `browser_check`, `browser_dialog`). Successful results are one bounded text observation — tab facts or a compact semantic page tree with element refs — except `browser_screenshot`, whose canonical value carries the durable attachment reference and intrinsic dimensions and renders as one image block. Failures carry stable codes such as `BROWSER_NOT_SHARED` and `BROWSER_SECRET_FIELD`.
 
 #### Token effect
 
@@ -95,7 +95,7 @@ Schemas are prefix-stable while definitions and visibility are unchanged; observ
 
 - Outside the Desktop Host there is no main-process channel, so every call fails with a transport or not-shared error; the row is disabled for non-Desktop profiles.
 - Element refs are best-effort identifiers a page can change or spoof; they are not authorization. The Agent must re-read after navigation.
-- Consequential actions rely on the person's awareness and the model policy, not an enforced confirmation step; keyboard/scroll/drag/select, dialogs, multi-tab, files, and CDP remain deferred to later roadmap phases.
+- Consequential actions rely on the person's awareness and the model policy unless `confirmActions` is enabled; multi-tab management, files, and console/network CDP remain deferred to later roadmap phases. Dialog observation attaches only the CDP Page domain and stays inert when another debugger owns the guest.
 
 <a id="dev-note"></a>
 ### Dev Note

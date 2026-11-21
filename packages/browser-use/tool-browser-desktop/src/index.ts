@@ -4,6 +4,7 @@
  * @module @ocean/ocean-tool-browser-desktop
  */
 import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@ocean/ocean-user-approval'
 import z from '@deepseek-ai/schemastery'
 import type { ImageAttachmentRef } from '@ocean/ocean-attachment'
 import type { ToolRunContext } from '@ocean/ocean-tools'
@@ -171,12 +172,15 @@ export interface Config {
   screenshotMaxWidth?: number
   /** Maximum encoded screenshot bytes accepted from the main process. */
   screenshotMaxBytes?: number
+  /** Require a person's approval before each mutating browser action. */
+  confirmActions?: boolean
 }
 
 /** Schemastery config for the screenshot bounds. */
 export const Config: z<Config> = z.object({
   screenshotMaxWidth: z.number().step(1).min(64).max(4096).default(1280),
   screenshotMaxBytes: z.number().step(1).min(1024).max(16_000_000).default(4_000_000),
+  confirmActions: z.boolean().default(false),
 })
 
 /** Loader plugin name. */
@@ -192,15 +196,39 @@ export const inject = ['tools', 'systemPrompt']
  */
 export function installDesktopBrowserAgent(ctx: Context,
   transport: DesktopBrowserTransport = processTransport(), config: Config = {}): void {
-  const bounds = Config(config)
+  // The schema defaults guarantee every field; the cast only removes the optional-input typing.
+  const bounds = Config(config) as Required<Config>
   const registry = ctx.get('browserUse') ?? new BrowserUseRegistry(ctx)
   if (registry.providerName !== undefined) {
     ctx.logger.warn(`desktop browser agent shares the process with browser provider "${registry.providerName}"; its own in-app tools remain available`)
   }
   const requester = new BrowserAgentRequester(transport)
-  const run = (exec: ToolRunContext, method: BrowserAgentMethod,
-    args: Readonly<Record<string, string | number>>): Promise<{ text: string }> =>
-    requester.request(sessionId(exec), method, args, exec.signal).then(observation => ({ text: observation.text }))
+  const mutating = new Set<BrowserAgentMethod>(['click', 'fill', 'navigate', 'press_key', 'scroll', 'select', 'check', 'dialog'])
+  const confirm = async (exec: ToolRunContext, method: BrowserAgentMethod): Promise<void> => {
+    const approval = ctx.get('approval')
+    const agent = exec.agent
+    if (approval === undefined || agent === undefined) {
+      throw new HarnessError('Approval is unavailable in this profile; the action was not performed.', 'BROWSER_APPROVAL_UNAVAILABLE')
+    }
+    const outcome = await approval.request({
+      agent, toolName: `browser_${method}`, callId: exec.callId,
+      reason: `The agent asks to perform browser_${method} on the shared Browser tab.`,
+      signal: exec.signal,
+    })
+    if (outcome !== 'allowed-once') {
+      throw new HarnessError('The person did not allow this browser action.', 'BROWSER_ACTION_DENIED')
+    }
+  }
+  const run = async (exec: ToolRunContext, method: BrowserAgentMethod,
+    args: Readonly<Record<string, string | number>>): Promise<{ text: string }> => {
+    const session = sessionId(exec)
+    if (bounds.confirmActions && mutating.has(method)
+      && !(method === 'dialog' && args.action === 'read')) {
+      await confirm(exec, method)
+    }
+    const observation = await requester.request(session, method, args, exec.signal)
+    return { text: observation.text }
+  }
   ctx.effect(function* () {
     if (registry.providerName === undefined) yield registry.register(BrowserUseProviderName(PROVIDER))
     yield ctx.systemPrompt.section({
@@ -318,7 +346,7 @@ export function installDesktopBrowserAgent(ctx: Context,
       },
       async execute(_args, exec) {
         const observation = await requester.request(sessionId(exec), 'screenshot', {
-          maxWidth: bounds.screenshotMaxWidth ?? 1280, maxBytes: bounds.screenshotMaxBytes ?? 4_000_000,
+          maxWidth: bounds.screenshotMaxWidth, maxBytes: bounds.screenshotMaxBytes,
         }, exec.signal)
         if (observation.image === undefined) {
           throw new HarnessError('The shared tab returned no image.', 'BROWSER_SCREENSHOT_MISSING')
@@ -342,6 +370,62 @@ export function installDesktopBrowserAgent(ctx: Context,
         }
       },
       presentCall: () => ({ card: 'generic', title: 'Screenshot shared browser', kind: 'read' }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_press_key',
+      description: 'Press one supported key in the shared browser tab and return the resulting page tree.',
+      parameters: {
+        key: { type: 'string', required: true, enum: ['Enter', 'Tab', 'Escape', 'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown', 'Space'], description: 'Key to press.' },
+        modifiers: { type: 'string', description: 'Comma-separated modifiers: shift, control, alt, meta.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => run(exec, 'press_key', args),
+      presentCall: args => ({ card: 'generic', title: 'Press key in shared browser', kind: 'other', rawInput: args.key }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_scroll',
+      description: 'Scroll the shared browser tab viewport or one element by bounded deltas and return the resulting page tree.',
+      parameters: {
+        ref: { type: 'string', description: 'Element ref to scroll; omit to scroll the viewport.' },
+        deltaX: { type: 'number', description: 'Horizontal pixels, clamped to +/-10000.' },
+        deltaY: { type: 'number', description: 'Vertical pixels, clamped to +/-10000.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => run(exec, 'scroll', args),
+      presentCall: () => ({ card: 'generic', title: 'Scroll shared browser', kind: 'other' }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_select',
+      description: 'Choose one option value in a select control of the shared browser tab and return the resulting page tree.',
+      parameters: {
+        ref: { type: 'string', required: true, description: 'Select control ref from browser_snapshot.' },
+        value: { type: 'string', required: true, description: 'Option value to select.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => run(exec, 'select', args),
+      presentCall: args => ({ card: 'generic', title: 'Select option in shared browser', kind: 'other', rawInput: args.ref }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_check',
+      description: 'Set one checkbox or radio in the shared browser tab to the requested state and return the resulting page tree.',
+      parameters: {
+        ref: { type: 'string', required: true, description: 'Checkbox or radio ref from browser_snapshot.' },
+        checked: { type: 'string', required: true, enum: ['true', 'false'], description: 'Desired checked state.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => run(exec, 'check', args),
+      presentCall: args => ({ card: 'generic', title: 'Set checkbox in shared browser', kind: 'other', rawInput: args.ref }),
+    }))
+    yield ctx.tools.register(defineTool({
+      name: 'browser_dialog',
+      description: 'Read the pending JavaScript dialog of the shared browser tab, or accept or dismiss it.',
+      parameters: {
+        action: { type: 'string', required: true, enum: ['read', 'accept', 'dismiss'], description: 'read reports the pending dialog without touching the page.' },
+        promptText: { type: 'string', description: 'Text for an accepted prompt dialog.' },
+      },
+      output: TEXT_OUTPUT,
+      execute: (args, exec) => run(exec, 'dialog', args),
+      presentCall: args => ({ card: 'generic', title: 'Answer shared browser dialog', kind: 'other', rawInput: args.action }),
     }))
     yield () => { requester.dispose() }
   }, 'desktop-browser-agent')

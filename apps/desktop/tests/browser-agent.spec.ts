@@ -6,6 +6,7 @@ import {
   BrowserAgentError,
   captureBrowserScreenshot,
   executeBrowserAgent,
+  watchDialogs,
   isBrowserAgentCommand,
 } from '../src/browser-agent.ts'
 
@@ -131,9 +132,101 @@ describe('browser screenshot capture', () => {
   })
 
   it('refuses an oversized raster and a closed guest', async () => {
-    await expect(captureBrowserScreenshot(guestWith(raster(100, 64)), { maxBytes: 1024 }))
+    await expect(captureBrowserScreenshot(guestWith(raster(100, 2048)), { maxBytes: 1024 }))
       .rejects.toMatchObject({ code: 'BROWSER_SCREENSHOT_TOO_LARGE' })
     await expect(captureBrowserScreenshot(guestWith(raster(100, 8), true), {}))
       .rejects.toMatchObject({ code: 'BROWSER_GUEST_CLOSED' })
+  })
+})
+
+describe('browser input primitives', () => {
+  function guest() {
+    const sendInputEvent = vi.fn()
+    const executeJavaScript = vi.fn(async (..._args: [string, boolean?]): Promise<unknown> => true)
+    const contents = {
+      isDestroyed: () => false, getTitle: () => 'T', getURL: () => 'https://example.test/', isLoading: () => false,
+      sendInputEvent, executeJavaScript, insertText: vi.fn(async () => {}), loadURL: vi.fn(async () => {}), reload: vi.fn(),
+      on: vi.fn(), removeListener: vi.fn(), once: vi.fn(),
+      navigationHistory: { canGoBack: () => false, canGoForward: () => false, goBack: vi.fn(), goForward: vi.fn() },
+    } as never
+    return { contents, sendInputEvent, executeJavaScript }
+  }
+
+  it('presses a supported key with modifiers and refuses unknown keys', async () => {
+    const { contents, sendInputEvent } = guest()
+    await executeBrowserAgent(contents, 'press_key', { key: 'Enter', modifiers: 'shift,control' })
+    expect(sendInputEvent).toHaveBeenCalledTimes(2)
+    expect(sendInputEvent.mock.calls[0]![0]).toMatchObject({ type: 'keyDown', keyCode: 'Enter', modifiers: ['shift', 'control'] })
+    await expect(executeBrowserAgent(contents, 'press_key', { key: 'F5' })).rejects.toMatchObject({ code: 'BROWSER_KEY_UNSUPPORTED' })
+    await expect(executeBrowserAgent(contents, 'press_key', { key: 'Tab', modifiers: 'hyper' })).rejects.toMatchObject({ code: 'BROWSER_MODIFIERS_INVALID' })
+  })
+
+  it('scrolls the viewport or one element and reports a stale ref', async () => {
+    const { contents, executeJavaScript } = guest()
+    await executeBrowserAgent(contents, 'scroll', { deltaY: 500 })
+    expect(executeJavaScript.mock.calls[0]![0]).toContain('window.scrollBy(0, 500)')
+    await executeBrowserAgent(contents, 'scroll', { ref: 'e1', deltaX: -20 })
+    expect(executeJavaScript.mock.calls[2]![0]).toContain('scrollBy(-20, 0)')
+    executeJavaScript.mockResolvedValueOnce(false)
+    await expect(executeBrowserAgent(contents, 'scroll', { ref: 'e9' })).rejects.toMatchObject({ code: 'BROWSER_REF_STALE' })
+  })
+
+  it('selects an option and refuses unsupported controls or missing options', async () => {
+    const { contents, executeJavaScript } = guest()
+    executeJavaScript.mockResolvedValueOnce('ok')
+    await executeBrowserAgent(contents, 'select', { ref: 'e1', value: 'b' })
+    executeJavaScript.mockResolvedValueOnce('unsupported')
+    await expect(executeBrowserAgent(contents, 'select', { ref: 'e1', value: 'b' })).rejects.toMatchObject({ code: 'BROWSER_SELECT_UNSUPPORTED' })
+    executeJavaScript.mockResolvedValueOnce('missing')
+    await expect(executeBrowserAgent(contents, 'select', { ref: 'e1', value: 'b' })).rejects.toMatchObject({ code: 'BROWSER_OPTION_MISSING' })
+  })
+
+  it('checks a box and reports unsupported, stale, or blocked controls', async () => {
+    const { contents, executeJavaScript } = guest()
+    executeJavaScript.mockResolvedValueOnce('ok')
+    await executeBrowserAgent(contents, 'check', { ref: 'e1', checked: 'true' })
+    for (const [outcome, code] of [['unsupported', 'BROWSER_CHECK_UNSUPPORTED'], ['missing', 'BROWSER_REF_STALE'], ['blocked', 'BROWSER_CHECK_BLOCKED']] as const) {
+      executeJavaScript.mockResolvedValueOnce(outcome)
+      await expect(executeBrowserAgent(contents, 'check', { ref: 'e1', checked: 'true' })).rejects.toMatchObject({ code })
+    }
+  })
+})
+
+describe('dialog watch', () => {
+  function guest(attachThrows = false) {
+    const listeners: ((...args: unknown[]) => void)[] = []
+    const sendCommand = vi.fn(async () => {})
+    const debuggerApi = {
+      attach: vi.fn(() => { if (attachThrows) throw new Error('busy') }),
+      detach: vi.fn(),
+      on: vi.fn((_event: string, listener: (...args: unknown[]) => void) => { listeners.push(listener) }),
+      removeListener: vi.fn(),
+      sendCommand,
+    }
+    const contents = { isDestroyed: () => false, debugger: debuggerApi } as never
+    return { contents, listeners, sendCommand, debuggerApi }
+  }
+
+  it('observes, answers, and clears a pending dialog', async () => {
+    const { contents, listeners, sendCommand } = guest()
+    const watch = watchDialogs(contents)
+    expect(watch.pending()).toBeUndefined()
+    listeners[0]!({}, 'Page.javascriptDialogOpening', { type: 'confirm', message: 'Delete?', defaultPrompt: '' })
+    expect(watch.pending()).toMatchObject({ type: 'confirm', message: 'Delete?' })
+    await watch.answer('accept', 'yes')
+    expect(sendCommand).toHaveBeenCalledWith('Page.handleJavaScriptDialog', { accept: true, promptText: 'yes' })
+    expect(watch.pending()).toBeUndefined()
+    listeners[0]!({}, 'Page.javascriptDialogOpening', { type: 'alert', message: 'Hi' })
+    listeners[0]!({}, 'Page.javascriptDialogClosed', {})
+    expect(watch.pending()).toBeUndefined()
+    await expect(watch.answer('dismiss')).rejects.toMatchObject({ code: 'BROWSER_DIALOG_NONE' })
+    watch.dispose()
+  })
+
+  it('stays inert when another debugger owns the guest', async () => {
+    const { contents } = guest(true)
+    const watch = watchDialogs(contents)
+    await expect(watch.answer('accept')).rejects.toMatchObject({ code: 'BROWSER_DIALOG_UNAVAILABLE' })
+    watch.dispose()
   })
 })

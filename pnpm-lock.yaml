@@ -2140,6 +2140,9 @@ importers:
       '@ocean/ocean-tools':
         specifier: workspace:*
         version: link:../../core/tools
+      '@ocean/ocean-user-approval':
+        specifier: workspace:*
+        version: link:../../interaction/user-approval
 
   packages/bundle/acp-app:
     dependencies:

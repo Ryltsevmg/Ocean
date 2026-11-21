@@ -32,18 +32,20 @@ function execution(agent = true): ToolRunContext {
   }
 }
 
-function fakeContext(providerName?: string, options: { attachments?: boolean; emptyStore?: boolean } = {}) {
+function fakeContext(providerName?: string, options: { attachments?: boolean; emptyStore?: boolean; approval?: 'allowed-once' | 'rejected' | 'absent' } = {}) {
   const registered = new Map<string, ToolDefinition>()
   const saveImages = vi.fn(async (inputs: { data: Uint8Array }[]) => options.emptyStore
     ? []
     : inputs.map(input => ({ attachmentId: 'att-1', mediaType: 'image/png' as const, bytes: input.data.byteLength, width: 10, height: 10 })))
   const attachments = options.attachments === false ? undefined : { saveImages }
+  const approvalRequest = vi.fn(async (_request: { readonly toolName: string }) => options.approval ?? 'allowed-once')
+  const approval = options.approval === 'absent' ? undefined : { request: approvalRequest }
   const browserUse = {
     providerName,
     register: vi.fn(() => async () => {}),
   }
   const ctx = {
-    get: vi.fn((name: string) => name === 'browserUse' ? browserUse : name === 'attachments' ? attachments : undefined),
+    get: vi.fn((name: string) => name === 'browserUse' ? browserUse : name === 'attachments' ? attachments : name === 'approval' ? approval : undefined),
     browserUse,
     systemPrompt: { section: vi.fn(() => () => {}), getSectionOrder: vi.fn(() => 0) },
     tools: { register: vi.fn((tool: ToolDefinition) => { registered.set(tool.name, tool); return () => {} }) },
@@ -55,7 +57,7 @@ function fakeContext(providerName?: string, options: { attachments?: boolean; em
       return () => {}
     }),
   }
-  return { ctx, registered, saveImages }
+  return { ctx, registered, saveImages, approvalRequest }
 }
 
 function channel() {
@@ -264,12 +266,24 @@ describe('browser_screenshot', () => {
     const ch = screenshotChannel()
     installDesktopBrowserAgent(ctx as never, ch.transport)
     const tool = registered.get('browser_screenshot')!
-    const value = await tool.execute({}, execution()) as { attachment: { attachmentId: string }; width: number }
+    const value = await tool.execute({}, execution()) as {
+      attachment: {
+        attachmentId: string
+        mediaType: string
+        bytes: number
+        width: number
+        height: number
+      }
+      width: number
+      height: number
+    }
     expect(value.attachment.attachmentId).toBe('att-1')
     expect(saveImages).toHaveBeenCalledOnce()
     expect(saveImages.mock.calls[0]![0][0]!.data).toBeInstanceOf(Uint8Array)
     expect(ch.commands[0]!.args).toMatchObject({ maxWidth: 1280, maxBytes: 4_000_000 })
-    expect(tool.output.render({}, value as never)).toEqual([{ type: 'image', attachment: expect.objectContaining({ attachmentId: 'att-1' }) }])
+    const blocks = tool.output.render({}, value) as { type: string; attachment: { attachmentId: string } }[]
+    expect(blocks[0]!.type).toBe('image')
+    expect(blocks[0]!.attachment.attachmentId).toBe('att-1')
     expect(tool.presentCall?.({})).toBeDefined()
   })
 
@@ -311,5 +325,62 @@ describe('browser_screenshot', () => {
     listener({ type: 'browser-agent-result', requestId: 1, ok: true, text: 't', image })
     await expect(pending).resolves.toMatchObject({ text: 't', image: { width: 10 } })
     requester.dispose()
+  })
+})
+
+describe('input tools and enforced confirmation', () => {
+  it('executes the input and dialog tools and presents their calls', async () => {
+    const { ctx, registered } = fakeContext()
+    installDesktopBrowserAgent(ctx as never, channel().transport)
+    const args: Record<string, Record<string, string | number>> = {
+      browser_press_key: { key: 'Enter' }, browser_scroll: { deltaY: 100 },
+      browser_select: { ref: 'e1', value: 'b' }, browser_check: { ref: 'e1', checked: 'true' },
+      browser_dialog: { action: 'accept' },
+    }
+    for (const [name, toolArgs] of Object.entries(args)) {
+      const tool = registered.get(name)!
+      await expect(tool.execute(toolArgs, execution())).resolves.toEqual({ text: 'ok' })
+      expect(tool.presentCall?.(toolArgs)).toBeDefined()
+    }
+  })
+
+  it('asks the person before mutating actions when confirmActions is on', async () => {
+    const granted = fakeContext(undefined, { approval: 'allowed-once' })
+    installDesktopBrowserAgent(granted.ctx as never, channel().transport, { confirmActions: true })
+    await granted.registered.get('browser_click')!.execute({ ref: 'e1' }, execution())
+    expect(granted.approvalRequest).toHaveBeenCalledOnce()
+    expect(granted.approvalRequest.mock.calls[0]![0]).toMatchObject({ toolName: 'browser_click' })
+
+    const read = fakeContext(undefined, { approval: 'allowed-once' })
+    installDesktopBrowserAgent(read.ctx as never, channel().transport, { confirmActions: true })
+    await read.registered.get('browser_dialog')!.execute({ action: 'read' }, execution())
+    expect(read.approvalRequest).not.toHaveBeenCalled()
+
+    const readOnly = fakeContext(undefined, { approval: 'allowed-once' })
+    installDesktopBrowserAgent(readOnly.ctx as never, channel().transport, { confirmActions: true })
+    await readOnly.registered.get('browser_snapshot')!.execute({}, execution())
+    expect(readOnly.approvalRequest).not.toHaveBeenCalled()
+
+    const dialogAccept = fakeContext(undefined, { approval: 'allowed-once' })
+    installDesktopBrowserAgent(dialogAccept.ctx as never, channel().transport, { confirmActions: true })
+    await dialogAccept.registered.get('browser_dialog')!.execute({ action: 'accept' }, execution())
+    expect(dialogAccept.approvalRequest).toHaveBeenCalledOnce()
+
+    const off = fakeContext(undefined, { approval: 'allowed-once' })
+    installDesktopBrowserAgent(off.ctx as never, channel().transport)
+    await off.registered.get('browser_click')!.execute({ ref: 'e1' }, execution())
+    expect(off.approvalRequest).not.toHaveBeenCalled()
+  })
+
+  it('refuses mutating actions when the person declines or approval is unavailable', async () => {
+    const declined = fakeContext(undefined, { approval: 'rejected' })
+    installDesktopBrowserAgent(declined.ctx as never, channel().transport, { confirmActions: true })
+    await expect(declined.registered.get('browser_click')!.execute({ ref: 'e1' }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_ACTION_DENIED' })
+
+    const absent = fakeContext(undefined, { approval: 'absent' })
+    installDesktopBrowserAgent(absent.ctx as never, channel().transport, { confirmActions: true })
+    await expect(absent.registered.get('browser_fill')!.execute({ ref: 'e1', text: 'x' }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_APPROVAL_UNAVAILABLE' })
   })
 })

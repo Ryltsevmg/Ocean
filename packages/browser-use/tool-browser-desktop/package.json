@@ -34,7 +34,8 @@
     "@ocean/ocean-browser-use": "workspace:*",
     "@ocean/ocean-error": "workspace:*",
     "@ocean/ocean-system-prompt": "workspace:*",
-    "@ocean/ocean-tools": "workspace:*"
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
@@ -48,6 +49,7 @@
     "@ocean/ocean-system-prompt": "workspace:*",
     "@ocean/ocean-tool-executor-native": "workspace:*",
     "@ocean/ocean-tool-testkit": "workspace:*",
-    "@ocean/ocean-tools": "workspace:*"
+    "@ocean/ocean-tools": "workspace:*",
+    "@ocean/ocean-user-approval": "workspace:*"
   }
 }
