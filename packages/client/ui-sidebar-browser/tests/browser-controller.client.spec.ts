@@ -144,6 +144,7 @@ describe('BrowserController', () => {
     const tabLifetime = lifetime()
     h.mount(tabLifetime.signal)
     expect(() => { h.face.setAgentEnabled(TAB, true) }).not.toThrow()
+    expect(() => { h.face.resumeAgent(TAB) }).not.toThrow()
     expect(h.face.keyedHooks.browserState(TAB)!.getSnapshot().frame.agentEnabled).toBeUndefined()
   })
   it('ignores navigation commands after its tab occurrence ends', async () => {

@@ -87,6 +87,17 @@ afterEach(async () => {
 })
 
 describe('BrowserBody', () => {
+  it('shows the handoff banner without a message', () => {
+    const state = createSnapshotStore<BrowserFrameState>({ ...emptyBrowserFrame(), agentEnabled: true, handoffActive: true })
+    const mounted = mountBrowser(undefined, { createPage: () => ({
+      presentation: { mount: () => () => {} },
+      frame: { getSnapshot: () => state.getSnapshot(), subscribe: listener => state.subscribe(listener),
+        loadUrl: vi.fn(), goBack: vi.fn(), goForward: vi.fn(), reload: vi.fn(), dispose: async () => {},
+        agent: { setEnabled: vi.fn(), resume: vi.fn() } },
+    }) })
+    expect(mounted.view.getByRole('status').textContent).toBe(`${zh['handoff.waiting']}${zh['handoff.resume']}`)
+  })
+
   it('shows the handoff banner and resumes the agent', () => {
     const state = createSnapshotStore<BrowserFrameState>({ ...emptyBrowserFrame(), agentEnabled: true,
       handoffActive: true, handoffMessage: 'log in please' })
