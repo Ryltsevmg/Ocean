@@ -178,9 +178,9 @@ describe('web e2e: plugin configuration pages', () => {
     // Host's registration order is not the YAML row order and only its membership is checked here.
     const hostWeb = scaffold.ctx.get('web') as { listProviders(): Record<'search' | 'fetch', { id: string }[]> } | undefined
     expect(hostWeb?.listProviders().search.map(provider => provider.id).sort()).toEqual(['deepseek-official', 'deepseek-search-api'])
-    // Automatic selection states which provider the Host runs for each model and shows no provider panel.
+    // Automatic selection states that the Host may name a provider and otherwise prefers one per model, and shows no provider panel.
     expect(await searchSection.getByText(
-      '跟随当前会话的模型：DeepSeek 模型使用 DeepSeek 服务端搜索，搜索不按次收费；其他模型使用 DeepSeek Search API。', { exact: true },
+      '宿主可指定提供方。否则，在提供方可用时，DeepSeek 模型优先使用 DeepSeek 服务端搜索，其他模型优先使用 DeepSeek Search API。', { exact: true },
     ).count()).toBe(1)
     expect(await searchSection.getByRole('link', { name: '网页搜索与获取指南', exact: true }).getAttribute('href'))
       .toBe('https://api-docs.deepseek.com/zh-cn/guides/search')
