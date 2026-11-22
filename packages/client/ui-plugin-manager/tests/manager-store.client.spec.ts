@@ -2271,6 +2271,16 @@ it('ignores a stale update target and prevents a disposed tab from beginning an 
   expect(plugins.installBundle).not.toHaveBeenCalled()
 })
 
+it('drops a published install offer after disposal without opening or starting anything', async () => {
+  const { controller, plugins, face, state } = bench({ listBundles: vi.fn().mockResolvedValue(ok([CATALOG, BUNDLE])) })
+  await controller.load()
+  controller.dispose()
+  face.installPublished({ name: 'ocean-verified', version: '2.1.0', sha256: 'a'.repeat(64), title: 'Verified plugin' })
+  expect(plugins.installPublishedBundle).not.toHaveBeenCalled()
+  expect(plugins.inspect).not.toHaveBeenCalled()
+  expect(state().install).toMatchObject({ open: false, phase: 'idle', subject: null })
+})
+
 
 it('installs a source Official entry as a local path through the ordinary installer', async () => {
   const spec = 'link:/development/ocean/packages/subagent/subagent-codex'

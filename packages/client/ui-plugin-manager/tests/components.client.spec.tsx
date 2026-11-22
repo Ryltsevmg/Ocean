@@ -460,6 +460,10 @@ describe('PluginManagerPage', () => {
     set({ install: { ...pinned, phase: 'failed', failure: { reason: '', code: 'published-archive-mismatch', kind: 'integrity' } } })
     expect(dialog().getByText(en.reasonPublishedArchiveMismatch)).toBeTruthy()
     expect(dialog().queryByText(en.installFailureIntegrity)).toBeNull()
+    // A spec-host attribution on a published offer names no host, because the pinned offer carries no host of its own.
+    set({ install: { ...pinned, phase: 'failed', failure: { reason: 'connection reset by peer', kind: 'network', failedAt: 'spec-host' } } })
+    expect(dialog().getByText(en.installFailureNetwork)).toBeTruthy()
+    expect(dialog().queryByText(en.installFailureNetworkHost.replace('{host}', 'registry.npmjs.org'))).toBeNull()
 
     set({ install: pinned })
     expect(dialog().queryByRole('textbox')).toBeNull()

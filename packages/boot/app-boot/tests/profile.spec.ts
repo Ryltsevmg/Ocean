@@ -504,6 +504,24 @@ describe('loadProfile', () => {
     if (installed !== undefined) expect(existsSync(join(installed, 'package.json'))).toBe(true)
   })
 
+  it('drops a reused retired selection whose profile manifest declares no dependencies field', () => {
+    const anchor = stageInstallation({ base: { patch: '[]\n' } })
+    const dir = join(tmp(), 'profile')
+    const name = reusedBundleNames[0]!
+    initProfile(dir, ['base', name])
+    const installed = stageProfileBundle(dir, name, { name, version: '1.0.0', ocean: { bundle: { patch: './cordis.patch.yml' } } })
+    // A manifest predating the dependencies field carries no direct-installation proof, so the reused name stays retired.
+    const { dependencies: _declared, ...withoutDependencies } = readProfileManifest('test', dir)
+    writeProfileManifest(dir, withoutDependencies)
+    const profile = loadProfileDirectory('test', dir, anchor)
+    expect(profile.layers.map(layer => layer.packageName)).toEqual(['base'])
+    expect(profile.skippedBundles).toEqual([])
+    const written = readProfileManifest('test', dir)
+    expect(written.dependencies).toBeUndefined()
+    expect(written.ocean?.profile?.bundles).toEqual(['base'])
+    expect(existsSync(join(installed, 'package.json'))).toBe(true)
+  })
+
   it.each([
     { label: 'unsupported platform', declaration: { platforms: [process.platform === 'darwin' ? 'win32' : 'darwin'] }, reason: 'Host is running' },
     { label: 'incompatible runtime', engines: { ocean: '0.2.2-rc.2' }, reason: 'is incompatible with ocean' },

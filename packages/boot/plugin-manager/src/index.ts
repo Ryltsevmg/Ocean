@@ -1023,6 +1023,7 @@ export class PluginManager extends TypertRemoteService {
       const before = readProfileManifest('ocean', this.profile.dir).dependencies ?? {}
       const checkPublished = (): void => {
         if (published === undefined) return
+        /* v8 ignore next -- a published target is only set together with a configured catalog, which is checked before prepare */
         if (this.publishedCatalog === undefined) throw new ManagementFailure('published-offer-unavailable')
         this.publishedCatalog.assertCurrent(published)
       }
