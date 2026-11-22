@@ -5,6 +5,8 @@ import type { BrowserTabState } from './BrowserPersistence.ts'
 
 /** Provider construction inputs; persistence does not enter the live navigation interface. */
 export interface BrowserPageOptions {
+  /** Exact Session that owns this tab; enables the Desktop Agent bridge. */
+  readonly sessionId?: string | undefined
   readonly initial: BrowserTabState | undefined
   readonly persist: (state: BrowserTabState) => void
   readonly openRequested: (url: string) => void

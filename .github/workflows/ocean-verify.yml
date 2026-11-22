@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  # gitleaks lists the pull request commits through the REST API on pull_request events.
+  pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

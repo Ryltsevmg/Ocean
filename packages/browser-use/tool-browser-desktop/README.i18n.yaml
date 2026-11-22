@@ -1,0 +1,61 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/browser-use/tool-browser-desktop/README.md
+/:
+  en: 253345ac98765a73
+  zh: 1403501a20a1b937
+/ocean-ocean-browser-use-desktop:
+  en: 88a088f59848197d
+  zh: e35bfd654de09d68
+/ocean-ocean-browser-use-desktop/summary:
+  en: 1e87eb5f3c5cb2fe
+  zh: a935dc29d225a3ce
+/ocean-ocean-browser-use-desktop/table-of-contents:
+  en: b563e4ec4727d0de
+  zh: 3c7690167080ab1f
+/ocean-ocean-browser-use-desktop/use-this-package:
+  en: 24b53913f7ef9424
+  zh: e38002b1589687cb
+/ocean-ocean-browser-use-desktop/understand-the-implementation:
+  en: 0262ec0d19b34393
+  zh: 84267e843a4e1613
+/ocean-ocean-browser-use-desktop/further-exploration:
+  en: c9559e64259f5693
+  zh: 32e4696fe73738e1
+/ocean-ocean-browser-use-desktop/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/ocean-ocean-browser-use-desktop/model-experience/system-prompt:
+  en: cf78b9dd5596495f
+  zh: cf78b9dd5596495f
+/ocean-ocean-browser-use-desktop/model-experience/system-prompt/what-the-model-sees:
+  en: fe41e69936f35c17
+  zh: 35091a90ccfcc01d
+/ocean-ocean-browser-use-desktop/model-experience/system-prompt/what-the-model-sees/browser-sharing-policy:
+  en: ed47b2901f4802d0
+  zh: ed47b2901f4802d0
+/ocean-ocean-browser-use-desktop/model-experience/system-prompt/token-effect:
+  en: 35ec696947287bca
+  zh: 02d9e1cbf3e8207f
+/ocean-ocean-browser-use-desktop/model-experience/system-prompt/kv-cache-effect:
+  en: 403da26878a7a345
+  zh: dc6c7f0002f1df7b
+/ocean-ocean-browser-use-desktop/model-experience/tool-schemas-and-results:
+  en: cadc497841430a21
+  zh: cadc497841430a21
+/ocean-ocean-browser-use-desktop/model-experience/tool-schemas-and-results/what-the-model-sees:
+  en: 73560f12d264b96c
+  zh: bb4125586ee8dfad
+/ocean-ocean-browser-use-desktop/model-experience/tool-schemas-and-results/token-effect:
+  en: a27023707ebcb3ee
+  zh: f8778e5b1c4c1587
+/ocean-ocean-browser-use-desktop/model-experience/tool-schemas-and-results/kv-cache-effect:
+  en: bfcbae13c80f87f8
+  zh: 2352d91bce684ddb
+/ocean-ocean-browser-use-desktop/known-limitations-and-deferred-work:
+  en: bd2dcf710433080e
+  zh: a16d0400d289a869
+/ocean-ocean-browser-use-desktop/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: e88aeb617ffb74ea

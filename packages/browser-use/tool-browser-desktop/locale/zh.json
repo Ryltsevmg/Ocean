@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Agent browser",
+    "description": "供模型使用当前会话共享的侧边栏浏览器标签页。"
+  }
+}

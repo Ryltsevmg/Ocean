@@ -168,6 +168,17 @@ const harness = await vi.hoisted(async () => {
       this.ready.reject(new Error('child stopped'))
       return this.exited.promise
     })
+    readonly messageListeners = new Set<(message: unknown) => boolean>()
+    readonly onMessage = vi.fn((listener: (message: unknown) => boolean) => {
+      this.messageListeners.add(listener)
+      return () => { this.messageListeners.delete(listener) }
+    })
+    readonly send = vi.fn(async (_message: object) => {})
+    /** Deliver one Host message through the registered private-channel listeners. */
+    emit(message: unknown): boolean {
+      for (const listener of this.messageListeners) if (listener(message)) return true
+      return false
+    }
     constructor(
       readonly node: string, readonly runtime: string, readonly profile: string,
       readonly inspectPort?: number, readonly environment?: NodeJS.ProcessEnv, readonly onFailure?: (error: Error) => void,
@@ -529,11 +540,20 @@ describe('desktop main startup', () => {
     expect(harness.windows[0]!.options).toMatchObject({ webPreferences: { sandbox: true, contextIsolation: true } })
   })
 
+  it.each(['darwin', 'win32'])('runs the unpackaged Host under the bundled Node on %s', async (platform) => {
+    vi.stubGlobal('process', { ...process, platform, arch: 'arm64', resourcesPath: 'desktop-test-resources' })
+    harness.app.isPackaged = false
+    await readyForUpdate()
+    expect(harness.hosts[0]!.node).toBe(join('test-primary-runtime', 'dependencies', 'node', 'bin', 'node'))
+  })
+
   it.each([true, false])('selects the package manager before Host startup (packaged=%s)', async (packaged) => {
     harness.app.isPackaged = packaged
     await readyForUpdate()
     const host = harness.hosts[0]!
-    expect(host.node).toBe(process.execPath)
+    // The unpackaged Host runs under the bundled plain Node on every platform: an unpackaged
+    // Electron can be ahead of the internal-module addon's supported runtime matrix.
+    expect(host.node).toBe(packaged ? process.execPath : join('test-primary-runtime', 'dependencies', 'node', 'bin', 'node'))
     expect(host.primaryRuntime).toBe(packaged
       ? join('desktop-test-resources', 'runtime', 'primary-runtime') : 'test-primary-runtime')
     expect(host.packageManager).toMatchObject({
@@ -542,6 +562,24 @@ describe('desktop main startup', () => {
         : 'test-pnpm',
       nodeBin: packaged ? join('desktop-test-resources', 'runtime', 'bin') : join('desktop-test-app', 'scripts', 'node-bin'),
     })
+  })
+
+  it('answers Agent browser commands over the private Host channel', async () => {
+    await readyForUpdate()
+    const host = harness.hosts[0]!
+    expect(host.emit({ type: 'browser-agent-command', requestId: 7, sessionId: 'session-x', method: 'snapshot', args: {} })).toBe(true)
+    await vi.waitFor(() => { expect(host.send).toHaveBeenCalled() })
+    expect(host.send.mock.calls[0]![0]).toMatchObject({
+      type: 'browser-agent-result', requestId: 7, ok: false, error: { code: 'BROWSER_NOT_SHARED' },
+    })
+    host.send.mockClear()
+    expect(host.emit({ type: 'browser-agent-command', requestId: 8, sessionId: 'session-x', method: 'tabs', args: {} })).toBe(true)
+    await vi.waitFor(() => { expect(host.send).toHaveBeenCalled() })
+    expect(host.send.mock.calls[0]![0]).toMatchObject({
+      type: 'browser-agent-result', requestId: 8, ok: false, error: { code: 'BROWSER_NOT_SHARED' },
+    })
+    expect(harness.handlers.has(DESKTOP_IPC.browserAgentResume)).toBe(true)
+    expect(host.emit({ type: 'ready', url: 'http://127.0.0.1:1/' })).toBe(false)
   })
 
   it('persists a channel through product IPC and ignores external edits during the process', async () => {
@@ -3442,7 +3480,7 @@ describe('desktop main startup', () => {
     harness.prepared.resolve()
     await harness.hostStarted.promise
     const project = join(harness.app.getAppPath(), '.desktop-build', 'development', 'project')
-    expect(harness.hosts[0]).toMatchObject({ node: process.execPath, runtime: project,
+    expect(harness.hosts[0]).toMatchObject({ node: join('test-primary-runtime', 'dependencies', 'node', 'bin', 'node'), runtime: project,
       primaryRuntime: 'test-primary-runtime', profile: 'desktop-test-profile' })
     expect(harness.applyRelease).toHaveBeenCalledOnce()
     harness.hosts[0]!.ready.resolve()

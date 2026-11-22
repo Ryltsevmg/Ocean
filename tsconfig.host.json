@@ -271,6 +271,7 @@
     { "path": "./packages/skill/skill-office" },
     { "path": "./packages/skill/tool-workspace-dependencies" },
     { "path": "./packages/browser-use/browser-use" },
+    { "path": "./packages/browser-use/tool-browser-desktop" },
     { "path": "./packages/api/terminal-controller/tsconfig.host.json" },
     { "path": "./packages/computer-use/computer-use" },
     { "path": "./packages/client/ui-sidebar-documentpreview/tsconfig.host.json" },

@@ -27,7 +27,12 @@ describe('gen-tool-catalog collectToolCatalog', () => {
     const catalog = await collectToolCatalog()
     const names = catalog.flatMap(entry => entry.schemas.map(s => s.name)).sort()
     expect(names).toEqual([
-      'apply_patch', 'ask_user_question', 'bash', 'bash', 'cordis_inspect_list',
+      'apply_patch', 'ask_user_question', 'bash', 'bash',
+      'browser_back', 'browser_check', 'browser_click', 'browser_console', 'browser_dialog',
+      'browser_downloads', 'browser_fill', 'browser_forward', 'browser_handoff', 'browser_info',
+      'browser_navigate', 'browser_network', 'browser_press_key', 'browser_reload', 'browser_screenshot', 'browser_scroll',
+      'browser_select', 'browser_snapshot', 'browser_tab_select', 'browser_tabs', 'browser_upload',
+      'cordis_inspect_list',
       'cordis_inspect_query', 'create_goal', 'edit', 'exit_plan_mode', 'get_goal', 'glob', 'grep',
       'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents',
       'list_mcp_resource_templates', 'list_mcp_resources', 'list_subagent_models',

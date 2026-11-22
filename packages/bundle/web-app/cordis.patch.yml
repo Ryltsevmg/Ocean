@@ -652,3 +652,9 @@
       name: '@ocean/ocean-agent-preset-registry'
       config:
         default: standard
+
+# Desktop-only Agent browser tools over the Session-shared Sidebar webview.
+- insert:
+    - id: browser-use-desktop
+      name: '@ocean/ocean-tool-browser-desktop'
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
