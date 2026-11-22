@@ -278,9 +278,9 @@
 .handoff {
   flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
   padding: 6px 12px;
   font: var(--dsw-font-xxs-12);
   background: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 10%, transparent);
@@ -288,7 +288,20 @@
 }
 
 .handoffText {
+  display: -webkit-box;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
   overflow-wrap: anywhere;
   color: var(--dsw-alias-label-secondary);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* The action keeps its label on one line and stays at the trailing edge; the message wraps instead. */
+.handoffAction {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
 }

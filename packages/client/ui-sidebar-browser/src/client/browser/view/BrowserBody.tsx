@@ -122,7 +122,7 @@ export function BrowserBody(props: BrowserBodyProps): ReactNode {
       {frame.agentEnabled && !frame.handoffActive && <div className={css.agentNotice} role="status">{t('agent.notice')}</div>}
       {frame.handoffActive && <div className={css.handoff} role="status">
         <span className={css.handoffText}>{frame.handoffMessage === undefined ? t('handoff.waiting') : `${t('handoff.waiting')} — ${frame.handoffMessage}`}</span>
-        <Button variant="primary" size="sm" onClick={() => { resumeAgent(tab.id) }}>{t('handoff.resume')}</Button>
+        <Button className={css.handoffAction} variant="primary" size="sm" onClick={() => { resumeAgent(tab.id) }}>{t('handoff.resume')}</Button>
       </div>}
       {frame.agentFailure !== undefined && <div className={css.agentFailure} role="alert">{t(`agent.${frame.agentFailure}`)}</div>}
       {sandboxed === false && <div className={css.sandboxWarning} role="status">{t('sandbox.warning')}</div>}

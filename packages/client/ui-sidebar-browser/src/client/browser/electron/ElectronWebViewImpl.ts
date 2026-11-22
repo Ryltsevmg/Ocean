@@ -163,7 +163,9 @@ export class ElectronWebViewImpl implements BrowserFrame {
     }
     if (this.agentEnabled) return
     if (this.lease === undefined) {
-      this.publishAgent({ agentEnabled: false, agentBusy: true, agentFailure: undefined })
+      // No guest to bind yet: remember the wish and let createGuest bind when it mounts.
+      // Latching `agentBusy` here would disable the toggle for good if the guest never mounts.
+      this.publishAgent({ agentEnabled: false, agentBusy: false, agentFailure: undefined })
       return
     }
     await this.bindAgent()

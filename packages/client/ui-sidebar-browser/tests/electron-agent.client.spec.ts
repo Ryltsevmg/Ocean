@@ -26,7 +26,8 @@ describe('Electron Agent sharing', () => {
     const h = fixture('session-1')
     expect(h.frame.agent).toBeDefined()
     h.frame.agent?.setEnabled(true)
-    expect(h.frame.getSnapshot()).toMatchObject({ agentEnabled: false, agentBusy: true })
+    // The wish is remembered without latching a busy flag the UI would never clear.
+    expect(h.frame.getSnapshot()).toMatchObject({ agentEnabled: false, agentBusy: false })
     h.frame.loadUrl(target)
     h.mount()
     const guest = await h.guest()
@@ -41,6 +42,15 @@ describe('Electron Agent sharing', () => {
       expect(h.bridge.unbindAgent).toHaveBeenCalledWith(h.reservation.lease)
       expect(h.frame.getSnapshot()).toMatchObject({ agentEnabled: false, agentBusy: false })
     })
+  })
+
+  it('keeps the toggle usable when the guest cannot mount yet', () => {
+    const h = fixture('session-1')
+    h.frame.agent?.setEnabled(true)
+    h.frame.agent?.setEnabled(true)
+    h.frame.agent?.setEnabled(false)
+    expect(h.frame.getSnapshot()).toMatchObject({ agentEnabled: false, agentBusy: false, agentFailure: undefined })
+    expect(h.bridge.bindAgent).not.toHaveBeenCalled()
   })
 
   it('reports a bind failure and leaves the tab private', async () => {
