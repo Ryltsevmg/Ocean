@@ -38,6 +38,34 @@ public static class InstallerCapture {
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool SetWindowText(IntPtr window, string text);
     [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr wparam, IntPtr lparam);
     [StructLayout(LayoutKind.Sequential)] struct Rect { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)] struct CaptionSize { public int Width, Height; }
+    [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr window, out Rect rect);
+    [DllImport("user32.dll")] static extern IntPtr GetDC(IntPtr window);
+    [DllImport("user32.dll")] static extern int ReleaseDC(IntPtr window, IntPtr dc);
+    [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr window);
+    [DllImport("gdi32.dll")] static extern IntPtr SelectObject(IntPtr dc, IntPtr value);
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] static extern bool GetTextExtentPoint32(IntPtr dc, string text, int length, out CaptionSize size);
+
+    // Painted caption extent in the control's own font against the client box
+    // DrawText receives: a centred caption wider than that box clips at both ends.
+    public static string CaptionFit(IntPtr control) {
+        var text = new StringBuilder(512);
+        GetWindowText(control, text, text.Capacity);
+        IntPtr font = SendMessage(control, 0x31, IntPtr.Zero, IntPtr.Zero);
+        Rect rect;
+        if (!GetClientRect(control, out rect)) throw new InvalidOperationException("Could not read control bounds");
+        IntPtr dc = GetDC(control);
+        if (dc == IntPtr.Zero) throw new InvalidOperationException("Could not read control device context");
+        IntPtr previous = SelectObject(dc, font);
+        try {
+            CaptionSize size;
+            if (!GetTextExtentPoint32(dc, text.ToString(), text.Length, out size)) throw new InvalidOperationException("Could not measure caption");
+            return "text=" + text + ";textWidth=" + size.Width + ";clientWidth=" + (rect.Right - rect.Left) + ";dpi=" + GetDpiForWindow(control);
+        } finally {
+            SelectObject(dc, previous);
+            ReleaseDC(control, dc);
+        }
+    }
 
     public static string Bounds(IntPtr window) {
         Rect rect;

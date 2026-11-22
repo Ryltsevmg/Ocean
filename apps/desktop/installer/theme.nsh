@@ -2,8 +2,8 @@
 !define INSTALLER_WINDOW_SIZE 600
 !define INSTALLER_BRAND_Y 174
 !define INSTALLER_BRAND_HEIGHT 196
-!define INSTALLER_BUTTON_X 240
 !define INSTALLER_BUTTON_Y 490
+; Minimum primary button width; the caption measurement widens and centres it.
 !define INSTALLER_BUTTON_WIDTH 120
 !define INSTALLER_BUTTON_HEIGHT 44
 !define INSTALLER_BUTTON_DIAMETER 20

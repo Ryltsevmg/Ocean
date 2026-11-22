@@ -20,6 +20,7 @@ Var InstallerLaunch
 Var InstallerExpanded
 Var InstallerMinimizeButton
 Var InstallerCloseButton
+Var InstallerEditFrameWidth
 !include "${__FILEDIR__}\path.nsh"
 !include "${__FILEDIR__}\drawing.nsh"
 
@@ -31,6 +32,41 @@ Var InstallerCloseButton
     System::Call 'kernel32::MulDiv(i ${H}, i $InstallerDpi, i 96) i.r3'
     System::Call 'user32::MoveWindow(p ${HWND}, i r0, i r1, i r2, i r3, i 1)'
 !macroend
+
+; Logical-pixel width of a string in the given font, measured with the dialog DC.
+; Localized captions vary in length, so sized controls measure instead of clipping.
+Function InstallerMeasureText
+    Pop $R0
+    Pop $R1
+    System::Call 'user32::GetDC(p $InstallerDialog) p.R2'
+    System::Call 'gdi32::SelectObject(p R2, p R1) p.R3'
+    StrLen $R4 $R0
+    System::Alloc 8
+    Pop $R5
+    System::Call 'gdi32::GetTextExtentPoint32W(p R2, w R0, i R4, p R5)'
+    System::Call '*$R5(i .R6)'
+    System::Free $R5
+    System::Call 'gdi32::SelectObject(p R2, p R3)'
+    System::Call 'user32::ReleaseDC(p $InstallerDialog, p R2)'
+    System::Call 'kernel32::MulDiv(i R6, i 96, i $InstallerDpi) i.R6'
+    Push $R6
+FunctionEnd
+
+; The primary button keeps its height and vertical seat, centred on its caption.
+Function InstallerPlacePrimaryButton
+    ${NSD_GetText} $InstallerButton $R0
+    Push $InstallerFont
+    Push $R0
+    Call InstallerMeasureText
+    Pop $R0
+    IntOp $R0 $R0 + 48
+    ${If} $R0 < ${INSTALLER_BUTTON_WIDTH}
+        StrCpy $R0 ${INSTALLER_BUTTON_WIDTH}
+    ${EndIf}
+    IntOp $R1 ${INSTALLER_WINDOW_SIZE} - $R0
+    IntOp $R1 $R1 / 2
+    !insertmacro InstallerPlace $InstallerButton $R1 ${INSTALLER_BUTTON_Y} $R0 ${INSTALLER_BUTTON_HEIGHT}
+FunctionEnd
 
 Function InstallerCreate
     nsDialogs::Create 1018
@@ -94,12 +130,35 @@ Function InstallerCreate
 
     ${NSD_CreateButton} 0 0 0 0 "$(INSTALLER_CHOOSE_PATH)"
     Pop $InstallerChoose
-    !insertmacro InstallerPlace $InstallerChoose 232 438 136 28
+    Push $InstallerSmallFont
+    Push "$(INSTALLER_CHOOSE_PATH)"
+    Call InstallerMeasureText
+    Pop $0
+    IntOp $0 $0 + 24
+    ${If} $0 < 136
+        StrCpy $0 136
+    ${EndIf}
+    IntOp $1 ${INSTALLER_WINDOW_SIZE} - $0
+    IntOp $1 $1 / 2
+    !insertmacro InstallerPlace $InstallerChoose $1 438 $0 28
     ${NSD_OnClick} $InstallerChoose InstallerExpandPath
     ${NSD_OnNotify} $InstallerChoose InstallerPaintButton
+    ; The browse caption sizes the row's right block; the control itself keeps
+    ; reading order after the path field so Tab reaches it next.
+    Push $InstallerSmallFont
+    Push "$(INSTALLER_BROWSE)"
+    Call InstallerMeasureText
+    Pop $0
+    IntOp $0 $0 + 24
+    ${If} $0 < 80
+        StrCpy $0 80
+    ${EndIf}
+    IntOp $2 536 - $0
+    IntOp $2 $2 - 72
+    StrCpy $InstallerEditFrameWidth $2
     ${NSD_CreateBitmap} 0 0 0 0 ""
     Pop $InstallerEditFrame
-    !insertmacro InstallerPlace $InstallerEditFrame 64 434 384 34
+    !insertmacro InstallerPlace $InstallerEditFrame 64 434 $2 34
     Call InstallerDrawEditFrame
     ${NSD_CreateText} 0 0 0 0 "$InstallerPath"
     Pop $InstallerEdit
@@ -120,9 +179,10 @@ Function InstallerCreate
     System::Free $6
     System::Call 'gdi32::SelectObject(p r4, p r5)'
     System::Call 'user32::ReleaseDC(p $InstallerEdit, p r4)'
+    IntOp $2 $2 - 24
     System::Call 'kernel32::MulDiv(i 76, i $InstallerDpi, i 96) i.r0'
     System::Call 'kernel32::MulDiv(i 434, i $InstallerDpi, i 96) i.r1'
-    System::Call 'kernel32::MulDiv(i 360, i $InstallerDpi, i 96) i.r2'
+    System::Call 'kernel32::MulDiv(i $2, i $InstallerDpi, i 96) i.r2'
     System::Call 'kernel32::MulDiv(i 34, i $InstallerDpi, i 96) i.r3'
     IntOp $3 $3 - $7
     IntOp $3 $3 / 2
@@ -134,7 +194,9 @@ Function InstallerCreate
     ${NSD_OnChange} $InstallerEdit InstallerPathChanged
     ${NSD_CreateButton} 0 0 0 0 "$(INSTALLER_BROWSE)"
     Pop $InstallerBrowse
-    !insertmacro InstallerPlace $InstallerBrowse 456 434 80 34
+    IntOp $0 $InstallerEditFrameWidth + 72
+    IntOp $1 536 - $0
+    !insertmacro InstallerPlace $InstallerBrowse $0 434 $1 34
     ${NSD_OnClick} $InstallerBrowse InstallerBrowsePath
     ${NSD_OnNotify} $InstallerBrowse InstallerPaintButton
     ${NSD_CreateCheckbox} 0 0 0 0 "$(INSTALLER_LAUNCH)"
@@ -163,8 +225,8 @@ Function InstallerCreate
 
     ${NSD_CreateButton} 0 0 0 0 "$(INSTALLER_INSTALL)"
     Pop $InstallerButton
-    !insertmacro InstallerPlace $InstallerButton ${INSTALLER_BUTTON_X} ${INSTALLER_BUTTON_Y} ${INSTALLER_BUTTON_WIDTH} ${INSTALLER_BUTTON_HEIGHT}
     SendMessage $InstallerButton ${WM_SETFONT} $InstallerFont 1
+    Call InstallerPlacePrimaryButton
     ${NSD_OnClick} $InstallerButton InstallerStart
     ${NSD_OnNotify} $InstallerButton InstallerPaintButton
     Call InstallerRender
@@ -192,9 +254,11 @@ Function InstallerRender
     ShowWindow $InstallerStatus 0
     ${If} $InstallerPhase == "success"
         ${NSD_SetText} $InstallerButton "$(INSTALLER_FINISH)"
+        Call InstallerPlacePrimaryButton
         ShowWindow $InstallerLaunch 5
     ${Else}
         ${NSD_SetText} $InstallerButton "$(INSTALLER_INSTALL)"
+        Call InstallerPlacePrimaryButton
         ${If} $InstallerExpanded == 1
             ShowWindow $InstallerEditFrame 5
             ShowWindow $InstallerEdit 5

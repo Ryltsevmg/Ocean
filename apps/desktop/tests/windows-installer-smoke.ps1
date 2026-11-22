@@ -26,6 +26,18 @@ function Wait-Control([Diagnostics.Process]$Process, [string]$Text, [switch]$Dia
     } while ($timer.Elapsed.TotalSeconds -lt 30)
     throw "Missing '$Text': $([InstallerCapture]::VisibleText($Process.Id))"
 }
+function Assert-CaptionFits([Diagnostics.Process]$Process, [string]$Text) {
+    $control = Wait-Control $Process $Text
+    $fit = [InstallerCapture]::CaptionFit($control)
+    $values = @{}
+    foreach ($pair in $fit -split ';') {
+        $key, $value = $pair -split '=', 2
+        $values[$key] = $value
+    }
+    if ([int]$values.textWidth -gt [int]$values.clientWidth) {
+        throw "Caption '$Text' is clipped at $($values.dpi) dpi: $fit"
+    }
+}
 function Start-Setup([string]$Theme, [string]$Path = $installPath) {
     $arguments = '/THEME=' + $Theme
     if ($Path) { $arguments += ' /D=' + $Path }
@@ -52,6 +64,8 @@ function Start-Setup([string]$Theme, [string]$Path = $installPath) {
     if ($languages.Count -ne 1) { throw "Cannot identify installer language: $([InstallerCapture]::VisibleText($process.Id))" }
     $script:copy = $localizedCopy[$languages[0]]
     [void](Wait-Control $process $copy.INSTALLER_INSTALL)
+    Assert-CaptionFits $process $copy.INSTALLER_INSTALL
+    Assert-CaptionFits $process $copy.INSTALLER_CHOOSE_PATH
     return $process
 }
 function Click-Control([Diagnostics.Process]$Process, [string]$Text) {
@@ -84,6 +98,7 @@ function Finish-Setup([Diagnostics.Process]$Process, [bool]$Launch, [string]$The
         Start-Sleep -Milliseconds 25
     }
     if ([InstallerCapture]::GetProp($window, 'HarnessInstaller.CompletedPercent').ToInt32() -ne 100) { throw 'Finish page replaced an incomplete progress bar' }
+    Assert-CaptionFits $Process $copy.INSTALLER_FINISH
     $checkbox = Wait-Control $Process $copy.INSTALLER_LAUNCH
     $state = [InstallerCapture]::SendMessage($checkbox, 0xF0, [IntPtr]::Zero, [IntPtr]::Zero).ToInt32()
     if ($state -ne $expected.launchCheckboxState) { throw 'Unexpected launch checkbox default' }
@@ -134,6 +149,7 @@ try {
     $window = [InstallerCapture]::Find($process.Id)
     [void][InstallerCapture]::Save($window, (Join-Path $OutputDirectory 'light-welcome.png'))
     Click-Control $process $copy.INSTALLER_CHOOSE_PATH
+    Assert-CaptionFits $process $copy.INSTALLER_BROWSE
     $edit = Wait-Control $process $installPath
     [void][InstallerCapture]::Save($window, (Join-Path $OutputDirectory 'light-path.png'))
     Click-Control $process $copy.INSTALLER_BROWSE
@@ -179,6 +195,7 @@ try {
 
     $process = Start-Setup dark ''
     Click-Control $process $copy.INSTALLER_CHOOSE_PATH
+    Assert-CaptionFits $process $copy.INSTALLER_BROWSE
     $edit = Wait-Control $process $installPath
     [void][InstallerCapture]::SendMessage($edit, 0xC, [IntPtr]::Zero, ($installPath + '\\'))
     [void][InstallerCapture]::Save([InstallerCapture]::Find($process.Id), (Join-Path $OutputDirectory 'dark-welcome.png'))
