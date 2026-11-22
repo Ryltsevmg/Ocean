@@ -1,9 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventEmitter } from 'node:events'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { basename, join } from 'node:path'
 
 const sessions = new Map<string, EventEmitter>()
+// Each test gets its own userData so a leftover download cannot rename the next run's file.
+const state = vi.hoisted(() => ({ userData: '' }))
 vi.mock('electron', () => ({
-  app: { isPackaged: false, getPath: () => '/tmp/ocean-test-userdata' },
+  app: { isPackaged: false, getPath: () => state.userData },
   session: { fromPartition: (partition: string) => {
     const value = Object.assign(new EventEmitter(), {
       setPermissionRequestHandler: vi.fn(), setPermissionCheckHandler: vi.fn(),
@@ -45,7 +50,8 @@ function attach(guests: DesktopBrowserGuests, ownerWebContents: ReturnType<typeo
 describe('DesktopBrowserGuests multi-tab sharing', () => {
   let guests: DesktopBrowserGuests
   let ownerWebContents: ReturnType<typeof owner>
-  beforeEach(() => {
+  beforeEach(async () => {
+    state.userData = await mkdtemp(join(tmpdir(), 'ocean-desktop-userdata-'))
     handoffs.length = 0
     guestObjects.length = 0
     guests = new DesktopBrowserGuests(() => 'http://127.0.0.1:4000/', (request) => { handoffs.push(request) })
@@ -128,6 +134,33 @@ describe('DesktopBrowserGuests multi-tab sharing', () => {
     expect(blocked.error.code).toBe('BROWSER_HANDOFF_ACTIVE')
     guests.resumeAgent(key)
     await expect(pending).resolves.toContain('snapshot')
+  })
+
+  it('neutralizes a traversal filename and keeps repeated names apart', async () => {
+    const key = attach(guests, ownerWebContents, 1)
+    guests.bindAgent(ownerWebContents as never, key, 'session-3')
+    const sharedSession = [...sessions.values()].at(-1)!
+    const source = guestObjects[0]
+    const download = (name: string) => Object.assign(new EventEmitter(), {
+      getFilename: () => name, setSavePath: vi.fn(),
+    })
+    const evil = download('../../../evil.sh')
+    sharedSession.emit('will-download', { preventDefault: vi.fn() }, evil, source)
+    const firstPath = evil.setSavePath.mock.calls[0]![0] as string
+    expect(firstPath).not.toContain('..')
+    expect(basename(firstPath)).toBe('evil.sh')
+    expect(firstPath.startsWith(join(state.userData, 'sidebar-browser-downloads'))).toBe(true)
+    const duplicate = download('evil.sh')
+    sharedSession.emit('will-download', { preventDefault: vi.fn() }, duplicate, source)
+    expect(basename(duplicate.setSavePath.mock.calls[0]![0] as string)).toBe('evil-1.sh')
+    const listed = await guests.executeAgent('session-3', 'downloads', {})
+    if (!listed.ok) throw new Error('downloads failed')
+    expect(listed.text).toContain('evil.sh')
+    expect(listed.text).toContain('evil-1.sh')
+  })
+
+  afterEach(async () => {
+    await rm(state.userData, { recursive: true, force: true })
   })
 
   it('reports not-shared for an unknown Session', async () => {

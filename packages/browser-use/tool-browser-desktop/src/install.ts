@@ -3,7 +3,8 @@
  * this package; same-package tests import this module directly.
  * @module
  */
-import { relative, resolve } from 'node:path'
+import { realpath, stat } from 'node:fs/promises'
+import { isAbsolute, relative, resolve, sep } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@ocean/ocean-user-approval'
 import z from '@deepseek-ai/schemastery'
@@ -37,6 +38,31 @@ function sessionId(exec: ToolRunContext): string {
   const agent = exec.agent
   if (agent === undefined) throw new HarnessError('The browser action needs a live Session.', 'BROWSER_SESSION_UNAVAILABLE')
   return agent.session.header.id
+}
+
+/**
+ * Decide whether one file really sits strictly inside an allowed root.
+ * Both sides are resolved through `realpath` so a symlink cannot leave a root,
+ * and a cross-drive Windows path is rejected because its relative form is absolute.
+ * @param roots - configured absolute directory prefixes.
+ * @param path - resolved absolute upload path.
+ * @returns whether the file may be handed to a page.
+ */
+async function isUploadAllowed(roots: readonly string[], path: string): Promise<boolean> {
+  if (roots.length === 0) return false
+  let target: string
+  try {
+    target = await realpath(path)
+    if (!(await stat(target)).isFile()) return false
+  } catch { return false }
+  for (const root of roots) {
+    let base: string
+    try { base = await realpath(resolve(root)) } catch { continue }
+    const rel = relative(base, target)
+    if (rel === '' || isAbsolute(rel) || rel === '..' || rel.startsWith(`..${sep}`)) continue
+    return true
+  }
+  return false
 }
 
 /** Deployment bounds for the raster observation the Desktop main process returns. */
@@ -338,14 +364,11 @@ export function installDesktopBrowserAgent(ctx: Context,
         path: { type: 'string', required: true, description: 'Absolute path of the file to upload.' },
       },
       output: TEXT_OUTPUT,
-      execute: (args, exec) => {
+      execute: async (args, exec) => {
         const path = resolve(args.path)
-        const allowed = bounds.uploadAllowedRoots.some((root) => {
-          const rel = relative(resolve(root), path)
-          return rel !== '' && !rel.startsWith('..') && !rel.startsWith('/')
-        })
-        if (!allowed) {
-          return Promise.reject(new HarnessError('The file is outside uploadAllowedRoots.', 'BROWSER_UPLOAD_NOT_ALLOWED'))
+        if (!await isUploadAllowed(bounds.uploadAllowedRoots, path)) {
+          throw new HarnessError('The file is outside uploadAllowedRoots or is not a regular file inside one.',
+            'BROWSER_UPLOAD_NOT_ALLOWED')
         }
         return run(exec, 'upload', { ref: args.ref, path })
       },

@@ -1,6 +1,7 @@
 /** Main-process ownership and fixed isolation policy for Sidebar webview guests. */
 import { randomUUID } from 'node:crypto'
-import { join } from 'node:path'
+import { existsSync, mkdirSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { app, session, type BrowserWindow, type Session, type WebContents } from 'electron'
 import type { DesktopBrowserLeaseId, DesktopBrowserOpenRequest, DesktopBrowserReservation } from '@ocean/ocean-client-ui-sidebar-browser/types'
 import type { BrowserAgentMethod, BrowserAgentResult } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
@@ -35,6 +36,40 @@ interface DownloadRecord {
 
 /** Upper bound on tabs one Session may share at once. */
 const MAX_SHARED_TABS = 8
+
+/** Reduce a page-supplied download name to one safe path segment. */
+function safeDownloadName(value: string): string {
+  const base = basename(value.replaceAll('\\', '/'))
+  // Keep a name the filesystem accepts on every platform the application ships to.
+  const cleaned = base.replace(/[\u0000-\u001f<>:"/\\|?*]/gu, '_').trim()
+  if (cleaned === '' || cleaned === '.' || cleaned === '..') return 'download'
+  return cleaned.slice(0, 180)
+}
+
+/** Reduce a Session id to one safe directory segment. */
+function safeSegment(value: string): string {
+  const cleaned = value.replace(/[^A-Za-z0-9_-]/gu, '_').slice(0, 96)
+  return cleaned === '' ? 'session' : cleaned
+}
+
+/**
+ * Pick a name no earlier download of this lease and no leftover file already uses.
+ * @param directory - absolute directory the file will be saved into.
+ * @param requested - page-supplied filename.
+ * @param taken - names this lease already recorded.
+ * @returns one unused filename inside the directory.
+ */
+function uniqueDownloadName(directory: string, requested: string, taken: ReadonlySet<string>): string {
+  const name = safeDownloadName(requested)
+  const used = (candidate: string): boolean => taken.has(candidate) || existsSync(join(directory, candidate))
+  if (!used(name)) return name
+  const dot = name.lastIndexOf('.')
+  const stem = dot > 0 ? name.slice(0, dot) : name
+  const extension = dot > 0 ? name.slice(dot) : ''
+  let counter = 1
+  while (used(`${stem}-${String(counter)}${extension}`)) counter += 1
+  return `${stem}-${String(counter)}${extension}`
+}
 
 /** One bounded failure for a command whose delivery itself broke. */
 export function browserFallbackResult(requestId: number): BrowserAgentResult {
@@ -397,9 +432,12 @@ export class DesktopBrowserGuests {
         event.preventDefault()
         return
       }
-      const savePath = join(app.getPath('userData'), 'sidebar-browser-downloads', shared, item.getFilename())
+      const directory = join(app.getPath('userData'), 'sidebar-browser-downloads', safeSegment(shared))
+      mkdirSync(directory, { recursive: true })
+      const filename = uniqueDownloadName(directory, item.getFilename(), new Set(lease.downloads.map(entry => entry.filename)))
+      const savePath = join(directory, filename)
       item.setSavePath(savePath)
-      const record: DownloadRecord = { filename: item.getFilename(), path: savePath, state: 'saving' }
+      const record: DownloadRecord = { filename, path: savePath, state: 'saving' }
       lease.downloads.push(record)
       item.once('done', (_doneEvent, state) => { record.state = state === 'completed' ? 'done' : 'interrupted' })
     })

@@ -6,7 +6,7 @@ import AgentRegistry from '@ocean/ocean-agent'
 import SystemPrompt from '@ocean/ocean-system-prompt'
 import ToolRuntime from '@ocean/ocean-tools'
 import * as NativeToolExecutor from '@ocean/ocean-tool-executor-native'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -400,18 +400,60 @@ describe('downloads and upload allowlist', () => {
     expect(tool.presentCall?.({})).toBeDefined()
   })
 
-  it('refuses uploads outside uploadAllowedRoots', async () => {
+  it('accepts a file inside a real root and refuses one outside it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ocean-upload-roots-'))
+    const inside = join(root, 'allowed', 'deep')
+    await mkdir(inside, { recursive: true })
+    const file = join(inside, 'cv.pdf')
+    await writeFile(file, 'pdf')
+    const outside = join(root, 'outside.pdf')
+    await writeFile(outside, 'pdf')
     const { ctx, registered } = fakeContext()
     const ch = channel()
-    installDesktopBrowserAgent(ctx as never, ch.transport, { uploadAllowedRoots: ['/allowed/deep'] })
+    installDesktopBrowserAgent(ctx as never, ch.transport, { uploadAllowedRoots: [join(root, 'allowed')] })
     const tool = registered.get('browser_upload')!
-    await expect(tool.execute({ ref: 'e1', path: '/other/file.pdf' }, execution()))
+    await expect(tool.execute({ ref: 'e1', path: outside }, execution()))
       .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
-    await expect(tool.execute({ ref: 'e1', path: '/allowed/deep/file.pdf' }, execution())).resolves.toEqual({ text: 'ok' })
-    expect(tool.presentCall?.({ ref: 'e1', path: '/allowed/deep/file.pdf' })).toBeDefined()
-    expect(ch.commands.at(-1)!.args).toMatchObject({ ref: 'e1', path: '/allowed/deep/file.pdf' })
-    await expect(tool.execute({ ref: 'e1', path: '/allowed/deep' }, execution()))
+    await expect(tool.execute({ ref: 'e1', path: file }, execution())).resolves.toEqual({ text: 'ok' })
+    expect(tool.presentCall?.({ ref: 'e1', path: file })).toBeDefined()
+    expect(ch.commands.at(-1)!.args).toMatchObject({ ref: 'e1', path: file })
+    // A directory is not a file the Agent may hand to a page.
+    await expect(tool.execute({ ref: 'e1', path: inside }, execution()))
       .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
+    // A path that does not exist cannot be resolved, so it fails closed.
+    await expect(tool.execute({ ref: 'e1', path: join(inside, 'gone.pdf') }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
+    await rm(root, { recursive: true, force: true })
+  })
+
+  it('skips a root that no longer exists and still uses a live one', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ocean-upload-stale-'))
+    const live = join(root, 'live')
+    await mkdir(live, { recursive: true })
+    const file = join(live, 'cv.pdf')
+    await writeFile(file, 'pdf')
+    const { ctx, registered } = fakeContext()
+    installDesktopBrowserAgent(ctx as never, channel().transport, {
+      uploadAllowedRoots: [join(root, 'deleted-root'), live],
+    })
+    await expect(registered.get('browser_upload')!.execute({ ref: 'e1', path: file }, execution()))
+      .resolves.toEqual({ text: 'ok' })
+    await rm(root, { recursive: true, force: true })
+  })
+
+  it.runIf(process.platform !== 'win32')('refuses a symlink that leaves an allowed root', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ocean-upload-link-'))
+    const allowed = join(root, 'allowed')
+    await mkdir(allowed, { recursive: true })
+    const secret = join(root, 'secret.pem')
+    await writeFile(secret, 'key')
+    const link = join(allowed, 'looks-inside.pdf')
+    await symlink(secret, link)
+    const { ctx, registered } = fakeContext()
+    installDesktopBrowserAgent(ctx as never, channel().transport, { uploadAllowedRoots: [allowed] })
+    await expect(registered.get('browser_upload')!.execute({ ref: 'e1', path: link }, execution()))
+      .rejects.toMatchObject({ code: 'BROWSER_UPLOAD_NOT_ALLOWED' })
+    await rm(root, { recursive: true, force: true })
   })
 
   it('refuses every upload when no roots are configured', async () => {

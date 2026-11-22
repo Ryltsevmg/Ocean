@@ -26,7 +26,7 @@ kind: "package-reference"
 
 Desktop bundle 仅为 `desktop` profile 挂载本行。每个浏览器 tab 默认不共享；用户在 tab 工具栏开启 **与 Agent 共享**。一个 Session 最多可同时共享八个 tab；最新共享的 tab 为活动 tab，`browser_tab_select` 负责切换，其余工具作用于活动 tab。关闭 tab 或停用共享即撤销访问。
 
-工具：`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`、`browser_press_key`、`browser_scroll`、`browser_select`、`browser_check`、`browser_dialog`、`browser_tabs`、`browser_tab_select`、`browser_downloads`、`browser_upload`、`browser_console`、`browser_network`、`browser_handoff`。`browser_snapshot` 返回带元素 ref 的紧凑语义树；操作接受最新 snapshot 的 ref 并返回结果树。`browser_fill` 拒绝 password、one-time-code 与卡片字段；`browser_navigate` 只接受不含凭据的 HTTP(S) 地址，包括 loopback。`browser_screenshot` 将视口捕获为一张有界 PNG，按 `screenshotMaxWidth`（默认 1280）缩放，超过 `screenshotMaxBytes`（默认 4000000）即拒绝；Host 通过 attachment 服务存储并返回持久 image 引用，Session log 中不出现 base64。`browser_press_key` 按下受限按键集中的一个键并可带修饰键；`browser_scroll` 以截断后的增量滚动视口或某个元素；`browser_select` 与 `browser_check` 驱动 select/checkbox/radio 控件；`browser_dialog` 读取、接受或关闭仅通过 Page domain debugger 观察到的待处理 JavaScript 对话框，对话框打开期间其他操作拒绝执行。`confirmActions: true` 时每个变更操作先经 approval seam 询问用户，未获授权即 fail closed；随发布的 desktop profile 未挂载 approval provider，开启该开关需要在 profile 中补充其行。
+工具：`browser_info`、`browser_snapshot`、`browser_navigate`、`browser_click`、`browser_fill`、`browser_back`、`browser_forward`、`browser_reload`、`browser_screenshot`、`browser_press_key`、`browser_scroll`、`browser_select`、`browser_check`、`browser_dialog`、`browser_tabs`、`browser_tab_select`、`browser_downloads`、`browser_upload`、`browser_console`、`browser_network`、`browser_handoff`。`browser_snapshot` 返回带元素 ref 的紧凑语义树；操作接受最新 snapshot 的 ref 并返回结果树。`browser_fill` 拒绝 password、one-time-code 与卡片字段；`browser_navigate` 只接受不含凭据的 HTTP(S) 地址，包括 loopback。`browser_screenshot` 将视口捕获为一张有界 PNG，按 `screenshotMaxWidth`（默认 1280）缩放，超过 `screenshotMaxBytes`（默认 4000000）即拒绝；Host 通过 attachment 服务存储并返回持久 image 引用，Session log 中不出现 base64。`browser_press_key` 按下受限按键集中的一个键并可带修饰键；`browser_scroll` 以截断后的增量滚动视口或某个元素；`browser_select` 与 `browser_check` 驱动 select/checkbox/radio 控件；`browser_dialog` 读取、接受或关闭通过共享 guest 的受限 debugger 附加观察到的待处理 JavaScript 对话框，对话框打开期间其他操作拒绝执行。`browser_upload` 只为真实存在、且 realpath 严格位于某个 `uploadAllowedRoots` 条目内的普通文件应答文件选择器；该列表默认为空，因此在部署配置之前上传一律被拒绝。`confirmActions: true` 时每个变更操作先经 approval seam 询问用户，未获授权即 fail closed；随发布的 desktop profile 未挂载 approval provider，开启该开关需要在 profile 中补充其行。
 
 -----
 
@@ -95,6 +95,8 @@ section 在 scope 内的每个 Desktop profile 请求上的小额固定输入成
 
 - Desktop Host 之外没有 main 进程通道，因此每次调用都以传输或未共享错误失败；非 Desktop profile 禁用本行。
 - 元素 ref 是页面可修改或伪造的 best-effort 标识，不是授权。Agent 必须在导航后重新读取。
+- `browser_upload` 的屏障是 `uploadAllowedRoots` 允许列表而不是 approval seam：它在 Host 中每次调用都会强制校验，而 `confirmActions` 是可选项且默认关闭。
+- 取消调用只会停止 Host 侧的等待，不会撤回 main 进程已经接受的命令；被取消的操作仍可能已经发生。
 - 重大操作依赖用户在场与模型策略，除非启用 `confirmActions`。元素级标注（像 Codex IAB 的点选评论）仍延期：它需要经设计评审的 guest 覆盖层 UI，不属于本桥接。Agent 可以列出和选择共享 tab，但不能关闭或取消共享——这仍是用户的操作。对话框、console 与 network 观察在 tab 开始共享时附加 CDP debugger，在共享结束时分离；guest 被其他 debugger 占用时保持惰性。私有 tab 从不附加，下载保持被阻止。
 
 <a id="dev-note"></a>
