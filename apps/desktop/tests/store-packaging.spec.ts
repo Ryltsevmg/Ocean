@@ -36,6 +36,10 @@ describe('Microsoft Store packaging', () => {
     expect(await sharp(path).metadata()).toMatchObject({ format: 'png', width, height })
   })
 
+  it('describes the product in the package metadata rather than the shell internals', () => {
+    expect(store.extraMetadata.description).toBe('A desktop workspace for AI agents, conversations, and tools')
+  })
+
   it('keeps the unpacked unsigned Windows input free of release update configuration', () => {
     const input = createElectronBuilderConfig(windows, 'win32', 'x64')
     expect(input.win.target).toEqual(['nsis'])

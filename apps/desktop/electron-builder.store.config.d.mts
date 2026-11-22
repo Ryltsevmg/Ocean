@@ -4,6 +4,7 @@ export interface DesktopStoreElectronBuilderConfig {
   readonly directories: { readonly output: string }
   readonly artifactName: string
   readonly publish: null
+  readonly extraMetadata: { readonly description: string }
   readonly win: {
     readonly target: readonly [{ readonly target: 'appx', readonly arch: readonly ['x64'] }]
     readonly forceCodeSigning: false

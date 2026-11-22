@@ -5,6 +5,8 @@ export default {
   directories: { output: '.desktop-build/store-artifacts' },
   artifactName: 'ocean-${version}-store-${arch}.${ext}',
   publish: null,
+  // The package description reaches the AppX manifest, so it states the product rather than the shell's role.
+  extraMetadata: { description: 'A desktop workspace for AI agents, conversations, and tools' },
   win: {
     target: [{ target: 'appx', arch: ['x64'] }],
     forceCodeSigning: false,
