@@ -3,7 +3,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, wr
 import { createHash } from 'node:crypto'
 import { realpath } from 'node:fs/promises'
 import { once } from 'node:events'
-import { createServer } from 'node:http'
+import { createServer, type ServerResponse } from 'node:http'
 import type { Socket } from 'node:net'
 import { join, resolve } from 'node:path'
 import { homedir, tmpdir } from 'node:os'
@@ -18,7 +18,8 @@ import {
 } from '@ocean/ocean-app-boot'
 import { OPTIONAL_BUNDLES, OFFICIAL_ON_DEMAND_CATALOG } from '@ocean/ocean-official-bundles'
 import PluginManager, { type Config, type PluginChange, type PluginInstallLogChunk, type PluginInstallProgress, type PluginInstallRequestId } from '../src/index.ts'
-import type { PluginEntryId, PluginOperation } from '../src/types.ts'
+import type { PluginEntryId, PluginInstallCancellation, PluginOperation } from '../src/types.ts'
+import { PublishedCatalogSource } from '../src/published-catalog.ts'
 import Hmr from '@ocean/ocean-hmr'
 import Timer from '@deepseek-ai/cordis-plugin-timer'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
@@ -208,10 +209,12 @@ it('cancels an active GitHub check before starting pnpm', async () => {
 })
 
 /** Serve one published offer whose archive may deliberately mismatch its digest. */
-async function publishedChannel(options: { name?: string; version?: string; mismatch?: boolean } = {}) {
+async function publishedChannel(options: { name?: string; version?: string; mismatch?: boolean; holdArchive?: boolean } = {}) {
   const archive = Buffer.from('published archive fixture')
   const digest = createHash('sha256').update(archive).digest('hex')
   let downloads = 0
+  const held = Promise.withResolvers<ServerResponse>()
+  const sockets = new Set<Socket>()
   const server = createServer((req, res) => {
     const port = (server.address() as { port: number }).port
     if (req.url === '/v1/current.json') {
@@ -225,15 +228,25 @@ async function publishedChannel(options: { name?: string; version?: string; mism
       }))
     } else if (req.url === `/archives/${digest}/plugin.tgz`) {
       downloads++
+      // With no answer the installation stays inside its preparation until the test stops it.
+      if (options.holdArchive === true) { held.resolve(res); return }
       res.end(options.mismatch === true ? Buffer.from('other bytes') : archive)
     } else res.writeHead(404).end()
-  }).listen(0, '127.0.0.1')
-  onTestFinished(() => new Promise<void>((resolve, reject) => {
-    server.close((error) => { if (error === undefined) resolve(); else reject(error) })
-  }))
+  })
+  server.on('connection', (socket) => {
+    sockets.add(socket)
+    socket.once('close', () => { sockets.delete(socket) })
+  })
+  server.listen(0, '127.0.0.1')
+  onTestFinished(async () => {
+    for (const socket of sockets) socket.destroy()
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => { if (error === undefined) resolve(); else reject(error) })
+    })
+  })
   await once(server, 'listening')
   const port = (server.address() as { port: number }).port
-  return { url: `http://127.0.0.1:${port}/v1/current.json`, digest, downloads: () => downloads }
+  return { url: `http://127.0.0.1:${port}/v1/current.json`, digest, downloads: () => downloads, downloading: () => held.promise }
 }
 
 it('prepares an approved published offer before installing it', async () => {
@@ -245,6 +258,115 @@ it('prepares an approved published offer before installing it', async () => {
   expect(channel.downloads()).toBe(1)
   expect(pnpm).toHaveBeenCalledOnce()
   expect(result.application).toBe('failed')
+})
+
+it('names a published install by its request id and records the builds it approves', async () => {
+  const channel = await publishedChannel()
+  const { ctx, manager, dir } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  writeFileSync(join(dir, 'pnpm-workspace.yaml'), 'allowBuilds:\n  native: set this to true or false\n')
+  const progress: PluginInstallProgress[] = []
+  ctx.on('plugin-manager/install-state', (event) => { progress.push(event) })
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm').mockResolvedValue({ exitCode: 1, output: 'stop', truncated: false, logPath: 'pnpm.log', kind: 'unknown' })
+  onTestFinished(() => { pnpm.mockRestore() })
+  const requestId = '0f3ce7d1-6a48-4f0b-9d2a-7c1b58e4a903' as PluginInstallRequestId
+  const result = await manager.installPublishedBundle(
+    { name: '@ocean/example', version: '1.2.3', sha256: channel.digest }, { requestId, approvedBuilds: ['native'] })
+  // Without the forwarded id this installation reports no progress at all; without the names it approves nothing.
+  expect(progress.length).toBeGreaterThan(0)
+  expect(progress.every(event => event.requestId === requestId)).toBe(true)
+  expect(result.approvedBuilds).toEqual(['native'])
+  expect(parse(readFileSync(join(dir, 'pnpm-workspace.yaml'), 'utf8'))).toEqual({ allowBuilds: { native: true } })
+  // The same call with neither option keeps the installation silent and the policy untouched.
+  writeFileSync(join(dir, 'pnpm-workspace.yaml'), 'allowBuilds:\n  other: set this to true or false\n')
+  const bare = await manager.installPublishedBundle({ name: '@ocean/example', version: '1.2.3', sha256: channel.digest })
+  expect(bare.approvedBuilds).toBeUndefined()
+  expect(progress.filter(event => event.requestId !== requestId)).toHaveLength(0)
+  expect(parse(readFileSync(join(dir, 'pnpm-workspace.yaml'), 'utf8'))).toEqual({ allowBuilds: { other: 'set this to true or false' } })
+})
+
+it('stops a published install cancelled at the instant its verified archive becomes ready', async () => {
+  const channel = await publishedChannel()
+  const { manager } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm').mockResolvedValue({ exitCode: 1, output: 'stop', truncated: false, logPath: 'pnpm.log', kind: 'unknown' })
+  onTestFinished(() => { pnpm.mockRestore() })
+  const target = { name: '@ocean/example', version: '1.2.3', sha256: channel.digest }
+  // The first install retains the verified bytes, so the second is prepared from the profile with no download.
+  expect(await manager.installPublishedBundle(target)).toMatchObject({ application: 'failed' })
+  expect(channel.downloads()).toBe(1)
+  expect(pnpm).toHaveBeenCalledOnce()
+  const requestId = '4a7f2b18-3c65-4e07-8d94-1b52a6e07c39' as PluginInstallRequestId
+  let cancelling: Promise<PluginInstallCancellation> | undefined
+  let checks = 0
+  const spy = vi.spyOn(PublishedCatalogSource.prototype, 'assertCurrent').mockImplementation(() => {
+    // prepare() rechecks the offer twice on the retained path; its last recheck is the instant the manager hands
+    // the ready archive back. The stop lands there, with the offer still current, so nothing refuses it.
+    checks++
+    if (checks === 2) cancelling = manager.cancelInstall(requestId)
+  })
+  onTestFinished(() => { spy.mockRestore() })
+  const installing = manager.installPublishedBundle(target, { requestId })
+  expect(await installing).toMatchObject({ application: 'cancelled', changed: false })
+  expect(await cancelling).toEqual({ status: 'cancelled' })
+  expect(checks).toBe(2)
+  // The preparation itself succeeded, yet the cancelled request started no package-manager run.
+  expect(channel.downloads()).toBe(1)
+  expect(pnpm).toHaveBeenCalledOnce()
+})
+
+it('stops a published install cancelled while its archive is still arriving', async () => {
+  const channel = await publishedChannel({ holdArchive: true })
+  const { manager, dir } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  const before = readFileSync(join(dir, 'package.json'), 'utf8')
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm')
+  onTestFinished(() => { pnpm.mockRestore() })
+  const requestId = '7d9e1c3a-5b42-4a86-9f17-2e6c8b04d51a' as PluginInstallRequestId
+  const installing = manager.installPublishedBundle({ name: '@ocean/example', version: '1.2.3', sha256: channel.digest }, { requestId })
+  await channel.downloading()
+  expect(await manager.cancelInstall(requestId)).toEqual({ status: 'cancelled' })
+  expect(await installing).toMatchObject({ application: 'cancelled', changed: false })
+  // Nothing verified was retained and nothing was asked of the package manager.
+  expect(existsSync(join(dir, 'published-plugins', channel.digest, 'plugin.tgz'))).toBe(false)
+  expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(before)
+  expect(pnpm).not.toHaveBeenCalled()
+})
+
+/** Select one more bundle in the profile manifest, leaving its dependencies as they are. */
+function selectBundleRow(dir: string, name: string): void {
+  const manifest = readProfileManifest('ocean', dir)
+  const profile = manifest.ocean?.profile
+  manifest.ocean = { ...manifest.ocean, profile: { ...profile, bundles: [...(profile?.bundles ?? []), name] } }
+  writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest))
+}
+
+it('refuses a published offer for a bundle the profile selected even though its files are gone', async () => {
+  const name = '@ocean/ocean-subagent-claude-code'
+  const channel = await publishedChannel({ name })
+  const { manager, dir } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url })
+  selectBundleRow(dir, name)
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm')
+  onTestFinished(() => { pnpm.mockRestore() })
+  expect(await manager.installPublishedBundle({ name, version: '1.2.3', sha256: channel.digest }))
+    .toMatchObject({ changed: false, application: 'failed', error: { code: 'already-installed' } })
+  expect(channel.downloads()).toBe(0)
+  expect(pnpm).not.toHaveBeenCalled()
+})
+
+it('refuses a published offer whose bundle files the profile already reads, though no dependency names it', async () => {
+  const channel = await publishedChannel()
+  const { manager } = await fixture('startup', false, undefined, { publishedCatalogUrl: channel.url }, undefined, (dir) => {
+    const path = join(dir, 'node_modules', '@ocean', 'example')
+    mkdirSync(path, { recursive: true })
+    writeFileSync(join(path, 'package.json'), JSON.stringify({ name: '@ocean/example', version: '1.2.3', ocean: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(path, 'cordis.patch.yml'), '[]\n')
+    selectBundleRow(dir, '@ocean/example')
+  })
+  const pnpm = vi.spyOn(operations, 'runProfilePnpm')
+  onTestFinished(() => { pnpm.mockRestore() })
+  const result = await manager.installPublishedBundle({ name: '@ocean/example', version: '1.2.3', sha256: channel.digest })
+  expect(result).toMatchObject({ changed: false, application: 'failed', error: { code: 'already-installed' } })
+  // The refusal lands before the archive is asked for, so no unverified byte reaches the profile.
+  expect(channel.downloads()).toBe(0)
+  expect(pnpm).not.toHaveBeenCalled()
 })
 
 it('refuses a published offer already present in the profile', async () => {
