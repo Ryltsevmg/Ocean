@@ -652,4 +652,51 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
     expect(tripwire.pageErrors).toEqual([])
     expect(tripwire.warnings).toEqual([])
   })
+
+  it('keeps the collapsed search target whole while a long locale title fills the header', async () => {
+    // Russian titles are the widest shipped heading; at the minimum column the
+    // header is a genuine deficit and the title, not the search target, must yield.
+    const narrow = await browser.newPage({ viewport: { width: 1200, height: 900 }, locale: 'ru-RU', timezoneId: 'Asia/Shanghai' })
+    const narrowTripwire = watchConsole(narrow)
+    try {
+      onTestFailed(() => saveFailureShot(narrow, 'web-e2e-sidebar-search-crowded'))
+      await narrow.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
+      const header = narrow.locator('[data-sidebar-workspace-header]')
+      await header.waitFor({ timeout: 30_000 })
+      const title = header.locator('[class*="sectionLabel"]')
+      await expect.poll(() => title.textContent()).toBe('Рабочие пространства')
+      const grip = await narrow.locator('[data-side="sidebar"]').boundingBox()
+      if (grip === null) throw new Error('sidebar grip has no layout box')
+      const origin = { x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 }
+      await narrow.mouse.move(origin.x, origin.y)
+      await narrow.mouse.down()
+      await narrow.mouse.move(origin.x - 400, origin.y, { steps: 12 })
+      await narrow.mouse.up()
+      const searchButton = narrow.getByRole('button', { name: 'Поиск сессий', exact: true })
+      await expect.poll(async () => (await searchButton.boundingBox())?.width ?? 0).toBe(28)
+      const searchable = await searchButton.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        const target = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+        return target !== null && element.contains(target)
+      })
+      expect(searchable).toBe(true)
+      const fitted = await title.evaluate(element => ({
+        visible: element.clientWidth,
+        content: element.scrollWidth,
+        overflow: getComputedStyle(element).textOverflow,
+        header: element.parentElement?.getBoundingClientRect().width ?? 0,
+      }))
+      expect(fitted.header).toBeLessThanOrEqual(300)
+      expect(fitted.visible).toBeGreaterThan(0)
+      expect(fitted.overflow).toBe('ellipsis')
+      await searchButton.click()
+      await expect.poll(() => searchButton.getAttribute('aria-expanded')).toBe('true')
+      await narrow.keyboard.press('Escape')
+      await expect.poll(() => searchButton.getAttribute('aria-expanded')).toBe('false')
+      expect(narrowTripwire.pageErrors).toEqual([])
+      expect(narrowTripwire.warnings).toEqual([])
+    } finally {
+      await narrow.close()
+    }
+  })
 })
