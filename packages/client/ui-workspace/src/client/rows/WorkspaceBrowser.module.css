@@ -124,7 +124,9 @@
 .searchSlot {
   flex: 1;
   max-width: 28px;
-  min-width: 0;
+  /* Reserve the collapsed button's square outright: the title absorbs the
+     deficit, so a long locale title never squeezes the search target. */
+  min-width: 28px;
   display: flex;
   align-items: center;
   margin-left: auto;

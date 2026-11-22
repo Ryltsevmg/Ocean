@@ -155,6 +155,9 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(label?.get('max-width')).toBe('100%')
     expect(label?.get('text-overflow')).toBe('ellipsis')
     expect(label?.get('white-space')).toBe('nowrap')
+    // The collapsed slot reserves the button's square; the title yields instead.
+    expect(declarations('.searchSlot')?.get('min-width')).toBe('28px')
+    expect(declarations('.searchSlot')?.get('max-width')).toBe('28px')
   })
 
   it('extends native row action targets while retaining the compact layout footprint', () => {
