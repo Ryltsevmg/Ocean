@@ -143,9 +143,8 @@ Function InstallerCreate
     !insertmacro InstallerPlace $InstallerChoose $1 438 $0 28
     ${NSD_OnClick} $InstallerChoose InstallerExpandPath
     ${NSD_OnNotify} $InstallerChoose InstallerPaintButton
-    ; The browse caption sets the row's right block; the path frame takes the rest.
-    ${NSD_CreateButton} 0 0 0 0 "$(INSTALLER_BROWSE)"
-    Pop $InstallerBrowse
+    ; The browse caption sizes the row's right block; the control itself keeps
+    ; reading order after the path field so Tab reaches it next.
     Push $InstallerSmallFont
     Push "$(INSTALLER_BROWSE)"
     Call InstallerMeasureText
@@ -154,12 +153,9 @@ Function InstallerCreate
     ${If} $0 < 80
         StrCpy $0 80
     ${EndIf}
-    IntOp $1 536 - $0
-    IntOp $2 $1 - 72
+    IntOp $2 536 - $0
+    IntOp $2 $2 - 72
     StrCpy $InstallerEditFrameWidth $2
-    !insertmacro InstallerPlace $InstallerBrowse $1 434 $0 34
-    ${NSD_OnClick} $InstallerBrowse InstallerBrowsePath
-    ${NSD_OnNotify} $InstallerBrowse InstallerPaintButton
     ${NSD_CreateBitmap} 0 0 0 0 ""
     Pop $InstallerEditFrame
     !insertmacro InstallerPlace $InstallerEditFrame 64 434 $2 34
@@ -196,6 +192,13 @@ Function InstallerCreate
     SendMessage $InstallerEdit ${EM_SETLIMITTEXT} 180 0
     !insertmacro InstallerControlColors $InstallerEdit
     ${NSD_OnChange} $InstallerEdit InstallerPathChanged
+    ${NSD_CreateButton} 0 0 0 0 "$(INSTALLER_BROWSE)"
+    Pop $InstallerBrowse
+    IntOp $0 $InstallerEditFrameWidth + 72
+    IntOp $1 536 - $0
+    !insertmacro InstallerPlace $InstallerBrowse $0 434 $1 34
+    ${NSD_OnClick} $InstallerBrowse InstallerBrowsePath
+    ${NSD_OnNotify} $InstallerBrowse InstallerPaintButton
     ${NSD_CreateCheckbox} 0 0 0 0 "$(INSTALLER_LAUNCH)"
     Pop $InstallerLaunch
     SendMessage $InstallerLaunch ${WM_SETFONT} $InstallerSmallFont 1
