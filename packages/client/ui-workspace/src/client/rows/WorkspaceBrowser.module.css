@@ -93,10 +93,13 @@
 .sectionLabel {
   position: relative;
   left: -1px;
-  flex: none;
-  max-width: 45%;
+  /* Takes the room the search slot and actions leave; long locale titles
+     ellipsize instead of clipping mid-word when the column is narrow. */
+  flex: 0 1 auto;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 20px;
   opacity: 1;
