@@ -182,7 +182,7 @@ export class ApprovalService extends Service {
     // Registration can finish after an unload has started. Do not add effects then.
     if (this.ctx.fiber.uid === null) return
 
-    const effective = (agent: Agent): ApprovalPolicy => this.effectivePolicy(agent.session)
+    const effective = (agent: Agent): ApprovalPolicy => this.policyOf(agent.session)
 
     // The complete current value travels after retained history, so switching
     // policy does not rewrite the stable system-prompt cache prefix.
@@ -209,7 +209,7 @@ export class ApprovalService extends Service {
    * @param policy - the new effective policy.
    */
   setPolicy(agent: Agent, policy: ApprovalPolicy): void {
-    const previous = this.effectivePolicy(agent.session)
+    const previous = this.policyOf(agent.session)
     if (previous === policy) return
     setApprovalPolicy(agent.session, policy)
     agent.inject(createUserMessage({
@@ -263,11 +263,12 @@ export class ApprovalService extends Service {
   /**
    * The session's effective policy: its projected override, else the
    * configured default (the schema already defaulted an omitted policy to
-   * `'ask'`; the `??` only narrows the optional-input TYPE).
+   * `'ask'`; the `??` only narrows the optional-input TYPE). Consumers read it
+   * to tell a `'never'` denial apart from an answerer's refusal.
    * @param session - the exact accepted session whose policy applies.
    * @returns the policy every ask for this session resolves under right now.
    */
-  private effectivePolicy(session: Session): ApprovalPolicy {
+  policyOf(session: Session): ApprovalPolicy {
     return this.overrideOf(session) ?? this.config.policy ?? 'ask'
   }
 
@@ -298,7 +299,7 @@ export class ApprovalService extends Service {
     // ahead of any gate LISTENER, so a listener-shaped gate cannot keep the
     // documented promise that 'never' rejects deterministically regardless
     // of registration order — only the service's own request path can.
-    if (this.effectivePolicy(session) === 'never') return 'rejected'
+    if (this.policyOf(session) === 'never') return 'rejected'
     // Enter the promise chain BEFORE dispatching: a listener that throws
     // SYNCHRONOUSLY (before its first await) must land in the same rejection
     // path as an async one — `Promise.resolve(call())` would let it escape

@@ -855,7 +855,7 @@ describe('sandbox escalation through the generic task producer', () => {
   })
 
   it.each([
-    ['rejected', 'user rejected'],
+    ['rejected', 'was denied'],
     ['cancelled', 'was cancelled'],
   ] as const)('maps an approval %s to its distinct failure', async (outcome, message) => {
     const { ctx, bash } = await setupSandboxed(true)

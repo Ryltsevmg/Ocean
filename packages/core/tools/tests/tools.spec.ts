@@ -883,7 +883,7 @@ describe('ToolRuntime', () => {
       return { session } as unknown as Agent
     }
 
-    async function approvalSetup() {
+    async function approvalSetup(policy?: 'ask' | 'never') {
       const ctx = new Context()
       await ctx.plugin(LlmRuntime)
       await ctx.plugin(SessionStore)
@@ -893,7 +893,7 @@ describe('ToolRuntime', () => {
       await ctx.plugin(NativeToolExecutor)
       await ctx.plugin(AgentRegistry)
       await ctx.plugin(AgentLoop, { agents: [] })
-      await ctx.plugin(ApprovalService)
+      await ctx.plugin(ApprovalService, policy === undefined ? {} : { policy })
       ctx.tools.register(echoTool)
       return ctx
     }
@@ -931,6 +931,24 @@ describe('ToolRuntime', () => {
       expect(result.isError).toBe(true)
       expect(result.content[0]).toMatchObject({ text: 'Error: the user rejected tool "echo"' })
       expect(result.error?.info).toEqual({ name: 'ApprovalError', code: 'APPROVAL_REJECTED' })
+    })
+
+    it('denies an ask disabled by the never policy without reporting a user rejection', async () => {
+      const ctx = await approvalSetup('never')
+      let asked = false
+      ctx.on('approval/request', () => {
+        asked = true
+        return Promise.resolve<ApprovalOutcome>('allowed-once')
+      })
+      ctx.on('tools/pre-execute', async (_exec, _next): Promise<PreToolDecision> => ({ kind: 'ask' }))
+
+      const result = await executeToolFixture(ctx, { signal: testToolSignal, callId: ToolCallId('c1'), name: 'echo', arguments: {}, agent: fakeAgent() })
+      expect(asked).toBe(false)
+      expect(result.isError).toBe(true)
+      expect(result.content[0]).toMatchObject({
+        text: 'Error: approval for tool "echo" was denied: approval prompts are disabled in this session, so no one was asked',
+      })
+      expect(result.error?.info).toEqual({ name: 'ApprovalError', code: 'APPROVAL_UNAVAILABLE' })
     })
 
     it('denies with the cancellation reason on cancelled', async () => {

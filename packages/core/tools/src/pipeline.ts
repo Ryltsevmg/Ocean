@@ -433,8 +433,9 @@ export class ToolExecutionPipeline {
    * An agent-less execution also degrades: without an agent there is no
    * session to audit to and no UI to route to. Otherwise the outcome maps
    * one-to-one — `allowed-once` proceeds; the three non-grants deny with
-   * distinct reasons so the model can tell a human "no" from an absent
-   * approval channel. Every denial carries `ApprovalError` with
+   * distinct reasons so the model can tell a human "no" from a `'never'`
+   * session policy, which rejects before any answerer is consulted, and both
+   * from an absent approval channel. Every denial carries `ApprovalError` with
    * `APPROVAL_REJECTED`, `APPROVAL_CANCELLED`, or `APPROVAL_UNAVAILABLE`.
    */
   private async serviceAsk(
@@ -464,9 +465,19 @@ export class ToolExecutionPipeline {
     })
     switch (outcome) {
       case 'allowed-once': return { decision: { kind: 'allow' }, approvalCancelled: false }
-      case 'rejected': return {
-        decision: approvalDenial(`the user rejected tool "${exec.name}"`, APPROVAL_REJECTED),
-        approvalCancelled: false,
+      case 'rejected': {
+        // A 'never' policy decides before any answerer is consulted, so its
+        // denial is not a human refusal and must not be reported as one.
+        const approvalDisabled = approval.policyOf(exec.agent.session) === 'never'
+        return {
+          decision: approvalDenial(
+            approvalDisabled
+              ? `approval for tool "${exec.name}" was denied: approval prompts are disabled in this session, so no one was asked`
+              : `the user rejected tool "${exec.name}"`,
+            approvalDisabled ? APPROVAL_UNAVAILABLE : APPROVAL_REJECTED,
+          ),
+          approvalCancelled: false,
+        }
       }
       case 'cancelled': return {
         decision: approvalDenial(`approval for tool "${exec.name}" was cancelled`, APPROVAL_CANCELLED),

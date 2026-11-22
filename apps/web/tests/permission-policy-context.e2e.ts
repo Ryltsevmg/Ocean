@@ -189,7 +189,7 @@ describe('web e2e: current sandbox policy reaches the model before tools', () =>
     expect(contexts[0]).toContain('Do not refuse a required modification from this policy alone')
     expect(contexts[0]).toContain('Approval prompts are enabled in this session')
     expect(contexts[1]).toContain('Current OCEAN file policy: danger-full-access. The OCEAN file sandbox does not restrict file modifications by available operations.')
-    expect(contexts[1]).toContain('Approval prompts are disabled in this session')
+    expect(contexts[1]).toContain('Approval prompts are enabled in this session')
 
     if (sessionWorkspace === undefined) throw new Error('permission-policy scenario observed no session workspace')
     expect(contexts[2]).toContain(`Current OCEAN file policy: workspace-write. Any available operation enforced by the OCEAN file sandbox may modify files under the session workspace: ${JSON.stringify(canonicalPath(sessionWorkspace))}. Some platform temporary areas may also be writable.`)

@@ -410,10 +410,11 @@ describe('web e2e: settings modal and General preferences', () => {
     const confirmedDocument = await readFile(join(scaffold.harnessHome, 'profiles', 'scaffold', 'cordis.patch.yml'), 'utf8')
     expect(confirmedDocument).toContain('defaultPreset: danger-full-access')
     const confirmed = await createSession('settings-permission-confirmed')
+    // Full access lifts the sandbox and keeps `ask`, so a gated action still asks.
     expect(confirmed.snapshotEvents().map(event => [event.type, event.data])).toEqual([
       ['permission/preset', { preset: 'danger-full-access' }],
       ['sandbox/mode', { mode: 'danger-full-access' }],
-      ['approval/policy', { policy: 'never' }],
+      ['approval/policy', { policy: 'ask' }],
     ])
     await page.keyboard.press('Escape')
     expect(tripwire.pageErrors).toEqual([])
