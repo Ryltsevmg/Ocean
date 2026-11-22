@@ -33,7 +33,7 @@
     },
     {
       "name": "@ocean/ocean-browser-control",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "title": {
         "en": "Browser control",
         "zh": "Browser control",
@@ -59,8 +59,8 @@
         "darwin",
         "linux"
       ],
-      "archive": "https://github.com/Ryltsevmg/Ocean/releases/download/plugin-4cfc24874bb24e118696a2c8cc624a987e5138a3e2732c14742627e4dcc4b566/plugin.tgz",
-      "sha256": "4cfc24874bb24e118696a2c8cc624a987e5138a3e2732c14742627e4dcc4b566"
+      "archive": "https://github.com/Ryltsevmg/Ocean/releases/download/plugin-9468aec098ec75377f4cde4f0d3caec2eab22f542ddf85d72c952bc11df0e9fa/plugin.tgz",
+      "sha256": "9468aec098ec75377f4cde4f0d3caec2eab22f542ddf85d72c952bc11df0e9fa"
     },
     {
       "name": "@ocean/ocean-circleci",
