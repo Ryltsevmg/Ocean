@@ -37,6 +37,12 @@ ocean serve --host 192.0.2.10 --port 8443 --trusted-host ocean.example \
 
 Behind a same-machine HTTPS reverse proxy, bind to `127.0.0.1` and replace the TLS arguments with `--public-url https://ocean.example/ --trusted-host ocean.example`. Keep the backend port private. Preserve the public Host header, forward WebSocket upgrades, and strip any external mount prefix before forwarding. Supply the full public URL, including that prefix, to clients.
 
+On a machine that joined a tailnet with MagicDNS and HTTPS certificates enabled, Tailscale can replace the certificate and proxy. Bind nothing yourself: `--tailscale-serve` keeps the listener on loopback, publishes `https://<node>.<tailnet>.ts.net/` through `tailscale serve`, and removes that mapping when the Host stops. On Linux the service account needs permission to configure serve, for example `tailscale set --operator=ocean`. If the node already serves a directory or file path, only root can change its serve configuration; point `--tailscale-command` at a wrapper that runs `sudo -n /usr/bin/tailscale "$@"`. The Host refuses a port that another mapping already uses, so pass a free `--tailscale-serve-port` beside an existing site. Other devices on the tailnet reach the Host without port forwarding.
+
+```sh
+ocean serve --tailscale-serve --device-admin-socket /srv/ocean/run/admin.sock
+```
+
 Wait for the `ocean serve:` readiness line before issuing a token.
 
 ## Run as a service or in a container
@@ -81,6 +87,12 @@ docker run --name ocean --init --network host --stop-timeout 60 \
 ## Manage devices
 
 Run the [device commands](../../apps/cli/README.md) as the service account against its active socket. Use `create <label>` for each device, `list` to inspect status, `rotate <id>` to replace a token, and `revoke <id>` to disable it. Send the output of `create` and `rotate` through a private channel. In the systemd and container examples, use the socket path visible to the command you run.
+
+To add a device without copying its token, create a one-time pairing link instead of `create`. The link works once and expires after ten minutes unless `--ttl` says otherwise. Send it through a private channel, then open it on the device or paste it into Desktop’s **Connect to remote Host** dialog.
+
+```sh
+ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://ocean.example/
+```
 
 Replace `DEVICE_ID` with an identifier from `list`.
 

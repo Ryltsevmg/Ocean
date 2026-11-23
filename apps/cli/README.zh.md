@@ -24,11 +24,13 @@
 
 `serve` profile 运行 Web Host，不打开浏览器，也不监视配置。就绪消息输出不含凭据的 URL。非环回监听地址必须使用 TLS。可在浏览器、Desktop 的**连接远程 Host**对话框或通过 `ocean connect` 使用设备令牌登录。此 profile 拒绝旧版所有者凭据。
 
-使用原生 TLS 时，通过 `--tls-cert` 传入 PEM 证书链，通过 `--tls-key` 传入对应的密钥。当 HTTPS 反向代理终止 TLS 时，将 Ocean 绑定到环回地址，用 `--public-url` 指定外部 HTTPS 根地址，用 `--trusted-host` 指定其主机名。配置代理以保留公共 Host 标头、转发 WebSocket 升级请求，并在将请求转发给 Ocean 前移除外部挂载路径前缀。客户端使用包含挂载路径的公共 URL。服务、容器和恢复步骤见[部署远程 Host](../../docs/cookbook/deploying-remote-host.zh.md)。
+使用原生 TLS 时，通过 `--tls-cert` 传入 PEM 证书链，通过 `--tls-key` 传入对应的密钥。当 HTTPS 反向代理终止 TLS 时，将 Ocean 绑定到环回地址，用 `--public-url` 指定外部 HTTPS 根地址，用 `--trusted-host` 指定其主机名。配置代理以保留公共 Host 标头、转发 WebSocket 升级请求，并在将请求转发给 Ocean 前移除外部挂载路径前缀。客户端使用包含挂载路径的公共 URL。对于 tailnet 中的机器，`ocean serve --tailscale-serve` 同时取代证书和代理：监听器保持在回环地址，并通过 `tailscale serve` 发布 `https://<node>.<tailnet>.ts.net/`，因此无需 TLS 文件或端口转发。服务、容器和恢复步骤见[部署远程 Host](../../docs/cookbook/deploying-remote-host.zh.md)。
 
 在 Windows、macOS 和 Linux 上，以 Host 的服务账户并使用相同的 `OCEAN_HOME` 运行 `ocean remote-device --bootstrap create <label>`，无需启动监听器即可创建设备。使用 `ocean remote-device --bootstrap list` 查看设备元数据，不输出令牌。运行中的 Host 通过文件监听器读取凭据更新；配置为 `watch: false` 的凭据提供者需要重新加载。Bootstrap 仅支持 create 和 list；rotate 和 revoke 需要使用运行中的 Unix 管理套接字。`--bootstrap` 和 `--socket` 必须且只能选择一个。`--timeout` 仅限制套接字操作的等待时间。
 
 在 Unix 上，使用 `ocean serve --device-admin-socket /absolute/private-dir/admin.sock` 启动 Host。目录必须已存在，且只能由服务器用户访问。运行 `ocean remote-device --socket /absolute/private-dir/admin.sock create <label>`，或使用 `list`、`rotate <id>` 和 `revoke <id>`。创建和轮换会将持有者令牌输出到 stdout。请直接将它交给目标客户端，避免写入日志。
+
+要在不输入令牌的情况下添加设备，请运行 `ocean remote-device --socket /absolute/private-dir/admin.sock pair <label> --url https://host.example/`。当 Host 知道自己的公共 HTTPS 地址时（例如使用 `--tailscale-serve` 或 `--public-url`），`--url` 可省略。命令输出一次性的 `ocean://pair` 链接及其到期时间。链接包含 Host 地址和标签，片段中带有只能使用一次的授权；除非用 `--ttl <seconds>`（30 至 3600）指定，否则十分钟后过期。在设备上打开该链接，或粘贴到 Desktop 的**连接远程 Host**对话框的地址栏中，并确认地址。链接在使用或过期之前应视同密码。`pair` 需要运行中 Host 的管理 socket，不能与 `--bootstrap` 一起使用。
 
 运行 `ocean connect --url https://host.example --token-env OCEAN_DEVICE_TOKEN list` 可用 JSON 输出远程 Session 摘要。启动前请设置指定的环境变量，或配合管道或输入重定向使用 `--token-stdin`。客户端正常验证 TLS 证书，并在命令执行期间将登录凭据保存在内存中。
 

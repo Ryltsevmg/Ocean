@@ -38,6 +38,12 @@ ocean serve --host 192.0.2.10 --port 8443 --trusted-host ocean.example \
 
 使用同机 HTTPS 反向代理时，绑定 `127.0.0.1`，并将 TLS 参数替换为 `--public-url https://ocean.example/ --trusted-host ocean.example`。保持后端端口私有。代理应保留公共 Host 标头、转发 WebSocket 升级，并在转发前移除外部挂载路径前缀。客户端使用含此前缀的完整公共 URL。
 
+对于已加入 tailnet 且启用了 MagicDNS 和 HTTPS 证书的机器，Tailscale 可以代替证书和代理。无需自己绑定任何地址：`--tailscale-serve` 让监听器保持在回环地址，通过 `tailscale serve` 发布 `https://<node>.<tailnet>.ts.net/`，并在 Host 停止时移除该映射。在 Linux 上，服务账号需要有配置 serve 的权限，例如 `tailscale set --operator=ocean`。如果该节点已经在提供某个目录或文件路径，则只有 root 能修改其 serve 配置；请让 `--tailscale-command` 指向运行 `sudo -n /usr/bin/tailscale "$@"` 的包装脚本。Host 会拒绝已被其他映射占用的端口，因此在已有站点旁请传入空闲的 `--tailscale-serve-port`。tailnet 中的其他设备无需端口转发即可访问该 Host。
+
+```sh
+ocean serve --tailscale-serve --device-admin-socket /srv/ocean/run/admin.sock
+```
+
 等到出现 `ocean serve:` 就绪行后，再签发令牌。
 
 <a id="run-as-a-service-or-in-a-container"></a>
@@ -85,6 +91,12 @@ docker run --name ocean --init --network host --stop-timeout 60 \
 
 以服务账号运行[设备命令](../../apps/cli/README.zh.md)，连接其活动套接字。用 `create <label>` 添加每台设备，用 `list` 检查状态，用 `rotate <id>` 替换令牌，用 `revoke <id>` 禁用设备。通过私有渠道传递 `create` 和 `rotate` 的输出。在 systemd 和容器示例中，使用执行命令时可见的套接字路径。
 
+
+要在不复制令牌的情况下添加设备，请用一次性配对链接代替 `create`。链接只能使用一次，除非用 `--ttl` 指定，否则十分钟后过期。通过私密渠道发送，然后在设备上打开，或粘贴到 Desktop 的**连接远程 Host**对话框。
+
+```sh
+ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://ocean.example/
+```
 
 将 `DEVICE_ID` 替换为 `list` 返回的标识。
 
