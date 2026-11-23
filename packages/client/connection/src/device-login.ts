@@ -17,6 +17,8 @@ function header(request: ConnectionTrustRequest, name: string): string | undefin
 export class DeviceLogin {
   private windowStartedAt = -Infinity
   private readonly attempts = new Map<DeviceId, number>()
+  private pairWindowStartedAt = -Infinity
+  private pairAttempts = 0
   /**
    * @param tokens - Durable credential registry.
    * @param config - Login limits and the optional HTTPS proxy origin.
@@ -91,6 +93,54 @@ export class DeviceLogin {
       'set-cookie': `__Host-ocean-device=${credential}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${Math.ceil(this.config.lifetimeMs / 1000)}`,
     })
     res.end()
+  }
+
+  /**
+   * Exchange a one-time pairing grant for a new device token.
+   * @param req - Incoming POST request with the grant bearer in Authorization.
+   * @param res - Response owned by the pairing endpoint.
+   * @param listener - Bound address and transport protocol.
+   */
+  async pair(req: IncomingMessage, res: ServerResponse, listener: {
+    host: string
+    protocol: 'http:' | 'https:'
+  }): Promise<void> {
+    const reject = (status: number, headers: Record<string, string> = {}): void => {
+      res.writeHead(status, { 'cache-control': 'no-store', ...headers })
+      res.end()
+    }
+    if (req.method !== 'POST') { reject(405); return }
+    if (this.origin(req, listener) === undefined) { reject(403); return }
+    if (req.headers[DEVICE_PROTOCOL_HEADER] !== DEVICE_PROTOCOL_VERSION) {
+      reject(409, { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION }); return
+    }
+    const expectedHost = header(req, DEVICE_HOST_HEADER)
+    if (expectedHost !== undefined && expectedHost !== this.config.identity.hostId) { reject(412); return }
+    const bearer = req.headers.authorization
+    if (bearer?.length !== 87 || !bearer.startsWith('Bearer ')) { reject(401); return }
+    const now = performance.now()
+    if (now - this.pairWindowStartedAt >= this.config.exchangeWindowMs) {
+      this.pairWindowStartedAt = now
+      this.pairAttempts = 0
+    }
+    if (this.pairAttempts >= this.config.maxExchangesPerWindow) {
+      reject(429, { 'retry-after': String(Math.ceil((this.pairWindowStartedAt + this.config.exchangeWindowMs - now) / 1000)) }); return
+    }
+    this.pairAttempts += 1
+    let device: Awaited<ReturnType<DeviceTokens['redeemPairing']>>
+    try {
+      device = await this.tokens.redeemPairing(bearer.slice(7))
+    } catch (_error) {
+      // Credential provider errors can contain record details. Keep them off the wire.
+      reject(503); return
+    }
+    if (device === undefined) { reject(401); return }
+    res.writeHead(200, {
+      ...this.identityHeaders(),
+      'cache-control': 'no-store',
+      'content-type': 'application/json',
+    })
+    res.end(JSON.stringify(device))
   }
 
   /**

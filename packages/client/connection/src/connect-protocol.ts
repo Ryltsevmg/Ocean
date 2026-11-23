@@ -21,6 +21,9 @@ export const CONNECT_PATH = '/connect'
 /** Authenticated structured boot injections for a packaged desktop client. */
 export const DEVICE_BOOTSTRAP_PATH = '/connect/bootstrap'
 
+/** One-time pairing exchange: a short-lived grant becomes a device token. */
+export const DEVICE_PAIR_PATH = '/connect/pair'
+
 /** Version of the device login and remote transport protocol. */
 export const DEVICE_PROTOCOL_VERSION = '1'
 

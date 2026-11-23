@@ -245,6 +245,8 @@
         serverMode: !!js "ctx.get('profileContext')?.name === 'serve'"
         printUrl: true
         publicUrl: !!js ctx.webStartup.publicUrl
+        tailscaleServePort: !!js ctx.webStartup.tailscaleServePort
+        tailscaleCommand: !!js ctx.webStartup.tailscaleCommand
         surfaceContext: true
 
     # Model context for an agent that inspects or extends the harness serving

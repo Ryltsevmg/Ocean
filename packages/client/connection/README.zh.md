@@ -74,13 +74,15 @@ HTTP RPC 和 WebSocket 升级在准入时验证登录 Cookie，并为每个传�
 
 Host 管理方法从撤销或轮换开始时拒绝受影响设备的答复和新传输，并在持久操作后等待其 Peer 释放。释放失败时操作会报错，已提交的注册表更改仍然有效。管理员可检查设备状态或再次轮换以取得新的令牌。
 
-在设备模式下，可通过 `deviceAdminSocket` 在 Unix 上启用本地管理监听器。请使用绝对路径，且其所在目录必须已存在、归服务器用户所有，并禁止组用户和其他用户访问。监听器通过 Unix socket 接收 JSON 格式的创建、列出、轮换和撤销命令。已有监听器不会被替换。 关闭期间，监听器先停止接收命令，再等待已接纳操作完成，随后 Connection 服务才释放资源。管理失败分别报告 `durableOutcome` 和 `liveCleanup`，不包含凭据详情。活动管理监听器仅支持 Unix。独立的 `deviceBootstrapOnly` 组合在 Windows 等平台上提供 `ctx.deviceBootstrap.issue()` 和 `list()`，不创建网络监听器，也不撤销或轮换活动设备。正在运行的 Host 在凭据监视器同步后看到引导写入；配置为 `watch: false` 的提供方需要重新加载。
+在设备模式下，可通过 `deviceAdminSocket` 在 Unix 上启用本地管理监听器。请使用绝对路径，且其所在目录必须已存在、归服务器用户所有，并禁止组用户和其他用户访问。监听器通过 Unix socket 接收 JSON 格式的创建、配对、列出、轮换和撤销命令。已有监听器不会被替换。 关闭期间，监听器先停止接收命令，再等待已接纳操作完成，随后 Connection 服务才释放资源。管理失败分别报告 `durableOutcome` 和 `liveCleanup`，不包含凭据详情。活动管理监听器仅支持 Unix。独立的 `deviceBootstrapOnly` 组合在 Windows 等平台上提供 `ctx.deviceBootstrap.issue()` 和 `list()`，不创建网络监听器，也不撤销或轮换活动设备。正在运行的 Host 在凭据监视器同步后看到引导写入；配置为 `watch: false` 的提供方需要重新加载。
 
 设备客户端在 POST `/connect` 上发送 `Ocean-Device-Protocol: 1`。版本缺失或不受支持时，在写入登录记录前返回 409，并在响应头中给出支持的版本。通过验证的设备令牌各自拥有独立的交换预算，由 `maxDeviceExchangesPerWindow` 和 `deviceExchangeWindowMs` 配置。无效令牌不会消耗其他设备的预算，即使客户端共享代理或网络地址。预算耗尽时，端点返回 429 和 `Retry-After`。
 
 登录成功时返回 `Ocean-Device-Host` 和 `Ocean-Device-Epoch`。前者标识凭据主目录，服务器重启后保持不变。后者在每次启动 Host 时改变。携带有效会话 Cookie 向 `/connect` 发送 HEAD 请求，可获取这两个值和支持的协议版本，无需签发新会话。不携带 Cookie 且带有协议头的 HEAD 请求经过相同的 HTTPS 和 Origin 检查后，可在提交凭据前获取 Host 标识。恢复已保存连接时，客户端在发送令牌前比对 Host 标识，并在换取会话的请求中附上预期标识。标识不一致时，Host 返回 HTTP 412，不签发会话。 首次注册信任用户选择的 HTTPS 源及其已验证的 TLS 证书，此时尚无既有 Host 标识可供比较。恢复已保存的连接时，必须在发送令牌前核对固定的标识。
 
 GET `/connect/bootstrap` 返回已登录设备 Peer 对应的 JSON 注入表，响应不可缓存。打包客户端使用该表初始化自己的应用文档。
+
+管理命令 `pair` 创建一次性配对授权，新设备用它换取自己的设备令牌，因此无需手动输入或复制令牌。授权在设备注册表中只保存哈希，有效期为 `devicePairingTtlSeconds`（默认 600 秒；命令可指定 30 至 3600 秒），只能使用一次。Host 同时最多保留 16 个未过期授权，超出时报告 `DEVICE_PAIRING_CAPACITY`。客户端向 POST `/connect/pair` 发送请求，以授权作为持有者令牌并附带 `Ocean-Device-Protocol: 1`。Host 应用与 `/connect` 相同的 HTTPS 和 Origin 检查，所有授权在每个时间窗口内共用一份尝试预算（`maxDeviceExchangesPerWindow`、`deviceExchangeWindowMs`），然后在一次凭据写入中消耗授权并创建设备。成功时返回 `200`，正文为 `{ id, token }`，并带有 Host 标识头。未知、已过期和已使用的授权都返回 `401`。新令牌随后与其他令牌一样通过 `/connect` 登录，`rotate` 和 `revoke` 对它同样有效。
 
 设备准入在容量耗尽时返回 503。`maxDeviceTransports` 限制整个 Host 上等待验证的请求与活动 HTTP 或 WebSocket 传输的总数。`maxDeviceTransportsPerDevice` 限制单台设备所有登录中的活动传输数量。租约开始释放时立即失去回答事件的权限，但其容量名额保留至 Peer 清理完成。
 

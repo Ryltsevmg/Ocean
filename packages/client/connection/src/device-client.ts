@@ -1,7 +1,8 @@
 /** Node client for device authentication and authenticated unary requests. */
 import { HarnessError } from '@ocean/ocean-error'
 import {
-  CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION,
+  CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PAIR_PATH, DEVICE_PROTOCOL_HEADER,
+  DEVICE_PROTOCOL_VERSION,
   type HostEpoch, type HostId, type HostIdentity,
 } from './connect-protocol.ts'
 
@@ -9,6 +10,7 @@ import {
 export type DeviceClientErrorCode = 'DEVICE_ADDRESS_INVALID' | 'DEVICE_AUTH_REJECTED' | 'DEVICE_RATE_LIMITED'
   | 'DEVICE_CAPACITY_EXCEEDED' | 'DEVICE_HOST_CHANGED' | 'DEVICE_IDENTITY_INVALID' | 'DEVICE_BOOTSTRAP_INVALID'
   | 'DEVICE_BOOTSTRAP_FAILED' | 'DEVICE_AUTH_FAILED' | 'DEVICE_CONNECTION_FAILED' | 'DEVICE_SIGN_IN_REQUIRED'
+  | 'DEVICE_PAIRING_REJECTED' | 'DEVICE_PAIRING_UNSUPPORTED'
 
 /** An authentication or transport failure with a secret-free diagnostic. */
 export class DeviceClientError extends HarnessError {
@@ -47,6 +49,16 @@ function readIdentity(response: Response): HostIdentity {
     throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a compatible device identity')
   }
   return { id: id as HostId, epoch: epoch as HostEpoch }
+}
+
+/** A device created by redeeming a pairing grant. */
+export interface PairedDevice {
+  /** Stable identifier the Host assigned to this device. */
+  readonly id: string
+  /** Bearer token for later logins; shown once, so the caller must store it. */
+  readonly token: string
+  /** Identity the Host reported while pairing; pin it for the first login. */
+  readonly host: HostIdentity
 }
 
 /** Manages a device session in memory and refuses redirects and Host changes. */
@@ -118,6 +130,39 @@ export class DeviceClient {
     this.cookie = deviceCookies[0]
     this.identity = identity
     return identity
+  }
+
+  /**
+   * Exchange a one-time pairing grant for a device token. The grant is spent even if the caller loses the reply.
+   * @param grant - Grant bearer from a pairing link.
+   * @param signal - Cancellation for the exchange.
+   * @returns The new device, its token, and the Host identity that issued it.
+   */
+  async pair(grant: string, signal: AbortSignal): Promise<PairedDevice> {
+    const response = await this.fetchResponse(new URL(DEVICE_PAIR_PATH.slice(1), this.base), {
+      method: 'POST', redirect: 'error', signal,
+      headers: { authorization: `Bearer ${grant}`, [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION },
+    })
+    if (response.status !== 200) {
+      await response.body?.cancel()
+      this.requirePairing(response)
+    }
+    let host: HostIdentity
+    try { host = readIdentity(response) } catch (cause) {
+      // A Host without the pairing route can answer any other document with 200.
+      await response.body?.cancel()
+      throw new DeviceClientError('DEVICE_PAIRING_UNSUPPORTED', 'Ocean Host does not support pairing links', { cause })
+    }
+    let body: unknown
+    try { body = await response.json() } catch (cause) {
+      throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a device token', { cause })
+    }
+    const id = typeof body === 'object' && body !== null && 'id' in body ? body.id : undefined
+    const token = typeof body === 'object' && body !== null && 'token' in body ? body.token : undefined
+    if (typeof id !== 'string' || typeof token !== 'string' || token.length !== 80) {
+      throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a device token')
+    }
+    return { id, token, host }
   }
 
   /**
@@ -258,6 +303,20 @@ export class DeviceClient {
       throw new DeviceSessionUnavailableError()
     }
     throw new DeviceClientError('DEVICE_AUTH_FAILED', `Ocean device authentication failed (HTTP ${response.status})`)
+  }
+
+  private requirePairing(response: Response): never {
+    if (response.status === 401) {
+      throw new DeviceClientError('DEVICE_PAIRING_REJECTED', 'Ocean pairing link is invalid, expired, or already used')
+    }
+    if (response.status === 404 || response.status === 405) {
+      throw new DeviceClientError('DEVICE_PAIRING_UNSUPPORTED', 'Ocean Host does not support pairing links')
+    }
+    if (response.status === 409) throw new DeviceProtocolVersionError()
+    if (response.status === 412) throw new DeviceClientError('DEVICE_HOST_CHANGED', 'Ocean Host identity changed')
+    if (response.status === 429) throw new DeviceClientError('DEVICE_RATE_LIMITED', 'Ocean device sign-in is rate limited')
+    if (response.status === 503) throw new DeviceSessionUnavailableError()
+    throw new DeviceClientError('DEVICE_AUTH_FAILED', `Ocean pairing failed (HTTP ${response.status})`)
   }
 
   private checkHost(identity: HostIdentity, expected: string | undefined = this.identity?.id): void {

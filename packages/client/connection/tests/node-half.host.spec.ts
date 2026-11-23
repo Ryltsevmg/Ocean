@@ -2,6 +2,9 @@
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { createServer, request as httpRequest } from 'node:http'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
@@ -167,6 +170,63 @@ describe('connection node half', () => {
     } finally {
       await fiber.dispose()
       expect(ctx.get('deviceBootstrap')).toBeUndefined()
+    }
+  })
+
+  it('creates a pairing grant through the administrator socket and redeems it on the Host route', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'ocean-pair-'))
+    const socketPath = join(directory, 'admin.sock')
+    const host = await mounted({ allowOwnerLogin: false, trustedHosts: ['ocean.example'], deviceAdminSocket: socketPath }, 'https:')
+    try {
+      const admin = (command: unknown): Promise<unknown> => new Promise((resolve, reject) => {
+        const req = httpRequest({ socketPath, path: '/', method: 'POST' }, (res) => {
+          const chunks: Buffer[] = []
+          res.on('data', (chunk: Buffer) => { chunks.push(chunk) })
+          res.on('end', () => { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))) })
+        })
+        req.once('error', reject)
+        req.end(JSON.stringify(command))
+      })
+      const created = await admin({ action: 'pair', label: 'Phone', ttlSeconds: 60 }) as { result: { grant: string; expiresAt: number } }
+      expect(created.result.grant).toHaveLength(80)
+      expect(created.result).not.toHaveProperty('address')
+      const defaulted = await admin({ action: 'pair', label: 'Tablet' }) as { result: { expiresAt: number } }
+      expect(defaulted.result.expiresAt - Date.now()).toBeGreaterThan(590_000)
+      const route = host.routes.find(candidate => candidate.path === '/connect/pair')
+      if (route === undefined) throw new Error('missing pairing route')
+      const reply = fakeResponse()
+      await route.handler(fakePost({
+        host: 'ocean.example', 'ocean-device-protocol': '1', authorization: `Bearer ${created.result.grant}`,
+      }, '/connect/pair', null), reply.response)
+      expect(reply.state.status).toBe(200)
+      const paired = JSON.parse(String(reply.state.body)) as { id: string; token: string }
+      expect(await new DeviceTokens(host.ctx.credentials).verify(paired.token)).toBe(paired.id)
+    } finally {
+      await host.dispose()
+      await rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('adds the configured public HTTPS address to a pairing reply', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'ocean-pair-'))
+    const socketPath = join(directory, 'admin.sock')
+    const host = await mounted({
+      allowOwnerLogin: false, trustedHosts: ['ocean.example'], deviceAdminSocket: socketPath, deviceProxyUrl: 'https://ocean.example/mount/',
+    }, 'http:')
+    try {
+      const reply = await new Promise<{ result: { address?: string } }>((resolve, reject) => {
+        const req = httpRequest({ socketPath, path: '/', method: 'POST' }, (res) => {
+          const chunks: Buffer[] = []
+          res.on('data', (chunk: Buffer) => { chunks.push(chunk) })
+          res.on('end', () => { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')) as { result: { address?: string } }) })
+        })
+        req.once('error', reject)
+        req.end(JSON.stringify({ action: 'pair', label: 'Phone' }))
+      })
+      expect(reply.result.address).toBe('https://ocean.example/mount/')
+    } finally {
+      await host.dispose()
+      await rm(directory, { recursive: true, force: true })
     }
   })
 

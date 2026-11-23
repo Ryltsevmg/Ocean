@@ -172,3 +172,83 @@ it('refuses an Origin that differs from the canonical HTTPS origin', async () =>
     expect(reply.response.statusCode).toBe(403)
   }
 })
+
+/** Headers of a same-origin pairing request. */
+function pairHeaders(grant: string, extra: Record<string, string> = {}): Record<string, string> {
+  return exchangeHeaders({ authorization: `Bearer ${grant}`, ...extra })
+}
+
+it('turns a pairing grant into a device token exactly once', async () => {
+  const store = new RecordCredentials()
+  const login = deviceLogin(store)
+  const grant = await login.tokens.createPairing('Phone', 60_000)
+  const reply = response()
+  await login.pair(request('POST', pairHeaders(grant.secret)), reply.response, LISTENER)
+  expect(reply.response.statusCode).toBe(200)
+  const call = reply.writeHead.mock.calls[0]?.[1] as Record<string, string>
+  expect(call).toMatchObject({
+    'cache-control': 'no-store', 'content-type': 'application/json',
+    'ocean-device-protocol': '1', 'ocean-device-host': 'host-fixture', 'ocean-device-epoch': 'epoch-fixture',
+  })
+  const devices = await login.tokens.list()
+  expect(devices).toHaveLength(1)
+  const second = response()
+  await login.pair(request('POST', pairHeaders(grant.secret)), second.response, LISTENER)
+  expect(second.response.statusCode).toBe(401)
+})
+
+it('fences pairing by method, origin, protocol, Host identity, and bearer shape', async () => {
+  const store = new RecordCredentials()
+  const login = deviceLogin(store)
+  const grant = await login.tokens.createPairing('Phone', 60_000)
+  const cases: [string, string, Record<string, string>, number][] = [
+    ['GET', 'method', pairHeaders(grant.secret), 405],
+    ['POST', 'untrusted origin', pairHeaders(grant.secret, { origin: 'https://evil.example' }), 403],
+    ['POST', 'protocol', pairHeaders(grant.secret, { 'ocean-device-protocol': '2' }), 409],
+    ['POST', 'host identity', pairHeaders(grant.secret, { 'ocean-device-host': 'other-host' }), 412],
+    ['POST', 'missing bearer', exchangeHeaders(), 401],
+    ['POST', 'short bearer', exchangeHeaders({ authorization: 'Bearer short' }), 401],
+  ]
+  for (const [method, label, headers, status] of cases) {
+    const reply = response()
+    await login.pair(request(method, headers), reply.response, LISTENER)
+    expect(reply.response.statusCode, label).toBe(status)
+  }
+  expect(await login.tokens.list()).toEqual([])
+})
+
+it('limits pairing attempts per window and reopens the window', async () => {
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(1_000)
+  try {
+    const login = new DeviceLogin(new DeviceTokens(new RecordCredentials()), {
+      trustedHosts: ['ocean.example'], lifetimeMs: 60_000, maxSessionsPerDevice: 2,
+      maxExchangesPerWindow: 2, exchangeWindowMs: 10_000, identity: IDENTITY,
+    })
+    const bogus = `${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}.${'A'.repeat(43)}`
+    const statuses: number[] = []
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const reply = response()
+      await login.pair(request('POST', pairHeaders(bogus)), reply.response, LISTENER)
+      statuses.push(reply.response.statusCode)
+      if (attempt === 2) expect(reply.writeHead.mock.calls[0]?.[1]).toMatchObject({ 'retry-after': '10' })
+    }
+    expect(statuses).toEqual([401, 401, 429])
+    clock.mockReturnValue(11_000)
+    const reopened = response()
+    await login.pair(request('POST', pairHeaders(bogus)), reopened.response, LISTENER)
+    expect(reopened.response.statusCode).toBe(401)
+  } finally {
+    clock.mockRestore()
+  }
+})
+
+it('contains a credential-store failure while pairing as 503 without record details', async () => {
+  const store = new RecordCredentials()
+  const login = deviceLogin(store)
+  const grant = await login.tokens.createPairing('Phone', 60_000)
+  vi.spyOn(store, 'modifyRecord').mockRejectedValue(new Error('private store detail'))
+  const reply = response()
+  await login.pair(request('POST', pairHeaders(grant.secret)), reply.response, LISTENER)
+  expect(reply.response.statusCode).toBe(503)
+  expect(reply.writeHead).toHaveBeenCalledWith(503, { 'cache-control': 'no-store' })
+})

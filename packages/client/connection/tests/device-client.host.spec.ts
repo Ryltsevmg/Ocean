@@ -250,3 +250,73 @@ it('keeps a newer login when an older session check is rejected', async () => {
   await expect(stale).rejects.toBeInstanceOf(DeviceSessionRejectedError)
   expect(client.transportCredentials().cookie).toBe('__Host-ocean-device=second')
 })
+
+const PAIRING_GRANT = `${'a'.repeat(8)}-aaaa-4aaa-8aaa-${'a'.repeat(12)}.${'B'.repeat(43)}`
+const PAIRED_TOKEN = `${'c'.repeat(8)}-cccc-4ccc-8ccc-${'c'.repeat(12)}.${'D'.repeat(43)}`
+const identityHeaders = { 'ocean-device-protocol': '1', 'ocean-device-host': 'host-one', 'ocean-device-epoch': 'epoch-one' }
+
+it('exchanges a pairing grant for a device token and reports the issuing Host', async () => {
+  const calls: Array<{ url: string; init: RequestInit | undefined }> = []
+  const client = new DeviceClient('https://ocean.example/mount', async (url, init) => {
+    calls.push({ url: url instanceof URL ? url.href : url instanceof Request ? url.url : url, init })
+    return Response.json({ id: 'device-id', token: PAIRED_TOKEN }, { headers: identityHeaders })
+  })
+  const paired = await client.pair(PAIRING_GRANT, new AbortController().signal)
+  expect(paired).toEqual({ id: 'device-id', token: PAIRED_TOKEN, host: { id: 'host-one', epoch: 'epoch-one' } })
+  expect(calls).toHaveLength(1)
+  expect(calls[0]!.url).toBe('https://ocean.example/mount/connect/pair')
+  expect(calls[0]!.init).toMatchObject({
+    method: 'POST', redirect: 'error',
+    headers: { authorization: `Bearer ${PAIRING_GRANT}`, 'ocean-device-protocol': '1' },
+  })
+})
+
+it.each([
+  [401, 'DEVICE_PAIRING_REJECTED'],
+  [404, 'DEVICE_PAIRING_UNSUPPORTED'],
+  [405, 'DEVICE_PAIRING_UNSUPPORTED'],
+  [412, 'DEVICE_HOST_CHANGED'],
+  [429, 'DEVICE_RATE_LIMITED'],
+  [403, 'DEVICE_AUTH_FAILED'],
+  [500, 'DEVICE_AUTH_FAILED'],
+] as const)('classifies pairing HTTP %i without exposing the grant', async (status, code) => {
+  const client = new DeviceClient('https://ocean.example/', async () => new Response(null, { status }))
+  const failure = await client.pair(PAIRING_GRANT, new AbortController().signal).catch((error: unknown) => error)
+  expect(failure).toMatchObject({ name: 'DeviceClientError', code })
+  expect((failure as Error).message).not.toContain(PAIRING_GRANT)
+})
+
+it('classifies a pairing protocol mismatch and an unavailable credential store', async () => {
+  const mismatch = new DeviceClient('https://ocean.example/', async () => new Response(null, { status: 409 }))
+  await expect(mismatch.pair(PAIRING_GRANT, new AbortController().signal)).rejects.toBeInstanceOf(DeviceProtocolVersionError)
+  const unavailable = new DeviceClient('https://ocean.example/', async () => new Response(null, { status: 503 }))
+  await expect(unavailable.pair(PAIRING_GRANT, new AbortController().signal)).rejects.toBeInstanceOf(DeviceSessionUnavailableError)
+})
+
+it('treats a Host that answers without a device identity as lacking pairing', async () => {
+  const client = new DeviceClient('https://ocean.example/', async () => new Response('<html></html>', { status: 200 }))
+  await expect(client.pair(PAIRING_GRANT, new AbortController().signal)).rejects.toMatchObject({
+    code: 'DEVICE_PAIRING_UNSUPPORTED',
+  })
+})
+
+it.each([
+  ['not json', 'text/plain'],
+  [JSON.stringify({ id: 'device-id' }), 'application/json'],
+  [JSON.stringify({ id: 1, token: PAIRED_TOKEN }), 'application/json'],
+  [JSON.stringify({ id: 'device-id', token: 'short' }), 'application/json'],
+  [JSON.stringify(null), 'application/json'],
+])('rejects a malformed pairing reply %s', async (body, type) => {
+  const client = new DeviceClient('https://ocean.example/', async () => new Response(body, {
+    status: 200, headers: { ...identityHeaders, 'content-type': type },
+  }))
+  await expect(client.pair(PAIRING_GRANT, new AbortController().signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+})
+
+it('keeps cancellation and network failures distinct while pairing', async () => {
+  const cause = new Error('network failure')
+  const client = new DeviceClient('https://ocean.example/', async () => { throw cause })
+  await expect(client.pair(PAIRING_GRANT, new AbortController().signal)).rejects.toMatchObject({
+    code: 'DEVICE_CONNECTION_FAILED', cause,
+  })
+})

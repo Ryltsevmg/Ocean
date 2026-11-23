@@ -26,6 +26,7 @@ import { scrubbedParentEnv } from '@ocean/ocean-subprocess'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@ocean/ocean-shell-env'
 import { parsePublicUrl } from './public-url.ts'
+import { startTailscaleServe } from './tailscale.ts'
 
 /** The Web GUI this process serves, provided by the `web-runtime` row. */
 export interface WebApp {
@@ -72,6 +73,13 @@ export interface Config {
    * Absent or YAML `null` advertises the bind-address URL.
    */
   publicUrl?: string
+  /**
+   * Tailscale HTTPS port that forwards to this loopback listener through `tailscale serve`.
+   * The mapping is created on activation and removed on disposal. Requires a loopback bind.
+   */
+  tailscaleServePort?: number
+  /** Tailscale executable that creates and removes that mapping; `tailscale` when absent. */
+  tailscaleCommand?: string
 }
 
 export const Config: z<Config> = z.object({
@@ -80,6 +88,8 @@ export const Config: z<Config> = z.object({
   printUrl: z.boolean().default(true),
   surfaceContext: z.boolean().default(true),
   publicUrl: z.transform(z.string(), value => parsePublicUrl(value).href),
+  tailscaleServePort: z.natural().min(1).max(65_535),
+  tailscaleCommand: z.string(),
 })
 
 /** Environment variable naming the advertised URL of this Web GUI. */
@@ -207,6 +217,21 @@ export function apply(ctx: Context, config: Config): void {
   /** The advertised root: the canonical `publicUrl`, or the listener's own origin. */
   const appRootUrl = (): string => publicUrl ?? ctx.webServer.getOrigin()
   ctx.provide('webApp', { getAdvertisedUrl: appRootUrl } satisfies WebApp)
+  const tailscalePort = config.tailscaleServePort ?? undefined
+  if (tailscalePort !== undefined) {
+    const localPort = ctx.webServer.port
+    if (ctx.webServer.protocol !== 'http:' || !isLoopbackHost(boundHost) || localPort === undefined) {
+      throw new Error('web-app: tailscaleServePort needs a plain HTTP listener on loopback')
+    }
+    const command = config.tailscaleCommand ?? 'tailscale'
+    ctx.effect(() => {
+      const remove = startTailscaleServe(command, tailscalePort, localPort)
+      return () => {
+        const failure = remove()
+        if (failure !== undefined) console.error(`ocean serve: ${failure}`)
+      }
+    }, 'web-app: Tailscale serve mapping')
+  }
   ctx.plugin(FrontendStatic, { distIndex: internals.resolveDistIndex() })
   if (config.surfaceContext) {
     ctx.inject(['shellEnv'], (runtimeCtx) => {

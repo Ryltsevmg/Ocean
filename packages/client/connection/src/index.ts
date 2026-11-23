@@ -6,7 +6,7 @@ import type {} from '@ocean/ocean-credentials'
 // Activates the webServer Context merge used below.
 import type { WebRoute } from '@ocean/ocean-host-webserver'
 import { API_PATH } from './api-path.ts'
-import { CONNECT_PATH, DEVICE_BOOTSTRAP_PATH } from './connect-protocol.ts'
+import { CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_PAIR_PATH } from './connect-protocol.ts'
 import { bridge } from './http-bridge.ts'
 import { isLoopbackHostname } from './loopback-hostname.ts'
 import { assertTrustedAuthority } from './api-request-trust.ts'
@@ -151,6 +151,15 @@ export async function apply(ctx: Context, config?: ConnectionConfig): Promise<vo
       switch (command.action) {
         case 'list': return deviceLogin.tokens.list()
         case 'create': return deviceLogin.tokens.issue(command.label)
+        case 'pair': {
+          const grant = await deviceLogin.tokens.createPairing(command.label,
+            (command.ttlSeconds ?? resolved.devicePairingTtlSeconds) * 1000)
+          return {
+            grant: grant.secret,
+            expiresAt: grant.expiresAt,
+            ...resolved.deviceProxyUrl === undefined ? {} : { address: resolved.deviceProxyUrl },
+          }
+        }
         case 'revoke': return connection.revokeDevice(command.id)
         case 'rotate': return (await connection.rotateDevice(command.id)) ?? null
       }
@@ -190,6 +199,10 @@ export async function apply(ctx: Context, config?: ConnectionConfig): Promise<vo
         connection.authorizeConnect(req, res)
       },
     }), 'client-connection: /connect route')
+    if (deviceLogin !== undefined) webCtx.effect(() => webCtx.webServer.register({
+      kind: 'exact', path: DEVICE_PAIR_PATH,
+      handler: async (req, res) => { await deviceLogin.pair(req, res, webCtx.webServer) },
+    }), 'client-connection: /connect/pair route')
     if (deviceLogin !== undefined) webCtx.effect(() => webCtx.webServer.register({
       kind: 'exact', path: DEVICE_BOOTSTRAP_PATH,
       resource: async (request) => {
