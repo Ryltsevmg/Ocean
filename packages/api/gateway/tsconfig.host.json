@@ -7,6 +7,7 @@
   },
   "files": [
     "src/access.ts",
+    "src/device-scope-actions.ts",
     "src/device.ts",
     "src/index.ts",
     "src/remote-error-codes.ts",

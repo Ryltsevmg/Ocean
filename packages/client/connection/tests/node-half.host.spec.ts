@@ -13,6 +13,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { AttachmentStore } from '@ocean/ocean-attachment'
 import { HostConnectionService } from '../src/rpc-host.ts'
 import { DeviceTokens, deviceId, deviceRegistryKey } from '../src/device-tokens.ts'
+import { DEVICE_SCOPES } from '../src/device-scopes.ts'
 import { credentialKey, type CredentialProvider } from '@ocean/ocean-credentials'
 import type { IndexInjection, WebServer, WebRoute, WebResourceRoute, WebUpgradeRoute } from '@ocean/ocean-host-webserver'
 import {
@@ -187,7 +188,7 @@ describe('connection node half', () => {
         req.once('error', reject)
         req.end(JSON.stringify(command))
       })
-      const created = await admin({ action: 'pair', label: 'Phone', ttlSeconds: 60 }) as { result: { grant: string; expiresAt: number } }
+      const created = await admin({ action: 'pair', label: 'Phone', ttlSeconds: 60, scopes: ['sessions:read'] }) as { result: { grant: string; expiresAt: number } }
       expect(created.result.grant).toHaveLength(80)
       expect(created.result).not.toHaveProperty('address')
       const defaulted = await admin({ action: 'pair', label: 'Tablet' }) as { result: { expiresAt: number } }
@@ -201,6 +202,10 @@ describe('connection node half', () => {
       expect(reply.state.status).toBe(200)
       const paired = JSON.parse(String(reply.state.body)) as { id: string; token: string }
       expect(await new DeviceTokens(host.ctx.credentials).verify(paired.token)).toBe(paired.id)
+      expect((await new DeviceTokens(host.ctx.credentials).list()).find(device => device.id === paired.id)?.scopes).toEqual(['sessions:read'])
+      const issued = await admin({ action: 'create', label: 'Tablet', scopes: ['files:read', 'terminal:operate'] }) as { result: { id: string } }
+      expect((await new DeviceTokens(host.ctx.credentials).list()).find(device => device.id === issued.result.id)?.scopes)
+        .toEqual(['files:read', 'terminal:operate'])
     } finally {
       await host.dispose()
       await rm(directory, { recursive: true, force: true })
@@ -283,6 +288,31 @@ describe('connection node half', () => {
       finish.resolve(undefined)
       await pending
       mutation.mockRestore()
+      await host.dispose()
+    }
+  })
+
+  it('reports the scopes of a device while its login is live, and every scope for a device without any', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const tokens = new DeviceTokens(host.ctx.credentials)
+    const limited = await tokens.issue('Phone', ['sessions:read'])
+    const full = await tokens.issue('Laptop')
+    const limits = { lifetimeMs: 60_000, maxSessionsPerDevice: 1 }
+    const admit = async (token: string) => {
+      const login = await tokens.exchange(token, 'https://localhost', limits)
+      return host.connection.admitTransport(fakeRequest({ host: 'localhost', cookie: `__Host-ocean-device=${login ?? ''}` }), true)
+    }
+    try {
+      expect(host.connection.deviceScopes?.(limited.id)).toBeUndefined()
+      const phone = await admit(limited.token)
+      const laptop = await admit(full.token)
+      if ('rejection' in phone || 'rejection' in laptop) throw new Error('device admission failed')
+      expect(host.connection.deviceScopes?.(limited.id)).toEqual(['sessions:read'])
+      expect(host.connection.deviceScopes?.(full.id)).toEqual(DEVICE_SCOPES)
+      await phone.release()
+      expect(host.connection.deviceScopes?.(limited.id)).toBeUndefined()
+      await laptop.release()
+    } finally {
       await host.dispose()
     }
   })

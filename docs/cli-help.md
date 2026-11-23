@@ -518,7 +518,7 @@ Options:
 
 Commands:
   list                      List devices and their access state
-  create <label>            Create a device and return its token once
+  create [options] <label>  Create a device and return its token once
   pair [options] <label>    Create a one-time link that adds a device without
                             typing its token
   rotate <id>               Replace a device token and invalidate its existing
@@ -552,7 +552,11 @@ Usage: ocean remote-device create [options] <label>
 Create a device and return its token once
 
 Options:
-  -h, --help  display help for command
+  --scope <name>  a right the device holds; repeat to name several
+                  (sessions:read, sessions:write, files:read, files:write,
+                  terminal:operate, settings:manage); every right when absent
+                  (default: [])
+  -h, --help      display help for command
 ```
 
 <a id="ocean-remote-device-pair"></a>
@@ -569,6 +573,10 @@ Options:
   --url <https-url>  HTTPS address clients use to reach this Host, including any
                      mount path; the Host supplies its public URL when it has
                      one
+  --scope <name>     a right the device holds; repeat to name several
+                     (sessions:read, sessions:write, files:read, files:write,
+                     terminal:operate, settings:manage); every right when absent
+                     (default: [])
   --ttl <seconds>    how long the link stays valid, 30 to 3600; the Host default
                      applies otherwise
   -h, --help         display help for command

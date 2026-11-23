@@ -3,6 +3,7 @@ export {
   DeviceClient, DeviceClientError, DeviceProtocolVersionError, DeviceSessionRejectedError, DeviceSessionUnavailableError,
   type DeviceClientErrorCode, type PairedDevice,
 } from './device-client.ts'
+export { DEVICE_SCOPES, parseDeviceScopes, type DeviceScope } from './device-scopes.ts'
 export {
   CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_PAIR_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER,
   DEVICE_PROTOCOL_VERSION,

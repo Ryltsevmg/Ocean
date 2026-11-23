@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import { Context, symbols } from '@deepseek-ai/cordis'
-import { apply as applyConnection, inject as connectionInject } from '@ocean/ocean-client-connection'
+import { apply as applyConnection, inject as connectionInject, type DeviceScope } from '@ocean/ocean-client-connection'
+import { DEVICE_SCOPES } from '@ocean/ocean-client-connection/device'
 import RemoteAccessService, {
   type RemoteAccessAction,
   type RemoteAccessBinding,
@@ -27,6 +28,7 @@ import TypertRegistry from '@ocean/ocean-typert-registry'
 import { z } from 'zod'
 import TypertGatewayService, { type TypertRemoteEventDispatch } from '@ocean/ocean-api-gateway'
 import { callResources, eventResources } from '../src/access.ts'
+import { actionsOfScopes, DEVICE_SCOPE_ACTIONS } from '../src/device-scope-actions.ts'
 import { provideBrowserCredentials } from './browser-credentials.ts'
 import { ownerPeer, peerFor } from './peer.ts'
 
@@ -262,12 +264,73 @@ function registerStrict(ctx: Context, methods: Readonly<Record<string, readonly 
   })
 }
 
+/** Provide a Connection whose live logins hold the given scopes, by device identifier. */
+function holdScopes(ctx: Context, held: Record<string, readonly DeviceScope[]>): void {
+  ctx.provide('connection', { deviceScopes: (deviceId: string) => held[deviceId] } as never)
+}
+
+const DEVICE = '6ace72c7-0fd3-4337-99af-761f403dceda'
+const deviceOf = (deviceId: string): PrincipalMap['remote-device'] => ({
+  kind: 'remote-device', deviceId: deviceId as PrincipalMap['remote-device']['deviceId'],
+})
+
+it('lets each scope allow exactly its own actions and a device hold their union', async () => {
+  const { ctx } = await setup()
+  holdScopes(ctx, { [DEVICE]: ['sessions:read'], other: ['files:read', 'terminal:operate'], none: [] })
+  const decide = (deviceId: string, action: RemoteAccessAction) =>
+    ctx.remoteAccess.decide({ principal: deviceOf(deviceId), action, resources: [GLOBAL, shelf('scope')] }).kind
+  expect(decide(DEVICE, 'session/list')).toBe('allow')
+  expect(decide(DEVICE, 'event:api-session/status')).toBe('allow')
+  for (const action of ['session/prompt', 'workspaceFiles/read', 'terminal/create', 'settings/update'] as const) {
+    expect(decide(DEVICE, action), action).toBe('deny')
+  }
+  expect(decide('other', 'workspaceFiles/read')).toBe('allow')
+  expect(decide('other', 'terminal/create')).toBe('allow')
+  expect(decide('other', 'session/list')).toBe('deny')
+  for (const action of ['session/list', 'session/prompt', 'settings/describe'] as const) expect(decide('none', action)).toBe('deny')
+  const snapshot = ctx.remoteAccess.snapshotFor(deviceOf(DEVICE))
+  if (snapshot.owner) throw new Error('device should have an explicit access snapshot')
+  expect(snapshot.grants.find(row => row.resource.kind === 'global')?.allResources).not.toContain('session/prompt')
+  expect(ctx.remoteAccess.snapshotFor(deviceOf('none'))).toEqual({ type: 'baseline', owner: false, grants: [] })
+})
+
+it('denies every action once no login of the device is live, and without a Connection', async () => {
+  const { ctx } = await setup()
+  const decide = () => ctx.remoteAccess.decide({ principal: deviceOf(DEVICE), action: 'session/list', resources: [GLOBAL] }).kind
+  expect(decide()).toBe('deny')
+  const held: Record<string, readonly DeviceScope[]> = {}
+  holdScopes(ctx, held)
+  expect(decide()).toBe('deny')
+  held[DEVICE] = ['sessions:read']
+  expect(decide()).toBe('allow')
+})
+
+it('keeps the union of every scope identical to the actions earlier releases allowed every device', () => {
+  const union = new Set(DEVICE_SCOPES.flatMap(scope => DEVICE_SCOPE_ACTIONS[scope]))
+  expect(DEVICE_SCOPES.flatMap(scope => DEVICE_SCOPE_ACTIONS[scope])).toHaveLength(union.size)
+  expect([...union].sort()).toEqual([
+    'session/list', 'session/search', 'session/create', 'session/rename', 'session/prompt', 'session/cancel',
+    'session/page', 'session/events', 'session/follow', 'session/state', 'session/wait', 'session/attachment',
+    'session/observeEvent', 'session/observeState', 'session/observeProjections', 'session/projections',
+    'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
+    'workspaceFiles/search', 'workspaceFiles/changes', 'fileUploads/upload',
+    'terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach',
+    'workspace/follow', 'workspace/create', 'workspace/initializeDefault', 'directoryPicker/list',
+    'session/control', 'session/modelCatalog', 'session/selectModel', 'session/initializeDefaultModel',
+    'settings/describe', 'settings/update', 'settings/replace', 'settings/mutate', 'event:settings/document-updated',
+    'credentials/describe', 'credentials/set', 'credentials/unset', 'event:credentials/reference-updated',
+    'llm/listProviders', 'llm/listConfigurableProviders',
+    'userQuestions/attachWait', 'userQuestions/answer',
+    'event:api-session/activity', 'event:api-session/added', 'event:api-session/error',
+    'event:api-session/removed', 'event:api-session/status',
+  ].sort())
+  expect(actionsOfScopes(['files:write']).has('fileUploads/upload')).toBe(true)
+})
+
 it('grants device session actions across resources and denies unlisted actions', async () => {
   const { ctx } = await setup()
-  const principal: PrincipalMap['remote-device'] = {
-    kind: 'remote-device',
-    deviceId: '6ace72c7-0fd3-4337-99af-761f403dceda' as PrincipalMap['remote-device']['deviceId'],
-  }
+  holdScopes(ctx, { [DEVICE]: DEVICE_SCOPES })
+  const principal = deviceOf(DEVICE)
   const resources = [GLOBAL, shelf('scope')]
   const snapshot = ctx.remoteAccess.snapshotFor(principal)
   if (snapshot.owner) throw new Error('device should have an explicit access snapshot')

@@ -17,6 +17,7 @@
     "src/device-client.ts",
     "src/device-host-identity.ts",
     "src/device-login.ts",
+    "src/device-scopes.ts",
     "src/device-tokens.ts",
     "src/device.ts",
     "src/host-config.ts",

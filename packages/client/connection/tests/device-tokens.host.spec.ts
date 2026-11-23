@@ -263,3 +263,44 @@ it('reports a redemption the provider did not keep', async () => {
   })
   await expect(devices.redeemPairing(grant.secret)).rejects.toThrow('pairing redemption did not commit')
 })
+
+it('keeps scopes on a created device, lists them, and reports them on its login', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const limited = await devices.issue('Phone', ['sessions:read', 'files:read'])
+  const full = await devices.issue('Laptop')
+  expect(await devices.list()).toEqual([
+    { id: limited.id, label: 'Phone', revoked: false, scopes: ['sessions:read', 'files:read'] },
+    { id: full.id, label: 'Laptop', revoked: false },
+  ])
+  expect(JSON.stringify(store.record)).not.toContain('"scopes":null')
+  const origin = 'https://ocean.example'
+  const limits = { lifetimeMs: 60_000, maxSessionsPerDevice: 2 }
+  const login = await devices.exchange(limited.token, origin, limits)
+  const fullLogin = await devices.exchange(full.token, origin, limits)
+  expect((await new DeviceTokens(store).readSession(login ?? '', origin))?.scopes).toEqual(['sessions:read', 'files:read'])
+  expect(await devices.readSession(fullLogin ?? '', origin)).not.toHaveProperty('scopes')
+})
+
+it('carries a pairing grant\'s scopes to the device it creates and omits them when none were chosen', async () => {
+  const devices = new DeviceTokens(new RecordCredentials())
+  const narrow = await devices.createPairing('Phone', 60_000, ['sessions:read'])
+  const broad = await devices.createPairing('Tablet', 60_000)
+  const first = await devices.redeemPairing(narrow.secret)
+  const second = await devices.redeemPairing(broad.secret)
+  const listed = await devices.list()
+  expect(listed.find(device => device.id === first?.id)?.scopes).toEqual(['sessions:read'])
+  expect(listed.find(device => device.id === second?.id)).not.toHaveProperty('scopes')
+})
+
+it('refuses an empty or unknown scope list when reading the stored registry', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const { token } = await devices.issue('Phone', ['sessions:read'])
+  const record = structuredClone(store.record) as { payload: { devices: { scopes?: unknown }[] } }
+  record.payload.devices[0]!.scopes = ['not-a-scope']
+  store.record = record as typeof store.record
+  await expect(devices.verify(token)).rejects.toThrow('invalid remote device credential record')
+  record.payload.devices[0]!.scopes = []
+  await expect(devices.verify(token)).rejects.toThrow('invalid remote device credential record')
+})

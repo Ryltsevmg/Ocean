@@ -117,6 +117,8 @@ class AccessFollower {
   }
 }
 
+const EMPTY_ACTIONS: ReadonlySet<RemoteAccessAction> = new Set()
+
 /**
  * Registry of access policies, the Gateway's access decisions, list
  * filtering, and the per-Peer access snapshot. Every composition that mounts
@@ -202,7 +204,9 @@ export class RemoteAccessService extends TypertRemoteService {
     if (principal.kind === 'owner' || action === FOLLOW_ACTION) return ALLOW
     const entry = this.policies.get(principal.kind)
     if (entry === undefined) return NO_ALLOW
-    if (entry.policy.globalActions?.has(action)) return ALLOW
+    const global = this.globalActionsOf(entry, principal, action)
+    if (global === undefined) return POLICY_FAILED
+    if (global.has(action)) return ALLOW
     const bindings = this.bindingsOf(entry, principal, action)
     if (bindings === undefined) return POLICY_FAILED
     for (const resource of request.resources) {
@@ -240,7 +244,9 @@ export class RemoteAccessService extends TypertRemoteService {
     const action: RemoteAccessAction = `${invocation.request.namespace}/${invocation.request.method}`
     const entry = this.policies.get(principal.kind)
     if (entry === undefined) return false
-    if (entry.policy.globalActions?.has(action)) return true
+    const global = this.globalActionsOf(entry, principal, action)
+    if (global === undefined) return false
+    if (global.has(action)) return true
     const bindings = this.bindingsOf(entry, principal, action)
     return bindings !== undefined && this.evaluate(entry, bindings, action, resource, undefined).kind === 'allow'
   }
@@ -298,6 +304,19 @@ export class RemoteAccessService extends TypertRemoteService {
       }
     } finally {
       this.followers.delete(follower)
+    }
+  }
+
+  /** The principal's global actions; empty without any, `undefined` after a logged failure of the function form. */
+  private globalActionsOf(entry: PolicyEntry, principal: Principal, purpose: string): ReadonlySet<RemoteAccessAction> | undefined {
+    const declared = entry.policy.globalActions
+    if (declared === undefined) return EMPTY_ACTIONS
+    if (typeof declared !== 'function') return declared
+    try {
+      return declared(principal)
+    } catch (error) {
+      this.report(entry, `list global actions for ${purpose}`, error)
+      return undefined
     }
   }
 
@@ -359,7 +378,8 @@ export class RemoteAccessService extends TypertRemoteService {
     const entry = this.policies.get(principal.kind)
     if (entry === undefined) return []
     const bindings = this.bindingsOf(entry, principal, 'a snapshot')
-    if (bindings === undefined) return []
+    const global = this.globalActionsOf(entry, principal, 'a snapshot')
+    if (bindings === undefined || global === undefined) return []
     const grants: RemoteAccessGrant[] = []
     const seen: RemoteAccessResource[] = []
     const resources = bindings.map(binding => binding.resource)
@@ -379,7 +399,7 @@ export class RemoteAccessService extends TypertRemoteService {
       // The resource union is extended by Host domains.
       // oxlint-disable-next-line typescript/no-unnecessary-condition
       const allResources = resource.kind === 'global'
-        ? [...entry.policy.globalActions ?? []].filter(action => !action.startsWith('event:')).sort()
+        ? [...global].filter(action => !action.startsWith('event:')).sort()
         : []
       for (const action of allResources) actions.add(action)
       if (actions.size > 0) grants.push(Object.freeze({

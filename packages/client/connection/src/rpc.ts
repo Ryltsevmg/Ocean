@@ -1,5 +1,6 @@
 /** Generic unary RPC contracts shared by the Host and Client Connection halves. */
 
+import type { DeviceScope } from './device-scopes.ts'
 import type { Branded } from '@ocean/ocean-brand'
 import type { PeerScope, Principal } from '@ocean/ocean-typert-protocol'
 
@@ -278,6 +279,13 @@ export interface HostConnectionHandle {
    * @returns Whether the Peers share a live device login.
    */
   sharesDeviceSession?(first: PeerScope, second: PeerScope): boolean
+
+  /**
+   * Read the rights of the device behind a live login.
+   * @param deviceId - Device the Peer's principal names.
+   * @returns Its scopes, every scope for a device created before scopes, or undefined without a live login.
+   */
+  deviceScopes?(deviceId: string): readonly DeviceScope[] | undefined
 
   /**
    * Authenticate one frontend index request, owning a token redirect or 401.

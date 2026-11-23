@@ -52,6 +52,7 @@ export { Peer } from './peer.ts'
 export type { PeerOptions } from './peer.ts'
 export type { ConnectionWebSocket, ConnectionWebSocketFactory } from './connect-protocol.ts'
 export { CONNECT_PATH, type ConnectionInteractions } from './connect-protocol.ts'
+export type { DeviceScope } from './device-scopes.ts'
 export {
   clientRequestSchema,
   rpcErrorSchema,
@@ -150,10 +151,10 @@ export async function apply(ctx: Context, config?: ConnectionConfig): Promise<vo
     closeAdmin = await listenDeviceAdmin(resolved.deviceAdminSocket, async (command) => {
       switch (command.action) {
         case 'list': return deviceLogin.tokens.list()
-        case 'create': return deviceLogin.tokens.issue(command.label)
+        case 'create': return deviceLogin.tokens.issue(command.label, command.scopes)
         case 'pair': {
           const grant = await deviceLogin.tokens.createPairing(command.label,
-            (command.ttlSeconds ?? resolved.devicePairingTtlSeconds) * 1000)
+            (command.ttlSeconds ?? resolved.devicePairingTtlSeconds) * 1000, command.scopes)
           return {
             grant: grant.secret,
             expiresAt: grant.expiresAt,

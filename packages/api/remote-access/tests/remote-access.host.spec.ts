@@ -387,6 +387,49 @@ describe('RemoteAccessService global actions', () => {
   })
 })
 
+describe('RemoteAccessService global actions per principal', () => {
+  const OTHER_GUEST: Principal = { kind: 'test-guest', guest: 'b' }
+
+  it('answers global actions for each principal, in decisions, item checks, and snapshots', async () => {
+    const { ctx, access } = await setup()
+    const policy = new GuestPolicy()
+    const held = new Map<string, ReadonlySet<RemoteAccessAction>>([
+      [JSON.stringify(GUEST), new Set<RemoteAccessAction>(['notes/rooms'])],
+    ])
+    const globalActions = vi.fn((principal: Principal) => held.get(JSON.stringify(principal)) ?? new Set<RemoteAccessAction>())
+    access.registerPolicy('test-guest', { bindings: policy.bindings, globalActions })
+    expect(access.decide(ask(GUEST, 'notes/rooms', ROOM2))).toEqual({ kind: 'allow' })
+    expect(access.decide(ask(OTHER_GUEST, 'notes/rooms', ROOM2))).toEqual({ kind: 'deny', reason: 'no-allow' })
+    expect(access.decide(ask(GUEST, 'notes/write', ROOM))).toEqual({ kind: 'deny', reason: 'no-allow' })
+    expect(ctx.extend({ invocation: invocationOf(ctx, GUEST, 'rooms', 'notes') }).remoteAccess.allows(ROOM2)).toBe(true)
+    expect(ctx.extend({ invocation: invocationOf(ctx, OTHER_GUEST, 'rooms', 'notes') }).remoteAccess.allows(ROOM2)).toBe(false)
+    expect(access.snapshotFor(GUEST)).toEqual({
+      type: 'baseline', owner: false,
+      grants: [{ resource: GLOBAL, actions: ['notes/rooms'], allResources: ['notes/rooms'] }],
+    })
+    // A principal whose function answers nothing holds no grant.
+    expect(access.snapshotFor(OTHER_GUEST)).toEqual({ type: 'baseline', owner: false, grants: [] })
+    // A later change is read on the next question without re-registering the policy.
+    held.set(JSON.stringify(GUEST), new Set<RemoteAccessAction>())
+    expect(access.decide(ask(GUEST, 'notes/rooms', ROOM2))).toEqual({ kind: 'deny', reason: 'no-allow' })
+    expect(globalActions).toHaveBeenCalled()
+  })
+
+  it('refuses with policy-failed when the global actions function throws, and logs once', async () => {
+    const { ctx, access } = await setup()
+    const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => {})
+    access.registerPolicy('test-guest', {
+      bindings: () => [],
+      globalActions: () => { throw new Error('scope store unavailable') },
+    })
+    expect(access.decide(ask(GUEST, 'notes/rooms', ROOM))).toEqual({ kind: 'deny', reason: 'policy-failed' })
+    expect(access.decide(ask(GUEST, 'notes/rooms', ROOM))).toEqual({ kind: 'deny', reason: 'policy-failed' })
+    expect(ctx.extend({ invocation: invocationOf(ctx, GUEST, 'rooms', 'notes') }).remoteAccess.allows(ROOM)).toBe(false)
+    expect(access.snapshotFor(GUEST)).toEqual({ type: 'baseline', owner: false, grants: [] })
+    expect(warn).toHaveBeenCalledTimes(2)
+  })
+})
+
 describe('RemoteAccessService.allows', () => {
   it('filters list items for non-owners on one resource without arguments', async () => {
     const { ctx, access } = await setup()

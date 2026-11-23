@@ -4,11 +4,12 @@ import { isAbsolute } from 'node:path'
 import { Command, InvalidArgumentError } from 'commander'
 import type { Context } from '@deepseek-ai/cordis'
 import { parseCmdline } from '@ocean/ocean-cmdline'
+import { DEVICE_SCOPES, parseDeviceScopes, type DeviceScope } from '@ocean/ocean-client-connection/device'
 
 type Operation =
   | { action: 'list' }
-  | { action: 'create'; label: string }
-  | { action: 'pair'; label: string; ttlSeconds?: number }
+  | { action: 'create'; label: string; scopes?: DeviceScope[] }
+  | { action: 'pair'; label: string; ttlSeconds?: number; scopes?: DeviceScope[] }
   | { action: 'rotate' | 'revoke'; id: string }
 
 type AdminReply = { ok: true; value: string } | { ok: false; committed: boolean; cleanupFailed: boolean }
@@ -106,7 +107,9 @@ export function runDeviceAdmin(ctx: Context): void {
     if (socket === undefined) {
       ctx.inject(['deviceBootstrap'], (scope) => {
         scope.effect(() => ready.onReady(() => {
-          const result = operation.action === 'create' ? scope.deviceBootstrap.issue(operation.label) : scope.deviceBootstrap.list()
+          const result = operation.action === 'create'
+            ? scope.deviceBootstrap.issue(operation.label, operation.scopes)
+            : scope.deviceBootstrap.list()
           void result.then((value) => { console.log(JSON.stringify(value)); exit(0) }, failure)
         }), 'remote-device: local bootstrap')
       })
@@ -133,17 +136,27 @@ export function runDeviceAdmin(ctx: Context): void {
     }
   }
   program.command('list').description('List devices and their access state').action(() => { run({ action: 'list' }) })
+  const scopeOption = (): [string, string, (value: string, previous: string[]) => string[], string[]] => [
+    '--scope <name>', `a right the device holds; repeat to name several (${DEVICE_SCOPES.join(', ')}); every right when absent`,
+    (value, previous) => [...previous, value], [],
+  ]
+  const readScopes = (names: string[]): { scopes?: DeviceScope[] } => {
+    if (names.length === 0) return {}
+    try { return { scopes: parseDeviceScopes(names) } } catch (error) { return program.error((error as Error).message) }
+  }
   program.command('create').description('Create a device and return its token once').argument('<label>')
-    .action((label: string) => { run({ action: 'create', label }) })
+    .option(...scopeOption())
+    .action((label: string, options: { scope: string[] }) => { run({ action: 'create', label, ...readScopes(options.scope) }) })
   program.command('pair').description('Create a one-time link that adds a device without typing its token')
     .argument('<label>')
     .option('--url <https-url>', 'HTTPS address clients use to reach this Host, including any mount path; the Host supplies its public URL when it has one')
+    .option(...scopeOption())
     .option('--ttl <seconds>', 'how long the link stays valid, 30 to 3600; the Host default applies otherwise', (value) => {
       const parsed = Number(value)
       if (!/^\d+$/u.test(value) || parsed < 30 || parsed > 3_600) throw new InvalidArgumentError('expected an integer from 30 to 3600')
       return parsed
     })
-    .action((label: string, options: { url?: string; ttl?: number }) => {
+    .action((label: string, options: { url?: string; ttl?: number; scope: string[] }) => {
       let address: URL | undefined
       if (options.url !== undefined) {
         try { address = new URL(options.url) } catch { program.error('--url must be a valid HTTPS address'); return }
@@ -151,7 +164,7 @@ export function runDeviceAdmin(ctx: Context): void {
           program.error('--url must be an HTTPS address without credentials, a query, or a fragment')
         }
       }
-      run({ action: 'pair', label, ...options.ttl === undefined ? {} : { ttlSeconds: options.ttl } }, (value) => {
+      run({ action: 'pair', label, ...options.ttl === undefined ? {} : { ttlSeconds: options.ttl }, ...readScopes(options.scope) }, (value) => {
         const reply = JSON.parse(value) as { grant: string; expiresAt: number; address?: string }
         const target = address?.href ?? reply.address
         if (target === undefined) throw new Error('pass --url: this Host does not advertise an HTTPS address')

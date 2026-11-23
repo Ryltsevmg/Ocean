@@ -5,6 +5,7 @@
  * @module @ocean/ocean-api-gateway
  */
 
+import { actionsOfScopes } from './device-scope-actions.ts'
 import { randomUUID } from 'node:crypto'
 import { Context, Service, symbols } from '@deepseek-ai/cordis'
 import type {
@@ -249,22 +250,8 @@ export class TypertGatewayService extends Service implements TypertGateway {
     const resolved = TypertGatewayService.Config(config)
     this.approvalTimeoutMs = resolved.approvalTimeoutMs
     ctx.remoteAccess.registerPolicy('remote-device', {
-      globalActions: new Set([
-        'session/list', 'session/search', 'session/create', 'session/rename', 'session/prompt', 'session/cancel',
-        'session/page', 'session/events', 'session/follow', 'session/state', 'session/wait', 'session/attachment',
-        'session/observeEvent', 'session/observeState', 'session/observeProjections', 'session/projections',
-        'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
-        'workspaceFiles/search', 'workspaceFiles/changes', 'fileUploads/upload',
-        'terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach',
-        'workspace/follow', 'workspace/create', 'workspace/initializeDefault', 'directoryPicker/list',
-        'session/control', 'session/modelCatalog', 'session/selectModel', 'session/initializeDefaultModel',
-        'settings/describe', 'settings/update', 'settings/replace', 'settings/mutate', 'event:settings/document-updated',
-        'credentials/describe', 'credentials/set', 'credentials/unset', 'event:credentials/reference-updated',
-        'llm/listProviders', 'llm/listConfigurableProviders',
-        'userQuestions/attachWait', 'userQuestions/answer',
-        'event:api-session/activity', 'event:api-session/added', 'event:api-session/error',
-        'event:api-session/removed', 'event:api-session/status',
-      ]),
+      // A live login's scopes; no live login means the device was revoked or its login ended, so nothing is allowed.
+      globalActions: principal => actionsOfScopes(this.ctx.get('connection')?.deviceScopes?.(principal.deviceId) ?? []),
       bindings: () => [],
     })
     ctx.on('internal/service', () => {
