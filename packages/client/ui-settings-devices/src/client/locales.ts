@@ -2,7 +2,7 @@
 
 /** Locale keys the section renders. */
 export type DevicesLocaleKey =
-  | 'title' | 'intro' | 'loading' | 'empty' | 'loadFailed' | 'retry'
+  | 'title' | 'intro' | 'loading' | 'empty' | 'loadFailed' | 'retry' | 'unmanaged'
   | 'active' | 'revoked' | 'revoke' | 'confirm' | 'cancel' | 'revoking' | 'revokeFailed'
   | 'rights' | 'allRights'
 
@@ -13,6 +13,7 @@ export const en: Record<DevicesLocaleKey, string> = {
   loading: 'Loading devices…',
   empty: 'No device is signed in to this Host yet.',
   loadFailed: 'Devices could not be loaded. Check the connection to this Host, then retry.',
+  unmanaged: 'This Host does not manage devices, so it has no device list. Device access is enabled only for a Host started with device authentication.',
   retry: 'Retry',
   active: 'Active',
   revoked: 'Revoked',
@@ -32,6 +33,7 @@ export const zh: Record<DevicesLocaleKey, string> = {
   loading: '正在加载设备…',
   empty: '还没有设备登录此 Host。',
   loadFailed: '无法加载设备。请检查与此 Host 的连接，然后重试。',
+  unmanaged: '此 Host 不管理设备，因此没有设备列表。只有在启用设备认证的情况下启动的 Host 才会启用设备访问。',
   retry: '重试',
   active: '活动',
   revoked: '已吊销',
@@ -51,6 +53,7 @@ export const ja = {
   loading: 'デバイスを読み込み中…',
   empty: 'このホストにサインインしているデバイスはまだありません。',
   loadFailed: 'デバイスを読み込めませんでした。このホストへの接続を確認してから再試行してください。',
+  unmanaged: 'このホストはデバイスを管理していないため、デバイス一覧はありません。デバイス認証を有効にして起動したホストでのみ、デバイスアクセスが有効になります。',
   retry: '再試行',
   active: '有効',
   revoked: '取り消し済み',
@@ -70,6 +73,7 @@ export const es = {
   loading: 'Cargando dispositivos…',
   empty: 'Todavía no hay ningún dispositivo con sesión iniciada en este Host.',
   loadFailed: 'No se pudieron cargar los dispositivos. Compruebe la conexión con este Host y vuelva a intentarlo.',
+  unmanaged: 'Este Host no gestiona dispositivos, así que no tiene lista de dispositivos. El acceso por dispositivo solo se habilita en un Host iniciado con autenticación de dispositivos.',
   retry: 'Reintentar',
   active: 'Activo',
   revoked: 'Revocado',
@@ -89,6 +93,7 @@ export const fr = {
   loading: 'Chargement des appareils…',
   empty: "Aucun appareil n'est encore connecté à ce Host.",
   loadFailed: 'Les appareils n’ont pas pu être chargés. Vérifiez la connexion à ce Host, puis réessayez.',
+  unmanaged: 'Ce Host ne gère pas d’appareils : il n’a donc pas de liste. L’accès par appareil n’est activé que pour un Host démarré avec l’authentification par appareil.',
   retry: 'Réessayer',
   active: 'Actif',
   revoked: 'Révoqué',
@@ -108,6 +113,7 @@ export const de = {
   loading: 'Geräte werden geladen…',
   empty: 'Bei diesem Host ist noch kein Gerät angemeldet.',
   loadFailed: 'Die Geräte konnten nicht geladen werden. Prüfen Sie die Verbindung zu diesem Host und versuchen Sie es erneut.',
+  unmanaged: 'Dieser Host verwaltet keine Geräte und hat deshalb keine Geräteliste. Gerätezugriff gibt es nur für einen Host, der mit Geräteauthentifizierung gestartet wurde.',
   retry: 'Erneut versuchen',
   active: 'Aktiv',
   revoked: 'Widerrufen',
@@ -127,6 +133,7 @@ export const ru = {
   loading: 'Загрузка устройств…',
   empty: 'На этот Host ещё не входило ни одно устройство.',
   loadFailed: 'Не удалось загрузить устройства. Проверьте подключение к этому Host и повторите попытку.',
+  unmanaged: 'Этот Host не управляет устройствами, поэтому списка устройств нет. Доступ по устройствам есть только у Host, запущенного с аутентификацией устройств.',
   retry: 'Повторить',
   active: 'Активно',
   revoked: 'Отозвано',
@@ -146,6 +153,7 @@ export const pt = {
   loading: 'A carregar dispositivos…',
   empty: 'Ainda nenhum dispositivo iniciou sessão neste Host.',
   loadFailed: 'Não foi possível carregar os dispositivos. Verifique a ligação a este Host e tente novamente.',
+  unmanaged: 'Este Host não gere dispositivos, por isso não tem lista de dispositivos. O acesso por dispositivo só é ativado num Host iniciado com autenticação de dispositivos.',
   retry: 'Tentar novamente',
   active: 'Ativo',
   revoked: 'Revogado',
@@ -165,6 +173,7 @@ export const ko = {
   loading: '기기를 불러오는 중…',
   empty: '아직 이 Host에 로그인한 기기가 없습니다.',
   loadFailed: '기기를 불러오지 못했습니다. 이 Host와의 연결을 확인한 뒤 다시 시도하세요.',
+  unmanaged: '이 Host는 기기를 관리하지 않으므로 기기 목록이 없습니다. 기기 액세스는 기기 인증으로 시작된 Host에서만 사용할 수 있습니다.',
   retry: '다시 시도',
   active: '활성',
   revoked: '취소됨',

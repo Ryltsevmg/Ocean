@@ -104,12 +104,13 @@ export function DevicesSection({ t, useDevices, reload, revoke }: DevicesSection
       <h2 className={css.heading}>{t('title')}</h2>
       <p className={css.intro}>{t('intro')}</p>
       {state.status === 'loading' && <p className={css.status} role="status">{t('loading')}</p>}
-      {state.status === 'failed' && (
+      {state.status === 'failed' && state.unmanaged !== true && (
         <div className={css.failure} role="alert">
           <p className={css.failureText}>{t('loadFailed')}</p>
           <Button variant="outline" onClick={reload}>{t('retry')}</Button>
         </div>
       )}
+      {state.status === 'failed' && state.unmanaged === true && <p className={css.status}>{t('unmanaged')}</p>}
       {state.status === 'ready' && state.devices.length === 0 && <p className={css.status}>{t('empty')}</p>}
       {state.status === 'ready' && state.devices.length > 0 && (
         <ul className={css.list}>

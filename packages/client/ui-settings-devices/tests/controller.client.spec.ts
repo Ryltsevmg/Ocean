@@ -33,7 +33,7 @@ describe('DevicesController', () => {
   it('reports a refused read and a failed carrier the same way, keeping no rows', async () => {
     const devices = remote()
     const controller = new DevicesController(devices)
-    devices.list.mockResolvedValue({ ok: false, error: new RemoteError('devices/unavailable', 'no registry', {}) })
+    devices.list.mockResolvedValue({ ok: false, error: new RemoteError('devices/not-found', 'gone', { id: LAPTOP }) })
 
     await controller.reload()
     expect(controller.state.getSnapshot()).toEqual({ status: 'failed', devices: [] })
@@ -41,6 +41,19 @@ describe('DevicesController', () => {
     devices.list.mockRejectedValue(new Error('carrier closed'))
     await controller.reload()
     expect(controller.state.getSnapshot()).toEqual({ status: 'failed', devices: [] })
+  })
+
+  it('marks a Host without a device registry, and clears the mark once a read succeeds', async () => {
+    const devices = remote()
+    const controller = new DevicesController(devices)
+    devices.list.mockResolvedValue({ ok: false, error: new RemoteError('devices/unavailable', 'no registry', {}) })
+
+    await controller.reload()
+    expect(controller.state.getSnapshot()).toEqual({ status: 'failed', devices: [], unmanaged: true })
+
+    devices.list.mockResolvedValue({ ok: true, value: [laptop] })
+    await controller.reload()
+    expect(controller.state.getSnapshot()).toEqual({ status: 'ready', devices: [laptop] })
   })
 
   it('drops a read that a newer read superseded, so a retry cannot overwrite fresher rows', async () => {

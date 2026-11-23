@@ -47,6 +47,13 @@ describe('DevicesSection', () => {
     expect(actions.reload).toHaveBeenCalledTimes(2)
   })
 
+  it('says the Host manages no devices instead of offering a retry that cannot help', () => {
+    renderSection({ status: 'failed', devices: [], unmanaged: true })
+
+    expect(document.body.textContent).toContain(en.unmanaged)
+    expect(screen.queryByRole('button', { name: en.retry })).toBeNull()
+  })
+
   it('says so when the Host has no devices', () => {
     renderSection({ devices: [] })
 

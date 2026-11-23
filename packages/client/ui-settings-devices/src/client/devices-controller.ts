@@ -26,6 +26,11 @@ export interface DevicesState {
   revoking?: DeviceId
   /** Device whose revocation failed; its row carries the message and offers Retry. */
   revokeFailed?: DeviceId
+  /**
+   * The Host runs without a device registry, so it has no inventory to show and
+   * no retry can change that; the section says so instead of offering Retry.
+   */
+  unmanaged?: boolean
 }
 
 /** Reads and revokes devices for one section instance. */
@@ -55,9 +60,12 @@ export class DevicesController {
     }
     if (generation !== this.generation) return
     const devices = result?.ok === true ? result.value : undefined
+    const unmanaged = result?.ok === false && result.error.code === 'devices/unavailable'
     this.state.update((state) => {
       state.status = devices === undefined ? 'failed' : 'ready'
       state.devices = devices ?? []
+      if (unmanaged) state.unmanaged = true
+      else delete state.unmanaged
     })
   }
 
