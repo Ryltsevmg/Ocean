@@ -46,7 +46,7 @@ kind: "package-reference"
 |---|---|---|
 | `policy` | `ask` | 没有 `approval/policy` 覆盖的会话的默认策略 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#oceanocean-user-approval)是每个受支持字段及其 JSDoc 的穷尽式真源。`setPolicy(agent, policy)` 切换运行中的 agent 的策略，并为它的下一个模型步骤排队一条模型体验一节所述的切换通知；`setApprovalPolicy(session, policy)` 是会话初始化使用的直接持久写入路径。
+生成的[配置目录](../../../docs/config-catalog.zh.md#oceanocean-user-approval)是每个受支持字段及其 JSDoc 的穷尽式真源。`setPolicy(agent, policy)` 切换运行中的 agent 的策略，并为它的下一个模型步骤排队一条模型体验一节所述的切换通知；`setApprovalPolicy(session, policy)` 是会话初始化使用的直接持久写入路径。`policyOf(session)` 返回有效策略，供必须把策略拒绝与应答者拒绝区分开报告的消费者使用。
 
 ### 请求决定
 

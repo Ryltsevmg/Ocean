@@ -146,7 +146,7 @@ describe('approveEscalation', () => {
 
   it('maps each non-grant outcome to its distinct verbatim text (subject in the rejection)', async () => {
     await expect(approveEscalation(req({ subject: 'operation' }), ingredients({ approver: approver('rejected') })))
-      .rejects.toThrow('the user rejected escalating this operation to "workspace-write"; it stays denied, so stop and explain instead of working around it')
+      .rejects.toThrow('escalating this operation to "workspace-write" was denied; it stays denied, so stop and explain instead of working around it')
     await expect(approveEscalation(req(), ingredients({ approver: approver('cancelled') })))
       .rejects.toThrow('approval for escalating to "workspace-write" was cancelled')
     await expect(approveEscalation(req(), ingredients({ approver: approver('unavailable') })))

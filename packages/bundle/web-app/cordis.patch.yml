@@ -23,6 +23,28 @@
   config:
     approvalTimeoutMs: !!js "ctx.get('profileContext')?.name === 'serve' ? 120000 : 0"
 
+# An interactive surface keeps approvals. Full access lifts the sandbox, but an
+# action that asks before running still asks the person in front of it; the
+# base row pairs Full access with `never`, which suits the automation profiles
+# where nobody can answer. This restates the whole table because a patch
+# replaces the targeted row's config.
+- id: approval
+  config:
+    policy: ask
+
+- id: permission
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: ask
+
 # ── surface-specific values the base deliberately omits ─────────────────────
 
 - id: system-prompt

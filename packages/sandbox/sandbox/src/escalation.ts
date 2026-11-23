@@ -246,7 +246,7 @@ export async function approveEscalation<A, C>(request: EscalationRequest, approv
     case 'allowed-once': return mode as SandboxMode
     case 'rejected':
       throw new SandboxEscalationError(
-        `the user rejected escalating this ${subject} to "${mode}"; it stays denied, so stop and explain instead of working around it`,
+        `escalating this ${subject} to "${mode}" was denied; it stays denied, so stop and explain instead of working around it`,
         'SANDBOX_ESCALATION_REJECTED',
       )
     case 'cancelled':
