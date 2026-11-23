@@ -84,6 +84,8 @@ GET `/connect/bootstrap` 返回已登录设备 Peer 对应的 JSON 注入表，�
 
 设备的权限范围决定其活动登录可调用的 Remote 操作：`sessions:read`、`sessions:write`、`files:read`、`files:write`、`terminal:operate` 和 `settings:manage`，它们到操作的映射见[网关](../../api/gateway/README.zh.md)。`create` 和 `pair` 接受 `scopes`（命令行上可重复使用 `--scope`）；不指定时设备持有全部权限。登录不再有效的设备不报告任何权限，因此即使陈旧的 Peer 比登录存活更久，网关也会拒绝其调用。
 
+`DeviceClient.probe(signal)` 通过 `HEAD /connect` 读取 Host 标识，不发送任何凭据，因此调用方可以在首次登录前固定标识或说明某个地址背后是哪台机器。当回复不是兼容的设备端点时报告 `DEVICE_IDENTITY_INVALID`，对拒绝的分类与登录一致。
+
 管理命令 `pair` 创建一次性配对授权，新设备用它换取自己的设备令牌，因此无需手动输入或复制令牌。授权在设备注册表中只保存哈希，有效期为 `devicePairingTtlSeconds`（默认 600 秒；命令可指定 30 至 3600 秒），只能使用一次。Host 同时最多保留 16 个未过期授权，超出时报告 `DEVICE_PAIRING_CAPACITY`。客户端向 POST `/connect/pair` 发送请求，以授权作为持有者令牌并附带 `Ocean-Device-Protocol: 1`。Host 应用与 `/connect` 相同的 HTTPS 和 Origin 检查，所有授权在每个时间窗口内共用一份尝试预算（`maxDeviceExchangesPerWindow`、`deviceExchangeWindowMs`），然后在一次凭据写入中消耗授权并创建设备。成功时返回 `200`，正文为 `{ id, token }`，并带有 Host 标识头。未知、已过期和已使用的授权都返回 `401`。新令牌随后与其他令牌一样通过 `/connect` 登录，`rotate` 和 `revoke` 对它同样有效。
 
 设备准入在容量耗尽时返回 503。`maxDeviceTransports` 限制整个 Host 上等待验证的请求与活动 HTTP 或 WebSocket 传输的总数。`maxDeviceTransportsPerDevice` 限制单台设备所有登录中的活动传输数量。租约开始释放时立即失去回答事件的权限，但其容量名额保留至 Peer 清理完成。

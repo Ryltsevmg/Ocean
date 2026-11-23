@@ -22,6 +22,7 @@ export const DESKTOP_IPC = {
   remoteForm: 'ocean-desktop:remote-form',
   remoteConnect: 'ocean-desktop:remote-connect',
   remoteForget: 'ocean-desktop:remote-forget',
+  remoteProbe: 'ocean-desktop:remote-probe',
   remotePairLink: 'ocean-desktop:remote-pair-link',
   remotePair: 'ocean-desktop:remote-pair',
   remoteClose: 'ocean-desktop:remote-close',

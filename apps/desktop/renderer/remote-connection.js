@@ -11,6 +11,7 @@ const title = document.querySelector('#title')
 const hint = document.querySelector('#hint')
 const rememberRow = document.querySelector('#remember-row')
 const saveHint = document.querySelector('#save-hint')
+const identity = document.querySelector('#host-identity')
 const addressField = document.querySelector('#address-field')
 const tokenRow = document.querySelector('#token-row')
 const rememberField = document.querySelector('#remember-field')
@@ -71,12 +72,35 @@ function validAddress() {
   const url = URL.parse(address.value.trim())
   return url !== null && url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash
 }
+/**
+ * Probe the entered address without sending a token, so the form can name the machine
+ * it reaches and refuse an address that answers as a different one.
+ */
+let probeSequence = 0
+let probeTimer
+async function probeAddress() {
+  const sequence = ++probeSequence
+  const target = address.value.trim()
+  identity.hidden = true
+  if (pairing !== undefined || !validAddress() || target === '') return
+  let result
+  try { result = await bridge.probe(target) } catch (_error) { return }
+  if (sequence !== probeSequence || result.kind === 'failed') return
+  const shortId = result.hostId.slice(0, 8)
+  const routes = result.routes ?? []
+  identity.textContent = result.known && routes.length > 0
+    ? view.messages.hostRoutes.replace('{id}', shortId).replace('{routes}', routes.join(', '))
+    : view.messages.hostIdentity.replace('{id}', shortId)
+  identity.hidden = false
+}
 address.addEventListener('input', () => {
   if (address.hasAttribute('aria-invalid')) {
     address.removeAttribute('aria-invalid')
     failure.hidden = true
   }
   updateForget()
+  clearTimeout(probeTimer)
+  probeTimer = setTimeout(() => { void probeAddress() }, 400)
 })
 refreshSavedAddresses()
 connect.disabled = false
