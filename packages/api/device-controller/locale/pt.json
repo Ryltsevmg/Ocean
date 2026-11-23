@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "API de administração de dispositivos",
+    "description": "Lista os dispositivos do Host com as suas permissões e revoga um deles."
+  }
+}

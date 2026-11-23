@@ -14,6 +14,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 
 | Package | Config | Description |
 |---|---|---|
+| `@ocean/ocean-api-device-controller` | no | Owner-only Remote namespace for the Host device inventory and revocation |
 | `@ocean/ocean-api-gateway` | yes | Typert Remote Host dispatcher and Client API endpoint |
 | `@ocean/ocean-api-job-controller` | yes | Job Remote observation stream and the reference-counted client job-output service |
 | `@ocean/ocean-api-remote-access` | no | Method-level Remote access control for non-owner Peers and the per-Peer access snapshot |
@@ -99,6 +100,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@ocean/ocean-client-ui-settings` | no | Settings domain base plugin: shared configuration forms and the canonical settings slot-type contract |
 | `@ocean/ocean-client-ui-settings-account` | yes | Manage DeepSeek login and open Platform billing pages |
 | `@ocean/ocean-client-ui-settings-agent-loop` | no | Settings page of the agent loop on the ocean web client's Plugins page: the parallel tool-call cap of the agent-loop namespace |
+| `@ocean/ocean-client-ui-settings-devices` | no | Settings section listing the Host's paired devices and revoking one |
 | `@ocean/ocean-client-ui-settings-general` | no | Settings ownerless-copy and product onboarding plugin: the General section, shell trigger/header chrome content, settings dictionaries, and the versioned welcome notice |
 | `@ocean/ocean-client-ui-settings-models` | yes | Models settings and shared product-onboarding dialogs over existing settings and credential joins |
 | `@ocean/ocean-client-ui-settings-plugin-inventory` | no | Read-only Cordis Loader inventory tab in Web Plugins settings |

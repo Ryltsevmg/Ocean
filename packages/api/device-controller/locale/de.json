@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Geräteverwaltungs-API",
+    "description": "Listet die Geräte des Hosts mit ihren Rechten auf und widerruft eines davon."
+  }
+}

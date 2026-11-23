@@ -144,6 +144,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   workspaceChanges: 'deliverables.md',
   terminalController: 'workspace.md',
   directoryPickerController: 'workspace.md',
+  deviceController: 'credentials.md',
 }
 
 /**
@@ -299,6 +300,9 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   DeviceId: 'credentials.md',
   DeviceMetadata: 'credentials.md',
   DeviceScope: 'credentials.md',
+  DeviceRecord: 'credentials.md',
+  DeviceRevokeRequest: 'credentials.md',
+  DeviceRevokeValue: 'credentials.md',
   RemoteAccessResource: 'typert.md',
   RemoteAccessResourceKind: 'typert.md',
   RemoteStream: 'typert.md',

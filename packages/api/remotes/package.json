@@ -65,6 +65,7 @@
   "devDependencies": {
     "@ocean/ocean-agent": "workspace:*",
     "@ocean/ocean-agent-preset-registry": "workspace:*",
+    "@ocean/ocean-api-device-controller": "workspace:*",
     "@ocean/ocean-api-gateway": "workspace:*",
     "@ocean/ocean-api-job-controller": "workspace:*",
     "@ocean/ocean-api-session-controller": "workspace:*",

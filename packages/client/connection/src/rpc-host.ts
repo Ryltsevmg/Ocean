@@ -17,7 +17,9 @@ import { isRemoteAuthority, isTrustedApiRequest } from './api-request-trust.ts'
 import { API_PATH } from './api-path.ts'
 import type { BrowserAuth } from './browser-auth.ts'
 import { DEVICE_SCOPES, type DeviceScope } from './device-scopes.ts'
-import { deviceRegistryKey, type DeviceId, type DeviceSession, type DeviceSessionKey } from './device-tokens.ts'
+import {
+  deviceRegistryKey, type DeviceId, type DeviceMetadata, type DeviceSession, type DeviceSessionKey,
+} from './device-tokens.ts'
 import type { DeviceLogin } from './device-login.ts'
 import { Peer } from './peer.ts'
 import { resolveDeviceTransportLimits } from './host-config.ts'
@@ -320,6 +322,15 @@ export class HostConnectionService extends Service implements HostConnectionHand
       }, expire)
     })
     return { peer, release }
+  }
+
+  /**
+   * Read the durable device inventory for an owner-facing administrative surface.
+   * @returns Every device's identity, label, revocation state, and stored scopes, without credential material.
+   */
+  async listDevices(): Promise<readonly DeviceMetadata[]> {
+    if (this.deviceLogin === undefined || this.disposed) throw new Error('client-connection: device login is unavailable')
+    return this.deviceLogin.tokens.list()
   }
 
   /**

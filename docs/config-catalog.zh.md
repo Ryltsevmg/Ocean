@@ -4167,6 +4167,7 @@ export interface Config {
 | --- | --- | --- |
 | `@ocean/ocean-acp-app` | `cmdlineArgs` | [`packages/bundle/acp-app/src/index.ts`](../packages/bundle/acp-app/src/index.ts) |
 | `@ocean/ocean-agent` | `sessionProjections` | [`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts) |
+| `@ocean/ocean-api-device-controller` | `connection` · `typert` | [`packages/api/device-controller/src/index.ts`](../packages/api/device-controller/src/index.ts) |
 | `@ocean/ocean-api-remote-access` | — | [`packages/api/remote-access/src/index.ts`](../packages/api/remote-access/src/index.ts) |
 | `@ocean/ocean-api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
 | `@ocean/ocean-authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
@@ -4207,6 +4208,7 @@ export interface Config {
 | `@ocean/ocean-client-ui-session` | — | [`packages/client/ui-session/src/index.ts`](../packages/client/ui-session/src/index.ts) |
 | `@ocean/ocean-client-ui-settings` | — | [`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts) |
 | `@ocean/ocean-client-ui-settings-agent-loop` | — | [`packages/client/ui-settings-agent-loop/src/index.ts`](../packages/client/ui-settings-agent-loop/src/index.ts) |
+| `@ocean/ocean-client-ui-settings-devices` | — | [`packages/client/ui-settings-devices/src/index.ts`](../packages/client/ui-settings-devices/src/index.ts) |
 | `@ocean/ocean-client-ui-settings-general` | — | [`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts) |
 | `@ocean/ocean-client-ui-settings-plugin-inventory` | — | [`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts) |
 | `@ocean/ocean-client-ui-settings-plugins` | — | [`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts) |
