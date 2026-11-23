@@ -1923,6 +1923,143 @@ describe('desktop main startup', () => {
     }
   })
 
+  it('closes the connection dialog on its own dismissal request', async () => {
+    await readyForUpdate()
+    const local = harness.windows[0]!
+    await local.shown.promise
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    expect(dialog.urls).toContain('dsh-app://shell/remote-connection.html')
+    expect(dialog.isDestroyed()).toBe(false)
+    await harness.handlers.get(DESKTOP_IPC.remoteClose)!({
+      sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame,
+    })
+    expect(dialog.isDestroyed()).toBe(true)
+    expect(local.isDestroyed()).toBe(false)
+  })
+
+  describe('pairing links', () => {
+    const grant = `${'a'.repeat(8)}-aaaa-4aaa-8aaa-${'a'.repeat(12)}.${'B'.repeat(43)}`
+    const token = `${'c'.repeat(8)}-cccc-4ccc-8ccc-${'c'.repeat(12)}.${'D'.repeat(43)}`
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'paired-host', 'ocean-device-epoch': 'epoch' }
+    const link = `ocean://pair?host=${encodeURIComponent('https://ocean.example/mount')}&label=Phone#${grant}`
+
+    /** Answer the pairing exchange, the pinned preflight, the login, and the bootstrap. */
+    function stubPairingHost(requests: string[]): void {
+      vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input, init) => {
+        const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+        const method = init?.method ?? 'GET'
+        requests.push(`${method} ${url.pathname}`)
+        if (url.pathname.endsWith('/connect/pair')) return Response.json({ id: 'device-id', token }, { headers: identity })
+        if (url.pathname.endsWith('/connect') && method === 'HEAD') return new Response(null, { status: 204, headers: identity })
+        if (url.pathname.endsWith('/connect') && method === 'POST') {
+          return new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } })
+        }
+        if (method === 'DELETE') return new Response(null, { status: 204 })
+        return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+      }))
+    }
+
+    async function openedDialog() {
+      const dialog = harness.windows.at(-1)!
+      await vi.waitFor(() => { expect(dialog.urls).toContain('dsh-app://shell/remote-connection.html') })
+      return { dialog, event: { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame } }
+    }
+
+    it('opens the form on a link, keeps the grant in the main process, and signs in pinned to the issuing Host after confirmation', async () => {
+      await readyForUpdate()
+      await harness.windows[0]!.shown.promise
+      const requests: string[] = []
+      stubPairingHost(requests)
+      harness.app.emit('open-url', { preventDefault: vi.fn() }, link)
+      const { event } = await openedDialog()
+      const form = await harness.handlers.get(DESKTOP_IPC.remoteForm)!(event)
+      expect(form).toMatchObject({ pairing: { address: 'https://ocean.example/mount/' } })
+      expect(JSON.stringify(form)).not.toContain(grant)
+      expect(requests).toEqual([])
+      const result = await harness.handlers.get(DESKTOP_IPC.remotePair)!(event)
+      expect(result).toMatchObject({ kind: 'connected' })
+      expect(requests.slice(0, 3)).toEqual(['POST /mount/connect/pair', 'HEAD /mount/connect', 'POST /mount/connect'])
+      expect(harness.views).toHaveLength(1)
+      await expect(Promise.resolve().then(() => harness.handlers.get(DESKTOP_IPC.remotePair)!(event))).rejects.toThrow('Rejected remote connection command')
+    })
+
+    it('replaces an open form when a link arrives and refuses a malformed link without opening anything', async () => {
+      await readyForUpdate()
+      await harness.windows[0]!.shown.promise
+      const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+      ;(menu as { click: () => void }).click()
+      const first = harness.windows.at(-1)!
+      harness.app.emit('open-url', { preventDefault: vi.fn() }, link)
+      const { dialog } = await openedDialog()
+      expect(dialog).not.toBe(first)
+      expect(first.isDestroyed()).toBe(true)
+      const count = harness.windows.length
+      harness.app.emit('open-url', { preventDefault: vi.fn() }, 'ocean://pair?host=nope')
+      expect(harness.windows).toHaveLength(count)
+      await vi.waitFor(() => {
+        expect(harness.dialog.showMessageBox).toHaveBeenCalledWith(expect.objectContaining({ message: en.remotePairLinkInvalid }))
+      })
+    })
+
+    it('stays pending after a failed attempt, then reports a rejected grant without exposing it', async () => {
+      await readyForUpdate()
+      await harness.windows[0]!.shown.promise
+      vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => new Response(null, { status: 401 })))
+      harness.app.emit('open-url', { preventDefault: vi.fn() }, link)
+      const { event } = await openedDialog()
+      const rejected = await harness.handlers.get(DESKTOP_IPC.remotePair)!(event)
+      expect(rejected).toEqual({ kind: 'failed', code: 'DEVICE_PAIRING_REJECTED', message: en.remotePairingRejected })
+      expect(JSON.stringify(rejected)).not.toContain(grant)
+      expect(harness.views).toHaveLength(0)
+      expect(await harness.handlers.get(DESKTOP_IPC.remoteForm)!(event)).toMatchObject({ pairing: { address: 'https://ocean.example/mount/' } })
+    })
+
+    it('accepts a pasted link from the form only through its own frame and validates it', async () => {
+      await readyForUpdate()
+      await harness.windows[0]!.shown.promise
+      const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+      ;(menu as { click: () => void }).click()
+      const { event } = await openedDialog()
+      const pairLink = harness.handlers.get(DESKTOP_IPC.remotePairLink)!
+      const foreign = { sender: harness.windows[0]!.webContents, senderFrame: event.senderFrame }
+      await expect(Promise.resolve().then(() => pairLink(foreign, link))).rejects.toThrow('Rejected remote connection command')
+      for (const invalid of [undefined, 42, 'ocean://pair?host=nope', 'x'.repeat(2049)]) {
+        expect(pairLink(event, invalid)).toMatchObject({ kind: 'failed', code: 'DESKTOP_REMOTE_PAIR_LINK_INVALID' })
+      }
+      expect(pairLink(event, link)).toEqual({ kind: 'pairing', address: 'https://ocean.example/mount/' })
+      expect(await harness.handlers.get(DESKTOP_IPC.remoteForm)!(event)).toMatchObject({ pairing: { address: 'https://ocean.example/mount/' } })
+    })
+
+    it('refuses to pair when no link is waiting', async () => {
+      await readyForUpdate()
+      await harness.windows[0]!.shown.promise
+      const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+      ;(menu as { click: () => void }).click()
+      const { event } = await openedDialog()
+      expect(await harness.handlers.get(DESKTOP_IPC.remotePair)!(event))
+        .toMatchObject({ kind: 'failed', code: 'DESKTOP_REMOTE_PAIR_LINK_INVALID' })
+    })
+
+    it('holds a link received during startup until the workspace is open, and reads one from a later launch', async () => {
+      await import('../src/main.ts')
+      await harness.preparing.promise
+      harness.app.emit('open-url', { preventDefault: vi.fn() }, link)
+      expect(harness.windows.some(window => window.urls.includes('dsh-app://shell/remote-connection.html'))).toBe(false)
+      harness.prepared.resolve()
+      await harness.hostStarted.promise
+      harness.hosts[0]!.ready.resolve()
+      await harness.navigated.promise
+      await vi.waitFor(() => {
+        expect(harness.windows.some(window => window.urls.includes('dsh-app://shell/remote-connection.html'))).toBe(true)
+      })
+      const first = harness.windows.at(-1)!
+      harness.app.emit('second-instance', {}, ['Ocean', link.replace('Phone', 'Tablet')])
+      await vi.waitFor(() => { expect(first.isDestroyed()).toBe(true) })
+    })
+  })
+
   it('refuses a new Host at the configured limit without disconnecting the existing Host', async () => {
     vi.stubEnv('OCEAN_DESKTOP_MAX_REMOTE_HOSTS', '1')
     await readyForUpdate()
@@ -2108,7 +2245,7 @@ describe('desktop main startup', () => {
       expect(window.show.mock.invocationCallOrder[0]).toBeLessThan(window.moveTop.mock.invocationCallOrder[0]!)
     }
     window.destroy()
-    harness.app.emit('second-instance')
+    harness.app.emit('second-instance', {}, [])
     const replacement = harness.windows[1]!
     await replacement.shown.promise
     expect(replacement.show).toHaveBeenCalledOnce()
@@ -2149,7 +2286,7 @@ describe('desktop main startup', () => {
     expect(harness.dialog.showMessageBox).not.toHaveBeenCalled()
     expect(window.hide).toHaveBeenCalledOnce()
     await host.stopping.promise
-    harness.app.emit('second-instance')
+    harness.app.emit('second-instance', {}, [])
     expect(window.show).not.toHaveBeenCalled()
     expect(window.focus).not.toHaveBeenCalled()
     host.exited.resolve()
@@ -2173,7 +2310,7 @@ describe('desktop main startup', () => {
     harness.trays[0]!.emit('click')
     expect(window.show).toHaveBeenCalledOnce()
     expect(window.focus).toHaveBeenCalled()
-    harness.app.emit('second-instance')
+    harness.app.emit('second-instance', {}, [])
     expect(window.show).toHaveBeenCalledTimes(2)
     // Locale changes relabel the tray together with the application menu.
     const relabels = harness.trays[0]!.setContextMenu.mock.calls.length

@@ -40,6 +40,7 @@ import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
+import { findPairingArgument, parsePairingLink, type PairingLink } from './remote-pairing.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
@@ -90,6 +91,7 @@ if (process.platform === 'linux') {
 }
 
 let focusPrimaryWindow = (): void => {}
+let openPairingArgument = (_argv: readonly string[]): void => {}
 let stopForRecovery = async (): Promise<void> => { await stopOperationReports() }
 let shuttingDown = false
 /**
@@ -538,6 +540,8 @@ async function main(): Promise<void> {
   let remoteConnectAbort: AbortController | undefined
   let remoteDialog: BrowserWindow | undefined
   let disconnectedRemoteAddress: string | undefined
+  let pendingPairing: PairingLink | undefined
+  let queuedPairing: PairingLink | undefined
   const remoteDialogUrl = `${SCHEME}://shell/remote-connection.html`
   const remoteStore = new RemoteConnectionStore(app.getPath('userData'), safeStorage)
   const remoteConfig = resolveDesktopRemoteConfig(process.env)
@@ -1497,6 +1501,11 @@ async function main(): Promise<void> {
     if (activate) window.show()
     else window.showInactive()
     enteredWorkspace = true
+    if (queuedPairing !== undefined) {
+      const pairing = queuedPairing
+      queuedPairing = undefined
+      void openRemoteDialog(undefined, pairing)
+    }
     if (raiseAfterUpdate) {
       raiseAfterUpdate = false
       window.moveTop()
@@ -1506,13 +1515,22 @@ async function main(): Promise<void> {
       window.webContents.openDevTools({ mode: 'detach' })
     }
   }
-  async function openRemoteDialog(disconnectedAddress?: string): Promise<void> {
+  async function openRemoteDialog(disconnectedAddress?: string, pairing?: PairingLink): Promise<void> {
     const parent = mainWindow
     if (parent === undefined || parent.isDestroyed() || isQuitting() || isMandatory()) return
-    if (remoteDialog !== undefined) { remoteDialog.focus(); return }
+    if (remoteDialog !== undefined && pairing === undefined) { remoteDialog.focus(); return }
+    if (remoteDialog !== undefined) {
+      // A pairing link replaces whatever the open form was showing.
+      const replaced = remoteDialog
+      remoteDialog = undefined
+      remoteConnectAbort?.abort()
+      replaced.destroy()
+    }
+    pendingPairing = pairing
     const window = new BrowserWindow({
-      parent, modal: true, show: false, width: 500, height: 500, minWidth: 360, minHeight: 420,
-      title: locale.messages.remoteConnectMenu, autoHideMenuBar: true,
+      parent, modal: true, show: false, useContentSize: true, width: 500, height: 460,
+      resizable: false, maximizable: false, fullscreenable: false,
+      title: locale.messages.remoteDialogTitle, autoHideMenuBar: true,
       webPreferences: { preload: appPreload, sandbox: true, contextIsolation: true, nodeIntegration: false },
     })
     remoteDialog = window
@@ -1525,6 +1543,7 @@ async function main(): Promise<void> {
       remoteConnectAbort?.abort()
       remoteDialog = undefined
       disconnectedRemoteAddress = undefined
+      pendingPairing = undefined
     })
     try {
       await window.loadURL(remoteDialogUrl)
@@ -1550,11 +1569,15 @@ async function main(): Promise<void> {
     )
     return {
       ...saved, address: disconnectedAddress ?? saved.addresses.at(-1), canSave: remoteStore.canSave,
+      pairing: pendingPairing === undefined ? undefined : { address: pendingPairing.address },
       notice: disconnectedAddress !== undefined ? locale.messages.remoteSessionEnded
         : saved.unreadable ? locale.messages.remoteSavedUnreadable : undefined,
       messages: {
+        title: locale.messages.remoteDialogTitle, hint: locale.messages.remoteDialogHint, pairHint: locale.messages.remotePairHint,
         address: locale.messages.remoteAddress, token: locale.messages.remoteToken, remember: locale.messages.remoteRemember,
-        connect: locale.messages.remoteConnect, forget: locale.messages.remoteForget, failure: locale.messages.remoteSwitchFailed,
+        connect: locale.messages.remoteConnect, forget: locale.messages.remoteForget,
+        cancel: locale.messages.cancel, failure: locale.messages.remoteSwitchFailed,
+        invalidAddress: locale.messages.remoteAddressInvalid, saveUnavailable: locale.messages.remoteSaveUnavailable,
         incompatible: locale.messages.remoteProtocolIncompatible,
         logoutUnconfirmed: locale.messages.remoteLogoutUnconfirmed,
         done: locale.messages.remoteDone, connecting: locale.messages.remoteConnecting,
@@ -1584,6 +1607,24 @@ async function main(): Promise<void> {
     if (typeof address !== 'string' || address.length > 2048 || typeof token !== 'string' || token.length > 512
       || typeof remember !== 'boolean') return remoteFailure('invalid-input', currentDesktopLocale().messages)
     return connectRemoteHost({ address, token, remember, window })
+  })
+  ipcMain.handle(DESKTOP_IPC.remotePairLink, (event, link: unknown) => {
+    assertRemoteDialog(event)
+    const messages = currentDesktopLocale().messages
+    const parsed = typeof link === 'string' && link.length <= 2048 ? parsePairingLink(link) : undefined
+    if (parsed === undefined) return remoteFailure('pair-link-invalid', messages)
+    pendingPairing = parsed
+    return { kind: 'pairing', address: parsed.address } satisfies DesktopRemoteResult
+  })
+  ipcMain.handle(DESKTOP_IPC.remotePair, async (event) => {
+    const window = assertRemoteDialog(event)
+    const pairing = pendingPairing
+    if (pairing === undefined) return remoteFailure('pair-link-invalid', currentDesktopLocale().messages)
+    const result = await connectRemoteHost({
+      address: pairing.address, token: '', remember: remoteStore.canSave, window, pairing: pairing.secret,
+    })
+    if (result.kind === 'connected' && pendingPairing === pairing) pendingPairing = undefined
+    return result
   })
 
   function attachRemoteView(owner: BrowserWindow, connection: RemoteConnection): WebContents {
@@ -1838,6 +1879,8 @@ async function main(): Promise<void> {
     token: string
     remember: boolean
     window: BrowserWindow
+    /** One-time pairing grant to exchange for a device token before signing in. */
+    pairing?: string
   }): Promise<DesktopRemoteResult> {
     const messages = currentDesktopLocale().messages
     if (switchingHost || remoteConnectionsClosing || isQuitting() || isMandatory()) return remoteFailure('busy', messages)
@@ -1848,13 +1891,19 @@ async function main(): Promise<void> {
     let next: RemoteDesktopHost | undefined
     let prepared: RemoteConnection | undefined
     try {
-      const token = input.token.trim()
+      let token = input.token.trim()
       const enteredAddress = input.address.trim()
+      const signal = AbortSignal.any([cancellation.signal, AbortSignal.timeout(15_000)])
+      let pinnedHostId: string | undefined
+      if (input.pairing !== undefined) {
+        const paired = await new DeviceClient(enteredAddress).pair(input.pairing, signal)
+        token = paired.token
+        pinnedHostId = paired.host.id
+      }
       const saved = token ? undefined : await remoteStore.read(enteredAddress || undefined)
       const address = enteredAddress || saved?.address
       if (!address) return remoteFailure('invalid-input', messages)
-      const signal = AbortSignal.any([cancellation.signal, AbortSignal.timeout(15_000)])
-      if (token) next = await RemoteDesktopHost.connect(address, token, signal)
+      if (token) next = await RemoteDesktopHost.connect(address, token, signal, pinnedHostId)
       else if (saved !== undefined) next = await RemoteDesktopHost.connect(address, saved.token, signal, saved.hostId)
       else return remoteFailure('token-required', messages)
       signal.throwIfAborted()
@@ -1938,9 +1987,25 @@ async function main(): Promise<void> {
   }
 
   if (app.isPackaged || process.env.OCEAN_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('ocean')
+  const openPairingLink = (link: string): void => {
+    const parsed = parsePairingLink(link)
+    if (parsed === undefined) {
+      void ordinaryMessageBox({ type: 'error', message: locale.messages.remotePairLinkInvalid })
+      return
+    }
+    if (!enteredWorkspace) { queuedPairing = parsed; return }
+    focusPrimaryWindow()
+    void openRemoteDialog(undefined, parsed)
+  }
+  openPairingArgument = (argv) => {
+    const link = findPairingArgument(argv)
+    if (link !== undefined) openPairingLink(link)
+  }
+  openPairingArgument(process.argv)
   app.on('open-url', (event, url) => {
     event.preventDefault()
     if (url === 'ocean://open' || url === 'ocean://open/' || url === 'dsh://open' || url === 'dsh://open/') focusPrimaryWindow()
+    else if (url.startsWith('ocean://pair')) openPairingLink(url)
   })
 
   app.on('activate', (_event, hasVisibleWindows) => {
@@ -2052,7 +2117,10 @@ async function main(): Promise<void> {
   publishUpdate(updateState)
 }
 
-const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })
+const ownsDesktopInstance = claimDesktopSingleInstance(app, (argv) => {
+  if (findPairingArgument(argv) === undefined) focusPrimaryWindow()
+  else openPairingArgument(argv)
+})
 
 if (ownsDesktopInstance) void app.whenReady().then(main).catch(async (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error)

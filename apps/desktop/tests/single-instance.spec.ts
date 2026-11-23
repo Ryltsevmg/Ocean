@@ -16,17 +16,17 @@ describe('desktop single-instance ownership', () => {
     expect(on).not.toHaveBeenCalled()
   })
 
-  it('routes a later launch to the primary process', () => {
-    let secondInstance: (() => void) | undefined
+  it('routes a later launch and its arguments to the primary process', () => {
+    let secondInstance: ((event: unknown, argv: string[]) => void) | undefined
     const focus = vi.fn()
     const application = {
       requestSingleInstanceLock: () => true,
       quit: vi.fn(),
-      on: vi.fn((_event: 'second-instance', listener: () => void) => { secondInstance = listener }),
+      on: vi.fn((_event: 'second-instance', listener: (event: unknown, argv: string[]) => void) => { secondInstance = listener }),
     } satisfies DesktopSingleInstanceApplication
 
     expect(claimDesktopSingleInstance(application, focus)).toBe(true)
-    secondInstance?.()
-    expect(focus).toHaveBeenCalledOnce()
+    secondInstance?.({}, ['ocean', 'ocean://pair?host=https%3A%2F%2Focean.example%2F'])
+    expect(focus).toHaveBeenCalledExactlyOnceWith(['ocean', 'ocean://pair?host=https%3A%2F%2Focean.example%2F'])
   })
 })

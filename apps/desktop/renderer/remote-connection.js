@@ -5,20 +5,46 @@ const token = document.querySelector('#token')
 const remember = document.querySelector('#remember')
 const connect = document.querySelector('#connect')
 const forget = document.querySelector('#forget')
+const closeButton = document.querySelector('#close')
 const failure = document.querySelector('#failure')
+const title = document.querySelector('#title')
+const hint = document.querySelector('#hint')
+const rememberRow = document.querySelector('#remember-row')
+const saveHint = document.querySelector('#save-hint')
+const addressField = document.querySelector('#address-field')
+const tokenRow = document.querySelector('#token-row')
+const rememberField = document.querySelector('#remember-field')
 const bridge = globalThis.oceanRemoteForm
 
 const view = await bridge.load()
 for (const name of ['address', 'token', 'remember']) {
   document.querySelector(`#${name}-label`).textContent = view.messages[name]
 }
+title.textContent = view.messages.title
+hint.textContent = view.messages.hint
 connect.textContent = view.messages.connect
 forget.textContent = view.messages.forget
+closeButton.textContent = view.messages.cancel
+saveHint.textContent = view.messages.saveUnavailable
+saveHint.hidden = view.canSave
+rememberRow.hidden = !view.canSave
 failure.textContent = view.notice ?? view.messages.failure
 failure.hidden = view.notice === undefined
 remember.disabled = !view.canSave
 if (view.address !== undefined) {
   address.value = view.address
+}
+/** Address of a pairing link waiting for the user's confirmation, or undefined in the ordinary form. */
+let pairing = view.pairing?.address
+function showPairing(target) {
+  pairing = target
+  hint.textContent = view.messages.pairHint.replace('{address}', target)
+  for (const field of [addressField, tokenRow, rememberField]) field.hidden = true
+  forget.hidden = true
+  failure.hidden = true
+  address.value = ''
+  connect.disabled = false
+  connect.focus()
 }
 const saved = new Set(view.addresses)
 let unreadable = view.unreadable
@@ -40,10 +66,22 @@ function selectedAddress() {
 function updateForget() {
   forget.hidden = !unreadable && selectedAddress() === undefined
 }
-address.addEventListener('input', updateForget)
+function validAddress() {
+  if (address.value.trim() === '') return true
+  const url = URL.parse(address.value.trim())
+  return url !== null && url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash
+}
+address.addEventListener('input', () => {
+  if (address.hasAttribute('aria-invalid')) {
+    address.removeAttribute('aria-invalid')
+    failure.hidden = true
+  }
+  updateForget()
+})
 refreshSavedAddresses()
 connect.disabled = false
-if (view.notice === undefined) address.focus()
+if (pairing !== undefined) showPairing(pairing)
+else if (view.notice === undefined) address.focus()
 else token.focus()
 
 async function perform(action) {
@@ -70,18 +108,49 @@ async function perform(action) {
     address.disabled = connected
     token.disabled = connected
     remember.disabled = connected || !view.canSave
+    closeButton.hidden = connected
     connect.textContent = connected ? view.messages.done : view.messages.connect
     if (connected) connect.focus()
   }
 }
 
+function closeDialog() {
+  void bridge.close().catch(() => {
+    failure.textContent = view.messages.failure
+    failure.hidden = false
+  })
+}
+closeButton.addEventListener('click', closeDialog)
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return
+  event.preventDefault()
+  closeDialog()
+})
+
 form.addEventListener('submit', event => {
   event.preventDefault()
   if (connected) {
-    void bridge.close().catch(() => {
-      failure.textContent = view.messages.failure
-      failure.hidden = false
+    closeDialog()
+    return
+  }
+  if (pairing !== undefined) {
+    void perform(() => bridge.pair())
+    return
+  }
+  const entered = address.value.trim()
+  if (entered.startsWith('ocean://')) {
+    void perform(async () => {
+      const result = await bridge.pairLink(entered)
+      if (result.kind === 'pairing') showPairing(result.address)
+      return result
     })
+    return
+  }
+  if (!validAddress()) {
+    address.setAttribute('aria-invalid', 'true')
+    failure.textContent = view.messages.invalidAddress
+    failure.hidden = false
+    address.focus()
     return
   }
   const secret = token.value
