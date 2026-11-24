@@ -1,9 +1,10 @@
 /** Node authentication client and wire constants for remote-device transports. */
 export {
   DeviceClient, DeviceClientError, DeviceProtocolVersionError, DeviceSessionRejectedError, DeviceSessionUnavailableError,
-  type DeviceClientErrorCode,
+  type DeviceClientErrorCode, type PairedDevice,
 } from './device-client.ts'
 export {
-  CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION,
+  CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_PAIR_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER,
+  DEVICE_PROTOCOL_VERSION,
   type HostId, type HostEpoch, type HostIdentity,
 } from './connect-protocol.ts'

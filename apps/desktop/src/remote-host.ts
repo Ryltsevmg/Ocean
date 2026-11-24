@@ -27,7 +27,11 @@ export class RemoteDesktopHost {
     const identity = await client.login(token, signal, expectedHostId)
     try {
       const injections = await client.bootstrap(signal)
-      assertRemoteBootstrapRelease(injections, release)
+      const hostRelease = assertRemoteBootstrapRelease(injections, release)
+      if (hostRelease.commit !== release.commit) {
+        console.warn(`ocean desktop: remote Host ${client.transportCredentials().address} runs ${hostRelease.version} from commit `
+          + `${hostRelease.commit ?? 'unknown'}; this app was built from ${release.commit ?? 'unknown'}`)
+      }
       return new RemoteDesktopHost(client, client.transportCredentials().address, identity.id, injections)
     } catch (error) {
       try { await client.logout(AbortSignal.timeout(5_000)) } catch (cleanupError) {

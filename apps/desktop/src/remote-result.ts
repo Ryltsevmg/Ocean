@@ -1,22 +1,23 @@
 /** Secret-free remote-connection results for the Desktop connection dialog. */
 import { DeviceClientError, DeviceProtocolVersionError, type DeviceClientErrorCode } from '@ocean/ocean-client-connection/device'
-import type { DesktopMessages } from './locale.ts'
+import { formatDesktopMessage, type DesktopMessages } from './locale.ts'
 import { RemoteConnectionStoreError } from './remote-connection-store.ts'
 import { RemoteBootstrapCompatibilityError } from './remote-bootstrap.ts'
 
 /** Local operation failures distinct from device-protocol failures. */
-export type DesktopRemoteFailure = 'invalid-input' | 'token-required' | 'busy' | 'host-limit' | 'timeout' | 'cancelled' | 'unknown'
+export type DesktopRemoteFailure = 'invalid-input' | 'token-required' | 'busy' | 'host-limit' | 'timeout' | 'cancelled' | 'pair-link-invalid' | 'unknown'
 
 const localCodes = {
   'invalid-input': 'DESKTOP_REMOTE_INVALID_INPUT', 'token-required': 'DESKTOP_REMOTE_TOKEN_REQUIRED',
   busy: 'DESKTOP_REMOTE_BUSY', 'host-limit': 'DESKTOP_REMOTE_HOST_LIMIT', timeout: 'DESKTOP_REMOTE_TIMEOUT',
-  cancelled: 'DESKTOP_REMOTE_CANCELLED', unknown: 'DESKTOP_REMOTE_FAILED',
+  cancelled: 'DESKTOP_REMOTE_CANCELLED', 'pair-link-invalid': 'DESKTOP_REMOTE_PAIR_LINK_INVALID', unknown: 'DESKTOP_REMOTE_FAILED',
 } as const satisfies Record<DesktopRemoteFailure, string>
 
 /** Dialog result; connection and credential persistence report independent outcomes. */
 export type DesktopRemoteResult =
   | { kind: 'connected'; persistence: 'saved' | 'skipped' | 'failed'; message?: string }
   | { kind: 'forgotten'; logout: 'confirmed' | 'unconfirmed'; message?: string }
+  | { kind: 'pairing'; address: string }
   | {
     kind: 'failed'
     code: DeviceClientErrorCode | RemoteConnectionStoreError['code']
@@ -24,13 +25,16 @@ export type DesktopRemoteResult =
     message: string
   }
 
+/** A failed dialog result. */
+export type DesktopRemoteFailureResult = Extract<DesktopRemoteResult, { kind: 'failed' }>
+
 /**
  * Present a local failure without exposing diagnostics or credentials.
  * @param code - Main-process operation classification.
  * @param messages - Current Desktop locale.
  * @returns A serializable localized failure.
  */
-export function remoteFailure(code: DesktopRemoteFailure, messages: DesktopMessages): DesktopRemoteResult {
+export function remoteFailure(code: DesktopRemoteFailure, messages: DesktopMessages): DesktopRemoteFailureResult {
   const copy = {
     'invalid-input': messages.remoteAddressInvalid,
     'token-required': messages.remoteTokenRequired,
@@ -38,6 +42,7 @@ export function remoteFailure(code: DesktopRemoteFailure, messages: DesktopMessa
     'host-limit': messages.remoteHostLimit,
     timeout: messages.remoteTimeout,
     cancelled: messages.remoteSwitchFailed,
+    'pair-link-invalid': messages.remotePairLinkInvalid,
     unknown: messages.remoteSwitchFailed,
   } satisfies Record<DesktopRemoteFailure, string>
   return { kind: 'failed', code: localCodes[code], message: copy[code] }
@@ -49,7 +54,7 @@ export function remoteFailure(code: DesktopRemoteFailure, messages: DesktopMessa
  * @param messages - Current Desktop locale.
  * @returns A secret-free localized failure.
  */
-export function remoteErrorResult(error: unknown, messages: DesktopMessages): DesktopRemoteResult {
+export function remoteErrorResult(error: unknown, messages: DesktopMessages): DesktopRemoteFailureResult {
   if (error instanceof AggregateError) {
     const primary = remoteErrorResult(error.errors[0], messages)
     return { ...primary, message: `${primary.message} ${messages.remoteDisconnectUnconfirmed}` }
@@ -58,7 +63,10 @@ export function remoteErrorResult(error: unknown, messages: DesktopMessages): De
     return { kind: 'failed', code: 'DEVICE_PROTOCOL_VERSION_INCOMPATIBLE', message: messages.remoteProtocolIncompatible }
   }
   if (error instanceof RemoteBootstrapCompatibilityError) {
-    return { kind: 'failed', code: 'DESKTOP_REMOTE_VERSION_INCOMPATIBLE', message: messages.remoteProtocolIncompatible }
+    const message = error.hostVersion === undefined || error.clientVersion === undefined
+      ? messages.remoteProtocolIncompatible
+      : formatDesktopMessage(messages.remoteVersionMismatch, { host: error.hostVersion, client: error.clientVersion })
+    return { kind: 'failed', code: 'DESKTOP_REMOTE_VERSION_INCOMPATIBLE', message }
   }
   if (error instanceof DeviceClientError) {
     const copy = {
@@ -73,6 +81,8 @@ export function remoteErrorResult(error: unknown, messages: DesktopMessages): De
       DEVICE_AUTH_FAILED: messages.remoteNetworkFailed,
       DEVICE_CONNECTION_FAILED: messages.remoteNetworkFailed,
       DEVICE_SIGN_IN_REQUIRED: messages.remoteTokenRequired,
+      DEVICE_PAIRING_REJECTED: messages.remotePairingRejected,
+      DEVICE_PAIRING_UNSUPPORTED: messages.remotePairingUnsupported,
     } satisfies Record<DeviceClientError['code'], string>
     return { kind: 'failed', code: error.code, message: copy[error.code] }
   }

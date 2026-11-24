@@ -145,6 +145,7 @@
     "@ocean/ocean-cordis-client-runner": "workspace:*",
     "@ocean/ocean-cordis-host-runner": "workspace:*",
     "@ocean/ocean-deliverable-file-references": "workspace:*",
+    "@ocean/ocean-error": "workspace:*",
     "@ocean/ocean-file-reference": "workspace:*",
     "@ocean/ocean-file-reference-local": "workspace:*",
     "@ocean/ocean-harness-dev-context": "workspace:*",

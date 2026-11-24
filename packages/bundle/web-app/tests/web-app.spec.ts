@@ -13,6 +13,7 @@ import * as AppBoot from '@ocean/ocean-app-boot'
 import { createLaunchEnvironmentSnapshot, OCEAN_LAUNCH_ENVIRONMENT_KEY } from '@ocean/ocean-launch-environment'
 import { bindUrlHost, type WebServer } from '@ocean/ocean-host-webserver'
 import { apply, Config, internals } from '../src/index.ts'
+import { tailscale, type TailscaleRun } from '../src/tailscale.ts'
 
 vi.mock('node:child_process', async importOriginal => ({
   ...await importOriginal<typeof import('node:child_process')>(),
@@ -26,7 +27,10 @@ beforeEach(() => {
   vi.stubEnv('SSH_TTY', '')
 })
 
+const originalTailscale = tailscale.run
+
 afterEach(() => {
+  tailscale.run = originalTailscale
   vi.restoreAllMocks()
   vi.mocked(spawn).mockReset()
   vi.unstubAllEnvs()
@@ -112,6 +116,106 @@ describe('web-app runtime glue', () => {
     await fiber.await()
     expect(log).toHaveBeenCalledWith('ocean serve: http://127.0.0.1:4567')
     expect(opener).not.toHaveBeenCalled()
+  })
+
+  describe('Tailscale serve mapping', () => {
+    /** Record `tailscale` invocations; each reply defaults to success. */
+    function scriptTailscale(replies: Partial<TailscaleRun>[] = []): (readonly string[])[] {
+      const calls: (readonly string[])[] = []
+      tailscale.run = (_command, args) => {
+        calls.push(args)
+        return { status: 0, stdout: '', stderr: '', ...replies[calls.length - 1] }
+      }
+      return calls
+    }
+
+    it('publishes the loopback listener on activation and removes the mapping on disposal', async () => {
+      stageDist()
+      const calls = scriptTailscale([{ stdout: '{}' }])
+      const ctx = new Context()
+      ctx.provide('webServer', fakeHttpServer().server)
+      provideConnection(ctx)
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      const fiber = ctx.plugin({ apply }, {
+        openBrowser: false, printUrl: false, surfaceContext: false, serverMode: true, tailscaleServePort: 443,
+      })
+      await fiber.await()
+      expect(calls).toEqual([['serve', 'status', '--json'], ['serve', '--bg', '--https=443', 'http://127.0.0.1:4567']])
+      await fiber.dispose()
+      expect(calls.at(-1)).toEqual(['serve', '--https=443', 'off'])
+      expect(calls).toHaveLength(3)
+    })
+
+    it('reports a mapping it cannot remove without failing shutdown', async () => {
+      stageDist()
+      scriptTailscale([{ stdout: '{}' }, {}, { status: 1, stderr: 'busy' }])
+      const ctx = new Context()
+      ctx.provide('webServer', fakeHttpServer().server)
+      provideConnection(ctx)
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const fiber = ctx.plugin({ apply }, {
+        openBrowser: false, printUrl: false, surfaceContext: false, serverMode: true, tailscaleServePort: 8443,
+      })
+      await fiber.await()
+      await fiber.dispose()
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('tailscale serve --https=8443 off'))
+    })
+
+    it('fails startup loudly when Tailscale refuses the mapping', async () => {
+      stageDist()
+      scriptTailscale([{ stdout: '{}' }, { status: 1, stderr: 'Access denied: serve config denied' }])
+      const ctx = new Context()
+      ctx.provide('webServer', fakeHttpServer().server)
+      provideConnection(ctx)
+      const fiber = ctx.plugin({ apply }, {
+        openBrowser: false, printUrl: false, surfaceContext: false, serverMode: true, tailscaleServePort: 443,
+      })
+      await expect(fiber.await()).rejects.toThrow('could not publish port 443: Access denied')
+    })
+
+    it('refuses a non-loopback listener', async () => {
+      stageDist()
+      const calls = scriptTailscale()
+      const ctx = new Context()
+      const listener = fakeHttpServer('10.1.2.3').server
+      Object.defineProperty(listener, 'protocol', { value: 'https:' })
+      ctx.provide('webServer', listener)
+      provideConnection(ctx)
+      const fiber = ctx.plugin({ apply }, {
+        openBrowser: false, printUrl: false, surfaceContext: false, serverMode: true, tailscaleServePort: 443,
+      })
+      await expect(fiber.await()).rejects.toThrow('tailscaleServePort needs a plain HTTP listener on loopback')
+      expect(calls).toEqual([])
+    })
+
+    it('refuses a listener whose port is not known', async () => {
+      stageDist()
+      const calls = scriptTailscale()
+      const ctx = new Context()
+      const listener = fakeHttpServer().server
+      Object.defineProperty(listener, 'port', { value: undefined })
+      ctx.provide('webServer', listener)
+      provideConnection(ctx)
+      const fiber = ctx.plugin({ apply }, {
+        openBrowser: false, printUrl: false, surfaceContext: false, serverMode: true, tailscaleServePort: 443,
+      })
+      await expect(fiber.await()).rejects.toThrow('tailscaleServePort needs a plain HTTP listener on loopback')
+      expect(calls).toEqual([])
+    })
+
+    it('does not touch Tailscale without the setting', async () => {
+      stageDist()
+      const calls = scriptTailscale()
+      const ctx = new Context()
+      ctx.provide('webServer', fakeHttpServer().server)
+      provideConnection(ctx)
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      const fiber = ctx.plugin({ apply }, { openBrowser: false, printUrl: false, surfaceContext: false, serverMode: true })
+      await fiber.await()
+      await fiber.dispose()
+      expect(calls).toEqual([])
+    })
   })
 
   it.each([

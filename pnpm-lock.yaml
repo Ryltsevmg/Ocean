@@ -2973,6 +2973,9 @@ importers:
       '@ocean/ocean-deliverable-file-references':
         specifier: workspace:*
         version: link:../../deliverables/deliverable-file-references
+      '@ocean/ocean-error':
+        specifier: workspace:*
+        version: link:../../util/error
       '@ocean/ocean-file-reference':
         specifier: workspace:*
         version: link:../../context/file-reference

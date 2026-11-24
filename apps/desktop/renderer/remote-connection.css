@@ -1,12 +1,20 @@
 :root { color-scheme: light dark; font: 14px/1.45 system-ui; }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px; min-height: 100dvh; color: CanvasText; background: Canvas; }
-form, label { display: grid; gap: 8px; }
-form { gap: 16px; }
+form { display: flex; flex-direction: column; gap: 16px; min-height: calc(100dvh - 48px); }
+label, header, .field { display: grid; gap: 8px; }
+header, .field { gap: 4px; }
+h1 { margin: 0; font-size: 16px; font-weight: 500; }
+.hint { margin: 0; color: GrayText; font-size: 13px; }
 input, button { font: inherit; }
-input[type="url"], input[type="password"] { width: 100%; min-width: 0; padding: 8px 10px; }
+input[type="text"], input[type="password"] { width: 100%; min-width: 0; padding: 8px 10px; }
 .remember { display: flex; align-items: center; }
-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.remember[hidden] { display: none; }
+.link { justify-self: start; padding: 0; border: 0; background: none; color: LinkText; }
+.link:hover { text-decoration: underline; }
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 button { max-width: 100%; padding: 6px 12px; overflow-wrap: anywhere; }
-.feedback { min-height: 3em; overflow-wrap: anywhere; }
+#connect { margin-left: auto; border-color: AccentColor; background: AccentColor; color: AccentColorText; }
+#connect:disabled { border-color: ButtonBorder; background: ButtonFace; color: GrayText; }
+.feedback { flex: 1; min-height: 3em; overflow-wrap: anywhere; }
 #failure { margin: 0; }

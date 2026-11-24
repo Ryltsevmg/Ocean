@@ -39,6 +39,9 @@
       "path": "../../host/webserver"
     },
     {
+      "path": "../../util/error"
+    },
+    {
       "path": "../../util/launch-environment"
     },
     {

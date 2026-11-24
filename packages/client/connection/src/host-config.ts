@@ -32,6 +32,8 @@ export interface ConnectionConfig {
   deviceExchangeWindowMs?: number
   /** Absolute local administrator socket in an owner-only directory. */
   deviceAdminSocket?: string
+  /** Lifetime in seconds of a pairing link created without an explicit lifetime. Default: 600. */
+  devicePairingTtlSeconds?: number
   /** Absolute browser and API cookie lifetime in days. Default: 30. */
   cookieMaxAgeDays?: number
   /** Lifetime of new device logins in seconds. Defaults to cookieMaxAgeDays converted to seconds. */
@@ -52,6 +54,7 @@ export const Config: z<ConnectionConfig> = z.object({
   maxDeviceExchangesPerWindow: z.natural().min(1).default(60),
   deviceExchangeWindowMs: z.natural().min(1).default(10_000),
   deviceAdminSocket: z.string(),
+  devicePairingTtlSeconds: z.natural().min(30).max(3_600).default(600),
   cookieMaxAgeDays: z.natural().min(1).default(30),
   deviceSessionLifetimeSeconds: z.natural().min(1).max(31_536_000),
   maxRequestBodyBytes: z.natural().min(1).default(DEFAULT_MAX_REQUEST_BODY_BYTES),

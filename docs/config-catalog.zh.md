@@ -521,6 +521,8 @@ export interface ConnectionConfig {
   deviceExchangeWindowMs?: number
   /** Absolute local administrator socket in an owner-only directory. */
   deviceAdminSocket?: string
+  /** Lifetime in seconds of a pairing link created without an explicit lifetime. Default: 600. */
+  devicePairingTtlSeconds?: number
   /** Absolute browser and API cookie lifetime in days. Default: 30. */
   cookieMaxAgeDays?: number
   /** Lifetime of new device logins in seconds. Defaults to cookieMaxAgeDays converted to seconds. */
@@ -3943,7 +3945,7 @@ export interface WebRuntimeConfig {
 ## `@ocean/ocean-web-app`
 
 - `inject`: `webServer`
-- `source`: [`packages/bundle/web-app/src/index.ts:55`](../packages/bundle/web-app/src/index.ts)
+- `source`: [`packages/bundle/web-app/src/index.ts:56`](../packages/bundle/web-app/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: composed deployment settings plus per-invocation command-line values. */
@@ -3967,6 +3969,13 @@ export interface Config {
    * Absent or YAML `null` advertises the bind-address URL.
    */
   publicUrl?: string
+  /**
+   * Tailscale HTTPS port that forwards to this loopback listener through `tailscale serve`.
+   * The mapping is created on activation and removed on disposal. Requires a loopback bind.
+   */
+  tailscaleServePort?: number
+  /** Tailscale executable that creates and removes that mapping; `tailscale` when absent. */
+  tailscaleCommand?: string
 }
 ```
 <!-- END GENERATED config-catalog:@ocean/ocean-web-app -->

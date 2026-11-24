@@ -13,7 +13,7 @@ import { DeviceBootstrap } from '@ocean/ocean-client-connection'
 import { DeviceTokens } from '@ocean/ocean-client-connection/src/device-tokens.ts'
 import { internals, provideCmdline } from '@ocean/ocean-cmdline'
 import LocalCredentials from '@ocean/ocean-credentials-local'
-import { runDeviceAdmin } from '../src/device-admin-client.ts'
+import { pairingLink, runDeviceAdmin } from '../src/device-admin-client.ts'
 import { bootDeviceProfile, type DeviceBoot } from './device-launcher.ts'
 
 let boot: DeviceBoot | undefined
@@ -148,6 +148,74 @@ describe('remote-device over the administrator socket', () => {
     expect(errors).toEqual([SOCKET_FAILURE])
   })
 
+  it('prints a pairing link that keeps the grant in the fragment', async () => {
+    const grant = `${'a'.repeat(8)}-aaaa-4aaa-8aaa-${'a'.repeat(12)}.${'B'.repeat(43)}`
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { grant, expiresAt: 1_700_000_000_000 } }) })
+    boot = await bootDeviceProfile('remote-device', [
+      '--socket', path, 'pair', 'Phone', '--url', 'https://ocean.example/mount', '--ttl', '120',
+    ])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual({ action: 'pair', label: 'Phone', ttlSeconds: 120 })
+    const printed = JSON.parse(logs[0]!) as { link: string; expiresAt: string }
+    expect(printed.expiresAt).toBe('2023-11-14T22:13:20.000Z')
+    const link = new URL(printed.link)
+    expect(link.protocol).toBe('ocean:')
+    expect(link.hostname).toBe('pair')
+    expect(link.searchParams.get('host')).toBe('https://ocean.example/mount')
+    expect(link.searchParams.get('label')).toBe('Phone')
+    expect(link.hash).toBe(`#${grant}`)
+    expect(link.search).not.toContain(grant)
+    expect(printed.link).toBe(pairingLink('https://ocean.example/mount', 'Phone', grant))
+  })
+
+  it('uses the address the Host advertises when --url is absent', async () => {
+    const grant = `${'a'.repeat(8)}-aaaa-4aaa-8aaa-${'a'.repeat(12)}.${'B'.repeat(43)}`
+    const path = await listenAdmin((_operation, res) => {
+      replyJson(res, 200, { result: { grant, expiresAt: 1_700_000_000_000, address: 'https://bigpc.tail71ee4f.ts.net/' } })
+    })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(new URL((JSON.parse(logs[0]!) as { link: string }).link).searchParams.get('host')).toBe('https://bigpc.tail71ee4f.ts.net/')
+  })
+
+  it('prefers an explicit --url over the advertised address', async () => {
+    const path = await listenAdmin((_operation, res) => {
+      replyJson(res, 200, { result: { grant: 'g', expiresAt: 1, address: 'https://advertised.example/' } })
+    })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone', '--url', 'https://chosen.example/'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(new URL((JSON.parse(logs[0]!) as { link: string }).link).searchParams.get('host')).toBe('https://chosen.example/')
+  })
+
+  it('asks for --url when the Host advertises no address', async () => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { grant: 'g', expiresAt: 1 } }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(logs).toEqual([])
+    expect(errors).toEqual(['ocean remote-device: pass --url: this Host does not advertise an HTTPS address'])
+  })
+
+  it('sends no lifetime when the pairing command names none', async () => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { grant: 'g', expiresAt: 1 } }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone', '--url', 'https://ocean.example/'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual({ action: 'pair', label: 'Phone' })
+  })
+
+  it.each([
+    { description: 'an unparsable address', args: ['--url', 'not a url'], message: '--url must be a valid HTTPS address' },
+    { description: 'an HTTP address', args: ['--url', 'http://ocean.example/'], message: '--url must be an HTTPS address without credentials, a query, or a fragment' },
+    { description: 'an address with credentials', args: ['--url', 'https://user:secret@ocean.example/'], message: '--url must be an HTTPS address' },
+    { description: 'a lifetime below the minimum', args: ['--url', 'https://ocean.example/', '--ttl', '10'], message: 'expected an integer from 30 to 3600' },
+    { description: 'a non-numeric lifetime', args: ['--url', 'https://ocean.example/', '--ttl', 'soon'], message: 'expected an integer from 30 to 3600' },
+  ])('rejects $description before contacting the Host', async ({ args, message }) => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: {} }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone', ...args])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(boot.observed.err).toContain(message)
+  })
+
   it('fails the command when the reply exceeds its size limit', async () => {
     const path = await listenAdmin((_operation, res) => {
       res.writeHead(200, { 'content-type': 'application/json' })
@@ -222,6 +290,14 @@ describe('remote-device local bootstrap', () => {
     boot = await bootDeviceProfile('remote-device', ['--bootstrap', 'list'], { provide: provideBootstrap })
     await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
     expect(logs).toEqual(['[]'])
+  })
+
+  it('refuses pairing in bootstrap mode because a grant needs a running Host', async () => {
+    boot = await bootDeviceProfile('remote-device', ['--bootstrap', 'pair', 'Phone', '--url', 'https://ocean.example/'], {
+      provide: provideBootstrap,
+    })
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(boot.observed.err).toContain('--bootstrap supports create and list')
   })
 
   it.each(['create', 'list'] as const)('fails %s when the bootstrap operation rejects', async (action) => {

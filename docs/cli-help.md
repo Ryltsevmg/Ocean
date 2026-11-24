@@ -37,6 +37,7 @@ Run `pnpm run gen-cli-help` to regenerate; run `pnpm run verify-cli-help` to che
 - [`ocean remote-device`](#ocean-remote-device)
 - [`ocean remote-device list`](#ocean-remote-device-list)
 - [`ocean remote-device create`](#ocean-remote-device-create)
+- [`ocean remote-device pair`](#ocean-remote-device-pair)
 - [`ocean remote-device rotate`](#ocean-remote-device-rotate)
 - [`ocean remote-device revoke`](#ocean-remote-device-revoke)
 - [`ocean sdk`](#ocean-sdk)
@@ -518,6 +519,8 @@ Options:
 Commands:
   list                      List devices and their access state
   create <label>            Create a device and return its token once
+  pair [options] <label>    Create a one-time link that adds a device without
+                            typing its token
   rotate <id>               Replace a device token and invalidate its existing
                             logins
   revoke <id>               Revoke a device and close its live connections
@@ -550,6 +553,25 @@ Create a device and return its token once
 
 Options:
   -h, --help  display help for command
+```
+
+<a id="ocean-remote-device-pair"></a>
+## `ocean remote-device pair`
+
+Invocations: `ocean remote-device pair --help`, `ocean --profile remote-device pair --help`
+
+```text
+Usage: ocean remote-device pair [options] <label>
+
+Create a one-time link that adds a device without typing its token
+
+Options:
+  --url <https-url>  HTTPS address clients use to reach this Host, including any
+                     mount path; the Host supplies its public URL when it has
+                     one
+  --ttl <seconds>    how long the link stays valid, 30 to 3600; the Host default
+                     applies otherwise
+  -h, --help         display help for command
 ```
 
 <a id="ocean-remote-device-rotate"></a>
@@ -642,6 +664,14 @@ Options:
   --tls-key <file>               unencrypted PEM private key; requires
                                  --tls-cert
   --device-admin-socket <path>   owner-only local administrator socket
+  --tailscale-serve              publish the loopback listener on this node's
+                                 tailnet name over HTTPS through `tailscale
+                                 serve`; replaces --public-url and TLS
+  --tailscale-serve-port <port>  Tailscale HTTPS port for --tailscale-serve;
+                                 default 443
+  --tailscale-command <path>     Tailscale executable for --tailscale-serve,
+                                 such as a wrapper that runs it with sudo;
+                                 default tailscale
   -h, --help                     show this help
 
 Examples:
@@ -649,11 +679,16 @@ Examples:
                                              serve on loopback without opening a browser
   ocean serve --host 10.0.0.7 --tls-cert ./server-chain.pem --tls-key ./server-key.pem
                                              serve HTTPS on one local interface
+  ocean serve --tailscale-serve --device-admin-socket /absolute/path/admin.sock
+                                             serve on loopback and publish https://<node>.<tailnet>.ts.net/
   ocean remote-device --socket /absolute/path/admin.sock create laptop
                                              create a device token through the local administrator socket
+  ocean remote-device --socket /absolute/path/admin.sock pair laptop
+                                             create a one-time link that adds a device
 
-Non-loopback listeners require --tls-cert and --tls-key. Use the local administrator
-socket to create device tokens; the server URL contains no launch token.
+Non-loopback listeners require --tls-cert and --tls-key, or --tailscale-serve on loopback.
+Use the local administrator socket to create device tokens; the server URL contains no
+launch token.
 
 ```
 

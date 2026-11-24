@@ -1,6 +1,6 @@
 /** Device credential persistence and independent revocation. */
 import { expect, it, vi } from 'vitest'
-import { DeviceLoginCapacityError, DeviceTokens } from '../src/device-tokens.ts'
+import { DeviceLoginCapacityError, DevicePairingCapacityError, DeviceTokens } from '../src/device-tokens.ts'
 import { RecordCredentials } from './browser-credentials.ts'
 
 it('persists verifiers, rejects the wrong secret and revokes only the selected device', async () => {
@@ -193,4 +193,73 @@ it('rotates an active device without changing its identity or preserving old log
 
   await devices.revoke(laptop.id)
   expect(await devices.rotate(laptop.id)).toBeUndefined()
+})
+
+it('exchanges a pairing grant for one device once and keeps only its hash', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const grant = await devices.createPairing('Phone', 60_000)
+  expect(JSON.stringify(store.record)).not.toContain(grant.secret.split('.')[1])
+  const paired = await new DeviceTokens(store).redeemPairing(grant.secret)
+  if (paired === undefined) throw new Error('the grant was refused')
+  expect(await devices.verify(paired.token)).toBe(paired.id)
+  expect(await devices.list()).toEqual([{ id: paired.id, label: 'Phone', revoked: false }])
+  expect(await devices.redeemPairing(grant.secret)).toBeUndefined()
+  expect(JSON.stringify(store.record)).not.toContain(grant.secret.split('.')[1])
+})
+
+it('refuses expired, wrong, malformed, and unknown pairing grants without creating a device', async () => {
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000)
+  try {
+    const store = new RecordCredentials()
+    const devices = new DeviceTokens(store)
+    const grant = await devices.createPairing('Phone', 100)
+    const wrong = `${grant.secret.slice(0, 37)}${'A'.repeat(43)}`
+    expect(await devices.redeemPairing(wrong)).toBeUndefined()
+    expect(await devices.redeemPairing('not-a-grant')).toBeUndefined()
+    expect(await devices.redeemPairing(`${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}${grant.secret.slice(36)}`)).toBeUndefined()
+    clock.mockReturnValue(1_100)
+    expect(await devices.redeemPairing(grant.secret)).toBeUndefined()
+    expect(await devices.list()).toEqual([])
+  } finally {
+    clock.mockRestore()
+  }
+})
+
+it('bounds pending pairing grants and frees expired ones', async () => {
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000)
+  try {
+    const devices = new DeviceTokens(new RecordCredentials())
+    for (let index = 0; index < 16; index += 1) await devices.createPairing(`Device ${index}`, 100)
+    await expect(devices.createPairing('One more', 100)).rejects.toBeInstanceOf(DevicePairingCapacityError)
+    clock.mockReturnValue(1_100)
+    await expect(devices.createPairing('After expiry', 100)).resolves.toMatchObject({ expiresAt: 1_200 })
+  } finally {
+    clock.mockRestore()
+  }
+})
+
+it('rejects a non-positive pairing lifetime before writing', async () => {
+  const store = new RecordCredentials()
+  await expect(new DeviceTokens(store).createPairing('Phone', 0)).rejects.toThrow('invalid pairing lifetime')
+  expect(store.record).toBeUndefined()
+})
+
+it('reports a pairing write the provider did not keep', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  vi.spyOn(store, 'modifyRecord').mockResolvedValue(undefined)
+  await expect(devices.createPairing('Phone', 60_000)).rejects.toThrow('pairing grant did not commit')
+})
+
+it('reports a redemption the provider did not keep', async () => {
+  const store = new RecordCredentials()
+  const devices = new DeviceTokens(store)
+  const grant = await devices.createPairing('Phone', 60_000)
+  const kept = structuredClone(store.record)
+  vi.spyOn(store, 'modifyRecord').mockImplementation(async (_key, update) => {
+    await update(kept)
+    return kept
+  })
+  await expect(devices.redeemPairing(grant.secret)).rejects.toThrow('pairing redemption did not commit')
 })

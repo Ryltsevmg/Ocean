@@ -48,10 +48,26 @@ const entry = z.object({
   revoked: z.boolean(),
   sessions: z.array(session).default([]),
 })
-const registry = z.object({ version: z.literal(1), devices: z.array(entry) })
+const pairing = z.object({
+  id: z.uuid(),
+  label: z.string().trim().min(1).max(128),
+  hash: z.string().regex(/^[0-9a-f]{64}$/u),
+  expiresAt: z.number().int().positive(),
+})
+const registry = z.object({ version: z.literal(1), devices: z.array(entry), pairings: z.array(pairing).default([]) })
+
+/** The Host already holds the most pairing grants it accepts at once. */
+export class DevicePairingCapacityError extends HarnessError {
+  constructor() {
+    super('Wait for a pending pairing link to expire or be used before creating another.', 'DEVICE_PAIRING_CAPACITY')
+  }
+}
+
+/** Pairing grants one Host keeps pending at once. */
+const maxPendingPairings = 16
 
 function load(record: CredentialRecord | undefined): z.infer<typeof registry> {
-  if (record === undefined) return { version: 1, devices: [] }
+  if (record === undefined) return { version: 1, devices: [], pairings: [] }
   const parsed = registry.safeParse(record.kind === 'grant' ? record.payload : null)
   if (!parsed.success || new Set(parsed.data.devices.map(device => device.id)).size !== parsed.data.devices.length) {
     throw new Error('client-connection: invalid remote device credential record')
@@ -90,6 +106,63 @@ export class DeviceTokens {
     }))
     if (!committed.devices.some(other => other.id === device.id && other.hash === device.hash && !other.revoked)) {
       throw new Error('client-connection: remote device issuance did not commit')
+    }
+    return { id: device.id, token: `${device.id}.${secret}` }
+  }
+
+  /**
+   * Create a one-time grant that a new device can exchange for its own token.
+   * @param label - Name the device receives when the grant is redeemed.
+   * @param ttlMs - Lifetime of the grant in milliseconds.
+   * @returns Grant bearer, shown once after the write commits, and its expiry.
+   * @throws {DevicePairingCapacityError} When the Host holds too many unexpired grants.
+   */
+  async createPairing(label: string, ttlMs: number): Promise<{ id: string; secret: string; expiresAt: number }> {
+    if (!Number.isSafeInteger(ttlMs) || ttlMs <= 0) throw new Error('client-connection: invalid pairing lifetime')
+    const secret = randomBytes(32).toString('base64url')
+    const grant = pairing.parse({ id: randomUUID(), label, hash: hash(secret), expiresAt: Date.now() + ttlMs })
+    const outcome = { capacityReached: false }
+    const committed = load(await this.modify((current) => {
+      const state = load(current)
+      const live = state.pairings.filter(other => other.expiresAt > Date.now())
+      if (live.length >= maxPendingPairings) { outcome.capacityReached = true; return undefined }
+      return { kind: 'grant', payload: { ...state, pairings: [...live, grant] } }
+    }))
+    if (outcome.capacityReached) throw new DevicePairingCapacityError()
+    if (!committed.pairings.some(other => other.id === grant.id && other.hash === grant.hash)) {
+      throw new Error('client-connection: pairing grant did not commit')
+    }
+    return { id: grant.id, secret: `${grant.id}.${secret}`, expiresAt: grant.expiresAt }
+  }
+
+  /**
+   * Spend one pairing grant and create the device it names, in a single write.
+   * @param bearer - Grant bearer returned by createPairing.
+   * @returns The new device and its token, or undefined for an unknown, spent, or expired grant.
+   */
+  async redeemPairing(bearer: string): Promise<{ id: DeviceId; token: string } | undefined> {
+    const parsed = parseBearer(bearer)
+    if (parsed === undefined) return undefined
+    const secret = randomBytes(32).toString('base64url')
+    const device = entry.parse({ id: randomUUID(), label: 'pending', hash: hash(secret), revoked: false })
+    const spent: { label?: string } = {}
+    const committed = load(await this.modify((current) => {
+      const state = load(current)
+      const now = Date.now()
+      const grant = state.pairings.find(other => other.id === parsed.id)
+      if (grant === undefined || grant.expiresAt <= now
+        || !timingSafeEqual(Buffer.from(grant.hash, 'hex'), parsed.digest)) return undefined
+      spent.label = grant.label
+      return { kind: 'grant', payload: {
+        ...state,
+        devices: [...state.devices, { ...device, label: grant.label }],
+        pairings: state.pairings.filter(other => other.id !== grant.id && other.expiresAt > now),
+      } }
+    }))
+    if (spent.label === undefined) return undefined
+    if (!committed.devices.some(other => other.id === device.id && other.hash === device.hash)
+      || committed.pairings.some(other => other.id === parsed.id)) {
+      throw new Error('client-connection: pairing redemption did not commit')
     }
     return { id: device.id, token: `${device.id}.${secret}` }
   }

@@ -8,6 +8,7 @@ import { parseCmdline } from '@ocean/ocean-cmdline'
 type Operation =
   | { action: 'list' }
   | { action: 'create'; label: string }
+  | { action: 'pair'; label: string; ttlSeconds?: number }
   | { action: 'rotate' | 'revoke'; id: string }
 
 type AdminReply = { ok: true; value: string } | { ok: false; committed: boolean; cleanupFailed: boolean }
@@ -56,6 +57,21 @@ function send(socketPath: string, operation: Operation, timeoutMs: number): Prom
 }
 
 /**
+ * Build the link a new device opens to pair with this Host.
+ * @param address - HTTPS address clients use to reach the Host.
+ * @param label - Name the new device receives.
+ * @param grant - One-time grant bearer returned by the Host.
+ * @returns An `ocean://pair` link that keeps the grant in its fragment.
+ */
+export function pairingLink(address: string, label: string, grant: string): string {
+  const url = new URL('ocean://pair')
+  url.searchParams.set('host', address)
+  url.searchParams.set('label', label)
+  url.hash = grant
+  return url.href
+}
+
+/**
  * Run one administrative command after the launcher commits startup.
  * @param ctx - Profile context carrying launcher arguments and exit lifecycle.
  */
@@ -71,7 +87,7 @@ export function runDeviceAdmin(ctx: Context): void {
       }
       return parsed
     }, 30_000)
-  const run = (operation: Operation): void => {
+  const run = (operation: Operation, format: (value: string) => string = value => value): void => {
     const { socket, timeout, bootstrap } = program.opts<{ socket?: string; timeout: number; bootstrap?: boolean }>()
     if ((socket !== undefined) === (bootstrap === true)) program.error('supply exactly one of --socket and --bootstrap')
     if (socket !== undefined && !isAbsolute(socket)) program.error('device administration requires an absolute socket path')
@@ -97,7 +113,17 @@ export function runDeviceAdmin(ctx: Context): void {
     } else {
       ctx.effect(() => ready.onReady(() => {
         void send(socket, operation, timeout).then((result) => {
-          if (result.ok) { console.log(result.value); exit(0); return }
+          if (result.ok) {
+            let output: string
+            try { output = format(result.value) } catch (error) {
+              console.error(`ocean remote-device: ${(error as Error).message}`)
+              exit(1)
+              return
+            }
+            console.log(output)
+            exit(0)
+            return
+          }
           console.error(result.committed && result.cleanupFailed
             ? 'ocean remote-device: the access change was saved, but live connection cleanup failed. Inspect the Host before retrying.'
             : 'ocean remote-device: operation outcome is unknown. Inspect device state before retrying.')
@@ -109,6 +135,32 @@ export function runDeviceAdmin(ctx: Context): void {
   program.command('list').description('List devices and their access state').action(() => { run({ action: 'list' }) })
   program.command('create').description('Create a device and return its token once').argument('<label>')
     .action((label: string) => { run({ action: 'create', label }) })
+  program.command('pair').description('Create a one-time link that adds a device without typing its token')
+    .argument('<label>')
+    .option('--url <https-url>', 'HTTPS address clients use to reach this Host, including any mount path; the Host supplies its public URL when it has one')
+    .option('--ttl <seconds>', 'how long the link stays valid, 30 to 3600; the Host default applies otherwise', (value) => {
+      const parsed = Number(value)
+      if (!/^\d+$/u.test(value) || parsed < 30 || parsed > 3_600) throw new InvalidArgumentError('expected an integer from 30 to 3600')
+      return parsed
+    })
+    .action((label: string, options: { url?: string; ttl?: number }) => {
+      let address: URL | undefined
+      if (options.url !== undefined) {
+        try { address = new URL(options.url) } catch { program.error('--url must be a valid HTTPS address'); return }
+        if (address.protocol !== 'https:' || address.username || address.password || address.search || address.hash) {
+          program.error('--url must be an HTTPS address without credentials, a query, or a fragment')
+        }
+      }
+      run({ action: 'pair', label, ...options.ttl === undefined ? {} : { ttlSeconds: options.ttl } }, (value) => {
+        const reply = JSON.parse(value) as { grant: string; expiresAt: number; address?: string }
+        const target = address?.href ?? reply.address
+        if (target === undefined) throw new Error('pass --url: this Host does not advertise an HTTPS address')
+        return JSON.stringify({
+          link: pairingLink(target, label, reply.grant),
+          expiresAt: new Date(reply.expiresAt).toISOString(),
+        })
+      })
+    })
   program.command('rotate').description('Replace a device token and invalidate its existing logins').argument('<id>')
     .action((id: string) => { run({ action: 'rotate', id }) })
   program.command('revoke').description('Revoke a device and close its live connections').argument('<id>')

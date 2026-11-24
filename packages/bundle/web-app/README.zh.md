@@ -92,6 +92,8 @@ ocean --profile web --no-open --host "$(hostname -i | awk '{print $1}')" --publi
 
 无论是公告 URL 还是浏览器信任栅栏都不保护端口本身，因此请把端口限制在可信代理或网络内。
 
+`ocean serve --tailscale-serve` 用 Tailscale 代替代理。它从 `tailscale status --json` 读取本节点的 MagicDNS 名称，让监听器保持在回环地址的纯 HTTP 上，将 `https://<node>.<tailnet>.ts.net/` 作为 `--public-url` 公告并信任该名称，监听器就绪后运行 `tailscale serve --bg --https=<port> http://127.0.0.1:<监听端口>`。TLS 由 Tailscale 用自己的证书终结。`--tailscale-serve-port` 可选择其他 HTTPS 端口（默认 443），该端口会出现在公告的 URL 中。该端口已被其他 `tailscale serve` 站点或 TCP 转发占用时，启动会在不做任何更改的情况下失败，因此不会替换已有映射；请改用空闲的 `--tailscale-serve-port`，或自行释放该端口。该 flag 与 `--public-url`、`--tls-cert`、`--tls-key` 以及非回环的 `--host` 互斥。`tailscale` 缺失、未运行、未启用 MagicDNS 或 HTTPS 证书，或无权配置 serve（在 Linux 上用 `tailscale set --operator=$USER` 授权）时，启动会连同原因一起失败。Host 停止时会移除该映射；移除失败时，Host 会记录可清除它的 `tailscale serve --https=<port> off` 命令。默认可执行文件是 `PATH` 中的 `tailscale`。`--tailscale-command <path>` 可指定其他可执行文件，例如运行 `sudo -n /usr/bin/tailscale "$@"` 的包装脚本：当节点的 serve 配置已经在提供某个目录或文件路径时，Tailscale 只允许 root 修改该配置，因此普通的 operator 账号需要这样的包装脚本。它也可用于指定 macOS 和 Windows 上的 Tailscale 可执行文件。
+
 打印的 URL 包含进程凭据，只应与预期用户分享。`printUrl: false` 无论是否配置 `--public-url` 都会抑制该行，凭据也绝不会出现在模型上下文或 `OCEAN_WEB_URL` 中。
 
 ### 通过 SSH 运行

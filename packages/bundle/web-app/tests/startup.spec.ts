@@ -13,6 +13,7 @@ import Include from '@deepseek-ai/cordis-plugin-include'
 import { internals, provideCmdline } from '@ocean/ocean-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply, WEB_STARTUP_SERVICE, type WebStartupValues } from '../src/startup.ts'
+import { tailscale } from '../src/tailscale.ts'
 
 /** What one fixture boot observed. */
 interface Observed {
@@ -26,7 +27,10 @@ const disposers: (() => Promise<void>)[] = []
 /** Fixture tree roots, removed after their booted tree has been disposed. */
 const tempDirs: string[] = []
 
+const originalTailscale = tailscale.run
+
 afterEach(async () => {
+  tailscale.run = originalTailscale
   for (const dispose of disposers.splice(0)) await dispose()
   for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
   internals.stdout = process.stdout
@@ -64,6 +68,8 @@ export const apply = ctx => globalThis.__webStartupApply(ctx)
     '    openBrowser: !!js ctx.webStartup.openBrowser',
     '    port: !!js ctx.webStartup.port ?? 3080',
     '    publicUrl: !!js ctx.webStartup.publicUrl',
+    '    tailscaleServePort: !!js ctx.webStartup.tailscaleServePort',
+    '    tailscaleCommand: !!js ctx.webStartup.tailscaleCommand',
     '    trustedHosts: !!js ctx.webStartup.trustedHosts',
     '    tls: !!js ctx.webStartup.tls',
     '- id: provider',
@@ -165,6 +171,77 @@ describe('web command-line provider', () => {
     const { values, observed } = await bootProvider(['--device-admin-socket', '/run/ocean/admin.sock'], 'serve')
     expect(values).toEqual({ openBrowser: false, trustedHosts: [], deviceAdminSocket: '/run/ocean/admin.sock' })
     expect(observed.exits).toEqual([])
+  })
+
+  /** A tailnet node named `bigpc` with HTTPS certificates, as `tailscale status --json` reports it. */
+  function runningTailnet(): void {
+    tailscale.run = () => ({
+      status: 0, stderr: '',
+      stdout: JSON.stringify({ BackendState: 'Running', Self: { DNSName: 'bigpc.tail71ee4f.ts.net.' }, CertDomains: ['bigpc.tail71ee4f.ts.net'] }),
+    })
+  }
+
+  it('publishes the tailnet name as the public URL and trusted host for --tailscale-serve', async () => {
+    runningTailnet()
+    const { values, observed } = await bootProvider(['--tailscale-serve', '--trusted-host', 'ocean.lan'], 'serve')
+    expect(values).toEqual({
+      openBrowser: false, publicUrl: 'https://bigpc.tail71ee4f.ts.net/', trustedHosts: ['ocean.lan', 'bigpc.tail71ee4f.ts.net'],
+      tailscaleServePort: 443, tailscaleCommand: 'tailscale',
+    })
+    expect(observed.readerConfig).toMatchObject({ tailscaleServePort: 443, tailscaleCommand: 'tailscale' })
+    expect(observed.exits).toEqual([])
+  })
+
+  it('runs the Tailscale executable named by --tailscale-command and publishes it for the mapping', async () => {
+    const commands: string[] = []
+    tailscale.run = (command) => {
+      commands.push(command)
+      return {
+        status: 0, stderr: '',
+        stdout: JSON.stringify({ BackendState: 'Running', Self: { DNSName: 'bigpc.tail71ee4f.ts.net.' }, CertDomains: ['bigpc.tail71ee4f.ts.net'] }),
+      }
+    }
+    const { values } = await bootProvider(['--tailscale-serve', '--tailscale-command', '/usr/local/bin/tailscale-sudo'], 'serve')
+    expect(commands).toEqual(['/usr/local/bin/tailscale-sudo'])
+    expect(values).toMatchObject({ tailscaleCommand: '/usr/local/bin/tailscale-sudo' })
+  })
+
+  it('keeps a custom Tailscale HTTPS port in the advertised URL and accepts a loopback --host', async () => {
+    runningTailnet()
+    const { values } = await bootProvider(['--tailscale-serve', '--tailscale-serve-port', '8443', '--host', '127.0.0.1'], 'serve')
+    expect(values).toMatchObject({ publicUrl: 'https://bigpc.tail71ee4f.ts.net:8443/', tailscaleServePort: 8443, host: '127.0.0.1' })
+  })
+
+  it.each([
+    { args: ['--tailscale-serve-port', '8443'], message: '--tailscale-serve-port and --tailscale-command require --tailscale-serve' },
+    { args: ['--tailscale-command', '/bin/tailscale'], message: '--tailscale-serve-port and --tailscale-command require --tailscale-serve' },
+    { args: ['--tailscale-serve', '--public-url', 'https://x.example/'], message: 'remove --public-url, --tls-cert, and --tls-key' },
+    { args: ['--tailscale-serve', '--tls-cert', 'c.pem', '--tls-key', 'k.pem'], message: 'remove --public-url, --tls-cert, and --tls-key' },
+    { args: ['--tailscale-serve', '--host', '10.0.0.7'], message: 'keeps the listener on loopback' },
+    { args: ['--tailscale-serve', '--tailscale-serve-port', 'abc'], message: '--tailscale-serve-port must be a port from 1 to 65535' },
+    { args: ['--tailscale-serve', '--tailscale-serve-port', '0'], message: '--tailscale-serve-port must be a port from 1 to 65535' },
+    { args: ['--tailscale-serve', '--tailscale-serve-port', '70000'], message: '--tailscale-serve-port must be a port from 1 to 65535' },
+  ])('rejects $args before startup', async ({ args, message }) => {
+    runningTailnet()
+    const { values, observed } = await bootProvider(args, 'serve')
+    expect(observed.out).toContain(message)
+    expect(observed.exits).toEqual([1])
+    expect(values).toBeUndefined()
+  })
+
+  it('reports an unusable tailnet as a usage error', async () => {
+    tailscale.run = () => ({ status: null, stdout: '', stderr: '', error: new Error('spawn tailscale ENOENT') })
+    const { values, observed } = await bootProvider(['--tailscale-serve'], 'serve')
+    expect(observed.out).toContain('could not run "tailscale"')
+    expect(observed.exits).toEqual([1])
+    expect(values).toBeUndefined()
+  })
+
+  it('rejects the Tailscale flags outside the server profile', async () => {
+    runningTailnet()
+    const web = await bootProvider(['--tailscale-serve'])
+    expect(web.observed.out).toContain("unknown option '--tailscale-serve'")
+    expect(web.observed.exits).toEqual([1])
   })
 
   it('rejects browser-only options in a server invocation', async () => {
