@@ -3,6 +3,7 @@ import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import AgentRegistry from '@ocean/ocean-agent'
+import BrowserUseRegistry from '@ocean/ocean-browser-use'
 import SystemPrompt from '@ocean/ocean-system-prompt'
 import ToolRuntime from '@ocean/ocean-tools'
 import * as NativeToolExecutor from '@ocean/ocean-tool-executor-native'
@@ -195,7 +196,7 @@ describe('requester edge paths', () => {
 })
 
 describe('process transport', () => {
-  it('creates the registry when absent and exercises the default IPC transport', async () => {
+  it('uses the shared registry and exercises the default IPC transport', async () => {
     const originalSend = Object.getOwnPropertyDescriptor(process, 'send')?.value as typeof process.send
     const originalConnected = process.connected
     const directory = await mkdtemp(join(tmpdir(), 'ocean-desktop-transport-'))
@@ -207,10 +208,10 @@ describe('process transport', () => {
       ctx.loader.builtins.include = Include
       Object.assign(ctx.loader.builtins, {
         agents: AgentRegistry, systemPrompt: SystemPrompt, tools: ToolRuntime,
-        toolExecutor: NativeToolExecutor, desktop: plugin,
+        toolExecutor: NativeToolExecutor, browserUse: BrowserUseRegistry, desktop: plugin,
       })
       const config = join(directory, 'cordis.yml')
-      await writeFile(config, '- name: cordis:agents\n- name: cordis:systemPrompt\n- name: cordis:tools\n- name: cordis:toolExecutor\n- name: cordis:desktop\n')
+      await writeFile(config, '- name: cordis:agents\n- name: cordis:systemPrompt\n- name: cordis:tools\n- name: cordis:toolExecutor\n- name: cordis:browserUse\n- name: cordis:desktop\n')
       ctx.baseUrl = pathToFileURL(directory).href + '/'
       await ctx.loader.create({ name: 'cordis:include', config: { path: pathToFileURL(config).href } })
       await ctx.loader.await()

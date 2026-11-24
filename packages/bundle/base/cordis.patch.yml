@@ -522,6 +522,11 @@
       name: '@ocean/ocean-tool-executor-ptc'
       disabled: true
 
+    # Single owner of the browser-use provider slot; browser providers inject it
+    # and defer when another provider already holds the slot.
+    - id: browser-use
+      name: '@ocean/ocean-browser-use'
+
     # The deployment persona is a deployment choice; plan-mode and tool plugins own
     # their own prompt sections.
     - id: system-prompt

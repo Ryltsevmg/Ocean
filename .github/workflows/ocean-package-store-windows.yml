@@ -1,0 +1,83 @@
+name: Ocean Windows Store package
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'Ryltsevmg/Ocean' && github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    timeout-minutes: 120
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.0'
+      - name: Install pinned package manager
+        run: npm install --global pnpm@11.28.5
+      - name: Install locked build dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build unpacked Windows x64 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p 'process.platform + "-" + process.arch')" = win32-x64
+          printf 'OCEAN_DESKTOP_APP_ID=app.ocean.chat\n' > apps/desktop/.env.windows
+          pnpm --dir apps/desktop run package:win:x64:unsigned --dir
+      - name: Package unsigned AppX for Store qualification
+        working-directory: apps/desktop
+        shell: pwsh
+        run: |
+          $app = (Resolve-Path '.desktop-build/targets/win-x64/unsigned-artifacts/win-unpacked').Path
+          if (-not (Test-Path (Join-Path $app 'Ocean.exe') -PathType Leaf)) { throw 'Missing Ocean.exe' }
+          if (Test-Path (Join-Path $app 'resources/app-update.yml')) { throw 'Unexpected NSIS update feed' }
+          pnpm exec electron-builder --config electron-builder.store.config.mjs --win appx --x64 --prepackaged $app --publish never
+          if ($LASTEXITCODE -ne 0) { throw 'AppX packaging failed' }
+      - name: Verify packaged manifest and update isolation
+        working-directory: apps/desktop
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem '.desktop-build/store-artifacts' -Filter '*.appx' -File)
+          if ($packages.Count -ne 1) { throw 'Expected exactly one AppX' }
+          $archive = [IO.Compression.ZipFile]::OpenRead($packages[0].FullName)
+          try {
+            $entry = $archive.GetEntry('AppxManifest.xml')
+            if ($null -eq $entry) { throw 'Missing AppxManifest.xml' }
+            $reader = [IO.StreamReader]::new($entry.Open())
+            try { [xml]$manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            $identity = $manifest.Package.Identity
+            $version = (Get-Content package.json -Raw | ConvertFrom-Json).version + '.0'
+            if ($identity.Name -cne 'RMGSoftware.oceanharness' -or
+                $identity.Publisher -cne 'CN=78CF6652-2933-4046-9EE6-A0931E27E1CA' -or
+                $manifest.Package.Properties.PublisherDisplayName -cne 'RMG Software' -or
+                $identity.ProcessorArchitecture -cne 'x64' -or $identity.Version -cne $version) {
+              throw 'AppX identity does not match the Store product and build'
+            }
+            if (-not $archive.GetEntry('app/Ocean.exe') -or $archive.GetEntry('app/resources/app-update.yml')) {
+              throw 'AppX must include Ocean.exe but not the NSIS update feed'
+            }
+          } finally { $archive.Dispose() }
+      - name: Record package digest and source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/desktop/.desktop-build/store-artifacts
+          sha256sum *.appx > SHA256SUMS
+          printf '%s\n' "$GITHUB_SHA" > source-commit.txt
+      - name: Retain AppX for review, not Store submission
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ocean-store-windows-x64-${{ github.sha }}
+          path: |
+            apps/desktop/.desktop-build/store-artifacts/*.appx
+            apps/desktop/.desktop-build/store-artifacts/SHA256SUMS
+            apps/desktop/.desktop-build/store-artifacts/source-commit.txt
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7

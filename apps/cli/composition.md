@@ -196,6 +196,8 @@ flowchart LR
   cfg --> plugin_ocean_base_tool_executor_native
   plugin_ocean_base_tool_executor_ptc["tool-executor-ptc<br/>@ocean/ocean-tool-executor-ptc"]
   cfg --> plugin_ocean_base_tool_executor_ptc
+  plugin_ocean_base_browser_use["browser-use<br/>@ocean/ocean-browser-use"]
+  cfg --> plugin_ocean_base_browser_use
   plugin_ocean_base_system_prompt["system-prompt<br/>@ocean/ocean-system-prompt"]
   cfg --> plugin_ocean_base_system_prompt
   plugin_ocean_base_agent_loop["agent-loop<br/>@ocean/ocean-agent-loop"]
@@ -304,6 +306,7 @@ flowchart LR
 | `tools` | `@ocean/ocean-tools` |
 | `tool-executor-native` | `@ocean/ocean-tool-executor-native` |
 | `tool-executor-ptc` | `@ocean/ocean-tool-executor-ptc` |
+| `browser-use` | `@ocean/ocean-browser-use` |
 | `system-prompt` | `@ocean/ocean-system-prompt` |
 | `agent-loop` | `@ocean/ocean-agent-loop` |
 | `fs-sandbox` | `@ocean/ocean-fs-sandbox` |

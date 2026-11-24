@@ -31,7 +31,7 @@ import {
   type Profile,
   type RuntimeResolution,
 } from '../src/index.ts'
-import { PROFILE_TEMPLATES } from '@ocean/ocean-official-bundles'
+import { PROFILE_TEMPLATES, REUSED_BUNDLE_VERSIONS } from '@ocean/ocean-official-bundles'
 import { installRuntimeInterception } from '../src/profile-resolution/resolver.ts'
 
 const tempRoots: string[] = []
@@ -430,6 +430,7 @@ describe('loadProfile', () => {
     '@ocean/ocean-experimental-session-titles-bundle',
     '@ocean/ocean-experimental-voice-input-bundle',
   ]
+  const reusedVersion = (name: string): string => REUSED_BUNDLE_VERSIONS.get(name) ?? '1.0.0'
 
   function stageProfileBundle(dir: string, name: string, manifest: object, patch = '[]\n'): string {
     const bundleDir = join(dir, 'node_modules', name)
@@ -449,7 +450,7 @@ describe('loadProfile', () => {
     for (const [index, name] of reusedBundleNames.entries()) {
       const linked = name === linkedBundle
       const installed = stageProfileBundle(linked ? tmp() : dir, name,
-        { name, version: '1.0.0', ocean: { bundle: { patch: './cordis.patch.yml' } } },
+        { name, version: reusedVersion(name), ocean: { bundle: { patch: './cordis.patch.yml' } } },
         `- insert: [{ id: restored-${index}, name: ${JSON.stringify(name)} }]\n`)
       if (linked) {
         const link = join(dir, 'node_modules', name)
@@ -457,7 +458,7 @@ describe('loadProfile', () => {
         symlinkSync(installed, link, 'junction')
       }
     }
-    const dependencies = Object.fromEntries(reusedBundleNames.map(name => [name, name === linkedBundle ? 'link:../local-bundle' : '1.0.0']))
+    const dependencies = Object.fromEntries(reusedBundleNames.map(name => [name, name === linkedBundle ? 'link:../local-bundle' : reusedVersion(name)]))
     writeProfileManifest(dir, { ...readProfileManifest('test', dir), dependencies })
     const before = readFileSync(join(dir, 'package.json'), 'utf8')
     const profile = loadProfileDirectory('test', dir, anchor)
@@ -492,10 +493,10 @@ describe('loadProfile', () => {
     const dir = join(home, 'profile')
     initProfile(dir, ['base', name])
     const installed = placement === 'missing' ? undefined : stageProfileBundle(placement === 'ancestor' ? home : dir, name, {
-      name, version: '1.0.0', ocean: { bundle: { patch: './cordis.patch.yml' } }, ...fields,
+      name, version: reusedVersion(name), ocean: { bundle: { patch: './cordis.patch.yml' } }, ...fields,
     })
     if (placement === 'malformed' && installed !== undefined) writeFileSync(join(installed, 'package.json'), '{')
-    const dependencies = direct === false ? {} : { [name]: '1.0.0' }
+    const dependencies = direct === false ? {} : { [name]: reusedVersion(name) }
     writeProfileManifest(dir, { ...readProfileManifest('test', dir), dependencies })
     const profile = loadProfileDirectory('test', dir, anchor)
     expect(profile.layers.map(layer => layer.packageName)).toEqual(['base'])

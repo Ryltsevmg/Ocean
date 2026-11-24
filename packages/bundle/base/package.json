@@ -48,6 +48,7 @@
     "@ocean/ocean-attachment-local": "workspace:*",
     "@ocean/ocean-authorization": "workspace:*",
     "@ocean/ocean-bash-sandbox": "workspace:*",
+    "@ocean/ocean-browser-use": "workspace:*",
     "@ocean/ocean-command-compact": "workspace:*",
     "@ocean/ocean-command-feedback": "workspace:*",
     "@ocean/ocean-command-goal": "workspace:*",
