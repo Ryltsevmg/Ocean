@@ -3880,7 +3880,7 @@ export interface Config {
 ## `@ocean/ocean-user-approval`
 
 - `inject`: `sessionProjections`
-- `source`: [`packages/interaction/user-approval/src/index.ts:157`](../packages/interaction/user-approval/src/index.ts)
+- `source`: [`packages/interaction/user-approval/src/index.ts:152`](../packages/interaction/user-approval/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config. All optional — `static Config` supplies the defaults. */

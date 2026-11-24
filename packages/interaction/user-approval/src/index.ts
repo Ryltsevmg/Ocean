@@ -55,11 +55,6 @@ export type { ApprovalDecision, ApprovalDeniedBy, ApprovalOutcome } from './type
 /** Every {@link ApprovalOutcome}, for runtime normalization of answerer returns. */
 const OUTCOMES: readonly ApprovalOutcome[] = ['allowed-once', 'rejected', 'cancelled', 'unavailable']
 
-/** Wrap an answerer's outcome: anything an answerer rejects came from it, not from the session policy. */
-function answered(outcome: ApprovalOutcome): ApprovalDecision {
-  return outcome === 'rejected' ? { outcome: 'rejected', deniedBy: 'answerer' } : { outcome }
-}
-
 /**
  * A session's approval policy — what happens to an {@link ApprovalService}
  * ask BEFORE any interactive answerer sees it:
@@ -340,3 +335,8 @@ export class ApprovalService extends Service {
 }
 
 export default ApprovalService
+
+/** Wrap an answerer's outcome: anything an answerer rejects came from it, not from the session policy. */
+function answered(outcome: ApprovalOutcome): ApprovalDecision {
+  return outcome === 'rejected' ? { outcome: 'rejected', deniedBy: 'answerer' } : { outcome }
+}
