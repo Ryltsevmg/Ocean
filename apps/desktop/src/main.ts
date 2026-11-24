@@ -1563,9 +1563,9 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.remoteForm, async (event) => {
     assertRemoteDialog(event)
     const disconnectedAddress = disconnectedRemoteAddress
-    const saved = await remoteStore.addresses().then(
-      addresses => ({ addresses, unreadable: false }),
-      () => ({ addresses: [], unreadable: true }),
+    const saved = await remoteStore.machines().then(
+      machines => ({ addresses: machines.flatMap(machine => machine.routes), machines, unreadable: false }),
+      () => ({ addresses: [], machines: [], unreadable: true }),
     )
     return {
       ...saved, address: disconnectedAddress ?? saved.addresses.at(-1), canSave: remoteStore.canSave,
@@ -1579,10 +1579,30 @@ async function main(): Promise<void> {
         cancel: locale.messages.cancel, failure: locale.messages.remoteSwitchFailed,
         invalidAddress: locale.messages.remoteAddressInvalid, saveUnavailable: locale.messages.remoteSaveUnavailable,
         incompatible: locale.messages.remoteProtocolIncompatible,
+        hostIdentity: locale.messages.remoteHostIdentity, hostRoutes: locale.messages.remoteHostRoutes,
+        hostDifferent: locale.messages.remoteHostDifferent,
         logoutUnconfirmed: locale.messages.remoteLogoutUnconfirmed,
         done: locale.messages.remoteDone, connecting: locale.messages.remoteConnecting,
       },
     }
+  })
+  ipcMain.handle(DESKTOP_IPC.remoteProbe, async (event, address: unknown) => {
+    assertRemoteDialog(event)
+    const messages = currentDesktopLocale().messages
+    if (typeof address !== 'string' || address.length > 2048) return remoteFailure('invalid-input', messages)
+    try {
+      const mount = DeviceClient.parseAddress(address).href
+      const machines = await remoteStore.machines().catch(() => [])
+      const routed = machines.find(machine => machine.routes.includes(mount))
+      if (routed !== undefined) return { hostId: routed.hostId, known: true, saved: true, routes: routed.routes }
+      // A route the record does not know yet may still reach a saved machine; report it without sending a token.
+      const probe = await new DeviceClient(mount).probe(AbortSignal.timeout(10_000))
+      const machine = machines.find(entry => entry.hostId === probe.id)
+      return {
+        hostId: probe.id, known: machine !== undefined, saved: false,
+        ...machine === undefined ? {} : { routes: machine.routes },
+      }
+    } catch (error) { return remoteErrorResult(error, messages) }
   })
   ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => { assertRemoteDialog(event).destroy() })
   ipcMain.handle(DESKTOP_IPC.remoteForget, async (event, address: unknown) => {
@@ -1900,10 +1920,22 @@ async function main(): Promise<void> {
         token = paired.token
         pinnedHostId = paired.host.id
       }
-      const saved = token ? undefined : await remoteStore.read(enteredAddress || undefined)
-      const address = enteredAddress || saved?.address
+      const machines = await remoteStore.machines().catch(() => [])
+      const address = enteredAddress || machines.at(-1)?.routes.at(-1)
       if (!address) return remoteFailure('invalid-input', messages)
-      if (token) next = await RemoteDesktopHost.connect(address, token, signal, pinnedHostId)
+      const mount = DeviceClient.parseAddress(address).href
+      const routed = machines.find(machine => machine.routes.includes(mount))
+      // An unsaved route with no entered token may still reach a known machine; ask the Host which one
+      // without sending a secret, so its saved token carries over. A saved route needs no probe, and an
+      // entered token is pinned by the login itself.
+      let routeHostId = pinnedHostId
+      if (routeHostId === undefined && routed === undefined && token === '') {
+        try { routeHostId = (await new DeviceClient(mount).probe(signal)).id } catch (_error) {
+          // The login reports the failure; the probe only decides whether a saved token can be reused.
+        }
+      }
+      const saved = token ? undefined : machines.find(machine => machine.hostId === routeHostId) ?? routed
+      if (token) next = await RemoteDesktopHost.connect(address, token, signal, routeHostId)
       else if (saved !== undefined) next = await RemoteDesktopHost.connect(address, saved.token, signal, saved.hostId)
       else return remoteFailure('token-required', messages)
       signal.throwIfAborted()

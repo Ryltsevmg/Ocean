@@ -20,7 +20,16 @@ async function render(options: { canSave?: boolean; pairing?: { address: string 
         connect: messages.remoteConnect, forget: messages.remoteForget, cancel: messages.cancel,
         failure: messages.remoteSwitchFailed, invalidAddress: messages.remoteAddressInvalid,
         saveUnavailable: messages.remoteSaveUnavailable,
+        hostIdentity: messages.remoteHostIdentity, hostRoutes: messages.remoteHostRoutes,
+        hostDifferent: messages.remoteHostDifferent,
         done: messages.remoteDone, connecting: messages.remoteConnecting } }),
+    probe: vi.fn<(address: string) => Promise<DesktopRemoteResult | {
+      hostId: string
+      known: boolean
+      saved: boolean
+      routes?: string[]
+      conflict?: boolean
+    }>>(),
     connect: vi.fn<() => Promise<DesktopRemoteResult>>(),
     forget: vi.fn<() => Promise<DesktopRemoteResult>>(),
     pairLink: vi.fn<(link: string) => Promise<DesktopRemoteResult>>(),
@@ -184,4 +193,63 @@ it('reports an invalid pasted pairing link and stays in the ordinary form', asyn
   await vi.waitFor(() => { expect(view.field('failure').hidden).toBe(false) })
   expect(view.field('failure').textContent).toBe(view.messages.remotePairLinkInvalid)
   expect(view.document.querySelector<HTMLElement>('#token-row')!.hidden).toBe(false)
+})
+
+it('names the machine an address reaches, without asking for a token', async () => {
+  const view = await render()
+  view.bridge.probe.mockResolvedValue({ hostId: '6ace72c7-0fd3-4337-99af-761f403dceda', known: false, saved: false })
+  view.field('address').value = 'https://new.example/'
+  view.field('address').dispatchEvent(new view.window.Event('input'))
+  const identity = view.document.querySelector<HTMLElement>('#host-identity')!
+  await vi.waitFor(() => { expect(identity.hidden).toBe(false) })
+  expect(identity.textContent).toBe('Host: 6ace72c7')
+  expect(identity.classList.contains('warning')).toBe(false)
+  expect(view.bridge.probe).toHaveBeenCalledWith('https://new.example/')
+})
+
+it('lists the other routes of a machine the record already knows', async () => {
+  const view = await render()
+  view.bridge.probe.mockResolvedValue({
+    hostId: '6ace72c7-0fd3-4337-99af-761f403dceda', known: true, saved: false,
+    routes: ['https://lan.example/', 'https://tailnet.example/'],
+  })
+  view.field('address').value = 'https://third.example/'
+  view.field('address').dispatchEvent(new view.window.Event('input'))
+  const identity = view.document.querySelector<HTMLElement>('#host-identity')!
+  await vi.waitFor(() => { expect(identity.hidden).toBe(false) })
+  expect(identity.textContent).toBe('Host: 6ace72c7 — also reachable at https://lan.example/, https://tailnet.example/')
+})
+
+it('names the machine behind a saved address', async () => {
+  const view = await render()
+  view.bridge.probe.mockResolvedValue({
+    hostId: '6ace72c7-0fd3-4337-99af-761f403dceda', known: true, saved: true, routes: ['https://saved.example/'],
+  })
+  view.field('address').value = 'https://saved.example/'
+  view.field('address').dispatchEvent(new view.window.Event('input'))
+  const identity = view.document.querySelector<HTMLElement>('#host-identity')!
+  await vi.waitFor(() => { expect(identity.hidden).toBe(false) })
+  expect(identity.textContent).toBe('Host: 6ace72c7 — also reachable at https://saved.example/')
+})
+
+it('keeps the identity hidden for an invalid address and ignores a stale probe', async () => {
+  const view = await render()
+  const first = Promise.withResolvers<{ hostId: string; known: boolean; saved: boolean }>()
+  view.bridge.probe.mockReturnValueOnce(first.promise)
+  view.bridge.probe.mockResolvedValue({ hostId: 'second-host', known: false, saved: false })
+  const identity = view.document.querySelector<HTMLElement>('#host-identity')!
+  view.field('address').value = 'http://insecure.example/'
+  view.field('address').dispatchEvent(new view.window.Event('input'))
+  await new Promise(resolve => setTimeout(resolve, 500))
+  expect(view.bridge.probe).not.toHaveBeenCalled()
+  view.field('address').value = 'https://first.example/'
+  view.field('address').dispatchEvent(new view.window.Event('input'))
+  await new Promise(resolve => setTimeout(resolve, 500))
+  view.field('address').value = 'https://second.example/'
+  view.field('address').dispatchEvent(new view.window.Event('input'))
+  await new Promise(resolve => setTimeout(resolve, 500))
+  await vi.waitFor(() => { expect(identity.textContent).toBe('Host: second-h') })
+  first.resolve({ hostId: 'first-host', known: false, saved: false })
+  await new Promise(resolve => setTimeout(resolve, 0))
+  expect(identity.textContent).toBe('Host: second-h')
 })

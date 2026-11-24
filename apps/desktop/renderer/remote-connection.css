@@ -6,6 +6,8 @@ label, header, .field { display: grid; gap: 8px; }
 header, .field { gap: 4px; }
 h1 { margin: 0; font-size: 16px; font-weight: 500; }
 .hint { margin: 0; color: GrayText; font-size: 13px; }
+.hint.warning { color: CanvasText; }
+#host-identity { overflow-wrap: anywhere; }
 input, button { font: inherit; }
 input[type="text"], input[type="password"] { width: 100%; min-width: 0; padding: 8px 10px; }
 .remember { display: flex; align-items: center; }

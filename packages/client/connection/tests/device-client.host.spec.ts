@@ -320,3 +320,36 @@ it('keeps cancellation and network failures distinct while pairing', async () =>
     code: 'DEVICE_CONNECTION_FAILED', cause,
   })
 })
+
+it('probes the Host identity without sending a credential', async () => {
+  const calls: Array<{ url: string; request: RequestInit | undefined }> = []
+  const fetcher = vi.fn<typeof fetch>(async (url, request) => {
+    const href = url instanceof URL ? url.href : url instanceof Request ? url.url : url
+    calls.push({ url: href, request })
+    return new Response(null, {
+      status: 204,
+      headers: { 'ocean-device-protocol': '1', 'ocean-device-host': 'probe-host', 'ocean-device-epoch': 'probe-epoch' },
+    })
+  })
+  const client = new DeviceClient('https://ocean.example/mount', fetcher)
+  expect(await client.probe(new AbortController().signal)).toEqual({ id: 'probe-host', epoch: 'probe-epoch' })
+  expect(calls).toHaveLength(1)
+  expect(calls[0]?.url).toBe('https://ocean.example/mount/connect')
+  expect(calls[0]?.request?.method).toBe('HEAD')
+  expect(calls[0]?.request?.redirect).toBe('error')
+  // No authorization, cookie, or pinned identity is sent: the probe reveals the Host, not the client.
+  expect(calls[0]?.request?.headers).toEqual({ 'ocean-device-protocol': '1' })
+})
+
+it('reports a probe of a Host that is not a compatible device endpoint', async () => {
+  const reply = (status: number, headers: Record<string, string>) => new DeviceClient(
+    'https://ocean.example/', async () => new Response(null, { status, headers }),
+  )
+  // Only the 204 the device endpoint answers to HEAD counts as a compatible reply.
+  await expect(reply(200, {}).probe(new AbortController().signal)).rejects.toMatchObject({ code: 'DEVICE_AUTH_FAILED' })
+  await expect(reply(204, {}).probe(new AbortController().signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+  await expect(reply(204, { 'ocean-device-protocol': '2', 'ocean-device-host': 'h', 'ocean-device-epoch': 'e' })
+    .probe(new AbortController().signal)).rejects.toMatchObject({ code: 'DEVICE_IDENTITY_INVALID' })
+  await expect(reply(401, {}).probe(new AbortController().signal)).rejects.toMatchObject({ code: 'DEVICE_AUTH_REJECTED' })
+  await expect(reply(500, {}).probe(new AbortController().signal)).rejects.toMatchObject({ code: 'DEVICE_AUTH_FAILED' })
+})

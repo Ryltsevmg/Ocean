@@ -93,6 +93,25 @@ export class DeviceClient {
   }
 
   /**
+   * Read the Host identity without sending any credential, so a caller can pin it before
+   * the first login and show the user which machine an address reaches.
+   * @param signal - Cancellation for the request.
+   * @returns Stable Host identity and launch epoch reported by `HEAD /connect`.
+   * @throws {DeviceClientError} `DEVICE_IDENTITY_INVALID` when the reply is not a compatible Host,
+   *   `DEVICE_AUTH_REJECTED` when the Host refuses the request.
+   */
+  async probe(signal: AbortSignal): Promise<HostIdentity> {
+    const response = await this.fetchResponse(this.connectUrl(), {
+      method: 'HEAD', redirect: 'error', signal,
+      headers: { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION },
+    })
+    this.requireLogin(response)
+    const identity = readIdentity(response)
+    this.identity = identity
+    return identity
+  }
+
+  /**
    * Exchange a token for an in-memory login and check the supported version.
    * @param token - Device bearer read from the client's secret source.
    * @param signal - Cancellation for the exchange.

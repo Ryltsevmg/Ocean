@@ -93,6 +93,7 @@ if (process.isMainFrame && location.href === `${SCHEME}://shell/remote-connectio
     connect: (address: string, token: string, remember: boolean) =>
       ipcRenderer.invoke(DESKTOP_IPC.remoteConnect, address, token, remember),
     forget: (address?: string) => ipcRenderer.invoke(DESKTOP_IPC.remoteForget, address),
+    probe: (address: string) => ipcRenderer.invoke(DESKTOP_IPC.remoteProbe, address),
     pairLink: (link: string) => ipcRenderer.invoke(DESKTOP_IPC.remotePairLink, link),
     pair: () => ipcRenderer.invoke(DESKTOP_IPC.remotePair),
     close: () => ipcRenderer.invoke(DESKTOP_IPC.remoteClose),
