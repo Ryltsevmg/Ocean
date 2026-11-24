@@ -78,7 +78,7 @@ describe('ui-settings-devices apply', () => {
 
     await vi.waitFor(() => { expect(slots.entries('settings.section')).toHaveLength(1) })
     const entry = slots.entries('settings.section')[0]!
-    expect(entry.options).toMatchObject({ id: 'devices', order: 5 })
+    expect(entry.options).toMatchObject({ id: 'devices', order: 12 })
     expect(resolveSlotLabel(entry.options.label)).toBe('设备')
     expect(entry.locale).toBe(NS)
     expect(whenAccess).toHaveBeenCalledWith('devices/list', expect.any(Function))

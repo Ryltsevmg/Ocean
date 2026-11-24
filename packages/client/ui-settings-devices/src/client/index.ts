@@ -56,7 +56,7 @@ export function apply(ctx: ClientContext): void {
   ctx.remoteAccess.whenAccess('devices/list', () => ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
     id: 'devices',
-    order: 5,
+    order: 12,
     label: () => t('title'),
     locale: NS,
     inject: face,
