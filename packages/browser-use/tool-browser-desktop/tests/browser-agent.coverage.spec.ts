@@ -33,16 +33,17 @@ function execution(agent = true): ToolRunContext {
   }
 }
 
-function fakeContext(providerName?: string, options: { attachments?: boolean; emptyStore?: boolean; approval?: 'allowed-once' | 'rejected' | 'absent' } = {}) {
+function fakeContext(providerName?: string, options: { attachments?: boolean; emptyStore?: boolean; approval?: 'allowed-once' | 'rejected' | 'policy-denied' | 'absent' } = {}) {
   const registered = new Map<string, ToolDefinition>()
   const saveImages = vi.fn(async (inputs: { data: Uint8Array }[]) => options.emptyStore
     ? []
     : inputs.map(input => ({ attachmentId: 'att-1', mediaType: 'image/png' as const, bytes: input.data.byteLength, width: 10, height: 10 })))
   const attachments = options.attachments === false ? undefined : { saveImages }
-  const approvalRequest = vi.fn(async (_request: { readonly toolName: string }) =>
-    options.approval === 'rejected'
-      ? { outcome: 'rejected' as const, deniedBy: 'answerer' as const }
-      : { outcome: options.approval ?? 'allowed-once' })
+  const approvalRequest = vi.fn(async (_request: { readonly toolName: string }) => {
+    if (options.approval === 'rejected') return { outcome: 'rejected' as const, deniedBy: 'answerer' as const }
+    if (options.approval === 'policy-denied') return { outcome: 'rejected' as const, deniedBy: 'policy' as const }
+    return { outcome: options.approval ?? 'allowed-once' }
+  })
   const approval = options.approval === 'absent' ? undefined : { request: approvalRequest }
   const browserUse = {
     providerName,
@@ -391,6 +392,16 @@ describe('input tools and enforced confirmation', () => {
     installDesktopBrowserAgent(absent.ctx as never, channel().transport, { confirmActions: true })
     await expect(absent.registered.get('browser_fill')!.execute({ ref: 'e1', text: 'x' }, execution()))
       .rejects.toMatchObject({ code: 'BROWSER_APPROVAL_UNAVAILABLE' })
+  })
+
+  it('does not blame the person when a never policy rejected the ask', async () => {
+    const disabled = fakeContext(undefined, { approval: 'policy-denied' })
+    installDesktopBrowserAgent(disabled.ctx as never, channel().transport, { confirmActions: true })
+    await expect(disabled.registered.get('browser_click')!.execute({ ref: 'e1' }, execution()))
+      .rejects.toMatchObject({
+        code: 'BROWSER_APPROVAL_UNAVAILABLE',
+        message: 'Approval prompts are disabled in this session, so this browser action was not performed.',
+      })
   })
 })
 
