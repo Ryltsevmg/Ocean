@@ -7,11 +7,11 @@ import { realpath, stat } from 'node:fs/promises'
 import { isAbsolute, relative, resolve, sep } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@ocean/ocean-user-approval'
+import type {} from '@ocean/ocean-browser-use'
 import z from '@deepseek-ai/schemastery'
 import type { ImageAttachmentRef } from '@ocean/ocean-attachment'
 import type { ToolRunContext } from '@ocean/ocean-tools'
 import { defineTool } from '@ocean/ocean-tools'
-import BrowserUseRegistry from '@ocean/ocean-browser-use'
 import { BrowserUseProviderName } from '@ocean/ocean-browser-use/brand'
 import { HarnessError } from '@ocean/ocean-error'
 import type { BrowserAgentMethod } from '@ocean/ocean-client-ui-sidebar-browser/agent-protocol'
@@ -89,7 +89,7 @@ export const Config: z<Config> = z.object({
 export const name = 'tool-browser-desktop'
 
 /** Services owning browser admission, tool execution, and model policy. */
-export const inject = ['tools', 'systemPrompt']
+export const inject = ['browserUse', 'tools', 'systemPrompt']
 
 /** Register the Desktop browser provider, tools, and policy section once.
  * @param ctx - plugin context owning browser admission, tools, and policy.
@@ -100,7 +100,7 @@ export function installDesktopBrowserAgent(ctx: Context,
   transport: DesktopBrowserTransport = processTransport(), config: Config = {}): void {
   // The schema defaults guarantee every field; the cast only removes the optional-input typing.
   const bounds = Config(config) as Required<Config>
-  const registry = ctx.get('browserUse') ?? new BrowserUseRegistry(ctx)
+  const registry = ctx.browserUse
   if (registry.providerName !== undefined) {
     ctx.logger.warn(`desktop browser agent shares the process with browser provider "${registry.providerName}"; its own in-app tools remain available`)
   }
