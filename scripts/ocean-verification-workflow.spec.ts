@@ -34,6 +34,7 @@ const names = readdirSync(directory).filter(name => /\.ya?ml$/u.test(name)).sort
 const workflow = yaml.load(readFileSync(new URL('ocean-verify.yml', directory), 'utf8')) as Workflow
 const packaging = yaml.load(readFileSync(new URL('ocean-package-linux.yml', directory), 'utf8')) as Workflow
 const windowsPackaging = yaml.load(readFileSync(new URL('ocean-package-windows.yml', directory), 'utf8')) as Workflow
+const storePackaging = yaml.load(readFileSync(new URL('ocean-package-store-windows.yml', directory), 'utf8')) as Workflow
 const packagingRunner = "${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}"
 const windowsPackagingRunner = 'windows-2025'
 
@@ -69,10 +70,26 @@ afterEach(() => { vi.unstubAllEnvs() })
 
 describe('Ocean workflow isolation', () => {
   it('contains only verification and manual unsigned packaging definitions', () => {
-    expect(names).toEqual(['ocean-package-linux.yml', 'ocean-package-windows.yml', 'ocean-verify.yml'])
+    expect(names).toEqual(['ocean-package-linux.yml', 'ocean-package-store-windows.yml', 'ocean-package-windows.yml', 'ocean-verify.yml'])
     assertIsolated(workflow)
     assertIsolated(packaging)
     assertIsolated(windowsPackaging)
+    assertIsolated(storePackaging)
+  })
+
+  it('retains Store candidates only after manifest verification and never submits them', () => {
+    expect(Object.keys(storePackaging.on)).toEqual(['workflow_dispatch'])
+    const job = storePackaging.jobs.package!
+    expect(job.if).toBe(windowsPackaging.jobs.package!.if)
+    expect(job['runs-on']).toBe(windowsPackagingRunner)
+    const pack = commands(job)
+    const build = pack.findIndex(run => run.includes('--win appx --x64 --prepackaged') && run.includes('--publish never'))
+    const verify = pack.findIndex(run => run.includes("GetEntry('AppxManifest.xml')"))
+    expect(build).toBeGreaterThanOrEqual(0)
+    expect(verify).toBeGreaterThan(build)
+    const retain = job.steps.find(step => step.uses?.startsWith('actions/upload-artifact@'))
+    expect(retain?.with?.path).toContain('*.appx')
+    expect(retain?.with?.['retention-days']).toBe(7)
   })
 
   it.each([

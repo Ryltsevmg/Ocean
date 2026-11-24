@@ -11,6 +11,8 @@ Use read-only repository permissions, SHA-pinned actions, nonpersistent checkout
 
 [Linux packaging](workflows/ocean-package-linux.yml) and [Windows packaging](workflows/ocean-package-windows.yml) require manual dispatch on `main`. Their file-scoped push events register the definitions but do not run packaging. Separate Linux x64 and ARM64 dispatches select native hosted Ubuntu runners; Windows x64 selects a hosted Windows runner. An optional `build_version` input packages an extended prerelease build version whose prefix must match the checkout product version; empty packages the checkout version. Unsigned archives/installers, SHA-256 checksums and build metadata are retained as workflow artifacts for seven days, not GitHub Releases or an update feed. These workflows use read-only repository access without signing or deployment secrets.
 
+[Microsoft Store packaging](workflows/ocean-package-store-windows.yml) requires manual dispatch on `main`. It retains an unsigned x64 AppX, its SHA-256 digest and source commit for qualification. It checks the package identity and absence of the NSIS update feed. It does not run WACK or submit to Partner Center.
+
 Hosted execution has not been verified here. Configured checks and tool versions do not establish runner availability, quota, memory, native dependency support or download access. Local checks do not qualify hosted CI. Live authentication, real-model tests, performance benchmarks, compatibility matrices, installed Python wheels, macOS packaging, and macOS/Windows signing are outside these definitions.
 
 <a id="release-prerequisites"></a>
