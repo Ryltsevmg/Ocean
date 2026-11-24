@@ -12,6 +12,9 @@ const hint = document.querySelector('#hint')
 const rememberRow = document.querySelector('#remember-row')
 const saveHint = document.querySelector('#save-hint')
 const identity = document.querySelector('#host-identity')
+const sshField = document.querySelector('#ssh-field')
+const sshHost = document.querySelector('#ssh-host')
+const sshStart = document.querySelector('#ssh-start')
 const addressField = document.querySelector('#address-field')
 const tokenRow = document.querySelector('#token-row')
 const rememberField = document.querySelector('#remember-field')
@@ -27,6 +30,7 @@ connect.textContent = view.messages.connect
 forget.textContent = view.messages.forget
 closeButton.textContent = view.messages.cancel
 saveHint.textContent = view.messages.saveUnavailable
+for (const name of ['label', 'hint', 'start']) document.querySelector(`#ssh-${name}`).textContent = view.messages[`ssh${name[0].toUpperCase()}${name.slice(1)}`]
 saveHint.hidden = view.canSave
 rememberRow.hidden = !view.canSave
 failure.textContent = view.notice ?? view.messages.failure
@@ -40,7 +44,7 @@ let pairing = view.pairing?.address
 function showPairing(target) {
   pairing = target
   hint.textContent = view.messages.pairHint.replace('{address}', target)
-  for (const field of [addressField, tokenRow, rememberField]) field.hidden = true
+  for (const field of [addressField, tokenRow, rememberField, sshField]) field.hidden = true
   forget.hidden = true
   failure.hidden = true
   address.value = ''
@@ -144,6 +148,41 @@ function closeDialog() {
     failure.hidden = false
   })
 }
+/**
+ * Prepare and start a Host on a remote machine over SSH, then let the user confirm
+ * the address it became reachable at. The Host mints the pairing link itself, so no
+ * token is typed here.
+ */
+async function startOverSsh() {
+  const host = sshHost.value.trim()
+  if (host === '') {
+    sshHost.focus()
+    return
+  }
+  failure.hidden = true
+  sshStart.disabled = true
+  sshHost.disabled = true
+  const label = sshStart.textContent
+  sshStart.textContent = view.messages.sshStarting
+  form.setAttribute('aria-busy', 'true')
+  try {
+    const result = await bridge.startSsh(host)
+    if (result.kind === 'pairing') showPairing(result.address)
+    else {
+      failure.textContent = result.message ?? view.messages.failure
+      failure.hidden = false
+    }
+  } catch (_error) {
+    failure.textContent = view.messages.failure
+    failure.hidden = false
+  } finally {
+    form.setAttribute('aria-busy', 'false')
+    sshStart.disabled = false
+    sshHost.disabled = false
+    sshStart.textContent = label
+  }
+}
+sshStart.addEventListener('click', () => { void startOverSsh() })
 closeButton.addEventListener('click', closeDialog)
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return

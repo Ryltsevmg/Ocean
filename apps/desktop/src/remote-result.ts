@@ -3,6 +3,7 @@ import { DeviceClientError, DeviceProtocolVersionError, type DeviceClientErrorCo
 import { formatDesktopMessage, type DesktopMessages } from './locale.ts'
 import { RemoteConnectionStoreError } from './remote-connection-store.ts'
 import { RemoteBootstrapCompatibilityError } from './remote-bootstrap.ts'
+import { RemoteSshError, type RemoteSshErrorCode, type RemoteSshStep } from './remote-ssh.ts'
 
 /** Local operation failures distinct from device-protocol failures. */
 export type DesktopRemoteFailure = 'invalid-input' | 'token-required' | 'busy' | 'host-limit' | 'timeout' | 'cancelled' | 'pair-link-invalid' | 'unknown'
@@ -20,7 +21,7 @@ export type DesktopRemoteResult =
   | { kind: 'pairing'; address: string }
   | {
     kind: 'failed'
-    code: DeviceClientErrorCode | RemoteConnectionStoreError['code']
+    code: DeviceClientErrorCode | RemoteConnectionStoreError['code'] | RemoteSshErrorCode
       | typeof localCodes[DesktopRemoteFailure] | 'DEVICE_PROTOCOL_VERSION_INCOMPATIBLE' | 'DESKTOP_REMOTE_VERSION_INCOMPATIBLE'
     message: string
   }
@@ -89,6 +90,18 @@ export function remoteErrorResult(error: unknown, messages: DesktopMessages): De
   if (error instanceof RemoteConnectionStoreError) {
     const unreadable = error.code === 'DESKTOP_REMOTE_STORAGE_INVALID' || error.code === 'DESKTOP_REMOTE_STORAGE_READ'
     return { kind: 'failed', code: error.code, message: unreadable ? messages.remoteSavedUnreadable : messages.remoteStorageFailed }
+  }
+  if (error instanceof RemoteSshError) {
+    // The step names where the machine preparation stopped, which the copy turns into an action.
+    const copy: Record<RemoteSshStep, string> = {
+      inspect: messages.remoteSshInspectFailed,
+      download: error.code === 'DESKTOP_SSH_RELEASE_MISSING' ? messages.remoteSshReleaseMissing : messages.remoteSshDownloadFailed,
+      verify: messages.remoteSshChecksumFailed,
+      extract: messages.remoteSshExtractFailed,
+      serve: messages.remoteSshServeFailed,
+      pair: messages.remoteSshPairFailed,
+    }
+    return { kind: 'failed', code: error.code, message: copy[error.step] }
   }
   if (error instanceof DOMException && error.name === 'TimeoutError') return remoteFailure('timeout', messages)
   if (error instanceof DOMException && error.name === 'AbortError') return remoteFailure('cancelled', messages)

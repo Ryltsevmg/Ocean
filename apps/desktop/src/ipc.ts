@@ -23,6 +23,7 @@ export const DESKTOP_IPC = {
   remoteConnect: 'ocean-desktop:remote-connect',
   remoteForget: 'ocean-desktop:remote-forget',
   remoteProbe: 'ocean-desktop:remote-probe',
+  remoteSshStart: 'ocean-desktop:remote-ssh-start',
   remotePairLink: 'ocean-desktop:remote-pair-link',
   remotePair: 'ocean-desktop:remote-pair',
   remoteClose: 'ocean-desktop:remote-close',
