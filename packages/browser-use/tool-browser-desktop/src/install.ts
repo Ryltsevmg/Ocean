@@ -112,14 +112,20 @@ export function installDesktopBrowserAgent(ctx: Context,
     if (approval === undefined || agent === undefined) {
       throw new HarnessError('Approval is unavailable in this profile; the action was not performed.', 'BROWSER_APPROVAL_UNAVAILABLE')
     }
-    const outcome = await approval.request({
+    const decision = await approval.request({
       agent, toolName: `browser_${method}`, callId: exec.callId,
       reason: `The agent asks to perform browser_${method} on the shared Browser tab.`,
       signal: exec.signal,
     })
-    if (outcome !== 'allowed-once') {
-      throw new HarnessError('The person did not allow this browser action.', 'BROWSER_ACTION_DENIED')
+    if (decision.outcome === 'allowed-once') return
+    // A 'never' policy rejects without asking, so nobody refused this action.
+    if (decision.outcome === 'rejected' && decision.deniedBy === 'policy') {
+      throw new HarnessError(
+        'Approval prompts are disabled in this session, so this browser action was not performed.',
+        'BROWSER_APPROVAL_UNAVAILABLE',
+      )
     }
+    throw new HarnessError('The person did not allow this browser action.', 'BROWSER_ACTION_DENIED')
   }
   const run = async (exec: ToolRunContext, method: BrowserAgentMethod,
     args: Readonly<Record<string, string | number>>,

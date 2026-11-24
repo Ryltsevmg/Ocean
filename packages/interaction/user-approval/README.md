@@ -46,7 +46,7 @@ The effective policy is the one set for the session, falling back to the configu
 |---|---|---|
 | `policy` | `ask` | Default for sessions without an `approval/policy` override |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#oceanocean-user-approval) is the exhaustive source for every accepted field and its JSDoc. `setPolicy(agent, policy)` switches a live agent and queues the switch notice described under Model Experience for its next model step; `setApprovalPolicy(session, policy)` is the direct durable write path used by session initialization. `policyOf(session)` returns the effective policy for consumers that must report a policy denial differently from an answerer's refusal.
+The generated [configuration catalog](../../../docs/config-catalog.md#oceanocean-user-approval) is the exhaustive source for every accepted field and its JSDoc. `setPolicy(agent, policy)` switches a live agent and queues the switch notice described under Model Experience for its next model step; `setApprovalPolicy(session, policy)` is the direct durable write path used by session initialization. `request()` returns an `ApprovalDecision`, whose `deniedBy` names the branch that settled a rejection: `'policy'` means `never` asked nobody, `'answerer'` means an answerer decided.
 
 ### Requesting a decision
 

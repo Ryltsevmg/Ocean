@@ -59,7 +59,7 @@ describe('SDK approval bridge', () => {
     })
     await expect(h.ctx.approval.request({
       agent: h.agent, toolName: 'bash', callId: ToolCallId('call-1'), reason: 'write outside workspace',
-    })).resolves.toBe(outcome)
+    })).resolves.toMatchObject({ outcome })
     expect(h.agent.session.snapshotEvents().slice(-2).map(e => [e.type, e.data])).toEqual([
       ['approval/asked', expect.objectContaining({ toolName: 'bash', reason: 'write outside workspace' })],
       ['approval/decided', expect.objectContaining({ outcome })],
@@ -69,21 +69,21 @@ describe('SDK approval bridge', () => {
   it.each([undefined, false])('delegates when approvalRequests is %s', async (enabled) => {
     const h = await setup(enabled)
     h.ctx.on('approval/request', () => Promise.resolve('rejected'))
-    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'rejected' })
   })
 
   it.each([null, {}, { outcome: 'allow-always' }, { outcome: true }])('fails closed for invalid response %j', async (result) => {
     const h = await setup(true)
     h.client.onRequest(() => Promise.resolve(result))
-    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toBe('unavailable')
+    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'unavailable' })
   })
 
   it('fails closed on client errors and a disconnected transport', async () => {
     const h = await setup(true)
     h.client.onRequest(() => Promise.reject(new Error('no decision')))
-    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toBe('unavailable')
+    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'unavailable' })
     h.serverWire.close()
-    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toBe('unavailable')
+    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'unavailable' })
   })
 
   it('correlates concurrent requests while another client request is in flight', async () => {
@@ -100,10 +100,10 @@ describe('SDK approval bridge', () => {
     onTestFinished(() => { first.resolve({ outcome: 'cancelled' }) })
     const pending = h.ctx.approval.request({ agent: h.agent, toolName: 'first' })
     await entered.promise
-    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'second' })).resolves.toBe('rejected')
+    await expect(h.ctx.approval.request({ agent: h.agent, toolName: 'second' })).resolves.toMatchObject({ outcome: 'rejected' })
     await expect(h.client.request('session/working-directory/get', { sessionId: 'main' })).resolves.toHaveProperty('cwd')
     first.resolve({ outcome: 'allowed-once' })
-    await expect(pending).resolves.toBe('allowed-once')
+    await expect(pending).resolves.toMatchObject({ outcome: 'allowed-once' })
   })
 
   it.each(['cancel', 'shutdown', 'disconnect'] as const)('settles a pending approval on %s and ignores a late grant', async (action) => {
@@ -118,7 +118,7 @@ describe('SDK approval bridge', () => {
     if (action === 'cancel') cancellation.abort()
     else if (action === 'shutdown') await h.server.shutdown()
     else h.serverWire.close()
-    await expect(pending).resolves.toBe(action === 'cancel' ? 'cancelled' : 'unavailable')
+    await expect(pending).resolves.toMatchObject({ outcome: action === 'cancel' ? 'cancelled' : 'unavailable' })
     const delivered = Promise.withResolvers<Buffer>()
     h.input.once('data', delivered.resolve)
     onTestFinished(() => { h.input.off('data', delivered.resolve) })
@@ -142,7 +142,7 @@ describe('SDK approval bridge', () => {
     const clientDecision = vi.fn(async () => ({ outcome: 'allowed-once' }))
     h.client.onRequest(clientDecision)
     h.ctx.on('approval/request', () => Promise.resolve('rejected'))
-    await expect(h.ctx.approval.request({ agent: foreign.agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(h.ctx.approval.request({ agent: foreign.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'rejected' })
     expect(clientDecision).not.toHaveBeenCalled()
   })
 
@@ -164,11 +164,11 @@ describe('SDK approval bridge', () => {
     const clientDecision = vi.fn(async () => ({ outcome: 'allowed-once' }))
     h.client.onRequest(clientDecision)
     for (const agent of [child.agent, grandchild.agent]) {
-      await expect(h.ctx.approval.request({ agent, toolName: 'bash' })).resolves.toBe('allowed-once')
+      await expect(h.ctx.approval.request({ agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'allowed-once' })
       expect(clientDecision).toHaveBeenLastCalledWith('approval/request', { sessionId: agent.session.id, toolName: 'bash' })
     }
     h.ctx.approval.setPolicy(child.agent, 'never')
-    await expect(h.ctx.approval.request({ agent: child.agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(h.ctx.approval.request({ agent: child.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'rejected' })
     expect(clientDecision).toHaveBeenCalledTimes(2)
   })
 
@@ -209,7 +209,7 @@ describe('SDK approval bridge', () => {
       await child.result
       expect(h.ctx.agents.get(child.childId)).toBeUndefined()
       h.ctx.approval.setPolicy(grandchildAgent, 'ask')
-      await expect(h.ctx.approval.request({ agent: grandchildAgent, toolName: 'bash' })).resolves.toBe('allowed-once')
+      await expect(h.ctx.approval.request({ agent: grandchildAgent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'allowed-once' })
       expect(clientDecision.mock.calls.map(call => call[1])).toEqual([
         { sessionId: grandchild.childId, toolName: 'bash' },
       ])
@@ -233,7 +233,7 @@ describe('SDK approval bridge', () => {
     const clientDecision = vi.fn(async () => ({ outcome: 'allowed-once' }))
     h.client.onRequest(clientDecision)
     h.ctx.on('approval/request', () => Promise.resolve('rejected'))
-    await expect(h.ctx.approval.request({ agent: child.agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(h.ctx.approval.request({ agent: child.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'rejected' })
     expect(clientDecision).not.toHaveBeenCalled()
   })
 
@@ -250,7 +250,7 @@ describe('SDK approval bridge', () => {
     h.client.onRequest(clientDecision)
     const fallback = vi.fn(() => Promise.resolve('rejected' as const))
     h.ctx.on('approval/request', fallback)
-    await expect(h.ctx.approval.request({ agent: foreign.agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(h.ctx.approval.request({ agent: foreign.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'rejected' })
     expect(fallback).toHaveBeenCalledOnce()
     expect(clientDecision).not.toHaveBeenCalled()
   })
@@ -269,7 +269,7 @@ describe('SDK approval bridge', () => {
     vi.spyOn(h.ctx.subagents, 'rootOf').mockImplementationOnce(() => { throw error })
     const fallback = vi.fn(() => Promise.resolve('rejected' as const))
     h.ctx.on('approval/request', fallback)
-    await expect(h.ctx.approval.request({ agent: foreign.agent, toolName: 'bash' })).resolves.toBe('unavailable')
+    await expect(h.ctx.approval.request({ agent: foreign.agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'unavailable' })
     expect(fallback).not.toHaveBeenCalled()
   })
 
@@ -284,6 +284,7 @@ describe('SDK approval bridge', () => {
     const clientDecision = vi.fn(async () => ({ outcome: 'allowed-once' }))
     h.client.onRequest(clientDecision)
     // Dispatch at the answerer seam: disposal has already closed the old Agent's turn.
+    // The answerer waterfall keeps the bare outcome vocabulary; only the service wraps it.
     await expect(h.ctx.waterfall('approval/request', { agent: old.agent, toolName: 'bash' },
       () => Promise.resolve('rejected' as const))).resolves.toBe('rejected')
     expect(clientDecision).not.toHaveBeenCalled()

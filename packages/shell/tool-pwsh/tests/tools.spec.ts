@@ -27,7 +27,7 @@ import AgentRegistry from '@ocean/ocean-agent'
 import type { Agent } from '@ocean/ocean-agent'
 import { SESSION_FORMAT_VERSION, SessionId, SessionLogOffset, SessionSeq } from '@ocean/ocean-session'
 import ApprovalService from '@ocean/ocean-user-approval'
-import type { ApprovalOutcome } from '@ocean/ocean-user-approval'
+import type { ApprovalDecision, ApprovalOutcome } from '@ocean/ocean-user-approval'
 import { ShellExecutor } from '@ocean/ocean-shell'
 import type { ShellExecRequest, ShellExecSpec, ShellExecution, ShellProcess, ShellRunResult } from '@ocean/ocean-shell'
 import SessionProjectionRegistry from '@ocean/ocean-session-projection'
@@ -723,7 +723,7 @@ describe('sandbox escalation through ctx.approval', () => {
   })
 
   it.each([
-    ['rejected', 'was denied'],
+    ['rejected', 'user rejected'],
     ['cancelled', 'was cancelled'],
   ] as const)('maps an approval %s to its distinct failure', async (outcome, message) => {
     const { ctx, bash } = await setupSandboxed(true)
@@ -821,9 +821,9 @@ describe('sandbox escalation through ctx.approval', () => {
 
   it('keeps the exhaustiveness backstop for a rogue approval implementation', async () => {
     const { ctx } = await setupSandboxed(true)
-    ctx.approval.request = () => Promise.resolve('rogue' as ApprovalOutcome)
+    ctx.approval.request = () => Promise.resolve({ outcome: 'rogue' } as unknown as ApprovalDecision)
     const result = await call(ctx, 'pwsh', escalate, sandboxAgent())
-    expect(text(result)).toContain('unreachable variant in EscalationOutcome')
+    expect(text(result)).toContain('unreachable variant in EscalationDecision')
   })
 })
 

@@ -28,9 +28,11 @@ type ApprovalRequestId = Branded<'ApprovalRequestId'>
 type ApprovalOutcome = 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'
 ```
 
+`ApprovalDecision` 把该结果与决定拒绝的分支配对。只有服务知道实际走的是哪条分支，因为问题待决期间策略切换可能落地；在调用前后读取会话策略的调用方会报告错误的分支。`deniedBy: 'policy'` 表示 `never` 在任何应答者被咨询之前就拒绝，因此没有人被询问；`deniedBy: 'answerer'` 表示应答者针对该请求作出了否定决定。审计事件对仍然只记录 `ApprovalOutcome`，所以这个区分不增加持久状态。
+
 ## 按会话策略
 
-`ApprovalPolicy` 决定在交互式应答者运行之前发生什么。`ask` 委托给组合的应答者链，链的无应答默认值为 `unavailable`；`never` 确定性地返回 `rejected`，不分发任何应答者。生效值为会话日志中最后一条 `approval/policy` 事件，回退到服务配置。消费方通过 `ctx.approval.policyOf(session)` 读取；`setApprovalPolicy(session, policy)` 是唯一的写入路径，因此回放能重建覆盖值。
+`ApprovalPolicy` 决定在交互式应答者运行之前发生什么。`ask` 委托给组合的应答者链，链的无应答默认值为 `unavailable`；`never` 确定性地返回 `rejected`，不分发任何应答者。生效值为会话日志中最后一条 `approval/policy` 事件，回退到服务配置。服务通过 `ApprovalDecision` 报告决定拒绝的分支，因此没有消费方需要在调用前后重新读取策略；`setApprovalPolicy(session, policy)` 是唯一的写入路径，因此回放能重建覆盖值。
 
 ```ts type-equiv
 /**
@@ -125,21 +127,12 @@ setPolicy(agent: Agent, policy: ApprovalPolicy): void
  * authoritative append cannot reject the request or suppress its matching
  * audit event.
  * @param req - the pending decision (agent, tool identity, reason, signal).
- * @returns the closed outcome; `'allowed-once'` is the only grant.
+ * @returns the closed outcome plus, for `'rejected'`, which branch settled
+ *   it; `'allowed-once'` is the only grant.
  * @throws when no turn is open or either audit event fails before the session
  *   append commit point.
  */
-async request(req: ApprovalRequest): Promise<ApprovalOutcome>
-
-/**
- * The session's effective policy: its projected override, else the
- * configured default (the schema already defaulted an omitted policy to
- * `'ask'`; the `??` only narrows the optional-input TYPE). Consumers read it
- * to tell a `'never'` denial apart from an answerer's refusal.
- * @param session - the exact accepted session whose policy applies.
- * @returns the policy every ask for this session resolves under right now.
- */
-policyOf(session: Session): ApprovalPolicy
+async request(req: ApprovalRequest): Promise<ApprovalDecision>
 
 /**
  * Read the session override without applying the configured default.

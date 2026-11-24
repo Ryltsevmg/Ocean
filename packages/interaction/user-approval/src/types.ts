@@ -91,3 +91,20 @@ declare module '@deepseek-ai/cordis' {
     ): Promise<ApprovalOutcome>
   }
 }
+
+/**
+ * Who settled a `'rejected'` outcome: the session policy, which rejects
+ * before any answerer is consulted and therefore asked nobody, or an answerer
+ * that decided against the request.
+ */
+export type ApprovalDeniedBy = 'policy' | 'answerer'
+
+/**
+ * One settled approval request. The service reports `deniedBy` itself because
+ * only it knows which branch ran: a caller reading the session policy around
+ * the call would race a policy switch that lands while the question is
+ * pending.
+ */
+export type ApprovalDecision =
+  | { readonly outcome: 'allowed-once' | 'cancelled' | 'unavailable' }
+  | { readonly outcome: 'rejected'; readonly deniedBy: ApprovalDeniedBy }

@@ -27,7 +27,8 @@ import type { SandboxMode } from './index.ts'
  *   target is not strictly wider than the call's effective mode; the model corrects the request.
  * - `SANDBOX_ESCALATION_UNAVAILABLE` — the composition cannot ask for approval: no sandboxing executor, no approval
  *   service, no calling Agent, or no approval channel.
- * - `SANDBOX_ESCALATION_REJECTED` — the user declined the escalation; the operation stays denied.
+ * - `SANDBOX_ESCALATION_REJECTED` — the escalation was not granted, whether a person declined it or the session policy
+ *   rejects approvals without asking; the operation stays denied.
  * - `SANDBOX_ESCALATION_CANCELLED` — the approval request ended without a decision while the call itself was not cancelled.
  */
 export const SANDBOX_ESCALATION_ERROR_CODES = [
@@ -141,6 +142,23 @@ export function sandboxPermissionsDescription(subject: string): string {
 export type EscalationOutcome = 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'
 
 /**
+ * Who settled a `'rejected'` outcome: the session policy, which rejects before
+ * consulting any answerer and therefore asked nobody, or an answerer that
+ * decided against the request.
+ */
+export type EscalationDeniedBy = 'policy' | 'answerer'
+
+/**
+ * One settled escalation request. The approval service reports the denying
+ * branch because only it knows which one ran; a caller reading the session
+ * policy around the request would race a switch that lands while the question
+ * is pending.
+ */
+export type EscalationDecision =
+  | { readonly outcome: 'allowed-once' | 'cancelled' | 'unavailable' }
+  | { readonly outcome: 'rejected'; readonly deniedBy: EscalationDeniedBy }
+
+/**
  * The minimal approval-request shape {@link approveEscalation} needs —
  * structurally the approval seam's `ApprovalService`, generic over the agent
  * type `A` and call-id type `C` so this package resolves escalations through
@@ -149,9 +167,9 @@ export type EscalationOutcome = 'allowed-once' | 'rejected' | 'cancelled' | 'una
  */
 export interface EscalationApprover<A = object, C = string> {
   /**
-   * Ask the human to approve one action, resolving to a closed outcome.
+   * Ask the human to approve one action, resolving to a closed decision.
    * @param req - the audit request with optional localized displayReason and presentation lifetime signal.
-   * @returns the human's decision as a closed {@link EscalationOutcome}.
+   * @returns the closed {@link EscalationDecision}, naming the denying branch for `'rejected'`.
    */
   request(req: {
     agent: A
@@ -160,7 +178,7 @@ export interface EscalationApprover<A = object, C = string> {
     reason: string
     displayReason?: { readonly en: string; readonly [locale: string]: string }
     signal?: AbortSignal
-  }): Promise<EscalationOutcome>
+  }): Promise<EscalationDecision>
 }
 
 /**
@@ -232,7 +250,7 @@ export async function approveEscalation<A, C>(request: EscalationRequest, approv
   }
   // Self-contained for the audit trail: approval/asked stores this reason,
   // and the target mode is part of the grant's identity.
-  const outcome = await approval.approver.request({
+  const decision = await approval.approver.request({
     agent: approval.agent,
     toolName: approval.toolName,
     callId: approval.callId,
@@ -240,13 +258,15 @@ export async function approveEscalation<A, C>(request: EscalationRequest, approv
     displayReason: escalationDisplayReason(mode, justification),
     ...approval.signal ? { signal: approval.signal } : {},
   })
-  switch (outcome) {
+  switch (decision.outcome) {
     // The schema enum already pinned `mode` to the closed target vocabulary;
     // the check above proved it is strictly wider.
     case 'allowed-once': return mode as SandboxMode
     case 'rejected':
       throw new SandboxEscalationError(
-        `escalating this ${subject} to "${mode}" was denied; it stays denied, so stop and explain instead of working around it`,
+        decision.deniedBy === 'policy'
+          ? `escalating this ${subject} to "${mode}" was denied: approval prompts are disabled in this session, so no one was asked; it stays denied, so stop and explain instead of working around it`
+          : `the user rejected escalating this ${subject} to "${mode}"; it stays denied, so stop and explain instead of working around it`,
         'SANDBOX_ESCALATION_REJECTED',
       )
     case 'cancelled':
@@ -258,6 +278,6 @@ export async function approveEscalation<A, C>(request: EscalationRequest, approv
         `sandbox escalation to "${mode}" requires approval, but no approval channel is available`,
         'SANDBOX_ESCALATION_UNAVAILABLE',
       )
-    default: return assertNever(outcome, 'EscalationOutcome')
+    default: return assertNever(decision, 'EscalationDecision')
   }
 }
