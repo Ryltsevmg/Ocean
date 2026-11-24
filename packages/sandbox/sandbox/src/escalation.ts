@@ -27,7 +27,8 @@ import type { SandboxMode } from './index.ts'
  *   target is not strictly wider than the call's effective mode; the model corrects the request.
  * - `SANDBOX_ESCALATION_UNAVAILABLE` — the composition cannot ask for approval: no sandboxing executor, no approval
  *   service, no calling Agent, or no approval channel.
- * - `SANDBOX_ESCALATION_REJECTED` — the user declined the escalation; the operation stays denied.
+ * - `SANDBOX_ESCALATION_REJECTED` — the escalation was not granted, whether a person declined it or the session policy
+ *   rejects approvals without asking; the operation stays denied.
  * - `SANDBOX_ESCALATION_CANCELLED` — the approval request ended without a decision while the call itself was not cancelled.
  */
 export const SANDBOX_ESCALATION_ERROR_CODES = [
