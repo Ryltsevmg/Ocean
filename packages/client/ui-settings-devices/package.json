@@ -29,7 +29,6 @@
   "ocean": {
     "client": {
       "inject": [
-        "@ocean/ocean-api-device-controller",
         "@ocean/ocean-api-remote-access",
         "@ocean/ocean-api-remotes",
         "@ocean/ocean-client-locale",
