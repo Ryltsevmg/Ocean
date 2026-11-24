@@ -2198,6 +2198,9 @@ importers:
       '@ocean/ocean-bash-sandbox':
         specifier: workspace:*
         version: link:../../shell/bash-sandbox
+      '@ocean/ocean-browser-use':
+        specifier: workspace:*
+        version: link:../../browser-use/browser-use
       '@ocean/ocean-command-compact':
         specifier: workspace:*
         version: link:../../compaction/command-compact
