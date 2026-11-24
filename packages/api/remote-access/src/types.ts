@@ -83,12 +83,21 @@ export interface RemoteAccessRequest<P extends Principal> {
 }
 
 /**
+ * Global actions of one principal. Declared as a method type, as `bindings` is, so a policy for one
+ * principal kind remains assignable where the service stores policies of every kind.
+ */
+type PrincipalActions<P extends Principal> = { bivarianceHack(principal: P): ReadonlySet<RemoteAccessAction> }['bivarianceHack']
+
+/**
  * Business rules for one non-owner principal kind. Every member answers
  * synchronously from state the business package holds in memory.
  */
 export interface RemoteAccessPolicy<P extends Principal> {
-  /** Explicit actions allowed on every valid resource for this principal kind. */
-  readonly globalActions?: ReadonlySet<RemoteAccessAction>
+  /**
+   * Explicit actions allowed on every valid resource for this principal kind. A function answers per principal,
+   * synchronously from in-memory state, and is called once per decision, item check, and snapshot computation.
+   */
+  readonly globalActions?: ReadonlySet<RemoteAccessAction> | PrincipalActions<P>
   /**
    * List the principal's bindings. Called once per `decide()`, once per
    * `allows()`, and once per snapshot computation; never cached.

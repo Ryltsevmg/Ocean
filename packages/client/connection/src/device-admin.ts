@@ -3,13 +3,15 @@ import { lstat } from 'node:fs/promises'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { dirname, isAbsolute } from 'node:path'
 import { z } from 'zod'
+import { DEVICE_SCOPES } from './device-scopes.ts'
 import { deviceId } from './device-tokens.ts'
 import { DeviceAdministrationError } from './rpc-host.ts'
 
+const scopes = z.array(z.enum(DEVICE_SCOPES)).min(1).max(DEVICE_SCOPES.length).optional()
 const command = z.discriminatedUnion('action', [
   z.object({ action: z.literal('list') }),
-  z.object({ action: z.literal('create'), label: z.string().trim().min(1).max(128) }),
-  z.object({ action: z.literal('pair'), label: z.string().trim().min(1).max(128), ttlSeconds: z.number().int().min(30).max(3_600).optional() }),
+  z.object({ action: z.literal('create'), label: z.string().trim().min(1).max(128), scopes }),
+  z.object({ action: z.literal('pair'), label: z.string().trim().min(1).max(128), scopes, ttlSeconds: z.number().int().min(30).max(3_600).optional() }),
   z.object({ action: z.literal('revoke'), id: deviceId }),
   z.object({ action: z.literal('rotate'), id: deviceId }),
 ])

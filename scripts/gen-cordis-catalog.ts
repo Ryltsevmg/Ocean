@@ -298,6 +298,7 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   PrincipalMap: 'typert.md',
   DeviceId: 'credentials.md',
   DeviceMetadata: 'credentials.md',
+  DeviceScope: 'credentials.md',
   RemoteAccessResource: 'typert.md',
   RemoteAccessResourceKind: 'typert.md',
   RemoteStream: 'typert.md',

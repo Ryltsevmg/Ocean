@@ -3,6 +3,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 import { credentialKey, type CredentialProvider, type CredentialRecord } from '@ocean/ocean-credentials'
 import { z } from 'zod'
 import { HarnessError } from '@ocean/ocean-error'
+import { DEVICE_SCOPES, type DeviceScope } from './device-scopes.ts'
 
 /** A valid device has no room for another active login. */
 export class DeviceLoginCapacityError extends HarnessError {
@@ -22,6 +23,8 @@ export interface DeviceMetadata {
   readonly id: DeviceId
   readonly label: string
   readonly revoked: boolean
+  /** Rights the device holds; absent for a device created before scopes, which holds every scope. */
+  readonly scopes?: readonly DeviceScope[]
 }
 /** Device login identity scoped to the origin that issued it. */
 export interface DeviceSessionKey {
@@ -33,6 +36,8 @@ export interface DeviceSessionKey {
 /** Current expiry of an admitted device login. */
 export interface DeviceSession extends DeviceSessionKey {
   readonly expiresAt: number
+  /** Rights of the device; absent for a device created before scopes, which holds every scope. */
+  readonly scopes?: readonly DeviceScope[]
 }
 
 const secretPattern = /^[A-Za-z0-9_-]{43}$/u
@@ -41,11 +46,13 @@ const session = z.object({
   origin: z.string(),
   expiresAt: z.number().int().positive(),
 })
+const scopes = z.array(z.enum(DEVICE_SCOPES)).min(1).optional()
 const entry = z.object({
   id: deviceId,
   label: z.string().trim().min(1).max(128),
   hash: z.string().regex(/^[0-9a-f]{64}$/u),
   revoked: z.boolean(),
+  scopes,
   sessions: z.array(session).default([]),
 })
 const pairing = z.object({
@@ -53,6 +60,7 @@ const pairing = z.object({
   label: z.string().trim().min(1).max(128),
   hash: z.string().regex(/^[0-9a-f]{64}$/u),
   expiresAt: z.number().int().positive(),
+  scopes,
 })
 const registry = z.object({ version: z.literal(1), devices: z.array(entry), pairings: z.array(pairing).default([]) })
 
@@ -75,6 +83,11 @@ function load(record: CredentialRecord | undefined): z.infer<typeof registry> {
   return parsed.data
 }
 
+/** A record fragment holding the scopes, or nothing: the credential store cannot represent an undefined value. */
+function withScopes(held: readonly DeviceScope[] | undefined): { scopes?: readonly DeviceScope[] } {
+  return held === undefined ? {} : { scopes: held }
+}
+
 function hash(secret: string): string {
   return createHash('sha256').update(secret).digest('hex')
 }
@@ -95,11 +108,14 @@ export class DeviceTokens {
   /**
    * Issue a distinct credential and return its secret once, after the write commits.
    * @param label - User-facing device name.
+   * @param granted - Rights the device receives; absent grants every scope.
    * @returns Device identity and bearer token.
    */
-  async issue(label: string): Promise<{ id: DeviceId; token: string }> {
+  async issue(label: string, granted?: readonly DeviceScope[]): Promise<{ id: DeviceId; token: string }> {
     const secret = randomBytes(32).toString('base64url')
-    const device = entry.parse({ id: randomUUID(), label, hash: hash(secret), revoked: false })
+    const device = entry.parse({
+      id: randomUUID(), label, hash: hash(secret), revoked: false, ...withScopes(granted),
+    })
     const committed = load(await this.modify((current) => {
       const state = load(current)
       return { kind: 'grant', payload: { ...state, devices: [...state.devices, device] } }
@@ -114,13 +130,18 @@ export class DeviceTokens {
    * Create a one-time grant that a new device can exchange for its own token.
    * @param label - Name the device receives when the grant is redeemed.
    * @param ttlMs - Lifetime of the grant in milliseconds.
+   * @param granted - Rights the new device receives; absent grants every scope.
    * @returns Grant bearer, shown once after the write commits, and its expiry.
    * @throws {DevicePairingCapacityError} When the Host holds too many unexpired grants.
    */
-  async createPairing(label: string, ttlMs: number): Promise<{ id: string; secret: string; expiresAt: number }> {
+  async createPairing(
+    label: string, ttlMs: number, granted?: readonly DeviceScope[],
+  ): Promise<{ id: string; secret: string; expiresAt: number }> {
     if (!Number.isSafeInteger(ttlMs) || ttlMs <= 0) throw new Error('client-connection: invalid pairing lifetime')
     const secret = randomBytes(32).toString('base64url')
-    const grant = pairing.parse({ id: randomUUID(), label, hash: hash(secret), expiresAt: Date.now() + ttlMs })
+    const grant = pairing.parse({
+      id: randomUUID(), label, hash: hash(secret), expiresAt: Date.now() + ttlMs, ...withScopes(granted),
+    })
     const outcome = { capacityReached: false }
     const committed = load(await this.modify((current) => {
       const state = load(current)
@@ -145,7 +166,7 @@ export class DeviceTokens {
     if (parsed === undefined) return undefined
     const secret = randomBytes(32).toString('base64url')
     const device = entry.parse({ id: randomUUID(), label: 'pending', hash: hash(secret), revoked: false })
-    const spent: { label?: string } = {}
+    const spent: { label?: string; scopes?: readonly DeviceScope[] } = {}
     const committed = load(await this.modify((current) => {
       const state = load(current)
       const now = Date.now()
@@ -155,7 +176,7 @@ export class DeviceTokens {
       spent.label = grant.label
       return { kind: 'grant', payload: {
         ...state,
-        devices: [...state.devices, { ...device, label: grant.label }],
+        devices: [...state.devices, { ...device, label: grant.label, ...grant.scopes === undefined ? {} : { scopes: grant.scopes } }],
         pairings: state.pairings.filter(other => other.id !== grant.id && other.expiresAt > now),
       } }
     }))
@@ -245,7 +266,9 @@ export class DeviceTokens {
     const now = Date.now()
     const login = device.sessions.find(other => other.origin === origin && other.expiresAt > now
       && timingSafeEqual(Buffer.from(other.hash, 'hex'), bearer.digest))
-    return login === undefined ? undefined : { deviceId: device.id, origin, expiresAt: login.expiresAt, verifier: login.hash }
+    return login === undefined ? undefined : {
+      deviceId: device.id, origin, expiresAt: login.expiresAt, verifier: login.hash, ...withScopes(device.scopes),
+    }
   }
 
   /**
@@ -280,7 +303,7 @@ export class DeviceTokens {
    */
   async list(): Promise<DeviceMetadata[]> {
     const state = load(await this.credentials.readRecord(deviceRegistryKey))
-    return state.devices.map(({ id, label, revoked }) => ({ id, label, revoked }))
+    return state.devices.map(({ id, label, revoked, scopes: held }) => ({ id, label, revoked, ...withScopes(held) }))
   }
 
   /**

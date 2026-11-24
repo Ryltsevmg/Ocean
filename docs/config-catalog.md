@@ -207,7 +207,7 @@ export interface Config {
 ## `@ocean/ocean-api-gateway`
 
 - `inject`: `typert` · `remoteAccess`
-- `source`: [`packages/api/gateway/src/index.ts:160`](../packages/api/gateway/src/index.ts)
+- `source`: [`packages/api/gateway/src/index.ts:161`](../packages/api/gateway/src/index.ts)
 
 ```ts config-catalog
 /** Gateway transport configuration. */

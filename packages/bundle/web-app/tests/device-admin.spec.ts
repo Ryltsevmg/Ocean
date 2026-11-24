@@ -195,6 +195,32 @@ describe('remote-device over the administrator socket', () => {
     expect(errors).toEqual(['ocean remote-device: pass --url: this Host does not advertise an HTTPS address'])
   })
 
+  it.each([
+    { args: ['create', 'laptop', '--scope', 'terminal:operate', '--scope', 'sessions:read', '--scope', 'sessions:read'], operation: { action: 'create', label: 'laptop', scopes: ['sessions:read', 'terminal:operate'] } },
+    { args: ['pair', 'phone', '--url', 'https://ocean.example/', '--scope', 'files:read'], operation: { action: 'pair', label: 'phone', scopes: ['files:read'] } },
+  ])('sends the named scopes, once each in catalog order, for $args', async ({ args, operation }) => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { id: 'd1', token: 't', grant: 'g', expiresAt: 1 } }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, ...args])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual(operation)
+  })
+
+  it.each(['create', 'pair'])('rejects an unknown scope for %s before contacting the Host', async (command) => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: {} }) })
+    const url = command === 'pair' ? ['--url', 'https://ocean.example/'] : []
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, command, 'phone', ...url, '--scope', 'admin'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(boot.observed.err).toContain('unknown device scope "admin"')
+  })
+
+  it('sends no scopes when none are named, so the device holds every right', async () => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { id: 'd1', token: 't' } }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'create', 'laptop'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual({ action: 'create', label: 'laptop' })
+  })
+
   it('sends no lifetime when the pairing command names none', async () => {
     const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { grant: 'g', expiresAt: 1 } }) })
     boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone', '--url', 'https://ocean.example/'])

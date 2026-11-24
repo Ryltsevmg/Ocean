@@ -184,6 +184,13 @@ admitDeviceDocument?(request: Request): Promise<ConnectionAdmission | undefined>
 sharesDeviceSession?(first: PeerScope, second: PeerScope): boolean
 
 /**
+ * Read the rights of the device behind a live login.
+ * @param deviceId - Device the Peer's principal names.
+ * @returns Its scopes, every scope for a device created before scopes, or undefined without a live login.
+ */
+deviceScopes?(deviceId: string): readonly DeviceScope[] | undefined
+
+/**
  * Authenticate one frontend index request, owning a token redirect or 401.
  * The cookie this mints is `Secure` when the mounted Web carrier serves TLS,
  * which only that listener's protocol decides.
@@ -201,7 +208,7 @@ authorizeIndex(request: ConnectionIndexRequest, response: ConnectionIndexRespons
 authenticatedUrl(baseUrl: string): string
 ```
 
-Types: [Principal](typert.md)
+Types: [DeviceScope](credentials.md) · [Principal](typert.md)
 
 Source: [`packages/client/connection/src/rpc.ts`](../../packages/client/connection/src/rpc.ts)
 

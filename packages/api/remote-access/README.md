@@ -99,4 +99,4 @@ None.
 
 </details>
 
-A policy may declare `globalActions` for actions it permits on every valid resource. These authorizations also apply to item filtering inside their methods. The snapshot includes those methods in the global grant’s `actions` and `allResources`. Scoped client controls consume only `allResources` from that grant.
+A policy may declare `globalActions` for actions it permits on every valid resource. The declaration is either one set for the whole principal kind, or a function that answers per principal, synchronously from in-memory state; the function is called once per decision, per item check, and per snapshot computation, and its failure is reported like a `bindings()` failure, refusing the question with `policy-failed`. These authorizations also apply to item filtering inside their methods. The snapshot includes those methods in the global grant’s `actions` and `allResources`. Scoped client controls consume only `allResources` from that grant.

@@ -759,6 +759,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'Whether the Peers share a live device login.',
       },
       {
+        signature: 'deviceScopes?(deviceId: string): readonly DeviceScope[] | undefined',
+        description: 'Read the rights of the device behind a live login.',
+        parameters: [{ name: 'deviceId', description: 'Device the Peer\'s principal names.' }],
+        returns: 'Its scopes, every scope for a device created before scopes, or undefined without a live login.',
+      },
+      {
         signature: 'authorizeIndex(request: ConnectionIndexRequest, response: ConnectionIndexResponse): boolean',
         description: 'Authenticate one frontend index request, owning a token redirect or 401. The cookie this mints is `Secure` when the mounted Web carrier serves TLS, which only that listener\'s protocol decides.',
         parameters: [{ name: 'request', description: 'root or configured-index HTTP request.' }, { name: 'response', description: 'response owned when the result is false.' }],
@@ -990,9 +996,9 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     description: 'Uses the selected credential provider\'s serialization and file-access policy.',
     methods: [
       {
-        signature: 'issue(label: string): Promise<{ id: DeviceId; token: string }>',
+        signature: 'issue(label: string, scopes?: readonly DeviceScope[]): Promise<{ id: DeviceId; token: string }>',
         description: 'Create a device in the local credential home without exposing a listener.',
-        parameters: [{ name: 'label', description: 'User-visible name for the device.' }],
+        parameters: [{ name: 'label', description: 'User-visible name for the device.' }, { name: 'scopes', description: 'Rights the device receives; absent grants every scope.' }],
         returns: 'The device identifier and its token, shown once after the write commits.',
       },
       {
@@ -5479,7 +5485,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'DeviceMetadata',
-    declaration: 'export interface DeviceMetadata {\n    readonly id: DeviceId;\n    readonly label: string;\n    readonly revoked: boolean;\n}',
+    declaration: 'export interface DeviceMetadata {\n    readonly id: DeviceId;\n    readonly label: string;\n    readonly revoked: boolean;\n    readonly scopes?: readonly DeviceScope[];\n}',
+  },
+  {
+    name: 'DeviceScope',
+    declaration: 'export type DeviceScope = typeof DEVICE_SCOPES[number];',
   },
   {
     name: 'DiffCallView',
@@ -6859,7 +6869,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'RemoteAccessPolicy',
-    declaration: 'export interface RemoteAccessPolicy<P extends Principal> {\n    readonly globalActions?: ReadonlySet<RemoteAccessAction>;\n    bindings(principal: P): readonly RemoteAccessBinding[];\n    explain?(request: RemoteAccessRequest<P>): string | undefined;\n}',
+    declaration: 'export interface RemoteAccessPolicy<P extends Principal> {\n    readonly globalActions?: ReadonlySet<RemoteAccessAction> | PrincipalActions<P>;\n    bindings(principal: P): readonly RemoteAccessBinding[];\n    explain?(request: RemoteAccessRequest<P>): string | undefined;\n}',
   },
   {
     name: 'RemoteAccessRequest',

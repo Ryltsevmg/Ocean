@@ -16,6 +16,7 @@ import { bridge } from './http-bridge.ts'
 import { isRemoteAuthority, isTrustedApiRequest } from './api-request-trust.ts'
 import { API_PATH } from './api-path.ts'
 import type { BrowserAuth } from './browser-auth.ts'
+import { DEVICE_SCOPES, type DeviceScope } from './device-scopes.ts'
 import { deviceRegistryKey, type DeviceId, type DeviceSession, type DeviceSessionKey } from './device-tokens.ts'
 import type { DeviceLogin } from './device-login.ts'
 import { Peer } from './peer.ts'
@@ -371,6 +372,18 @@ export class HostConnectionService extends Service implements HostConnectionHand
       && session !== undefined && other !== undefined && !this.invalidatingDevices.has(session.deviceId)
       && session.expiresAt > Date.now() && other.expiresAt > Date.now()
       && session.deviceId === other.deviceId && session.origin === other.origin && session.verifier === other.verifier
+  }
+
+  /**
+   * Read the rights of the device behind a live login.
+   * @param deviceId - Device the Peer's principal names.
+   * @returns Its scopes, every scope for a device created before scopes, or undefined while no login of it is live.
+   */
+  deviceScopes(deviceId: string): readonly DeviceScope[] | undefined {
+    for (const lease of this.deviceLeases.values()) {
+      if (lease.session.deviceId === deviceId && lease.active) return lease.session.scopes ?? DEVICE_SCOPES
+    }
+    return undefined
   }
 
   private async invalidateDevice<T>(id: DeviceId, mutate: () => Promise<T>): Promise<T> {

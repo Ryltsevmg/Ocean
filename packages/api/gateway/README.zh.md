@@ -62,7 +62,7 @@ Host 组合可通过 `registerRemoteEvents()` 注册唯一的应用事件 source
 
 `./device` 入口导出 Node socket 工厂以及共享的 `RemoteStreamMuxClient`、`RemoteStreamCarrierError` 和 `ClientUplinkQueue`，不加载 Gateway 插件。`./stream-protocol` 导出为原生桌面调用方提供共享的 Remote 流帧格式和解析器。它们与浏览器客户端使用同一个经过认证的 WebSocket 端点。
 
-通过认证的设备使用 Gateway 的设备策略。该策略显式允许列出、搜索、创建和重命名会话、发送提示、取消会话及已列出的历史记录与状态方法。未列出的操作仍会被拒绝。
+通过认证的设备使用 Gateway 的设备策略。该策略允许设备活动登录的权限范围之并集，通过 `ctx.connection.deviceScopes(deviceId)` 读取，此外不允其他操作：`sessions:read` 覆盖会话列出、搜索、分页、历史、状态、跟随、投影、模型目录和会话事件；`sessions:write` 覆盖创建、重命名、发送提示、取消、控制、模型选择和工具审批答复；`files:read` 覆盖工作区列出、读取、统计、搜索、变更和目录选择器；`files:write` 覆盖上传和工作区创建；`terminal:operate` 覆盖保留终端相关方法；`settings:manage` 覆盖设置、凭据和提供商列出。在权限范围出现之前创建的设备持有全部权限。没有活动登录的设备不持有任何权限，因此比登录存活更久的 Peer 无法操作。未列出的操作仍会被拒绝。
 
 已认证设备可以通过 `deviceApproval/list` 和 `deviceApproval/answer` 列出并回答待处理的工具审批。两种操作都需要 Session ID。答复可授权一次执行或拒绝请求。第一个有效答复会完成待处理请求并取消未完成的投递。
 

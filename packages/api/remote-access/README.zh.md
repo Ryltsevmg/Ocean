@@ -99,4 +99,4 @@ Client 入口同步读取 index 注入在 `REMOTE_ACCESS_SNAPSHOT_KEY` 下的 ba
 
 </details>
 
-策略可使用 `globalActions` 声明允许作用于所有有效资源的操作权限。方法内部的条目筛选也使用这些权限。快照将该集合中的方法同时列入全局授权的 `actions` 和 `allResources`。作用域内的客户端控件只读取该授权的 `allResources`。
+策略可使用 `globalActions` 声明允许作用于所有有效资源的操作权限。该声明可以是整个主体类别共用的一组权限，也可以是按主体分别回答的函数；函数同步地根据内存状态回答，每次决策、每次条目检查、每次快照计算各调用一次，其失败与 `bindings()` 失败一样上报，并以 `policy-failed` 拒绝该问题。方法内部的条目筛选也使用这些权限。快照将该集合中的方法同时列入全局授权的 `actions` 和 `allResources`。作用域内的客户端控件只读取该授权的 `allResources`。

@@ -28,7 +28,7 @@
 
 在 Windows、macOS 和 Linux 上，以 Host 的服务账户并使用相同的 `OCEAN_HOME` 运行 `ocean remote-device --bootstrap create <label>`，无需启动监听器即可创建设备。使用 `ocean remote-device --bootstrap list` 查看设备元数据，不输出令牌。运行中的 Host 通过文件监听器读取凭据更新；配置为 `watch: false` 的凭据提供者需要重新加载。Bootstrap 仅支持 create 和 list；rotate 和 revoke 需要使用运行中的 Unix 管理套接字。`--bootstrap` 和 `--socket` 必须且只能选择一个。`--timeout` 仅限制套接字操作的等待时间。
 
-在 Unix 上，使用 `ocean serve --device-admin-socket /absolute/private-dir/admin.sock` 启动 Host。目录必须已存在，且只能由服务器用户访问。运行 `ocean remote-device --socket /absolute/private-dir/admin.sock create <label>`，或使用 `list`、`rotate <id>` 和 `revoke <id>`。创建和轮换会将持有者令牌输出到 stdout。请直接将它交给目标客户端，避免写入日志。
+在 Unix 上，使用 `ocean serve --device-admin-socket /absolute/private-dir/admin.sock` 启动 Host。目录必须已存在，且只能由服务器用户访问。运行 `ocean remote-device --socket /absolute/private-dir/admin.sock create <label>`，或使用 `list`、`rotate <id>` 和 `revoke <id>`。创建和轮换会将持有者令牌输出到 stdout。请直接将它交给目标客户端，避免写入日志。`create` 和 `pair` 接受可重复的 `--scope <name>`，把设备收窄到指定权限：`sessions:read`、`sessions:write`、`files:read`、`files:write`、`terminal:operate` 和 `settings:manage`。不指定 `--scope` 时设备持有全部权限，与之前一致。设备保留创建时的权限，因此扩大权限意味着创建另一个设备并撤销旧的。
 
 要在不输入令牌的情况下添加设备，请运行 `ocean remote-device --socket /absolute/private-dir/admin.sock pair <label> --url https://host.example/`。当 Host 知道自己的公共 HTTPS 地址时（例如使用 `--tailscale-serve` 或 `--public-url`），`--url` 可省略。命令输出一次性的 `ocean://pair` 链接及其到期时间。链接包含 Host 地址和标签，片段中带有只能使用一次的授权；除非用 `--ttl <seconds>`（30 至 3600）指定，否则十分钟后过期。在设备上打开该链接，或粘贴到 Desktop 的**连接远程 Host**对话框的地址栏中，并确认地址。链接在使用或过期之前应视同密码。`pair` 需要运行中 Host 的管理 socket，不能与 `--bootstrap` 一起使用。
 

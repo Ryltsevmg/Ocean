@@ -413,9 +413,10 @@ Uses the selected credential provider's serialization and file-access policy.
 /**
  * Create a device in the local credential home without exposing a listener.
  * @param label - User-visible name for the device.
+ * @param scopes - Rights the device receives; absent grants every scope.
  * @returns The device identifier and its token, shown once after the write commits.
  */
-issue(label: string): Promise<{ id: DeviceId; token: string }>
+issue(label: string, scopes?: readonly DeviceScope[]): Promise<{ id: DeviceId; token: string }>
 
 /**
  * Read local device metadata without credential material.
