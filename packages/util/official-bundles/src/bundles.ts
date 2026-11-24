@@ -121,11 +121,11 @@ export const RETIRED_BUNDLES: ReadonlySet<string> = new Set([
 /** Exact package versions eligible to keep a profile selection under a reused {@link RETIRED_BUNDLES} name. */
 export const REUSED_BUNDLE_VERSIONS: ReadonlyMap<string, string> = new Map([
   ['@ocean/ocean-cua-bundle', '1.0.0'],
-  ['@ocean/ocean-experimental-auto-review', '1.0.0'],
-  ['@ocean/ocean-experimental-forge-bundle', '1.0.0'],
-  ['@ocean/ocean-experimental-inspector-profile', '1.0.0'],
-  ['@ocean/ocean-experimental-session-titles-bundle', '1.0.0'],
-  ['@ocean/ocean-experimental-voice-input-bundle', '1.0.0'],
+  ['@ocean/ocean-experimental-auto-review', '1.1.0'],
+  ['@ocean/ocean-experimental-forge-bundle', '1.1.0'],
+  ['@ocean/ocean-experimental-inspector-profile', '1.1.0'],
+  ['@ocean/ocean-experimental-session-titles-bundle', '1.1.0'],
+  ['@ocean/ocean-experimental-voice-input-bundle', '1.1.0'],
 ])
 
 /**
