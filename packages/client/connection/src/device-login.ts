@@ -34,6 +34,39 @@ export class DeviceLogin {
   }) {}
 
   /**
+   * Admit a bearer exchange: POST over a trusted origin, the current protocol version, and the
+   * Host identity the caller pinned. Both the token and the pairing exchange start here.
+   * @param req - Incoming POST request.
+   * @param listener - Bound address and transport protocol.
+   * @returns The bearer without its scheme and the trusted origin, or the rejection status and headers that end the request.
+   */
+  private admit(req: IncomingMessage, listener: { host: string; protocol: 'http:' | 'https:' }):
+    | { bearer: string; origin: string }
+    | { rejection: number; headers: Record<string, string> } {
+    if (req.method !== 'POST') return { rejection: 405, headers: {} }
+    const origin = this.origin(req, listener)
+    if (origin === undefined) return { rejection: 403, headers: {} }
+    if (req.headers[DEVICE_PROTOCOL_HEADER] !== DEVICE_PROTOCOL_VERSION) {
+      return { rejection: 409, headers: { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION } }
+    }
+    const expectedHost = header(req, DEVICE_HOST_HEADER)
+    if (expectedHost !== undefined && expectedHost !== this.config.identity.hostId) return { rejection: 412, headers: {} }
+    const authorization = req.headers.authorization
+    if (authorization?.length !== 87 || !authorization.startsWith('Bearer ')) return { rejection: 401, headers: {} }
+    return { bearer: authorization.slice(7), origin }
+  }
+
+  /**
+   * End a request with an admission's rejection, so a refused exchange carries no body and is never cached.
+   * @param res - Response owned by the calling endpoint.
+   * @param admitted - A rejection status and the headers that explain it.
+   */
+  private refuse(res: ServerResponse, admitted: { rejection: number; headers: Record<string, string> }): void {
+    res.writeHead(admitted.rejection, { 'cache-control': 'no-store', ...admitted.headers })
+    res.end()
+  }
+
+  /**
    * Exchange an Authorization bearer and set a host-only login cookie.
    * @param req - Incoming POST request with the device bearer in Authorization.
    * @param res - Response owned by the login endpoint.
@@ -47,19 +80,11 @@ export class DeviceLogin {
       res.writeHead(status, { 'cache-control': 'no-store', ...headers })
       res.end()
     }
-    if (req.method !== 'POST') {  reject(405); return }
-    const origin = this.origin(req, listener)
-    if (origin === undefined) {  reject(403); return }
-    if (req.headers[DEVICE_PROTOCOL_HEADER] !== DEVICE_PROTOCOL_VERSION) {
-      reject(409, { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION }); return
-    }
-    const expectedHost = header(req, DEVICE_HOST_HEADER)
-    if (expectedHost !== undefined && expectedHost !== this.config.identity.hostId) {  reject(412); return }
-    const bearer = req.headers.authorization
-    if (bearer?.length !== 87 || !bearer.startsWith('Bearer ')) {  reject(401); return }
+    const admitted = this.admit(req, listener)
+    if ('rejection' in admitted) { this.refuse(res, admitted); return }
     let device: DeviceId | undefined
     try {
-      device = await this.tokens.verify(bearer.slice(7))
+      device = await this.tokens.verify(admitted.bearer)
     } catch (_error) {
       // Credential storage details are not part of the public response.
       reject(503); return
@@ -78,7 +103,7 @@ export class DeviceLogin {
     this.attempts.set(device, attempts + 1)
     let credential: string | undefined
     try {
-      credential = await this.tokens.exchange(bearer.slice(7), origin, this.config)
+      credential = await this.tokens.exchange(admitted.bearer, admitted.origin, this.config)
     } catch (error) {
       // Credential provider errors can contain record details. Keep them off the wire.
       if (error instanceof DeviceLoginCapacityError) {
@@ -105,23 +130,15 @@ export class DeviceLogin {
     host: string
     protocol: 'http:' | 'https:'
   }): Promise<void> {
-    const reject = (status: number, headers: Record<string, string> = {}): void => {
-      res.writeHead(status, { 'cache-control': 'no-store', ...headers })
-      res.end()
-    }
-    if (req.method !== 'POST') { reject(405); return }
-    if (this.origin(req, listener) === undefined) { reject(403); return }
-    if (req.headers[DEVICE_PROTOCOL_HEADER] !== DEVICE_PROTOCOL_VERSION) {
-      reject(409, { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION }); return
-    }
-    const expectedHost = header(req, DEVICE_HOST_HEADER)
-    if (expectedHost !== undefined && expectedHost !== this.config.identity.hostId) { reject(412); return }
-    const bearer = req.headers.authorization
-    if (bearer?.length !== 87 || !bearer.startsWith('Bearer ')) { reject(401); return }
+    const admitted = this.admit(req, listener)
+    if ('rejection' in admitted) { this.refuse(res, admitted); return }
     const now = performance.now()
     if (now - this.pairWindowStartedAt >= this.config.exchangeWindowMs) {
       this.pairWindowStartedAt = now
       this.pairAttempts = 0
+    }
+    const reject = (status: number, headers: Record<string, string> = {}): void => {
+      this.refuse(res, { rejection: status, headers })
     }
     if (this.pairAttempts >= this.config.maxExchangesPerWindow) {
       reject(429, { 'retry-after': String(Math.ceil((this.pairWindowStartedAt + this.config.exchangeWindowMs - now) / 1000)) }); return
@@ -129,7 +146,7 @@ export class DeviceLogin {
     this.pairAttempts += 1
     let device: Awaited<ReturnType<DeviceTokens['redeemPairing']>>
     try {
-      device = await this.tokens.redeemPairing(bearer.slice(7))
+      device = await this.tokens.redeemPairing(admitted.bearer)
     } catch (_error) {
       // Credential provider errors can contain record details. Keep them off the wire.
       reject(503); return
