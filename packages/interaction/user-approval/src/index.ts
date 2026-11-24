@@ -47,13 +47,18 @@ declare module '@ocean/ocean-session/types' {
 }
 
 import { ApprovalRequestId } from './types.ts'
-import type { ApprovalOutcome, ApprovalRequestEvent } from './types.ts'
+import type { ApprovalDecision, ApprovalOutcome, ApprovalRequestEvent } from './types.ts'
 
 export { ApprovalRequestId } from './types.ts'
-export type { ApprovalOutcome } from './types.ts'
+export type { ApprovalDecision, ApprovalDeniedBy, ApprovalOutcome } from './types.ts'
 
 /** Every {@link ApprovalOutcome}, for runtime normalization of answerer returns. */
 const OUTCOMES: readonly ApprovalOutcome[] = ['allowed-once', 'rejected', 'cancelled', 'unavailable']
+
+/** Wrap an answerer's outcome: anything an answerer rejects came from it, not from the session policy. */
+function answered(outcome: ApprovalOutcome): ApprovalDecision {
+  return outcome === 'rejected' ? { outcome: 'rejected', deniedBy: 'answerer' } : { outcome }
+}
 
 /**
  * A session's approval policy — what happens to an {@link ApprovalService}
@@ -182,7 +187,7 @@ export class ApprovalService extends Service {
     // Registration can finish after an unload has started. Do not add effects then.
     if (this.ctx.fiber.uid === null) return
 
-    const effective = (agent: Agent): ApprovalPolicy => this.policyOf(agent.session)
+    const effective = (agent: Agent): ApprovalPolicy => this.effectivePolicy(agent.session)
 
     // The complete current value travels after retained history, so switching
     // policy does not rewrite the stable system-prompt cache prefix.
@@ -209,7 +214,7 @@ export class ApprovalService extends Service {
    * @param policy - the new effective policy.
    */
   setPolicy(agent: Agent, policy: ApprovalPolicy): void {
-    const previous = this.policyOf(agent.session)
+    const previous = this.effectivePolicy(agent.session)
     if (previous === policy) return
     setApprovalPolicy(agent.session, policy)
     agent.inject(createUserMessage({
@@ -235,11 +240,12 @@ export class ApprovalService extends Service {
    * authoritative append cannot reject the request or suppress its matching
    * audit event.
    * @param req - the pending decision (agent, tool identity, reason, signal).
-   * @returns the closed outcome; `'allowed-once'` is the only grant.
+   * @returns the closed outcome plus, for `'rejected'`, which branch settled
+   *   it; `'allowed-once'` is the only grant.
    * @throws when no turn is open or either audit event fails before the session
    *   append commit point.
    */
-  async request(req: ApprovalRequest): Promise<ApprovalOutcome> {
+  async request(req: ApprovalRequest): Promise<ApprovalDecision> {
     const session = req.agent.session
     if (!this.approvalStateOf(session).turnOpen) {
       throw new Error(
@@ -255,20 +261,19 @@ export class ApprovalService extends Service {
       ...req.callId !== undefined ? { callId: req.callId } : {},
       ...req.reason !== undefined ? { reason: req.reason } : {},
     })
-    const outcome = await this.decide(req, session)
-    session.append('approval/decided', { id, outcome })
-    return outcome
+    const decision = await this.decide(req, session)
+    session.append('approval/decided', { id, outcome: decision.outcome })
+    return decision
   }
 
   /**
    * The session's effective policy: its projected override, else the
    * configured default (the schema already defaulted an omitted policy to
-   * `'ask'`; the `??` only narrows the optional-input TYPE). Consumers read it
-   * to tell a `'never'` denial apart from an answerer's refusal.
+   * `'ask'`; the `??` only narrows the optional-input TYPE).
    * @param session - the exact accepted session whose policy applies.
    * @returns the policy every ask for this session resolves under right now.
    */
-  policyOf(session: Session): ApprovalPolicy {
+  private effectivePolicy(session: Session): ApprovalPolicy {
     return this.overrideOf(session) ?? this.config.policy ?? 'ask'
   }
 
@@ -291,20 +296,20 @@ export class ApprovalService extends Service {
    * @param session - the request agent's session used for policy lookup.
    * @returns the normalized closed outcome.
    */
-  private async decide(req: ApprovalRequest, session: Session): Promise<ApprovalOutcome> {
+  private async decide(req: ApprovalRequest, session: Session): Promise<ApprovalDecision> {
     const signal = req.signal
-    if (signal?.aborted) return 'cancelled'
+    if (signal?.aborted) return { outcome: 'cancelled' }
     // The 'never' policy is decided HERE, before any dispatch: a listener
     // registered with `prepend: true` after this service mounts would sit
     // ahead of any gate LISTENER, so a listener-shaped gate cannot keep the
     // documented promise that 'never' rejects deterministically regardless
     // of registration order — only the service's own request path can.
-    if (this.policyOf(session) === 'never') return 'rejected'
+    if (this.effectivePolicy(session) === 'never') return { outcome: 'rejected', deniedBy: 'policy' }
     // Enter the promise chain BEFORE dispatching: a listener that throws
     // SYNCHRONOUSLY (before its first await) must land in the same rejection
     // path as an async one — `Promise.resolve(call())` would let it escape
     // the containment into the caller.
-    const answer: Promise<ApprovalOutcome> = Promise.resolve().then(
+    const answer: Promise<ApprovalDecision> = Promise.resolve().then(
       () => this.ctx.waterfall(
         scopeTarget(req.agent, req.agent), 'approval/request', req,
         () => Promise.resolve<ApprovalOutcome>('unavailable'),
@@ -312,23 +317,23 @@ export class ApprovalService extends Service {
     ).then(
       // Normalize a rogue (non-vocabulary) answerer return to the fail-closed
       // outcome instead of leaking it into callers' closed-union switches.
-      outcome => OUTCOMES.includes(outcome) ? outcome : 'unavailable',
+      outcome => answered(OUTCOMES.includes(outcome) ? outcome : 'unavailable'),
       // A throwing answerer must fail the QUESTION closed, not the caller's
       // tool call open — the seam contains its callbacks.
-      () => 'unavailable',
+      () => answered('unavailable'),
     )
     if (signal === undefined) return answer
-    return await new Promise<ApprovalOutcome>((resolve) => {
+    return await new Promise<ApprovalDecision>((resolve) => {
       const onAbort = () => {
         signal.removeEventListener('abort', onAbort)
-        resolve('cancelled')
+        resolve({ outcome: 'cancelled' })
       }
       signal.addEventListener('abort', onAbort, { once: true })
-      void answer.then((outcome) => {
+      void answer.then((decision) => {
         signal.removeEventListener('abort', onAbort)
         // After an abort won the race this resolve is a settled-promise no-op:
         // the late answer is discarded by construction.
-        resolve(outcome)
+        resolve(decision)
       })
     })
   }

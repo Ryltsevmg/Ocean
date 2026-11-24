@@ -435,7 +435,8 @@ export class ToolExecutionPipeline {
    * one-to-one — `allowed-once` proceeds; the three non-grants deny with
    * distinct reasons so the model can tell a human "no" from a `'never'`
    * session policy, which rejects before any answerer is consulted, and both
-   * from an absent approval channel. Every denial carries `ApprovalError` with
+   * from an absent approval channel. The decision itself names that branch, so
+   * this method never re-reads the session policy. Every denial carries `ApprovalError` with
    * `APPROVAL_REJECTED`, `APPROVAL_CANCELLED`, or `APPROVAL_UNAVAILABLE`.
    */
   private async serviceAsk(
@@ -455,7 +456,7 @@ export class ToolExecutionPipeline {
         approvalCancelled: false,
       }
     }
-    const outcome = await approval.request({
+    const decision = await approval.request({
       agent: exec.agent,
       toolName: exec.name,
       callId: exec.callId,
@@ -463,18 +464,18 @@ export class ToolExecutionPipeline {
       ...ask.displayReason !== undefined ? { displayReason: ask.displayReason } : {},
       signal: exec.signal,
     })
-    switch (outcome) {
+    switch (decision.outcome) {
       case 'allowed-once': return { decision: { kind: 'allow' }, approvalCancelled: false }
       case 'rejected': {
-        // A 'never' policy decides before any answerer is consulted, so its
-        // denial is not a human refusal and must not be reported as one.
-        const approvalDisabled = approval.policyOf(exec.agent.session) === 'never'
+        // The service names the branch: a 'never' policy decides before any
+        // answerer is consulted, so its denial is not a human refusal.
+        const policyDenied = decision.deniedBy === 'policy'
         return {
           decision: approvalDenial(
-            approvalDisabled
+            policyDenied
               ? `approval for tool "${exec.name}" was denied: approval prompts are disabled in this session, so no one was asked`
               : `the user rejected tool "${exec.name}"`,
-            approvalDisabled ? APPROVAL_UNAVAILABLE : APPROVAL_REJECTED,
+            policyDenied ? APPROVAL_UNAVAILABLE : APPROVAL_REJECTED,
           ),
           approvalCancelled: false,
         }
@@ -487,7 +488,7 @@ export class ToolExecutionPipeline {
         decision: approvalDenial(`tool "${exec.name}" requires approval, but no approval channel is available`, APPROVAL_UNAVAILABLE),
         approvalCancelled: false,
       }
-      default: return assertNever(outcome, 'ApprovalOutcome')
+      default: return assertNever(decision, 'ApprovalDecision')
     }
   }
 

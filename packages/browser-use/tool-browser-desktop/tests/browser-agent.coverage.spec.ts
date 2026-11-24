@@ -39,7 +39,10 @@ function fakeContext(providerName?: string, options: { attachments?: boolean; em
     ? []
     : inputs.map(input => ({ attachmentId: 'att-1', mediaType: 'image/png' as const, bytes: input.data.byteLength, width: 10, height: 10 })))
   const attachments = options.attachments === false ? undefined : { saveImages }
-  const approvalRequest = vi.fn(async (_request: { readonly toolName: string }) => options.approval ?? 'allowed-once')
+  const approvalRequest = vi.fn(async (_request: { readonly toolName: string }) =>
+    options.approval === 'rejected'
+      ? { outcome: 'rejected' as const, deniedBy: 'answerer' as const }
+      : { outcome: options.approval ?? 'allowed-once' })
   const approval = options.approval === 'absent' ? undefined : { request: approvalRequest }
   const browserUse = {
     providerName,

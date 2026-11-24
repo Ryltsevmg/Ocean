@@ -87,9 +87,16 @@ describe('approveEscalation', () => {
     subject: 'command',
     ...over,
   })
-  /** An approver that records the request and returns a fixed outcome. */
-  const approver = (outcome: EscalationOutcome, sink?: (req: unknown) => void): EscalationApprover => ({
-    request: async (request) => { sink?.(request); return outcome },
+  /** An approver that records the request and returns a fixed decision. */
+  const approver = (
+    outcome: EscalationOutcome,
+    sink?: (req: unknown) => void,
+    deniedBy: 'policy' | 'answerer' = 'answerer',
+  ): EscalationApprover => ({
+    request: async (request) => {
+      sink?.(request)
+      return outcome === 'rejected' ? { outcome, deniedBy } : { outcome }
+    },
   })
   const ingredients = (over: Partial<Parameters<typeof approveEscalation>[1]> = {}) => ({
     approver: approver('allowed-once'),
@@ -146,11 +153,20 @@ describe('approveEscalation', () => {
 
   it('maps each non-grant outcome to its distinct verbatim text (subject in the rejection)', async () => {
     await expect(approveEscalation(req({ subject: 'operation' }), ingredients({ approver: approver('rejected') })))
-      .rejects.toThrow('escalating this operation to "workspace-write" was denied; it stays denied, so stop and explain instead of working around it')
+      .rejects.toThrow('the user rejected escalating this operation to "workspace-write"; it stays denied, so stop and explain instead of working around it')
     await expect(approveEscalation(req(), ingredients({ approver: approver('cancelled') })))
       .rejects.toThrow('approval for escalating to "workspace-write" was cancelled')
     await expect(approveEscalation(req(), ingredients({ approver: approver('unavailable') })))
       .rejects.toThrow('no approval channel is available')
+  })
+
+  it('does not attribute a policy denial to the user', async () => {
+    await expect(approveEscalation(
+      req({ subject: 'operation' }),
+      ingredients({ approver: approver('rejected', undefined, 'policy') }),
+    )).rejects.toThrow(
+      'escalating this operation to "workspace-write" was denied: approval prompts are disabled in this session, so no one was asked; it stays denied, so stop and explain instead of working around it',
+    )
   })
 
   it('codes each non-grant outcome', async () => {

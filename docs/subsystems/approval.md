@@ -28,9 +28,11 @@ type ApprovalRequestId = Branded<'ApprovalRequestId'>
 type ApprovalOutcome = 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'
 ```
 
+`ApprovalDecision` pairs that outcome with the branch that settled a rejection. Only the service knows which branch ran, because a policy switch can land while a question is pending; a caller reading the session policy around the call would report the wrong branch. `deniedBy: 'policy'` means `never` rejected before any answerer was consulted, so nobody was asked; `deniedBy: 'answerer'` means an answerer decided against the request. The audit pair keeps logging the bare `ApprovalOutcome`, so this distinction adds no persisted state.
+
 ## Per-session policy
 
-`ApprovalPolicy` determines what happens before interactive answerers run. `ask` delegates to the composed answerer chain, whose no-answer default is `unavailable`; `never` deterministically returns `rejected` without dispatching any answerer. The effective value is the last `approval/policy` event in the session log, falling back to the service config. Consumers read it with `ctx.approval.policyOf(session)`; `setApprovalPolicy(session, policy)` is the single write path, so replay reconstructs the override.
+`ApprovalPolicy` determines what happens before interactive answerers run. `ask` delegates to the composed answerer chain, whose no-answer default is `unavailable`; `never` deterministically returns `rejected` without dispatching any answerer. The effective value is the last `approval/policy` event in the session log, falling back to the service config. The service reports which branch settled a rejection through `ApprovalDecision`, so no consumer re-reads the policy around the call; `setApprovalPolicy(session, policy)` is the single write path, so replay reconstructs the override.
 
 ```ts type-equiv
 /**
@@ -125,21 +127,12 @@ setPolicy(agent: Agent, policy: ApprovalPolicy): void
  * authoritative append cannot reject the request or suppress its matching
  * audit event.
  * @param req - the pending decision (agent, tool identity, reason, signal).
- * @returns the closed outcome; `'allowed-once'` is the only grant.
+ * @returns the closed outcome plus, for `'rejected'`, which branch settled
+ *   it; `'allowed-once'` is the only grant.
  * @throws when no turn is open or either audit event fails before the session
  *   append commit point.
  */
-async request(req: ApprovalRequest): Promise<ApprovalOutcome>
-
-/**
- * The session's effective policy: its projected override, else the
- * configured default (the schema already defaulted an omitted policy to
- * `'ask'`; the `??` only narrows the optional-input TYPE). Consumers read it
- * to tell a `'never'` denial apart from an answerer's refusal.
- * @param session - the exact accepted session whose policy applies.
- * @returns the policy every ask for this session resolves under right now.
- */
-policyOf(session: Session): ApprovalPolicy
+async request(req: ApprovalRequest): Promise<ApprovalDecision>
 
 /**
  * Read the session override without applying the configured default.

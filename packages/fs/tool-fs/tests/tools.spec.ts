@@ -1117,7 +1117,7 @@ describe('sandbox escalation API (write/edit)', () => {
     ctx.on('approval/request', () => Promise.resolve('rejected' as const))
     const result = await call(ctx, 'edit', { file_path: 'a.txt', old_string: 'x', new_string: 'y', sandbox_permissions: 'danger-full-access', justification: 'the test needs it' }, escalationAgent())
     expect(result.isError).toBe(true)
-    expect(text(result)).toContain('escalating this operation to "danger-full-access" was denied')
+    expect(text(result)).toContain('the user rejected escalating this operation to "danger-full-access"')
     expect(fs.stamped).toEqual([])
   })
 

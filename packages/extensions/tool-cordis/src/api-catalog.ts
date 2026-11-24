@@ -374,17 +374,11 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         parameters: [{ name: 'agent', description: 'the live agent whose policy is changing.' }, { name: 'policy', description: 'the new effective policy.' }],
       },
       {
-        signature: 'async request(req: ApprovalRequest): Promise<ApprovalOutcome>',
+        signature: 'async request(req: ApprovalRequest): Promise<ApprovalDecision>',
         description: 'Ask the composed answerers to decide one readonly same-process request. The service borrows the request, agent, session, and live signal directly. The request requires an open turn because the audit pair must be enclosed by the durable log\'s commit/replay boundary; an idle ask rejects before appending anything. The answerer phase always produces an outcome: an aborted signal yields `\'cancelled\'`, a missing or throwing answerer yields `\'unavailable\'` (fail closed), and a rogue non-vocabulary return value is normalized to `\'unavailable\'`. A failure that prevents either audit append from committing still rejects because returning an unlogged decision would violate the pair. Session contains post-commit observer failures, so an authoritative append cannot reject the request or suppress its matching audit event.',
         parameters: [{ name: 'req', description: 'the pending decision (agent, tool identity, reason, signal).' }],
-        returns: 'the closed outcome; `\'allowed-once\'` is the only grant.',
+        returns: 'the closed outcome plus, for `\'rejected\'`, which branch settled it; `\'allowed-once\'` is the only grant.',
         throws: ['when no turn is open or either audit event fails before the session append commit point.'],
-      },
-      {
-        signature: 'policyOf(session: Session): ApprovalPolicy',
-        description: 'The session\'s effective policy: its projected override, else the configured default (the schema already defaulted an omitted policy to `\'ask\'`; the `??` only narrows the optional-input TYPE). Consumers read it to tell a `\'never\'` denial apart from an answerer\'s refusal.',
-        parameters: [{ name: 'session', description: 'the exact accepted session whose policy applies.' }],
-        returns: 'the policy every ask for this session resolves under right now.',
       },
       {
         signature: 'overrideOf(session: Session): ApprovalPolicy | undefined',

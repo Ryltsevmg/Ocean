@@ -70,7 +70,7 @@ describe('ApprovalService.request', () => {
 
     const outcome = await ctx.approval.request(requestOf(agent, { callId: ToolCallId('call-1'), reason: 'hook says ask' }))
 
-    expect(outcome).toBe('unavailable')
+    expect(outcome.outcome).toBe('unavailable')
     expect(appended.map(e => e.type)).toEqual(['approval/asked', 'approval/decided'])
     const [asked, decided] = appended
     expect(asked?.data).toMatchObject({ toolName: 'echo', callId: 'call-1', reason: 'hook says ask' })
@@ -107,7 +107,7 @@ describe('ApprovalService.request', () => {
       reason: 'scoped reason',
     })
 
-    await expect(ctx.approval.request(request)).resolves.toBe('allowed-once')
+    await expect(ctx.approval.request(request)).resolves.toMatchObject({ outcome: 'allowed-once' })
     expect(carrier).toBe(agent)
     expect(received).toBe(request)
     expect(appended).toHaveLength(2)
@@ -133,7 +133,7 @@ describe('ApprovalService.request', () => {
     })
     ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('allowed-once'))
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('allowed-once')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'allowed-once' })
 
     const audit = session.snapshotEvents().filter(event => event.type.startsWith('approval/'))
     const asked = session.snapshotEvents().find((event): event is SessionEvent<'approval/asked'> => event.type === 'approval/asked')
@@ -155,7 +155,8 @@ describe('ApprovalService.request', () => {
     })
     ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('rejected'))
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('rejected')
+    await expect(ctx.approval.request(requestOf(agent)))
+      .resolves.toEqual({ outcome: 'rejected', deniedBy: 'answerer' })
 
     const audit = session.snapshotEvents().filter(event => event.type.startsWith('approval/'))
     const asked = session.snapshotEvents().find((event): event is SessionEvent<'approval/asked'> => event.type === 'approval/asked')
@@ -184,7 +185,7 @@ describe('ApprovalService.request', () => {
       return Promise.resolve<ApprovalOutcome>('rejected')
     })
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('allowed-once')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'allowed-once' })
     expect(secondRan).toBe(false)
   })
 
@@ -193,7 +194,7 @@ describe('ApprovalService.request', () => {
     const { agent } = fakeAgent(ctx)
     ctx.on('approval/request', (_req, next) => next())
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('unavailable')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'unavailable' })
   })
 
   it('dispatches to global and matching agent-scoped listeners, never a foreign scope', async () => {
@@ -220,8 +221,8 @@ describe('ApprovalService.request', () => {
       return next()
     })
 
-    await expect(ctx.approval.request(requestOf(agentA))).resolves.toBe('unavailable')
-    await expect(ctx.approval.request(requestOf(agentB))).resolves.toBe('unavailable')
+    await expect(ctx.approval.request(requestOf(agentA))).resolves.toMatchObject({ outcome: 'unavailable' })
+    await expect(ctx.approval.request(requestOf(agentB))).resolves.toMatchObject({ outcome: 'unavailable' })
 
     expect(heard).toEqual(['global:A', 'scoped:A', 'global:B', 'scoped:B'])
     await scopesFiber.dispose()
@@ -241,7 +242,7 @@ describe('ApprovalService.request', () => {
       return next()
     })
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('unavailable')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'unavailable' })
 
     expect(seenKey).toBe(agent)
     await scopeFiber.dispose()
@@ -252,7 +253,7 @@ describe('ApprovalService.request', () => {
     const { agent, appended } = fakeAgent(ctx)
     ctx.on('approval/request', () => Promise.reject(new Error('transport died')))
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('unavailable')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'unavailable' })
     expect(appended[1]?.data).toMatchObject({ outcome: 'unavailable' })
   })
 
@@ -263,7 +264,7 @@ describe('ApprovalService.request', () => {
     // callers' closed-union switches.
     ctx.on('approval/request', () => Promise.resolve('yolo' as ApprovalOutcome))
 
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('unavailable')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'unavailable' })
   })
 
   it('settles cancelled immediately on an already-aborted signal without asking anyone', async () => {
@@ -277,7 +278,7 @@ describe('ApprovalService.request', () => {
 
     const outcome = await ctx.approval.request(requestOf(agent, { signal: AbortSignal.abort() }))
 
-    expect(outcome).toBe('cancelled')
+    expect(outcome.outcome).toBe('cancelled')
     expect(asked).toBe(false)
     expect(appended.map(e => e.type)).toEqual(['approval/asked', 'approval/decided'])
     expect(appended[1]?.data).toMatchObject({ outcome: 'cancelled' })
@@ -292,7 +293,7 @@ describe('ApprovalService.request', () => {
 
     const pending = ctx.approval.request(requestOf(agent, { signal: controller.signal }))
     controller.abort()
-    await expect(pending).resolves.toBe('cancelled')
+    await expect(pending).resolves.toMatchObject({ outcome: 'cancelled' })
 
     // The answerer settles after the fact: no second decided event appears.
     settleLate?.('allowed-once')
@@ -310,7 +311,7 @@ describe('ApprovalService.request', () => {
 
     const pending = ctx.approval.request(requestOf(agent, { signal: controller.signal }))
     controller.abort()
-    await expect(pending).resolves.toBe('cancelled')
+    await expect(pending).resolves.toMatchObject({ outcome: 'cancelled' })
 
     rejectLate?.(new Error('answered too late'))
     // Drain microtasks: the contained rejection must not escape the seam.
@@ -323,7 +324,7 @@ describe('ApprovalService.request', () => {
     ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('rejected'))
     const controller = new AbortController()
 
-    await expect(ctx.approval.request(requestOf(agent, { signal: controller.signal }))).resolves.toBe('rejected')
+    await expect(ctx.approval.request(requestOf(agent, { signal: controller.signal }))).resolves.toMatchObject({ outcome: 'rejected' })
   })
 
   it('issues a fresh id per request', async () => {
@@ -344,10 +345,10 @@ describe('ApprovalService.request', () => {
     const fiber = await ctx.plugin((inner: Context) => {
       inner.on('approval/request', () => Promise.resolve<ApprovalOutcome>('allowed-once'))
     })
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('allowed-once')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'allowed-once' })
 
     await fiber.dispose()
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('unavailable')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'unavailable' })
   })
 })
 
@@ -392,7 +393,7 @@ describe('approval policy (the approval/policy fold)', () => {
     service.config = {}
     const { agent } = sessionAgent(ctx, 'sess-bare-config')
     ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('allowed-once'))
-    await expect(service.request({ agent, toolName: 'echo' })).resolves.toBe('allowed-once')
+    await expect(service.request({ agent, toolName: 'echo' })).resolves.toMatchObject({ outcome: 'allowed-once' })
   })
 
   it('contains an answerer that throws SYNCHRONOUSLY as unavailable', async () => {
@@ -400,7 +401,7 @@ describe('approval policy (the approval/policy fold)', () => {
     await ctx.plugin(ApprovalService)
     const { agent } = sessionAgent(ctx, 'sess-syncthrow')
     ctx.on('approval/request', () => { throw new Error('sync bug') })
-    await expect(ctx.approval.request({ agent, toolName: 'echo' })).resolves.toBe('unavailable')
+    await expect(ctx.approval.request({ agent, toolName: 'echo' })).resolves.toMatchObject({ outcome: 'unavailable' })
   })
 
   it('a never config rejects deterministically without consulting any answerer', async () => {
@@ -409,7 +410,8 @@ describe('approval policy (the approval/policy fold)', () => {
     const consulted = vi.fn()
     ctx.on('approval/request', (_req, next) => { consulted(); return next() })
     const { agent, session } = sessionAgent(ctx, 'sess-gate-1')
-    await expect(ctx.approval.request({ agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(ctx.approval.request({ agent, toolName: 'bash' }))
+      .resolves.toEqual({ outcome: 'rejected', deniedBy: 'policy' })
     expect(consulted).not.toHaveBeenCalled()
     // The audit pair still lands on the session log.
     expect(session.snapshotEvents().filter(e => e.type === 'approval/asked')).toHaveLength(1)
@@ -421,7 +423,7 @@ describe('approval policy (the approval/policy fold)', () => {
     ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('allowed-once'))
     await ctx.plugin(ApprovalService, { policy: 'never' })
     const { agent } = sessionAgent(ctx, 'sess-gate-2')
-    await expect(ctx.approval.request({ agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(ctx.approval.request({ agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'rejected' })
   })
 
   it('never is unbypassable even by an answerer PREPENDED after the service mounts', async () => {
@@ -433,7 +435,7 @@ describe('approval policy (the approval/policy fold)', () => {
     const consulted = vi.fn()
     ctx.on('approval/request', () => { consulted(); return Promise.resolve<ApprovalOutcome>('allowed-once') }, { prepend: true })
     const { agent, appended } = fakeAgent(ctx)
-    await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('rejected')
+    await expect(ctx.approval.request(requestOf(agent))).resolves.toMatchObject({ outcome: 'rejected' })
     expect(consulted).not.toHaveBeenCalled()
     expect(appended.map(e => e.type)).toEqual(['approval/asked', 'approval/decided'])
   })
@@ -446,9 +448,10 @@ describe('approval policy (the approval/policy fold)', () => {
     expect(ctx.approval.overrideOf(session)).toBeUndefined()
     setApprovalPolicy(session, 'ask')
     expect(ctx.approval.overrideOf(session)).toBe('ask')
-    await expect(ctx.approval.request({ agent, toolName: 'bash' })).resolves.toBe('allowed-once')
+    await expect(ctx.approval.request({ agent, toolName: 'bash' })).resolves.toMatchObject({ outcome: 'allowed-once' })
     setApprovalPolicy(session, 'never')
-    await expect(ctx.approval.request({ agent, toolName: 'bash' })).resolves.toBe('rejected')
+    await expect(ctx.approval.request({ agent, toolName: 'bash' }))
+      .resolves.toEqual({ outcome: 'rejected', deniedBy: 'policy' })
   })
 
   it('queues a live policy switch for the next model step', async () => {
