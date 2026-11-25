@@ -30,7 +30,7 @@ import {
   type Session,
   type WebContents,
 } from 'electron'
-import { DeviceClient } from '@ocean/ocean-client-connection/device'
+import { DeviceClient, parsePairing, type PairingLink } from '@ocean/ocean-client-connection/device'
 import { provisionRemoteHost } from './remote-ssh.ts'
 import { HarnessError } from '@ocean/ocean-error'
 import { resolveDesktopPaths } from './paths.ts'
@@ -41,7 +41,7 @@ import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
-import { findPairingArgument, parsePairingLink, type PairingLink } from './remote-pairing.ts'
+import { findPairingArgument } from './remote-pairing.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
@@ -1624,7 +1624,7 @@ async function main(): Promise<void> {
       console.error('[desktop] remote SSH provisioning failed:', error)
       return remoteErrorResult(error, messages)
     }
-    const pairing = parsePairingLink(provisioned.link)
+    const pairing = parsePairing(provisioned.link)
     if (pairing === undefined) return remoteFailure('pair-link-invalid', messages)
     pendingPairing = pairing
     queuedPairing = undefined
@@ -1658,7 +1658,7 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.remotePairLink, (event, link: unknown) => {
     assertRemoteDialog(event)
     const messages = currentDesktopLocale().messages
-    const parsed = typeof link === 'string' && link.length <= 2048 ? parsePairingLink(link) : undefined
+    const parsed = typeof link === 'string' && link.length <= 2048 ? parsePairing(link) : undefined
     if (parsed === undefined) return remoteFailure('pair-link-invalid', messages)
     pendingPairing = parsed
     return { kind: 'pairing', address: parsed.address } satisfies DesktopRemoteResult
@@ -2047,7 +2047,7 @@ async function main(): Promise<void> {
 
   if (app.isPackaged || process.env.OCEAN_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('ocean')
   const openPairingLink = (link: string): void => {
-    const parsed = parsePairingLink(link)
+    const parsed = parsePairing(link)
     if (parsed === undefined) {
       void ordinaryMessageBox({ type: 'error', message: locale.messages.remotePairLinkInvalid })
       return

@@ -88,6 +88,8 @@ GET `/connect/bootstrap` 返回已登录设备 Peer 对应的 JSON 注入表，�
 
 管理命令 `pair` 创建一次性配对授权，新设备用它换取自己的设备令牌，因此无需手动输入或复制令牌。授权在设备注册表中只保存哈希，有效期为 `devicePairingTtlSeconds`（默认 600 秒；命令可指定 30 至 3600 秒），只能使用一次。Host 同时最多保留 16 个未过期授权，超出时报告 `DEVICE_PAIRING_CAPACITY`。客户端向 POST `/connect/pair` 发送请求，以授权作为持有者令牌并附带 `Ocean-Device-Protocol: 1`。Host 应用与 `/connect` 相同的 HTTPS 和 Origin 检查，所有授权在每个时间窗口内共用一份尝试预算（`maxDeviceExchangesPerWindow`、`deviceExchangeWindowMs`），然后在一次凭据写入中消耗授权并创建设备。成功时返回 `200`，正文为 `{ id, token }`，并带有 Host 标识头。未知、已过期和已使用的授权都返回 `401`。新令牌随后与其他令牌一样通过 `/connect` 登录，`rotate` 和 `revoke` 对它同样有效。
 
+授权通过两种链接之一到达设备，`@ocean/ocean-client-connection/device` 导出的 `parsePairing` 把任一形式解析为 `PairingLink { address, label?, secret }`：`parsePairingLink` 读取 Desktop 形式 `ocean://pair?host=<https-address>&label=<name>#<grant>`，要求 `host` 和 `label`；`parsePairingUrl` 读取浏览器形式 `https://<host>/<mount>#pair=<grant>`，不携带标签。两种形式都要求 HTTPS 地址不含凭据、查询参数和自身片段；授权为 `<uuid>.<43 个 base64url 字符>`。其他任何文本都返回 `undefined`。Desktop 和 `ocean connect` 接受任一形式；在浏览器中打开浏览器形式链接的设备通过其设备登录页完成配对，该页面归 [`frontend-static`](../../host/frontend-static/README.zh.md)所有。`DeviceClient.pair` 把未知、已过期或已使用的授权报告为 `DEVICE_PAIRING_REJECTED`（401），把没有该路由的 Host 报告为 `DEVICE_PAIRING_UNSUPPORTED`（404 或 405）。
+
 设备准入在容量耗尽时返回 503。`maxDeviceTransports` 限制整个 Host 上等待验证的请求与活动 HTTP 或 WebSocket 传输的总数。`maxDeviceTransportsPerDevice` 限制单台设备所有登录中的活动传输数量。租约开始释放时立即失去回答事件的权限，但其容量名额保留至 Peer 清理完成。
 
 根 Context 拥有的 `connectionLaunch` 在插件重载期间保留启动令牌和 `HostEpoch`，并随应用根 Context 释放。`HostId` 标识持久凭据主目录。
