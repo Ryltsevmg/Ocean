@@ -127,6 +127,22 @@ it('reports a lost Host and follows route changes through the boot bridge', asyn
   expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, handler)
 })
 
+it('follows the Host ports the carrier forwards to this computer', async () => {
+  vi.stubGlobal('location', new URL('dsh-app://app/'))
+  await import('../src/preload-app.ts')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'oceanDesktopBoot')?.[1] as {
+    onForwardedPorts(listener: (ports: number[]) => void): () => void
+  }
+  const listener = vi.fn()
+  const off = api.onForwardedPorts(listener)
+  const handler = electron.ipcRenderer.on.mock.calls.find(([channel]) => channel === DESKTOP_IPC.forwardedPorts)![1] as
+    (event: unknown, ports: unknown) => void
+  handler({}, [3000, 5173])
+  expect(listener).toHaveBeenCalledExactlyOnceWith([3000, 5173])
+  off()
+  expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.forwardedPorts, handler)
+})
+
 it('exposes a directory picker only to the local application document', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')

@@ -6174,6 +6174,9 @@ importers:
       '@ocean/ocean-client-store':
         specifier: workspace:*
         version: link:../store
+      '@ocean/ocean-client-ui-commands':
+        specifier: workspace:*
+        version: link:../ui-commands
       '@ocean/ocean-client-ui-dockkit':
         specifier: workspace:*
         version: link:../ui-dockkit

@@ -2184,6 +2184,12 @@ describe('desktop main startup', () => {
     socket.on('error', () => { resolve(false) })
   })
 
+  /** The forwarded-port lists the carrier sent to one window or view, in order. */
+  function sentForwardedPorts(target: { webContents: { send: { mock: { calls: unknown[][] } } } }): unknown[] {
+    return (target.webContents.send.mock.calls as [string, unknown][])
+      .filter(([channel]) => channel === DESKTOP_IPC.forwardedPorts).map(([, ports]) => ports)
+  }
+
   /** A loopback port that is free right now. */
   async function freePort(): Promise<number> {
     const probe = createNetServer()
@@ -2212,10 +2218,14 @@ describe('desktop main startup', () => {
     )).toEqual({ kind: 'connected', persistence: 'skipped' })
     const view = harness.views.at(-1)!
     await vi.waitFor(async () => { expect(await loopbackAccepts(port)).toBe(true) })
+    // The page learns which loopback ports reach the Host, so the command palette can offer them.
+    await vi.waitFor(() => { expect(sentForwardedPorts(view)).toEqual([[port]]) })
     // Leaving the Host for the local workspace ends its forwards.
     const useLocal = applicationMenuItems(view).find(item => item.label === en.remoteLocalMenu) as { click: () => void }
     useLocal.click()
     await vi.waitFor(async () => { expect(await loopbackAccepts(port)).toBe(false) })
+    // The local page starts from its own empty list; the carrier also cleared the one it published last.
+    expect([...sentForwardedPorts(harness.windows[0]!), ...sentForwardedPorts(view)]).toContainEqual([])
   })
 
   it('keeps a connection live when encrypted token saving fails', async () => {
@@ -2514,7 +2524,7 @@ describe('desktop main startup', () => {
     await harness.hostStarted.promise
     expect(settled).toBe(false)
     harness.hosts[0]!.ready.resolve()
-    await expect(boot).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3080', ownsHost: true })
+    await expect(boot).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3080', ownsHost: true, forwardedPorts: [] })
     expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/'])
   })
 
@@ -3528,7 +3538,7 @@ describe('desktop main startup', () => {
     expect(replacement.updateTasks).not.toHaveBeenCalled()
     replacement.ready.resolve()
     await vi.waitFor(() => { expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/', 'dsh-app://app/']) })
-    await expect(Promise.resolve(invoke(DESKTOP_IPC.boot))).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3099', ownsHost: true })
+    await expect(Promise.resolve(invoke(DESKTOP_IPC.boot))).resolves.toEqual({ injections: [], streamBaseUrl: 'http://127.0.0.1:3099', ownsHost: true, forwardedPorts: [] })
     if (mandatory) await answerMandatory('later')
     await expect(retry).resolves.toBe(false)
     expect(replacement.updateTasks.mock.calls).toEqual([['inspect']])

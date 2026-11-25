@@ -892,14 +892,17 @@ async function main(): Promise<void> {
     if (selected !== undefined) {
       delete selected.publication
       publishHostSelection()
-      return { injections: selected.host.injections, streamBaseUrl: selected.host.address, ownsHost: false }
+      return {
+        injections: selected.host.injections, streamBaseUrl: selected.host.address, ownsHost: false,
+        forwardedPorts: forwardedPorts(),
+      }
     }
     await startup
     if (assertOwnedApplication(event) !== owner) throw new Error('Desktop application owner changed during startup')
     if (backend.host === undefined || hostUrl === undefined) throw new Error('Desktop Host is unavailable')
     localHostPublication = undefined
     publishHostSelection()
-    return { injections, streamBaseUrl: new URL(hostUrl).origin, ownsHost: true }
+    return { injections, streamBaseUrl: new URL(hostUrl).origin, ownsHost: true, forwardedPorts: [] }
   })
 
   ipcMain.handle(DESKTOP_IPC.bootFailed, (event, message: unknown) => {
@@ -1952,6 +1955,15 @@ async function main(): Promise<void> {
 
   let portForwards: { ports: PortForward[]; controller: AbortController } | undefined
 
+  /** Loopback ports of this computer that reach the selected Host; empty when nothing is forwarded. */
+  const forwardedPorts = (): number[] => portForwards?.ports.map(forward => forward.port) ?? []
+
+  /** Tell the page on screen which Host ports it can reach on this computer's loopback. */
+  const publishForwardedPorts = (): void => {
+    const contents = activeContents()
+    if (contents !== undefined && !contents.isDestroyed()) contents.send(DESKTOP_IPC.forwardedPorts, forwardedPorts())
+  }
+
   /** Forward the configured Host ports of the selected connection to this computer's loopback. */
   const followPortForwards = async (connection: RemoteConnection): Promise<void> => {
     await stopPortForwards()
@@ -1969,12 +1981,15 @@ async function main(): Promise<void> {
         console.warn(`ocean desktop: Host port ${String(port)} was not forwarded`, error)
       }
     }
+    // A selection that changed meanwhile owns the page's list; this one is already closed.
+    if (portForwards === current) publishForwardedPorts()
   }
 
   const stopPortForwards = async (): Promise<void> => {
     const current = portForwards
     portForwards = undefined
     if (current === undefined) return
+    publishForwardedPorts()
     current.controller.abort()
     await Promise.all(current.ports.map(port => port.close()))
   }

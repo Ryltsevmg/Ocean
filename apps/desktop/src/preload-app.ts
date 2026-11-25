@@ -151,6 +151,11 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
       ipcRenderer.on(DESKTOP_IPC.routeChanged, notify)
       return () => { ipcRenderer.off(DESKTOP_IPC.routeChanged, notify) }
     },
+    onForwardedPorts: (listener: (ports: number[]) => void): (() => void) => {
+      const notify = (_event: unknown, ports: number[]): void => { listener(ports) }
+      ipcRenderer.on(DESKTOP_IPC.forwardedPorts, notify)
+      return () => { ipcRenderer.off(DESKTOP_IPC.forwardedPorts, notify) }
+    },
   })
   contextBridge.exposeInMainWorld('oceanPlatform', {
     open: (page: 'usage' | 'top-up', bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke(PLATFORM_IPC.open, page, bounds),
