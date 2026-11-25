@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-error",
   "description": "Dependency-free HarnessError base class with a stable machine-routable code for the Ocean",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-pwsh-local",
   "description": "Local PowerShell implementation of the Ocean bash executor seam",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

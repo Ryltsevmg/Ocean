@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-tool-office",
   "description": "Model-facing Office tools for rendering, converting, and recalculating documents",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

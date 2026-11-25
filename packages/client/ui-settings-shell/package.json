@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-client-ui-settings-shell",
   "description": "Settings page of the shell executor on the ocean web client's Plugins page: the command timeout and the per-stream output cap of the shell namespace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },
