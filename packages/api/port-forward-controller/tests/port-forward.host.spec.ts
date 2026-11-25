@@ -155,6 +155,15 @@ describe('portForward namespace', () => {
     await expect(open(ctx, port)).rejects.toMatchObject({ code: 'port-forward/invalid-port', details: { port } })
   })
 
+  it('rejects a request that names the port without the parameter the descriptor declares', async () => {
+    const ctx = await mounted()
+
+    await expect(ctx.typertGateway.stream({
+      peer: peerFor(ctx, { kind: 'owner' }), namespace: 'portForward', method: 'open',
+      args: { port: 4000 }, uplink: ended(), signal: new AbortController().signal,
+    })).rejects.toMatchObject({ code: 'gateway/arguments-invalid' })
+  })
+
   it('relays bytes both ways, half-closes on a Client end item, and ends when the port closes', async () => {
     const hello = Buffer.from('hello over the forwarded port')
     const received = Promise.withResolvers<Buffer>()

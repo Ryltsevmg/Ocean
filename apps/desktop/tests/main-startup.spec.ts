@@ -2228,6 +2228,54 @@ describe('desktop main startup', () => {
     expect([...sentForwardedPorts(harness.windows[0]!), ...sentForwardedPorts(view)]).toContainEqual([])
   })
 
+  it('leaves no listener behind when the Host is left while another forward is still closing', async () => {
+    const port = await freePort()
+    vi.stubEnv('OCEAN_DESKTOP_FORWARD_PORTS', String(port))
+    const machines = ['machine-one', 'machine-two']
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      if (url.pathname === '/connect') {
+        const host = machines.shift()!
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'ocean-device-protocol': '1', 'ocean-device-host': host, 'ocean-device-epoch': 'launch',
+            'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly',
+          },
+        })
+      }
+      return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+    }))
+    await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    /** Open the connection form from the page on screen and sign in to one address; a successful sign-in closes the form. */
+    const connect = async (page: (typeof harness.views)[number], address: string): Promise<unknown> => {
+      ;(applicationMenuItems(page).find(item => item.label === en.remoteConnectMenu) as { click: () => void }).click()
+      const dialog = harness.windows.at(-1)!
+      return harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+        { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, address, 'fixture-token', false,
+      )
+    }
+    const first = harness.windows[0]!
+    await vi.waitFor(() => { expect(first.urls).toEqual(['dsh-app://app/']) })
+    ;(applicationMenuItems().find(item => item.label === en.remoteConnectMenu) as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+      { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, 'https://first.example/', 'fixture-token', false,
+    )).toEqual({ kind: 'connected', persistence: 'skipped' })
+    await vi.waitFor(async () => { expect(await loopbackAccepts(port)).toBe(true) })
+    // The second Host starts by closing the first Host's listener; leaving for the local Host lands inside that close.
+    const firstView = harness.views.at(-1)!
+    expect(await connect(firstView, 'https://second.example/')).toEqual({ kind: 'connected', persistence: 'skipped' })
+    const second = harness.views.at(-1)!
+    ;(applicationMenuItems(second).find(item => item.label === en.remoteLocalMenu) as { click: () => void }).click()
+    await vi.waitFor(async () => { expect(await loopbackAccepts(port)).toBe(false) })
+    await vi.advanceTimersByTimeAsync(500)
+    expect(await loopbackAccepts(port)).toBe(false)
+    const published = [...sentForwardedPorts(harness.windows[0]!), ...sentForwardedPorts(second)]
+    expect(published.at(-1)).toEqual([])
+  })
+
   it('keeps a connection live when encrypted token saving fails', async () => {
     await readyForUpdate()
     const local = harness.windows[0]!

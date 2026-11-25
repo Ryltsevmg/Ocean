@@ -18,7 +18,12 @@ export interface PortForward {
 /** What the forward needs from the Host's stream multiplexer. */
 export interface StreamOpener {
   start(): void
-  open(endpoint: string, request: { args: { port: number } }, signal: AbortSignal, uplink: ClientUplinkQueue): AsyncIterable<unknown>
+  open(
+    endpoint: string,
+    request: { args: { request: { port: number } } },
+    signal: AbortSignal,
+    uplink: ClientUplinkQueue,
+  ): AsyncIterable<unknown>
   close(): Promise<void>
 }
 
@@ -54,6 +59,18 @@ function isHostFrame(value: unknown): value is HostFrame {
 }
 
 /**
+ * Follow one connection's current Host, so a tunnel accepted after a route switch dials the new route.
+ * @param connection - Open connection whose `host` a route switch replaces.
+ * @returns A client view that resolves the Host at each use.
+ */
+export function currentHost(connection: { readonly host: Pick<DeviceClient, 'openSocket'> }): Pick<DeviceClient, 'openSocket'> {
+  return {
+    openSocket: <Socket>(path: string, connect: (url: URL, cookie: string) => Socket): Socket =>
+      connection.host.openSocket(path, connect),
+  }
+}
+
+/**
  * Listen on this computer's loopback and tunnel every connection to the same port on the Host.
  * @param client - Authenticated device client of the Host, or the connection that holds one.
  * @param port - Port on the Host's loopback.
@@ -83,7 +100,9 @@ export async function forwardHostPort(client: Pick<DeviceClient, 'openSocket'>, 
     const uplink = new ClientUplinkQueue(PORT_FORWARD_ENDPOINT)
     opener.start()
     try {
-      for await (const frame of opener.open(PORT_FORWARD_ENDPOINT, { args: { port } }, AbortSignal.any([signal, closed.signal]), uplink)) {
+      // The generated descriptor names its one parameter `request`, and the Gateway rejects any other field.
+      const tunnelSignal = AbortSignal.any([signal, closed.signal])
+      for await (const frame of opener.open(PORT_FORWARD_ENDPOINT, { args: { request: { port } } }, tunnelSignal, uplink)) {
         if (!isHostFrame(frame)) throw new Error(UNEXPECTED_FRAME)
         if (frame.type === 'connected') {
           socket.on('data', (chunk: Buffer) => { uplink.push({ type: 'data', data: chunk.toString('base64') }) })

@@ -2,11 +2,11 @@
 import { connect, type Socket } from 'node:net'
 import { expect, it, vi } from 'vitest'
 import { DeviceClient } from '@ocean/ocean-client-connection/device'
-import { forwardHostPort, PORT_FORWARD_ENDPOINT, type StreamOpener } from '../src/remote-port-forward.ts'
+import { currentHost, forwardHostPort, PORT_FORWARD_ENDPOINT, type StreamOpener } from '../src/remote-port-forward.ts'
 
 /** A controllable Host stream: the test feeds frames and reads what the client sent. */
 class FakeHost {
-  readonly opened: { port: number }[] = []
+  readonly opened: { request: { port: number } }[] = []
   readonly sent: unknown[] = []
   closed = 0
   private readonly waiting: ((item: IteratorResult<unknown>) => void)[] = []
@@ -72,7 +72,8 @@ it('relays bytes both ways until each side ends its half', async () => {
   const host = new FakeHost()
   const forward = await opened(host)
   const socket = connect(forward.port)
-  await vi.waitFor(() => { expect(host.opened).toEqual([{ port: 8080 }]) })
+  // The generated descriptor names its one parameter `request`; the Gateway rejects a bare `port`.
+  await vi.waitFor(() => { expect(host.opened).toEqual([{ request: { port: 8080 } }]) })
   host.push({ type: 'connected', port: 8080 })
   const received = read(socket)
   socket.write('hello')
@@ -147,6 +148,23 @@ it('stops listening and ends its tunnels when aborted', async () => {
     retry.on('connect', () => { retry.destroy(); resolve() })
     retry.on('error', reject)
   })).rejects.toMatchObject({ code: 'ECONNREFUSED' })
+})
+
+it('resolves the Host of the connection each time a socket opens, so a route switch reaches new tunnels', () => {
+  const opened: string[] = []
+  type Host = Pick<DeviceClient, 'openSocket'>
+  const route = (name: string): Host => ({
+    openSocket: <Socket>(path: string, _connect: (url: URL, cookie: string) => Socket): Socket => {
+      opened.push(`${name}:${path}`)
+      return {} as Socket
+    },
+  })
+  const connection: { host: Host } = { host: route('first') }
+  const client = currentHost(connection)
+  client.openSocket('api/remote.mux', () => ({} as never))
+  connection.host = route('second')
+  client.openSocket('api/remote.mux', () => ({} as never))
+  expect(opened).toEqual(['first:api/remote.mux', 'second:api/remote.mux'])
 })
 
 it('keeps each connection on its own stream', async () => {

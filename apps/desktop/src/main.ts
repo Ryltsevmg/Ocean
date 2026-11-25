@@ -43,7 +43,7 @@ import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
 import { findPairingArgument } from './remote-pairing.ts'
 import { answeringRoute } from './remote-routes.ts'
-import { forwardHostPort, type PortForward } from './remote-port-forward.ts'
+import { currentHost, forwardHostPort, type PortForward } from './remote-port-forward.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
@@ -1954,6 +1954,8 @@ async function main(): Promise<void> {
   }
 
   let portForwards: { ports: PortForward[]; controller: AbortController } | undefined
+  /** Bumped by every start and stop, so a start that awaited a previous stop cannot publish its own forwards. */
+  let forwardEpoch = 0
 
   /** Loopback ports of this computer that reach the selected Host; empty when nothing is forwarded. */
   const forwardedPorts = (): number[] => portForwards?.ports.map(forward => forward.port) ?? []
@@ -1964,34 +1966,42 @@ async function main(): Promise<void> {
     if (contents !== undefined && !contents.isDestroyed()) contents.send(DESKTOP_IPC.forwardedPorts, forwardedPorts())
   }
 
-  /** Forward the configured Host ports of the selected connection to this computer's loopback. */
-  const followPortForwards = async (connection: RemoteConnection): Promise<void> => {
-    await stopPortForwards()
-    if (remoteConfig.forwardPorts.length === 0 || isQuitting()) return
-    const controller = new AbortController()
-    const current = { ports: [] as PortForward[], controller }
-    portForwards = current
-    for (const port of remoteConfig.forwardPorts) {
-      try {
-        const forward = await forwardHostPort(connection.host, port, { signal: controller.signal })
-        if (portForwards !== current) { await forward.close(); continue }
-        current.ports.push(forward)
-      } catch (error) {
-        // A port this computer already uses, or a Host that cannot be reached, leaves the other ports forwarded.
-        console.warn(`ocean desktop: Host port ${String(port)} was not forwarded`, error)
-      }
-    }
-    // A selection that changed meanwhile owns the page's list; this one is already closed.
-    if (portForwards === current) publishForwardedPorts()
-  }
-
-  const stopPortForwards = async (): Promise<void> => {
+  /** Close the listeners of the current forwards without superseding a start that is still running. */
+  const clearPortForwards = async (): Promise<void> => {
     const current = portForwards
     portForwards = undefined
     if (current === undefined) return
     publishForwardedPorts()
     current.controller.abort()
     await Promise.all(current.ports.map(port => port.close()))
+  }
+
+  const stopPortForwards = async (): Promise<void> => {
+    forwardEpoch += 1
+    await clearPortForwards()
+  }
+
+  /** Forward the configured Host ports of the selected connection to this computer's loopback. */
+  const followPortForwards = async (connection: RemoteConnection): Promise<void> => {
+    const epoch = ++forwardEpoch
+    await clearPortForwards()
+    // A newer selection or a stop superseded this one while the previous listeners closed.
+    if (epoch !== forwardEpoch || remoteConfig.forwardPorts.length === 0 || isQuitting()) return
+    const controller = new AbortController()
+    const current = { ports: [] as PortForward[], controller }
+    portForwards = current
+    for (const port of remoteConfig.forwardPorts) {
+      try {
+        const forward = await forwardHostPort(currentHost(connection), port, { signal: controller.signal })
+        if (epoch !== forwardEpoch) { await forward.close(); return }
+        current.ports.push(forward)
+      } catch (error) {
+        if (epoch !== forwardEpoch) return
+        // A port this computer already uses, or a Host that cannot be reached, leaves the other ports forwarded.
+        console.warn(`ocean desktop: Host port ${String(port)} was not forwarded`, error)
+      }
+    }
+    if (epoch === forwardEpoch) publishForwardedPorts()
   }
 
   function selectRemoteConnection(connection?: RemoteConnection): void {
