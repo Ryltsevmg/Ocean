@@ -14,6 +14,7 @@ import { DesktopHostFatalError, DesktopHostUncleanExitError } from '../src/host-
 import { en, zh } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
+import { RemoteConnectionStore } from '../src/remote-connection-store.ts'
 import { runOperationReportJob } from '../src/operation-report-job.ts'
 
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } | null }
@@ -238,6 +239,13 @@ const harness = await vi.hoisted(async () => {
     failWindow(error: Error) { windowFailure = error },
     windows, views, hosts, handlers, app, FakeWindow, FakeView, FakeHost, powerMonitor, nativeTheme, analytics,
     trays, FakeTray, backgroundNotice, shellDialog,
+    // Storage reports encryption as unavailable until a test turns it on to seed a saved machine.
+    safeStorage: {
+      isEncryptionAvailable: (): boolean => false,
+      getSelectedStorageBackend: (): string => 'basic_text',
+      encryptString: (plaintext: string): Buffer => Buffer.from(plaintext, 'utf8'),
+      decryptString: (ciphertext: Buffer): string => ciphertext.toString('utf8'),
+    },
     menu, popup, socketHeaders: vi.fn(), connectWelcome: vi.fn(), removeLegacyHostCookies: vi.fn(async () => {}), hostCookies: {},
     loginShell, readLoginShell, updateCheck, updateDownload, updateInstall,
     platformDispose,
@@ -342,7 +350,7 @@ vi.mock('electron', () => ({
   dialog: harness.dialog,
   shell: { openExternal: harness.openExternal, showItemInFolder: harness.showItemInFolder },
   nativeTheme: harness.nativeTheme,
-  safeStorage: { isEncryptionAvailable: () => false },
+  safeStorage: harness.safeStorage,
   ipcMain: {
     on: harness.ipcOn,
     handle: (channel: string, handler: InvokeHandler) => {
@@ -1864,6 +1872,66 @@ describe('desktop main startup', () => {
     await expect(connect({ sender: next.webContents, senderFrame: next.webContents.mainFrame },
       'https://ocean.example/', 'fixture-retry-token', false)).resolves.toMatchObject({ kind: 'failed', code: 'DEVICE_AUTH_REJECTED' })
     expect(send).toHaveBeenCalledTimes(2)
+  })
+
+  it('signs in to a saved machine through the first route that answers as that machine', async () => {
+    vi.spyOn(harness.safeStorage, 'isEncryptionAvailable').mockReturnValue(true)
+    const store = new RemoteConnectionStore(harness.app.getPath('userData'), harness.safeStorage)
+    await store.save({ address: 'https://lan.example/', hostId: 'machine', token: 'saved-token' })
+    await store.save({ address: 'https://tail.example/', hostId: 'machine', token: 'saved-token' })
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    const send = vi.fn<typeof fetch>(async (input) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      // The LAN route is out of reach, as it is away from that network.
+      if (url.hostname === 'lan.example') throw new TypeError('fetch failed')
+      if (url.pathname === '/connect') {
+        return new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } })
+      }
+      return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+    })
+    vi.stubGlobal('fetch', send)
+    await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+      { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, 'https://lan.example/', '', false,
+    )).toEqual({ kind: 'connected', persistence: 'skipped' })
+    const requests = send.mock.calls.map(([input, init]) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      return `${init?.method ?? 'GET'} ${url.href}`
+    })
+    expect(requests).toEqual([
+      'HEAD https://lan.example/connect', 'HEAD https://tail.example/connect',
+      'HEAD https://tail.example/connect', 'POST https://tail.example/connect', 'GET https://tail.example/connect/bootstrap',
+    ])
+    expect(harness.views.at(-1)!.isVisible()).toBe(true)
+  })
+
+  it('signs in to a saved machine with one route without probing it first', async () => {
+    vi.spyOn(harness.safeStorage, 'isEncryptionAvailable').mockReturnValue(true)
+    const store = new RemoteConnectionStore(harness.app.getPath('userData'), harness.safeStorage)
+    await store.save({ address: 'https://only.example/', hostId: 'machine', token: 'saved-token' })
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    const send = vi.fn<typeof fetch>(async (input) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      if (url.pathname === '/connect') {
+        return new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } })
+      }
+      return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+    })
+    vi.stubGlobal('fetch', send)
+    await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+      { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, 'https://only.example/', '', false,
+    )).toEqual({ kind: 'connected', persistence: 'skipped' })
+    const methods = send.mock.calls.map(([, init]) => init?.method ?? 'GET')
+    expect(methods).toEqual(['HEAD', 'POST', 'GET'])
   })
 
   it('keeps a connection live when encrypted token saving fails', async () => {

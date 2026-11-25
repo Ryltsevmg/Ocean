@@ -42,6 +42,7 @@ import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
 import { findPairingArgument } from './remote-pairing.ts'
+import { answeringRoute } from './remote-routes.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
@@ -1963,8 +1964,11 @@ async function main(): Promise<void> {
       }
       const saved = token ? undefined : machines.find(machine => machine.hostId === routeHostId) ?? routed
       if (token) next = await RemoteDesktopHost.connect(address, token, signal, routeHostId)
-      else if (saved !== undefined) next = await RemoteDesktopHost.connect(address, saved.token, signal, saved.hostId)
-      else return remoteFailure('token-required', messages)
+      else if (saved !== undefined) {
+        // A saved machine may answer on another route when the chosen one does not; its token is pinned to its identity.
+        const route = await answeringRoute(saved, address, signal)
+        next = await RemoteDesktopHost.connect(route, saved.token, signal, saved.hostId)
+      } else return remoteFailure('token-required', messages)
       signal.throwIfAborted()
       if (isQuitting() || isMandatory() || input.window.isDestroyed()) return remoteFailure('cancelled', messages)
       const authenticated = next
