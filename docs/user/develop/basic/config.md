@@ -42,6 +42,8 @@ Add the configuration to the inserted local plugin row in `scratch-plugin/cordis
         maxRetries: 5
 ```
 
+The resolved `config` is `{ greeting: 'Hi there', maxRetries: 5, verbose: false }`. The example sets `greeting` to `Hi there` and `maxRetries` to 5, and omits `verbose`, so `verbose` keeps the `false` its schema declares. Any field the configuration omits takes the default declared on its schema field. Setting `verbose: true` in `cordis.yml` overrides that `false` default.
+
 When loading the plugin, Cordis uses the exported schema to validate configuration and fill defaults. Do not export a plain object as `Config`; it does not implement the Standard Schema interface required by Cordis.
 
 ## Schema validation
