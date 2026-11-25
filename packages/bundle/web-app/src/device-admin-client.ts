@@ -4,7 +4,8 @@ import { isAbsolute } from 'node:path'
 import { Command, InvalidArgumentError } from 'commander'
 import type { Context } from '@deepseek-ai/cordis'
 import { parseCmdline } from '@ocean/ocean-cmdline'
-import { DEVICE_SCOPES, parseDeviceScopes, type DeviceScope } from '@ocean/ocean-client-connection/device'
+import { DEVICE_SCOPES, DeviceClient, parseDeviceScopes, type DeviceScope } from '@ocean/ocean-client-connection/device'
+import { qrTerminal } from './pairing-qr.ts'
 
 type Operation =
   | { action: 'list' }
@@ -73,6 +74,16 @@ export function pairingLink(address: string, label: string, grant: string): stri
 }
 
 /**
+ * Build the browser URL a new device opens to pair with this Host.
+ * @param address - HTTPS address clients use to reach the Host.
+ * @param grant - One-time grant bearer returned by the Host.
+ * @returns A Host URL that keeps the grant in its fragment.
+ */
+export function pairingUrl(address: string, grant: string): string {
+  return `${DeviceClient.parseAddress(address).href}#pair=${grant}`
+}
+
+/**
  * Run one administrative command after the launcher commits startup.
  * @param ctx - Profile context carrying launcher arguments and exit lifecycle.
  */
@@ -88,7 +99,7 @@ export function runDeviceAdmin(ctx: Context): void {
       }
       return parsed
     }, 30_000)
-  const run = (operation: Operation, format: (value: string) => string = value => value): void => {
+  const run = (operation: Operation, format: (value: string) => string = value => value, printed?: () => void): void => {
     const { socket, timeout, bootstrap } = program.opts<{ socket?: string; timeout: number; bootstrap?: boolean }>()
     if ((socket !== undefined) === (bootstrap === true)) program.error('supply exactly one of --socket and --bootstrap')
     if (socket !== undefined && !isAbsolute(socket)) program.error('device administration requires an absolute socket path')
@@ -124,6 +135,7 @@ export function runDeviceAdmin(ctx: Context): void {
               return
             }
             console.log(output)
+            printed?.()
             exit(0)
             return
           }
@@ -156,7 +168,8 @@ export function runDeviceAdmin(ctx: Context): void {
       if (!/^\d+$/u.test(value) || parsed < 30 || parsed > 3_600) throw new InvalidArgumentError('expected an integer from 30 to 3600')
       return parsed
     })
-    .action((label: string, options: { url?: string; ttl?: number; scope: string[] }) => {
+    .option('--qr', 'also print a QR code of the browser link to standard error')
+    .action((label: string, options: { url?: string; ttl?: number; scope: string[]; qr?: boolean }) => {
       let address: URL | undefined
       if (options.url !== undefined) {
         try { address = new URL(options.url) } catch { program.error('--url must be a valid HTTPS address'); return }
@@ -164,15 +177,18 @@ export function runDeviceAdmin(ctx: Context): void {
           program.error('--url must be an HTTPS address without credentials, a query, or a fragment')
         }
       }
+      let web = ''
       run({ action: 'pair', label, ...options.ttl === undefined ? {} : { ttlSeconds: options.ttl }, ...readScopes(options.scope) }, (value) => {
         const reply = JSON.parse(value) as { grant: string; expiresAt: number; address?: string }
         const target = address?.href ?? reply.address
         if (target === undefined) throw new Error('pass --url: this Host does not advertise an HTTPS address')
+        web = pairingUrl(target, reply.grant)
         return JSON.stringify({
           link: pairingLink(target, label, reply.grant),
+          web,
           expiresAt: new Date(reply.expiresAt).toISOString(),
         })
-      })
+      }, options.qr === true ? () => { console.error(qrTerminal(web)) } : undefined)
     })
   program.command('rotate').description('Replace a device token and invalidate its existing logins').argument('<id>')
     .action((id: string) => { run({ action: 'rotate', id }) })

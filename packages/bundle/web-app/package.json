@@ -59,6 +59,7 @@
     }
   },
   "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
     "@ocean/ocean-agent-instructions": "workspace:*",
     "@ocean/ocean-agent-preset": "workspace:*",
     "@ocean/ocean-agent-preset-registry": "workspace:*",
@@ -168,6 +169,7 @@
     "@ocean/ocean-persona": "workspace:*",
     "@ocean/ocean-plan-mode": "workspace:*",
     "@ocean/ocean-plugin-manager": "workspace:*",
+    "@ocean/ocean-plugin-market": "workspace:*",
     "@ocean/ocean-schedule": "workspace:*",
     "@ocean/ocean-session-log-export": "workspace:*",
     "@ocean/ocean-session-reference": "workspace:*",
@@ -182,6 +184,7 @@
     "@ocean/ocean-tool-ask-user": "workspace:*",
     "@ocean/ocean-tool-bash": "workspace:*",
     "@ocean/ocean-tool-bash-persistent": "workspace:*",
+    "@ocean/ocean-tool-browser-desktop": "workspace:*",
     "@ocean/ocean-tool-cordis": "workspace:*",
     "@ocean/ocean-tool-executor-ptc": "workspace:*",
     "@ocean/ocean-tool-fs": "workspace:*",
@@ -204,11 +207,9 @@
     "@ocean/ocean-workflow-ptc": "workspace:*",
     "@ocean/ocean-workspace": "workspace:*",
     "@ocean/ocean-workspace-changes": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
     "commander": "^15.0.0",
     "open": "^11.0.2",
-    "@ocean/ocean-plugin-market": "workspace:*",
-    "@ocean/ocean-tool-browser-desktop": "workspace:*"
+    "uqr": "^0.1.3"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
@@ -219,12 +220,14 @@
     "@deepseek-ai/cordis": "workspace:~",
     "@deepseek-ai/cordis-plugin-include": "workspace:~",
     "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+    "@deepseek-ai/libreoffice-kit": "0.2.3",
     "@ocean/ocean-agent": "workspace:*",
     "@ocean/ocean-agent-loop-testkit": "workspace:*",
     "@ocean/ocean-fs": "workspace:*",
     "@ocean/ocean-fs-local": "workspace:*",
     "@ocean/ocean-home-paths": "workspace:*",
     "@ocean/ocean-llm": "workspace:*",
+    "@ocean/ocean-otel": "workspace:*",
     "@ocean/ocean-sandbox-policy": "workspace:*",
     "@ocean/ocean-session": "workspace:*",
     "@ocean/ocean-session-projection": "workspace:*",
@@ -234,8 +237,6 @@
     "@ocean/ocean-tool-executor-native": "workspace:*",
     "@ocean/ocean-tool-testkit": "workspace:*",
     "@ocean/ocean-tools": "workspace:*",
-    "@ocean/ocean-typert-registry": "workspace:*",
-    "@deepseek-ai/libreoffice-kit": "0.2.3",
-    "@ocean/ocean-otel": "workspace:*"
+    "@ocean/ocean-typert-registry": "workspace:*"
   }
 }

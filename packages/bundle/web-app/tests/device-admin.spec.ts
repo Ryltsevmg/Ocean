@@ -14,6 +14,7 @@ import { DeviceTokens } from '@ocean/ocean-client-connection/src/device-tokens.t
 import { internals, provideCmdline } from '@ocean/ocean-cmdline'
 import LocalCredentials from '@ocean/ocean-credentials-local'
 import { pairingLink, runDeviceAdmin } from '../src/device-admin-client.ts'
+import { qrTerminal } from '../src/pairing-qr.ts'
 import { bootDeviceProfile, type DeviceBoot } from './device-launcher.ts'
 
 let boot: DeviceBoot | undefined
@@ -156,8 +157,10 @@ describe('remote-device over the administrator socket', () => {
     ])
     await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
     expect(received[0]!.operation).toEqual({ action: 'pair', label: 'Phone', ttlSeconds: 120 })
-    const printed = JSON.parse(logs[0]!) as { link: string; expiresAt: string }
+    const printed = JSON.parse(logs[0]!) as { link: string; web: string; expiresAt: string }
     expect(printed.expiresAt).toBe('2023-11-14T22:13:20.000Z')
+    expect(printed.web).toBe(`https://ocean.example/mount/#pair=${grant}`)
+    expect(errors).toEqual([])
     const link = new URL(printed.link)
     expect(link.protocol).toBe('ocean:')
     expect(link.hostname).toBe('pair')
@@ -175,7 +178,19 @@ describe('remote-device over the administrator socket', () => {
     })
     boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone'])
     await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
-    expect(new URL((JSON.parse(logs[0]!) as { link: string }).link).searchParams.get('host')).toBe('https://bigpc.tail71ee4f.ts.net/')
+    const printed = JSON.parse(logs[0]!) as { link: string; web: string }
+    expect(new URL(printed.link).searchParams.get('host')).toBe('https://bigpc.tail71ee4f.ts.net/')
+    expect(printed.web).toBe(`https://bigpc.tail71ee4f.ts.net/#pair=${grant}`)
+  })
+
+  it('prints a QR code of the browser link to standard error with --qr', async () => {
+    const grant = `${'a'.repeat(8)}-aaaa-4aaa-8aaa-${'a'.repeat(12)}.${'B'.repeat(43)}`
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { grant, expiresAt: 1_700_000_000_000 } }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'pair', 'Phone', '--url', 'https://ocean.example', '--qr'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(logs).toHaveLength(1)
+    expect((JSON.parse(logs[0]!) as { web: string }).web).toBe(`https://ocean.example/#pair=${grant}`)
+    expect(errors).toEqual([qrTerminal(`https://ocean.example/#pair=${grant}`)])
   })
 
   it('prefers an explicit --url over the advertised address', async () => {

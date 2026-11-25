@@ -331,9 +331,11 @@ describe('real Loader composition', () => {
     const html = await challenge.text()
     expect(html).toContain('<html lang="en">')
     expect(html).toContain('Sign in to Ocean')
-    expect(html).toContain('<input id="device-token" type="password" autocomplete="off" required maxlength="80">')
+    expect(html).toContain('<label for="device-token">Device token or pairing link</label>')
+    expect(html).toContain('<input id="device-token" type="password" autocomplete="off" required maxlength="512">')
     expect(html).toContain('<button type="submit" disabled>Sign in</button>')
-    expect(html).toContain('<p role="alert" hidden>')
+    expect(html).toContain('<p role="alert" data-failed hidden>')
+    expect(html).toContain('<p role="alert" data-foreign hidden>This pairing link belongs to another Ocean Host.</p>')
     // The CSP hash admits exactly the one script the document embeds.
     const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1]
     expect(script).toBeDefined()
