@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-attachment-local",
   "description": "Private content-addressed OCEAN_HOME attachment storage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-tool-browser-desktop",
   "description": "Desktop-only Agent browser tools over the Session-shared Sidebar webview",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

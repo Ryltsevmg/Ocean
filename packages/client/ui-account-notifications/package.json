@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-client-ui-account-notifications",
   "description": "Display account notifications and refresh localized content",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

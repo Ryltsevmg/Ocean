@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-api-device-controller",
   "description": "Owner-only Remote namespace for the Host device inventory and revocation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },

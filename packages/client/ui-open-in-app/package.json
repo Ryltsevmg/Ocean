@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-client-ui-open-in-app",
   "description": "Session application submenus and native opening controls for directories and previewed files",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },
