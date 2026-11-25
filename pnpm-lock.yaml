@@ -651,6 +651,12 @@ importers:
       '@electron/notarize':
         specifier: 2.5.0
         version: 2.5.0(supports-color@9.4.0)
+      '@ocean/ocean-api-port-forward-controller':
+        specifier: workspace:*
+        version: link:../../packages/api/port-forward-controller
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../packages/api/remote-access
       '@ocean/ocean-app-boot':
         specifier: workspace:*
         version: link:../../packages/boot/app-boot
@@ -696,6 +702,9 @@ importers:
       '@ocean/ocean-plugin-manager':
         specifier: workspace:*
         version: link:../../packages/boot/plugin-manager
+      '@ocean/ocean-typert-registry':
+        specifier: workspace:*
+        version: link:../../packages/typert/registry
       '@ocean/ocean-util-file-drag':
         specifier: workspace:*
         version: link:../../packages/util/file-drag

@@ -21,6 +21,15 @@
       "path": "../../packages/credentials/deepseek-account"
     },
     {
+      "path": "../../packages/api/port-forward-controller"
+    },
+    {
+      "path": "../../packages/api/remote-access/tsconfig.host.json"
+    },
+    {
+      "path": "../../packages/typert/registry"
+    },
+    {
       "path": "../../packages/api/gateway/tsconfig.host.json"
     },
     {
