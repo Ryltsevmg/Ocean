@@ -9410,6 +9410,12 @@ importers:
       '@ocean/ocean-session':
         specifier: workspace:*
         version: link:../../core/session
+      '@ocean/ocean-session-persistence':
+        specifier: workspace:*
+        version: link:../../session/session-persistence
+      '@ocean/ocean-session-persistence-jsonl':
+        specifier: workspace:*
+        version: link:../../session/session-persistence-jsonl
       '@ocean/ocean-session-projection':
         specifier: workspace:*
         version: link:../../session/session-projection
