@@ -22,7 +22,10 @@ async function render(options: { canSave?: boolean; pairing?: { address: string 
         saveUnavailable: messages.remoteSaveUnavailable,
         hostIdentity: messages.remoteHostIdentity, hostRoutes: messages.remoteHostRoutes,
         hostDifferent: messages.remoteHostDifferent,
+        sshLabel: messages.remoteSshLabel, sshHint: messages.remoteSshHint,
+        sshStart: messages.remoteSshStart, sshStarting: messages.remoteSshStarting,
         done: messages.remoteDone, connecting: messages.remoteConnecting } }),
+    startSsh: vi.fn<(host: string) => Promise<DesktopRemoteResult>>(),
     probe: vi.fn<(address: string) => Promise<DesktopRemoteResult | {
       hostId: string
       known: boolean
@@ -252,4 +255,50 @@ it('keeps the identity hidden for an invalid address and ignores a stale probe',
   first.resolve({ hostId: 'first-host', known: false, saved: false })
   await new Promise(resolve => setTimeout(resolve, 0))
   expect(identity.textContent).toBe('Host: second-h')
+})
+
+it('prepares a machine over SSH and then asks for the usual confirmation', async () => {
+  const view = await render()
+  const started = Promise.withResolvers<DesktopRemoteResult>()
+  view.bridge.startSsh.mockReturnValue(started.promise)
+  view.field('ssh-host').value = 'bigpc'
+  view.document.querySelector<HTMLElement>('#ssh-start')!.click()
+  // The action is unavailable while the machine is being prepared, and says so.
+  await vi.waitFor(() => { expect(view.bridge.startSsh).toHaveBeenCalledWith('bigpc') })
+  expect(view.field('ssh-start').disabled).toBe(true)
+  expect(view.field('ssh-start').textContent).toBe(view.messages.remoteSshStarting)
+
+  started.resolve({ kind: 'pairing', address: 'https://bigpc.tail71ee4f.ts.net/' })
+  await vi.waitFor(() => { expect(view.field('hint').textContent).toContain('https://bigpc.tail71ee4f.ts.net/') })
+  expect(view.document.querySelector<HTMLElement>('#ssh-field')!.hidden).toBe(true)
+  expect(view.field('ssh-start').disabled).toBe(false)
+})
+
+it('reports a machine that could not be prepared and keeps the form usable', async () => {
+  const view = await render()
+  view.bridge.startSsh.mockResolvedValue({ kind: 'failed', code: 'DESKTOP_SSH_UNREACHABLE', message: 'Could not reach the Host securely.' })
+  view.field('ssh-host').value = 'bigpc'
+  view.document.querySelector<HTMLElement>('#ssh-start')!.click()
+
+  await vi.waitFor(() => { expect(view.field('failure').hidden).toBe(false) })
+  expect(view.field('failure').textContent).toBe('Could not reach the Host securely.')
+  expect(view.field('ssh-host').disabled).toBe(false)
+  expect(view.field('ssh-start').textContent).toBe(view.messages.remoteSshStart)
+})
+
+it('asks for a machine instead of starting one when the field is empty', async () => {
+  const view = await render()
+  view.document.querySelector<HTMLElement>('#ssh-start')!.click()
+
+  expect(view.bridge.startSsh).not.toHaveBeenCalled()
+})
+
+it('reports a carrier failure from the SSH action', async () => {
+  const view = await render()
+  view.bridge.startSsh.mockRejectedValue(new Error('channel closed'))
+  view.field('ssh-host').value = 'bigpc'
+  view.document.querySelector<HTMLElement>('#ssh-start')!.click()
+
+  await vi.waitFor(() => { expect(view.field('failure').hidden).toBe(false) })
+  expect(view.field('failure').textContent).toBe(view.messages.remoteSwitchFailed)
 })

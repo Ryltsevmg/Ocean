@@ -5,6 +5,7 @@ import { DeviceClientError, DeviceProtocolVersionError, type DeviceClientErrorCo
 import { resolveDesktopLocale } from '../src/locale.ts'
 import { RemoteConnectionStoreError } from '../src/remote-connection-store.ts'
 import { remoteErrorResult } from '../src/remote-result.ts'
+import { RemoteSshError, type RemoteSshErrorCode, type RemoteSshStep } from '../src/remote-ssh.ts'
 
 const messages = resolveDesktopLocale('en-US').messages
 
@@ -40,3 +41,23 @@ it('distinguishes protocol versions and timeouts from unknown failures', () => {
   expect(remoteErrorResult(new DOMException('fixture-secret', 'TimeoutError'), messages)).toMatchObject({ code: 'DESKTOP_REMOTE_TIMEOUT' })
   expect(remoteErrorResult(new Error('fixture-secret'), messages)).toEqual({ kind: 'failed', code: 'DESKTOP_REMOTE_FAILED', message: messages.remoteSwitchFailed })
 })
+
+it.each([
+  ['inspect', 'DESKTOP_SSH_UNREACHABLE', 'remoteSshInspectFailed'],
+  ['inspect', 'DESKTOP_SSH_UNSUPPORTED', 'remoteSshInspectFailed'],
+  ['inspect', 'DESKTOP_SSH_TOOLS_MISSING', 'remoteSshInspectFailed'],
+  ['download', 'DESKTOP_SSH_DOWNLOAD_FAILED', 'remoteSshDownloadFailed'],
+  ['download', 'DESKTOP_SSH_RELEASE_MISSING', 'remoteSshReleaseMissing'],
+  ['verify', 'DESKTOP_SSH_CHECKSUM_FAILED', 'remoteSshChecksumFailed'],
+  ['extract', 'DESKTOP_SSH_EXTRACT_FAILED', 'remoteSshExtractFailed'],
+  ['serve', 'DESKTOP_SSH_SERVE_FAILED', 'remoteSshServeFailed'],
+  ['pair', 'DESKTOP_SSH_PAIR_FAILED', 'remoteSshPairFailed'],
+] as [RemoteSshStep, RemoteSshErrorCode, keyof typeof messages][])(
+  'names the machine-preparation step that failed: %s %s',
+  (step, code, copy) => {
+    const result = remoteErrorResult(new RemoteSshError(code, step, 'Ocean remote SSH: detail'), messages)
+    expect(result).toEqual({ kind: 'failed', code, message: messages[copy] })
+    // The remote diagnostics never reach the form.
+    expect(result.message).not.toContain('detail')
+  },
+)

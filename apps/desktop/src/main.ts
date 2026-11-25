@@ -31,6 +31,7 @@ import {
   type WebContents,
 } from 'electron'
 import { DeviceClient } from '@ocean/ocean-client-connection/device'
+import { provisionRemoteHost } from './remote-ssh.ts'
 import { HarnessError } from '@ocean/ocean-error'
 import { resolveDesktopPaths } from './paths.ts'
 import { DesktopProjectManager } from './project-manager.ts'
@@ -108,6 +109,9 @@ let windowsLanguage: string | undefined = readDesktopLocaleCache(app.getPath('us
 let backendReady = false
 /** Error-level console output of the primary window, attached to crash reports. */
 const rendererConsole = new RendererConsoleTail()
+
+/** Deadline for preparing and starting a Host on a remote machine over SSH. */
+const REMOTE_SSH_TIMEOUT_MS = 900_000
 
 // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
 // set before ready so the first fatal report already resolves under it.
@@ -1581,6 +1585,8 @@ async function main(): Promise<void> {
         incompatible: locale.messages.remoteProtocolIncompatible,
         hostIdentity: locale.messages.remoteHostIdentity, hostRoutes: locale.messages.remoteHostRoutes,
         hostDifferent: locale.messages.remoteHostDifferent,
+        sshLabel: locale.messages.remoteSshLabel, sshHint: locale.messages.remoteSshHint,
+        sshStart: locale.messages.remoteSshStart, sshStarting: locale.messages.remoteSshStarting,
         logoutUnconfirmed: locale.messages.remoteLogoutUnconfirmed,
         done: locale.messages.remoteDone, connecting: locale.messages.remoteConnecting,
       },
@@ -1603,6 +1609,27 @@ async function main(): Promise<void> {
         ...machine === undefined ? {} : { routes: machine.routes },
       }
     } catch (error) { return remoteErrorResult(error, messages) }
+  })
+  ipcMain.handle(DESKTOP_IPC.remoteSshStart, async (event, host: unknown) => {
+    assertRemoteDialog(event)
+    const messages = currentDesktopLocale().messages
+    if (switchingHost || remoteConnectionsClosing || isQuitting() || isMandatory()) return remoteFailure('busy', messages)
+    if (typeof host !== 'string' || host.length > 255) return remoteFailure('invalid-input', messages)
+    // Preparing a machine downloads and unpacks a release, so the deadline covers the whole run.
+    const signal = AbortSignal.timeout(REMOTE_SSH_TIMEOUT_MS)
+    let provisioned: Awaited<ReturnType<typeof provisionRemoteHost>>
+    try {
+      provisioned = await provisionRemoteHost({ host, version: app.getVersion(), signal })
+    } catch (error) {
+      console.error('[desktop] remote SSH provisioning failed:', error)
+      return remoteErrorResult(error, messages)
+    }
+    const pairing = parsePairingLink(provisioned.link)
+    if (pairing === undefined) return remoteFailure('pair-link-invalid', messages)
+    pendingPairing = pairing
+    queuedPairing = undefined
+    // The form then confirms the address it can reach, exactly as for a link typed by the user.
+    return { kind: 'pairing', address: pairing.address }
   })
   ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => { assertRemoteDialog(event).destroy() })
   ipcMain.handle(DESKTOP_IPC.remoteForget, async (event, address: unknown) => {

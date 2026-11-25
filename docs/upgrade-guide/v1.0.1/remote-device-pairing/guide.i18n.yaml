@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v1.0.1/remote-device-pairing/guide.md
+/:
+  en: d69f18c15f6a8fee
+  zh: 38b93c0184691caf
+/remote-devices-pair-by-link-and-hold-named-rights:
+  en: 58b264c443074302
+  zh: 2042f35fda0c2792
+/remote-devices-pair-by-link-and-hold-named-rights/change:
+  en: d237636530ecbfd2
+  zh: 9ef019c5054a9e87
+/remote-devices-pair-by-link-and-hold-named-rights/migration:
+  en: d121a1133c7d1c21
+  zh: 9d3ed66c4ce200f9
