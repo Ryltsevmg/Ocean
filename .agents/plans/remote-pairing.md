@@ -126,6 +126,12 @@
 
 Вкладки браузера Host показываются на клиенте, порт Host слушается на `localhost` клиента. Нужно исследование: какой браузер запускается на Host (пакеты `browser-use`), транспорт стриминга и проброса TCP через шлюз.
 
+Не начато. Проект по разведке кода 2026-11-25.
+
+10a. Проброс порта. Транспорт — тот же поток шлюза, которым пользуется терминал: клиент строит `RemoteStreamMuxClient` поверх `client.openSocket('api/remote.mux', openDeviceStreamSocket)` и открывает поток с восходящим каналом (`ClientUplinkQueue`, `uplink.push({ type: 'write', sequence, data })`) — образец `writeTerminal` в `packages/bundle/web-app/src/device-connect-client.ts`. На Host поток — метод `@Remote({ mode: 'stream' })`, который возвращает `RemoteStream<Кадр, Вход>` и читает `invocation.uplink()` — образец `attach` в `packages/api/terminal-controller/src/index.ts:328` и `terminal.ts:93`. Кадры потока — JSON, поэтому байты идут base64. Дом потока: новый `@ocean/ocean-api-port-forward-controller` по `docs/cookbook/adding-a-remote-api.md` (пакет, строка `cordis.patch.yml`, сборка в `api-remotes`, каталоги), не в `terminal-controller`. Поток `portForward/open { port }`: Host соединяется с `127.0.0.1:<port>` на своей стороне и качает данные в обе стороны; нисходящий поток останавливается, когда сокет не готов писать (`write()` вернул `false` → ждать `drain`), соединения только с loopback Host. Право — `terminal:operate`: достучаться до порта Host значит запустить на нём службу; список действий в `packages/api/gateway/src/device-scope-actions.ts`. Desktop: `net.Server` на `127.0.0.1:<port>` для выбранного удалённого подключения, каждое соединение — один поток; forwarded-порты закрываются при отключении Host. Триггер первой итерации — список портов в настройке, как `OCEAN_DESKTOP_MAX_REMOTE_HOSTS`; затем интерфейс по образцу T3 Code: список **Servers** в треде и пункт «Forwarded ports» в палитре команд.
+
+10b. Вкладки браузера Host. Здесь нужно отдельное исследование, которого не проводилось: какие вкладки открывает агент на Host (пакеты `browser-use`, `tool-browser-desktop`), можно ли получить кадры и ввод через CDP, и как их показать в существующем `ui-sidebar-browser`. Часть сценария T3 Code — «Open on this device»: страница `localhost` хоста открывается в браузере клиента, — покрывается пунктом 10a без стриминга.
+
 ### Остаётся вне работы
 
 Облачный ретранслятор и несколько пользователей с изоляцией данных.
