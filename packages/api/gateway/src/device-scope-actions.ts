@@ -23,7 +23,7 @@ export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteA
     'workspaceFiles/search', 'workspaceFiles/changes', 'directoryPicker/list', 'workspace/follow',
   ],
   'files:write': ['fileUploads/upload', 'workspace/create', 'workspace/initializeDefault'],
-  'terminal:operate': ['terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach'],
+  'terminal:operate': ['terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach', 'portForward/open'],
   'settings:manage': [
     'settings/describe', 'settings/update', 'settings/replace', 'settings/mutate', 'event:settings/document-updated',
     'credentials/describe', 'credentials/set', 'credentials/unset', 'event:credentials/reference-updated',

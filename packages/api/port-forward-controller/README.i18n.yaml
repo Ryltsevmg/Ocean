@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/port-forward-controller/README.md
+/:
+  en: 296defd3f5529a2c
+  zh: c9faec109c2ec1a3
+/port-forward-controller:
+  en: 8551fb683340ece3
+  zh: 11b5c55b9eef1781
+/port-forward-controller/summary:
+  en: a3159902685c9f45
+  zh: d4beebe9b8ecdd96
+/port-forward-controller/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 453b541aec65ffb8
+/port-forward-controller/use-this-package:
+  en: eb5ce1e5f5533a78
+  zh: d69e6aad0394a531
+/port-forward-controller/model-experience:
+  en: 5d42283c3d4a909e
+  zh: d0bf0f32d9a33188
+/port-forward-controller/model-experience/kv-cache-effect:
+  en: 52953a887ec611ba
+  zh: 03ee0030e0b81d74
+/port-forward-controller/known-limitations-and-deferred-work:
+  en: 89e7bdeda3ecfc20
+  zh: 398c4993bc558adb
+/port-forward-controller/known-limitations-and-deferred-work/dev-note:
+  en: 7db85b1d952ef22c
+  zh: 65aab4c5191d0ca3

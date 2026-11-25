@@ -70,6 +70,7 @@
     "@ocean/ocean-api-remotes": "workspace:*",
     "@ocean/ocean-api-session-controller": "workspace:*",
     "@ocean/ocean-api-settings-controller": "workspace:*",
+    "@ocean/ocean-api-port-forward-controller": "workspace:*",
     "@ocean/ocean-api-terminal-controller": "workspace:*",
     "@ocean/ocean-api-workspace-controller": "workspace:*",
     "@ocean/ocean-api-workspace-files": "workspace:*",

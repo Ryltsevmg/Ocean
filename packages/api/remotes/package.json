@@ -95,6 +95,7 @@
     "@deepseek-ai/cordis": "workspace:~",
     "zod": "4.6.6",
     "@ocean/ocean-command-feedback": "workspace:*",
+    "@ocean/ocean-api-port-forward-controller": "workspace:*",
     "@ocean/ocean-api-terminal-controller": "workspace:*",
     "@ocean/ocean-plugin-manager": "workspace:*",
     "@ocean/ocean-mcp-manager": "workspace:*",

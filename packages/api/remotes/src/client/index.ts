@@ -29,6 +29,7 @@ import subagentsRemote from '@ocean/ocean-subagent/remote'
 import sessionRemote from '@ocean/ocean-api-session-controller/remote'
 import jobRemote from '@ocean/ocean-api-job-controller/remote'
 import deviceRemote from '@ocean/ocean-api-device-controller/remote'
+import portForwardRemote from '@ocean/ocean-api-port-forward-controller/remote'
 import workspaceRemote from '@ocean/ocean-api-workspace-controller/remote'
 import terminalRemote from '@ocean/ocean-api-terminal-controller/remote'
 import workspaceFilesRemote from '@ocean/ocean-api-workspace-files/remote'
@@ -74,6 +75,8 @@ export type {} from '@ocean/ocean-api-job-controller/remote'
 export type * from '@ocean/ocean-api-job-controller/types'
 export type {} from '@ocean/ocean-api-device-controller/remote'
 export type * from '@ocean/ocean-api-device-controller/types'
+export type {} from '@ocean/ocean-api-port-forward-controller/remote'
+export type * from '@ocean/ocean-api-port-forward-controller/types'
 export type {} from '@ocean/ocean-api-workspace-controller/remote'
 export type * from '@ocean/ocean-api-workspace-controller/types'
 export type {} from '@ocean/ocean-api-workspace-files/remote'
@@ -201,7 +204,7 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
       messageFeedbackRemote, sessionFeedbackRemote,
       fileUploadsRemote, sessionReferencesRemote,
       permissionPresetsRemote, subagentsRemote, sessionRemote, jobRemote, deviceRemote, workspaceRemote,
-      workspaceFilesRemote, terminalRemote,
+      workspaceFilesRemote, terminalRemote, portForwardRemote,
       officeKitRemote, userQuestionsRemote, webRemote,
     ]) {
       disposers.push(await ctx.remote.$mount(contribution))

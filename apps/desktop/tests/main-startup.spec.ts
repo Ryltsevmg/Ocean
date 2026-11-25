@@ -5,6 +5,7 @@ import { WINDOWS_TITLEBAR_HEIGHT } from '../src/windows-layout.ts'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi, type Mock } from 'vitest'
 import type { IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
+import { connect as netConnect, createServer as createNetServer } from 'node:net'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import type { MenuItemConstructorOptions, MessageBoxOptions } from 'electron'
@@ -2174,6 +2175,47 @@ describe('desktop main startup', () => {
     await vi.waitFor(() => { expect(harness.windows[0]!.urls).toEqual([FORM, FORM]) })
     expect(view.isDestroyed()).toBe(true)
     expect(harness.windows[0]!.setTitle).toHaveBeenLastCalledWith(harness.app.name)
+  })
+
+  /** Whether this computer's loopback accepts a connection on the port. */
+  const loopbackAccepts = (port: number): Promise<boolean> => new Promise((resolve) => {
+    const socket = netConnect(port, '127.0.0.1')
+    socket.on('connect', () => { socket.destroy(); resolve(true) })
+    socket.on('error', () => { resolve(false) })
+  })
+
+  /** A loopback port that is free right now. */
+  async function freePort(): Promise<number> {
+    const probe = createNetServer()
+    await new Promise<void>((resolve) => { probe.listen(0, '127.0.0.1', () => { resolve() }) })
+    const port = (probe.address() as { port: number }).port
+    await new Promise<void>((resolve) => { probe.close(() => { resolve() }) })
+    return port
+  }
+
+  it('forwards the configured Host ports of the selected Host and stops them when it is left', async () => {
+    const port = await freePort()
+    vi.stubEnv('OCEAN_DESKTOP_FORWARD_PORTS', `${String(port)},${String(port)}`)
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } }))
+      .mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+      .mockResolvedValue(new Response(null, { status: 204 })))
+    await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    expect(await loopbackAccepts(port)).toBe(false)
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+      { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, 'https://machine.example/', 'fixture-token', false,
+    )).toEqual({ kind: 'connected', persistence: 'skipped' })
+    const view = harness.views.at(-1)!
+    await vi.waitFor(async () => { expect(await loopbackAccepts(port)).toBe(true) })
+    // Leaving the Host for the local workspace ends its forwards.
+    const useLocal = applicationMenuItems(view).find(item => item.label === en.remoteLocalMenu) as { click: () => void }
+    useLocal.click()
+    await vi.waitFor(async () => { expect(await loopbackAccepts(port)).toBe(false) })
   })
 
   it('keeps a connection live when encrypted token saving fails', async () => {

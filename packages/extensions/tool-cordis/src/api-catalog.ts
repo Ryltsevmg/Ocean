@@ -1967,6 +1967,20 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'portForwardController',
+    summary: 'Host service backing the generated `ctx.remote.portForward` namespace.',
+    description: 'Host service backing the generated `ctx.remote.portForward` namespace.',
+    methods: [
+      {
+        signature: '@Remote({ mode: \'stream\' }) open(request: PortForwardRequest, signal: AbortSignal): RemoteStream<PortForwardFrame, PortForwardInput>',
+        description: 'Connect `127.0.0.1:<port>` on this Host and relay bytes both ways. The stream reports `connected`, then every byte the port sends as base64 `data` frames as they arrive, and ends with `end` when the port closes its end or `failed` when the connection is refused or breaks. Client `data` items are written to the socket in order, waiting for the socket to drain before the next item whenever the port reads slowly; a Client `end` item, or the Client ending its uplink, half-closes the socket. Cancelling the stream destroys the socket.',
+        parameters: [{ name: 'request', description: 'loopback port of this Host.' }, { name: 'signal', description: 'carrier cancellation; destroys the socket.' }],
+        returns: 'the downlink frames in wire order.',
+        throws: ['RemoteError `port-forward/invalid-port` for a port outside 1…65535.'],
+      },
+    ],
+  },
+  {
     key: 'productAnalytics',
     summary: 'Authenticated event intake; disabled instances do not inspect identity or accept new events.',
     description: 'Authenticated event intake; disabled instances do not inspect identity or accept new events.',
@@ -6625,6 +6639,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'PluginVersionList',
     declaration: 'export type PluginVersionList = {\n    readonly status: \'listed\';\n    readonly installed: string;\n    readonly registry: Registry;\n    readonly attempts: readonly RegistryAttempt[];\n    readonly versions: readonly PluginVersion[];\n    readonly omitted: number;\n} | {\n    readonly status: \'refused\';\n    readonly problem: \'not-updatable\' | \'not-found\' | \'network\' | \'unknown\';\n    readonly reason: string;\n    readonly attempts: readonly RegistryAttempt[];\n};',
+  },
+  {
+    name: 'PortForwardFailureCode',
+    declaration: 'export type PortForwardFailureCode = \'refused\' | \'unreachable\' | \'limit\';',
+  },
+  {
+    name: 'PortForwardFrame',
+    declaration: 'export type PortForwardFrame = {\n    readonly type: \'connected\';\n    readonly port: number;\n} | {\n    readonly type: \'data\';\n    readonly data: string;\n} | {\n    readonly type: \'end\';\n} | {\n    readonly type: \'failed\';\n    readonly code: PortForwardFailureCode;\n    readonly message: string;\n};',
+  },
+  {
+    name: 'PortForwardInput',
+    declaration: 'export type PortForwardInput = {\n    readonly type: \'data\';\n    readonly data: string;\n} | {\n    readonly type: \'end\';\n};',
+  },
+  {
+    name: 'PortForwardRequest',
+    declaration: 'export interface PortForwardRequest {\n    readonly port: number;\n}',
   },
   {
     name: 'PostToolDecision',

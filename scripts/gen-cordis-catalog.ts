@@ -145,6 +145,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   terminalController: 'workspace.md',
   directoryPickerController: 'workspace.md',
   deviceController: 'credentials.md',
+  portForwardController: 'typert.md',
 }
 
 /**
@@ -1034,6 +1035,9 @@ export const TYPE_LINK_EXEMPTIONS: Readonly<Record<string, string>> = {
   AgentTerminalRequest: 'Agent terminal allocation fields are owned by packages/api/terminal-controller/README.md',
   TerminalScreenRequest: 'Browser terminal screen reads are owned by packages/api/terminal-controller/README.md',
   TerminalScreenPage: 'Browser terminal screen reads are owned by packages/api/terminal-controller/README.md',
+  PortForwardRequest: 'Host port forward arguments are owned by packages/api/port-forward-controller/README.md',
+  PortForwardFrame: 'Host port forward stream frames are owned by packages/api/port-forward-controller/README.md',
+  PortForwardInput: 'Host port forward uplink items are owned by packages/api/port-forward-controller/README.md',
 }
 
 /** Repository data policy consumed by the Cordis catalog projector. */

@@ -43,6 +43,7 @@ import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
 import { findPairingArgument } from './remote-pairing.ts'
 import { answeringRoute } from './remote-routes.ts'
+import { forwardHostPort, type PortForward } from './remote-port-forward.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
@@ -1949,6 +1950,35 @@ async function main(): Promise<void> {
     }
   }
 
+  let portForwards: { ports: PortForward[]; controller: AbortController } | undefined
+
+  /** Forward the configured Host ports of the selected connection to this computer's loopback. */
+  const followPortForwards = async (connection: RemoteConnection): Promise<void> => {
+    await stopPortForwards()
+    if (remoteConfig.forwardPorts.length === 0 || isQuitting()) return
+    const controller = new AbortController()
+    const current = { ports: [] as PortForward[], controller }
+    portForwards = current
+    for (const port of remoteConfig.forwardPorts) {
+      try {
+        const forward = await forwardHostPort(connection.host, port, { signal: controller.signal })
+        if (portForwards !== current) { await forward.close(); continue }
+        current.ports.push(forward)
+      } catch (error) {
+        // A port this computer already uses, or a Host that cannot be reached, leaves the other ports forwarded.
+        console.warn(`ocean desktop: Host port ${String(port)} was not forwarded`, error)
+      }
+    }
+  }
+
+  const stopPortForwards = async (): Promise<void> => {
+    const current = portForwards
+    portForwards = undefined
+    if (current === undefined) return
+    current.controller.abort()
+    await Promise.all(current.ports.map(port => port.close()))
+  }
+
   function selectRemoteConnection(connection?: RemoteConnection): void {
     const owner = mainWindow
     if (owner === undefined || owner.isDestroyed() || isQuitting() || connection === remoteConnection) return
@@ -1960,6 +1990,7 @@ async function main(): Promise<void> {
     connection?.setVisible?.(true)
     owner.setTitle(connection === undefined ? app.name : formatDesktopMessage(currentDesktopLocale().messages.remoteWindowTitle,
       { host: new URL(connection.host.address).host }))
+    void (connection === undefined ? stopPortForwards() : followPortForwards(connection))
     const contents = activeContents()
     if (contents !== undefined && !contents.isDestroyed()) {
       contents.send(DESKTOP_IPC.updatesChannelChanged, channelState)
@@ -2009,6 +2040,7 @@ async function main(): Promise<void> {
   async function closeRemoteConnections(): Promise<void> {
     remoteConnectionsClosing = true
     remoteConnectAbort?.abort()
+    await stopPortForwards()
     const openRemotes = [...remoteConnections.values()]
     remoteConnections.clear()
     remoteConnection = undefined

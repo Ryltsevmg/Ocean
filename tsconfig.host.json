@@ -329,6 +329,7 @@
     { "path": "./packages/api/remotes/tsconfig.host.json" },
     { "path": "./packages/api/job-controller/tsconfig.host.json" },
     { "path": "./packages/api/device-controller" },
+    { "path": "./packages/api/port-forward-controller" },
     { "path": "./packages/api/session-controller/tsconfig.host.json" },
     { "path": "./packages/api/workspace-files/tsconfig.host.json" },
     { "path": "./packages/api/settings-controller" },

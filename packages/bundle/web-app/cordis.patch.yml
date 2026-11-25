@@ -170,6 +170,11 @@
     # agent-write change feed inside the session workspace root.
     - id: terminal-controller
       name: '@ocean/ocean-api-terminal-controller'
+    # One Typert stream is one TCP connection to a port on this Host's loopback,
+    # so a Client reaches a service the Host runs through the Gateway's device
+    # policy rather than a direct socket.
+    - id: port-forward-controller
+      name: '@ocean/ocean-api-port-forward-controller'
     - id: workspace-files
       name: '@ocean/ocean-api-workspace-files'
 

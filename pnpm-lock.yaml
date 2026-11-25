@@ -1272,6 +1272,31 @@ importers:
         specifier: workspace:*
         version: link:../../typert/registry
 
+  packages/api/port-forward-controller:
+    dependencies:
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+      zod:
+        specifier: 4.6.6
+        version: 4.6.6
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@ocean/ocean-api-gateway':
+        specifier: workspace:*
+        version: link:../gateway
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../remote-access
+      '@ocean/ocean-client-connection':
+        specifier: workspace:*
+        version: link:../../client/connection
+      '@ocean/ocean-typert-registry':
+        specifier: workspace:*
+        version: link:../../typert/registry
+
   packages/api/remote-access:
     dependencies:
       '@ocean/ocean-typert-protocol':
@@ -1333,6 +1358,9 @@ importers:
       '@ocean/ocean-api-job-controller':
         specifier: workspace:*
         version: link:../job-controller
+      '@ocean/ocean-api-port-forward-controller':
+        specifier: workspace:*
+        version: link:../port-forward-controller
       '@ocean/ocean-api-session-controller':
         specifier: workspace:*
         version: link:../session-controller
@@ -2767,6 +2795,9 @@ importers:
       '@ocean/ocean-api-job-controller':
         specifier: workspace:*
         version: link:../../api/job-controller
+      '@ocean/ocean-api-port-forward-controller':
+        specifier: workspace:*
+        version: link:../../api/port-forward-controller
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes

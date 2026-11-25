@@ -341,6 +341,13 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Owns user terminal processes, default shell resolution and bounded screen recovery through the subprocess provider and typed Remote transport.',
   },
   {
+    key: 'portForwardController',
+    pkg: 'api-port-forward-controller',
+    title: 'Host loopback port forwarding Remote controller',
+    mode: 'core',
+    note: 'Carries one TCP connection to a port on the Host\'s own loopback over one Remote stream per connection; the Client names a port, never an address.',
+  },
+  {
     key: 'workspaceController',
     pkg: 'api-workspace-controller',
     title: 'Host Workspace Remote controller',

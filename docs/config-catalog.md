@@ -4166,6 +4166,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@ocean/ocean-acp-app` | `cmdlineArgs` | [`packages/bundle/acp-app/src/index.ts`](../packages/bundle/acp-app/src/index.ts) |
 | `@ocean/ocean-agent` | `sessionProjections` | [`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts) |
 | `@ocean/ocean-api-device-controller` | `connection` · `typert` | [`packages/api/device-controller/src/index.ts`](../packages/api/device-controller/src/index.ts) |
+| `@ocean/ocean-api-port-forward-controller` | `typert` | [`packages/api/port-forward-controller/src/index.ts`](../packages/api/port-forward-controller/src/index.ts) |
 | `@ocean/ocean-api-remote-access` | — | [`packages/api/remote-access/src/index.ts`](../packages/api/remote-access/src/index.ts) |
 | `@ocean/ocean-api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
 | `@ocean/ocean-authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
