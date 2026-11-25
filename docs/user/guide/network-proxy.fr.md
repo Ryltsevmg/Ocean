@@ -81,7 +81,7 @@ Certaines requêtes de OCEAN contournent le proxy.
 
 - **Tout sur cette machine.** Loopback est toujours direct: `localhost`, l'ensemble de la gamme `127.0.0.0/8` , `::1`, et `0.0.0.0`. Un proxy ne peut pas facilement atteindre un service qui écoute seulement localement.
 - **Code écrit par le modèle.** Les workers de workflow et les processus Node de ptc-runtime ne reçoivent aucun paramètre de proxy. Les scripts écrits par le modèle ne peuvent donc pas lire une URL de proxy susceptible de contenir un mot de passe. Si ces requêtes ont besoin d’un proxy, le script doit le configurer. L’environnement d’exécution isolé continue de s’appliquer.
-- **Télémétrie d’utilisation.** L’exportateur OTLP utilise le client HTTP propre à Node. Il se connecte directement et échoue si les connexions sortantes directes sont bloquées. Ces échecs n’affectent pas l’utilisation de OCEAN. Définissez `OCEAN_TELEMETRY_MODE=DISABLED` pour désactiver entièrement la télémétrie.
+- **Télémétrie d’utilisation.** Les profils fournis désactivent l’envoi de sessions via OTel : il n’y a donc aucune requête de télémétrie à relayer par le proxy. Un déploiement qui l’active envoie via le client HTTP propre à Node, qu’aucun réglage de proxy n’atteint ; la connexion est donc directe et échoue là où les connexions sortantes directes sont bloquées.
 - **`web_fetch` vers une adresse IP privée explicite.** L’outil refuse toute URL qui contient directement une adresse privée, telle que `http://10.0.0.5/`, sans la transmettre au proxy. Le refus est identique en l’absence de proxy.
 
 <a id="check-that-it-worked"></a>
