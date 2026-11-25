@@ -765,6 +765,20 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'Its scopes, every scope for a device created before scopes, or undefined without a live login.',
       },
       {
+        signature: 'listDevices(): Promise<readonly DeviceMetadata[]>',
+        description: 'Read the durable device inventory for an owner-facing administrative surface.',
+        parameters: [],
+        returns: 'Every device\'s identity, label, revocation state, and stored scopes, without credential material.',
+        throws: ['{Error} when the Host runs without device login.'],
+      },
+      {
+        signature: 'revokeDevice(id: DeviceId): Promise<boolean>',
+        description: 'Revoke one device durably and finish the cleanup of its live transport Peers.',
+        parameters: [{ name: 'id', description: 'Device identifier as `listDevices` reported it.' }],
+        returns: 'Whether the device was found and is now revoked.',
+        throws: ['{Error} when the Host runs without device login, or when the durable write and live cleanup disagree.'],
+      },
+      {
         signature: 'authorizeIndex(request: ConnectionIndexRequest, response: ConnectionIndexResponse): boolean',
         description: 'Authenticate one frontend index request, owning a token redirect or 401. The cookie this mints is `Secure` when the mounted Web carrier serves TLS, which only that listener\'s protocol decides.',
         parameters: [{ name: 'request', description: 'root or configured-index HTTP request.' }, { name: 'response', description: 'response owned when the result is false.' }],
@@ -1006,6 +1020,27 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Read local device metadata without credential material.',
         parameters: [],
         returns: 'The credential provider\'s current device inventory.',
+      },
+    ],
+  },
+  {
+    key: 'deviceController',
+    summary: 'Host service backing the generated `ctx.remote.devices` namespace.',
+    description: 'Host service backing the generated `ctx.remote.devices` namespace.',
+    methods: [
+      {
+        signature: '@Remote(\'list\') async list(): Promise<readonly DeviceRecord[]>',
+        description: 'List every device the Host\'s registry holds, revoked ones included, so an owner can tell an active device from one that is already out.',
+        parameters: [],
+        returns: 'the inventory in registry order, without credential material.',
+        throws: ['RemoteError `devices/unavailable` when this Host runs without a device registry.'],
+      },
+      {
+        signature: '@Remote(\'revoke\') async revoke(request: DeviceRevokeRequest): Promise<DeviceRevokeValue>',
+        description: 'Revoke one device through the Connection registry, which also closes the device\'s live transports: the next login attempt is refused, and a Peer that is already connected loses its leases. The id is resolved against the registry first so an unknown device reports its own failure instead of reading as an already-revoked one.',
+        parameters: [{ name: 'request', description: 'device to revoke, as `list` reported it.' }],
+        returns: 'the receipt for a device that is now revoked.',
+        throws: ['RemoteError `devices/not-found` for an id the registry does not hold, or `devices/unavailable` when this Host runs without a device registry.'],
       },
     ],
   },
@@ -5480,12 +5515,20 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface DeveloperMessage extends MessageBase {\n    readonly role: \'developer\';\n}',
   },
   {
-    name: 'DeviceId',
-    declaration: 'export type DeviceId = z.infer<typeof deviceId>;',
-  },
-  {
     name: 'DeviceMetadata',
     declaration: 'export interface DeviceMetadata {\n    readonly id: DeviceId;\n    readonly label: string;\n    readonly revoked: boolean;\n    readonly scopes?: readonly DeviceScope[];\n}',
+  },
+  {
+    name: 'DeviceRecord',
+    declaration: 'export interface DeviceRecord {\n    readonly id: DeviceId;\n    readonly label: string;\n    readonly revoked: boolean;\n    readonly scopes?: readonly DeviceScope[];\n}',
+  },
+  {
+    name: 'DeviceRevokeRequest',
+    declaration: 'export interface DeviceRevokeRequest {\n    readonly id: DeviceId;\n}',
+  },
+  {
+    name: 'DeviceRevokeValue',
+    declaration: 'export interface DeviceRevokeValue {\n    readonly id: DeviceId;\n    readonly revoked: true;\n}',
   },
   {
     name: 'DeviceScope',

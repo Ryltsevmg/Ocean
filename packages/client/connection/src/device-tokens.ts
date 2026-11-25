@@ -4,6 +4,7 @@ import { credentialKey, type CredentialProvider, type CredentialRecord } from '@
 import { z } from 'zod'
 import { HarnessError } from '@ocean/ocean-error'
 import { DEVICE_SCOPES, type DeviceScope } from './device-scopes.ts'
+import { deviceId, type DeviceId, type DeviceMetadata } from './device-metadata.ts'
 
 /** A valid device has no room for another active login. */
 export class DeviceLoginCapacityError extends HarnessError {
@@ -14,18 +15,10 @@ export class DeviceLoginCapacityError extends HarnessError {
 
 /** Credential record whose updates can invalidate live device sessions. */
 export const deviceRegistryKey = credentialKey('client-connection', 'remote-devices')
-/** Validate an identifier supplied by the local administrator. */
-export const deviceId = z.uuid().brand<'DeviceId'>()
-/** Validated device identifier from the credential registry. */
-export type DeviceId = z.infer<typeof deviceId>
-/** Administrative device inventory without credential hashes or login secrets. */
-export interface DeviceMetadata {
-  readonly id: DeviceId
-  readonly label: string
-  readonly revoked: boolean
-  /** Rights the device holds; absent for a device created before scopes, which holds every scope. */
-  readonly scopes?: readonly DeviceScope[]
-}
+// Re-exported for the registry's own callers; the declarations live in the
+// client-safe metadata leaf so the Host handle can name them too.
+export { deviceId } from './device-metadata.ts'
+export type { DeviceId, DeviceMetadata } from './device-metadata.ts'
 /** Device login identity scoped to the origin that issued it. */
 export interface DeviceSessionKey {
   readonly deviceId: DeviceId

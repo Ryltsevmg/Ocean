@@ -3,6 +3,7 @@
   - navigation:
     - button "General"
     - button "Models"
+    - button "Devices"
     - button "Built-in plugins"
     - button "Agent presets"
     - button "Feedback"

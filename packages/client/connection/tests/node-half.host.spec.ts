@@ -317,6 +317,26 @@ describe('connection node half', () => {
     }
   })
 
+  it('lists the durable device inventory without credential material, revoked devices included', async () => {
+    const host = await mounted({ allowOwnerLogin: false }, 'https:')
+    const tokens = new DeviceTokens(host.ctx.credentials)
+    const limited = await tokens.issue('Phone', ['sessions:read'])
+    const full = await tokens.issue('Laptop')
+    try {
+      expect(await host.connection.listDevices()).toEqual([
+        { id: limited.id, label: 'Phone', revoked: false, scopes: ['sessions:read'] },
+        { id: full.id, label: 'Laptop', revoked: false },
+      ])
+      await host.connection.revokeDevice(limited.id)
+      expect(await host.connection.listDevices()).toEqual([
+        { id: limited.id, label: 'Phone', revoked: true, scopes: ['sessions:read'] },
+        { id: full.id, label: 'Laptop', revoked: false },
+      ])
+    } finally {
+      await host.dispose()
+    }
+  })
+
   it('distinguishes a committed revocation from failed live cleanup', async () => {
     const host = await mounted({ allowOwnerLogin: false }, 'https:')
     const tokens = new DeviceTokens(host.ctx.credentials)
@@ -1406,6 +1426,7 @@ describe('connection transport leases and device administration', () => {
       const absent = deviceId.parse(randomUUID())
       await expect(service.revokeDevice(absent)).rejects.toThrow('device login is unavailable')
       await expect(service.rotateDevice(absent)).rejects.toThrow('device login is unavailable')
+      await expect(service.listDevices()).rejects.toThrow('device login is unavailable')
     } finally { await host.dispose() }
   })
 
@@ -1433,6 +1454,7 @@ describe('connection transport leases and device administration', () => {
       const service = serviceOf(host.connection)
       await expect(service.revokeDevice(device.id)).rejects.toThrow('device login is unavailable')
       await expect(service.rotateDevice(device.id)).rejects.toThrow('device login is unavailable')
+      await expect(service.listDevices()).rejects.toThrow('device login is unavailable')
     } finally { await host.dispose() }
   })
 

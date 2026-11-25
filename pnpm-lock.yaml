@@ -1152,6 +1152,34 @@ importers:
         specifier: workspace:*
         version: link:../../interaction/user-approval
 
+  packages/api/device-controller:
+    dependencies:
+      '@ocean/ocean-brand':
+        specifier: workspace:*
+        version: link:../../util/brand
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+      zod:
+        specifier: 4.6.6
+        version: 4.6.6
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@ocean/ocean-api-gateway':
+        specifier: workspace:*
+        version: link:../gateway
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../remote-access
+      '@ocean/ocean-client-connection':
+        specifier: workspace:*
+        version: link:../../client/connection
+      '@ocean/ocean-typert-registry':
+        specifier: workspace:*
+        version: link:../../typert/registry
+
   packages/api/gateway:
     dependencies:
       '@deepseek-ai/schemastery':
@@ -1296,6 +1324,9 @@ importers:
       '@ocean/ocean-agent-team':
         specifier: workspace:*
         version: link:../../team/agent-team
+      '@ocean/ocean-api-device-controller':
+        specifier: workspace:*
+        version: link:../device-controller
       '@ocean/ocean-api-gateway':
         specifier: workspace:*
         version: link:../gateway
@@ -2727,6 +2758,9 @@ importers:
       '@ocean/ocean-agent-tool-presentation':
         specifier: workspace:*
         version: link:../../core/agent-tool-presentation
+      '@ocean/ocean-api-device-controller':
+        specifier: workspace:*
+        version: link:../../api/device-controller
       '@ocean/ocean-api-gateway':
         specifier: workspace:*
         version: link:../../api/gateway
@@ -2883,6 +2917,9 @@ importers:
       '@ocean/ocean-client-ui-settings-agent-loop':
         specifier: workspace:*
         version: link:../../client/ui-settings-agent-loop
+      '@ocean/ocean-client-ui-settings-devices':
+        specifier: workspace:*
+        version: link:../../client/ui-settings-devices
       '@ocean/ocean-client-ui-settings-general':
         specifier: workspace:*
         version: link:../../client/ui-settings-general
@@ -5585,6 +5622,45 @@ importers:
       '@ocean/ocean-client-ui-plugin-manager':
         specifier: workspace:*
         version: link:../ui-plugin-manager
+      '@ocean/ocean-client-ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+      '@ocean/ocean-client-ui-renderer':
+        specifier: workspace:*
+        version: link:../ui-renderer
+      '@ocean/ocean-client-ui-settings':
+        specifier: workspace:*
+        version: link:../ui-settings
+      '@ocean/ocean-client-ui-slots':
+        specifier: workspace:*
+        version: link:../ui-slots
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+
+  packages/client/ui-settings-devices:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@ocean/ocean-api-device-controller':
+        specifier: workspace:*
+        version: link:../../api/device-controller
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
+      '@ocean/ocean-api-remotes':
+        specifier: workspace:*
+        version: link:../../api/remotes
+      '@ocean/ocean-client-locale':
+        specifier: workspace:*
+        version: link:../locale
+      '@ocean/ocean-client-store':
+        specifier: workspace:*
+        version: link:../store
+      '@ocean/ocean-client-test-runtime':
+        specifier: workspace:*
+        version: link:../../test-support/client-runtime
       '@ocean/ocean-client-ui-primitives':
         specifier: workspace:*
         version: link:../ui-primitives

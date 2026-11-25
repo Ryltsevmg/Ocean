@@ -158,6 +158,14 @@
     # the roster rides the session control stream above.
     - id: job-controller
       name: '@ocean/ocean-api-job-controller'
+
+    # The owner-facing device inventory and revocation. Both methods read and
+    # write the Connection device registry, so the row is limited to profiles
+    # that mount Connection; a Host that mounts it without a device registry
+    # answers `devices/unavailable` instead of failing to load.
+    - id: device-controller
+      name: '@ocean/ocean-api-device-controller'
+      disabled: !!js "['remote-device', 'connect'].includes(ctx.get('profileContext')?.name)"
     # Workspace file service: bounded read, directory listing, and the
     # agent-write change feed inside the session workspace root.
     - id: terminal-controller
@@ -533,6 +541,9 @@
     # Host serves the namespace.
     - id: ui-settings-shell
       name: '@ocean/ocean-client-ui-settings-shell'
+
+    - id: ui-settings-devices
+      name: '@ocean/ocean-client-ui-settings-devices'
 
     - id: ui-settings-agent-loop
       name: '@ocean/ocean-client-ui-settings-agent-loop'

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "API d'administration des appareils",
+    "description": "Liste les appareils du Host avec leurs droits et en révoque un."
+  }
+}

@@ -427,6 +427,37 @@ list(): Promise<DeviceMetadata[]>
 
 Source: [`packages/client/connection/src/device-bootstrap.ts`](../../packages/client/connection/src/device-bootstrap.ts)
 
+<a id="ctxdevicecontroller--devicecontroller"></a>
+
+### `ctx.deviceController` — `DeviceController`
+
+Host service backing the generated `ctx.remote.devices` namespace.
+
+```ts cordis-catalog
+/**
+ * List every device the Host's registry holds, revoked ones included, so an
+ * owner can tell an active device from one that is already out.
+ * @returns the inventory in registry order, without credential material.
+ * @throws RemoteError `devices/unavailable` when this Host runs without a device registry.
+ */
+@Remote('list') async list(): Promise<readonly DeviceRecord[]>
+
+/**
+ * Revoke one device through the Connection registry, which also closes the
+ * device's live transports: the next login attempt is refused, and a Peer
+ * that is already connected loses its leases. The id is resolved against the
+ * registry first so an unknown device reports its own failure instead of
+ * reading as an already-revoked one.
+ * @param request - device to revoke, as `list` reported it.
+ * @returns the receipt for a device that is now revoked.
+ * @throws RemoteError `devices/not-found` for an id the registry does not hold, or
+ *   `devices/unavailable` when this Host runs without a device registry.
+ */
+@Remote('revoke') async revoke(request: DeviceRevokeRequest): Promise<DeviceRevokeValue>
+```
+
+Source: [`packages/api/device-controller/src/index.ts`](../../packages/api/device-controller/src/index.ts)
+
 <a id="authorization-events"></a>
 
 ### `authorization/*` events

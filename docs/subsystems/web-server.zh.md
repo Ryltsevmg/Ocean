@@ -191,6 +191,21 @@ sharesDeviceSession?(first: PeerScope, second: PeerScope): boolean
 deviceScopes?(deviceId: string): readonly DeviceScope[] | undefined
 
 /**
+ * Read the durable device inventory for an owner-facing administrative surface.
+ * @returns Every device's identity, label, revocation state, and stored scopes, without credential material.
+ * @throws {Error} when the Host runs without device login.
+ */
+listDevices(): Promise<readonly DeviceMetadata[]>
+
+/**
+ * Revoke one device durably and finish the cleanup of its live transport Peers.
+ * @param id - Device identifier as `listDevices` reported it.
+ * @returns Whether the device was found and is now revoked.
+ * @throws {Error} when the Host runs without device login, or when the durable write and live cleanup disagree.
+ */
+revokeDevice(id: DeviceId): Promise<boolean>
+
+/**
  * Authenticate one frontend index request, owning a token redirect or 401.
  * The cookie this mints is `Secure` when the mounted Web carrier serves TLS,
  * which only that listener's protocol decides.
@@ -208,7 +223,7 @@ authorizeIndex(request: ConnectionIndexRequest, response: ConnectionIndexRespons
 authenticatedUrl(baseUrl: string): string
 ```
 
-Types: [DeviceScope](credentials.zh.md) · [Principal](typert.zh.md)
+Types: [DeviceId](credentials.zh.md) · [DeviceMetadata](credentials.zh.md) · [DeviceScope](credentials.zh.md) · [Principal](typert.zh.md)
 
 Source: [`packages/client/connection/src/rpc.ts`](../../packages/client/connection/src/rpc.ts)
 

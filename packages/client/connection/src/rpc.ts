@@ -1,5 +1,6 @@
 /** Generic unary RPC contracts shared by the Host and Client Connection halves. */
 
+import type { DeviceId, DeviceMetadata } from './device-metadata.ts'
 import type { DeviceScope } from './device-scopes.ts'
 import type { Branded } from '@ocean/ocean-brand'
 import type { PeerScope, Principal } from '@ocean/ocean-typert-protocol'
@@ -286,6 +287,21 @@ export interface HostConnectionHandle {
    * @returns Its scopes, every scope for a device created before scopes, or undefined without a live login.
    */
   deviceScopes?(deviceId: string): readonly DeviceScope[] | undefined
+
+  /**
+   * Read the durable device inventory for an owner-facing administrative surface.
+   * @returns Every device's identity, label, revocation state, and stored scopes, without credential material.
+   * @throws {Error} when the Host runs without device login.
+   */
+  listDevices(): Promise<readonly DeviceMetadata[]>
+
+  /**
+   * Revoke one device durably and finish the cleanup of its live transport Peers.
+   * @param id - Device identifier as `listDevices` reported it.
+   * @returns Whether the device was found and is now revoked.
+   * @throws {Error} when the Host runs without device login, or when the durable write and live cleanup disagree.
+   */
+  revokeDevice(id: DeviceId): Promise<boolean>
 
   /**
    * Authenticate one frontend index request, owning a token redirect or 401.

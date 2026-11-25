@@ -80,6 +80,9 @@
       "path": "../job-controller/tsconfig.client.json"
     },
     {
+      "path": "../device-controller"
+    },
+    {
       "path": "../session-controller/tsconfig.client.json"
     },
     {

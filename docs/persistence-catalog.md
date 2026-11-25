@@ -6754,7 +6754,7 @@ Sources: [`packages/core/tool-executor-ptc/src/types.ts:68`](../packages/core/to
 
 SHA-256: `9066df9d15becdda85c1fdc3a9dd04a45ecd680d70be5d5360dda4d427dc6e22`
 
-Sources: [`packages/client/connection/src/rpc-host.ts:82`](../packages/client/connection/src/rpc-host.ts)
+Sources: [`packages/client/connection/src/rpc-host.ts:84`](../packages/client/connection/src/rpc-host.ts)
 
 | Property | Presence | Type |
 |---|---|---|
