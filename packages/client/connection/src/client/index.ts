@@ -117,6 +117,19 @@ export interface ClientTransportHooks {
   createWebSocket?: ConnectionWebSocketFactory
   /** Host base URL for desktop or Node sockets; omission uses the document base. */
   streamBaseUrl?: string
+  /**
+   * The carrier moves the page to another route of the same Host once the page keeps failing to reach it.
+   * It is called on the third failed retry in a row and then on every tenth, and not while the browser is offline,
+   * when no route can be reached at all. A served page has no carrier, and a page that owns its Host has no other route.
+   */
+  onConnectionLost?(): void
+  /**
+   * The carrier calls the listener after it changes {@link ClientTransportHooks.streamBaseUrl}, so the page reconnects
+   * at once instead of waiting for its next retry.
+   * @param listener - Callback for one route change.
+   * @returns A function that ends the notifications.
+   */
+  onRouteChanged?(listener: () => void): () => void
 }
 
 /** Page global carrying {@link ClientTransportHooks}; absent in the served web app. */
@@ -227,6 +240,11 @@ function watchBrowserNetwork(controller: ConnectionController): () => void {
   }
 }
 
+/** Retries in a row after which the page first reports a Host it cannot reach. */
+const LOSS_REPORT_RETRIES = 3
+/** Retries between later reports of the same loss. */
+const LOSS_REPORT_INTERVAL_RETRIES = 10
+
 /**
  * Install one Context-owned Connection service from explicit composition inputs.
  * @param ctx - client Cordis context.
@@ -328,6 +346,8 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
       if (source === undefined) throw new Error('connection: no generation source is registered')
       const token = {}
       const ownsGeneration = (): boolean => owner?.token === token
+      let retries = 0
+      const reconnectRequested = sinks.onReconnectRequested
       const startGeneration: ConnectionGenerationSource = deviceDocument === undefined ? source : async (signal, ready) => {
         const response = await fetch(deviceDocument.connectUrl, {
           method: 'HEAD', credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal,
@@ -347,7 +367,14 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
       }
       const controller = new ConnectionController(startGeneration, {
         ...sinks,
+        onReconnectRequested: () => {
+          reconnectRequested?.()
+          // Every failed attempt asks for the next one; report the loss rarely enough for a carrier to react.
+          retries += 1
+          if (retries === LOSS_REPORT_RETRIES || retries % LOSS_REPORT_INTERVAL_RETRIES === 0) transport?.onConnectionLost?.()
+        },
         onConnected: (host) => {
+          retries = 0
           const nextGeneration = { id: ++generationId, host }
           publishGeneration(nextGeneration)
           if (!ownsGeneration() || !Object.is(generation, nextGeneration)) return
@@ -371,6 +398,8 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
     },
   }
   ctx.provide('connection', handle)
+  const stopRouteChanges = transport?.onRouteChanged?.(() => { handle.reconnect() })
+  if (stopRouteChanges !== undefined) ctx.effect(() => stopRouteChanges, 'connection: route changes')
 }
 
 /**

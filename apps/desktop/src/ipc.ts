@@ -37,6 +37,8 @@ export const DESKTOP_IPC = {
   onboardingActive: 'ocean-desktop:onboarding-active',
   onboardingApiKey: 'ocean-desktop:onboarding-api-key',
   bootFailed: 'ocean-desktop:boot-failed',
+  connectionLost: 'ocean-desktop:connection-lost',
+  routeChanged: 'ocean-desktop:route-changed',
   browserAcquire: 'ocean-desktop:browser-acquire',
   browserRelease: 'ocean-desktop:browser-release',
   browserAgentBind: 'ocean-desktop:browser-agent-bind',

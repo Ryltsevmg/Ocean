@@ -385,6 +385,114 @@ describe('connection client apply', () => {
     }
   })
 
+  it('reports a Host the page keeps failing to reach on the third retry, then on every tenth', async () => {
+    vi.useFakeTimers()
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const browser = new BrowserNetworkProbe()
+    vi.stubGlobal('window', browser)
+    ;(globalThis as Win).location = { hostname: 'localhost' }
+    const onConnectionLost = vi.fn<NonNullable<ClientTransportHooks['onConnectionLost']>>()
+    ;(globalThis as Win).__OCEAN_TRANSPORT__ = { onConnectionLost }
+    const handle = await mount()
+    handle.registerGenerationSource(() => { throw new Error('Host unreachable') })
+    // With no jitter the backoff is half its cap, so every retry waits ten milliseconds.
+    const loop = handle.start({}, { backoffBaseMs: 20, backoffMaxMs: 20 })
+    try {
+      const retryWindow = async (): Promise<void> => { await vi.advanceTimersByTimeAsync(10) }
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handle.state.getSnapshot()).toBe('connecting')
+      await retryWindow()
+      await retryWindow()
+      expect(onConnectionLost).not.toHaveBeenCalled()
+      await retryWindow()
+      expect(onConnectionLost).toHaveBeenCalledOnce()
+      for (let retry = 4; retry <= 9; retry += 1) await retryWindow()
+      expect(onConnectionLost).toHaveBeenCalledOnce()
+      await retryWindow()
+      expect(onConnectionLost).toHaveBeenCalledTimes(2)
+      for (let retry = 11; retry <= 20; retry += 1) await retryWindow()
+      expect(onConnectionLost).toHaveBeenCalledTimes(3)
+    } finally {
+      loop.stop()
+      randomSpy.mockRestore()
+      warnSpy.mockRestore()
+    }
+  })
+
+  it('reports no loss while the browser is offline, when no route can be reached', async () => {
+    vi.useFakeTimers()
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const browser = new BrowserNetworkProbe()
+    browser.navigator.onLine = false
+    vi.stubGlobal('window', browser)
+    ;(globalThis as Win).location = { hostname: 'localhost' }
+    const onConnectionLost = vi.fn<NonNullable<ClientTransportHooks['onConnectionLost']>>()
+    ;(globalThis as Win).__OCEAN_TRANSPORT__ = { onConnectionLost }
+    const handle = await mount()
+    handle.registerGenerationSource(() => { throw new Error('Host unreachable') })
+    const loop = handle.start({}, { backoffBaseMs: 20, backoffMaxMs: 20 })
+    try {
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(handle.state.getSnapshot()).toBe('disconnected')
+      expect(onConnectionLost).not.toHaveBeenCalled()
+
+      // Back online, the same failures are worth reporting again.
+      browser.setOnline(true)
+      for (let retry = 0; retry < 3; retry += 1) await vi.advanceTimersByTimeAsync(10)
+      expect(onConnectionLost).toHaveBeenCalledOnce()
+    } finally {
+      loop.stop()
+      randomSpy.mockRestore()
+      warnSpy.mockRestore()
+    }
+  })
+
+  it('reconnects at once on a transport route change and stops listening when the plugin is disposed', async () => {
+    vi.useFakeTimers()
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const stopRouteChanges = vi.fn()
+    const onRouteChanged = vi.fn<NonNullable<ClientTransportHooks['onRouteChanged']>>(() => stopRouteChanges)
+    ;(globalThis as Win).location = { hostname: 'localhost' }
+    ;(globalThis as Win).__OCEAN_TRANSPORT__ = { onRouteChanged }
+    const ctx = new Context()
+    const fiber = ctx.plugin({ apply, inject: [] })
+    await fiber
+    const handle = ctx.get('connection') as ConnectionHandle | undefined
+    if (handle === undefined) throw new Error('ctx.connection not provided')
+    installGeneration(handle)
+    const requested = vi.fn()
+    const loop = handle.start({ onReconnectRequested: requested }, {
+      backoffBaseMs: 60_000,
+      backoffFactor: 2,
+      backoffMaxMs: 120_000,
+      generationReadyTimeoutMs: 500,
+    })
+    try {
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handle.generation.getSnapshot()?.id).toBe(1)
+      expect(onRouteChanged).toHaveBeenCalledOnce()
+      const listener = onRouteChanged.mock.calls[0]![0]
+
+      listener()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handle.generation.getSnapshot()?.id).toBe(2)
+      expect(handle.state.getSnapshot()).toBe('connected')
+      expect(requested).toHaveBeenCalledOnce()
+      expect(warnSpy.mock.calls.map(([message]) => String(message))).toEqual(['[connection] connection lost, retry #1'])
+      expect(stopRouteChanges).not.toHaveBeenCalled()
+
+      await fiber.dispose()
+      expect(stopRouteChanges).toHaveBeenCalledOnce()
+    } finally {
+      loop.stop()
+      randomSpy.mockRestore()
+      warnSpy.mockRestore()
+    }
+  })
+
   it('does not announce a generation synchronously stopped by a generation subscriber', async () => {
     ;(globalThis as Win).location = { hostname: 'localhost' }
     const handle = await mount()

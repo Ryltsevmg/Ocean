@@ -1726,23 +1726,77 @@ async function main(): Promise<void> {
   }
 
   function configureRemoteBrowserSession(connection: RemoteConnection): void {
-    const { host, browserSession } = connection
+    const { browserSession } = connection
     browserSession.protocol.handle(SCHEME, request => serveApplication(request, connection))
     installHostSockets(browserSession, connection)
-    const mux = new URL('api/remote.mux', host.address)
+    installMuxSignOut(connection)
+    installMicrophonePermissions(browserSession, () => connection.contents, 'remote')
+  }
+
+  /** Watch the stream socket of the connection's current route; a refused sign-in there ends the connection. */
+  function installMuxSignOut(connection: RemoteConnection): void {
+    const { browserSession } = connection
+    const mux = new URL('api/remote.mux', connection.host.address)
     mux.protocol = 'wss:'
     browserSession.webRequest.onHeadersReceived({ urls: [mux.href] }, (details, reply) => {
       reply({})
       const owner = connection.contents
       if (details.statusCode !== 401 || details.resourceType !== 'webSocket' || details.url !== mux.href
-        || owner === undefined || details.webContentsId !== owner.id || remoteConnections.get(host.hostId) !== connection) return
+        || owner === undefined || details.webContentsId !== owner.id || remoteConnections.get(connection.host.hostId) !== connection) return
       const wasSelected = remoteConnection === connection
       void disconnectRemoteConnection(connection).then(async () => {
-        if (wasSelected && remoteConnection === undefined) await openRemoteDialog(host.address)
+        if (wasSelected && remoteConnection === undefined) await openRemoteDialog(connection.host.address)
       }).catch(reportRemoteError)
     })
-    installMicrophonePermissions(browserSession, () => connection.contents, 'remote')
   }
+
+  const routeSwitches = new Set<RemoteConnection>()
+
+  /**
+   * Move a connection whose route stopped answering to the first other route of its saved machine.
+   * A machine whose token is not saved cannot sign in again, and a route that still answers is kept.
+   * @param connection - Open connection whose page reported a lost Host.
+   * @returns After the connection follows a new route, or after nothing changed.
+   */
+  async function switchRemoteRoute(connection: RemoteConnection): Promise<void> {
+    if (routeSwitches.has(connection) || remoteConnections.get(connection.host.hostId) !== connection || isQuitting()) return
+    routeSwitches.add(connection)
+    const messages = currentDesktopLocale().messages
+    try {
+      const machine = (await remoteStore.machines().catch(() => [])).find(entry => entry.hostId === connection.host.hostId)
+      if (machine === undefined || isQuitting()) return
+      const current = connection.host.address
+      const signal = AbortSignal.timeout(15_000)
+      const route = await answeringRoute(machine, current, signal)
+      if (route === current || isQuitting() || remoteConnections.get(machine.hostId) !== connection) return
+      const next = await RemoteDesktopHost.connect(route, machine.token, signal, machine.hostId)
+      const previous = connection.host
+      connection.host = next
+      // The page dials the previous route until told; a refused sign-in there must not end the connection meanwhile.
+      installMuxSignOut(connection)
+      connection.contents?.send(DESKTOP_IPC.routeChanged, { streamBaseUrl: next.address })
+      const owner = mainWindow
+      if (remoteConnection === connection && owner !== undefined && !owner.isDestroyed()) {
+        owner.setTitle(formatDesktopMessage(messages.remoteWindowTitle, { host: new URL(next.address).host }))
+      }
+      refreshApplicationMenu()
+      publishHostSelection()
+      // The previous login ends when the route can be reached; otherwise the Host expires it.
+      await previous.close(AbortSignal.timeout(5_000)).catch(() => {
+        console.warn('ocean desktop: the login on the previous route of a switched Host was not closed')
+      })
+    } catch (error) {
+      reportRemoteError(error)
+    } finally {
+      routeSwitches.delete(connection)
+    }
+  }
+
+  ipcMain.on(DESKTOP_IPC.connectionLost, (event) => {
+    if (event.senderFrame === null || event.senderFrame !== event.sender.mainFrame) return
+    const connection = remoteByContents.get(event.sender)
+    if (connection !== undefined) void switchRemoteRoute(connection)
+  })
 
   async function releaseRemoteBrowserSession(browserSession: Session): Promise<void> {
     releaseDownloads(browserSession)
@@ -1982,11 +2036,13 @@ async function main(): Promise<void> {
         const host = next
         const browserSession = session.fromPartition(`ocean-remote-${randomUUID()}`, { cache: false })
         let disposing: Promise<void> | undefined
-        prepared = {
+        const connection: RemoteConnection = {
           host,
           browserSession,
-          dispose: () => disposing ??= disposeRemoteConnection(host, browserSession),
+          // A route switch replaces the host; disposal closes whichever one is current.
+          dispose: () => disposing ??= disposeRemoteConnection(connection.host, browserSession),
         }
+        prepared = connection
         next = undefined
         configureRemoteBrowserSession(prepared)
         await attachRemoteView(owner, prepared).loadURL(applicationUrl)

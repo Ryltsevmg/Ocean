@@ -2,7 +2,7 @@ import { parsePluginOperationRecord } from '@ocean/ocean-plugin-manager/diagnost
 import type { DesktopHostProcess } from '../src/host-process.ts'
 import type { AccountView } from '@ocean/ocean-deepseek-account/types'
 import { WINDOWS_TITLEBAR_HEIGHT } from '../src/windows-layout.ts'
-import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi, type Mock } from 'vitest'
 import type { IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -1932,6 +1932,132 @@ describe('desktop main startup', () => {
     )).toEqual({ kind: 'connected', persistence: 'skipped' })
     const methods = send.mock.calls.map(([, init]) => init?.method ?? 'GET')
     expect(methods).toEqual(['HEAD', 'POST', 'GET'])
+  })
+
+  type RemoteView = (typeof harness.views)[number]
+
+  /** Open a saved machine through its LAN route, with a second route left for a switch. */
+  async function openMachineThroughLan(): Promise<{
+    view: RemoteView
+    send: Mock<typeof fetch>
+    carrier: ReturnType<typeof makeRemoteCarrier>
+    reachLan: (reachable: boolean) => void
+  }> {
+    vi.spyOn(harness.safeStorage, 'isEncryptionAvailable').mockReturnValue(true)
+    const store = new RemoteConnectionStore(harness.app.getPath('userData'), harness.safeStorage)
+    await store.save({ address: 'https://lan.example/', hostId: 'machine', token: 'saved-token' })
+    await store.save({ address: 'https://tail.example/', hostId: 'machine', token: 'saved-token' })
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    let lanReachable = true
+    const send = vi.fn<typeof fetch>(async (input) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      if (url.hostname === 'lan.example' && !lanReachable) throw new TypeError('fetch failed')
+      if (url.pathname === '/connect') {
+        return new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } })
+      }
+      return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+    })
+    const carrier = makeRemoteCarrier()
+    fromPartition.mockReturnValueOnce(carrier)
+    vi.stubGlobal('fetch', send)
+    await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+      { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, 'https://lan.example/', '', false,
+    )).toEqual({ kind: 'connected', persistence: 'skipped' })
+    const view = harness.views.at(-1)!
+    view.webContents.send.mockClear()
+    send.mockClear()
+    return { view, send, carrier, reachLan: (reachable: boolean): void => { lanReachable = reachable } }
+  }
+
+  /** Deliver the page's report that it lost its Host. */
+  function reportLostHost(view: { webContents: RemoteView['webContents'] }): void {
+    const listener = harness.ipcOn.mock.calls.find(([channel]) => channel === DESKTOP_IPC.connectionLost)![1]
+    listener({ sender: view.webContents, senderFrame: view.webContents.mainFrame })
+  }
+
+  const requestsOf = (send: Mock<typeof fetch>): string[] => send.mock.calls.map(([input, init]) => {
+    const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+    return `${init?.method ?? 'GET'} ${url.href}`
+  })
+
+  it('moves an open connection to another route of its machine when its page reports a lost Host', async () => {
+    const { view, send, carrier, reachLan } = await openMachineThroughLan()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    reachLan(false)
+    reportLostHost(view)
+    await vi.waitFor(() => { expect(view.webContents.send).toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, { streamBaseUrl: 'https://tail.example/' }) })
+    await vi.waitFor(() => { expect(requestsOf(send).at(-1)).toBe('DELETE https://lan.example/connect') })
+    expect(requestsOf(send)).toEqual([
+      'HEAD https://lan.example/connect', 'HEAD https://tail.example/connect',
+      'HEAD https://tail.example/connect', 'POST https://tail.example/connect', 'GET https://tail.example/connect/bootstrap',
+      'DELETE https://lan.example/connect',
+    ])
+    // The refused-sign-in watch follows the route the page now dials, and the window names it.
+    expect(carrier.webRequest.onHeadersReceived.mock.calls.at(-1)![0]).toEqual({ urls: ['wss://tail.example/api/remote.mux'] })
+    expect(harness.windows[0]!.setTitle).toHaveBeenLastCalledWith('Ocean — tail.example')
+    expect(view.isDestroyed()).toBe(false)
+    // An unreachable route keeps its login until the Host expires it; that is reported, not raised.
+    expect(warn.mock.calls.filter(([message]) => message === 'ocean desktop: the login on the previous route of a switched Host was not closed'))
+      .toHaveLength(1)
+  })
+
+  it('keeps the route and tells the page nothing when no other route of the machine answers', async () => {
+    const { view, send, reachLan } = await openMachineThroughLan()
+    reachLan(false)
+    send.mockImplementation(async () => { throw new TypeError('fetch failed') })
+    reportLostHost(view)
+    await vi.waitFor(() => { expect(send).toHaveBeenCalledTimes(2) })
+    expect(requestsOf(send)).toEqual(['HEAD https://lan.example/connect', 'HEAD https://tail.example/connect'])
+    expect(view.webContents.send).not.toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, expect.anything())
+    expect(harness.windows[0]!.setTitle).toHaveBeenLastCalledWith('Ocean — lan.example')
+  })
+
+  it('attempts one switch for repeated reports of a lost Host', async () => {
+    const gate = Promise.withResolvers<Response>()
+    const { view, send, reachLan } = await openMachineThroughLan()
+    reachLan(false)
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    send.mockImplementation((input) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      if (url.hostname === 'lan.example') throw new TypeError('fetch failed')
+      return url.pathname === '/connect'
+        ? Promise.resolve(new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } }))
+        : gate.promise
+    })
+    reportLostHost(view)
+    await vi.waitFor(() => { expect(send).toHaveBeenCalledTimes(5) })
+    reportLostHost(view)
+    gate.resolve(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+    await vi.waitFor(() => { expect(view.webContents.send).toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, { streamBaseUrl: 'https://tail.example/' }) })
+    expect(requestsOf(send).filter(request => request.startsWith('HEAD'))).toHaveLength(3)
+  })
+
+  it('does nothing for a lost Host report from a connection whose token is not saved', async () => {
+    await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+    ;(menu as { click: () => void }).click()
+    const dialog = harness.windows.at(-1)!
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    const send = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } }))
+      .mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+    vi.stubGlobal('fetch', send)
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(
+      { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame }, 'https://unsaved.example/', 'fixture-token', false,
+    )).toEqual({ kind: 'connected', persistence: 'skipped' })
+    const view = harness.views.at(-1)!
+    send.mockClear()
+    reportLostHost(view)
+    reportLostHost(harness.windows[0]!)
+    await Promise.resolve()
+    expect(send).not.toHaveBeenCalled()
+    expect(view.webContents.send).not.toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, expect.anything())
   })
 
   it('keeps a connection live when encrypted token saving fails', async () => {

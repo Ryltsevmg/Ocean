@@ -6,7 +6,19 @@ interface DesktopBootGlobal {
   oceanDesktopBoot?: {
     failed(message: string): Promise<void>
     ready(): Promise<{ injections: Parameters<typeof applyIndexInjections>[0]; streamBaseUrl: string; ownsHost: boolean }>
+    /** Tells the carrier that the page lost its Host; the carrier may answer with a route change. */
+    connectionLost(): void
+    /** Follows the carrier's route changes for the lifetime of the page. */
+    onRouteChanged(listener: (route: { streamBaseUrl: string }) => void): () => void
   }
+}
+
+/** The page transport as the connection plugin reads it; the last two members carry route changes. */
+interface DesktopTransport {
+  ownsHost: boolean
+  streamBaseUrl: string
+  onConnectionLost?(): void
+  onRouteChanged?(listener: () => void): () => void
 }
 const desktop = (globalThis as DesktopBootGlobal).oceanDesktopBoot
 const reportFailure = (reason: unknown): void => {
@@ -22,8 +34,19 @@ try {
     const gate = (globalThis as { __OCEAN_BOOT_READY__?: PromiseWithResolvers<void> }).__OCEAN_BOOT_READY__
     if (gate === undefined) throw new Error('desktop web: boot readiness is missing')
     void desktop.ready().then(async ({ injections, streamBaseUrl, ownsHost }) => {
-      const transport = globalThis as { __OCEAN_TRANSPORT__?: { ownsHost: boolean; streamBaseUrl: string } }
-      transport.__OCEAN_TRANSPORT__ = { ownsHost, streamBaseUrl }
+      const transport = globalThis as { __OCEAN_TRANSPORT__?: DesktopTransport }
+      const hooks: DesktopTransport = { ownsHost, streamBaseUrl }
+      transport.__OCEAN_TRANSPORT__ = hooks
+      // A page that owns its Host has no other route to take.
+      if (!ownsHost) {
+        const routeListeners = new Set<() => void>()
+        hooks.onConnectionLost = () => { desktop.connectionLost() }
+        hooks.onRouteChanged = (listener) => { routeListeners.add(listener); return () => { routeListeners.delete(listener) } }
+        desktop.onRouteChanged((route) => {
+          hooks.streamBaseUrl = route.streamBaseUrl
+          for (const listener of [...routeListeners]) listener()
+        })
+      }
       await applyIndexInjections(injections, src => new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
         script.src = src

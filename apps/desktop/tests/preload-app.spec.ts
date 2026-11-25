@@ -108,6 +108,25 @@ it('exposes asynchronous boot only to the local application document', async () 
   expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'oceanDesktopBoot')).toBe(false)
 })
 
+it('reports a lost Host and follows route changes through the boot bridge', async () => {
+  vi.stubGlobal('location', new URL('dsh-app://app/'))
+  await import('../src/preload-app.ts')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'oceanDesktopBoot')?.[1] as {
+    connectionLost(): void
+    onRouteChanged(listener: (route: { streamBaseUrl: string }) => void): () => void
+  }
+  api.connectionLost()
+  expect(electron.ipcRenderer.send.mock.calls).toEqual([[DESKTOP_IPC.connectionLost]])
+  const listener = vi.fn()
+  const off = api.onRouteChanged(listener)
+  const handler = electron.ipcRenderer.on.mock.calls.find(([channel]) => channel === DESKTOP_IPC.routeChanged)![1] as
+    (event: unknown, route: unknown) => void
+  handler({}, { streamBaseUrl: 'https://ocean.example/mount/' })
+  expect(listener).toHaveBeenCalledExactlyOnceWith({ streamBaseUrl: 'https://ocean.example/mount/' })
+  off()
+  expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, handler)
+})
+
 it('exposes a directory picker only to the local application document', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
