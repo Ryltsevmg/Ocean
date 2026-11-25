@@ -893,7 +893,7 @@ describe('desktop main startup', () => {
     const menu = applicationMenuItems()
     const visible = menu.filter(item => item.visible !== false)
     expect(visible.map(item => item.role === 'quit' ? 'quit' : item.label ?? item.type)).toEqual([
-      messages.aboutMenu, 'separator', messages.remoteConnectMenu, messages.remoteLocalMenu, messages.checkUpdatesMenu,
+      messages.aboutMenu, 'separator', messages.remoteConnectMenu, messages.remoteLocalHostLaunchMenu, messages.remoteLocalMenu, messages.checkUpdatesMenu,
       ...platform === 'linux' ? [] : [messages.cliCommandMenu],
       'separator', ...packaged ? [] : [messages.reloadPageMenu, messages.restartAppHostMenu],
       messages.toggleDevToolsMenu, 'separator',
@@ -1462,7 +1462,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 Ocean', 'separator', zh.remoteConnectMenu, zh.remoteLocalMenu, '检查更新…', '管理 ocean 命令…', 'separator', zh.toggleDevToolsMenu, 'separator', '退出',
+      '关于 Ocean', 'separator', zh.remoteConnectMenu, zh.remoteLocalHostLaunchMenu, zh.remoteLocalMenu, '检查更新…', '管理 ocean 命令…', 'separator', zh.toggleDevToolsMenu, 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -1510,8 +1510,8 @@ describe('desktop main startup', () => {
       : undefined)
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
-      ? ['about', 'separator', en.remoteConnectMenu, en.remoteLocalMenu, en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'toggleDevTools', 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
-      : ['about', 'separator', en.remoteConnectMenu, en.remoteLocalMenu, en.checkUpdatesMenu, 'separator', 'toggleDevTools', 'separator', 'quit'])
+      ? ['about', 'separator', en.remoteConnectMenu, en.remoteLocalHostLaunchMenu, en.remoteLocalMenu, en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'toggleDevTools', 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
+      : ['about', 'separator', en.remoteConnectMenu, en.remoteLocalHostLaunchMenu, en.remoteLocalMenu, en.checkUpdatesMenu, 'separator', 'toggleDevTools', 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
 
@@ -2058,6 +2058,122 @@ describe('desktop main startup', () => {
     await Promise.resolve()
     expect(send).not.toHaveBeenCalled()
     expect(view.webContents.send).not.toHaveBeenCalledWith(DESKTOP_IPC.routeChanged, expect.anything())
+  })
+
+  /** Write the Desktop settings document before the application starts. */
+  function configureLocalHost(startAtLaunch: boolean): void {
+    const directory = join(harness.app.getPath('userData'), 'desktop')
+    mkdirSync(directory, { recursive: true })
+    writeFileSync(join(directory, 'settings.json'), JSON.stringify({
+      updates: { allowTestAuthPopupWindow: false }, localHost: { startAtLaunch },
+    }))
+  }
+
+  /** Start the application the way a launch does. The update gate opens only with a local Host, so none is awaited. */
+  async function readyWithoutLocalHost(): Promise<void> {
+    await import('../src/main.ts')
+    await vi.waitFor(() => { expect(harness.windows[0]?.isVisible()).toBe(true) })
+  }
+
+  const FORM = 'dsh-app://shell/remote-connection.html'
+  const mainEvent = () => ({ sender: harness.windows[0]!.webContents, senderFrame: harness.windows[0]!.webContents.mainFrame })
+  /** Call an IPC handler as the application page would; without a local Host only a connected Host has one. */
+  const asApplicationPage = <T>(call: () => T): T => {
+    const frame = harness.windows[0]!.webContents.mainFrame
+    const shown = frame.url
+    frame.url = 'dsh-app://app/'
+    try { return call() } finally { frame.url = shown }
+  }
+  /** The application menu as a page of the application requests it. */
+  const remoteOnlyMenu = (): MenuItemConstructorOptions[] => {
+    asApplicationPage(() => {
+      const owner = harness.windows[0]!
+      const event = { sender: owner.webContents, senderFrame: owner.webContents.mainFrame }
+      harness.handlers.get(DESKTOP_IPC.windowsMenu)!(event, 'application', 0, 0)
+    })
+    return harness.menu.mock.lastCall![0]
+  }
+  const menuItem = (label: string): { checked?: boolean; click: () => void } | undefined =>
+    remoteOnlyMenu().find(item => item.label === label) as { checked?: boolean; click: () => void } | undefined
+
+  it('starts without a local Host and shows the connection form as the window', async () => {
+    configureLocalHost(false)
+    await readyWithoutLocalHost()
+    expect(harness.hosts).toHaveLength(0)
+    expect(harness.windows).toHaveLength(1)
+    expect(harness.windows[0]!.urls).toEqual([FORM])
+    // Nothing in the menu leads to a local workspace; the preference is a checkbox that applies to the next launch.
+    expect(menuItem(en.remoteLocalMenu)).toBeUndefined()
+    expect(menuItem(en.remoteLocalHostLaunchMenu)).toMatchObject({ checked: false })
+    expect(await asApplicationPage(() => harness.handlers.get(DESKTOP_IPC.hostSelection)!(mainEvent()))).toMatchObject({ entries: [] })
+    await expect(Promise.resolve().then(() => asApplicationPage(() => harness.handlers.get(DESKTOP_IPC.selectHost)!(mainEvent(), ''))))
+      .rejects.toMatchObject({ code: 'DESKTOP_HOST_NAVIGATION_UNAVAILABLE' })
+    // The form's own Close gives it a fresh form instead of a window it cannot close.
+    await harness.handlers.get(DESKTOP_IPC.remoteClose)!(mainEvent())
+    await vi.waitFor(() => { expect(harness.windows[0]!.urls).toEqual([FORM, FORM]) })
+  })
+
+  it('signs in to the most recent saved machine at start over the form', async () => {
+    configureLocalHost(false)
+    vi.spyOn(harness.safeStorage, 'isEncryptionAvailable').mockReturnValue(true)
+    const store = new RemoteConnectionStore(harness.app.getPath('userData'), harness.safeStorage)
+    await store.save({ address: 'https://machine.example/', hostId: 'machine', token: 'saved-token' })
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => {
+      const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+      if (url.pathname === '/connect') {
+        return new Response(null, { status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } })
+      }
+      return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+    }))
+    await readyWithoutLocalHost()
+    await vi.waitFor(() => { expect(harness.views.at(-1)?.isVisible()).toBe(true) })
+    expect(harness.hosts).toHaveLength(0)
+    expect(harness.windows).toHaveLength(1)
+    expect(harness.windows[0]!.isDestroyed()).toBe(false)
+    expect(harness.windows[0]!.urls).toEqual([FORM])
+    expect(harness.windows[0]!.setTitle).toHaveBeenLastCalledWith('Ocean — machine.example')
+    const view = harness.views.at(-1)!
+    expect(await harness.handlers.get(DESKTOP_IPC.hostSelection)!({ sender: view.webContents, senderFrame: view.webContents.mainFrame }))
+      .toMatchObject({ selected: 'machine', entries: [{ id: 'machine' }] })
+  })
+
+  it('saves the launch preference from the menu checkbox and names when it applies', async () => {
+    configureLocalHost(false)
+    await readyWithoutLocalHost()
+    const read = (): unknown => JSON.parse(readFileSync(join(harness.app.getPath('userData'), 'desktop', 'settings.json'), 'utf8'))
+    expect(read()).toMatchObject({ localHost: { startAtLaunch: false }, updates: { allowTestAuthPopupWindow: false } })
+    menuItem(en.remoteLocalHostLaunchMenu)!.click()
+    await vi.waitFor(() => { expect(menuItem(en.remoteLocalHostLaunchMenu)).toMatchObject({ checked: true }) })
+    expect(read()).toMatchObject({ localHost: { startAtLaunch: true }, updates: { allowTestAuthPopupWindow: false } })
+    // The running application keeps the mode it started in.
+    expect(harness.hosts).toHaveLength(0)
+    const shown = harness.dialog.showMessageBox.mock.calls.flat() as ({ message?: string } | undefined)[]
+    expect(shown.some(argument => argument?.message === en.remoteLocalHostLaunchNote)).toBe(true)
+  })
+
+  it('returns to the connection form when the last remote Host is disconnected', async () => {
+    configureLocalHost(false)
+    await readyWithoutLocalHost()
+    const carrier = makeRemoteCarrier()
+    fromPartition.mockReturnValueOnce(carrier)
+    const identity = { 'ocean-device-protocol': '1', 'ocean-device-host': 'machine', 'ocean-device-epoch': 'launch' }
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, {
+        status: 204, headers: { ...identity, 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' },
+      }))
+      .mockResolvedValueOnce(Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }]))
+      .mockResolvedValue(new Response(null, { status: 204 })))
+    expect(await harness.handlers.get(DESKTOP_IPC.remoteConnect)!(mainEvent(), 'https://machine.example/', 'fixture-token', false))
+      .toEqual({ kind: 'connected', persistence: 'skipped' })
+    const view = harness.views.at(-1)!
+    expect(view.isVisible()).toBe(true)
+    expect(harness.windows[0]!.setTitle).toHaveBeenLastCalledWith('Ocean — machine.example')
+    const disconnect = applicationMenuItems(view).find(item => item.label === en.remoteDisconnectMenu) as { click: () => void }
+    disconnect.click()
+    await vi.waitFor(() => { expect(harness.windows[0]!.urls).toEqual([FORM, FORM]) })
+    expect(view.isDestroyed()).toBe(true)
+    expect(harness.windows[0]!.setTitle).toHaveBeenLastCalledWith(harness.app.name)
   })
 
   it('keeps a connection live when encrypted token saving fails', async () => {

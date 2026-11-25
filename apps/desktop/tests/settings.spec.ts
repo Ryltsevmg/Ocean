@@ -19,59 +19,78 @@ function fixture() {
   return { userData, path: join(directory, 'settings.json') }
 }
 
+const defaults = { updates: { allowTestAuthPopupWindow: false }, localHost: { startAtLaunch: true } }
+
 it('creates a discoverable default file on first launch without touching other preferences', async () => {
   const { userData, path } = fixture()
   rmSync(join(userData, 'desktop'), { recursive: true })
   writeFileSync(join(userData, 'keybindings.json'), 'existing shortcuts\n')
-  expect(await readDesktopSettings(userData)).toEqual({ updates: { allowTestAuthPopupWindow: false } })
-  expect(readFileSync(path, 'utf8')).toBe('{\n  "updates": {\n    "allowTestAuthPopupWindow": false\n  }\n}\n')
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
+  expect(readFileSync(path, 'utf8')).toBe('{\n  "updates": {\n    "allowTestAuthPopupWindow": false\n  },\n  "localHost": {\n    "startAtLaunch": true\n  }\n}\n')
   expect(readFileSync(join(userData, 'keybindings.json'), 'utf8')).toBe('existing shortcuts\n')
 })
 
-it.each(['{}', '{"updates": {}}', '{"other": 1, "updates": {"other": true}}'])('defaults an older document without rewriting it: %s', async (raw) => {
+it.each(['{}', '{"updates": {}}', '{"updates": {}, "localHost": {}}', '{"other": 1, "updates": {"other": true}}'])('defaults an older document without rewriting it: %s', async (raw) => {
   const { userData, path } = fixture()
   writeFileSync(path, raw)
-  expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
   expect(readFileSync(path, 'utf8')).toBe(raw)
 })
 
 it('loads explicit opt-in and opt-out on the next read without changing an earlier process snapshot', async () => {
   const { userData, path } = fixture()
   for (const allow of [true, false]) {
-    const raw = JSON.stringify({ updates: { allowTestAuthPopupWindow: allow }, custom: 'preserve' })
+    const raw = JSON.stringify({ updates: { allowTestAuthPopupWindow: allow }, localHost: { startAtLaunch: !allow }, custom: 'preserve' })
     writeFileSync(path, raw)
-    expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(allow)
+    expect(await readDesktopSettings(userData))
+      .toEqual({ updates: { allowTestAuthPopupWindow: allow }, localHost: { startAtLaunch: !allow } })
     expect(readFileSync(path, 'utf8')).toBe(raw)
   }
   const previous = await readDesktopSettings(userData)
-  writeFileSync(path, '{"updates":{"allowTestAuthPopupWindow":true}}')
-  expect(previous.updates.allowTestAuthPopupWindow).toBe(false)
-  expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(true)
+  writeFileSync(path, '{"updates":{"allowTestAuthPopupWindow":true},"localHost":{"startAtLaunch":true}}')
+  expect(previous).toEqual({ updates: { allowTestAuthPopupWindow: false }, localHost: { startAtLaunch: true } })
+  expect(await readDesktopSettings(userData)).toEqual({ updates: { allowTestAuthPopupWindow: true }, localHost: { startAtLaunch: true } })
 })
 
 it.each(['', '{', 'null', '[]', '{"updates":null}', '{"updates":[]}',
   '{"updates":{"allowTestAuthPopupWindow":"false"}}', '{"updates":{"allowTestAuthPopupWindow":1}}',
-  '{"updates":{"allowTestAuthPopupWindow":null}}'])('reports invalid settings with their path and preserves the original: %s', async (raw) => {
+  '{"updates":{"allowTestAuthPopupWindow":null}}',
+  '{"localHost":null}', '{"localHost":[]}', '{"localHost":{"startAtLaunch":"true"}}',
+  '{"localHost":{"startAtLaunch":null}}', '{"localHost":{"startAtLaunch":1}}',
+])('reports invalid settings with their path and preserves the original: %s', async (raw) => {
   const { userData, path } = fixture()
   writeFileSync(path, raw)
-  expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
+  expect(console.warn).toHaveBeenCalledTimes(1)
   expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(path), expect.any(Error))
   expect(readFileSync(path, 'utf8')).toBe(raw)
+})
+
+it('reports each invalid field separately and defaults both', async () => {
+  const { userData, path } = fixture()
+  writeFileSync(path, '{"updates":{"allowTestAuthPopupWindow":"x"},"localHost":{"startAtLaunch":"x"}}')
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
+  expect(console.warn).toHaveBeenCalledTimes(2)
+  for (const field of ['allowTestAuthPopupWindow', 'startAtLaunch']) {
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(path),
+      expect.objectContaining({ problem: { kind: 'invalid', reason: 'field', field } }))
+  }
+  expect(readFileSync(path, 'utf8')).toBe('{"updates":{"allowTestAuthPopupWindow":"x"},"localHost":{"startAtLaunch":"x"}}')
 })
 
 it('reports filesystem errors instead of replacing unreadable settings', async () => {
   const { userData, path } = fixture()
   mkdirSync(path)
-  expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
   expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(path), expect.any(Error))
   expect(fs.statSync(path).isDirectory()).toBe(true)
 })
 
-it.each(['mkdir', 'writeFile'] as const)('continues with disabled popups when %s fails', async (operation) => {
+it.each(['mkdir', 'writeFile'] as const)('continues with disabled popups and an enabled local Host when %s fails', async (operation) => {
   const { userData, path } = fixture()
   const failure = Object.assign(new Error('settings creation denied'), { code: 'EACCES' })
   vi.spyOn(fsp, operation).mockRejectedValue(failure)
-  expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
   expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(path), expect.objectContaining({ cause: failure }))
 })
 
@@ -79,6 +98,6 @@ it('continues with defaults even when warning output fails', async () => {
   const { userData, path } = fixture()
   writeFileSync(path, '{')
   vi.mocked(console.warn).mockImplementation(() => { throw new Error('output unavailable') })
-  expect((await readDesktopSettings(userData)).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(await readDesktopSettings(userData)).toEqual(defaults)
   expect(readFileSync(path, 'utf8')).toBe('{')
 })

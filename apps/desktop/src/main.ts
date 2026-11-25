@@ -74,6 +74,7 @@ import { desktopClientMetadata, desktopClientVersion } from './client-metadata.t
 import { DesktopMandatoryUpdateWindow } from './mandatory-update-window.ts'
 import { DesktopPolicyTestAuth } from './policy-test-auth.ts'
 import { readDesktopSettings } from './settings.ts'
+import { DesktopSettingsFile } from './settings-file.ts'
 import { readDesktopLocaleCache, writeDesktopLocaleCache } from './locale-cache.ts'
 import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
@@ -415,6 +416,10 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 
 async function main(): Promise<void> {
   const desktopSettings = await readDesktopSettings(app.getPath('userData'))
+  // Without a local Host the app only drives remote machines: nothing of the local workspace starts.
+  let startLocalHostAtLaunch = desktopSettings.localHost.startAtLaunch
+  const remoteOnly = !startLocalHostAtLaunch
+  const desktopSettingsFile = new DesktopSettingsFile(app.getPath('userData'))
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.OCEAN_DESKTOP_UPDATE_JOURNAL_DIR
   const updateJournal = journalDirectory === undefined ? undefined : new DesktopUpdateJournal(journalDirectory, app.getVersion())
@@ -1315,8 +1320,12 @@ async function main(): Promise<void> {
     { type: 'separator' },
     { label: currentDesktopLocale().messages.remoteConnectMenu, enabled: !switchingHost,
       click: () => { void openRemoteDialog() } },
-    { label: currentDesktopLocale().messages.remoteLocalMenu, enabled: remoteConnection !== undefined && !switchingHost,
+    { label: currentDesktopLocale().messages.remoteLocalHostLaunchMenu, type: 'checkbox', checked: startLocalHostAtLaunch,
+      click: () => { void toggleLocalHostAtLaunch() } },
+    ...(remoteOnly ? [] : [{
+      label: currentDesktopLocale().messages.remoteLocalMenu, enabled: remoteConnection !== undefined && !switchingHost,
       click: () => { selectRemoteConnection() } },
+    ]),
     ...remoteConnections.size === 0 ? [] : [{
       label: currentDesktopLocale().messages.remoteHostsMenu, enabled: !switchingHost,
       submenu: [...remoteConnections.values()].map(connection => ({
@@ -1330,7 +1339,11 @@ async function main(): Promise<void> {
       label: currentDesktopLocale().messages.remoteDisconnectMenu, enabled: !switchingHost,
       click: () => {
         const connection = remoteConnection
-        if (connection !== undefined) void disconnectRemoteConnection(connection).catch(reportRemoteCleanupFailure)
+        if (connection === undefined) return
+        const disconnected = disconnectRemoteConnection(connection)
+        // Without a local workspace to return to, the form is what remains.
+        if (remoteOnly) void disconnected.then(() => { return openRemoteDialog() }).catch(reportRemoteCleanupFailure)
+        else void disconnected.catch(reportRemoteCleanupFailure)
       },
     }],
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
@@ -1520,9 +1533,28 @@ async function main(): Promise<void> {
       window.webContents.openDevTools({ mode: 'detach' })
     }
   }
+  /**
+   * Show the connection form as the window's own document, the home of a Desktop that starts no local Host.
+   * The form and its handlers are the dialog's; the window differs, so nothing closes it.
+   * @param disconnectedAddress - Address to offer first, when a connection just ended.
+   * @returns After the form document loaded, or at once when it already shows.
+   */
+  async function showRemoteHome(disconnectedAddress?: string): Promise<void> {
+    const window = mainWindow
+    if (window === undefined || window.isDestroyed() || isQuitting() || isMandatory()) return
+    disconnectedRemoteAddress = disconnectedAddress
+    remoteDialog = window
+    await window.loadURL(remoteDialogUrl).catch((error: unknown) => { reportFatal(error, 'main') })
+  }
+
   async function openRemoteDialog(disconnectedAddress?: string, pairing?: PairingLink): Promise<void> {
     const parent = mainWindow
     if (parent === undefined || parent.isDestroyed() || isQuitting() || isMandatory()) return
+    if (remoteOnly) {
+      pendingPairing = pairing
+      await showRemoteHome(disconnectedAddress)
+      return
+    }
     if (remoteDialog !== undefined && pairing === undefined) { remoteDialog.focus(); return }
     if (remoteDialog !== undefined) {
       // A pairing link replaces whatever the open form was showing.
@@ -1632,7 +1664,12 @@ async function main(): Promise<void> {
     // The form then confirms the address it can reach, exactly as for a link typed by the user.
     return { kind: 'pairing', address: pairing.address }
   })
-  ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => { assertRemoteDialog(event).destroy() })
+  ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => {
+    const window = assertRemoteDialog(event)
+    // The home form has no window to close; a fresh form is what its Done state offers.
+    if (window === mainWindow) { void showRemoteHome(); return }
+    window.destroy()
+  })
   ipcMain.handle(DESKTOP_IPC.remoteForget, async (event, address: unknown) => {
     assertRemoteDialog(event)
     const messages = currentDesktopLocale().messages
@@ -1829,7 +1866,7 @@ async function main(): Promise<void> {
       publicationRevision: (local ? localHostPublication : remoteByContents.get(event.sender)?.publication)?.revision ?? -1,
       selected: remoteConnection?.host.hostId ?? '',
       entries: [
-        { id: '', label: remoteLocalMenu, ...pendingHostWork(localHostPublication) },
+        ...(remoteOnly ? [] : [{ id: '', label: remoteLocalMenu, ...pendingHostWork(localHostPublication) }]),
         ...[...remoteConnections.values()].map(({ host, publication }) => ({
           id: host.hostId, label: host.address, ...pendingHostWork(publication),
           ...(local && publication !== undefined ? { sessions: publication.sessions } : {}),
@@ -1873,7 +1910,10 @@ async function main(): Promise<void> {
     if (typeof id !== 'string' || switchingHost || remoteConnectionsClosing || isQuitting() || isMandatory()) {
       throw hostNavigationUnavailable()
     }
-    if (id === '') return undefined
+    if (id === '') {
+      if (remoteOnly) throw hostNavigationUnavailable()
+      return undefined
+    }
     const connection = remoteConnections.get(id)
     if (connection?.contents === undefined || connection.contents.isDestroyed() || connection.bootFailed) {
       throw hostNavigationUnavailable()
@@ -2064,7 +2104,7 @@ async function main(): Promise<void> {
           persistence = 'failed'
         }
       }
-      if (persistence !== 'failed' && !input.window.isDestroyed()) input.window.destroy()
+      if (persistence !== 'failed' && !input.window.isDestroyed() && input.window !== mainWindow) input.window.destroy()
       return { kind: 'connected', persistence, ...(persistence === 'failed' ? { message: messages.remoteSaveFailed } : {}) }
     } catch (error) {
       return remoteErrorResult(error, messages)
@@ -2075,6 +2115,33 @@ async function main(): Promise<void> {
       switchingHost = false
       if (!isQuitting()) { refreshApplicationMenu(); publishHostSelection() }
     }
+  }
+
+  /** Save whether the next launch starts a local Host; the running app keeps the mode it started in. */
+  const toggleLocalHostAtLaunch = async (): Promise<void> => {
+    const next = !startLocalHostAtLaunch
+    try {
+      await desktopSettingsFile.saveLocalHost(next)
+    } catch (error) {
+      console.error('desktop settings: could not save the local Host preference', error)
+      return
+    }
+    startLocalHostAtLaunch = next
+    refreshApplicationMenu()
+    await ordinaryMessageBox({ type: 'info', message: currentDesktopLocale().messages.remoteLocalHostLaunchNote })
+  }
+
+  /** Start without a local Host: show the window, then sign in to the most recent saved machine or ask for one. */
+  const openRemoteOnlyStart = async (): Promise<void> => {
+    const window = currentMainWindow()
+    if (window === undefined || window.isDestroyed() || isQuitting() || isMandatory()) return
+    window.show()
+    await openRemoteDialog()
+    const dialog = remoteDialog
+    if (dialog === undefined || dialog.isDestroyed() || switchingHost) return
+    const address = (await remoteStore.addresses().catch(() => [])).at(-1)
+    if (address === undefined) return
+    await connectRemoteHost({ address, token: '', remember: false, window: dialog })
   }
 
   const openInitialWindow = async (): Promise<void> => {
@@ -2095,14 +2162,17 @@ async function main(): Promise<void> {
     const window = mainWindow
     if (window === undefined || window.isDestroyed()) {
       try { createMainWindow() } catch (error) { reportFatal(error, 'main'); return }
-      void (backend.state.phase === 'ready' ? openInitialWindow() : navigateMain(applicationUrl)).catch((error: unknown) => { reportFatal(error, 'main') })
+      void (remoteOnly ? openRemoteOnlyStart() : backend.state.phase === 'ready' ? openInitialWindow() : navigateMain(applicationUrl))
+        .catch((error: unknown) => { reportFatal(error, 'main') })
       return
     }
     // Startup and sign-out select the visible window before activation may reveal the workspace.
-    if (window === mainWindow && !enteredWorkspace) return
+    if (window === mainWindow && !enteredWorkspace && !remoteOnly) return
     if (window.isMinimized()) window.restore()
     window.show()
     window.focus()
+    // With no local workspace behind it, a window without a remote Host shows the form.
+    if (remoteOnly && remoteConnection === undefined) void openRemoteDialog()
   }
 
   if (app.isPackaged || process.env.OCEAN_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('ocean')
@@ -2226,7 +2296,8 @@ async function main(): Promise<void> {
     }).catch((error: unknown) => { console.error(error) })
   }
   automaticCheck()
-  await reconcileBackend().catch(() => undefined)
+  if (remoteOnly) await openRemoteOnlyStart().catch((error: unknown) => { reportFatal(error, 'main') })
+  else await reconcileBackend().catch(() => undefined)
   // Window lifecycle callbacks run while backend startup is pending.
   if (isQuitting()) return
   const window = currentMainWindow()

@@ -11,6 +11,11 @@
     "enabled": true
   },
   {
+    "label": "Start local Host at launch",
+    "type": "checkbox",
+    "checked": true
+  },
+  {
     "label": "Use local Host",
     "enabled": false
   },

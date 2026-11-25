@@ -59,6 +59,7 @@ it('updates the document initialized by shell settings without losing the popup 
   await settings.save('nightly')
   expect(JSON.parse(await readFile(settings.path, 'utf8'))).toEqual({
     updates: { allowTestAuthPopupWindow: false, channel: 'nightly' },
+    localHost: { startAtLaunch: true },
   })
   expect((await readDesktopSettings(root)).updates.allowTestAuthPopupWindow).toBe(false)
   expect(await settings.load()).toEqual({ kind: 'ready', channel: 'nightly' })
