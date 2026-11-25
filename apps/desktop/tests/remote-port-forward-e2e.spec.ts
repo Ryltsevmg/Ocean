@@ -16,12 +16,10 @@ import RemoteAccessService from '@ocean/ocean-api-remote-access'
 import TypertGatewayService from '@ocean/ocean-api-gateway'
 import PortForwardController from '@ocean/ocean-api-port-forward-controller'
 import {
-  openDeviceStreamSocket,
   RemoteStreamMuxServer,
   type RemoteStreamFailureMapper,
   type RemoteStreamOpener,
 } from '@ocean/ocean-api-gateway/src/stream-server.ts'
-import { RemoteStreamMuxClient } from '@ocean/ocean-api-gateway/src/stream-client.ts'
 import { Peer, type DeviceScope } from '@ocean/ocean-client-connection'
 import { remoteErrorOf, type PeerScope } from '@ocean/ocean-typert-protocol'
 import { forwardHostPort, openHostStreams } from '../src/remote-port-forward.ts'
@@ -111,9 +109,16 @@ async function serveTcp(handler: (socket: Socket) => void): Promise<number> {
   return (server.address() as { port: number }).port
 }
 
-/** A multiplexer over the device cookie, as `openHostStreams` builds for the production client. */
+/**
+ * The production multiplexer factory over this fixture's mount: `openHostStreams`
+ * resolves the Host socket through the client, which here points at the real
+ * mux server, so the test drives the shipped carrier rather than a copy of it.
+ */
 function hostStreams(mountUrl: string): ReturnType<typeof openHostStreams> {
-  return new RemoteStreamMuxClient(path => openDeviceStreamSocket(new URL(path.slice(1), mountUrl), '__Host-ocean-device=login'))
+  return openHostStreams({
+    openSocket: <Socket>(path: string, connect: (url: URL, cookie: string) => Socket): Socket =>
+      connect(new URL(path.slice(1), mountUrl), '__Host-ocean-device=login'),
+  })
 }
 
 /** Everything the socket delivers before it closes. */
