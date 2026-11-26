@@ -40,27 +40,46 @@ function installTarget(plugin, resolveText) {
 }
 
     // ---- src/view.js ----
-/** Join published releases to local bundle state by exact package name. */
+/** Join published releases to local bundle state by exact package name or by the bundle row that mounts them. */
 
 /** @typedef {import('./catalog.js').PublishedPlugin} PublishedPlugin */
 /** @typedef {import('./catalog.js').PublishedInstallTarget} PublishedInstallTarget */
 /** @typedef {import('@ocean/ocean-api-remotes/client').BundleInfo} BundleInfo */
-/** @typedef {{ kind: 'install', target: PublishedInstallTarget } | { kind: 'enable' | 'disable' | 'open' }} CardAction */
+/** @typedef {{ kind: 'install', target: PublishedInstallTarget } | { kind: 'enable' | 'disable' } | { kind: 'open', name?: string }} CardAction */
 
 const badges = /** @type {const} */ ({
-  on: 'badgeOn', off: 'badgeOff', blocked: 'badgeBlocked', broken: 'badgeBroken',
+  on: 'badgeOn', off: 'badgeOff', blocked: 'badgeBlocked', broken: 'badgeBroken', contained: 'badgeContained',
   incompatible: 'badgeIncompatible', missing: 'badgeMissing', unknown: 'badgeUnknown',
 })
+
+/**
+ * Index the packages that installed or selected bundles mount as their own rows. A published package that one of
+ * them already mounts is present in the profile even though it has no bundle entry of its own.
+ * @param {readonly BundleInfo[]} bundles the profile inventory.
+ * @returns {Map<string, BundleInfo>} mounted package name to the bundle holding it, preferring an enabled one.
+ */
+function mountedPackages(bundles) {
+  const mounted = new Map()
+  const ranked = [...bundles].sort((left, right) => Number(right.enabled === true) - Number(left.enabled === true))
+  for (const bundle of ranked) {
+    if (bundle.availability === 'missing' || (bundle.installed !== true && bundle.enabled !== true)) continue
+    for (const row of bundle.rows ?? []) {
+      if (!mounted.has(row.moduleName)) mounted.set(row.moduleName, bundle)
+    }
+  }
+  return mounted
+}
 
 /**
  * Project a release and its matching profile record. Compatibility describes the published release, not the installed copy.
  * @param {PublishedPlugin} plugin a release the Host lists in the catalogue.
  * @param {BundleInfo | undefined} bundle the matching local bundle, if found.
- * @param {{fresh: boolean, inventoryReady: boolean, resolveText: (text: PublishedPlugin['title']) => string}} options
- * whether installation offers and inventory are current, and how offer text resolves to the active UI language.
+ * @param {{fresh: boolean, inventoryReady: boolean, resolveText: (text: PublishedPlugin['title']) => string,
+ *   holder?: BundleInfo}} options whether installation offers and inventory are current, how offer text resolves to the
+ * active UI language, and the bundle that already mounts this package as one of its rows.
  * @returns The card and its available actions.
  */
-function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) {
+function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText, holder }) {
   const { name, compatible, version: publishedVersion } = plugin
   const title = resolveText(plugin.title)
   const description = resolveText(plugin.description)
@@ -69,11 +88,15 @@ function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) {
   const selected = bundle?.enabled === true
   const error = bundle?.error?.code
   const canChange = bundle?.readOnlyReason === undefined
+  const contained = bundle === undefined && holder !== undefined
   const state = readable ? (error !== undefined ? 'blocked' : selected ? 'on' : 'off')
+    : contained ? 'contained'
     : configured ? 'broken' : !compatible ? 'incompatible' : bundle !== undefined || inventoryReady ? 'missing' : 'unknown'
   /** @type {CardAction[]} */
   const actions = []
-  if (readable || configured) {
+  if (contained) {
+    actions.push({ kind: 'open', name: holder.name })
+  } else if (readable || configured) {
     if (canChange && selected) actions.push({ kind: 'disable' })
     if (canChange && !selected && readable && error === undefined) actions.push({ kind: 'enable' })
     actions.push({ kind: 'open' })
@@ -85,12 +108,15 @@ function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) {
     name, title, description, compatible, publishedVersion, state, actions, error,
     search: [title, description, name].join(' ').toLowerCase(),
     version: readable ? bundle.version : undefined,
-    installed: readable,
-    enabled: readable && selected && error === undefined,
+    installed: readable || contained,
+    enabled: readable ? selected && error === undefined : contained ? holder.enabled === true : false,
+    containedBy: contained ? holder.name : undefined,
+    containedVersion: contained ? holder.version : undefined,
     badge: badges[state],
-    note: state === 'broken' ? /** @type {const} */ ('noteBroken')
-      : error === 'unsupported-platform' ? /** @type {const} */ ('noteUnsupported')
-        : error !== undefined ? /** @type {const} */ ('noteError') : undefined,
+    note: state === 'contained' ? /** @type {const} */ ('noteContained')
+      : state === 'broken' ? /** @type {const} */ ('noteBroken')
+        : error === 'unsupported-platform' ? /** @type {const} */ ('noteUnsupported')
+          : error !== undefined ? /** @type {const} */ ('noteError') : undefined,
   }
 }
 
@@ -113,8 +139,11 @@ function filterCards(cards, query) {
  */
 function buildMarketView({ plugins, bundles, fresh, inventoryReady, resolveText }) {
   const byName = new Map(bundles.map(bundle => [bundle.name, bundle]))
-  const options = { fresh, inventoryReady, resolveText }
-  const cards = plugins.map(plugin => cardFor(plugin, byName.get(plugin.name), options))
+  const mounted = mountedPackages(bundles)
+  const cards = plugins.map(plugin => cardFor(plugin, byName.get(plugin.name), {
+    fresh, inventoryReady, resolveText,
+    holder: byName.has(plugin.name) ? undefined : mounted.get(plugin.name),
+  }))
   const counts = { total: cards.length, installed: 0, enabled: 0 }
   for (const card of cards) {
     if (card.installed) counts.installed += 1
@@ -272,6 +301,7 @@ const en = {
   unavailable: 'The published catalogue is unavailable. Try refreshing.',
   inventoryUnavailable: 'Ocean could not check which plugins are installed. Try refreshing.',
   installedVersion: 'Installed version: {version}',
+  containedIn: 'Part of: {bundle} {version}',
   publishedVersion: 'Published version: {version}',
   unknownVersion: 'Unknown',
   install: 'Install',
@@ -283,10 +313,12 @@ const en = {
   badgeMissing: 'Not installed',
   badgeBroken: 'Files missing',
   badgeBlocked: 'Not running',
+  badgeContained: 'In a bundle',
   badgeIncompatible: 'Incompatible',
   badgeUnknown: 'Install state unknown',
   noteIncompatible: 'The published version is not compatible with this Ocean version.',
   noteBroken: 'The profile still references this plugin, but its files are missing.',
+  noteContained: 'This package is already mounted by the {bundle} bundle. Open that bundle to enable, disable or remove it; once it is removed, this package installs on its own.',
   noteUnsupported: 'This plugin does not support the host platform.',
   noteError: 'The plugin could not be loaded or enabled.',
   failed: 'The plugin change failed. Check the details before trying again.',
@@ -318,6 +350,7 @@ const ru = {
   unavailable: 'Опубликованный каталог недоступен. Попробуйте обновить список.',
   inventoryUnavailable: 'Не удалось проверить, какие плагины установлены. Попробуйте обновить список.',
   installedVersion: 'Установленная версия: {version}',
+  containedIn: 'В составе: {bundle} {version}',
   publishedVersion: 'Опубликованная версия: {version}',
   unknownVersion: 'Неизвестна',
   install: 'Установить',
@@ -329,10 +362,12 @@ const ru = {
   badgeMissing: 'Не установлен',
   badgeBroken: 'Файлы отсутствуют',
   badgeBlocked: 'Не запущен',
+  badgeContained: 'В составе bundle',
   badgeIncompatible: 'Несовместим',
   badgeUnknown: 'Состояние установки неизвестно',
   noteIncompatible: 'Опубликованная версия не совместима с этой версией Ocean.',
   noteBroken: 'В профиле есть запись об этом плагине, но его файлы отсутствуют.',
+  noteContained: 'Пакет уже смонтирован bundle {bundle}. Откройте его, чтобы включить, выключить или удалить; после удаления пакет можно установить отдельно.',
   noteUnsupported: 'Плагин не поддерживает платформу хоста.',
   noteError: 'Не удалось загрузить или включить плагин.',
   failed: 'Не удалось изменить плагин. Проверьте детали перед повторной попыткой.',
@@ -362,6 +397,7 @@ const zh = {
   unavailable: '无法获取已发布的插件目录，请尝试刷新',
   inventoryUnavailable: 'Ocean 无法确定已安装的插件，请尝试刷新',
   installedVersion: '已安装版本：{version}',
+  containedIn: '属于：{bundle} {version}',
   publishedVersion: '发布版本：{version}',
   unknownVersion: '未知',
   install: '安装',
@@ -373,10 +409,12 @@ const zh = {
   badgeMissing: '未安装',
   badgeBroken: '文件缺失',
   badgeBlocked: '未运行',
+  badgeContained: '属于 bundle',
   badgeIncompatible: '不兼容',
   badgeUnknown: '安装状态未知',
   noteIncompatible: '此插件的发布版本与当前 Ocean 版本不兼容',
   noteBroken: '当前配置仍引用此插件，但其文件缺失',
+  noteContained: '该包已由 bundle {bundle} 挂载。打开该 bundle 可启用、停用或卸载；卸载后即可单独安装此包。',
   noteUnsupported: '此插件不支持主机平台',
   noteError: '无法加载或启用此插件',
   failed: '无法更改插件。请查看详情后重试',
@@ -411,7 +449,7 @@ const warnInk = 'var(--dsw-alias-state-warn-primary)'
 const successInk = 'var(--dsw-alias-state-success-primary)'
 /** Status pill tone per badge, reusing the Plugins page state-color treatment. */
 const badgeTone = { badgeOn: successInk, badgeOff: idleInk, badgeMissing: idleInk, badgeBlocked: warnInk,
-  badgeBroken: errorInk, badgeIncompatible: warnInk, badgeUnknown: idleInk }
+  badgeBroken: errorInk, badgeContained: idleInk, badgeIncompatible: warnInk, badgeUnknown: idleInk }
 /** @param {string} badge the card's badge key @returns {import('react').CSSProperties} a compact state-colored pill */
 function badgeStyle(badge) {
   const ink = badgeTone[badge] ?? idleInk
@@ -475,7 +513,7 @@ function createMarketTab(React, Modal, dialogClass) {
             const target = actions.getInstallTarget(action.target)
             if (target !== undefined) installPublished(target)
           } else if (action.kind === 'open') {
-            openPackage(card.name)
+            openPackage(action.name ?? card.name)
           } else {
             void actions.setEnabled(card.name, action.kind === 'enable')
           }
@@ -502,7 +540,8 @@ function createMarketTab(React, Modal, dialogClass) {
   function BundleMeta({ card, t, pending }) {
     return h('div', { style: styles.meta },
       h('span', { style: styles.name }, card.name),
-      card.installed ? h('span', null, t('installedVersion', { version: card.version ?? t('unknownVersion') })) : null,
+      card.containedBy === undefined ? null : h('span', null, t('containedIn', { bundle: card.containedBy, version: card.containedVersion ?? t('unknownVersion') })),
+      card.containedBy === undefined && card.installed ? h('span', null, t('installedVersion', { version: card.version ?? t('unknownVersion') })) : null,
       card.version === card.publishedVersion ? null : h('span', null, t('publishedVersion', { version: card.publishedVersion })),
       pending ? h('span', { role: 'status' }, t('changing')) : null,
     )
@@ -512,7 +551,8 @@ function createMarketTab(React, Modal, dialogClass) {
   function CardNotes({ card, t }) {
     return h(React.Fragment, null,
       !card.compatible ? h('p', { style: styles.note }, t('noteIncompatible')) : null,
-      card.note === undefined ? null : h('p', { style: styles.note }, t(card.note)),
+      card.note === undefined ? null : h('p', { style: styles.note },
+        t(card.note, card.containedBy === undefined ? undefined : { bundle: card.containedBy })),
       card.error === undefined ? null : h('p', { style: styles.error }, card.error),
     )
   }

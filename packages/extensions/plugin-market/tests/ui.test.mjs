@@ -130,6 +130,21 @@ test('toggling an installed copy keeps its details and focused control; Open goe
   assert.equal(queryByRole(panel, 'dialog'), null)
 })
 
+test('a package a profile bundle mounts names that bundle and opens it instead of installing', async t => {
+  const holder = {
+    name: '@ocean/holder', version: '0.2.2', availability: 'profile', installed: true, enabled: true,
+    rows: [{ rowId: 'holder-row', moduleName: name }],
+  }
+  const { panel, opened } = await fixture(t, { bundles: [holder] })
+  const card = within(getByRole(panel, 'article'))
+  assert.ok(card.getByText(en.badgeContained))
+  assert.equal(card.queryByRole('button', { name: en.install }), null)
+  assert.ok(card.getByText(en.containedIn.replace('{bundle}', holder.name).replace('{version}', holder.version)))
+  assert.ok(card.getByText(en.noteContained.replace('{bundle}', holder.name)))
+  fireEvent.click(card.getByRole('button', { name: en.open }))
+  assert.deepEqual(opened, [holder.name])
+})
+
 for (const dictionary of [en, ru, zh]) {
   test(`unavailable with no cache is not a published empty state (${dictionary.tab})`, async t => {
     const { panel } = await fixture(t, { dictionary, response: { status: 'unavailable', plugins: [] } })
