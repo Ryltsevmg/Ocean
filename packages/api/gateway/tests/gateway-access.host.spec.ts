@@ -314,7 +314,7 @@ it('keeps the union of every scope identical to the actions earlier releases all
     'session/observeEvent', 'session/observeState', 'session/observeProjections', 'session/projections',
     'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
     'workspaceFiles/search', 'workspaceFiles/changes', 'fileUploads/upload',
-    'terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach',
+    'terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach', 'portForward/open',
     'workspace/follow', 'workspace/create', 'workspace/initializeDefault', 'directoryPicker/list',
     'session/control', 'session/modelCatalog', 'session/selectModel', 'session/initializeDefaultModel',
     'settings/describe', 'settings/update', 'settings/replace', 'settings/mutate', 'event:settings/document-updated',

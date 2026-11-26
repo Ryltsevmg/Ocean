@@ -29,7 +29,7 @@ Host 与 Client 共享的消费方从 `./protocol` 导入线路常量、品牌�
 
 `./client` 导入在 Node 中选择独立的 `lib/client.node.js` ESM bundle，在浏览器中选择 `lib/client.browser.js` loader factory。Web Host 仍以逻辑 URL `/plugins/.../client.js` 提供浏览器导出。非页面 Cordis 树应导入 Client 入口；独立的包根入口是 Host 入口。
 
-静态桌面页面可以通过 `__OCEAN_TRANSPORT__.streamBaseUrl` 提供其所拥有 Host 的 HTTP origin。Gateway 将该 origin 用于 WebSocket，HTTP 传输仍独立选择。桌面载体负责认证；仅设置 origin 不会授予访问权限。
+静态桌面页面可以通过 `__OCEAN_TRANSPORT__.streamBaseUrl` 提供其所拥有 Host 的 HTTP origin。Gateway 将该 origin 用于 WebSocket，HTTP 传输仍独立选择。桌面载体负责认证；仅设置 origin 不会授予访问权限。页面还可以设置 `onConnectionLost`，在一次失败尝试之后的第三次连续重试时插件调用它，此后每第十次重试再调用一次，浏览器离线时从不调用；以及 `onRouteChanged`，载体在更改 `streamBaseUrl` 后调用其监听器，监听器随即立即重连，而不是等待下一次重试。载体用这一对钩子把页面迁到同一 Host 的另一个路由。
 
 一元 RPC 请求使用 JSON。Host handler 可以返回已经从 JSON 兼容结果值中分离的字节附件，每个附件标明其相对于结果的路径。Connection 将这些值写为 multipart 部分。JSON `metadata` 部分包含带 `null` 占位值的 RPC 响应信封，以及记录各路径、codec 和部分标识符的附件表。路径使用字符串键与数字数组下标，不保留任何业务字段名。Client 校验信封、`rpcId`、附件表和各部分，再将每个字节值恢复为以 `ArrayBuffer` 为底层缓冲区的视图。没有附件的结果（包括 base64 字符串）与失败仍使用 JSON。逻辑 RPC 载体直接返回解码后的原生值。Connection 不识别二进制字段，也不依赖 Typert；拥有结果协议的 handler 在返回前执行按类型或按运行时值的投影。不支持二进制参数、事件和二进制流式结果。
 
@@ -87,6 +87,8 @@ GET `/connect/bootstrap` 返回已登录设备 Peer 对应的 JSON 注入表，�
 `DeviceClient.probe(signal)` 通过 `HEAD /connect` 读取 Host 标识，不发送任何凭据，因此调用方可以在首次登录前固定标识或说明某个地址背后是哪台机器。当回复不是兼容的设备端点时报告 `DEVICE_IDENTITY_INVALID`，对拒绝的分类与登录一致。
 
 管理命令 `pair` 创建一次性配对授权，新设备用它换取自己的设备令牌，因此无需手动输入或复制令牌。授权在设备注册表中只保存哈希，有效期为 `devicePairingTtlSeconds`（默认 600 秒；命令可指定 30 至 3600 秒），只能使用一次。Host 同时最多保留 16 个未过期授权，超出时报告 `DEVICE_PAIRING_CAPACITY`。客户端向 POST `/connect/pair` 发送请求，以授权作为持有者令牌并附带 `Ocean-Device-Protocol: 1`。Host 应用与 `/connect` 相同的 HTTPS 和 Origin 检查，所有授权在每个时间窗口内共用一份尝试预算（`maxDeviceExchangesPerWindow`、`deviceExchangeWindowMs`），然后在一次凭据写入中消耗授权并创建设备。成功时返回 `200`，正文为 `{ id, token }`，并带有 Host 标识头。未知、已过期和已使用的授权都返回 `401`。新令牌随后与其他令牌一样通过 `/connect` 登录，`rotate` 和 `revoke` 对它同样有效。
+
+授权通过两种链接之一到达设备，`@ocean/ocean-client-connection/device` 导出的 `parsePairing` 把任一形式解析为 `PairingLink { address, label?, secret }`：`parsePairingLink` 读取 Desktop 形式 `ocean://pair?host=<https-address>&label=<name>#<grant>`，要求 `host` 和 `label`；`parsePairingUrl` 读取浏览器形式 `https://<host>/<mount>#pair=<grant>`，不携带标签。两种形式都要求 HTTPS 地址不含凭据、查询参数和自身片段；授权为 `<uuid>.<43 个 base64url 字符>`。其他任何文本都返回 `undefined`。Desktop 和 `ocean connect` 接受任一形式；在浏览器中打开浏览器形式链接的设备通过其设备登录页完成配对，该页面归 [`frontend-static`](../../host/frontend-static/README.zh.md)所有。`DeviceClient.pair` 把未知、已过期或已使用的授权报告为 `DEVICE_PAIRING_REJECTED`（401），把没有该路由的 Host 报告为 `DEVICE_PAIRING_UNSUPPORTED`（404 或 405）。
 
 设备准入在容量耗尽时返回 503。`maxDeviceTransports` 限制整个 Host 上等待验证的请求与活动 HTTP 或 WebSocket 传输的总数。`maxDeviceTransportsPerDevice` 限制单台设备所有登录中的活动传输数量。租约开始释放时立即失去回答事件的权限，但其容量名额保留至 Peer 清理完成。
 

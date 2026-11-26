@@ -2,6 +2,7 @@
 import type { ShortcutCommandId } from '@ocean/ocean-client-shortcuts/client'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@ocean/ocean-client-locale/client'
+import type {} from '@ocean/ocean-client-ui-commands/client'
 import type {} from '@ocean/ocean-client-ui-renderer/client'
 import type {} from '@ocean/ocean-client-ui-session/client'
 import type {} from '@ocean/ocean-client-ui-sidebar-right/client'
@@ -37,12 +38,34 @@ declare module '@ocean/ocean-client-ui-sidebar-right/client' {
 }
 
 /** Required Browser services. */
-export const inject = ['slots', 'locale', 'sidebarRight', 'sidebarRightTabs']
+export const inject = ['slots', 'locale', 'sidebarRight', 'sidebarRightTabs', 'commandUi']
 
-/** Register the Browser type, localized guide entry, body, and title. */
+/** Register the Browser type, localized guide entry, body, title, and the forwarded-ports command. */
 export function apply(ctx: Context): void {
   const namespace = 'sidebarBrowser'
   const t = ctx.locale.bind(namespace)
+  // Desktop forwards the Host ports its configuration names to this computer's
+  // loopback; Web and a page that owns its Host publish an empty list.
+  const forwardedPorts = (): readonly number[] =>
+    (globalThis as { __OCEAN_TRANSPORT__?: { forwardedPorts?: readonly number[] } }).__OCEAN_TRANSPORT__?.forwardedPorts ?? []
+  ctx.effect(() => ctx.commandUi.register({
+    name: 'ports',
+    label: () => t('ports.label'),
+    available: () => forwardedPorts().length > 0,
+    ui: {
+      kind: 'popupSelect',
+      searchMode: 'fuzzy-label',
+      searchLabels: () => ({ placeholder: t('ports.heading'), empty: t('ports.empty'), noResults: t('ports.empty') }),
+      options: () => Promise.resolve(forwardedPorts().map(port => ({
+        id: String(port),
+        label: `localhost:${String(port)}`,
+        detail: `http://localhost:${String(port)}`,
+      }))),
+      onSelect: (option, session) => {
+        ctx.sidebarRight.openTabIn(session.sessionId, 'browser', { params: { url: `http://localhost:${option.id}` } })
+      },
+    },
+  }), 'ui-sidebar-browser: forwarded ports command')
   ctx.inject(['shortcuts'], (ctx) => {
     ctx.effect(() => ctx.shortcuts.register({
       id: 'browser.new' as ShortcutCommandId, label: () => t('guide.title'), aliases: ['browser', 'new browser tab'],

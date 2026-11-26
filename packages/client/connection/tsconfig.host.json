@@ -18,6 +18,7 @@
     "src/device-host-identity.ts",
     "src/device-login.ts",
     "src/device-metadata.ts",
+    "src/device-pairing.ts",
     "src/device-scopes.ts",
     "src/device-tokens.ts",
     "src/device.ts",

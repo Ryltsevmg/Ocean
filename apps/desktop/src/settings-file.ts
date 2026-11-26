@@ -8,17 +8,23 @@ const preferencesSchema = z.object({
   allowTestAuthPopupWindow: z.boolean(),
   channel: z.enum(['nightly', 'stable']),
 })
-const documentSchema = z.looseObject({ updates: z.looseObject({}).optional() })
+const localHostSchema = z.object({ startAtLaunch: z.boolean() })
+const documentSchema = z.looseObject({
+  updates: z.looseObject({}).optional(),
+  localHost: z.looseObject({}).optional(),
+})
 
 /** Known field values before consumers supply defaults for absent fields. */
 export type DesktopUpdatePreferences = z.infer<typeof preferencesSchema>
-/** Unknown root and updates fields survive a read-modify-write operation. */
+/** Local Host launch preference; absence starts the Host, matching earlier releases. */
+export type DesktopLocalHostPreferences = z.infer<typeof localHostSchema>
+/** Unknown root, updates and localHost fields survive a read-modify-write operation. */
 export type DesktopSettingsDocument = z.infer<typeof documentSchema>
 /** Handling-relevant failure details; validation failures never include document contents. */
 export type DesktopSettingsProblem =
   | { kind: 'read' }
   | { kind: 'invalid'; reason: 'json' | 'structure' }
-  | { kind: 'invalid'; reason: 'field'; field: keyof DesktopUpdatePreferences }
+  | { kind: 'invalid'; reason: 'field'; field: keyof DesktopUpdatePreferences | keyof DesktopLocalHostPreferences }
   | { kind: 'write'; operation: 'initialize' | 'save'; effect: 'unchanged' | 'unknown' | 'written' }
 
 /** A storage or validation failure; business consumers decide fallback or suspension. */
@@ -46,10 +52,14 @@ export type DesktopSettingsRead =
   | {
     kind: 'ready'
     document: DesktopSettingsDocument
-    fields: { [K in keyof DesktopUpdatePreferences]: DesktopSettingsField<DesktopUpdatePreferences[K]> }
+    fields: {
+      [K in keyof DesktopUpdatePreferences]: DesktopSettingsField<DesktopUpdatePreferences[K]>
+    } & { [K in keyof DesktopLocalHostPreferences]: DesktopSettingsField<DesktopLocalHostPreferences[K]> }
   }
 
-function field<T>(schema: z.ZodType<T>, value: unknown, name: keyof DesktopUpdatePreferences, path: string): DesktopSettingsField<T> {
+type SettingsField = keyof DesktopUpdatePreferences | keyof DesktopLocalHostPreferences
+
+function field<T>(schema: z.ZodType<T>, value: unknown, name: SettingsField, path: string): DesktopSettingsField<T> {
   if (value === undefined) return { kind: 'absent' }
   const result = schema.safeParse(value)
   return result.success ? { kind: 'valid', value: result.data }
@@ -74,7 +84,7 @@ function desktopSettingsPath(userData: string): string {
   return join(userData, 'desktop', 'settings.json')
 }
 
-/** File operations do not watch, cache, choose defaults or apply runtime preferences. */
+/** File operations do not watch, cache, choose defaults or apply runtime preferences; each section is patched alone. */
 export class DesktopSettingsFile {
   readonly path: string
 
@@ -104,6 +114,7 @@ export class DesktopSettingsFile {
       allowTestAuthPopupWindow: field(preferencesSchema.shape.allowTestAuthPopupWindow,
         document.updates?.allowTestAuthPopupWindow, 'allowTestAuthPopupWindow', this.path),
       channel: field(preferencesSchema.shape.channel, document.updates?.channel, 'channel', this.path),
+      startAtLaunch: field(localHostSchema.shape.startAtLaunch, document.localHost?.startAtLaunch, 'startAtLaunch', this.path),
     } }
   }
 
@@ -129,11 +140,28 @@ export class DesktopSettingsFile {
    * @returns After atomic replacement and lock release; otherwise throws DesktopSettingsFileError.
    */
   async saveUpdates(updates: Partial<DesktopUpdatePreferences>): Promise<void> {
-    const result = await this.mutate({ kind: 'save', updates })
+    await this.patch({ updates })
+  }
+
+  /**
+   * Replace the local Host preference under the shared writer lock; updates and unknown fields are preserved.
+   * Failure classification matches saveUpdates. No runtime Host process is started or stopped here.
+   * @param startAtLaunch - Whether the next application start launches the local Host.
+   * @returns After atomic replacement and lock release; otherwise throws DesktopSettingsFileError.
+   */
+  async saveLocalHost(startAtLaunch: boolean): Promise<void> {
+    await this.patch({ localHost: { startAtLaunch } })
+  }
+
+  private async patch(request:
+    { updates: Partial<DesktopUpdatePreferences> } | { localHost: Partial<DesktopLocalHostPreferences> }): Promise<void> {
+    const result = await this.mutate({ kind: 'save', ...request })
     if (result.kind === 'error') throw result.error
   }
 
-  private async mutate(request: { kind: 'initialize' } | { kind: 'save'; updates: Partial<DesktopUpdatePreferences> }): Promise<DesktopSettingsRead> {
+  private async mutate(request: { kind: 'initialize' } | { kind: 'save' } & (
+    { updates: Partial<DesktopUpdatePreferences> } | { localHost: Partial<DesktopLocalHostPreferences> }
+  )): Promise<DesktopSettingsRead> {
     let effect: 'unchanged' | 'unknown' | 'written' = 'unchanged'
     try {
       await mkdir(dirname(this.path), { recursive: true, mode: 0o700 })
@@ -142,8 +170,12 @@ export class DesktopSettingsFile {
         if (current.kind === 'error') throw current.error
         if (request.kind === 'initialize' && current.kind !== 'missing') return current
         const document = current.kind === 'ready' ? current.document : {}
-        const updates = request.kind === 'initialize' ? { allowTestAuthPopupWindow: false } : request.updates
-        const next = { ...document, updates: { ...document.updates, ...updates } }
+        const sections = request.kind === 'initialize'
+          ? { updates: { allowTestAuthPopupWindow: false }, localHost: { startAtLaunch: true } }
+          : request
+        const next = { ...document }
+        if ('updates' in sections) next.updates = { ...document.updates, ...sections.updates }
+        if ('localHost' in sections) next.localHost = { ...document.localHost, ...sections.localHost }
         const raw = `${JSON.stringify(next, null, 2)}\n`
         effect = 'unknown'
         if (request.kind === 'initialize') {

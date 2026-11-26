@@ -116,10 +116,12 @@ class ScriptedHost {
   loginStatus = 204
   identifyStatus = 204
   logoutStatus = 204
+  pairStatus = 200
   readonly results = new Map<string, RpcResult>()
   loginOverride?: (call: HostCall) => Response | Promise<Response>
   identifyOverride?: (call: HostCall) => Response | Promise<Response>
   logoutOverride?: (call: HostCall) => Response | Promise<Response>
+  pairOverride?: (call: HostCall) => Response | Promise<Response>
   rpcOverride?: (endpoint: string, envelope: { rpcId: string }, call: HostCall) => Response | Promise<Response>
   uploadOverride?: (call: HostCall) => Response | Promise<Response>
 
@@ -143,6 +145,13 @@ class ScriptedHost {
       if (call.method === 'DELETE') {
         return this.logoutOverride !== undefined ? this.logoutOverride(call) : new Response(null, { status: this.logoutStatus })
       }
+    }
+    if (url.pathname === '/connect/pair' && call.method === 'POST') {
+      return this.pairOverride !== undefined ? this.pairOverride(call) : this.pairStatus === 200
+        ? Response.json({ id: DEVICE_ID, token: PAIRED_TOKEN }, { headers: {
+          [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION, [DEVICE_HOST_HEADER]: 'host-1', [DEVICE_EPOCH_HEADER]: this.epoch,
+        } })
+        : new Response(null, { status: this.pairStatus })
     }
     if (url.pathname === '/api/session/uploadFileBinary') {
       return this.uploadOverride !== undefined
@@ -180,6 +189,8 @@ const TOKEN_ENV = 'OCEAN_CONNECT_TEST_TOKEN'
 const GENERIC_FAILURE = 'ocean connect: remote request failed. Check the HTTPS address, certificate, token and protocol version.'
 const UNKNOWN_RESULT = 'ocean connect: command result is unknown. Inspect remote session state before retrying.'
 const TOKEN_FAILURE = 'ocean connect: could not read a device token from standard input.'
+const DEVICE_ID = 'device-1'
+const PAIRED_TOKEN = `${'c'.repeat(8)}-cccc-4ccc-8ccc-${'c'.repeat(12)}.${'D'.repeat(43)}`
 
 let boot: DeviceBoot | undefined
 let host: ScriptedHost
@@ -258,6 +269,63 @@ function item(socket: FakeSocket, streamId: string, value: unknown): void {
 function envelopeOf(call: HostCall): { type: string; method: string; rpcId: string; payload: unknown } {
   return JSON.parse(String(call.body)) as { type: string; method: string; rpcId: string; payload: unknown }
 }
+
+describe('connect pairing', () => {
+  const grant = `${'a'.repeat(8)}-aaaa-4aaa-8aaa-${'a'.repeat(12)}.${'B'.repeat(43)}`
+  const appLink = `ocean://pair?host=${encodeURIComponent(HOST_URL)}&label=Phone#${grant}`
+  const paired = `ocean connect: paired device ${DEVICE_ID}. Keep its token for --token-env: ${PAIRED_TOKEN}`
+
+  it.each([
+    ['an app link', appLink],
+    ['a browser pairing URL', `${HOST_URL}#pair=${grant}`],
+  ])('exchanges %s for a device token and signs in with it', async (_description, link) => {
+    boot = await bootDeviceProfile('connect', ['--pair', link, 'list'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    const exchanges = host.callsTo('POST', '/connect/pair')
+    expect(exchanges).toHaveLength(1)
+    expect(exchanges[0]!.url.href).toBe(`${HOST_URL}connect/pair`)
+    expect(exchanges[0]!.headers.get('authorization')).toBe(`Bearer ${grant}`)
+    expect(host.callsTo('POST', '/connect').map(call => call.headers.get('authorization'))).toEqual([`Bearer ${PAIRED_TOKEN}`])
+    expect(errors).toEqual([paired])
+    expect(host.callsTo('DELETE', '/connect')).toHaveLength(1)
+  })
+
+  it('refuses --pair with text that is not a pairing link', async () => {
+    boot = await bootDeviceProfile('connect', ['--pair', 'ocean://pair?label=Phone', 'list'])
+    expect(boot.exits).toEqual([1])
+    expect(boot.observed.err).toContain('--pair needs a pairing link from ocean remote-device pair')
+    expect(host.calls).toEqual([])
+  })
+
+  it.each([
+    { flag: '--url', extra: ['--url', HOST_URL] },
+    { flag: '--token-env', extra: ['--token-env', TOKEN_ENV] },
+    { flag: '--token-stdin', extra: ['--token-stdin'] },
+  ])('refuses --pair together with $flag', async ({ extra }) => {
+    boot = await bootDeviceProfile('connect', ['--pair', appLink, ...extra, 'list'])
+    expect(boot.exits).toEqual([1])
+    expect(boot.observed.err).toContain('--pair takes a pairing link alone')
+    expect(host.calls).toEqual([])
+  })
+
+  it('refuses a command that names neither an address nor a pairing link', async () => {
+    boot = await bootDeviceProfile('connect', ['list'])
+    expect(boot.exits).toEqual([1])
+    expect(boot.observed.err).toContain('supply --url with a device token, or --pair with a pairing link')
+    expect(host.calls).toEqual([])
+  })
+
+  it.each([
+    [401, 'ocean connect: the pairing link is invalid, expired, or already used. Create a new one with ocean remote-device pair.'],
+    [404, 'ocean connect: the Host does not support pairing links. Update the Host or sign in with a device token.'],
+  ])('explains a pairing exchange the Host answers with %i', async (status, message) => {
+    host.pairStatus = status
+    boot = await bootDeviceProfile('connect', ['--pair', appLink, 'list'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(errors).toEqual([message])
+    expect(host.callsTo('POST', '/connect')).toEqual([])
+  })
+})
 
 describe('connect token acquisition', () => {
   it('rejects --token-stdin on a terminal', async () => {

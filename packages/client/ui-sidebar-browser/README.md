@@ -44,6 +44,9 @@ Client plugins can open a tab through `ctx.sidebarRight.openTab('browser', { par
 
 The `browser.new` command opens a separate Browser page in the focused dock pane, replacing a guide and retaining existing content pages. From the conversation or a floating content page, it uses the active dock pane. Desktop defaults to Cmd+T on macOS and Ctrl+T on Windows; Windows and macOS Web use the [shortcut service’s platform defaults](../shortcuts/README.md); Linux Web leaves the command unbound. The guide button uses a blue globe and displays the effective shortcut inline without a duplicate tooltip.
 
+
+The `/ports` command lists the Host ports Desktop forwards to this computer's loopback and opens the chosen one in a Browser tab as `http://localhost:<port>`. The list comes from the Desktop carrier ([`ocean-desktop`](../../../apps/desktop/README.md) forwards the ports named by `OCEAN_DESKTOP_FORWARD_PORTS`); the command is unavailable in Web and for a local Host, where nothing is forwarded.
+
 The toolbar provides Back, Forward, Reload, Go, and Open in system browser. Web also offers a per-tab sandbox toggle; disabling it is temporary and displays an amber warning with neutral text. Desktop shows the observed page title. After a restart, Browser shows the saved title and URL; Restore or Reload opens that address only when requested.
 
 <a id="desktop-agent-sharing"></a>

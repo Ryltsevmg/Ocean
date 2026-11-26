@@ -50,7 +50,7 @@ ocean --profile web --no-open --port 8080
 
 ### 远程 Host 与设备命令
 
-本 bundle 还提供 `serve`、`connect` 和 `remote-device`。这些配置禁用配置文件与客户端模块监听。`serve` 要求设备认证，输出不含凭据的 URL，并且不打开浏览器；非回环监听器必须使用 TLS。`connect` 和 `remote-device` 不启动本地 Web 监听器及其依赖的 HTTP 和 Session UI 插件。本地 bootstrap 可在 Windows、macOS 和 Linux 上创建和列出设备；轮换与撤销需要运行中 Host 的 Unix 管理套接字。`create` 和 `pair` 接受可重复的 `--scope`，把设备收窄到指定权限。[CLI 指南](../../../apps/cli/README.zh.md) 说明参数、凭据主目录选择及令牌处理。
+本 bundle 还提供 `serve`、`connect` 和 `remote-device`。这些配置禁用配置文件与客户端模块监听。`serve` 要求设备认证，输出不含凭据的 URL，并且不打开浏览器；非回环监听器必须使用 TLS。`connect` 和 `remote-device` 不启动本地 Web 监听器及其依赖的 HTTP 和 Session UI 插件。本地 bootstrap 可在 Windows、macOS 和 Linux 上创建和列出设备；轮换与撤销需要运行中 Host 的 Unix 管理套接字。`create` 和 `pair` 接受可重复的 `--scope`，把设备收窄到指定权限。`pair` 输出供 Desktop 使用的 `link` 和供浏览器或 `ocean connect --pair` 使用的 `web` 地址；两者花费同一个一次性授权，`--qr` 会在 stderr 追加 `web` 的 QR 码。[CLI 指南](../../../apps/cli/README.zh.md) 说明参数、凭据主目录选择、令牌处理及配对链接的使用。
 
 ### 配置
 

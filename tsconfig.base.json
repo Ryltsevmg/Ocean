@@ -87,6 +87,8 @@
       "@ocean/ocean-api-job-controller/types": ["./packages/api/job-controller/src/types.ts"],
       "@ocean/ocean-api-device-controller": ["./packages/api/device-controller/src/index.ts"],
       "@ocean/ocean-api-device-controller/types": ["./packages/api/device-controller/src/types.ts"],
+      "@ocean/ocean-api-port-forward-controller": ["./packages/api/port-forward-controller/src/index.ts"],
+      "@ocean/ocean-api-port-forward-controller/types": ["./packages/api/port-forward-controller/src/types.ts"],
       "@ocean/ocean-api-session-controller": ["./packages/api/session-controller/src/index.ts"],
       "@ocean/ocean-api-session-controller/client": ["./packages/api/session-controller/src/client/index.ts"],
       "@ocean/ocean-api-session-controller/types": ["./packages/api/session-controller/src/types.ts"],

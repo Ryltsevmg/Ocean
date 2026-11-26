@@ -511,6 +511,32 @@ interface TypertClientRemote extends TypertRemoteNamespaceMap {
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxportforwardcontroller--portforwardcontroller"></a>
+
+### `ctx.portForwardController` — `PortForwardController`
+
+Host service backing the generated `ctx.remote.portForward` namespace.
+
+```ts cordis-catalog
+/**
+ * Connect `127.0.0.1:<port>` on this Host and relay bytes both ways. The
+ * stream reports `connected`, then every byte the port sends as base64 `data`
+ * frames as they arrive, and ends with `end` when the port closes its end or
+ * `failed` when the connection is refused or breaks. Client `data` items are
+ * written to the socket in order, waiting for the socket to drain before the
+ * next item whenever the port reads slowly; a Client `end` item, or the Client
+ * ending its uplink, half-closes the socket. Cancelling the stream destroys
+ * the socket.
+ * @param request - loopback port of this Host.
+ * @param signal - carrier cancellation; destroys the socket.
+ * @returns the downlink frames in wire order.
+ * @throws RemoteError `port-forward/invalid-port` for a port outside 1…65535.
+ */
+@Remote({ mode: 'stream' }) open(request: PortForwardRequest, signal: AbortSignal): RemoteStream<PortForwardFrame, PortForwardInput>
+```
+
+Source: [`packages/api/port-forward-controller/src/index.ts`](../../packages/api/port-forward-controller/src/index.ts)
+
 <a id="ctxremoteaccess--remoteaccessservice"></a>
 
 ### `ctx.remoteAccess` — `RemoteAccessService`

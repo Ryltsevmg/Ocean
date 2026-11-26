@@ -17,6 +17,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@ocean/ocean-api-device-controller` | no | Owner-only Remote namespace for the Host device inventory and revocation |
 | `@ocean/ocean-api-gateway` | yes | Typert Remote Host dispatcher and Client API endpoint |
 | `@ocean/ocean-api-job-controller` | yes | Job Remote observation stream and the reference-counted client job-output service |
+| `@ocean/ocean-api-port-forward-controller` | no | Host loopback TCP port forwarding over one Typert Remote stream per connection |
 | `@ocean/ocean-api-remote-access` | no | Method-level Remote access control for non-owner Peers and the per-Peer access snapshot |
 | `@ocean/ocean-api-remotes` | no | Remote BFF assembly for application-selected Host capabilities |
 | `@ocean/ocean-api-session-controller` | yes | Session Remote commands, cold reads, and live control transport |

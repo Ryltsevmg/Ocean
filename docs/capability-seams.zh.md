@@ -90,6 +90,8 @@ flowchart LR
   svc_workspaceChanges["ctx.workspaceChanges<br/>Host per-turn changed-file summaries"]
   pkg_api_terminal_controller["api-terminal-controller"]
   svc_terminalController["ctx.terminalController<br/>Session interactive terminal Remote controller"]
+  pkg_api_port_forward_controller["api-port-forward-controller"]
+  svc_portForwardController["ctx.portForwardController<br/>Host loopback port forwarding Remote controller"]
   pkg_api_workspace_controller["api-workspace-controller"]
   svc_workspaceController["ctx.workspaceController<br/>Host Workspace Remote controller"]
   svc_directoryPickerController["ctx.directoryPickerController<br/>Host directory-picking Remote controller"]
@@ -276,6 +278,7 @@ flowchart LR
   pkg_api_device_controller --> svc_deviceController
   pkg_api_gateway --> svc_typertGateway
   pkg_api_job_controller --> svc_jobController
+  pkg_api_port_forward_controller --> svc_portForwardController
   pkg_api_remote_access --> svc_remoteAccess
   pkg_api_session_controller --> svc_sessionController
   pkg_api_session_controller --> svc_sessionFileReferences
@@ -582,6 +585,7 @@ flowchart LR
 | `ctx.workspaceFiles` | `core` | [`api-workspace-files`](../packages/api/workspace-files) | - | - | - | 为会话工作区根内的文件提供 stat、分页文本、字节窗口、目录列举与变更流，经 lstat、包含关系与 stat 重检限定。 |
 | `ctx.workspaceChanges` | `core` | [`workspace-changes`](../packages/deliverables/workspace-changes) | - | - | - | 按 Session 和事件序号提供每个 workspace/changes 事件公布的摘要，以及各列出文件的轮次开始与结束对比，直到该 Session 被销毁；日志仅携带轮次。 |
 | `ctx.terminalController` | `core` | [`api-terminal-controller`](../packages/api/terminal-controller) | - | - | - | 通过子进程提供方与类型化 Remote 传输管理用户终端进程、解析默认 shell，并恢复有界终端屏幕。 |
+| `ctx.portForwardController` | `core` | [`api-port-forward-controller`](../packages/api/port-forward-controller) | - | - | - | 每个 Remote 流承载一个到 Host 自身回环地址端口的 TCP 连接；Client 只给出端口，从不给出地址。 |
 | `ctx.workspaceController` | `core` | [`api-workspace-controller`](../packages/api/workspace-controller) | - | - | - | 通过生成的 Remote namespace 负责 Workspace 命令和可在重连后收敛的 Workspace 状态投递。 |
 | `ctx.directoryPickerController` | `core` | [`api-workspace-controller`](../packages/api/workspace-controller) | - | - | - | 把选目录 seam 送上线：能力门禁、取消传播，以及浏览器目录流程用于分支判断的 seam 错误码。 |
 | `ctx.typert` | `core` | [`typert-registry`](../packages/typert/registry) | - | [`typert-loader`](../packages/typert/loader), [`api-gateway`](../packages/api/gateway) | - | 插件直接或通过 ocean-typert-loader 注册实时 zod 贡献；API 网关消费调用描述符和提供方，其他运行时消费方则在各自边界查询 schema 与反射元数据。 |

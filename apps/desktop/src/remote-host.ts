@@ -41,6 +41,16 @@ export class RemoteDesktopHost {
     }
   }
 
+  /**
+   * Open an authenticated socket route beneath the Host's current route.
+   * @param path - Logical socket route relative to the Host.
+   * @param connect - Transport factory that keeps redirects disabled.
+   * @returns The connecting socket owned by the caller.
+   */
+  openSocket<Socket>(path: string, connect: (url: URL, cookie: string) => Socket): Socket {
+    return this.client.openSocket(path, connect)
+  }
+
   /** Main-process credentials for HTTP and WebSocket forwarding. */
   get transport(): { address: string; cookie: string } { return this.client.transportCredentials() }
 

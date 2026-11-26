@@ -88,6 +88,8 @@ flowchart LR
   svc_workspaceChanges["ctx.workspaceChanges<br/>Host per-turn changed-file summaries"]
   pkg_api_terminal_controller["api-terminal-controller"]
   svc_terminalController["ctx.terminalController<br/>Session interactive terminal Remote controller"]
+  pkg_api_port_forward_controller["api-port-forward-controller"]
+  svc_portForwardController["ctx.portForwardController<br/>Host loopback port forwarding Remote controller"]
   pkg_api_workspace_controller["api-workspace-controller"]
   svc_workspaceController["ctx.workspaceController<br/>Host Workspace Remote controller"]
   svc_directoryPickerController["ctx.directoryPickerController<br/>Host directory-picking Remote controller"]
@@ -274,6 +276,7 @@ flowchart LR
   pkg_api_device_controller --> svc_deviceController
   pkg_api_gateway --> svc_typertGateway
   pkg_api_job_controller --> svc_jobController
+  pkg_api_port_forward_controller --> svc_portForwardController
   pkg_api_remote_access --> svc_remoteAccess
   pkg_api_session_controller --> svc_sessionController
   pkg_api_session_controller --> svc_sessionFileReferences
@@ -580,6 +583,7 @@ flowchart LR
 | `ctx.workspaceFiles` | `core` | [`api-workspace-files`](../packages/api/workspace-files) | - | - | - | Serves stat, paged text, byte windows, directory listings, and the change feed for files inside a Session's workspace root, confined by lstat, containment, and a stat re-check. |
 | `ctx.workspaceChanges` | `core` | [`workspace-changes`](../packages/deliverables/workspace-changes) | - | - | - | Serves the summary each workspace/changes event announced and each listed file's turn-start and turn-end comparison, by Session and event sequence, until that Session is disposed; the log carries only the turn. |
 | `ctx.terminalController` | `core` | [`api-terminal-controller`](../packages/api/terminal-controller) | - | - | - | Owns user terminal processes, default shell resolution and bounded screen recovery through the subprocess provider and typed Remote transport. |
+| `ctx.portForwardController` | `core` | [`api-port-forward-controller`](../packages/api/port-forward-controller) | - | - | - | Carries one TCP connection to a port on the Host's own loopback over one Remote stream per connection; the Client names a port, never an address. |
 | `ctx.workspaceController` | `core` | [`api-workspace-controller`](../packages/api/workspace-controller) | - | - | - | Owns Workspace commands and reconnect-safe Workspace state delivery through the generated Remote namespace. |
 | `ctx.directoryPickerController` | `core` | [`api-workspace-controller`](../packages/api/workspace-controller) | - | - | - | Carries the picking seam onto the wire: capability gating, cancellation, and the seam-coded failures a browser directory flow discriminates on. |
 | `ctx.typert` | `core` | [`typert-registry`](../packages/typert/registry) | - | [`typert-loader`](../packages/typert/loader), [`api-gateway`](../packages/api/gateway) | - | Plugins register live zod contributions directly or through ocean-typert-loader; the API gateway consumes invocation descriptors and providers, while other runtime consumers query schemas and reflection metadata at their own edges. |

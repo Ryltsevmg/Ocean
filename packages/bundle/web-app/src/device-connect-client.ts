@@ -8,7 +8,7 @@ import { addAbortSignal } from 'node:stream'
 import { Command } from 'commander'
 import type { Context } from '@deepseek-ai/cordis'
 import { serverResponseSchema } from '@ocean/ocean-client-connection'
-import { DeviceClient, DeviceClientError, DeviceSessionRejectedError, DeviceSessionUnavailableError, type HostEpoch } from '@ocean/ocean-client-connection/device'
+import { DeviceClient, DeviceClientError, DeviceSessionRejectedError, DeviceSessionUnavailableError, parsePairing, type HostEpoch } from '@ocean/ocean-client-connection/device'
 import { FILE_UPLOAD_ROUTE } from '@ocean/ocean-client-file-upload/protocol'
 import { openDeviceStreamSocket, ClientUplinkQueue, RemoteStreamCarrierError, RemoteStreamMuxClient } from '@ocean/ocean-api-gateway/device'
 import { parseCmdline } from '@ocean/ocean-cmdline'
@@ -189,6 +189,19 @@ async function writeTerminal(
   }
 }
 
+/** Explain a refused pairing exchange; undefined for every other failure. */
+function pairingFailure(error: unknown): string | undefined {
+  if (!(error instanceof DeviceClientError)) return undefined
+  switch (error.code) {
+    case 'DEVICE_PAIRING_REJECTED':
+      return 'ocean connect: the pairing link is invalid, expired, or already used. Create a new one with ocean remote-device pair.'
+    case 'DEVICE_PAIRING_UNSUPPORTED':
+      return 'ocean connect: the Host does not support pairing links. Update the Host or sign in with a device token.'
+    default:
+      return undefined
+  }
+}
+
 /**
  * Parse and run an Ocean remote client command.
  * @param ctx - Profile context containing launcher arguments and lifecycle.
@@ -196,23 +209,34 @@ async function writeTerminal(
 export function runDeviceConnect(ctx: Context): void {
   const program = new Command().name('ocean connect')
     .description('Run a command against an authenticated remote Ocean Host.')
-    .requiredOption('--url <https-url>', 'Ocean server address')
+    .option('--url <https-url>', 'Ocean server address')
     .option('--token-env <name>', 'environment variable containing the device token')
     .option('--token-stdin', 'read the device token from redirected standard input')
+    .option('--pair <link>', 'pairing link from ocean remote-device pair; exchanges its one-time grant for a device token')
   const run = (call: CommandCall): void => {
-    const options = program.opts<{ url: string; tokenEnv?: string; tokenStdin?: boolean }>()
-    const fromStdin = options.tokenStdin === true
-    if ((options.tokenEnv !== undefined) === fromStdin) {
-      return program.error('ocean connect: supply exactly one of --token-env and --token-stdin')
+    const options = program.opts<{ url?: string; tokenEnv?: string; tokenStdin?: boolean; pair?: string }>()
+    const pairing = options.pair === undefined ? undefined : parsePairing(options.pair)
+    if (options.pair !== undefined && pairing === undefined) return program.error('ocean connect: --pair needs a pairing link from ocean remote-device pair')
+    if (pairing !== undefined && (options.url !== undefined || options.tokenEnv !== undefined || options.tokenStdin === true)) {
+      return program.error('ocean connect: --pair takes a pairing link alone, without --url, --token-env, or --token-stdin')
     }
-    if (fromStdin && process.stdin.isTTY) {
-      return program.error('ocean connect: --token-stdin requires a pipe or redirected input')
+    const address = pairing?.address ?? options.url
+    if (address === undefined) return program.error('ocean connect: supply --url with a device token, or --pair with a pairing link')
+    let envToken: string | undefined
+    if (pairing === undefined) {
+      const fromStdin = options.tokenStdin === true
+      if ((options.tokenEnv !== undefined) === fromStdin) {
+        return program.error('ocean connect: supply exactly one of --token-env and --token-stdin')
+      }
+      if (fromStdin && process.stdin.isTTY) {
+        return program.error('ocean connect: --token-stdin requires a pipe or redirected input')
+      }
+      envToken = options.tokenEnv === undefined ? undefined : process.env[options.tokenEnv]
+      if (options.tokenEnv !== undefined && !envToken) return program.error('ocean connect: the configured token environment variable is empty')
     }
-    const envToken = options.tokenEnv === undefined ? undefined : process.env[options.tokenEnv]
-    if (options.tokenEnv !== undefined && !envToken) return program.error('ocean connect: the configured token environment variable is empty')
     let client: DeviceClient
     try {
-      client = new DeviceClient(options.url)
+      client = new DeviceClient(address)
     } catch (_error) {
       program.error('ocean connect: use an HTTPS URL without credentials, query, or fragment')
     }
@@ -227,15 +251,22 @@ export function runDeviceConnect(ctx: Context): void {
           let submitted = false
           try {
             let token: string
-            try {
-              token = envToken ?? await readDeviceToken(signal)
-              if (!token) throw new Error('Empty token input')
-            } catch (_error) {
-              if (!controller.signal.aborted) {
-                console.error('ocean connect: could not read a device token from standard input.')
-                exit(1)
+            if (pairing === undefined) {
+              try {
+                token = envToken ?? await readDeviceToken(signal)
+                if (!token) throw new Error('Empty token input')
+              } catch (_error) {
+                if (!controller.signal.aborted) {
+                  console.error('ocean connect: could not read a device token from standard input.')
+                  exit(1)
+                }
+                return
               }
-              return
+            } else {
+              // The link is spent even if this process loses the token, so name where the token can be kept.
+              const paired = await client.pair(pairing.secret, signal)
+              token = paired.token
+              console.error(`ocean connect: paired device ${paired.id}. Keep its token for --token-env: ${token}`)
             }
             const host = await client.login(token, signal)
             let result: CommandResult
@@ -272,7 +303,10 @@ export function runDeviceConnect(ctx: Context): void {
             }
           } catch (error) {
             if (controller.signal.aborted) return
-            if (!submitted && error instanceof DeviceSessionRejectedError) {
+            const pairingRefused = submitted ? undefined : pairingFailure(error)
+            if (pairingRefused !== undefined) {
+              console.error(pairingRefused)
+            } else if (!submitted && error instanceof DeviceSessionRejectedError) {
               console.error('ocean connect: the remote session ended. Run the command again with an active device token.')
             } else if (!submitted) {
               console.error('ocean connect: remote request failed. Check the HTTPS address, certificate, token and protocol version.')

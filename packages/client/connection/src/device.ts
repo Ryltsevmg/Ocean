@@ -4,6 +4,7 @@ export {
   type DeviceClientErrorCode, type PairedDevice,
 } from './device-client.ts'
 export { DEVICE_SCOPES, parseDeviceScopes, type DeviceScope } from './device-scopes.ts'
+export { parsePairing, parsePairingLink, parsePairingUrl, type PairingLink } from './device-pairing.ts'
 export {
   CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_PAIR_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER,
   DEVICE_PROTOCOL_VERSION,

@@ -26,9 +26,20 @@ it.each([
 })
 
 it('resolves the connection limit without evicting existing Hosts', () => {
-  expect(resolveDesktopRemoteConfig({})).toEqual({ maxConnections: 4 })
-  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_MAX_REMOTE_HOSTS: '1' })).toEqual({ maxConnections: 1 })
-  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_MAX_REMOTE_HOSTS: '8' })).toEqual({ maxConnections: 8 })
+  expect(resolveDesktopRemoteConfig({})).toEqual({ maxConnections: 4, forwardPorts: [] })
+  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_MAX_REMOTE_HOSTS: '1' })).toEqual({ maxConnections: 1, forwardPorts: [] })
+  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_MAX_REMOTE_HOSTS: '8' })).toEqual({ maxConnections: 8, forwardPorts: [] })
+})
+
+it('resolves the forwarded Host ports as a list without duplicates', () => {
+  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_FORWARD_PORTS: '3000, 5173 ,3000' })).toEqual({ maxConnections: 4, forwardPorts: [3000, 5173] })
+  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_FORWARD_PORTS: '' })).toEqual({ maxConnections: 4, forwardPorts: [] })
+  expect(resolveDesktopRemoteConfig({ OCEAN_DESKTOP_FORWARD_PORTS: '65535' })).toEqual({ maxConnections: 4, forwardPorts: [65535] })
+})
+
+it.each(['0', '65536', 'abc', '-1', '1.5', '3000 4000'])('rejects an invalid forwarded port list: %s', (value) => {
+  expect(() => resolveDesktopRemoteConfig({ OCEAN_DESKTOP_FORWARD_PORTS: value }))
+    .toThrow(expect.objectContaining({ code: 'DESKTOP_REMOTE_CONFIG_INVALID' }))
 })
 
 it.each(['', '0', '-1', '2.5', ' 4', '4x', 'Infinity', '9007199254740992'])('rejects an invalid connection limit: %s', (value) => {

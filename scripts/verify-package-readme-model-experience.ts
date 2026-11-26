@@ -57,6 +57,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/host/product-telemetry-otel': { kind: 'none', reason: 'The plugin exports explicit analytics records without contributing model context.' },
   'packages/api/terminal-controller': { kind: 'indirect', reason: 'Working-directory recovery owns directory context; user terminal screens never enter model requests.' },
   'packages/api/device-controller': { kind: 'none', reason: 'Owner-only device administration over the Connection registry; registers no model context, tool, or Session event.' },
+  'packages/api/port-forward-controller': { kind: 'none', reason: 'A transport surface for Host loopback ports; registers no model context, tool, or Session event.' },
   'packages/client/ui-sidebar-terminal': { kind: 'none', reason: 'The browser renders user terminal screens without exposing them to the model.' },
   'packages/ssh/ssh-helper-runtime': { kind: 'none', reason: 'The private executable carrier registers no model-facing content; its providers and consumers own operation results.' },
   'packages/ssh/ssh': { kind: 'none', reason: 'The connection owner transports private provider operations; consumers own all model-facing content.' },

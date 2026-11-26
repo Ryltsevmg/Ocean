@@ -30,7 +30,7 @@ import {
   type Session,
   type WebContents,
 } from 'electron'
-import { DeviceClient } from '@ocean/ocean-client-connection/device'
+import { DeviceClient, parsePairing, type PairingLink } from '@ocean/ocean-client-connection/device'
 import { provisionRemoteHost } from './remote-ssh.ts'
 import { HarnessError } from '@ocean/ocean-error'
 import { resolveDesktopPaths } from './paths.ts'
@@ -41,7 +41,9 @@ import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
-import { findPairingArgument, parsePairingLink, type PairingLink } from './remote-pairing.ts'
+import { findPairingArgument } from './remote-pairing.ts'
+import { answeringRoute } from './remote-routes.ts'
+import { currentHost, forwardHostPort, type PortForward } from './remote-port-forward.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
@@ -73,6 +75,7 @@ import { desktopClientMetadata, desktopClientVersion } from './client-metadata.t
 import { DesktopMandatoryUpdateWindow } from './mandatory-update-window.ts'
 import { DesktopPolicyTestAuth } from './policy-test-auth.ts'
 import { readDesktopSettings } from './settings.ts'
+import { DesktopSettingsFile } from './settings-file.ts'
 import { readDesktopLocaleCache, writeDesktopLocaleCache } from './locale-cache.ts'
 import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
@@ -414,6 +417,10 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 
 async function main(): Promise<void> {
   const desktopSettings = await readDesktopSettings(app.getPath('userData'))
+  // Without a local Host the app only drives remote machines: nothing of the local workspace starts.
+  let startLocalHostAtLaunch = desktopSettings.localHost.startAtLaunch
+  const remoteOnly = !startLocalHostAtLaunch
+  const desktopSettingsFile = new DesktopSettingsFile(app.getPath('userData'))
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.OCEAN_DESKTOP_UPDATE_JOURNAL_DIR
   const updateJournal = journalDirectory === undefined ? undefined : new DesktopUpdateJournal(journalDirectory, app.getVersion())
@@ -885,14 +892,17 @@ async function main(): Promise<void> {
     if (selected !== undefined) {
       delete selected.publication
       publishHostSelection()
-      return { injections: selected.host.injections, streamBaseUrl: selected.host.address, ownsHost: false }
+      return {
+        injections: selected.host.injections, streamBaseUrl: selected.host.address, ownsHost: false,
+        forwardedPorts: forwardedPorts(),
+      }
     }
     await startup
     if (assertOwnedApplication(event) !== owner) throw new Error('Desktop application owner changed during startup')
     if (backend.host === undefined || hostUrl === undefined) throw new Error('Desktop Host is unavailable')
     localHostPublication = undefined
     publishHostSelection()
-    return { injections, streamBaseUrl: new URL(hostUrl).origin, ownsHost: true }
+    return { injections, streamBaseUrl: new URL(hostUrl).origin, ownsHost: true, forwardedPorts: [] }
   })
 
   ipcMain.handle(DESKTOP_IPC.bootFailed, (event, message: unknown) => {
@@ -1314,8 +1324,12 @@ async function main(): Promise<void> {
     { type: 'separator' },
     { label: currentDesktopLocale().messages.remoteConnectMenu, enabled: !switchingHost,
       click: () => { void openRemoteDialog() } },
-    { label: currentDesktopLocale().messages.remoteLocalMenu, enabled: remoteConnection !== undefined && !switchingHost,
+    { label: currentDesktopLocale().messages.remoteLocalHostLaunchMenu, type: 'checkbox', checked: startLocalHostAtLaunch,
+      click: () => { void toggleLocalHostAtLaunch() } },
+    ...(remoteOnly ? [] : [{
+      label: currentDesktopLocale().messages.remoteLocalMenu, enabled: remoteConnection !== undefined && !switchingHost,
       click: () => { selectRemoteConnection() } },
+    ]),
     ...remoteConnections.size === 0 ? [] : [{
       label: currentDesktopLocale().messages.remoteHostsMenu, enabled: !switchingHost,
       submenu: [...remoteConnections.values()].map(connection => ({
@@ -1329,7 +1343,11 @@ async function main(): Promise<void> {
       label: currentDesktopLocale().messages.remoteDisconnectMenu, enabled: !switchingHost,
       click: () => {
         const connection = remoteConnection
-        if (connection !== undefined) void disconnectRemoteConnection(connection).catch(reportRemoteCleanupFailure)
+        if (connection === undefined) return
+        const disconnected = disconnectRemoteConnection(connection)
+        // Without a local workspace to return to, the form is what remains.
+        if (remoteOnly) void disconnected.then(() => { return openRemoteDialog() }).catch(reportRemoteCleanupFailure)
+        else void disconnected.catch(reportRemoteCleanupFailure)
       },
     }],
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
@@ -1519,9 +1537,28 @@ async function main(): Promise<void> {
       window.webContents.openDevTools({ mode: 'detach' })
     }
   }
+  /**
+   * Show the connection form as the window's own document, the home of a Desktop that starts no local Host.
+   * The form and its handlers are the dialog's; the window differs, so nothing closes it.
+   * @param disconnectedAddress - Address to offer first, when a connection just ended.
+   * @returns After the form document loaded, or at once when it already shows.
+   */
+  async function showRemoteHome(disconnectedAddress?: string): Promise<void> {
+    const window = mainWindow
+    if (window === undefined || window.isDestroyed() || isQuitting() || isMandatory()) return
+    disconnectedRemoteAddress = disconnectedAddress
+    remoteDialog = window
+    await window.loadURL(remoteDialogUrl).catch((error: unknown) => { reportFatal(error, 'main') })
+  }
+
   async function openRemoteDialog(disconnectedAddress?: string, pairing?: PairingLink): Promise<void> {
     const parent = mainWindow
     if (parent === undefined || parent.isDestroyed() || isQuitting() || isMandatory()) return
+    if (remoteOnly) {
+      pendingPairing = pairing
+      await showRemoteHome(disconnectedAddress)
+      return
+    }
     if (remoteDialog !== undefined && pairing === undefined) { remoteDialog.focus(); return }
     if (remoteDialog !== undefined) {
       // A pairing link replaces whatever the open form was showing.
@@ -1624,14 +1661,19 @@ async function main(): Promise<void> {
       console.error('[desktop] remote SSH provisioning failed:', error)
       return remoteErrorResult(error, messages)
     }
-    const pairing = parsePairingLink(provisioned.link)
+    const pairing = parsePairing(provisioned.link)
     if (pairing === undefined) return remoteFailure('pair-link-invalid', messages)
     pendingPairing = pairing
     queuedPairing = undefined
     // The form then confirms the address it can reach, exactly as for a link typed by the user.
     return { kind: 'pairing', address: pairing.address }
   })
-  ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => { assertRemoteDialog(event).destroy() })
+  ipcMain.handle(DESKTOP_IPC.remoteClose, (event) => {
+    const window = assertRemoteDialog(event)
+    // The home form has no window to close; a fresh form is what its Done state offers.
+    if (window === mainWindow) { void showRemoteHome(); return }
+    window.destroy()
+  })
   ipcMain.handle(DESKTOP_IPC.remoteForget, async (event, address: unknown) => {
     assertRemoteDialog(event)
     const messages = currentDesktopLocale().messages
@@ -1658,7 +1700,7 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.remotePairLink, (event, link: unknown) => {
     assertRemoteDialog(event)
     const messages = currentDesktopLocale().messages
-    const parsed = typeof link === 'string' && link.length <= 2048 ? parsePairingLink(link) : undefined
+    const parsed = typeof link === 'string' && link.length <= 2048 ? parsePairing(link) : undefined
     if (parsed === undefined) return remoteFailure('pair-link-invalid', messages)
     pendingPairing = parsed
     return { kind: 'pairing', address: parsed.address } satisfies DesktopRemoteResult
@@ -1725,23 +1767,77 @@ async function main(): Promise<void> {
   }
 
   function configureRemoteBrowserSession(connection: RemoteConnection): void {
-    const { host, browserSession } = connection
+    const { browserSession } = connection
     browserSession.protocol.handle(SCHEME, request => serveApplication(request, connection))
     installHostSockets(browserSession, connection)
-    const mux = new URL('api/remote.mux', host.address)
+    installMuxSignOut(connection)
+    installMicrophonePermissions(browserSession, () => connection.contents, 'remote')
+  }
+
+  /** Watch the stream socket of the connection's current route; a refused sign-in there ends the connection. */
+  function installMuxSignOut(connection: RemoteConnection): void {
+    const { browserSession } = connection
+    const mux = new URL('api/remote.mux', connection.host.address)
     mux.protocol = 'wss:'
     browserSession.webRequest.onHeadersReceived({ urls: [mux.href] }, (details, reply) => {
       reply({})
       const owner = connection.contents
       if (details.statusCode !== 401 || details.resourceType !== 'webSocket' || details.url !== mux.href
-        || owner === undefined || details.webContentsId !== owner.id || remoteConnections.get(host.hostId) !== connection) return
+        || owner === undefined || details.webContentsId !== owner.id || remoteConnections.get(connection.host.hostId) !== connection) return
       const wasSelected = remoteConnection === connection
       void disconnectRemoteConnection(connection).then(async () => {
-        if (wasSelected && remoteConnection === undefined) await openRemoteDialog(host.address)
+        if (wasSelected && remoteConnection === undefined) await openRemoteDialog(connection.host.address)
       }).catch(reportRemoteError)
     })
-    installMicrophonePermissions(browserSession, () => connection.contents, 'remote')
   }
+
+  const routeSwitches = new Set<RemoteConnection>()
+
+  /**
+   * Move a connection whose route stopped answering to the first other route of its saved machine.
+   * A machine whose token is not saved cannot sign in again, and a route that still answers is kept.
+   * @param connection - Open connection whose page reported a lost Host.
+   * @returns After the connection follows a new route, or after nothing changed.
+   */
+  async function switchRemoteRoute(connection: RemoteConnection): Promise<void> {
+    if (routeSwitches.has(connection) || remoteConnections.get(connection.host.hostId) !== connection || isQuitting()) return
+    routeSwitches.add(connection)
+    const messages = currentDesktopLocale().messages
+    try {
+      const machine = (await remoteStore.machines().catch(() => [])).find(entry => entry.hostId === connection.host.hostId)
+      if (machine === undefined || isQuitting()) return
+      const current = connection.host.address
+      const signal = AbortSignal.timeout(15_000)
+      const route = await answeringRoute(machine, current, signal)
+      if (route === current || isQuitting() || remoteConnections.get(machine.hostId) !== connection) return
+      const next = await RemoteDesktopHost.connect(route, machine.token, signal, machine.hostId)
+      const previous = connection.host
+      connection.host = next
+      // The page dials the previous route until told; a refused sign-in there must not end the connection meanwhile.
+      installMuxSignOut(connection)
+      connection.contents?.send(DESKTOP_IPC.routeChanged, { streamBaseUrl: next.address })
+      const owner = mainWindow
+      if (remoteConnection === connection && owner !== undefined && !owner.isDestroyed()) {
+        owner.setTitle(formatDesktopMessage(messages.remoteWindowTitle, { host: new URL(next.address).host }))
+      }
+      refreshApplicationMenu()
+      publishHostSelection()
+      // The previous login ends when the route can be reached; otherwise the Host expires it.
+      await previous.close(AbortSignal.timeout(5_000)).catch(() => {
+        console.warn('ocean desktop: the login on the previous route of a switched Host was not closed')
+      })
+    } catch (error) {
+      reportRemoteError(error)
+    } finally {
+      routeSwitches.delete(connection)
+    }
+  }
+
+  ipcMain.on(DESKTOP_IPC.connectionLost, (event) => {
+    if (event.senderFrame === null || event.senderFrame !== event.sender.mainFrame) return
+    const connection = remoteByContents.get(event.sender)
+    if (connection !== undefined) void switchRemoteRoute(connection)
+  })
 
   async function releaseRemoteBrowserSession(browserSession: Session): Promise<void> {
     releaseDownloads(browserSession)
@@ -1774,7 +1870,7 @@ async function main(): Promise<void> {
       publicationRevision: (local ? localHostPublication : remoteByContents.get(event.sender)?.publication)?.revision ?? -1,
       selected: remoteConnection?.host.hostId ?? '',
       entries: [
-        { id: '', label: remoteLocalMenu, ...pendingHostWork(localHostPublication) },
+        ...(remoteOnly ? [] : [{ id: '', label: remoteLocalMenu, ...pendingHostWork(localHostPublication) }]),
         ...[...remoteConnections.values()].map(({ host, publication }) => ({
           id: host.hostId, label: host.address, ...pendingHostWork(publication),
           ...(local && publication !== undefined ? { sessions: publication.sessions } : {}),
@@ -1818,7 +1914,10 @@ async function main(): Promise<void> {
     if (typeof id !== 'string' || switchingHost || remoteConnectionsClosing || isQuitting() || isMandatory()) {
       throw hostNavigationUnavailable()
     }
-    if (id === '') return undefined
+    if (id === '') {
+      if (remoteOnly) throw hostNavigationUnavailable()
+      return undefined
+    }
     const connection = remoteConnections.get(id)
     if (connection?.contents === undefined || connection.contents.isDestroyed() || connection.bootFailed) {
       throw hostNavigationUnavailable()
@@ -1854,6 +1953,57 @@ async function main(): Promise<void> {
     }
   }
 
+  let portForwards: { ports: PortForward[]; controller: AbortController } | undefined
+  /** Bumped by every start and stop, so a start that awaited a previous stop cannot publish its own forwards. */
+  let forwardEpoch = 0
+
+  /** Loopback ports of this computer that reach the selected Host; empty when nothing is forwarded. */
+  const forwardedPorts = (): number[] => portForwards?.ports.map(forward => forward.port) ?? []
+
+  /** Tell the page on screen which Host ports it can reach on this computer's loopback. */
+  const publishForwardedPorts = (): void => {
+    const contents = activeContents()
+    if (contents !== undefined && !contents.isDestroyed()) contents.send(DESKTOP_IPC.forwardedPorts, forwardedPorts())
+  }
+
+  /** Close the listeners of the current forwards without superseding a start that is still running. */
+  const clearPortForwards = async (): Promise<void> => {
+    const current = portForwards
+    portForwards = undefined
+    if (current === undefined) return
+    publishForwardedPorts()
+    current.controller.abort()
+    await Promise.all(current.ports.map(port => port.close()))
+  }
+
+  const stopPortForwards = async (): Promise<void> => {
+    forwardEpoch += 1
+    await clearPortForwards()
+  }
+
+  /** Forward the configured Host ports of the selected connection to this computer's loopback. */
+  const followPortForwards = async (connection: RemoteConnection): Promise<void> => {
+    const epoch = ++forwardEpoch
+    await clearPortForwards()
+    // A newer selection or a stop superseded this one while the previous listeners closed.
+    if (epoch !== forwardEpoch || remoteConfig.forwardPorts.length === 0 || isQuitting()) return
+    const controller = new AbortController()
+    const current = { ports: [] as PortForward[], controller }
+    portForwards = current
+    for (const port of remoteConfig.forwardPorts) {
+      try {
+        const forward = await forwardHostPort(currentHost(connection), port, { signal: controller.signal })
+        if (epoch !== forwardEpoch) { await forward.close(); return }
+        current.ports.push(forward)
+      } catch (error) {
+        if (epoch !== forwardEpoch) return
+        // A port this computer already uses, or a Host that cannot be reached, leaves the other ports forwarded.
+        console.warn(`ocean desktop: Host port ${String(port)} was not forwarded`, error)
+      }
+    }
+    if (epoch === forwardEpoch) publishForwardedPorts()
+  }
+
   function selectRemoteConnection(connection?: RemoteConnection): void {
     const owner = mainWindow
     if (owner === undefined || owner.isDestroyed() || isQuitting() || connection === remoteConnection) return
@@ -1865,6 +2015,7 @@ async function main(): Promise<void> {
     connection?.setVisible?.(true)
     owner.setTitle(connection === undefined ? app.name : formatDesktopMessage(currentDesktopLocale().messages.remoteWindowTitle,
       { host: new URL(connection.host.address).host }))
+    void (connection === undefined ? stopPortForwards() : followPortForwards(connection))
     const contents = activeContents()
     if (contents !== undefined && !contents.isDestroyed()) {
       contents.send(DESKTOP_IPC.updatesChannelChanged, channelState)
@@ -1914,6 +2065,7 @@ async function main(): Promise<void> {
   async function closeRemoteConnections(): Promise<void> {
     remoteConnectionsClosing = true
     remoteConnectAbort?.abort()
+    await stopPortForwards()
     const openRemotes = [...remoteConnections.values()]
     remoteConnections.clear()
     remoteConnection = undefined
@@ -1963,8 +2115,11 @@ async function main(): Promise<void> {
       }
       const saved = token ? undefined : machines.find(machine => machine.hostId === routeHostId) ?? routed
       if (token) next = await RemoteDesktopHost.connect(address, token, signal, routeHostId)
-      else if (saved !== undefined) next = await RemoteDesktopHost.connect(address, saved.token, signal, saved.hostId)
-      else return remoteFailure('token-required', messages)
+      else if (saved !== undefined) {
+        // A saved machine may answer on another route when the chosen one does not; its token is pinned to its identity.
+        const route = await answeringRoute(saved, address, signal)
+        next = await RemoteDesktopHost.connect(route, saved.token, signal, saved.hostId)
+      } else return remoteFailure('token-required', messages)
       signal.throwIfAborted()
       if (isQuitting() || isMandatory() || input.window.isDestroyed()) return remoteFailure('cancelled', messages)
       const authenticated = next
@@ -1978,11 +2133,13 @@ async function main(): Promise<void> {
         const host = next
         const browserSession = session.fromPartition(`ocean-remote-${randomUUID()}`, { cache: false })
         let disposing: Promise<void> | undefined
-        prepared = {
+        const connection: RemoteConnection = {
           host,
           browserSession,
-          dispose: () => disposing ??= disposeRemoteConnection(host, browserSession),
+          // A route switch replaces the host; disposal closes whichever one is current.
+          dispose: () => disposing ??= disposeRemoteConnection(connection.host, browserSession),
         }
+        prepared = connection
         next = undefined
         configureRemoteBrowserSession(prepared)
         await attachRemoteView(owner, prepared).loadURL(applicationUrl)
@@ -2004,7 +2161,7 @@ async function main(): Promise<void> {
           persistence = 'failed'
         }
       }
-      if (persistence !== 'failed' && !input.window.isDestroyed()) input.window.destroy()
+      if (persistence !== 'failed' && !input.window.isDestroyed() && input.window !== mainWindow) input.window.destroy()
       return { kind: 'connected', persistence, ...(persistence === 'failed' ? { message: messages.remoteSaveFailed } : {}) }
     } catch (error) {
       return remoteErrorResult(error, messages)
@@ -2015,6 +2172,33 @@ async function main(): Promise<void> {
       switchingHost = false
       if (!isQuitting()) { refreshApplicationMenu(); publishHostSelection() }
     }
+  }
+
+  /** Save whether the next launch starts a local Host; the running app keeps the mode it started in. */
+  const toggleLocalHostAtLaunch = async (): Promise<void> => {
+    const next = !startLocalHostAtLaunch
+    try {
+      await desktopSettingsFile.saveLocalHost(next)
+    } catch (error) {
+      console.error('desktop settings: could not save the local Host preference', error)
+      return
+    }
+    startLocalHostAtLaunch = next
+    refreshApplicationMenu()
+    await ordinaryMessageBox({ type: 'info', message: currentDesktopLocale().messages.remoteLocalHostLaunchNote })
+  }
+
+  /** Start without a local Host: show the window, then sign in to the most recent saved machine or ask for one. */
+  const openRemoteOnlyStart = async (): Promise<void> => {
+    const window = currentMainWindow()
+    if (window === undefined || window.isDestroyed() || isQuitting() || isMandatory()) return
+    window.show()
+    await openRemoteDialog()
+    const dialog = remoteDialog
+    if (dialog === undefined || dialog.isDestroyed() || switchingHost) return
+    const address = (await remoteStore.addresses().catch(() => [])).at(-1)
+    if (address === undefined) return
+    await connectRemoteHost({ address, token: '', remember: false, window: dialog })
   }
 
   const openInitialWindow = async (): Promise<void> => {
@@ -2035,19 +2219,22 @@ async function main(): Promise<void> {
     const window = mainWindow
     if (window === undefined || window.isDestroyed()) {
       try { createMainWindow() } catch (error) { reportFatal(error, 'main'); return }
-      void (backend.state.phase === 'ready' ? openInitialWindow() : navigateMain(applicationUrl)).catch((error: unknown) => { reportFatal(error, 'main') })
+      void (remoteOnly ? openRemoteOnlyStart() : backend.state.phase === 'ready' ? openInitialWindow() : navigateMain(applicationUrl))
+        .catch((error: unknown) => { reportFatal(error, 'main') })
       return
     }
     // Startup and sign-out select the visible window before activation may reveal the workspace.
-    if (window === mainWindow && !enteredWorkspace) return
+    if (window === mainWindow && !enteredWorkspace && !remoteOnly) return
     if (window.isMinimized()) window.restore()
     window.show()
     window.focus()
+    // With no local workspace behind it, a window without a remote Host shows the form.
+    if (remoteOnly && remoteConnection === undefined) void openRemoteDialog()
   }
 
   if (app.isPackaged || process.env.OCEAN_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('ocean')
   const openPairingLink = (link: string): void => {
-    const parsed = parsePairingLink(link)
+    const parsed = parsePairing(link)
     if (parsed === undefined) {
       void ordinaryMessageBox({ type: 'error', message: locale.messages.remotePairLinkInvalid })
       return
@@ -2166,7 +2353,8 @@ async function main(): Promise<void> {
     }).catch((error: unknown) => { console.error(error) })
   }
   automaticCheck()
-  await reconcileBackend().catch(() => undefined)
+  if (remoteOnly) await openRemoteOnlyStart().catch((error: unknown) => { reportFatal(error, 'main') })
+  else await reconcileBackend().catch(() => undefined)
   // Window lifecycle callbacks run while backend startup is pending.
   if (isQuitting()) return
   const window = currentMainWindow()

@@ -53,10 +53,17 @@ async function boot(platform: ShortcutPlatform = 'macos', runtime: 'desktop' | '
       return () => { dictionaries.delete(namespace) }
     }),
   }
+  const commands: { name: string; label?: () => string; available(session: never): boolean; ui: unknown }[] = []
+  const commandUi = {
+    register: vi.fn((contribution: { name: string; label?: () => string; available(session: never): boolean; ui: unknown }) => {
+      commands.push(contribution)
+      return () => { commands.splice(commands.indexOf(contribution), 1) }
+    }),
+  }
   const openTabs = createSnapshotStore<readonly { sessionId: string; tabId: TabId }[]>([])
   const target = { sessionId: 'session', paneId: 'pane' }
   const sidebar = { openTabs, commandTarget: vi.fn<() => typeof target | undefined>(() => target),
-    openTabFromTarget: vi.fn() }
+    openTabFromTarget: vi.fn(), openTabIn: vi.fn() }
   const registry = new ShortcutRegistry(runtime, platform)
   ctx.provide('sidebarRight', sidebar as never)
   ctx.provide('shortcuts', { register: (command: ShortcutCommand) => registry.register(command) } as never)
@@ -64,9 +71,10 @@ async function boot(platform: ShortcutPlatform = 'macos', runtime: 'desktop' | '
   ctx.provide('workspaces', { list: createSnapshotStore({ phase: 'ready', items: [] }) } as never)
   ctx.provide('slots', slots as never)
   ctx.provide('locale', locale as never)
+  ctx.provide('commandUi', commandUi as never)
   const fiber = ctx.plugin({ inject: [...inject], apply })
   await fiber.await()
-  return { tabs, registered, dictionaries, fiber, openTabs, registry, sidebar, target }
+  return { tabs, registered, dictionaries, fiber, openTabs, registry, sidebar, target, commands, commandUi }
 }
 
 describe('ui-sidebar-browser apply', () => {
@@ -169,6 +177,43 @@ describe('ui-sidebar-browser apply', () => {
     const h = await boot('macos', 'web')
     try { expect(h.registry.catalog.getSnapshot()[0]?.binding).toEqual({ code: 'KeyT', modifiers: ['alt', 'meta'] }) }
     finally { await h.fiber.dispose() }
+  })
+
+  it('offers the Host ports Desktop forwards to this computer and opens one in a Browser tab', async () => {
+    vi.stubGlobal('__OCEAN_TRANSPORT__', { forwardedPorts: [3000, 5173] })
+    const h = await boot()
+    try {
+      const command = h.commands.find(entry => entry.name === 'ports')!
+      expect(command.label?.()).toBe('ports.label')
+      expect(command.available(null as never)).toBe(true)
+      const ui = command.ui as {
+        searchLabels(): { placeholder: string; empty: string; noResults: string }
+        options(session: unknown): Promise<readonly { id: string; label: string; detail?: string }[]>
+        onSelect(option: { id: string }, session: { sessionId: string }): void
+      }
+      expect(ui.searchLabels()).toEqual({ placeholder: 'ports.heading', empty: 'ports.empty', noResults: 'ports.empty' })
+      expect(await ui.options({})).toEqual([
+        { id: '3000', label: 'localhost:3000', detail: 'http://localhost:3000' },
+        { id: '5173', label: 'localhost:5173', detail: 'http://localhost:5173' },
+      ])
+      ui.onSelect({ id: '5173' }, { sessionId: 'session' })
+      expect(h.sidebar.openTabIn).toHaveBeenCalledExactlyOnceWith('session', 'browser', { params: { url: 'http://localhost:5173' } })
+    } finally { await h.fiber.dispose() }
+  })
+
+  it('hides the forwarded-ports command when nothing is forwarded', async () => {
+    vi.stubGlobal('__OCEAN_TRANSPORT__', { forwardedPorts: [] })
+    const h = await boot()
+    try {
+      expect(h.commands.find(entry => entry.name === 'ports')!.available(null as never)).toBe(false)
+    } finally { await h.fiber.dispose() }
+  })
+
+  it('hides the forwarded-ports command outside Desktop, where no transport exists', async () => {
+    const h = await boot()
+    try {
+      expect(h.commands.find(entry => entry.name === 'ports')!.available(null as never)).toBe(false)
+    } finally { await h.fiber.dispose() }
   })
 
   it('removes every registration when the plugin is disposed', async () => {

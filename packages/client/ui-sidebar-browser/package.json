@@ -36,8 +36,9 @@
     "client": {
       "inject": [
         "@ocean/ocean-api-workspace-controller",
-        "@ocean/ocean-client-ui-sidebar-right",
-        "@ocean/ocean-client-ui-session"
+        "@ocean/ocean-client-ui-commands",
+        "@ocean/ocean-client-ui-session",
+        "@ocean/ocean-client-ui-sidebar-right"
       ],
       "platform": "web"
     }
@@ -57,6 +58,7 @@
     "@ocean/ocean-client-locale": "workspace:*",
     "@ocean/ocean-client-shortcuts": "workspace:*",
     "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-client-ui-commands": "workspace:*",
     "@ocean/ocean-client-ui-dockkit": "workspace:*",
     "@ocean/ocean-client-ui-primitives": "workspace:*",
     "@ocean/ocean-client-ui-renderer": "workspace:*",

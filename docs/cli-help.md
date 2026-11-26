@@ -139,6 +139,7 @@ Options:
   --url <https-url>                                                           Ocean server address
   --token-env <name>                                                          environment variable containing the device token
   --token-stdin                                                               read the device token from redirected standard input
+  --pair <link>                                                               pairing link from ocean remote-device pair; exchanges its one-time grant for a device token
   -h, --help                                                                  display help for command
 
 Commands:
@@ -579,6 +580,7 @@ Options:
                      (default: [])
   --ttl <seconds>    how long the link stays valid, 30 to 3600; the Host default
                      applies otherwise
+  --qr               also print a QR code of the browser link to standard error
   -h, --help         display help for command
 ```
 

@@ -651,6 +651,12 @@ importers:
       '@electron/notarize':
         specifier: 2.5.0
         version: 2.5.0(supports-color@9.4.0)
+      '@ocean/ocean-api-port-forward-controller':
+        specifier: workspace:*
+        version: link:../../packages/api/port-forward-controller
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../packages/api/remote-access
       '@ocean/ocean-app-boot':
         specifier: workspace:*
         version: link:../../packages/boot/app-boot
@@ -696,6 +702,9 @@ importers:
       '@ocean/ocean-plugin-manager':
         specifier: workspace:*
         version: link:../../packages/boot/plugin-manager
+      '@ocean/ocean-typert-registry':
+        specifier: workspace:*
+        version: link:../../packages/typert/registry
       '@ocean/ocean-util-file-drag':
         specifier: workspace:*
         version: link:../../packages/util/file-drag
@@ -1272,6 +1281,31 @@ importers:
         specifier: workspace:*
         version: link:../../typert/registry
 
+  packages/api/port-forward-controller:
+    dependencies:
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+      zod:
+        specifier: 4.6.6
+        version: 4.6.6
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@ocean/ocean-api-gateway':
+        specifier: workspace:*
+        version: link:../gateway
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../remote-access
+      '@ocean/ocean-client-connection':
+        specifier: workspace:*
+        version: link:../../client/connection
+      '@ocean/ocean-typert-registry':
+        specifier: workspace:*
+        version: link:../../typert/registry
+
   packages/api/remote-access:
     dependencies:
       '@ocean/ocean-typert-protocol':
@@ -1333,6 +1367,9 @@ importers:
       '@ocean/ocean-api-job-controller':
         specifier: workspace:*
         version: link:../job-controller
+      '@ocean/ocean-api-port-forward-controller':
+        specifier: workspace:*
+        version: link:../port-forward-controller
       '@ocean/ocean-api-session-controller':
         specifier: workspace:*
         version: link:../session-controller
@@ -2767,6 +2804,9 @@ importers:
       '@ocean/ocean-api-job-controller':
         specifier: workspace:*
         version: link:../../api/job-controller
+      '@ocean/ocean-api-port-forward-controller':
+        specifier: workspace:*
+        version: link:../../api/port-forward-controller
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -3193,6 +3233,9 @@ importers:
       open:
         specifier: ^11.0.2
         version: 11.0.4
+      uqr:
+        specifier: ^0.1.3
+        version: 0.1.3
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:~
@@ -6140,6 +6183,9 @@ importers:
       '@ocean/ocean-client-store':
         specifier: workspace:*
         version: link:../store
+      '@ocean/ocean-client-ui-commands':
+        specifier: workspace:*
+        version: link:../ui-commands
       '@ocean/ocean-client-ui-dockkit':
         specifier: workspace:*
         version: link:../ui-dockkit
@@ -22158,6 +22204,9 @@ packages:
     peerDependencies:
       browserslist: '>= 4.21.0'
 
+  uqr@0.1.3:
+    resolution: {integrity: sha512-0rjE8iEJe4YmT9TOhwsZtqCMRLc5DXZUI2UEYUUg63ikBkqqE5EYWaI0etFe/5KUcmcYwLih2RND1kq+hrUJXA==}
+
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
@@ -29693,6 +29742,8 @@ snapshots:
       browserslist: 4.28.7
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  uqr@0.1.3: {}
 
   uri-js@4.4.1:
     dependencies:

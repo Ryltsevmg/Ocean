@@ -11,6 +11,11 @@
     "enabled": true
   },
   {
+    "label": "启动时运行本地 Host",
+    "type": "checkbox",
+    "checked": true
+  },
+  {
     "label": "使用本地 Host",
     "enabled": false
   },

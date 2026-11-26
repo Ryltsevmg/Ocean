@@ -83,6 +83,9 @@
       "path": "../device-controller"
     },
     {
+      "path": "../port-forward-controller"
+    },
+    {
       "path": "../session-controller/tsconfig.client.json"
     },
     {

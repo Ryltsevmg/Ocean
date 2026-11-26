@@ -145,6 +145,17 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
   contextBridge.exposeInMainWorld('oceanDesktopBoot', {
     ready: () => ipcRenderer.invoke(DESKTOP_IPC.boot) as Promise<unknown>,
     failed: (message: string) => ipcRenderer.invoke(DESKTOP_IPC.bootFailed, message) as Promise<void>,
+    connectionLost: (): void => { ipcRenderer.send(DESKTOP_IPC.connectionLost) },
+    onRouteChanged: (listener: (route: { streamBaseUrl: string }) => void): (() => void) => {
+      const notify = (_event: unknown, route: { streamBaseUrl: string }): void => { listener(route) }
+      ipcRenderer.on(DESKTOP_IPC.routeChanged, notify)
+      return () => { ipcRenderer.off(DESKTOP_IPC.routeChanged, notify) }
+    },
+    onForwardedPorts: (listener: (ports: number[]) => void): (() => void) => {
+      const notify = (_event: unknown, ports: number[]): void => { listener(ports) }
+      ipcRenderer.on(DESKTOP_IPC.forwardedPorts, notify)
+      return () => { ipcRenderer.off(DESKTOP_IPC.forwardedPorts, notify) }
+    },
   })
   contextBridge.exposeInMainWorld('oceanPlatform', {
     open: (page: 'usage' | 'top-up', bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke(PLATFORM_IPC.open, page, bounds),

@@ -122,6 +122,61 @@ export function releaseUrls(version: string, arch: 'x64' | 'arm64'): { archive: 
   return { archive: `${base}/${archiveName(version, arch)}`, sums: `${base}/SHA256SUMS` }
 }
 
+/** HTTPS ports tried when the caller pins none; 443 first, so a machine that serves nothing keeps the familiar address. */
+const SERVE_PORT_CANDIDATES: readonly number[] = [443, 8443, 9443, 10443]
+
+/**
+ * Read the HTTPS ports the machine's Tailscale already serves another site on, in
+ * the shape the Host reads them: `Web` authorities, and `TCP` entries that are not
+ * this Host's own HTTPS publications.
+ * @param json - Output of `tailscale serve status --json`.
+ * @returns Ports another site occupies; empty when the output cannot be read.
+ */
+export function servePortsInUse(json: string): Set<number> {
+  const ports = new Set<number>()
+  let parsed: unknown
+  try { parsed = JSON.parse(json.trim() === '' ? '{}' : json) } catch (_error) {
+    // Unreadable output says nothing about occupied ports; the Host reports its own refusal.
+    return ports
+  }
+  if (typeof parsed !== 'object' || parsed === null) return ports
+  const { Web: web, TCP: tcp } = parsed as { Web?: unknown; TCP?: unknown }
+  if (typeof web === 'object' && web !== null) {
+    for (const authority of Object.keys(web)) ports.add(portOfAuthority(authority))
+  }
+  if (typeof tcp === 'object' && tcp !== null) {
+    for (const [key, entry] of Object.entries(tcp)) {
+      const port = Number(key)
+      // An HTTPS entry is this Host's own published port; a raw TCP forward is something else's.
+      const https = typeof entry === 'object' && entry !== null && 'HTTPS' in entry && (entry as { HTTPS?: unknown }).HTTPS === true
+      if (Number.isInteger(port) && !https) ports.add(port)
+    }
+  }
+  return ports
+}
+
+/**
+ * @param authority - `Web` key: a host name, with `:port` only when it is not 443.
+ * @returns The HTTPS port that authority serves.
+ */
+function portOfAuthority(authority: string): number {
+  const tail = authority.slice(authority.lastIndexOf(':') + 1)
+  if (tail === authority) return 443
+  const port = Number(tail)
+  return Number.isInteger(port) ? port : 443
+}
+
+/**
+ * Choose the HTTPS port to publish on.
+ * @param requested - Port the caller pinned, or undefined to pick a free one.
+ * @param inUse - Ports the machine's Tailscale already serves.
+ * @returns The pinned port, else the first free candidate, else 443 for the Host to report.
+ */
+export function chooseServePort(requested: number | undefined, inUse: ReadonlySet<number>): number {
+  if (requested !== undefined) return requested
+  return SERVE_PORT_CANDIDATES.find(port => !inUse.has(port)) ?? 443
+}
+
 /** One provisioning run: the destination, the version, and the hook that reports progress. */
 export interface RemoteSshRequest {
   readonly host: string
@@ -133,9 +188,10 @@ export interface RemoteSshRequest {
   /** Test hook: the executable that runs the command, `ssh` by default. */
   readonly command?: string
   /**
-   * Tailscale HTTPS port to publish on; 443 by default. A machine whose port is
-   * already taken by another `tailscale serve` site needs another one, and the
-   * Host refuses rather than replacing that site.
+   * Tailscale HTTPS port to publish on, pinning it. Without it the provisioner
+   * publishes on 443, or on the first free port when the machine already serves
+   * that one: the Host refuses to replace another site rather than taking its
+   * port.
    */
   readonly servePort?: number
 }
@@ -266,26 +322,50 @@ export async function provisionRemoteHost(request: RemoteSshRequest): Promise<Re
   // `tailscale serve` needs root unless the account is an operator, and a node that already serves a
   // path allows only root to change that configuration, so the mapping goes through a wrapper that
   // falls back to passwordless sudo. The administrator socket directory must be private to this user.
-  const started = await run('serve', [
+  const prepared = await run('serve', [
     'set -e',
     'cd "$HOME"',
     'root="$HOME/.ocean-server"',
-    'log="$root/serve.log"',
-    ': > "$log"',
     'mkdir -p "$root/run"',
     'chmod 700 "$root" "$root/run"',
     'wrapper="$root/run/tailscale-ocean"',
     'printf "%s\\n" "#!/bin/sh" "if tailscale \\"\\$@\\" 2>/dev/null; then exit 0; fi"'
       + ' "exec sudo -n /usr/bin/tailscale \\"\\$@\\"" > "$wrapper"',
     'chmod 700 "$wrapper"',
+  ].join('\n'), false)
+  requireSuccess(prepared, 'DESKTOP_SSH_SERVE_FAILED', 'serve', 'preparing the Tailscale command')
+
+  // Another site may already hold 443; the Host refuses to replace it, so the port is chosen here.
+  const status = await run('serve', '"$HOME/.ocean-server/run/tailscale-ocean" serve status --json', false)
+  const httpsPort = chooseServePort(request.servePort, servePortsInUse(status.stdout))
+
+  const started = await run('serve', [
+    'set -e',
+    'cd "$HOME"',
+    'root="$HOME/.ocean-server"',
+    'log="$root/serve.log"',
+    ': > "$log"',
+    'wrapper="$root/run/tailscale-ocean"',
+    // A Host this provisioner started earlier still owns the administrator socket and refuses to share it.
+    'if [ -f "$root/serve.pid" ]; then',
+    '  previous=$(cat "$root/serve.pid")',
+    '  if kill -0 "$previous" 2>/dev/null; then',
+    '    kill "$previous" 2>/dev/null || true',
+    '    i=0',
+    '    while kill -0 "$previous" 2>/dev/null && [ $i -lt 20 ]; do sleep 1; i=$((i + 1)); done',
+    '  fi',
+    '  rm -f "$root/serve.pid"',
+    'fi',
+    'rm -f "$root/run/admin.sock"',
     `setsid nohup "$HOME/${directory}/resources/runtime/cli/bin/ocean" serve --tailscale-serve`
-      + ` --tailscale-serve-port ${String(request.servePort ?? 443)} --tailscale-command "$wrapper" --port 0`
+      + ` --tailscale-serve-port ${String(httpsPort)} --tailscale-command "$wrapper" --port 0`
       + ' --device-admin-socket "$root/run/admin.sock" > "$log" 2>&1 < /dev/null &',
     'echo $! > "$root/serve.pid"',
     'i=0',
     'while [ $i -lt 120 ]; do',
     '  sleep 1',
     '  if grep -q "ocean serve:" "$log"; then grep "ocean serve:" "$log" | tail -1; exit 0; fi',
+    '  if ! kill -0 "$(cat "$root/serve.pid")" 2>/dev/null; then tail -20 "$log" >&2; exit 1; fi',
     '  i=$((i + 1))',
     'done',
     'tail -20 "$log" >&2',

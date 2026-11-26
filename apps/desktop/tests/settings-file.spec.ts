@@ -29,20 +29,76 @@ it('distinguishes missing files from absent fields without creating a file durin
   await expect(readFile(file.path)).rejects.toMatchObject({ code: 'ENOENT' })
   await file.saveUpdates({})
   expect(await file.read()).toMatchObject({ kind: 'ready', fields: {
-    channel: { kind: 'absent' }, allowTestAuthPopupWindow: { kind: 'absent' },
+    channel: { kind: 'absent' }, allowTestAuthPopupWindow: { kind: 'absent' }, startAtLaunch: { kind: 'absent' },
   } })
 })
 
 it.each([
   ['{secret-value', 'json'], ['null', 'structure'], ['[]', 'structure'],
   ['{"updates":null}', 'structure'], ['{"updates":[]}', 'structure'], ['{"updates":true}', 'structure'],
+  ['{"localHost":null}', 'structure'], ['{"localHost":[]}', 'structure'], ['{"localHost":true}', 'structure'],
 ])('classifies malformed documents and refuses to replace them: %s', async (raw, reason) => {
   const { file } = await fixture(raw)
   const result = await file.initialize()
   expect(result).toMatchObject({ kind: 'error', error: { problem: { kind: 'invalid', reason }, path: file.path } })
   expect(JSON.stringify(result)).not.toContain('secret-value')
   await expect(file.saveUpdates({ channel: 'stable' })).rejects.toMatchObject({ problem: { kind: 'invalid', reason } })
+  await expect(file.saveLocalHost(false)).rejects.toMatchObject({ problem: { kind: 'invalid', reason } })
   expect(await readFile(file.path, 'utf8')).toBe(raw)
+})
+
+it('starts the local Host when its section or field is absent and reads an explicit value', async () => {
+  const { root, file } = await fixture('{"updates":{"allowTestAuthPopupWindow":true}}')
+  expect(await file.read()).toMatchObject({ kind: 'ready', fields: { startAtLaunch: { kind: 'absent' } } })
+  expect(await readDesktopSettings(root)).toEqual({ updates: { allowTestAuthPopupWindow: true }, localHost: { startAtLaunch: true } })
+  await writeFile(file.path, '{"localHost":{"startAtLaunch":false},"other":1}')
+  expect(await file.read()).toMatchObject({ kind: 'ready', fields: { startAtLaunch: { kind: 'valid', value: false } } })
+  expect((await readDesktopSettings(root)).localHost.startAtLaunch).toBe(false)
+})
+
+it.each(['"no"', 'null', 1])('defaults an invalid local Host field to enabled without hiding the popup preference: %s', async (startAtLaunch) => {
+  const { root, file } = await fixture(`{"localHost":{"startAtLaunch":${startAtLaunch}},"updates":{"allowTestAuthPopupWindow":true}}`)
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  expect(await file.read()).toMatchObject({ kind: 'ready', fields: {
+    startAtLaunch: { kind: 'invalid', error: { problem: { kind: 'invalid', reason: 'field', field: 'startAtLaunch' }, path: file.path } },
+    allowTestAuthPopupWindow: { kind: 'valid', value: true },
+  } })
+  expect(await readDesktopSettings(root)).toEqual({ updates: { allowTestAuthPopupWindow: true }, localHost: { startAtLaunch: true } })
+  expect(console.warn).toHaveBeenCalledTimes(1)
+  expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(file.path),
+    expect.objectContaining({ problem: { kind: 'invalid', reason: 'field', field: 'startAtLaunch' } }))
+})
+
+it('saves the local Host preference alone and leaves updates and unknown fields in place', async () => {
+  const { file } = await fixture('{"updates":{"channel":"stable","allowTestAuthPopupWindow":true,"future":1},"localHost":{"future":2},"other":1}')
+  await expect(file.saveLocalHost(false)).resolves.toBeUndefined()
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({
+    updates: { channel: 'stable', allowTestAuthPopupWindow: true, future: 1 },
+    localHost: { future: 2, startAtLaunch: false }, other: 1,
+  })
+  expect(await file.read()).toMatchObject({ kind: 'ready', fields: { startAtLaunch: { kind: 'valid', value: false } } })
+  await file.saveUpdates({ channel: 'nightly' })
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toMatchObject({
+    updates: { channel: 'nightly', allowTestAuthPopupWindow: true }, localHost: { future: 2, startAtLaunch: false },
+  })
+  await file.saveLocalHost(true)
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toMatchObject({ localHost: { future: 2, startAtLaunch: true } })
+})
+
+it('creates only the local Host section when saving into a document without one', async () => {
+  const { file } = await fixture()
+  await file.saveLocalHost(false)
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ localHost: { startAtLaunch: false } })
+})
+
+it('reports an uncertain local Host save without reporting success', async () => {
+  const { file } = await fixture('{"localHost":{"startAtLaunch":true}}')
+  vi.spyOn(atomic, 'writeFileAtomic').mockRejectedValue(new Error('write failed'))
+  await expect(file.saveLocalHost(false)).rejects.toMatchObject({ problem: {
+    kind: 'write', operation: 'save', effect: 'unknown',
+  } })
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ localHost: { startAtLaunch: true } })
+  await expect(fs.access(`${file.path}.lock`)).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
 it('keeps an invalid channel independent from the popup preference and repairs only the selected field', async () => {
@@ -83,8 +139,9 @@ it('serializes initializers and patches from separate storage instances without 
   const { root, file } = await fixture()
   const other = new DesktopSettingsFile(root)
   await Promise.all([file.initialize(), other.initialize()])
-  await Promise.all([file.saveUpdates({ channel: 'stable' }), other.saveUpdates({ allowTestAuthPopupWindow: true })])
-  expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ updates: { channel: 'stable', allowTestAuthPopupWindow: true } })
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ updates: { allowTestAuthPopupWindow: false }, localHost: { startAtLaunch: true } })
+  await Promise.all([file.saveUpdates({ channel: 'stable' }), other.saveUpdates({ allowTestAuthPopupWindow: true }), file.saveLocalHost(false)])
+  expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ updates: { channel: 'stable', allowTestAuthPopupWindow: true }, localHost: { startAtLaunch: false } })
   await expect(fs.access(`${file.path}.lock`)).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
