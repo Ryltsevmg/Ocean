@@ -28,7 +28,7 @@ import TypertRegistry from '@ocean/ocean-typert-registry'
 import { z } from 'zod'
 import TypertGatewayService, { type TypertRemoteEventDispatch } from '@ocean/ocean-api-gateway'
 import { callResources, eventResources } from '../src/access.ts'
-import { actionsOfScopes, DEVICE_SCOPE_ACTIONS } from '../src/device-scope-actions.ts'
+import { actionsOfScopes, DEVICE_SCOPE_ACTIONS, scopeRefusalReason } from '../src/device-scope-actions.ts'
 import { provideBrowserCredentials } from './browser-credentials.ts'
 import { ownerPeer, peerFor } from './peer.ts'
 
@@ -245,17 +245,17 @@ function strictCodec(name: string, create: () => z.ZodType): InvocationParameter
   return { mode: 'strict', typeSymbol: `@fixture/access#${name}`, create }
 }
 
-/** Give each listed fixture method a strict descriptor with these parameters. */
-function registerStrict(ctx: Context, methods: Readonly<Record<string, readonly InvocationParameterDescriptor[]>>): void {
+/** Give each listed method of one fixture namespace a strict descriptor with these parameters. */
+function registerStrict(ctx: Context, methods: Readonly<Record<string, readonly InvocationParameterDescriptor[]>>, namespace = 'accessFixture'): void {
   ctx.typert.register({
     package: '@fixture/gateway-access-strict',
     face: 'host',
     schemas: [],
     model: { services: [], events: [], objects: [] },
     invocations: Object.entries(methods).map(([method, parameters]) => ({
-      id: `@fixture/gateway-access-strict#accessFixture/${method}`,
+      id: `@fixture/gateway-access-strict#${namespace}/${method}`,
       service: 'accessFixture',
-      namespace: 'accessFixture',
+      namespace,
       method,
       invocation: { kind: 'direct' },
       parameters,
@@ -305,7 +305,7 @@ it('denies every action once no login of the device is live, and without a Conne
   expect(decide()).toBe('allow')
 })
 
-it('keeps the union of every scope identical to the actions earlier releases allowed every device', () => {
+it('lists the union of every scope in full and without a repeat', () => {
   const union = new Set(DEVICE_SCOPES.flatMap(scope => DEVICE_SCOPE_ACTIONS[scope]))
   expect(DEVICE_SCOPES.flatMap(scope => DEVICE_SCOPE_ACTIONS[scope])).toHaveLength(union.size)
   expect([...union].sort()).toEqual([
@@ -323,6 +323,12 @@ it('keeps the union of every scope identical to the actions earlier releases all
     'userQuestions/attachWait', 'userQuestions/answer',
     'event:api-session/activity', 'event:api-session/added', 'event:api-session/error',
     'event:api-session/removed', 'event:api-session/status',
+    'session/fork', 'session/updateQueue', 'workspace/rename', 'workspace/delete', 'workspace/insertBefore',
+    'workspace/insertSessionBefore', 'workspace/archiveSession', 'workspace/unarchiveSession',
+    'workspace/pinSession', 'workspace/unpinSession',
+    'officeKit/render', 'officeKit/generation', 'directoryPicker/createDirectory',
+    'terminal/environment', 'terminal/shells', 'terminal/watch', 'terminal/retain', 'terminal/rename',
+    'llm/discoverModels', 'permissionPresets/catalog', 'event:llm/adapters-updated', 'event:credentials/record-updated',
   ].sort())
   expect(actionsOfScopes(['files:write']).has('fileUploads/upload')).toBe(true)
 })
@@ -351,6 +357,35 @@ it('grants device session actions across resources and denies unlisted actions',
   })
   expect(ctx.remoteAccess.decide({ principal, action: 'accessFixture/open', resources })).toEqual({
     kind: 'deny', reason: 'no-allow',
+  })
+})
+
+/** Each action the scope map lists under one scope, with that scope. */
+const MAPPED_ACTIONS: ReadonlyArray<readonly [action: RemoteAccessAction, scope: DeviceScope]> = [
+  ['session/fork', 'sessions:write'], ['session/updateQueue', 'sessions:write'], ['workspace/rename', 'sessions:write'],
+  ['workspace/delete', 'sessions:write'], ['workspace/insertBefore', 'sessions:write'], ['workspace/insertSessionBefore', 'sessions:write'],
+  ['workspace/archiveSession', 'sessions:write'], ['workspace/unarchiveSession', 'sessions:write'],
+  ['workspace/pinSession', 'sessions:write'], ['workspace/unpinSession', 'sessions:write'],
+  ['officeKit/render', 'files:read'], ['officeKit/generation', 'files:read'],
+  ['directoryPicker/createDirectory', 'files:write'],
+  ['terminal/environment', 'terminal:operate'], ['terminal/shells', 'terminal:operate'], ['terminal/watch', 'terminal:operate'],
+  ['terminal/retain', 'terminal:operate'], ['terminal/rename', 'terminal:operate'],
+  ['llm/discoverModels', 'settings:manage'], ['permissionPresets/catalog', 'settings:manage'],
+  ['event:llm/adapters-updated', 'settings:manage'], ['event:credentials/record-updated', 'settings:manage'],
+]
+
+describe('device scope refusal reason', () => {
+  it.each(MAPPED_ACTIONS)('allows %s to a device holding every scope and refuses it with %s to a device lacking that scope', async (action, scope) => {
+    const { ctx } = await setup()
+    holdScopes(ctx, { [DEVICE]: DEVICE_SCOPES, lacking: DEVICE_SCOPES.filter(held => held !== scope) })
+    const decide = (deviceId: string) => ctx.remoteAccess.decide({ principal: deviceOf(deviceId), action, resources: [GLOBAL] })
+    expect(decide(DEVICE)).toEqual({ kind: 'allow' })
+    expect(decide('lacking')).toEqual({ kind: 'deny', reason: `scope:${scope}` })
+  })
+
+  it('leaves no-allow for an action no scope lists', () => {
+    expect(scopeRefusalReason('settings/openSettingsDocument')).toBeUndefined()
+    expect(scopeRefusalReason('session/fork')).toBe('scope:sessions:write')
   })
 })
 
@@ -387,6 +422,17 @@ describe('Gateway access checks', () => {
     hold(GLOBAL)
     await expect(call(ctx, guest, 'open')).resolves.toBe('test-guest')
     expect(fixture.principals).toEqual([GUEST])
+  })
+
+  it('refuses a device call with the scope that lists its action before the method runs', async () => {
+    const { ctx } = await setup()
+    holdScopes(ctx, { [DEVICE]: ['sessions:read'] })
+    registerStrict(ctx, { environment: [] }, 'terminal')
+    await expect(ctx.typertGateway.invoke({ peer: peerFor(ctx, deviceOf(DEVICE)), namespace: 'terminal', method: 'environment', args: {} })).rejects.toMatchObject({
+      code: 'remote-access/denied',
+      message: 'remote access: terminal/environment: access denied (scope:terminal:operate)',
+      details: { action: 'terminal/environment', reason: 'scope:terminal:operate' },
+    })
   })
 
   it('hands remoteAccess the endpoint action, the resolved resources, and the call arguments', async () => {

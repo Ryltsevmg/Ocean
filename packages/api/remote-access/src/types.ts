@@ -121,7 +121,9 @@ export interface RemoteAccessDeniedDetails {
   /**
    * A condition's or `explain()`'s reason, `no-allow`, or `policy-failed`;
    * the Gateway refuses a call whose resources are invalid with
-   * `resource-invalid` before `decide()` is asked.
+   * `resource-invalid` before `decide()` is asked. The Gateway's device policy
+   * names each scope listing the action as `scope:<name>`, several joined by `|`;
+   * an action no scope lists stays `no-allow`.
    */
   readonly reason: string
 }
