@@ -62,6 +62,7 @@ None; the package does not assemble or send provider requests.
 <a id="known-limitations-and-deferred-work"></a>
 
 - The catalogue does not scan Git repositories or registries. Only offers with a reviewed archive in the public release channel appear.
+- One theme offer covers every palette: `@local/ocean-theme-picker` applies any bundled theme from its own settings. The per-palette bundles in the plugin workspace stay unpublished on purpose, because a card for each of them would repeat one plugin's purpose twenty-eight times.
 - Publication and removal do not update or modify packages already installed in profiles.
 - Published-archive upgrades are not automatic.
 - The long description is the text the index carries, not a live read of the installed package: an offer published without one shows no details section even after installation. The index omits a document's relative images, because it serves no package files, so a document that holds nothing but images publishes no long description at all.
