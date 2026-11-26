@@ -44,4 +44,6 @@ export const ja = {
   'markdown.truncatedCharacters': '… {total}文字で省略',
   'number.thousand': '{value}千',
   'number.million': '{value}百万',
+  'remoteAccess.denied.scope': 'このデバイスには Host 上でこの操作を行う権限がありません。Host の所有者に {scope} 権限の付与を依頼してください。',
+  'remoteAccess.denied.owner': 'この操作は Host の所有者のみが実行できます。接続したデバイスでは実行できません。',
 } satisfies Record<keyof typeof en, string>

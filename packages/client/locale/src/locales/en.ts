@@ -43,4 +43,6 @@ export const en = {
   'markdown.truncatedCharacters': '… truncated at {total} characters',
   'number.thousand': '{value}K',
   'number.million': '{value}M',
+  'remoteAccess.denied.scope': 'This device isn\'t allowed to do this on the Host. Ask the Host owner to grant it the {scope} right.',
+  'remoteAccess.denied.owner': 'Only the Host owner can do this; a connected device cannot.',
 } satisfies Record<CommonKey, string>

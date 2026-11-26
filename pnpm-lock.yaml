@@ -5222,9 +5222,15 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-client-store':
         specifier: workspace:*
         version: link:../store
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       '@ocean/ocean-util-code-language':
         specifier: workspace:*
         version: link:../../util/code-language

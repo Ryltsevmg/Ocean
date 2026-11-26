@@ -44,4 +44,6 @@ export const ru = {
   'markdown.truncatedCharacters': '… обрезано на {total} символах',
   'number.thousand': '{value} тыс.',
   'number.million': '{value} млн',
+  'remoteAccess.denied.scope': 'У этого устройства нет права делать это на Host. Попросите владельца Host выдать ему право {scope}.',
+  'remoteAccess.denied.owner': 'Это доступно только владельцу Host; подключённое устройство не может этого сделать.',
 } satisfies Record<keyof typeof en, string>
