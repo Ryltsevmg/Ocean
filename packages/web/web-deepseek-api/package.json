@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-web-deepseek-api",
   "description": "DeepSeek Search and Fetch API providers for the Ocean web capability seam (ctx.web)",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-storage-sqlite",
   "description": "SQLite storage backend (kv facet) for the Ocean storage hub",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publishConfig": {
     "access": "public"
   },

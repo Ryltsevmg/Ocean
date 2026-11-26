@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-skill-office",
   "description": "Bundled Word, PowerPoint, and Excel workflows and Office operation guidance",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publishConfig": {
     "access": "public"
   },
