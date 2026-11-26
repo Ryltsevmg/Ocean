@@ -326,6 +326,47 @@ export function runDeviceConnect(ctx: Context): void {
       return () => { detach(); controller.abort() }
     }, 'connect: run remote command')
   }
+  /**
+   * Pair without running a command. The token is the only thing worth keeping,
+   * and running a command just to discard its output hides it in noise.
+   */
+  const pairAlone = (): void => {
+    const options = program.opts<{ url?: string; tokenEnv?: string; tokenStdin?: boolean; pair?: string }>()
+    // Bare `ocean connect` is a usage error, so its help exits non-zero as it did before pairing existed.
+    if (options.pair === undefined) { program.help({ error: true }); return }
+    const pairing = parsePairing(options.pair)
+    if (pairing === undefined) { program.error('ocean connect: --pair needs a pairing link from ocean remote-device pair'); return }
+    if (options.url !== undefined || options.tokenEnv !== undefined || options.tokenStdin === true) {
+      program.error('ocean connect: --pair takes a pairing link alone, without --url, --token-env, or --token-stdin'); return
+    }
+    const client = new DeviceClient(pairing.address)
+    const ready = ctx.get('appReady')
+    const exit = ctx.get('appExit')
+    if (ready === undefined || exit === undefined) throw new Error('ocean connect requires the profile launcher')
+    ctx.effect(() => {
+      const controller = new AbortController()
+      const detach = ready.onReady(() => {
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)])
+        void (async () => {
+          try {
+            const paired = await client.pair(pairing.secret, signal)
+            // The link is spent even if this process loses the token, so name where the token can be kept.
+            console.error(`ocean connect: paired device ${paired.id}. Keep its token for --token-env: ${paired.token}`)
+            exit(0)
+          } catch (error) {
+            if (controller.signal.aborted) return
+            console.error(pairingFailure(error)
+              ?? 'ocean connect: pairing failed. Check the HTTPS address, certificate, and protocol version.')
+            exit(1)
+          }
+        })()
+      })
+      return () => { detach(); controller.abort() }
+    }, 'connect: pair without a command')
+  }
+  program.action(pairAlone)
+  // An action handler suppresses the implicit `help` command, so it is restored here.
+  program.helpCommand(true)
   program.command('list').description('List remote sessions as JSON')
     .action(() => { run({ endpoint: 'session/list', args: { _request: {} } }) })
   program.command('create').description('Create a remote session')

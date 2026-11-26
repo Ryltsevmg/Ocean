@@ -290,6 +290,23 @@ describe('connect pairing', () => {
     expect(host.callsTo('DELETE', '/connect')).toHaveLength(1)
   })
 
+  it('pairs without a command and prints the token to keep', async () => {
+    boot = await bootDeviceProfile('connect', ['--pair', appLink])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(host.callsTo('POST', '/connect/pair')).toHaveLength(1)
+    // No command ran, so the token is the whole result.
+    expect(host.callsTo('POST', '/connect')).toEqual([])
+    expect(errors).toEqual([paired])
+  })
+
+  it('shows help when it is given neither a command nor a pairing link', async () => {
+    boot = await bootDeviceProfile('connect', [])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    // A usage error writes its help to stderr, as it did before pairing existed.
+    expect(boot.observed.err).toContain('Usage: ocean connect')
+    expect(host.calls).toEqual([])
+  })
+
   it('refuses --pair with text that is not a pairing link', async () => {
     boot = await bootDeviceProfile('connect', ['--pair', 'ocean://pair?label=Phone', 'list'])
     expect(boot.exits).toEqual([1])
