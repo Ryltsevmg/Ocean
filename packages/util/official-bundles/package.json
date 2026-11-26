@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-official-bundles",
   "description": "Installation-owned lists of official ocean bundles (shipped profile templates, optional, on-demand, and retired bundles) and the plugin manager's protected and presented packages",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-api-remotes",
   "description": "Remote BFF assembly for application-selected Host capabilities",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publishConfig": {
     "access": "public"
   },

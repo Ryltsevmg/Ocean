@@ -1,6 +1,6 @@
 {
   "name": "@ocean/ocean-plugin-market",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Curated plugin catalog for Ocean",
   "type": "module",
   "exports": {
@@ -45,7 +45,7 @@
     }
   },
   "engines": {
-    "ocean": ">=1.0.0 <1.1.0"
+    "ocean": ">=1.1.0 <1.2.0"
   },
   "scripts": {
     "bundle": "tsdown",
