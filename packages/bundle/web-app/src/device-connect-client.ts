@@ -16,6 +16,8 @@ import { parseCmdline } from '@ocean/ocean-cmdline'
 interface CommandCall {
   endpoint: string
   args: Record<string, unknown>
+  /** Exchange the pairing link and print the token, without submitting the call. */
+  pairOnly?: boolean
   mutation?: boolean
   requestId?: string
   stream?: boolean
@@ -268,6 +270,7 @@ export function runDeviceConnect(ctx: Context): void {
               token = paired.token
               console.error(`ocean connect: paired device ${paired.id}. Keep its token for --token-env: ${token}`)
             }
+            if (call.pairOnly === true) { exit(0); return }
             const host = await client.login(token, signal)
             let result: CommandResult
             try {
@@ -326,6 +329,14 @@ export function runDeviceConnect(ctx: Context): void {
       return () => { detach(); controller.abort() }
     }, 'connect: run remote command')
   }
+  // A bare invocation pairs and stops there: the token is the whole result, so no
+  // command runs. Without --pair it stays a usage error, as it was before pairing.
+  program.action((options: { pair?: string }) => {
+    if (options.pair === undefined) { program.help({ error: true }); return }
+    run({ endpoint: 'session/list', args: { _request: {} }, pairOnly: true })
+  })
+  // An action handler suppresses the implicit `help` command, so it is restored here.
+  program.helpCommand(true)
   program.command('list').description('List remote sessions as JSON')
     .action(() => { run({ endpoint: 'session/list', args: { _request: {} } }) })
   program.command('create').description('Create a remote session')
