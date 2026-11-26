@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import {
-  archiveName, parseSshTarget, provisionRemoteHost, releaseUrls, remoteSsh, RemoteSshError, type RemoteSshRun,
+  archiveName, chooseServePort, parseSshTarget, provisionRemoteHost, releaseUrls, remoteSsh, RemoteSshError,
+  servePortsInUse, type RemoteSshRun,
 } from '../src/remote-ssh.ts'
 
 const original = remoteSsh.run
@@ -53,7 +54,7 @@ it('names the archive and its checksum manifest for one version and architecture
 })
 
 it('prepares and starts a Host, reporting every step and returning the advertised address', async () => {
-  script(LINUX, {}, {}, {}, CAPS, READY, PAIRED)
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
   const steps: string[] = []
   const result = await provisionRemoteHost({
     host: 'bigpc', version: '1.0.0', onProgress: (progress) => { steps.push(`${progress.step}:${String(progress.done)}`) },
@@ -80,19 +81,19 @@ it('prepares and starts a Host, reporting every step and returning the advertise
   expect(scripts[2]).toContain('sha256sum download.tar.gz')
   expect(scripts[3]).toContain('--strip-components=1')
   expect(scripts[4]).toContain('serve --help')
-  expect(scripts[5]).toContain('--tailscale-serve')
-  expect(scripts[5]).toContain('--tailscale-serve-port 443')
+  expect(scripts[7]).toContain('--tailscale-serve')
+  expect(scripts[7]).toContain('--tailscale-serve-port 443')
   // The mapping runs through a wrapper that falls back to passwordless sudo, and the socket directory is private.
   expect(scripts[5]).toContain('chmod 700 "$root" "$root/run"')
   expect(scripts[5]).toContain('sudo -n /usr/bin/tailscale')
-  expect(scripts[5]).toContain('--tailscale-command "$wrapper"')
-  expect(scripts[5]).toContain('--device-admin-socket')
+  expect(scripts[7]).toContain('--tailscale-command "$wrapper"')
+  expect(scripts[7]).toContain('--device-admin-socket')
   // The new device is minted on the Host itself, because no token exists yet.
-  expect(scripts[6]).toContain('pair desktop --ttl 600')
+  expect(scripts[8]).toContain('pair desktop --ttl 600')
 })
 
 it('uses wget when the machine has no curl', async () => {
-  script({ ...LINUX, stdout: 'Linux\nx86_64\nmissing:curl\n/usr/bin/tar\n/usr/bin/sha256sum\n' }, {}, {}, {}, CAPS, READY, PAIRED)
+  script({ ...LINUX, stdout: 'Linux\nx86_64\nmissing:curl\n/usr/bin/tar\n/usr/bin/sha256sum\n' }, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
   await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })
   expect(scripts[1]).toContain('wget -q -O "$archive"')
   expect(scripts[1]).toContain('wget -q -O "$sums"')
@@ -101,7 +102,7 @@ it('uses wget when the machine has no curl', async () => {
 
 it('accepts arm64 and the vendor spellings of both architectures', async () => {
   for (const [reported, arch] of [['aarch64', 'arm64'], ['arm64', 'arm64'], ['amd64', 'x64']] as const) {
-    script({ ...LINUX, stdout: `Linux\n${reported}\n/usr/bin/curl\n/usr/bin/tar\n/usr/bin/sha256sum\n` }, {}, {}, {}, CAPS, READY, PAIRED)
+    script({ ...LINUX, stdout: `Linux\n${reported}\n/usr/bin/curl\n/usr/bin/tar\n/usr/bin/sha256sum\n` }, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
     await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })
     expect(scripts[1]).toContain(`linux-${arch}-unsigned`)
   }
@@ -164,12 +165,12 @@ it('reports a failed extraction and a Host that never became ready', async () =>
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).rejects.toMatchObject({
     code: 'DESKTOP_SSH_EXTRACT_FAILED', step: 'extract',
   })
-  script(LINUX, {}, {}, {}, CAPS, { status: 1, stderr: 'TailscaleServeError: could not publish\n' })
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, { status: 1, stderr: 'TailscaleServeError: could not publish\n' })
   const refused = await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' }).catch((error: unknown) => error)
   // The Host's own last line explains the refusal, so the dialog can name it.
   expect(refused).toMatchObject({ code: 'DESKTOP_SSH_SERVE_FAILED', step: 'serve' })
   expect((refused as Error).message).toContain('could not publish')
-  script(LINUX, {}, {}, {}, CAPS, { status: null, error: new Error('connection closed') })
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, { status: null, error: new Error('connection closed') })
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).rejects.toMatchObject({ code: 'DESKTOP_SSH_SERVE_FAILED' })
 })
 
@@ -181,12 +182,12 @@ it('refuses a ready line that is not an HTTPS address', async () => {
   script(LINUX, {}, {}, {}, CAPS, { stdout: '' })
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).rejects.toMatchObject({ code: 'DESKTOP_SSH_SERVE_FAILED' })
   // Trailing blank lines do not hide the ready line.
-  script(LINUX, {}, {}, {}, CAPS, { stdout: 'ocean serve: https://bigpc.tail71ee4f.ts.net/\n\n' }, PAIRED)
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, { stdout: 'ocean serve: https://bigpc.tail71ee4f.ts.net/\n\n' }, PAIRED)
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).resolves.toMatchObject({ address: 'https://bigpc.tail71ee4f.ts.net/' })
 })
 
 it('stops at the next step boundary when the caller cancels', async () => {
-  script(LINUX, {}, {}, {}, CAPS, READY, PAIRED)
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
   const cancel = new AbortController()
   cancel.abort(new Error('cancelled by caller'))
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0', signal: cancel.signal }))
@@ -225,27 +226,80 @@ it('runs a real executable through the production hook', async () => {
 })
 
 it('keeps the destination out of the remote script, so a host name cannot alter it', async () => {
-  script(LINUX, {}, {}, {}, CAPS, READY, PAIRED)
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
   await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })
   for (const script of scripts) expect(script).not.toContain('bigpc')
   expect(vi.isMockFunction(remoteSsh.run)).toBe(false)
 })
 
 it('reports a Host that cannot mint a pairing link', async () => {
-  script(LINUX, {}, {}, {}, CAPS, READY, { status: 1, stderr: 'admin socket refused' })
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, { status: 1, stderr: 'admin socket refused' })
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).rejects.toMatchObject({
     code: 'DESKTOP_SSH_PAIR_FAILED', step: 'pair',
   })
-  script(LINUX, {}, {}, {}, CAPS, READY, { stdout: 'not json' })
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, { stdout: 'not json' })
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).rejects.toMatchObject({ code: 'DESKTOP_SSH_PAIR_FAILED' })
-  script(LINUX, {}, {}, {}, CAPS, READY, { stdout: '{"expiresAt":"soon"}' })
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, { stdout: '{"expiresAt":"soon"}' })
   await expect(provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })).rejects.toMatchObject({ code: 'DESKTOP_SSH_PAIR_FAILED' })
 })
 
+it('reads the HTTPS ports a machine already serves from the Host\'s own status shape', () => {
+  const json = JSON.stringify({
+    Web: {
+      'bigpc.tail71ee4f.ts.net': { Handlers: { '/': { Proxy: 'http://100.72.163.58:49374' } } },
+      'bigpc.tail71ee4f.ts.net:8443': { Handlers: { '/': { Proxy: 'http://127.0.0.1:3080' } } },
+      'other.tail71ee4f.ts.net:10443': { Handlers: {} },
+    },
+    TCP: { '2222': { TCPForward: '127.0.0.1:22' }, '9443': { HTTPS: true } },
+  })
+  // An HTTPS entry is this Host's own publication, not another site's claim on the port.
+  expect([...servePortsInUse(json)].sort((left, right) => left - right)).toEqual([443, 2222, 8443, 10443])
+  // Unreadable or empty output says nothing about occupied ports.
+  expect(servePortsInUse('not json').size).toBe(0)
+  expect(servePortsInUse('').size).toBe(0)
+  expect(servePortsInUse('null').size).toBe(0)
+})
+
+it('chooses a free port, keeping 443 when the machine serves nothing there', () => {
+  expect(chooseServePort(undefined, new Set())).toBe(443)
+  expect(chooseServePort(undefined, new Set([443]))).toBe(8443)
+  expect(chooseServePort(undefined, new Set([443, 8443, 9443]))).toBe(10443)
+  // A pinned port is honoured even when it is taken: the Host reports the refusal.
+  expect(chooseServePort(9443, new Set([9443]))).toBe(9443)
+})
+
+it('publishes on a free port when another site already holds 443', async () => {
+  const status = { status: 0, stdout: JSON.stringify({ Web: { 'bigpc.tail71ee4f.ts.net': { Handlers: {} } } }), stderr: '' }
+  script(LINUX, {}, {}, {}, CAPS, {}, status, { ...READY, stdout: 'ocean serve: https://bigpc.tail71ee4f.ts.net:8443/\n' }, PAIRED)
+  const result = await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })
+  expect(scripts[7]).toContain('--tailscale-serve-port 8443')
+  expect(result.address).toBe('https://bigpc.tail71ee4f.ts.net:8443/')
+})
+
+it('stops the Host an earlier run started, which still owns the administrator socket', async () => {
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
+  await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' })
+  // The Host refuses to share an existing socket, so the previous process and its socket go first.
+  expect(scripts[7]).toContain('kill "$previous"')
+  expect(scripts[7]).toContain('rm -f "$root/run/admin.sock"')
+})
+
+it('stops waiting as soon as the Host process dies, instead of the whole two minutes', async () => {
+  const dead = {
+    status: 1,
+    stderr: 'TailscaleServeError: --tailscale-serve found port 443 already used\n',
+  }
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, dead)
+  const refused = await provisionRemoteHost({ host: 'bigpc', version: '1.0.0' }).catch((error: unknown) => error)
+  expect(refused).toMatchObject({ code: 'DESKTOP_SSH_SERVE_FAILED', step: 'serve' })
+  // The start script no longer sleeps the full budget when the process is gone.
+  expect(scripts[7]).toContain('kill -0')
+})
+
 it('publishes on the Tailscale port it was given, so an occupied 443 is not replaced', async () => {
-  script(LINUX, {}, {}, {}, CAPS, READY, PAIRED)
+  script(LINUX, {}, {}, {}, CAPS, {}, {}, READY, PAIRED)
   await provisionRemoteHost({ host: 'bigpc', version: '1.0.0', servePort: 8444 })
-  expect(scripts[5]).toContain('--tailscale-serve-port 8444')
+  expect(scripts[7]).toContain('--tailscale-serve-port 8444')
 })
 
 it('refuses an archive older than this app, instead of reporting an unknown option', async () => {
