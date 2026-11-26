@@ -11,15 +11,31 @@ import { z } from 'zod'
 import { InvalidInstallSpecError, parseInstallSpec } from '../../packages/boot/plugin-manager/src/install-spec.ts'
 import { HarnessError } from '../../packages/util/error/src/index.ts'
 import { canSelectBundleVersion } from '../../packages/util/official-bundles/src/bundles.ts'
+import {
+  languageChain, readPackageDocument, README_NAMES, type DetailFiles,
+} from '../../packages/util/plugin-detail/src/index.ts'
 
 const RELEASE_URL = 'https://github.com/Ryltsevmg/Ocean/releases/download'
-const CATALOG_LIMIT = 512 * 1024
+/** The version-2 index carries a plugin's artwork and long description, so it is larger than the metadata-only one. */
+const CATALOG_LIMIT = 2 * 1024 * 1024
+const INVENTORY_LIMIT = 512 * 1024
 const ARCHIVE_LIMIT = 64 * 1024 * 1024
 const UNPACKED_LIMIT = 256 * 1024 * 1024
 const MANIFEST_LIMIT = 1024 * 1024
 const MANIFEST_PATH = 'package/package.json'
+/** Largest package icon the catalogue carries, matching the manifest declaration's own limit. */
+const ICON_LIMIT = 256 * 1024
+/** Largest detail document stored per language. */
+const DETAIL_LIMIT = 64 * 1024
 const USAGE = 'Usage: pnpm exec tsx scripts/release/plugin-catalog.ts --inventory <file>'
 const utf8 = new TextDecoder('utf-8', { fatal: true })
+
+/** Languages the catalogue stores a detail document for, in display-preference order. */
+const DETAIL_LANGUAGES = ['en', 'ru', 'zh', 'ja', 'de', 'es', 'fr', 'pt', 'ko'] as const
+/** Icon media types the catalogue serves inline as data URLs. */
+const ICON_TYPES = new Map([
+  ['.png', 'image/png'], ['.jpg', 'image/jpeg'], ['.jpeg', 'image/jpeg'], ['.svg', 'image/svg+xml'], ['.webp', 'image/webp'],
+])
 
 const platformList = z.array(z.enum(['darwin', 'linux', 'win32'])).min(1).max(3)
   .refine(values => new Set(values).size === values.length, 'must not contain duplicate platforms')
@@ -94,11 +110,24 @@ function portablePath(path: string): boolean {
     && !/^(?:aux|con|nul|prn|(?:com|lpt)[1-9¹²³])(?:\.|$)/iu.test(segment))
 }
 
-function inspectArchive(bytes: Buffer): { manifest: Record<string, unknown>; files: ReadonlySet<string> } {
+/** Files whose bytes the catalogue needs: the manifest, locale files, Markdown documents, and package icons. */
+function neededContent(path: string): boolean {
+  if (path === MANIFEST_PATH) return true
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  return /\.(?:md|markdown)$/iu.test(name) || README_NAMES.includes(name)
+    || /^locale\/[^/]+\.json$/u.test(path.slice('package/'.length)) || /^icon\.(?:png|jpe?g|svg|webp)$/iu.test(name)
+}
+
+function inspectArchive(bytes: Buffer): {
+  manifest: Record<string, unknown>
+  files: ReadonlySet<string>
+  contents: ReadonlyMap<string, Buffer>
+} {
   const data = gunzipSync(bytes, { maxOutputLength: UNPACKED_LIMIT })
   const paths = new Map<string, string>()
   const directories = new Map<string, string>()
   const files = new Set<string>()
+  const contents = new Map<string, Buffer>()
   const pathKey = (path: string) => path.normalize('NFC').toLowerCase()
   const manifestChunks: Buffer[] = []
   const tarState = { eof: false }
@@ -120,6 +149,10 @@ function inspectArchive(bytes: Buffer): { manifest: Record<string, unknown>; fil
       if (file && path === MANIFEST_PATH) {
         if (entry.size > MANIFEST_LIMIT) throw new Error(`package.json must not exceed ${MANIFEST_LIMIT} bytes`)
         entry.on('data', (chunk: Buffer) => { manifestChunks.push(chunk) })
+      } else if (file && neededContent(path) && entry.size <= ICON_LIMIT) {
+        const chunks: Buffer[] = []
+        entry.on('data', (chunk: Buffer) => { chunks.push(chunk) })
+        entry.on('end', () => { contents.set(path, Buffer.concat(chunks)) })
       }
     },
   })
@@ -148,7 +181,76 @@ function inspectArchive(bytes: Buffer): { manifest: Record<string, unknown>; fil
   }
   const manifest: unknown = JSON.parse(utf8.decode(Buffer.concat(manifestChunks)))
   if (!isRecord(manifest)) throw new Error('package.json must be an object')
-  return { manifest, files }
+  return { manifest, files, contents }
+}
+
+/**
+ * The package icon as an inline data URL, so a catalogue card needs no second request.
+ * @param manifest - the archive's package.json.
+ * @param files - every regular file path in the archive.
+ * @param contents - bytes collected for the files the catalogue reads.
+ * @returns the data URL, or undefined when the manifest declares no icon.
+ */
+function iconDataUrl(
+  manifest: Record<string, unknown>, files: ReadonlySet<string>, contents: ReadonlyMap<string, Buffer>,
+): string | undefined {
+  const declared = manifest.icon ?? (isRecord(manifest.exports) ? manifest.exports['./icon'] : undefined)
+  if (declared === undefined) return undefined
+  if (typeof declared !== 'string') throw new Error('package.json icon must be a string')
+  const relative = declared.replace(/^\.\//u, '')
+  if (!portablePath(relative) || relative.startsWith('/')) throw new Error('package.json icon must be a relative path')
+  const path = `package/${relative}`
+  const mediaType = ICON_TYPES.get(relative.slice(relative.lastIndexOf('.')).toLowerCase())
+  if (mediaType === undefined) throw new Error(`package.json icon must be PNG, JPEG, SVG or WebP: ${declared}`)
+  const icon = contents.get(path)
+  if (icon === undefined) {
+    throw new Error(files.has(path) ? `icon exceeds ${ICON_LIMIT} bytes` : `package.json icon ${declared} is not a regular file`)
+  }
+  return `data:${mediaType};base64,${icon.toString('base64')}`
+}
+
+/**
+ * Drop images the index cannot serve. A document's pictures live inside its package, which the catalogue does not
+ * distribute, so a relative destination would render as its alt text; absolute addresses stay.
+ * @param markdown - the document text.
+ * @returns the text without relative images and the blank lines they leave.
+ */
+function withoutRelativeImages(markdown: string): string {
+  return markdown
+    .replace(/!\[[^\]]*\]\(\s*([^)\s]+)(?:\s+"[^"]*")?\s*\)/gu,
+      (match, destination: string) => /^(?:https?:|data:)/iu.test(destination) ? match : '')
+    .split('\n').map(line => line.trimEnd()).join('\n')
+    .replace(/\n{3,}/gu, '\n\n')
+    .trim()
+}
+
+/** Detail documents of one archive, read in the same order a bundle page uses. */
+async function detailText(contents: ReadonlyMap<string, Buffer>): Promise<Record<string, string> | undefined> {
+  const files: DetailFiles = {
+    key: 'catalog-archive',
+    read: path => Promise.resolve(contents.get(`package/${path}`)),
+    readme(dir) {
+      const prefix = dir === '' ? '' : `${dir}/`
+      for (const name of README_NAMES) {
+        const bytes = contents.get(`package/${prefix}${name}`)
+        if (bytes !== undefined) return Promise.resolve({ path: `${prefix}${name}`, bytes })
+      }
+      return Promise.resolve(undefined)
+    },
+  }
+  const signal = new AbortController().signal
+  const documents = new Map<string, string>()
+  let english: string | undefined
+  for (const language of DETAIL_LANGUAGES) {
+    const document = await readPackageDocument(files, '', languageChain(language), DETAIL_LIMIT, signal)
+    if (document === undefined) break
+    if (english === undefined) english = document.path
+    // A language that only reaches the English document, or a document with no text beside its images, adds nothing.
+    if (document.path === english && language !== 'en') continue
+    const text = withoutRelativeImages(document.markdown)
+    if (text !== '') documents.set(language, text)
+  }
+  return documents.size === 0 ? undefined : Object.fromEntries(documents)
 }
 
 function checkPlatformDeclaration(manifest: Record<string, unknown>, bundle: Record<string, unknown>, approved: ApprovedPlugin): void {
@@ -167,14 +269,14 @@ function checkPlatformDeclaration(manifest: Record<string, unknown>, bundle: Rec
   }
 }
 
-function inspectPlugin(approved: ApprovedPlugin, directory: string) {
+async function inspectPlugin(approved: ApprovedPlugin, directory: string, schemaVersion: 1 | 2) {
   const { archive, sha256: expected, ...metadata } = approved
   const path = resolve(directory, archive)
   try {
     const bytes = boundedFile(path, ARCHIVE_LIMIT)
     const sha256 = createHash('sha256').update(bytes).digest('hex')
     if (sha256 !== expected) throw new Error('archive does not match the approved sha256')
-    const { manifest, files } = inspectArchive(bytes)
+    const { manifest, files, contents } = inspectArchive(bytes)
     if (manifest.name !== approved.name || manifest.version !== approved.version) {
       throw new Error('package.json name/version do not match the approved identity')
     }
@@ -192,7 +294,16 @@ function inspectPlugin(approved: ApprovedPlugin, directory: string) {
       }
     }
     checkPlatformDeclaration(manifest, bundle, approved)
-    return { ...metadata, archive: `${RELEASE_URL}/plugin-${sha256}/plugin.tgz`, sha256 }
+    if (schemaVersion === 1) return { ...metadata, archive: `${RELEASE_URL}/plugin-${sha256}/plugin.tgz`, sha256 }
+    const icon = iconDataUrl(manifest, files, contents)
+    const detail = await detailText(contents)
+    return {
+      ...metadata,
+      ...(icon === undefined ? {} : { icon }),
+      ...(detail === undefined ? {} : { detail }),
+      archive: `${RELEASE_URL}/plugin-${sha256}/plugin.tgz`,
+      sha256,
+    }
   } catch (cause) {
     const reason = cause instanceof Error ? cause.message : String(cause)
     throw failure('PLUGIN_CATALOG_INVALID_ARCHIVE', `${approved.name}@${approved.version} (${path}): ${reason}`, cause)
@@ -203,14 +314,16 @@ function inspectPlugin(approved: ApprovedPlugin, directory: string) {
  * Read a reviewed `{ schemaVersion: 1, plugins: [...] }` inventory. Each entry supplies the catalog metadata,
  * a local `archive` path (relative to the inventory file or absolute), and its approved `sha256`.
  * @param inventoryPath - The JSON file to read; an explicit empty `plugins` list withdraws every row from the proposed catalog.
- * @returns The complete version-1 catalog JSON with a trailing newline. No files or remote state are modified.
+ * @param schemaVersion - Output index version: `2` adds each archive's icon and detail documents, `1` emits the
+ *   metadata-only index that clients predating the artwork and long descriptions read.
+ * @returns The complete catalog JSON with a trailing newline. No files or remote state are modified.
  * @throws If the inventory or any referenced archive is invalid; there is no partial catalog.
  */
-export function generatePluginCatalog(inventoryPath: string): string {
+export async function generatePluginCatalog(inventoryPath: string, schemaVersion: 1 | 2 = 2): Promise<string> {
   const path = resolve(inventoryPath)
   let inventory: z.infer<typeof inventorySchema>
   try {
-    const raw: unknown = JSON.parse(utf8.decode(boundedFile(path, CATALOG_LIMIT)))
+    const raw: unknown = JSON.parse(utf8.decode(boundedFile(path, INVENTORY_LIMIT)))
     inventory = inventorySchema.parse(raw)
     const names = new Set<string>()
     for (const plugin of inventory.plugins) {
@@ -227,31 +340,42 @@ export function generatePluginCatalog(inventoryPath: string): string {
       : cause instanceof Error ? cause.message : String(cause)
     throw failure('PLUGIN_CATALOG_INVALID_INVENTORY', `${path}: ${reason}`, cause)
   }
-  const plugins = inventory.plugins.map(plugin => inspectPlugin(plugin, dirname(path)))
+  const plugins = []
+  for (const plugin of inventory.plugins) plugins.push(await inspectPlugin(plugin, dirname(path), schemaVersion))
   plugins.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
-  const json = `${JSON.stringify({ schemaVersion: 1, plugins })}\n`
+  const json = `${JSON.stringify({ schemaVersion, plugins })}\n`
   if (Buffer.byteLength(json) > CATALOG_LIMIT) {
     throw failure('PLUGIN_CATALOG_INVALID_INVENTORY', `Catalog JSON must not exceed ${CATALOG_LIMIT} bytes`)
   }
   return json
 }
 
-function main(args: string[]): void {
+async function main(args: string[]): Promise<void> {
   let inventories: string[] | undefined
+  let schemaVersion: 1 | 2 = 2
   try {
-    const { values } = parseArgs({ args, options: { inventory: { type: 'string', multiple: true } } })
+    const { values } = parseArgs({
+      args, options: {
+        inventory: { type: 'string', multiple: true },
+        'schema-version': { type: 'string' },
+      },
+    })
     inventories = values.inventory
+    if (values['schema-version'] !== undefined) {
+      if (values['schema-version'] !== '1' && values['schema-version'] !== '2') throw new Error('unknown schema version')
+      schemaVersion = values['schema-version'] === '1' ? 1 : 2
+    }
   } catch (cause) {
     throw failure('PLUGIN_CATALOG_USAGE', USAGE, cause)
   }
   const [inventoryPath] = inventories ?? []
   if (inventories?.length !== 1 || !inventoryPath?.trim()) throw failure('PLUGIN_CATALOG_USAGE', USAGE)
-  process.stdout.write(generatePluginCatalog(inventoryPath))
+  process.stdout.write(await generatePluginCatalog(inventoryPath, schemaVersion))
 }
 
 if (import.meta.main) {
   try {
-    main(process.argv.slice(2))
+    await main(process.argv.slice(2))
   } catch (error) {
     if (!(error instanceof HarnessError)) throw error
     process.stderr.write(`${error.code}: ${error.message}\n`)

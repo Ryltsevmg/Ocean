@@ -12,6 +12,17 @@ const badges = /** @type {const} */ ({
 })
 
 /**
+ * Drop a document's leading level-one heading. A package writes its name there, and the details view already shows that
+ * name as its own title; a document that is nothing but that heading has no body to show.
+ * @param {string} markdown the resolved long description.
+ * @returns the body to render, or undefined when nothing is left.
+ */
+function detailBody(markdown) {
+  const body = markdown.replace(/^\s*#[ \t][^\n]*\n*/u, '').trimEnd()
+  return body.trim() === '' ? undefined : body
+}
+
+/**
  * Project a release and its matching profile record. Compatibility describes the published release, not the installed copy.
  * @param {PublishedPlugin} plugin a release the Host lists in the catalogue.
  * @param {BundleInfo | undefined} bundle the matching local bundle, if found.
@@ -42,6 +53,8 @@ export function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) 
 
   return {
     name, title, description, compatible, publishedVersion, state, actions, error,
+    icon: plugin.icon,
+    detail: plugin.detail === undefined ? undefined : detailBody(resolveText(plugin.detail)),
     search: [title, description, name].join(' ').toLowerCase(),
     version: readable ? bundle.version : undefined,
     installed: readable,

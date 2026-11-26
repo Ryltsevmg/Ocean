@@ -36,14 +36,15 @@ export function remoteApi(ctx) {
 }
 
 /**
- * Build the browser plugin from the shared React and modal implementations.
+ * Build the browser plugin from the shared React and primitive implementations.
  * @param {typeof import('react')} React the module loader's React.
- * @param {typeof import('@ocean/ocean-client-ui-primitives').Modal} Modal the shared client modal.
+ * @param {typeof import('@ocean/ocean-client-ui-primitives')} primitives the shared client primitives: the modal, the
+ * Markdown renderer, and the default plugin artwork.
  * @param {string} [dialogClass] the scrollable details styling; absent uses the shared modal alone.
  * @returns {{ inject: string[], apply: (ctx: import('@deepseek-ai/cordis').Context) => void }} the Cordis client plugin.
  */
-export function createMarket(React, Modal, dialogClass) {
-  const { MarketTab } = createMarketTab(React, Modal, dialogClass)
+export function createMarket(React, primitives, dialogClass) {
+  const { MarketTab } = createMarketTab(React, primitives, dialogClass)
   return {
     inject: ['slots', 'locale', 'remote', 'remote.pluginManager'],
     apply(ctx) {
