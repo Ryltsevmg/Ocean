@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-office-kit",
   "description": "Shared Office rendering, conversion, and recalculation with bounded queues and caching",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publishConfig": {
     "access": "public"
   },
