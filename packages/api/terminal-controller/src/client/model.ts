@@ -5,6 +5,9 @@ import { createSnapshotStore, type SnapshotStore } from '@ocean/ocean-client-sto
 import { Deque } from '@ocean/ocean-deque'
 import { RemoteStreamCarrierError, type ClientRemote, type RemoteStream } from '@ocean/ocean-api-gateway/client'
 import { RemoteError, remoteErrorOf, type RemoteResult, type RemoteStreamHandle, type RemoteUplinkWindow } from '@ocean/ocean-typert-protocol'
+import { accessRefusal, type AccessRefusalText } from '@ocean/ocean-client-ui-primitives'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 import type {} from '@ocean/ocean-api-terminal-controller/remote'
 import type { SessionId } from '@ocean/ocean-session/types'
 import type {
@@ -45,6 +48,8 @@ export interface TerminalViewState {
   readonly render?: TerminalRenderFrame | undefined
   readonly error?: string | undefined
   readonly issue?: TerminalViewIssue | undefined
+  /** Shared explanation of a Remote access refusal; the UI shows its `common` text in place of `error`. */
+  readonly refusal?: AccessRefusalText | undefined
 }
 
 interface InputCost {
@@ -126,7 +131,7 @@ export class TerminalView {
     if (this.loading !== undefined) return this.loading
     if (this.closing !== undefined || this.lifetime.signal.aborted) return Promise.resolve()
     const retry = this.state.getSnapshot().phase !== 'idle'
-    this.patch({ phase: 'loading', error: undefined, issue: undefined })
+    this.patch({ phase: 'loading', error: undefined, issue: undefined, refusal: undefined })
     this.loading = (async () => {
       const [environment, available] = await Promise.all([
         this.remote.environment(this.sessionId, this.lifetime.signal),
@@ -155,7 +160,7 @@ export class TerminalView {
   private stopped(): boolean { return this.lifetime.signal.aborted || this.closing !== undefined }
 
   private async create(environment: TerminalEnvironment, shellPath?: string): Promise<void> {
-    this.patch({ phase: 'creating', error: undefined, issue: undefined })
+    this.patch({ phase: 'creating', error: undefined, issue: undefined, refusal: undefined })
     this.creation = (async () => {
       const info = valueOf(await this.remote.create(this.sessionId, {
         id: this.id, ...shellPath === undefined ? {} : { shellPath },
@@ -207,7 +212,7 @@ export class TerminalView {
       carrierFailed: () => { if (this.stream === stream) this.patch({ phase: 'disconnected', writable: false }) },
     })
     this.stream = stream
-    this.patch({ phase: 'connecting', writable: false, error: undefined, issue: undefined, render: undefined })
+    this.patch({ phase: 'connecting', writable: false, error: undefined, issue: undefined, refusal: undefined, render: undefined })
     void this.consume(stream)
   }
 
@@ -307,7 +312,7 @@ export class TerminalView {
    */
   close(): Promise<void> {
     if (this.closing !== undefined) return this.closing
-    this.patch({ phase: 'closing', writable: false, error: undefined, issue: undefined })
+    this.patch({ phase: 'closing', writable: false, error: undefined, issue: undefined, refusal: undefined })
     this.detach()
     this.closing = (async () => {
       // Even a refused or lost creation response may leave an allocation to close.
@@ -407,7 +412,11 @@ export class TerminalView {
     const failure = remoteErrorOf(error)
     const issue = failure?.code === 'terminal/view' ? failure.details.issue : failure?.code === 'terminal/limit-reached' ? 'terminalLimit' : failure?.code === 'terminal/unavailable' ? 'missingTerminal' : undefined
     if (!this.stopped() && issue === 'missingTerminal') this.inventory.remove(this.id)
-    this.patch({ phase: error instanceof RemoteStreamCarrierError ? 'disconnected' : 'failed', writable: false, issue, error: error instanceof Error ? error.message : String(error) })
+    this.patch({
+      phase: error instanceof RemoteStreamCarrierError ? 'disconnected' : 'failed', writable: false, issue,
+      refusal: failure === undefined ? undefined : accessRefusal(failure),
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
 }
 

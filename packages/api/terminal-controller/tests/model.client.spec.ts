@@ -4,6 +4,8 @@ import { RemoteStream, RemoteStreamCarrierError, type ClientRemote, type RemoteS
 import { createSnapshotStore } from '@ocean/ocean-client-store'
 import { RemoteError, type RemoteResult, type RemoteUplinkWindow } from '@ocean/ocean-typert-protocol'
 import { RemoteMock, streamMethod, type StreamHandle } from '@ocean/ocean-remote-mock'
+import type { AccessRefusalText } from '@ocean/ocean-client-ui-primitives'
+import type {} from '@ocean/ocean-api-remote-access/types'
 import type {} from '@ocean/ocean-api-terminal-controller/remote'
 import type { SessionId } from '@ocean/ocean-session/types'
 import { TerminalView, type TerminalRemote } from '../src/client/model.ts'
@@ -28,6 +30,11 @@ function untilAborted(signal?: AbortSignal): Promise<void> {
 
 function failure(message: string): RemoteResult<never> {
   return { ok: false, error: new RemoteError('gateway/bad-request', message, {}) }
+}
+
+/** The Gateway's refusal of a non-owner device call, as the Client face rebuilds it. */
+function denied(action: string, reason: string): RemoteError<'remote-access/denied'> {
+  return new RemoteError('remote-access/denied', `remote access: ${action}: access denied (${reason})`, { action, reason })
 }
 
 function fixture(prepareStream?: <Item>(stream: RemoteStream<Item>) => void, inputWindow?: RemoteUplinkWindow) {
@@ -280,7 +287,7 @@ it('classifies a discovery carrier failure as disconnected and supports explicit
   const { model, remote } = fixture()
   vi.mocked(remote.environment).mockRejectedValueOnce(new RemoteStreamCarrierError('offline'))
   await model.refresh()
-  expect(model.state.getSnapshot()).toMatchObject({ phase: 'disconnected', error: 'offline' })
+  expect(model.state.getSnapshot()).toMatchObject({ phase: 'disconnected', error: 'offline', refusal: undefined })
   expect(remote.create).not.toHaveBeenCalled()
   await model.refresh()
   expect(model.state.getSnapshot().info?.id).toBe(info.id)
@@ -358,7 +365,37 @@ it('exposes a localized quota error and clears it after a successful retry', asy
   await model.refresh()
   expect(model.state.getSnapshot()).toMatchObject({ phase: 'failed', issue: 'terminalLimit' })
   await connected(model)
-  expect(model.state.getSnapshot()).toMatchObject({ phase: 'connected', issue: undefined, error: undefined })
+  expect(model.state.getSnapshot()).toMatchObject({ phase: 'connected', issue: undefined, error: undefined, refusal: undefined })
+})
+
+it.each([
+  ['scope:terminal:operate', { key: 'remoteAccess.denied.scope', scope: 'terminal:operate' }],
+  ['no-allow', { key: 'remoteAccess.denied.owner' }],
+] satisfies readonly (readonly [string, AccessRefusalText])[])('explains a refused environment lookup (%s) beside the wire text and clears it after a successful retry', async (reason, refusal) => {
+  const { model, remote } = fixture()
+  vi.mocked(remote.environment).mockResolvedValueOnce({ ok: false, error: denied('terminal/environment', reason) })
+  await model.refresh()
+  expect(model.state.getSnapshot()).toMatchObject({ phase: 'failed', refusal, error: `remote access: terminal/environment: access denied (${reason})` })
+  expect(remote.create).not.toHaveBeenCalled()
+  await connected(model)
+  expect(model.state.getSnapshot()).toMatchObject({ phase: 'connected', refusal: undefined, error: undefined })
+})
+
+it('keeps a non-access Remote failure without a refusal explanation', async () => {
+  const { model, remote } = fixture()
+  vi.mocked(remote.environment).mockResolvedValueOnce(failure('bad request'))
+  await model.refresh()
+  expect(model.state.getSnapshot()).toMatchObject({ phase: 'failed', error: 'bad request', refusal: undefined })
+})
+
+it('explains a refused output attachment delivered as the stream error frame', async () => {
+  const { model, remote } = fixture()
+  vi.mocked(remote.attach).mockImplementationOnce(streamMethod<TerminalRemote['attach']>(async function* () {
+    throw denied('terminal/attach', 'scope:terminal:operate|scope:sessions:read')
+  }))
+  await mount(model)
+  await expect.poll(() => model.state.getSnapshot().refusal).toEqual({ key: 'remoteAccess.denied.scope', scope: 'terminal:operate, sessions:read' })
+  expect(model.state.getSnapshot().phase).toBe('failed')
 })
 
 it('sends input and clamped resize in order without waiting for acknowledgements', async () => {

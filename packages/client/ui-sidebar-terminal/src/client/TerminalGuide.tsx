@@ -2,7 +2,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ShortcutCatalogEntry } from '@ocean/ocean-client-shortcuts/client'
 import type { HostObservable } from '@ocean/ocean-client-ui-slots'
-import { PluginArtworkTerminal, ShortcutKeys, Button, IconChevronDownOutlineRegular, Menu } from '@ocean/ocean-client-ui-primitives'
+import { PluginArtworkTerminal, ShortcutKeys, Button, IconChevronDownOutlineRegular, Menu, accessRefusal, accessRefusalText, type AccessRefusalText } from '@ocean/ocean-client-ui-primitives'
+import { remoteErrorOf } from '@ocean/ocean-typert-protocol'
 import type { TerminalLaunchShells } from '@ocean/ocean-api-terminal-controller/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@ocean/ocean-client-ui-slots'
 import type {} from '@ocean/ocean-client-ui-sidebar-right/client'
@@ -21,7 +22,7 @@ export interface TerminalGuideInjected {
 /** Session guide owner props, framework hooks and terminal actions. */
 export type TerminalGuideProps = PropsRuntime<'sidebar.right.tab.guide.entry'> & PropsLocale<'sidebarTerminal'> & InjectFace<TerminalGuideInjected>
 
-type MenuState = { phase: 'loading' } | { phase: 'ready'; choices: TerminalLaunchShells } | { phase: 'failed'; message: string }
+type MenuState = { phase: 'loading' } | { phase: 'ready'; choices: TerminalLaunchShells } | { phase: 'failed'; message: string; refusal: AccessRefusalText | undefined }
 
 /**
  * Open the remembered shell from the card or choose another shell from its menu.
@@ -43,15 +44,18 @@ export function TerminalGuide({
     void loadShells(lifetime.signal).then((choices) => {
       if (!lifetime.signal.aborted) setState({ phase: 'ready', choices })
     }, (error: unknown) => {
-      if (!lifetime.signal.aborted) setState({ phase: 'failed', message: error instanceof Error ? error.message : String(error) })
+      if (lifetime.signal.aborted) return
+      const failure = remoteErrorOf(error)
+      setState({ phase: 'failed', message: error instanceof Error ? error.message : String(error), refusal: failure === undefined ? undefined : accessRefusal(failure) })
     })
     return () => { lifetime.abort() }
   }, [open, attempt, loadShells])
+  const refusal = state.phase === 'failed' ? state.refusal : undefined
   const items = state.phase === 'ready'
     ? state.choices.shells.map(shell => ({ id: shell.path, label: shell.name }))
     : state.phase === 'loading'
       ? [{ id: 'loading', label: t('shellLoading'), disabled: true }]
-      : [{ id: 'error', label: t('failed', { message: state.message }), disabled: true }, { id: 'retry', label: t('retry') }]
+      : [{ id: 'error', disabled: true, label: refusal === undefined ? t('failed', { message: state.message }) : accessRefusalText(refusal, t) }, { id: 'retry', label: t('retry') }]
   return <div className={css.entry} data-sidebar-right-guide-entry={kind}>
     <Button variant="ghost" className={css.main} aria-label={description === undefined ? title : `${title} ${description}`} aria-keyshortcuts={shortcut?.aria}
       onClick={() => { tab.actions.openTab('terminal', { replaceTab: true }) }} />

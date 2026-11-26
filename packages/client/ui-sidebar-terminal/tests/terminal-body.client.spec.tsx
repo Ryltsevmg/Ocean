@@ -6,6 +6,9 @@ import type { ReactNode } from 'react'
 import type { ITheme } from '@xterm/xterm'
 import type { ThemeSnapshot } from '@ocean/ocean-client-ui-theme/client'
 import { makeTranslate } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
+import { zh as commonZh } from '@ocean/ocean-client-locale/src/locales/zh.ts'
+import type { AccessRefusalText } from '@ocean/ocean-client-ui-primitives'
 import type { TerminalViewState } from '@ocean/ocean-api-terminal-controller/client'
 import type { WebTerminalId } from '@ocean/ocean-api-terminal-controller/types'
 import { TerminalBody, type TerminalBodyProps } from '../src/client/terminal.tsx'
@@ -88,7 +91,7 @@ function mount(initial: TerminalViewState | undefined = idle, dictionary = en) {
     view: () => model,
     useTerminal: (_key: string, select?: (value: TerminalViewState | undefined) => unknown) => select === undefined ? state : select(state),
     useTheme: (select: (value: ThemeSnapshot) => unknown) => select(theme),
-    useTabInfo: tab, t: makeTranslate(dictionary),
+    useTabInfo: tab, t: makeTranslate(dictionary, dictionary === zh ? commonZh : commonEn),
   } as unknown as TerminalBodyProps
   const view = render(<TerminalBody {...props} />)
   return {
@@ -124,6 +127,19 @@ it('mounts automatic startup and offers retry only when startup fails', () => {
   h.update(undefined)
   expect(h.view.container.childElementCount).toBe(0)
   expect(h.model.mount).toHaveBeenCalledOnce()
+})
+
+it.each([
+  ['a missing scope', { key: 'remoteAccess.denied.scope', scope: 'terminal:operate' }],
+  ['an owner-only action', { key: 'remoteAccess.denied.owner' }],
+] satisfies readonly (readonly [string, AccessRefusalText])[])('explains %s with the shared access text instead of the wire diagnostic and keeps Retry', (_name, refusal) => {
+  const h = mount({ ...idle, phase: 'failed', error: 'remote access: terminal/environment: access denied (scope:terminal:operate)', refusal })
+  expect(h.view.getAllByRole('alert')).toHaveLength(1)
+  expect(h.view.getByRole('alert').textContent)
+    .toBe('scope' in refusal ? commonEn['remoteAccess.denied.scope'].replace('{scope}', refusal.scope) : commonEn['remoteAccess.denied.owner'])
+  expect(h.view.queryByText(/remote access:/u)).toBeNull()
+  fireEvent.click(h.view.getByRole('button', { name: en.retry }))
+  expect(h.model.refresh).toHaveBeenCalledOnce()
 })
 
 it('shows only the terminal screen while connected and detaches on unmount', () => {

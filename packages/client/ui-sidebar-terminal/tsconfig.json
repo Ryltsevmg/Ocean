@@ -42,6 +42,9 @@
       "path": "../../api/terminal-controller/tsconfig.client.json"
     },
     {
+      "path": "../../typert/protocol"
+    },
+    {
       "path": "../ui-layout"
     },
     {

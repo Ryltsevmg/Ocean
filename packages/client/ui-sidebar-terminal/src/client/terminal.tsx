@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
-import { Button, IconPlusOutlineRegular } from '@ocean/ocean-client-ui-primitives'
+import { Button, IconPlusOutlineRegular, accessRefusalText } from '@ocean/ocean-client-ui-primitives'
 import type { TerminalViewState, TerminalView } from '@ocean/ocean-api-terminal-controller/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@ocean/ocean-client-ui-slots'
 import type { ThemeSnapshot } from '@ocean/ocean-client-ui-theme/client'
@@ -43,7 +43,8 @@ export function TerminalBody({ useTabInfo, useTerminal, useTheme, view, t }: Ter
       {newTerminal}
     </div>
   </section>
-  const error = state.phase === 'disconnected' ? undefined : state.issue === undefined ? state.error ?? state.info?.error : t(state.issue)
+  const refusal = state.phase === 'disconnected' ? undefined : state.refusal
+  const error = state.phase === 'disconnected' || refusal !== undefined ? undefined : state.issue === undefined ? state.error ?? state.info?.error : t(state.issue)
   let status: string | undefined
   if (state.phase === 'idle' || state.phase === 'loading') status = t('loading')
   else if (state.phase === 'creating' || state.phase === 'connecting' || state.phase === 'disconnected') status = t(state.phase)
@@ -64,6 +65,7 @@ export function TerminalBody({ useTabInfo, useTerminal, useTheme, view, t }: Ter
         {ended && newTerminal}
       </div>}
       {state.info !== undefined && <TerminalScreen state={state} model={model} visible={tab.visible} label={t('title')} theme={theme} />}
+      {refusal !== undefined && <p className={css.error} role="alert">{accessRefusalText(refusal, t)}</p>}
       {error !== undefined && <p className={css.error} role="alert">{t('failed', { message: error })}</p>}
     </section>
   )
