@@ -4396,6 +4396,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -4417,6 +4420,9 @@ importers:
       '@ocean/ocean-client-ui-workspace':
         specifier: workspace:*
         version: link:../ui-workspace
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       '@testing-library/react':
         specifier: ^16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -5020,6 +5026,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -5068,6 +5077,9 @@ importers:
       '@ocean/ocean-remote-mock':
         specifier: workspace:*
         version: link:../../test-support/remote-mock
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
@@ -6352,6 +6364,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes

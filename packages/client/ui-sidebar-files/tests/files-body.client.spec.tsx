@@ -4,6 +4,9 @@ import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { act, cleanup, fireEvent, within } from '@testing-library/react'
 import { makeTranslate, RemoteError } from '@ocean/ocean-client-test-runtime'
 import type { RemoteFailure } from '@ocean/ocean-api-remotes/client'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
+import { zh as commonZh } from '@ocean/ocean-client-locale/src/locales/zh.ts'
 import { fileAddressFor } from '@ocean/ocean-util-workspace-path'
 import { failureLine } from '../src/client/workspace-tree.ts'
 import type { PaneId, TabId } from '@ocean/ocean-client-ui-dockkit'
@@ -417,7 +420,7 @@ describe('FilesBody', () => {
 })
 
 describe('failureLine', () => {
-  const t = makeTranslate(zh)
+  const t = makeTranslate(zh, commonZh)
 
   it('names each directory failure', () => {
     expect(failureLine(t, new RemoteError('workspace-file/not-found', 'x', { path: 'p' }))).toBe(zh['error.notFound'])
@@ -427,9 +430,19 @@ describe('failureLine', () => {
       .toBe(zh['error.notDirectory'])
   })
 
+  it('explains a refused device call in the common vocabulary, naming the missing right or the Host owner', () => {
+    const denied = (reason: string): RemoteFailure =>
+      new RemoteError('remote-access/denied', 'remote access: workspaceFiles/list: access denied (scope:files:read)', { action: 'workspaceFiles/list', reason })
+    expect(failureLine(t, denied('scope:files:read'))).toBe(commonZh['remoteAccess.denied.scope'].replace('{scope}', 'files:read'))
+    expect(failureLine(t, denied('no-allow'))).toBe(commonZh['remoteAccess.denied.owner'])
+  })
+
   it('carries an unclassified failure\'s own message', () => {
     const failure = { code: 'remote/transport', message: 'socket closed' } as unknown as RemoteFailure
     expect(failureLine(t, failure)).toBe('读取失败：socket closed')
+    // A refusal the Gateway explained otherwise keeps its wire message.
+    expect(failureLine(t, new RemoteError('remote-access/denied', 'remote access: workspaceFiles/list: access denied (resource-invalid)', { action: 'workspaceFiles/list', reason: 'resource-invalid' })))
+      .toBe('读取失败：remote access: workspaceFiles/list: access denied (resource-invalid)')
   })
 })
 

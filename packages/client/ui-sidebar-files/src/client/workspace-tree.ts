@@ -13,7 +13,10 @@
  * whose every entry is hidden says so. The same conversion draws a search's
  * results, whose directories hold only the matches.
  */
+import { accessRefusal, accessRefusalText } from '@ocean/ocean-client-ui-primitives'
 import type { RemoteFailure } from '@ocean/ocean-api-remotes/client'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 import type { TreeDirectoryState, TreeEntry } from './FileTree.tsx'
 import type { TranslateNS } from '@ocean/ocean-client-ui-slots'
 import type {} from './locales.ts'
@@ -21,12 +24,18 @@ import { isHiddenEntry } from './search-rules.ts'
 import { childPath, type DirLevel, type FilesTreeState } from './store.ts'
 
 /**
- * Say why a directory could not be listed, in terms of the directory.
+ * Say why a directory could not be listed, in terms of the directory. A
+ * device call the Host refused is explained in the common vocabulary, naming
+ * the right the device lacks or the Host owner.
  * @param t - namespace-bound translate.
  * @param failure - the settled Remote failure.
  * @returns the line to show under the directory.
  */
 export function failureLine(t: TranslateNS<'sidebarFiles'>, failure: RemoteFailure): string {
+  const refusal = accessRefusal(failure)
+  if (refusal !== undefined) {
+    return accessRefusalText(refusal, t)
+  }
   switch (failure.code) {
     case 'workspace-file/not-found': return t('error.notFound')
     case 'workspace-file/outside-workspace': return t('error.outsideWorkspace')
