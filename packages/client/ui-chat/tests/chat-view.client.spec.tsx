@@ -4752,6 +4752,22 @@ describe('ChatView', () => {
     expect(lv.getByText('载入历史…')).toBeTruthy()
   })
 
+  it.each([
+    ['scope:sessions:read', commonZh['remoteAccess.denied.scope'].replace('{scope}', 'sessions:read')],
+    ['no-allow', commonZh['remoteAccess.denied.owner']],
+  ] as const)('explains a refused history open (%s) with the shared access text', (reason, text) => {
+    const h = makeHarness({}, {
+      openState: 'error',
+      openError: {
+        code: 'remote-access/denied', message: `remote access: session/events: access denied (${reason})`,
+        details: { action: 'session/events', reason },
+      } as never,
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByText(text)).toBeTruthy()
+    expect(view.queryByText(/历史加载失败/)).toBeNull()
+  })
+
   it('renders command nodes as durable rows: settled text, error state, executing spinner, run-less soft-fall', () => {
     // Settled success: the bare command name is the title, the outcome text
     // the summary — neither the dispatched `/` nor its arguments reach the row

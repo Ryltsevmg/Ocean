@@ -144,6 +144,18 @@ describe('list store projection', () => {
     await Promise.resolve()
     expect(b.svc.list.getSnapshot().ids).toContain('s2')
   })
+
+  it('publishes a failed pull as the list error and clears it once a pull succeeds', async ({ bench }) => {
+    const b = bench()
+    const failure = new RemoteError('gateway/internal', 'list unavailable', {})
+    b.mock.remote.session.list.mockResolvedValueOnce(err(failure))
+    await b.svc.refresh()
+    await Promise.resolve()
+    expect(b.svc.list.getSnapshot()).toMatchObject({ ids: [], phase: 'pending', error: failure })
+
+    await feedList(b, [{ id: 's1' }])
+    expect(b.svc.list.getSnapshot()).toMatchObject({ ids: ['s1'], phase: 'ready', error: null })
+  })
 })
 
 describe('search', () => {

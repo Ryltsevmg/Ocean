@@ -566,6 +566,11 @@
   color: var(--dsw-alias-label-caption);
 }
 
+/* A failed list pull: the empty-state geometry with no rows, compact above listed rows. */
+.listError {
+  color: var(--dsw-alias-state-error-primary);
+}
+
 .emptyAction {
   padding: 0;
   border: none;

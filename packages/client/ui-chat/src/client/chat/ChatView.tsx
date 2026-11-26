@@ -6,9 +6,9 @@ import type {
   NodeKey, RenderEntry,
 } from '@ocean/ocean-client-ui-conversation/client'
 import type { InboxState } from '@ocean/ocean-agent/types'
-import type { PendingSubmission } from '@ocean/ocean-api-session-controller/client'
+import type { PendingSubmission, SessionSnapshot } from '@ocean/ocean-api-session-controller/client'
 import {
-  Button, FenceCodeBlock, IconChevronDownOutlineRegular, MarkdownDelegateProvider, Modal,
+  accessRefusal, accessRefusalText, Button, FenceCodeBlock, IconChevronDownOutlineRegular, MarkdownDelegateProvider, Modal,
   type MarkdownDelegateFenceInfo, type MarkdownMenuTarget,
 } from '@ocean/ocean-client-ui-primitives'
 import { isAtOrOutside } from '../contract/group-tree.ts'
@@ -26,6 +26,19 @@ import css from './ChatView.module.css'
 function openFailureMessage(error: unknown, fallback: string): string {
   const message = error instanceof Error ? error.message : String(error)
   return message === '' ? fallback : message
+}
+
+/**
+ * Text for a history that failed to open: a device access refusal in the
+ * shared `common` words, any other failure in the history-load diagnostic.
+ * @param failure - the failure the open reported.
+ * @param t - the view's locale seat; the `common` vocabulary is in its key domain.
+ * @returns the localized access refusal, or the history-load failure text.
+ */
+function historyFailureText(failure: NonNullable<SessionSnapshot['openError']>, t: ChatViewSlotProps['t']): string {
+  const refusal = accessRefusal(failure)
+  if (refusal === undefined) return t('chat.loadError', { message: failure.message, code: failure.code })
+  return accessRefusalText(refusal, t)
 }
 
 /**
@@ -247,7 +260,7 @@ export function ChatView({
             {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
             {openState === 'error' && openError !== null && (
               <div className={css.openError}>
-                {t('chat.loadError', { message: openError.message, code: openError.code })}
+                {historyFailureText(openError, t)}
               </div>
             )}
             {(hasMore || historyWasPartial) && (

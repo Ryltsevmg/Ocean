@@ -20,6 +20,7 @@ import { workspaceDisplayTitle } from '@ocean/ocean-api-workspace-controller/def
 import type { SnapshotSelectorHook } from '@ocean/ocean-client-ui-slots'
 import type { DirectoryFlowOwnerProps, WorkspacePickerProps } from './contract/slots.ts'
 import { distinguishingPathSuffixes } from './path-suffix.ts'
+import { remoteFailureText } from './remote-failure.ts'
 import css from './WorkspacePicker.module.css'
 
 const ADD_WORKSPACE = '::add-workspace'
@@ -143,6 +144,9 @@ export function WorkspacePickFlow({
   // package without any directory-picker): an empty popover would claim a
   // choice that does not exist, so the anchor gesture shows nothing at all.
   const menuIsEmpty = items.length === 0
+  // A list read that failed shows its reason where the loading status stood;
+  // the menu keeps its entries.
+  const listFailure = workspaceSnapshot.error
 
   const closeModal = (): void => {
     setErrorOpen(false)
@@ -221,7 +225,8 @@ export function WorkspacePickFlow({
         portal
         anchorRef={anchorRef ?? absentAnchor}
       />
-      {open && !addIsTheOnlyEntry && !menuIsEmpty && workspaceSnapshot.phase === 'pending' && <div className={css.menuStatus} role="status">{t('picker.loading')}</div>}
+      {open && !addIsTheOnlyEntry && !menuIsEmpty && listFailure === null && workspaceSnapshot.phase === 'pending' && <div className={css.menuStatus} role="status">{t('picker.loading')}</div>}
+      {open && !addIsTheOnlyEntry && !menuIsEmpty && listFailure !== null && <div className={css.menuError} role="alert">{remoteFailureText(listFailure, t)}</div>}
       {renderDirectoryFlow(flowOwner)}
       <Modal
         open={errorOpen}

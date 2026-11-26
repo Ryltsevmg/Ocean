@@ -65,6 +65,11 @@ export interface SessionListState {
   byId: Record<SessionId, SessionSummary>
   /** Arrival lifecycle projected 1:1 from the manager snapshot (see SessionListPhase): empty-with-ready means "truly no sessions". */
   phase: SessionListPhase
+  /**
+   * The failed list pull's Remote failure while the list cannot refresh;
+   * `null` once a pull succeeds, and absent in a snapshot that never failed.
+   */
+  error?: RemoteFailure | null
   /** Shared projection values and explicit-read state, including unopened Sessions. */
   projectionsBySession: Readonly<Record<SessionId, SessionProjectionSnapshot>>
 }
@@ -275,7 +280,7 @@ export class ClientSessions implements ISessions {
   ) {
     this.manager = new SessionManager(remote)
     this.list = createSnapshotStore<SessionListState>({
-      ids: [], byId: {}, phase: 'pending', projectionsBySession: {},
+      ids: [], byId: {}, phase: 'pending', error: null, projectionsBySession: {},
     })
     const disposeManagerProjection = this.manager.subscribe(() => { this.projectList() })
     rootCtx.effect(() => async () => {
@@ -640,7 +645,7 @@ export class ClientSessions implements ISessions {
   private projectList(): void {
     const previousById = this.list.getSnapshot().byId
     const {
-      items, phase, projectionsBySession,
+      items, phase, error, projectionsBySession,
     } = this.manager.getListSnapshot()
     const ids: SessionId[] = []
     const byId: Record<SessionId, SessionSummary> = {}
@@ -709,7 +714,7 @@ export class ClientSessions implements ISessions {
         ...(title === undefined ? {} : { title, displayTitle: title }),
       }
     }
-    this.list.set({ ids, byId, phase, projectionsBySession })
+    this.list.set({ ids, byId, phase, error, projectionsBySession })
   }
 
   private startScopeDrop(
