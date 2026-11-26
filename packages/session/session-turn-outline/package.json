@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-session-turn-outline",
   "description": "Whole-log turn outline projection (turnOutline) for the Ocean",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-ptc-runtime",
   "description": "Abstract PTC execution seam (ctx.ptcRuntime) for the Ocean",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publishConfig": {
     "access": "public"
   },

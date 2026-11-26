@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-headless",
   "description": "The ocean one-shot bundle: a direct core Agent/Session runner over ocean-base with no Host, HTTP, or browser layer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publishConfig": {
     "access": "public"
   },
