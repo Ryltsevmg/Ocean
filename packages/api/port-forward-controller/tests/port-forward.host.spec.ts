@@ -259,12 +259,19 @@ describe('portForward namespace', () => {
   })
 
   it('reports a connection that breaks after it was established as unreachable, not as an end', async () => {
-    const port = await listening((socket) => { socket.write('hi', () => socket.resetAndDestroy()) })
+    // The reset waits for the Client to see `connected`: an RST can otherwise reach it first,
+    // which would report a refused connection and never exercise the established path.
+    const established = Promise.withResolvers<undefined>()
+    const port = await listening((socket) => {
+      socket.write('hi', () => { void established.promise.then(() => { socket.resetAndDestroy() }) })
+    })
     const ctx = await mounted()
+    const iterator = (await open(ctx, port))[Symbol.asyncIterator]()
 
-    const frames = await collect(await open(ctx, port))
+    expect(await iterator.next()).toMatchObject({ done: false, value: { type: 'connected', port } })
+    established.resolve(undefined)
 
-    expect(frames[0]).toEqual({ type: 'connected', port })
+    const frames = await collect(iterator)
     expect(frames.at(-1)).toMatchObject({ type: 'failed', code: 'unreachable' })
     expect(frames.some(frame => frame.type === 'end')).toBe(false)
   })
@@ -272,25 +279,32 @@ describe('portForward namespace', () => {
   it('delivers every byte to a Client that reads slowly while the port writes faster than it is read', async () => {
     const payload = Buffer.alloc(2 * 1024 * 1024)
     for (let offset = 0; offset < payload.length; offset++) payload[offset] = offset % 251
-    let held: Socket | undefined
-    const write = vi.spyOn(Socket.prototype, 'write')
+    // The port cannot hand over the whole payload while nothing drains the relay.
+    let sentAll = false
     const port = await listening((socket) => {
-      held = socket
-      void sendAll(socket, payload)
+      void sendAll(socket, payload).then(() => { sentAll = true })
     })
     const ctx = await mounted()
+    const iterator = (await open(ctx, port, silent()))[Symbol.asyncIterator]()
 
+    // The Client reads nothing yet, so the relay stops pulling and the port's writes cannot finish.
+    expect(await iterator.next()).toMatchObject({ done: false, value: { type: 'connected', port } })
+    await delay(200)
+    expect(sentAll).toBe(false)
+
+    // Keep reading slowly, as a Client that drains its screen at its own pace does.
     const frames: PortForwardFrame[] = []
-    for await (const frame of await open(ctx, port, silent())) {
-      frames.push(frame as PortForwardFrame)
+    while (true) {
+      const next = await iterator.next()
+      if (next.done === true) break
+      frames.push(next.value as PortForwardFrame)
       await delay(1)
     }
 
-    expect(frames[0]).toEqual({ type: 'connected', port })
     expect(frames.at(-1)).toEqual({ type: 'end' })
     expect(bytesOf(frames).equals(payload)).toBe(true)
-    // The port's writes stalled: the relay stopped reading the socket while the Client paused.
-    expect(write.mock.results.some((result, index) => write.mock.contexts[index] === held && result.value === false)).toBe(true)
+    // Draining the Client lets the port finish, so the stall was backpressure rather than a lost byte.
+    expect(sentAll).toBe(true)
   })
 
   it('waits for the socket to drain before pulling the next uplink item while the port does not read', async () => {
