@@ -1,6 +1,6 @@
 ---
 kind: upgrade-guide
-description: "The published plugin index moves to schema version 2, and Ocean 1.0.0 refuses it as unavailable."
+description: "A 1.0.0 reader refuses a schema-version-2 index, so the channel keeps the metadata-only file at the address it reads."
 ---
 
 # Read the version-2 plugin catalog index
@@ -11,7 +11,7 @@ English | [中文](guide.zh.md)
 
 The public plugin index in the `plugin-catalog` branch now has two files: `v1/current.json` keeps `schemaVersion: 1` for released clients, and `v2/current.json` carries `schemaVersion: 2`, where each offer may add an inline `icon` data URL and a localized `detail` Markdown document that the **Catalogue** tab shows as card artwork and a long description in **Details**. The shipped composition reads `v2/current.json`.
 
-Ocean 1.0.0 accepts only `schemaVersion: 1` and rejects the whole index otherwise, so a 1.0.0 client shows **The published catalogue is unavailable** against the version-2 index. Upgrading to the next release restores the catalogue. Indexes that stay at version 1 keep working in both releases; they show no artwork and no long description. A custom `publishedCatalogUrl` channel is subject to the same rule.
+A 1.0.0 reader accepts only `schemaVersion: 1` and rejects the whole index otherwise. It keeps reading `v1/current.json`, so a released client shows the catalogue as before, without artwork and long descriptions, and needs no change. The refusal appears only when a version-2 index sits at the address a 1.0.0 reader reads, such as a custom `publishedCatalogUrl` that points at it.
 
 ## Migration
 

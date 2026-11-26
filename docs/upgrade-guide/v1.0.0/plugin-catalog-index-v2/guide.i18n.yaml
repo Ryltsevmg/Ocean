@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/upgrade-guide/v1.0.0/plugin-catalog-index-v2/guide.md
 /:
-  en: b6783365a9e47d47
-  zh: f6ce34805a60a821
+  en: 3a978815ce6d20cd
+  zh: 7ce8614ece5b3598
 /read-the-version-2-plugin-catalog-index:
   en: d141653407cc1faf
   zh: 9cc7d8483f4deb89
 /read-the-version-2-plugin-catalog-index/change:
-  en: 80bf66550d8ba341
-  zh: d746a1a76c38f1e6
+  en: a29a6da56fd95cca
+  zh: 044f1395d29e2150
 /read-the-version-2-plugin-catalog-index/migration:
   en: 925b1f11d703c729
   zh: fc07e58b1695dece

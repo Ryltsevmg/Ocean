@@ -1,6 +1,6 @@
 ---
 kind: upgrade-guide
-description: "已发布插件索引升级到 schema 版本 2，Ocean 1.0.0 会将其视为不可用。"
+description: "1.0.0 读取端会拒绝 schema 版本 2 的索引，因此渠道在其读取的地址保留纯元数据文件。"
 ---
 
 # 读取版本 2 的插件目录索引
@@ -11,7 +11,7 @@ description: "已发布插件索引升级到 schema 版本 2，Ocean 1.0.0 会�
 
 `plugin-catalog` 分支中的公开插件索引现在包含两个文件：`v1/current.json` 继续为已发布客户端保留 `schemaVersion: 1`，`v2/current.json` 携带 `schemaVersion: 2`，其中每个条目可以增加内联 `icon` data URL 和本地化的 `detail` Markdown 说明，「目录」标签页将其显示为卡片图标，并在**详情**中显示长说明。随附组合读取 `v2/current.json`。
 
-Ocean 1.0.0 只接受 `schemaVersion: 1`，其他版本会让整个索引被拒绝，因此在版本 2 索引下，1.0.0 客户端会显示**已发布的插件目录不可用**。升级到下一个发布版本后目录恢复。保持版本 1 的索引在两个版本中都可用，只是不显示图标和长说明。自定义 `publishedCatalogUrl` 渠道遵循同一规则。
+1.0.0 读取端只接受 `schemaVersion: 1`，其他版本会让整个索引被拒绝。它继续读取 `v1/current.json`，因此已发布客户端的目录与之前一致，只是不显示图标和长说明，无需任何改动。只有当版本 2 索引位于 1.0.0 读取端读取的地址时才会出现拒绝，例如指向它的自定义 `publishedCatalogUrl`。
 
 ## 迁移
 
