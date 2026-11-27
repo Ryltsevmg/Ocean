@@ -7,9 +7,11 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { PassThrough, Readable } from 'node:stream'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
 import { DeviceBootstrap } from '@ocean/ocean-client-connection'
+import { DevicePairingPassword } from '@ocean/ocean-client-connection/src/device-pairing-password.ts'
 import { DeviceTokens } from '@ocean/ocean-client-connection/src/device-tokens.ts'
 import { internals, provideCmdline } from '@ocean/ocean-cmdline'
 import LocalCredentials from '@ocean/ocean-credentials-local'
@@ -24,6 +26,7 @@ let credentialDir: string | undefined
 const received: { operation: unknown; headers: IncomingMessage['headers'] }[] = []
 const logs: string[] = []
 const errors: string[] = []
+const originalStdin = Object.getOwnPropertyDescriptor(process, 'stdin')
 
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation((message: unknown) => { logs.push(String(message)) })
@@ -45,10 +48,17 @@ afterEach(async () => {
   received.length = 0
   logs.length = 0
   errors.length = 0
+  vi.unstubAllEnvs()
   vi.restoreAllMocks()
+  if (originalStdin !== undefined) Object.defineProperty(process, 'stdin', originalStdin)
   internals.stdout = process.stdout
   internals.stderr = process.stderr
 })
+
+/** Replace process stdin with a test-owned stream. */
+function stubStdin(stream: Readable): void {
+  Object.defineProperty(process, 'stdin', { value: stream, configurable: true, writable: true })
+}
 
 /** Send one JSON reply with the given status. */
 function replyJson(res: ServerResponse, status: number, body: unknown): void {
@@ -338,7 +348,7 @@ describe('remote-device local bootstrap', () => {
       provide: provideBootstrap,
     })
     await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
-    expect(boot.observed.err).toContain('--bootstrap supports create and list')
+    expect(boot.observed.err).toContain('--bootstrap supports create, list, and password')
   })
 
   it.each(['create', 'list'] as const)('fails %s when the bootstrap operation rejects', async (action) => {
@@ -358,5 +368,177 @@ describe('remote-device local bootstrap', () => {
     onTestFinished(() => ctx.fiber.dispose())
     provideCmdline(ctx, { args: ['--bootstrap', 'list'], exit: () => {} })
     expect(() => { runDeviceAdmin(ctx) }).toThrow('device administration requires the profile launcher')
+  })
+})
+
+describe('remote-device pairing password', () => {
+  const PASSWORD = 'correct horse battery'
+  const PASSWORD_ENV = 'OCEAN_PAIRING_PASSWORD'
+  const PASSWORD_RULE = 'ocean remote-device: the pairing password must be 8 to 256 characters'
+  const PASSWORD_UNREADABLE = 'ocean remote-device: could not read a pairing password from standard input.'
+
+  /** An administrator socket that reports the pairing password as set or cleared. */
+  async function listenPasswordAdmin(): Promise<string> {
+    return listenAdmin((_operation, res) => { replyJson(res, 200, { result: { set: true } }) })
+  }
+
+  it.each([
+    { description: 'a newline-terminated password', feed: `${PASSWORD}\n` },
+    { description: 'a CRLF-terminated password', feed: `${PASSWORD}\r\n` },
+    { description: 'a password without a line ending', feed: PASSWORD },
+  ])('reads $description from standard input and prints no secret', async ({ feed }) => {
+    const path = await listenPasswordAdmin()
+    const stdin = new PassThrough()
+    stubStdin(stdin)
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-stdin'])
+    stdin.end(feed)
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual({ action: 'password', password: PASSWORD })
+    expect(logs).toEqual(['Pairing password set.'])
+    expect(errors).toEqual([])
+  })
+
+  it('reads the password from the named environment variable', async () => {
+    vi.stubEnv(PASSWORD_ENV, PASSWORD)
+    const path = await listenPasswordAdmin()
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-env', PASSWORD_ENV])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual({ action: 'password', password: PASSWORD })
+    expect(logs).toEqual(['Pairing password set.'])
+    expect(errors).toEqual([])
+  })
+
+  it('clears the pairing password with --clear', async () => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 200, { result: { set: false } }) })
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--clear'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    expect(received[0]!.operation).toEqual({ action: 'password', password: null })
+    expect(logs).toEqual(['Pairing password cleared.'])
+    expect(errors).toEqual([])
+  })
+
+  it.each([
+    { description: 'no password source', args: ['password'] },
+    { description: 'two password sources', args: ['password', '--password-stdin', '--password-env', PASSWORD_ENV] },
+    { description: 'a password source beside --clear', args: ['password', '--password-env', PASSWORD_ENV, '--clear'] },
+  ])('rejects $description before contacting the Host', async ({ args }) => {
+    const path = await listenPasswordAdmin()
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, ...args])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(logs).toEqual([])
+    expect(boot.observed.err).toContain('supply exactly one of --password-stdin, --password-env, and --clear')
+  })
+
+  it.each(['short', 'x'.repeat(257)])('rejects a password outside the rule from the environment before contacting the Host', async (password) => {
+    vi.stubEnv(PASSWORD_ENV, password)
+    const path = await listenPasswordAdmin()
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-env', PASSWORD_ENV])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(boot.observed.err).toContain(PASSWORD_RULE)
+    expect(boot.observed.err).not.toContain(password)
+  })
+
+  it('rejects an empty password environment variable', async () => {
+    vi.stubEnv(PASSWORD_ENV, '')
+    const path = await listenPasswordAdmin()
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-env', PASSWORD_ENV])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(boot.observed.err).toContain('the configured password environment variable is empty')
+  })
+
+  it('rejects --password-stdin on a terminal', async () => {
+    stubStdin(Object.assign(new PassThrough(), { isTTY: true }))
+    boot = await bootDeviceProfile('remote-device', ['--socket', '/unused/admin.sock', 'password', '--password-stdin'])
+    expect(boot.exits).toEqual([1])
+    expect(boot.observed.err).toContain('--password-stdin requires a pipe or redirected input')
+  })
+
+  it('fails on a password outside the rule from standard input without contacting the Host', async () => {
+    const path = await listenPasswordAdmin()
+    const stdin = new PassThrough()
+    stubStdin(stdin)
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-stdin'])
+    stdin.end('short\n')
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(logs).toEqual([])
+    expect(errors).toEqual([PASSWORD_RULE])
+  })
+
+  it.each([
+    { description: 'a trailing-newline password one character too long', feed: `${'x'.repeat(257)}\n` },
+    { description: 'input past the read bound', feed: 'x'.repeat(300) },
+  ])('fails on $description from standard input without contacting the Host', async ({ feed }) => {
+    const path = await listenPasswordAdmin()
+    const stdin = new PassThrough()
+    stubStdin(stdin)
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-stdin'])
+    stdin.end(feed)
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(errors).toEqual([PASSWORD_RULE])
+  })
+
+  it('fails on a non-text standard input chunk', async () => {
+    const path = await listenPasswordAdmin()
+    stubStdin(Readable.from([{ not: 'text' }], { objectMode: true }))
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-stdin'])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(received).toEqual([])
+    expect(errors).toEqual([PASSWORD_UNREADABLE])
+  })
+
+  it('reports a refused socket reply as an unknown outcome without printing the password', async () => {
+    const path = await listenAdmin((_operation, res) => { replyJson(res, 500, { error: {} }) })
+    vi.stubEnv(PASSWORD_ENV, PASSWORD)
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-env', PASSWORD_ENV])
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(errors).toEqual([UNKNOWN_OUTCOME])
+    expect(logs).toEqual([])
+  })
+
+  it.each([
+    { args: ['--password-stdin'], password: PASSWORD, printed: 'Pairing password set.' },
+    { args: ['--clear'], password: null, printed: 'Pairing password cleared.' },
+  ])('sets or clears the pairing password through the local credential store with $args', async ({ args, password, printed }) => {
+    const stdin = new PassThrough()
+    stubStdin(stdin)
+    boot = await bootDeviceProfile('remote-device', ['--bootstrap', 'password', ...args], { provide: provideBootstrap })
+    stdin.end(`${PASSWORD}\n`)
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([0]) })
+    const stored = new DevicePairingPassword(boot.ctx.credentials)
+    expect(password === null ? await stored.isSet() : await stored.verify(PASSWORD)).toBe(password !== null)
+    expect(logs).toEqual([printed])
+    expect(errors).toEqual([])
+  })
+
+  it('fails the bootstrap password command when the credential store rejects it', async () => {
+    const unavailable = () => Promise.reject(new Error('credential store unavailable'))
+    boot = await bootDeviceProfile('remote-device', ['--bootstrap', 'password', '--clear'], {
+      provide: (ctx) => {
+        ctx.provide('deviceBootstrap', { issue: unavailable, list: unavailable, setPairingPassword: unavailable } as never)
+      },
+    })
+    await vi.waitFor(() => { expect(boot!.exits).toEqual([1]) })
+    expect(logs).toEqual([])
+    expect(errors).toEqual([BOOTSTRAP_FAILURE])
+  })
+
+  it('stays silent when disposal aborts a pending password read', async () => {
+    const path = await listenPasswordAdmin()
+    stubStdin(new PassThrough())
+    boot = await bootDeviceProfile('remote-device', ['--socket', path, 'password', '--password-stdin'], { holdReady: true })
+    const held = boot
+    held.commit()
+    await held.dispose()
+    boot = undefined
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(held.exits).toEqual([])
+    expect(received).toEqual([])
+    expect(logs).toEqual([])
+    expect(errors).toEqual([])
   })
 })

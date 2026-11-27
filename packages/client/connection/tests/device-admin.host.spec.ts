@@ -97,6 +97,24 @@ it.skipIf(process.platform === 'win32')('accepts valid local requests only from 
   })
 })
 
+it.skipIf(process.platform === 'win32')('dispatches the pairing password command and refuses a password outside the rule', async () => {
+  const path = join(await adminDir(), 'admin.sock')
+  const dispatch = vi.fn(async () => ({ set: true }))
+  const close = await listenDeviceAdmin(path, dispatch)
+  try {
+    expect(await post(path, { action: 'password', password: 'correct horse' })).toBe(200)
+    expect(dispatch).toHaveBeenLastCalledWith({ action: 'password', password: 'correct horse' })
+    expect(await post(path, { action: 'password', password: null })).toBe(200)
+    expect(dispatch).toHaveBeenLastCalledWith({ action: 'password', password: null })
+    for (const password of ['short', 'x'.repeat(257), 12, undefined]) {
+      expect(await post(path, { action: 'password', password }), String(password)).toBe(400)
+    }
+    expect(dispatch).toHaveBeenCalledTimes(2)
+  } finally {
+    await close()
+  }
+})
+
 it.skipIf(process.platform === 'win32')('drains accepted administrative replies before close completes', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'ocean-device-'))
   onTestFinished(() => rm(dir, { recursive: true, force: true }))

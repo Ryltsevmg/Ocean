@@ -21,6 +21,7 @@ it.each([
   ['DEVICE_AUTH_FAILED', messages.remoteNetworkFailed],
   ['DEVICE_CONNECTION_FAILED', messages.remoteNetworkFailed],
   ['DEVICE_SIGN_IN_REQUIRED', messages.remoteTokenRequired],
+  ['DEVICE_PAIRING_PASSWORD_UNSET', messages.remotePairingPasswordUnset],
 ] satisfies [DeviceClientErrorCode, string][])('presents %s without raw transport diagnostics', (code, message) => {
   const error = new DeviceClientError(code, 'fixture-secret', { cause: new Error('fixture-secret') })
   expect(remoteErrorResult(error, messages)).toEqual({ kind: 'failed', code, message })

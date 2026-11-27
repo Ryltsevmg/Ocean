@@ -98,6 +98,12 @@ docker run --name ocean --init --network host --stop-timeout 60 \
 ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://ocean.example/
 ```
 
+无法在服务器上打开 shell 为每台设备生成链接时，改为设置一个配对密码。`--password-stdin`（管道或重定向输入）、`--password-env <NAME>` 和 `--clear` 必须且只能提供一个。命令只输出 `Pairing password set.` 或 `Pairing password cleared.`，服务器保存加盐的校验值而不是密码。之后每台设备提交该密码即可配对，以这种方式配对的每台设备都持有全部权限。
+
+```sh
+ocean remote-device --socket /run/ocean/admin.sock password --password-stdin
+```
+
 将 `DEVICE_ID` 替换为 `list` 返回的标识。
 
 ```sh

@@ -128,8 +128,8 @@ describe('web command-line provider', () => {
     { args: ['list'], message: 'supply exactly one of --socket and --bootstrap' },
     { args: ['--bootstrap', '--socket', '/local/admin.sock', 'list'], message: 'supply exactly one of --socket and --bootstrap' },
     { args: ['--socket', 'relative.sock', 'list'], message: 'requires an absolute socket path' },
-    { args: ['--bootstrap', 'rotate', 'device-id'], message: '--bootstrap supports create and list' },
-    { args: ['--bootstrap', 'revoke', 'device-id'], message: '--bootstrap supports create and list' },
+    { args: ['--bootstrap', 'rotate', 'device-id'], message: '--bootstrap supports create, list, and password' },
+    { args: ['--bootstrap', 'revoke', 'device-id'], message: '--bootstrap supports create, list, and password' },
   ])('rejects administrative arguments $args before startup', async ({ args, message }) => {
     const { values, observed } = await bootProvider(args, 'remote-device')
     expect(observed.out).toContain(message)

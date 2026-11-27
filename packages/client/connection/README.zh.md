@@ -74,7 +74,7 @@ HTTP RPC 和 WebSocket 升级在准入时验证登录 Cookie，并为每个传�
 
 Host 管理方法从撤销或轮换开始时拒绝受影响设备的答复和新传输，并在持久操作后等待其 Peer 释放。释放失败时操作会报错，已提交的注册表更改仍然有效。管理员可检查设备状态或再次轮换以取得新的令牌。
 
-在设备模式下，可通过 `deviceAdminSocket` 在 Unix 上启用本地管理监听器。请使用绝对路径，且其所在目录必须已存在、归服务器用户所有，并禁止组用户和其他用户访问。监听器通过 Unix socket 接收 JSON 格式的创建、配对、列出、轮换和撤销命令。已有监听器不会被替换。 关闭期间，监听器先停止接收命令，再等待已接纳操作完成，随后 Connection 服务才释放资源。管理失败分别报告 `durableOutcome` 和 `liveCleanup`，不包含凭据详情。活动管理监听器仅支持 Unix。独立的 `deviceBootstrapOnly` 组合在 Windows 等平台上提供 `ctx.deviceBootstrap.issue()` 和 `list()`，不创建网络监听器，也不撤销或轮换活动设备。正在运行的 Host 在凭据监视器同步后看到引导写入；配置为 `watch: false` 的提供方需要重新加载。
+在设备模式下，可通过 `deviceAdminSocket` 在 Unix 上启用本地管理监听器。请使用绝对路径，且其所在目录必须已存在、归服务器用户所有，并禁止组用户和其他用户访问。监听器通过 Unix socket 接收 JSON 格式的创建、配对、设置配对密码、列出、轮换和撤销命令。已有监听器不会被替换。 关闭期间，监听器先停止接收命令，再等待已接纳操作完成，随后 Connection 服务才释放资源。管理失败分别报告 `durableOutcome` 和 `liveCleanup`，不包含凭据详情。活动管理监听器仅支持 Unix。独立的 `deviceBootstrapOnly` 组合在 Windows 等平台上提供 `ctx.deviceBootstrap.issue()`、`list()` 和 `setPairingPassword()`，不创建网络监听器，也不撤销或轮换活动设备。正在运行的 Host 在凭据监视器同步后看到引导写入；配置为 `watch: false` 的提供方需要重新加载。
 
 设备客户端在 POST `/connect` 上发送 `Ocean-Device-Protocol: 1`。版本缺失或不受支持时，在写入登录记录前返回 409，并在响应头中给出支持的版本。通过验证的设备令牌各自拥有独立的交换预算，由 `maxDeviceExchangesPerWindow` 和 `deviceExchangeWindowMs` 配置。无效令牌不会消耗其他设备的预算，即使客户端共享代理或网络地址。预算耗尽时，端点返回 429 和 `Retry-After`。
 
@@ -89,6 +89,10 @@ GET `/connect/bootstrap` 返回已登录设备 Peer 对应的 JSON 注入表，�
 管理命令 `pair` 创建一次性配对授权，新设备用它换取自己的设备令牌，因此无需手动输入或复制令牌。授权在设备注册表中只保存哈希，有效期为 `devicePairingTtlSeconds`（默认 600 秒；命令可指定 30 至 3600 秒），只能使用一次。Host 同时最多保留 16 个未过期授权，超出时报告 `DEVICE_PAIRING_CAPACITY`。客户端向 POST `/connect/pair` 发送请求，以授权作为持有者令牌并附带 `Ocean-Device-Protocol: 1`。Host 应用与 `/connect` 相同的 HTTPS 和 Origin 检查，所有授权在每个时间窗口内共用一份尝试预算（`maxDeviceExchangesPerWindow`、`deviceExchangeWindowMs`），然后在一次凭据写入中消耗授权并创建设备。成功时返回 `200`，正文为 `{ id, token }`，并带有 Host 标识头。未知、已过期和已使用的授权都返回 `401`。新令牌随后与其他令牌一样通过 `/connect` 登录，`rotate` 和 `revoke` 对它同样有效。
 
 授权通过两种链接之一到达设备，`@ocean/ocean-client-connection/device` 导出的 `parsePairing` 把任一形式解析为 `PairingLink { address, label?, secret }`：`parsePairingLink` 读取 Desktop 形式 `ocean://pair?host=<https-address>&label=<name>#<grant>`，要求 `host` 和 `label`；`parsePairingUrl` 读取浏览器形式 `https://<host>/<mount>#pair=<grant>`，不携带标签。两种形式都要求 HTTPS 地址不含凭据、查询参数和自身片段；授权为 `<uuid>.<43 个 base64url 字符>`。其他任何文本都返回 `undefined`。Desktop 和 `ocean connect` 接受任一形式；在浏览器中打开浏览器形式链接的设备通过其设备登录页完成配对，该页面归 [`frontend-static`](../../host/frontend-static/README.zh.md)所有。`DeviceClient.pair` 把未知、已过期或已使用的授权报告为 `DEVICE_PAIRING_REJECTED`（401），把没有该路由的 Host 报告为 `DEVICE_PAIRING_UNSUPPORTED`（404 或 405）。
+
+Host 也可以接受可重复使用的配对密码，代替一次性授权。`ocean remote-device password` 通过管理套接字（`{ action: 'password', password }`，`null` 表示清除）或 `ctx.deviceBootstrap.setPairingPassword()` 设置或清除它；密码去除首尾空白后必须为 8 至 256 个字符，Host 只在 `client-connection/pairing-password` 凭据记录中保存加盐的 scrypt 校验值。设备在同一个 POST `/connect/pair` 上用 `Ocean-Device-Pairing: password` 选择该模式：Authorization 持有者令牌是 UTF-8 密码的 base64url 编码，`Ocean-Device-Label` 以 1 至 128 个可打印 ASCII 字符命名设备，可选的 `Ocean-Device-Host` 与 `/connect` 一样固定 Host 标识。方法、HTTPS 与 Origin、协议版本（409）和 Host 标识（412）检查与授权配对相同；标签、持有者令牌或模式值格式错误时返回 400。密码尝试共用所有调用方的一份预算，即 `deviceExchangeWindowMs` 窗口内的 `maxPairingPasswordAttemptsPerWindow`（默认 5），并且在检查密码之前计数，因此正确密码同样消耗预算；预算耗尽时返回 429 和 `Retry-After`，授权配对的预算不受影响。正确密码得到 `200`、`{ id, token }`、标识头和全部权限；错误密码得到 `401`；未设置密码得到带标识头的 `404`，因此客户端能区分未配置的 Host 和旧版 Host。选择该模式的请求的每个响应都带有 `Ocean-Device-Pairing: password`：不支持密码配对的 Host 会忽略该头，把持有者令牌当作授权读取并回答 `401`，正是这个缺失的头让客户端把该 Host 报告为不支持，而不是把密码报告为错误。凭据存储故障返回 503，不含记录详情。
+
+`DeviceClient.pairWithPassword({ password, label, signal?, expectedHostId? })` 发送该请求并返回与 `pair` 相同的 `PairedDevice`。由于密码可重复使用，知道 Host 标识的客户端（通过 `expectedHostId` 或先前的 `probe`）会先用匿名的 `HEAD /connect` 核对标识，再让密码离开设备，并把它作为 `Ocean-Device-Host` 前置条件发送。它把错误密码报告为 `DEVICE_PAIRING_REJECTED`，把未设置密码报告为 `DEVICE_PAIRING_PASSWORD_UNSET`，把没有标明该模式的 Host 报告为 `DEVICE_PAIRING_UNSUPPORTED`。
 
 设备准入在容量耗尽时返回 503。`maxDeviceTransports` 限制整个 Host 上等待验证的请求与活动 HTTP 或 WebSocket 传输的总数。`maxDeviceTransportsPerDevice` 限制单台设备所有登录中的活动传输数量。租约开始释放时立即失去回答事件的权限，但其容量名额保留至 Peer 清理完成。
 
@@ -131,6 +135,7 @@ Node 客户端从 `@ocean/ocean-client-connection/device` 导入 `DeviceClient`�
 - **明文 HTTP 监听器会在传输中暴露 bearer cookie**：此类部署无法给浏览器 cookie 加 `Secure`；若把同一 authority 暴露到网络上，会话 cookie 可能泄露；在 Web 载体（[`ocean-host-webserver`](../../host/webserver/README.zh.md)）上配置 TLS 即可让 cookie 带上 `Secure` 并只经 TLS 发送。
 - **未使用的 API Peer 可以保留到 Host 退出**：调用方从未建立 WebSocket 时，其轻量记录不受建联期限或空闲回收约束。Cookie 过期仍拒绝新请求。其生命周期 socket 关闭或 Host 重启后，API 调用方必须通过 `/connect` 重新接入。
 - **所有者浏览器认证没有服务器端 logout 操作**：清除浏览器 cookie 会结束单个浏览器会话；删除 owner 凭据记录并重启 `ocean` 会撤销全部会话。
+- **密码配对授予全部权限，且只校验标签的长度和 ASCII 范围**：通过密码配对的设备持有全部六项权限，与不带 `scopes` 的 `create` 相同；`Ocean-Device-Label` 只检查去除首尾空白后为 1 至 128 个可打印 ASCII 字符，不做其他校验。需要更少权限的设备应改用带指定权限的 `create` 或 `pair` 创建。
 
 
 <a id="dev-note"></a>

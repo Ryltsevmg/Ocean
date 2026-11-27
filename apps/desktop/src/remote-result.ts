@@ -84,6 +84,7 @@ export function remoteErrorResult(error: unknown, messages: DesktopMessages): De
       DEVICE_SIGN_IN_REQUIRED: messages.remoteTokenRequired,
       DEVICE_PAIRING_REJECTED: messages.remotePairingRejected,
       DEVICE_PAIRING_UNSUPPORTED: messages.remotePairingUnsupported,
+      DEVICE_PAIRING_PASSWORD_UNSET: messages.remotePairingPasswordUnset,
     } satisfies Record<DeviceClientError['code'], string>
     return { kind: 'failed', code: error.code, message: copy[error.code] }
   }

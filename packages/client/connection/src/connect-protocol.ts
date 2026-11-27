@@ -24,6 +24,15 @@ export const DEVICE_BOOTSTRAP_PATH = '/connect/bootstrap'
 /** One-time pairing exchange: a short-lived grant becomes a device token. */
 export const DEVICE_PAIR_PATH = '/connect/pair'
 
+/** HTTP header selecting how `POST /connect/pair` reads its Authorization bearer; absent selects the pairing grant. */
+export const DEVICE_PAIRING_HEADER = 'ocean-device-pairing'
+
+/** Header value that selects password pairing, echoed by every reply to a request that selected it. */
+export const DEVICE_PAIRING_PASSWORD = 'password'
+
+/** HTTP header naming the label a device receives from password pairing, which carries no pre-assigned grant label. */
+export const DEVICE_LABEL_HEADER = 'ocean-device-label'
+
 /** Version of the device login and remote transport protocol. */
 export const DEVICE_PROTOCOL_VERSION = '1'
 

@@ -19,6 +19,7 @@
     "src/device-login.ts",
     "src/device-metadata.ts",
     "src/device-pairing.ts",
+    "src/device-pairing-password.ts",
     "src/device-scopes.ts",
     "src/device-tokens.ts",
     "src/device.ts",

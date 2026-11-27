@@ -28,6 +28,8 @@ export interface ConnectionConfig {
   maxDeviceTransportsPerDevice?: number
   /** Maximum credential exchanges per authenticated device per window. */
   maxDeviceExchangesPerWindow?: number
+  /** Maximum password pairing attempts across all callers per exchange window; wrong and right attempts both count. Default: 5. */
+  maxPairingPasswordAttemptsPerWindow?: number
   /** Window for device credential exchange attempts in milliseconds. */
   deviceExchangeWindowMs?: number
   /** Absolute local administrator socket in an owner-only directory. */
@@ -52,6 +54,7 @@ export const Config: z<ConnectionConfig> = z.object({
   maxDeviceTransports: z.natural().min(1).default(256),
   maxDeviceTransportsPerDevice: z.natural().min(1).default(32),
   maxDeviceExchangesPerWindow: z.natural().min(1).default(60),
+  maxPairingPasswordAttemptsPerWindow: z.natural().min(1).default(5),
   deviceExchangeWindowMs: z.natural().min(1).default(10_000),
   deviceAdminSocket: z.string(),
   devicePairingTtlSeconds: z.natural().min(30).max(3_600).default(600),

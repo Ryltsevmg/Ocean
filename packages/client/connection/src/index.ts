@@ -12,6 +12,7 @@ import { isLoopbackHostname } from './loopback-hostname.ts'
 import { assertTrustedAuthority } from './api-request-trust.ts'
 import { DeviceTokens } from './device-tokens.ts'
 import { DeviceBootstrap } from './device-bootstrap.ts'
+import { DevicePairingPassword } from './device-pairing-password.ts'
 import { listenDeviceAdmin } from './device-admin.ts'
 import { loadDeviceHostIdentity } from './device-host-identity.ts'
 import { DeviceLogin } from './device-login.ts'
@@ -64,6 +65,7 @@ export {
 export { HostConnectionService } from './rpc-host.ts'
 export { DeviceBootstrap } from './device-bootstrap.ts'
 export type { DeviceId, DeviceMetadata } from './device-tokens.ts'
+export { pairingPassword } from './device-pairing-password.ts'
 
 export { API_PATH } from './api-path.ts'
 
@@ -127,15 +129,17 @@ export async function apply(ctx: Context, config?: ConnectionConfig): Promise<vo
   if (proxy !== undefined && (proxy.protocol !== 'https:' || proxy.username || proxy.password)) {
     throw new Error('client-connection: deviceProxyUrl must be HTTPS and contain no credentials')
   }
-  const deviceLogin = !resolved.allowOwnerLogin ? new DeviceLogin(new DeviceTokens(ctx.credentials), {
-    trustedHosts,
-    identity: await loadDeviceHostIdentity(ctx.credentials, ctx.root),
-    ...(proxy === undefined ? {} : { proxyOrigin: proxy.origin }),
-    lifetimeMs: (resolved.deviceSessionLifetimeSeconds ?? cookieMaxAgeDays * 86_400) * 1000,
-    maxSessionsPerDevice: resolved.maxDeviceSessions,
-    maxExchangesPerWindow: resolved.maxDeviceExchangesPerWindow,
-    exchangeWindowMs: resolved.deviceExchangeWindowMs,
-  }) : undefined
+  const deviceLogin = !resolved.allowOwnerLogin ? new DeviceLogin(
+    new DeviceTokens(ctx.credentials), new DevicePairingPassword(ctx.credentials), {
+      trustedHosts,
+      identity: await loadDeviceHostIdentity(ctx.credentials, ctx.root),
+      ...(proxy === undefined ? {} : { proxyOrigin: proxy.origin }),
+      lifetimeMs: (resolved.deviceSessionLifetimeSeconds ?? cookieMaxAgeDays * 86_400) * 1000,
+      maxSessionsPerDevice: resolved.maxDeviceSessions,
+      maxExchangesPerWindow: resolved.maxDeviceExchangesPerWindow,
+      maxPairingPasswordAttemptsPerWindow: resolved.maxPairingPasswordAttemptsPerWindow,
+      exchangeWindowMs: resolved.deviceExchangeWindowMs,
+    }) : undefined
   let closeAdmin: (() => Promise<void>) | undefined
   const connection = new HostConnectionService(
     ctx,
@@ -163,6 +167,11 @@ export async function apply(ctx: Context, config?: ConnectionConfig): Promise<vo
         }
         case 'revoke': return connection.revokeDevice(command.id)
         case 'rotate': return (await connection.rotateDevice(command.id)) ?? null
+        case 'password': {
+          if (command.password === null) await deviceLogin.passwords.clear()
+          else await deviceLogin.passwords.set(command.password)
+          return { set: command.password !== null }
+        }
       }
     })
   }
