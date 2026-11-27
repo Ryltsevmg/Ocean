@@ -54,7 +54,7 @@ export class RemoteSshError extends Error {
   }
 }
 
-/** Test hook for the `ssh` executable; production runs the one found on `PATH`. */
+/** Test hook for the executables Desktop runs by name, `ssh` and `tailscale`; production runs the one found on `PATH`. */
 export const remoteSsh: { run: (command: string, args: readonly string[]) => Promise<RemoteSshRun> } = {
   async run(command, args) {
     const { spawn } = await import('node:child_process')
@@ -73,7 +73,7 @@ export const remoteSsh: { run: (command: string, args: readonly string[]) => Pro
 }
 
 /** OpenSSH destination characters; anything else could smuggle another option or command. */
-const DESTINATION = /^[A-Za-z0-9][A-Za-z0-9_.@-]*$/u
+export const SSH_DESTINATION = /^[A-Za-z0-9][A-Za-z0-9_.@-]*$/u
 
 /** Release archive names and the machine architectures they cover. */
 const ARCHITECTURES: Readonly<Record<string, 'x64' | 'arm64'>> = { x86_64: 'x64', amd64: 'x64', aarch64: 'arm64', arm64: 'arm64' }
@@ -95,7 +95,7 @@ const RELEASE_ROOT = 'https://github.com/Ryltsevmg/Ocean/releases/download'
  */
 export function parseSshTarget(host: string): string {
   const trimmed = host.trim()
-  if (trimmed === '' || trimmed.length > 255 || !DESTINATION.test(trimmed)) {
+  if (trimmed === '' || trimmed.length > 255 || !SSH_DESTINATION.test(trimmed)) {
     throw new RemoteSshError('DESKTOP_SSH_HOST_INVALID', 'inspect', 'Ocean remote SSH: the destination is not a valid OpenSSH host')
   }
   return trimmed
@@ -123,7 +123,7 @@ export function releaseUrls(version: string, arch: 'x64' | 'arm64'): { archive: 
 }
 
 /** HTTPS ports tried when the caller pins none; 443 first, so a machine that serves nothing keeps the familiar address. */
-const SERVE_PORT_CANDIDATES: readonly number[] = [443, 8443, 9443, 10443]
+export const SERVE_PORT_CANDIDATES: readonly number[] = [443, 8443, 9443, 10443]
 
 /**
  * Read the HTTPS ports the machine's Tailscale already serves another site on, in

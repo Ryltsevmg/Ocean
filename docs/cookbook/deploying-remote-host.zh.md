@@ -92,7 +92,7 @@ docker run --name ocean --init --network host --stop-timeout 60 \
 以服务账号运行[设备命令](../../apps/cli/README.zh.md)，连接其活动套接字。用 `create <label>` 添加每台设备，用 `list` 检查状态，用 `rotate <id>` 替换令牌，用 `revoke <id>` 禁用设备。通过私有渠道传递 `create` 和 `rotate` 的输出。在 systemd 和容器示例中，使用执行命令时可见的套接字路径。
 
 
-要在不复制令牌的情况下添加设备，请用一次性配对链接代替 `create`。链接只能使用一次，除非用 `--ttl` 指定，否则十分钟后过期。通过私密渠道发送，然后在设备上打开，或粘贴到 Desktop 的**连接远程 Host**对话框。
+要在不复制令牌的情况下添加设备，请用一次性配对链接代替 `create`。链接只能使用一次，除非用 `--ttl` 指定，否则十分钟后过期。通过私密渠道发送，然后在设备上打开，或粘贴到 Desktop **连接远程 Host**窗口中**其他连接方式**下的地址栏。
 
 ```sh
 ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://ocean.example/
@@ -103,6 +103,8 @@ ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://oce
 ```sh
 ocean remote-device --socket /run/ocean/admin.sock password --password-stdin
 ```
+
+在设备上，Desktop 能通过 Tailscale 访问的 Host 会列在**连接远程 Host**窗口中，带 **Tailscale** 徽标和**配对**。**配对**要求输入配对密码，用它换取以设备主机名标记的设备令牌，登录，并在安全存储可用时保存令牌；密码本身不会被保留。密码错误、Host 未设置密码和频率限制分别提示；窗口未列出的 Host 仍可通过把配对链接粘贴到**其他连接方式**下的地址栏来连接。
 
 将 `DEVICE_ID` 替换为 `list` 返回的标识。
 

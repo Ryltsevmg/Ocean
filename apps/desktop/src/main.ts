@@ -10,6 +10,7 @@ import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 import { randomUUID } from 'node:crypto'
 import { access, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { hostname } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import {
   app,
@@ -31,7 +32,8 @@ import {
   type WebContents,
 } from 'electron'
 import { DeviceClient, parsePairing, type PairingLink } from '@ocean/ocean-client-connection/device'
-import { provisionRemoteHost } from './remote-ssh.ts'
+import { provisionRemoteHost, SERVE_PORT_CANDIDATES } from './remote-ssh.ts'
+import { discoverHosts, readSshTargets, readTailscalePeers, type RemoteDiscovery } from './remote-discovery.ts'
 import { HarnessError } from '@ocean/ocean-error'
 import { resolveDesktopPaths } from './paths.ts'
 import { DesktopProjectManager } from './project-manager.ts'
@@ -42,12 +44,12 @@ import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { RemoteConnectionStore } from './remote-connection-store.ts'
 import { findPairingArgument } from './remote-pairing.ts'
-import { answeringRoute } from './remote-routes.ts'
+import { answeringRoute, probeRoute } from './remote-routes.ts'
 import { currentHost, forwardHostPort, type PortForward } from './remote-port-forward.ts'
 import { RemoteDesktopHost } from './remote-host.ts'
 import { readDesktopHostPublication, type DesktopHostPublication } from './remote-publication.ts'
 import { resolveDesktopRemoteConfig } from './remote-configuration.ts'
-import { remoteErrorResult, remoteFailure, type DesktopRemoteResult } from './remote-result.ts'
+import { remoteErrorResult, remoteFailure, remotePasswordErrorResult, type DesktopRemoteResult } from './remote-result.ts'
 import { DesktopBackendController } from './backend-controller.ts'
 import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } from './ipc.ts'
 import { readDeviceInfo } from './device-info.ts'
@@ -115,6 +117,20 @@ const rendererConsole = new RendererConsoleTail()
 
 /** Deadline for preparing and starting a Host on a remote machine over SSH. */
 const REMOTE_SSH_TIMEOUT_MS = 900_000
+/** Deadline for exchanging a pairing password for a device token. */
+const REMOTE_PAIR_PASSWORD_TIMEOUT_MS = 15_000
+/** Device label a Host without an ASCII hostname receives. */
+const DEVICE_LABEL_FALLBACK = 'Ocean Desktop'
+
+/**
+ * The label a password-paired device receives on the Host: this machine's name when the Host would
+ * accept it, else a fixed name.
+ * @returns A label of 1 to 128 printable ASCII characters.
+ */
+function deviceLabel(): string {
+  const name = hostname().trim()
+  return name.length > 0 && name.length <= 128 && /^[\x20-\x7e]+$/u.test(name) ? name : DEVICE_LABEL_FALLBACK
+}
 
 // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
 // set before ready so the first fatal report already resolves under it.
@@ -1569,7 +1585,7 @@ async function main(): Promise<void> {
     }
     pendingPairing = pairing
     const window = new BrowserWindow({
-      parent, modal: true, show: false, useContentSize: true, width: 500, height: 460,
+      parent, modal: true, show: false, useContentSize: true, width: 560, height: 620,
       resizable: false, maximizable: false, fullscreenable: false,
       title: locale.messages.remoteDialogTitle, autoHideMenuBar: true,
       webPreferences: { preload: appPreload, sandbox: true, contextIsolation: true, nodeIntegration: false },
@@ -1604,8 +1620,12 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.remoteForm, async (event) => {
     assertRemoteDialog(event)
     const disconnectedAddress = disconnectedRemoteAddress
+    // The list needs identities and routes only; tokens stay in the main process.
     const saved = await remoteStore.machines().then(
-      machines => ({ addresses: machines.flatMap(machine => machine.routes), machines, unreadable: false }),
+      machines => ({
+        addresses: machines.flatMap(machine => machine.routes),
+        machines: machines.map(({ hostId, routes }) => ({ hostId, routes })), unreadable: false,
+      }),
       () => ({ addresses: [], machines: [], unreadable: true }),
     )
     return {
@@ -1626,6 +1646,13 @@ async function main(): Promise<void> {
         sshStart: locale.messages.remoteSshStart, sshStarting: locale.messages.remoteSshStarting,
         logoutUnconfirmed: locale.messages.remoteLogoutUnconfirmed,
         done: locale.messages.remoteDone, connecting: locale.messages.remoteConnecting,
+        machines: locale.messages.remoteMachinesLabel, savedBadge: locale.messages.remoteSavedBadge,
+        sshBadge: locale.messages.remoteSshBadge, tailscaleBadge: locale.messages.remoteTailscaleBadge,
+        setup: locale.messages.remoteSetupAction, pair: locale.messages.remotePairAction,
+        forgetMachine: locale.messages.remoteForgetMachine, discovering: locale.messages.remoteDiscovering,
+        refresh: locale.messages.remoteRefresh, tailscaleMissing: locale.messages.remoteTailscaleMissing,
+        otherWays: locale.messages.remoteOtherWays, password: locale.messages.remotePasswordLabel,
+        passwordHint: locale.messages.remotePasswordHint, back: locale.messages.remotePasswordBack,
       },
     }
   })
@@ -1714,6 +1741,36 @@ async function main(): Promise<void> {
     })
     if (result.kind === 'connected' && pendingPairing === pairing) pendingPairing = undefined
     return result
+  })
+  ipcMain.handle(DESKTOP_IPC.remoteDiscover, async (event): Promise<RemoteDiscovery> => {
+    assertRemoteDialog(event)
+    const [targets, peers, machines] = await Promise.all([
+      readSshTargets(app.getPath('home')), readTailscalePeers(), remoteStore.machines().catch(() => []),
+    ])
+    // An SSH destination or a Tailscale route that reaches a saved machine is that machine, already paired.
+    const paired = new Set(machines.flatMap(machine => machine.routes).map(route => new URL(route).hostname.toLowerCase()))
+    const identities = new Set(machines.map(machine => machine.hostId))
+    const ssh = targets.filter(target => !paired.has(target.hostName.toLowerCase())).map(({ host, label }) => ({ host, label }))
+    if (!Array.isArray(peers)) return { kind: 'discovered', ssh, tailscale: [], tailscaleAvailable: false }
+    const hosts = await discoverHosts({ peers, ports: SERVE_PORT_CANDIDATES, probe: probeRoute })
+    return {
+      kind: 'discovered', ssh, tailscaleAvailable: true,
+      tailscale: hosts.map(host => ({ ...host, known: identities.has(host.hostId) })),
+    }
+  })
+  ipcMain.handle(DESKTOP_IPC.remotePairPassword, async (event, address: unknown, password: unknown): Promise<DesktopRemoteResult> => {
+    const window = assertRemoteDialog(event)
+    const messages = currentDesktopLocale().messages
+    if (typeof address !== 'string' || address.length > 2048 || typeof password !== 'string' || password.length === 0 || password.length > 256) {
+      return remoteFailure('invalid-input', messages)
+    }
+    let token: string
+    try {
+      const signal = AbortSignal.timeout(REMOTE_PAIR_PASSWORD_TIMEOUT_MS)
+      const paired = await new DeviceClient(address).pairWithPassword({ password, label: deviceLabel(), signal })
+      token = paired.token
+    } catch (error) { return remotePasswordErrorResult(error, address, messages) }
+    return connectRemoteHost({ address, token, remember: remoteStore.canSave, window })
   })
 
   function attachRemoteView(owner: BrowserWindow, connection: RemoteConnection): WebContents {

@@ -50,6 +50,24 @@ export function remoteFailure(code: DesktopRemoteFailure, messages: DesktopMessa
 }
 
 /**
+ * Present a password-pairing failure. A Host without a password and a wrong password are named
+ * for the machine the password was meant for; every other failure reads as in the generic classifier.
+ * @param error - Failure of `DeviceClient.pairWithPassword`.
+ * @param address - Machine the password was sent to.
+ * @param messages - Current Desktop locale.
+ * @returns A secret-free localized failure.
+ */
+export function remotePasswordErrorResult(error: unknown, address: string, messages: DesktopMessages): DesktopRemoteFailureResult {
+  if (error instanceof DeviceClientError && error.code === 'DEVICE_PAIRING_PASSWORD_UNSET') {
+    return { kind: 'failed', code: error.code, message: formatDesktopMessage(messages.remotePasswordUnset, { address }) }
+  }
+  if (error instanceof DeviceClientError && error.code === 'DEVICE_PAIRING_REJECTED') {
+    return { kind: 'failed', code: error.code, message: messages.remotePasswordWrong }
+  }
+  return remoteErrorResult(error, messages)
+}
+
+/**
  * Classify transport and encrypted-storage errors without inspecting their text.
  * @param error - Owning client's structured failure.
  * @param messages - Current Desktop locale.

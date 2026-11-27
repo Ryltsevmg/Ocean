@@ -16,7 +16,7 @@ export const ROUTE_PROBE_TIMEOUT_MS = 2_500
 export type RouteProbe = (route: string, signal: AbortSignal) => Promise<HostIdentity>
 
 /** The probe Desktop uses: a credential-free `HEAD /connect` through the device client. */
-const probeRoute: RouteProbe = (route, signal): Promise<HostIdentity> => new DeviceClient(route).probe(signal)
+export const probeRoute: RouteProbe = (route, signal): Promise<HostIdentity> => new DeviceClient(route).probe(signal)
 
 /**
  * Order the routes of a machine for one sign-in.
