@@ -7,7 +7,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import Schema from '@deepseek-ai/schemastery'
 import type { SettingsNamespaceView } from '@ocean/ocean-api-remotes/client'
 import type { JsonValue } from '@ocean/ocean-util-values'
-import { allowAllAccess, bindSnapshotSelector, RemoteError } from '@ocean/ocean-client-test-runtime'
+import { allowAllAccess, bindSnapshotSelector, makeTranslate, RemoteError } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
 import { DeepSeekOnboardingDialog } from '../src/client/DeepSeekOnboardingDialog.tsx'
 import type { DeepSeekOnboardingDialogProps } from '../src/client/DeepSeekOnboardingDialog.tsx'
 import { SettingsDescribeMirror } from '@ocean/ocean-client-ui-settings/src/client/settings-mirror.ts'
@@ -138,7 +139,8 @@ function harness(options: {
   }
   // The page plugin's context, scripted down to the namespaces it reaches.
   const ctx = { remote: { ...face, session: { initializeDefaultModel: async () => ({ ok: true, value: undefined }) } } } as never
-  const operations = createModelsOperations(ctx)
+  // The common vocabulary `apply` binds for the page's Host operations.
+  const operations = createModelsOperations(ctx, makeTranslate(commonEn))
   const controller = new ModelsSettingsStore(ctx, settingsSchema, new SettingsDescribeMirror(ctx))
   const openSection = vi.fn()
   const complete = vi.fn()

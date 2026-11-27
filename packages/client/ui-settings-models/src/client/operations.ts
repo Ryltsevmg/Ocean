@@ -7,9 +7,13 @@
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {
-  LlmDiscoveredModel, LlmModelDiscoveryRequest,
+  LlmDiscoveredModel, LlmModelDiscoveryRequest, RemoteFailure,
   SettingsNamespaceView, SettingsPathOpView,
 } from '@ocean/ocean-api-remotes/client'
+import { accessRefusal, accessRefusalText } from '@ocean/ocean-client-ui-primitives'
+import type { TranslateNS } from '@ocean/ocean-client-ui-slots'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 
 /** What one namespace write answered. */
 export type SettingsWriteOutcome =
@@ -27,7 +31,10 @@ export type SettingsWriteOutcome =
 export type ModelDiscoveryOutcome =
   /** The candidates the provider disclosed, in its own order. */
   | { readonly kind: 'found'; readonly models: readonly LlmDiscoveredModel[] }
-  /** The interrogation was refused, with the Host's own diagnostic. */
+  /**
+   * The interrogation was refused: with the Host's own diagnostic, or with the
+   * common explanation when the Host refused the device the call came from.
+   */
   | { readonly kind: 'refused'; readonly message: string }
 
 /** The Host operations the Models page and its cards invoke. */
@@ -68,12 +75,26 @@ export interface ModelsOperations {
 }
 
 /**
+ * Say why an interrogation was refused. A device call the Host refused is
+ * explained in the common vocabulary, naming the right the device lacks or the
+ * Host owner; any other failure keeps the Host's own diagnostic.
+ * @param failure - the settled Remote failure.
+ * @param t - common-vocabulary translate.
+ * @returns the message the cards report.
+ */
+function discoveryFailureText(failure: RemoteFailure, t: TranslateNS<'common'>): string {
+  const refusal = accessRefusal(failure)
+  return refusal === undefined ? failure.message : accessRefusalText(refusal, t)
+}
+
+/**
  * Bind the page's Host operations to the plugin's own Remote namespaces.
  * @param ctx - the page plugin's context, which declares `remote.credentials`,
  * `remote.llm`, and `remote.settings` in its own `inject`.
+ * @param t - common-vocabulary translate, for a refused device call.
  * @returns the callbacks the section and its cards are injected with.
  */
-export function createModelsOperations(ctx: ClientContext): ModelsOperations {
+export function createModelsOperations(ctx: ClientContext, t: TranslateNS<'common'>): ModelsOperations {
   return {
     storeCredential: async (ref, value) => {
       const response = await ctx.remote.credentials.set(ref, value)
@@ -93,7 +114,7 @@ export function createModelsOperations(ctx: ClientContext): ModelsOperations {
       const response = await ctx.remote.llm.discoverModels(settingsNs, request)
       return response.ok
         ? { kind: 'found', models: response.value }
-        : { kind: 'refused', message: response.error.message }
+        : { kind: 'refused', message: discoveryFailureText(response.error, t) }
     },
   }
 }
