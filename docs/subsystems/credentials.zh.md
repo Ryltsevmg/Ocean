@@ -423,6 +423,13 @@ issue(label: string, scopes?: readonly DeviceScope[]): Promise<{ id: DeviceId; t
  * @returns The credential provider's current device inventory.
  */
 list(): Promise<DeviceMetadata[]>
+
+/**
+ * Set or clear the pairing password in the local credential home.
+ * @param password - New pairing password, 8 to 256 characters after trimming; `null` removes it.
+ * @throws When the password is outside the rule (`DEVICE_PAIRING_PASSWORD_INVALID`), or the provider fails.
+ */
+setPairingPassword(password: string | null): Promise<void>
 ```
 
 Source: [`packages/client/connection/src/device-bootstrap.ts`](../../packages/client/connection/src/device-bootstrap.ts)

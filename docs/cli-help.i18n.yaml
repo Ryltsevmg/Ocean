@@ -9,8 +9,8 @@
   en: ac5f1d8b3cfb914a
   zh: 7f4fd7bcad864182
 /ocean-cli-help/contents:
-  en: 8748376c143fb6f6
-  zh: b65d26715f10d7e5
+  en: de99e074552f6e66
+  zh: ae4b102349af90ed
 /ocean-cli-help/ocean:
   en: 481a54b3fc8a0683
   zh: 33bf81c33d58bffb
@@ -96,8 +96,11 @@
   en: 5187809ae9ee93be
   zh: 3b019a5345947888
 /ocean-cli-help/ocean-remote-device-pair:
-  en: 4e38496d08b71e56
-  zh: 059f6b57377c2b5b
+  en: 11ac77fa2bbad733
+  zh: 27a1df15dabd7b04
+/ocean-cli-help/ocean-remote-device-password:
+  en: ed3972bf884f1b95
+  zh: 9cfa1578c6e60854
 /ocean-cli-help/ocean-remote-device-rotate:
   en: 7c970fc74954c2cf
   zh: 668a68ace17b66ed

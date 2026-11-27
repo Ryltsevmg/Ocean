@@ -321,6 +321,101 @@ it('keeps cancellation and network failures distinct while pairing', async () =>
   })
 })
 
+const PAIRED_BODY = JSON.stringify({ id: 'device-id', token: PAIRED_TOKEN })
+const passwordModeHeaders = { ...identityHeaders, 'ocean-device-pairing': 'password' }
+const encoded = (password: string): string => Buffer.from(password, 'utf8').toString('base64url')
+const PASSWORD = 'пароль secret'
+
+it('pairs with the password after an anonymous preflight of the pinned Host', async () => {
+  const calls: Array<{ url: string; init: RequestInit | undefined }> = []
+  const client = new DeviceClient('https://ocean.example/mount', async (url, init) => {
+    calls.push({ url: url instanceof URL ? url.href : url instanceof Request ? url.url : url, init })
+    const headers = calls.length === 1 ? identityHeaders : passwordModeHeaders
+    return new Response(calls.length === 1 ? null : PAIRED_BODY, { status: calls.length === 1 ? 204 : 200, headers })
+  })
+  const signal = new AbortController().signal
+  const paired = await client.pairWithPassword({ password: PASSWORD, label: 'Phone', signal, expectedHostId: 'host-one' })
+  expect(paired).toEqual({ id: 'device-id', token: PAIRED_TOKEN, host: { id: 'host-one', epoch: 'epoch-one' } })
+  expect(calls.map(call => call.url)).toEqual(['https://ocean.example/mount/connect', 'https://ocean.example/mount/connect/pair'])
+  expect(calls[0]?.init).toMatchObject({ method: 'HEAD', redirect: 'error', headers: { 'ocean-device-protocol': '1' } })
+  expect(calls[1]?.init).toMatchObject({
+    method: 'POST', redirect: 'error', signal,
+    headers: {
+      authorization: `Bearer ${encoded(PASSWORD)}`, 'ocean-device-protocol': '1', 'ocean-device-pairing': 'password',
+      'ocean-device-label': 'Phone', 'ocean-device-host': 'host-one',
+    },
+  })
+  expect(calls[1]?.init?.body).toBeUndefined()
+})
+
+it('pins a previously probed Host identity before the password leaves, and sends nothing extra when none is known', async () => {
+  const probed = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(null, { status: 204, headers: { ...identityHeaders, 'ocean-device-host': 'probed-host' } }))
+    .mockResolvedValueOnce(new Response(null, { status: 204, headers: { ...identityHeaders, 'ocean-device-host': 'probed-host' } }))
+    .mockResolvedValueOnce(new Response(PAIRED_BODY, { headers: passwordModeHeaders }))
+  const client = new DeviceClient('https://ocean.example/', probed)
+  await client.probe(new AbortController().signal)
+  await client.pairWithPassword({ password: 'correct horse', label: 'Phone' })
+  expect(probed.mock.calls[2]?.[1]?.headers).toMatchObject({ 'ocean-device-host': 'probed-host' })
+  const fresh = vi.fn<typeof fetch>().mockResolvedValue(new Response(PAIRED_BODY, { headers: passwordModeHeaders }))
+  await new DeviceClient('https://ocean.example/', fresh).pairWithPassword({ password: 'correct horse', label: 'Phone' })
+  expect(fresh).toHaveBeenCalledTimes(1)
+  expect(fresh.mock.calls[0]?.[1]?.headers).toEqual({
+    authorization: `Bearer ${encoded('correct horse')}`, 'ocean-device-protocol': '1', 'ocean-device-pairing': 'password',
+    'ocean-device-label': 'Phone',
+  })
+})
+
+it.each([
+  [401, 'DEVICE_PAIRING_REJECTED'],
+  [404, 'DEVICE_PAIRING_PASSWORD_UNSET'],
+  [429, 'DEVICE_RATE_LIMITED'],
+  [403, 'DEVICE_AUTH_FAILED'],
+  [400, 'DEVICE_AUTH_FAILED'],
+] as const)('classifies password pairing HTTP %i that names the password mode', async (status, code) => {
+  const client = new DeviceClient('https://ocean.example/', async () => new Response(null, { status, headers: passwordModeHeaders }))
+  const failure = await client.pairWithPassword({ password: PASSWORD, label: 'Phone' }).catch((error: unknown) => error)
+  expect(failure).toMatchObject({ name: 'DeviceClientError', code })
+  expect((failure as Error).message).not.toContain(PASSWORD)
+})
+
+it.each([401, 404, 405] as const)('reports a Host that answers HTTP %i without naming the password mode as lacking it', async (status) => {
+  // A Host without password pairing reads the bearer as a pairing grant, so its 401 is not a verdict on the password.
+  const client = new DeviceClient('https://ocean.example/', async () => new Response(null, { status, headers: identityHeaders }))
+  await expect(client.pairWithPassword({ password: PASSWORD, label: 'Phone' })).rejects.toMatchObject({ code: 'DEVICE_PAIRING_UNSUPPORTED' })
+})
+
+it('treats a Host that answers 200 without a device identity as lacking password pairing', async () => {
+  const client = new DeviceClient('https://ocean.example/', async () => new Response('<html></html>', { status: 200 }))
+  await expect(client.pairWithPassword({ password: PASSWORD, label: 'Phone' })).rejects.toMatchObject({
+    code: 'DEVICE_PAIRING_UNSUPPORTED', message: 'Ocean Host does not support password pairing',
+  })
+})
+
+it('classifies the refusals password pairing shares with grant pairing', async () => {
+  const reply = (status: number) => new DeviceClient('https://ocean.example/', async () => new Response(null, { status, headers: passwordModeHeaders }))
+  await expect(reply(409).pairWithPassword({ password: PASSWORD, label: 'Phone' })).rejects.toBeInstanceOf(DeviceProtocolVersionError)
+  await expect(reply(412).pairWithPassword({ password: PASSWORD, label: 'Phone' })).rejects.toMatchObject({ code: 'DEVICE_HOST_CHANGED' })
+  await expect(reply(503).pairWithPassword({ password: PASSWORD, label: 'Phone' })).rejects.toBeInstanceOf(DeviceSessionUnavailableError)
+})
+
+it('never sends the password to an address that reports a different Host than the pinned one', async () => {
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204, headers: { ...identityHeaders, 'ocean-device-host': 'replacement' } }))
+  const client = new DeviceClient('https://ocean.example/', fetcher)
+  await expect(client.pairWithPassword({ password: PASSWORD, label: 'Phone', expectedHostId: 'pinned' })).rejects.toMatchObject({ code: 'DEVICE_HOST_CHANGED' })
+  expect(fetcher).toHaveBeenCalledTimes(1)
+  expect(JSON.stringify(fetcher.mock.calls)).not.toContain(encoded(PASSWORD))
+})
+
+it('keeps cancellation and network failures distinct while pairing with a password', async () => {
+  const cause = new Error('network failure')
+  const client = new DeviceClient('https://ocean.example/', async () => { throw cause })
+  await expect(client.pairWithPassword({ password: PASSWORD, label: 'Phone' })).rejects.toMatchObject({ code: 'DEVICE_CONNECTION_FAILED', cause })
+  const cancel = new AbortController()
+  cancel.abort(new Error('cancelled by caller'))
+  await expect(client.pairWithPassword({ password: PASSWORD, label: 'Phone', signal: cancel.signal })).rejects.toBe(cancel.signal.reason)
+})
+
 it('probes the Host identity without sending a credential', async () => {
   const calls: Array<{ url: string; request: RequestInit | undefined }> = []
   const fetcher = vi.fn<typeof fetch>(async (url, request) => {

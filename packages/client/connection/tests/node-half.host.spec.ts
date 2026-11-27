@@ -12,6 +12,7 @@ import type { AddressInfo } from 'node:net'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { AttachmentStore } from '@ocean/ocean-attachment'
 import { HostConnectionService } from '../src/rpc-host.ts'
+import { DevicePairingPassword } from '../src/device-pairing-password.ts'
 import { DeviceTokens, deviceId, deviceRegistryKey } from '../src/device-tokens.ts'
 import { DEVICE_SCOPES } from '../src/device-scopes.ts'
 import { credentialKey, type CredentialProvider } from '@ocean/ocean-credentials'
@@ -142,6 +143,19 @@ async function mounted(
   }
 }
 
+/** Post one command to the mounted Host's administrator socket and resolve its decoded reply. */
+function adminCommand(socketPath: string, command: unknown): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({ socketPath, path: '/', method: 'POST' }, (res) => {
+      const chunks: Buffer[] = []
+      res.on('data', (chunk: Buffer) => { chunks.push(chunk) })
+      res.on('end', () => { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))) })
+    })
+    req.once('error', reject)
+    req.end(JSON.stringify(command))
+  })
+}
+
 /** Exchange a service's process token for one authority-bound Cookie header. */
 function browserCookie(connection: HostConnectionHandle, authority: string): string {
   const url = new URL(connection.authenticatedUrl(`http://${authority}`))
@@ -168,6 +182,11 @@ describe('connection node half', () => {
       const device = await bootstrap.issue('Windows laptop')
       expect(await bootstrap.list()).toEqual([{ id: device.id, label: 'Windows laptop', revoked: false }])
       expect(await new DeviceTokens(ctx.credentials).verify(device.token)).toBe(device.id)
+      await bootstrap.setPairingPassword('correct horse')
+      expect(await new DevicePairingPassword(ctx.credentials).verify('correct horse')).toBe(true)
+      await expect(bootstrap.setPairingPassword('short')).rejects.toMatchObject({ code: 'DEVICE_PAIRING_PASSWORD_INVALID' })
+      await bootstrap.setPairingPassword(null)
+      expect(await new DevicePairingPassword(ctx.credentials).isSet()).toBe(false)
     } finally {
       await fiber.dispose()
       expect(ctx.get('deviceBootstrap')).toBeUndefined()
@@ -179,15 +198,7 @@ describe('connection node half', () => {
     const socketPath = join(directory, 'admin.sock')
     const host = await mounted({ allowOwnerLogin: false, trustedHosts: ['ocean.example'], deviceAdminSocket: socketPath }, 'https:')
     try {
-      const admin = (command: unknown): Promise<unknown> => new Promise((resolve, reject) => {
-        const req = httpRequest({ socketPath, path: '/', method: 'POST' }, (res) => {
-          const chunks: Buffer[] = []
-          res.on('data', (chunk: Buffer) => { chunks.push(chunk) })
-          res.on('end', () => { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))) })
-        })
-        req.once('error', reject)
-        req.end(JSON.stringify(command))
-      })
+      const admin = (command: unknown): Promise<unknown> => adminCommand(socketPath, command)
       const created = await admin({ action: 'pair', label: 'Phone', ttlSeconds: 60, scopes: ['sessions:read'] }) as { result: { grant: string; expiresAt: number } }
       expect(created.result.grant).toHaveLength(80)
       expect(created.result).not.toHaveProperty('address')
@@ -206,6 +217,37 @@ describe('connection node half', () => {
       const issued = await admin({ action: 'create', label: 'Tablet', scopes: ['files:read', 'terminal:operate'] }) as { result: { id: string } }
       expect((await new DeviceTokens(host.ctx.credentials).list()).find(device => device.id === issued.result.id)?.scopes)
         .toEqual(['files:read', 'terminal:operate'])
+    } finally {
+      await host.dispose()
+      await rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('sets the pairing password through the administrator socket and redeems it on the Host route', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'ocean-pair-'))
+    const socketPath = join(directory, 'admin.sock')
+    const host = await mounted({ allowOwnerLogin: false, trustedHosts: ['ocean.example'], deviceAdminSocket: socketPath }, 'https:')
+    try {
+      const admin = (command: unknown): Promise<unknown> => adminCommand(socketPath, command)
+      expect(await admin({ action: 'password', password: 'correct horse' })).toEqual({ result: { set: true } })
+      expect(await admin({ action: 'password', password: 'short' })).toEqual({ error: 'invalid command' })
+      const route = host.routes.find(candidate => candidate.path === '/connect/pair')
+      if (route === undefined) throw new Error('missing pairing route')
+      const passwordPairing = (): IncomingMessage => fakePost({
+        host: 'ocean.example', 'ocean-device-protocol': '1', 'ocean-device-pairing': 'password', 'ocean-device-label': 'Phone',
+        authorization: `Bearer ${Buffer.from('correct horse').toString('base64url')}`,
+      }, '/connect/pair', null)
+      const issued = fakeResponse()
+      await route.handler(passwordPairing(), issued.response)
+      expect(issued.state.status).toBe(200)
+      expect(issued.state.headers).toMatchObject({ 'ocean-device-pairing': 'password', 'cache-control': 'no-store' })
+      const paired = JSON.parse(String(issued.state.body)) as { id: string; token: string }
+      const devices = await new DeviceTokens(host.ctx.credentials).list()
+      expect(devices.find(device => device.id === paired.id)).toEqual({ id: paired.id, label: 'Phone', revoked: false })
+      expect(await admin({ action: 'password', password: null })).toEqual({ result: { set: false } })
+      const cleared = fakeResponse()
+      await route.handler(passwordPairing(), cleared.response)
+      expect(cleared.state.status).toBe(404)
     } finally {
       await host.dispose()
       await rm(directory, { recursive: true, force: true })

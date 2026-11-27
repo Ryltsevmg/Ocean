@@ -1,8 +1,13 @@
 /** HTTPS-only exchange of device tokens for browser login credentials. */
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { z } from 'zod'
 import { isTrustedApiRequest } from './api-request-trust.ts'
-import { DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION } from './connect-protocol.ts'
+import {
+  DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_LABEL_HEADER, DEVICE_PAIRING_HEADER, DEVICE_PAIRING_PASSWORD,
+  DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION,
+} from './connect-protocol.ts'
 import type { HostId, HostEpoch } from './connect-protocol.ts'
+import type { DevicePairingPassword } from './device-pairing-password.ts'
 import type { ConnectionTrustRequest } from './rpc.ts'
 import type { DeviceId, DeviceSession, DeviceSessionKey, DeviceTokens } from './device-tokens.ts'
 import { DeviceLoginCapacityError } from './device-tokens.ts'
@@ -13,36 +18,56 @@ function header(request: ConnectionTrustRequest, name: string): string | undefin
   return typeof value === 'string' ? value : undefined
 }
 
+/** Name a device receives from password pairing; printable ASCII keeps it readable in every inventory and log. */
+const pairingLabel = z.string().trim().min(1).max(128).regex(/^[\x20-\x7e]+$/u)
+
+/** Authorization bearer of password pairing: the base64url encoding of the UTF-8 password. */
+const encodedPassword = /^[A-Za-z0-9_-]+$/u
+
+/** One attempt budget that reopens after `exchangeWindowMs`. */
+interface AttemptWindow {
+  startedAt: number
+  attempts: number
+}
+
+/** What the shared fence admits: a device token or pairing grant bearer, or a password pairing request. */
+type DeviceAdmission =
+    | { mode: 'grant'; bearer: string; origin: string }
+    | { mode: 'password'; bearer: string; origin: string; label: string }
+    | { rejection: number; headers: Record<string, string> }
+
 /** Resolve device login origins without accepting forwarded headers. */
 export class DeviceLogin {
   private windowStartedAt = -Infinity
   private readonly attempts = new Map<DeviceId, number>()
-  private pairWindowStartedAt = -Infinity
-  private pairAttempts = 0
+  private readonly grantWindow: AttemptWindow = { startedAt: -Infinity, attempts: 0 }
+  private readonly passwordWindow: AttemptWindow = { startedAt: -Infinity, attempts: 0 }
   /**
    * @param tokens - Durable credential registry.
+   * @param passwords - Pairing password verifier.
    * @param config - Login limits and the optional HTTPS proxy origin.
    */
-  constructor(readonly tokens: DeviceTokens, private readonly config: {
+  constructor(readonly tokens: DeviceTokens, readonly passwords: DevicePairingPassword, private readonly config: {
     trustedHosts: readonly string[]
     proxyOrigin?: string
     lifetimeMs: number
     maxSessionsPerDevice: number
     maxExchangesPerWindow: number
+    maxPairingPasswordAttemptsPerWindow: number
     exchangeWindowMs: number
     identity: { hostId: HostId; epoch: HostEpoch }
   }) {}
 
   /**
    * Admit a bearer exchange: POST over a trusted origin, the current protocol version, and the
-   * Host identity the caller pinned. Both the token and the pairing exchange start here.
+   * Host identity the caller pinned. The token exchange and both pairing modes start here.
    * @param req - Incoming POST request.
    * @param listener - Bound address and transport protocol.
+   * @param mode - `grant` reads a device token or pairing grant bearer; `password` reads a label and an encoded pairing password.
    * @returns The bearer without its scheme and the trusted origin, or the rejection status and headers that end the request.
    */
-  private admit(req: IncomingMessage, listener: { host: string; protocol: 'http:' | 'https:' }):
-    | { bearer: string; origin: string }
-    | { rejection: number; headers: Record<string, string> } {
+  private admit(req: IncomingMessage, listener: { host: string; protocol: 'http:' | 'https:' }, mode: 'grant' | 'password'):
+  DeviceAdmission {
     if (req.method !== 'POST') return { rejection: 405, headers: {} }
     const origin = this.origin(req, listener)
     if (origin === undefined) return { rejection: 403, headers: {} }
@@ -52,8 +77,47 @@ export class DeviceLogin {
     const expectedHost = header(req, DEVICE_HOST_HEADER)
     if (expectedHost !== undefined && expectedHost !== this.config.identity.hostId) return { rejection: 412, headers: {} }
     const authorization = req.headers.authorization
+    if (mode === 'password') {
+      const label = pairingLabel.safeParse(header(req, DEVICE_LABEL_HEADER))
+      if (!label.success) return { rejection: 400, headers: {} }
+      if (authorization === undefined || !authorization.startsWith('Bearer ')) return { rejection: 401, headers: {} }
+      const bearer = authorization.slice(7)
+      if (!encodedPassword.test(bearer)) return { rejection: 400, headers: {} }
+      return { mode, bearer, origin, label: label.data }
+    }
     if (authorization?.length !== 87 || !authorization.startsWith('Bearer ')) return { rejection: 401, headers: {} }
-    return { bearer: authorization.slice(7), origin }
+    return { mode, bearer: authorization.slice(7), origin }
+  }
+
+  /**
+   * Count one attempt in a window that reopens after the configured exchange window.
+   * @param state - Budget of one exchange kind; grant and password attempts never share one.
+   * @param limit - Attempts one window admits.
+   * @returns The `Retry-After` seconds once the budget is spent, else undefined after counting the attempt.
+   */
+  private countAttempt(state: AttemptWindow, limit: number): number | undefined {
+    const now = performance.now()
+    if (now - state.startedAt >= this.config.exchangeWindowMs) {
+      state.startedAt = now
+      state.attempts = 0
+    }
+    if (state.attempts >= limit) return Math.ceil((state.startedAt + this.config.exchangeWindowMs - now) / 1000)
+    state.attempts += 1
+    return undefined
+  }
+
+  /**
+   * Run one credential-store operation, reporting a failure as `undefined` so record details stay off the wire.
+   * @param operation - Provider read or write.
+   * @returns Its result, or undefined when the provider failed.
+   */
+  private async fromStore<T>(operation: () => Promise<T>): Promise<T | undefined> {
+    try {
+      return await operation()
+    } catch (_error) {
+      // Credential provider errors can contain record details.
+      return undefined
+    }
   }
 
   /**
@@ -80,7 +144,7 @@ export class DeviceLogin {
       res.writeHead(status, { 'cache-control': 'no-store', ...headers })
       res.end()
     }
-    const admitted = this.admit(req, listener)
+    const admitted = this.admit(req, listener, 'grant')
     if ('rejection' in admitted) { this.refuse(res, admitted); return }
     let device: DeviceId | undefined
     try {
@@ -121,8 +185,8 @@ export class DeviceLogin {
   }
 
   /**
-   * Exchange a one-time pairing grant for a new device token.
-   * @param req - Incoming POST request with the grant bearer in Authorization.
+   * Exchange a one-time pairing grant or the pairing password for a new device token.
+   * @param req - Incoming POST request with the grant bearer, or the encoded pairing password, in Authorization.
    * @param res - Response owned by the pairing endpoint.
    * @param listener - Bound address and transport protocol.
    */
@@ -130,20 +194,21 @@ export class DeviceLogin {
     host: string
     protocol: 'http:' | 'https:'
   }): Promise<void> {
-    const admitted = this.admit(req, listener)
-    if ('rejection' in admitted) { this.refuse(res, admitted); return }
-    const now = performance.now()
-    if (now - this.pairWindowStartedAt >= this.config.exchangeWindowMs) {
-      this.pairWindowStartedAt = now
-      this.pairAttempts = 0
-    }
+    const selected = req.headers[DEVICE_PAIRING_HEADER]
+    if (selected !== undefined && selected !== DEVICE_PAIRING_PASSWORD) { this.refuse(res, { rejection: 400, headers: {} }); return }
+    const passwordMode = selected !== undefined
+    const admitted = this.admit(req, listener, passwordMode ? 'password' : 'grant')
+    // A reply to a request that selected password pairing names the mode, so a client can tell a mode-aware
+    // refusal from a Host that ignored the header and read the bearer as a pairing grant.
+    const modeHeaders = passwordMode ? { [DEVICE_PAIRING_HEADER]: DEVICE_PAIRING_PASSWORD } : {}
     const reject = (status: number, headers: Record<string, string> = {}): void => {
-      this.refuse(res, { rejection: status, headers })
+      this.refuse(res, { rejection: status, headers: { ...modeHeaders, ...headers } })
     }
-    if (this.pairAttempts >= this.config.maxExchangesPerWindow) {
-      reject(429, { 'retry-after': String(Math.ceil((this.pairWindowStartedAt + this.config.exchangeWindowMs - now) / 1000)) }); return
-    }
-    this.pairAttempts += 1
+    if ('rejection' in admitted) { reject(admitted.rejection, admitted.headers); return }
+    const limit = admitted.mode === 'password' ? this.config.maxPairingPasswordAttemptsPerWindow : this.config.maxExchangesPerWindow
+    const retryAfter = this.countAttempt(admitted.mode === 'password' ? this.passwordWindow : this.grantWindow, limit)
+    if (retryAfter !== undefined) { reject(429, { 'retry-after': String(retryAfter) }); return }
+    if (admitted.mode === 'password') { await this.pairWithPassword(res, admitted, modeHeaders); return }
     let device: Awaited<ReturnType<DeviceTokens['redeemPairing']>>
     try {
       device = await this.tokens.redeemPairing(admitted.bearer)
@@ -158,6 +223,31 @@ export class DeviceLogin {
       'content-type': 'application/json',
     })
     res.end(JSON.stringify(device))
+  }
+
+  /**
+   * Issue a device that holds every scope to a caller presenting the pairing password.
+   * @param res - Response owned by the pairing endpoint.
+   * @param admitted - Password-mode admission: the encoded password and the label the device receives.
+   * @param modeHeaders - Header naming the selected pairing mode, carried by every reply.
+   */
+  private async pairWithPassword(
+    res: ServerResponse, admitted: { bearer: string; label: string }, modeHeaders: Record<string, string>,
+  ): Promise<void> {
+    const reply = (status: number, extra: Record<string, string> = {}, body?: string): void => {
+      res.writeHead(status, { 'cache-control': 'no-store', ...modeHeaders, ...extra })
+      res.end(body)
+    }
+    const set = await this.fromStore(() => this.passwords.isSet())
+    if (set === undefined) { reply(503); return }
+    if (!set) { reply(404, this.identityHeaders()); return }
+    const password = Buffer.from(admitted.bearer, 'base64url').toString('utf8')
+    const matched = await this.fromStore(() => this.passwords.verify(password))
+    if (matched === undefined) { reply(503); return }
+    if (!matched) { reply(401); return }
+    const device = await this.fromStore(() => this.tokens.issue(admitted.label))
+    if (device === undefined) { reply(503); return }
+    reply(200, { ...this.identityHeaders(), 'content-type': 'application/json' }, JSON.stringify(device))
   }
 
   /**

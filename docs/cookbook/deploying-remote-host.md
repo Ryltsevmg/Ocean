@@ -94,6 +94,12 @@ To add a device without copying its token, create a one-time pairing link instea
 ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://ocean.example/
 ```
 
+When you cannot open a shell on the server to make a link for each device, set one pairing password instead. Supply exactly one of `--password-stdin` (a pipe or redirected input), `--password-env <NAME>`, or `--clear`. The command prints only `Pairing password set.` or `Pairing password cleared.`, and the server keeps a salted verifier rather than the password. Each device then pairs by presenting the password, and every device paired this way holds every right.
+
+```sh
+ocean remote-device --socket /run/ocean/admin.sock password --password-stdin
+```
+
 Replace `DEVICE_ID` with an identifier from `list`.
 
 ```sh

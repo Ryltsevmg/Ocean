@@ -38,6 +38,7 @@ Run `pnpm run gen-cli-help` to regenerate; run `pnpm run verify-cli-help` to che
 - [`ocean remote-device list`](#ocean-remote-device-list)
 - [`ocean remote-device create`](#ocean-remote-device-create)
 - [`ocean remote-device pair`](#ocean-remote-device-pair)
+- [`ocean remote-device password`](#ocean-remote-device-password)
 - [`ocean remote-device rotate`](#ocean-remote-device-rotate)
 - [`ocean remote-device revoke`](#ocean-remote-device-revoke)
 - [`ocean sdk`](#ocean-sdk)
@@ -511,8 +512,8 @@ credential store.
 Options:
   --socket <path>           absolute path to the running Host administrator
                             socket
-  --bootstrap               create or list devices using the local credential
-                            store; supports Windows
+  --bootstrap               create or list devices, or set the pairing password,
+                            using the local credential store; supports Windows
   --timeout <milliseconds>  maximum time to wait for a socket operation and live
                             connection cleanup (default: 30000)
   -h, --help                display help for command
@@ -522,6 +523,8 @@ Commands:
   create [options] <label>  Create a device and return its token once
   pair [options] <label>    Create a one-time link that adds a device without
                             typing its token
+  password [options]        Set or clear the pairing password a device can pair
+                            with instead of a link
   rotate <id>               Replace a device token and invalidate its existing
                             logins
   revoke <id>               Revoke a device and close its live connections
@@ -582,6 +585,25 @@ Options:
                      applies otherwise
   --qr               also print a QR code of the browser link to standard error
   -h, --help         display help for command
+```
+
+<a id="ocean-remote-device-password"></a>
+## `ocean remote-device password`
+
+Invocations: `ocean remote-device password --help`, `ocean --profile remote-device password --help`
+
+```text
+Usage: ocean remote-device password [options]
+
+Set or clear the pairing password a device can pair with instead of a link
+
+Options:
+  --password-stdin       read the new pairing password from redirected standard
+                         input
+  --password-env <name>  environment variable holding the new pairing password
+  --clear                remove the pairing password, so password pairing is
+                         refused
+  -h, --help             display help for command
 ```
 
 <a id="ocean-remote-device-rotate"></a>

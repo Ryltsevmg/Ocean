@@ -2,25 +2,53 @@
 import { ServerResponse, type IncomingMessage } from 'node:http'
 import { Readable } from 'node:stream'
 import { expect, it, vi } from 'vitest'
+import type { CredentialKey, CredentialProvider } from '@ocean/ocean-credentials'
 import type { HostEpoch, HostId } from '../src/connect-protocol.ts'
+import { DevicePairingPassword, pairingPasswordKey } from '../src/device-pairing-password.ts'
 import { DeviceLogin } from '../src/device-login.ts'
-import { DeviceTokens } from '../src/device-tokens.ts'
+import { DeviceTokens, deviceRegistryKey } from '../src/device-tokens.ts'
 import { RecordCredentials } from './browser-credentials.ts'
 
 const LISTENER = { host: '127.0.0.1', protocol: 'https:' } as const
 const ORIGIN = 'https://ocean.example'
 const IDENTITY = { hostId: 'host-fixture' as HostId, epoch: 'epoch-fixture' as HostEpoch }
 
+/** The credential operations a device Home reads and writes. */
+type HomeCredentials = Pick<CredentialProvider, 'readRecord' | 'modifyRecord' | 'deleteRecord'>
+
+/** Route the two credential keys of a device Home to separate fixture records, as a real provider stores them. */
+function home(): { credentials: HomeCredentials; tokens: RecordCredentials; passwords: RecordCredentials } {
+  const tokens = new RecordCredentials()
+  const passwords = new RecordCredentials()
+  const records = new Map<CredentialKey, RecordCredentials>([[deviceRegistryKey, tokens], [pairingPasswordKey, passwords]])
+  const record = (key: CredentialKey): RecordCredentials => {
+    const found = records.get(key)
+    if (found === undefined) throw new Error('unexpected credential key')
+    return found
+  }
+  return {
+    tokens, passwords,
+    credentials: {
+      readRecord: key => record(key).readRecord(),
+      modifyRecord: (key, mutate) => record(key).modifyRecord(key, mutate),
+      deleteRecord: key => record(key).deleteRecord(),
+    },
+  }
+}
+
 /** A DeviceLogin over the fixture registry with the shared trusted authority. */
-function deviceLogin(store: RecordCredentials, overrides: {
+function deviceLogin(credentials: HomeCredentials, overrides: {
   trustedHosts?: readonly string[]
   maxSessionsPerDevice?: number
+  maxPairingPasswordAttemptsPerWindow?: number
+  maxExchangesPerWindow?: number
 } = {}): DeviceLogin {
-  return new DeviceLogin(new DeviceTokens(store), {
+  return new DeviceLogin(new DeviceTokens(credentials), new DevicePairingPassword(credentials), {
     trustedHosts: overrides.trustedHosts ?? ['ocean.example'],
     lifetimeMs: 60_000,
     maxSessionsPerDevice: overrides.maxSessionsPerDevice ?? 2,
-    maxExchangesPerWindow: 10,
+    maxExchangesPerWindow: overrides.maxExchangesPerWindow ?? 10,
+    maxPairingPasswordAttemptsPerWindow: overrides.maxPairingPasswordAttemptsPerWindow ?? 5,
     exchangeWindowMs: 60_000,
     identity: IDENTITY,
   })
@@ -32,10 +60,10 @@ function request(method: string, headers: Record<string, string>): IncomingMessa
   return Object.assign(message, { url: '/connect', method, headers })
 }
 
-/** A real response whose reply status and headers the test reads back. */
+/** A real response whose reply status, headers, and body the test reads back. */
 function response() {
   const recorder = new ServerResponse(request('POST', {}))
-  return { response: recorder, writeHead: vi.spyOn(recorder, 'writeHead') }
+  return { response: recorder, writeHead: vi.spyOn(recorder, 'writeHead'), end: vi.spyOn(recorder, 'end') }
 }
 
 /** Headers of a same-origin exchange request with a compatible protocol. */
@@ -190,6 +218,7 @@ it('turns a pairing grant into a device token exactly once', async () => {
     'cache-control': 'no-store', 'content-type': 'application/json',
     'ocean-device-protocol': '1', 'ocean-device-host': 'host-fixture', 'ocean-device-epoch': 'epoch-fixture',
   })
+  expect(call).not.toHaveProperty('ocean-device-pairing')
   const devices = await login.tokens.list()
   expect(devices).toHaveLength(1)
   const second = response()
@@ -220,9 +249,9 @@ it('fences pairing by method, origin, protocol, Host identity, and bearer shape'
 it('limits pairing attempts per window and reopens the window', async () => {
   const clock = vi.spyOn(performance, 'now').mockReturnValue(1_000)
   try {
-    const login = new DeviceLogin(new DeviceTokens(new RecordCredentials()), {
+    const login = new DeviceLogin(new DeviceTokens(new RecordCredentials()), new DevicePairingPassword(new RecordCredentials()), {
       trustedHosts: ['ocean.example'], lifetimeMs: 60_000, maxSessionsPerDevice: 2,
-      maxExchangesPerWindow: 2, exchangeWindowMs: 10_000, identity: IDENTITY,
+      maxExchangesPerWindow: 2, maxPairingPasswordAttemptsPerWindow: 5, exchangeWindowMs: 10_000, identity: IDENTITY,
     })
     const bogus = `${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}.${'A'.repeat(43)}`
     const statuses: number[] = []
@@ -251,4 +280,145 @@ it('contains a credential-store failure while pairing as 503 without record deta
   await login.pair(request('POST', pairHeaders(grant.secret)), reply.response, LISTENER)
   expect(reply.response.statusCode).toBe(503)
   expect(reply.writeHead).toHaveBeenCalledWith(503, { 'cache-control': 'no-store' })
+})
+
+const PASSWORD = 'correct horse battery'
+const IDENTITY_HEADERS = { 'ocean-device-protocol': '1', 'ocean-device-host': 'host-fixture', 'ocean-device-epoch': 'epoch-fixture' }
+
+/** Encode a password the way a device sends it: base64url of its UTF-8 bytes. */
+function encoded(password: string): string {
+  return Buffer.from(password, 'utf8').toString('base64url')
+}
+
+/** Headers of a same-origin password pairing request. */
+function passwordHeaders(password = PASSWORD, extra: Record<string, string> = {}): Record<string, string> {
+  return exchangeHeaders({
+    authorization: `Bearer ${encoded(password)}`,
+    'ocean-device-pairing': 'password', 'ocean-device-label': 'Phone', ...extra,
+  })
+}
+
+it('issues a device holding every scope to the pairing password, named by the label header', async () => {
+  const devices = home()
+  const login = deviceLogin(devices.credentials)
+  await login.passwords.set(PASSWORD)
+  const reply = response()
+  await login.pair(request('POST', passwordHeaders(`  ${PASSWORD}  `, { 'ocean-device-host': 'host-fixture' })), reply.response, LISTENER)
+  expect(reply.response.statusCode).toBe(200)
+  expect(reply.writeHead.mock.calls[0]?.[1]).toEqual({
+    ...IDENTITY_HEADERS, 'cache-control': 'no-store', 'content-type': 'application/json', 'ocean-device-pairing': 'password',
+  })
+  const device = JSON.parse(String(reply.end.mock.calls[0]?.[0])) as { id: string; token: string }
+  expect(await login.tokens.verify(device.token)).toBe(device.id)
+  expect(await login.tokens.list()).toEqual([{ id: device.id, label: 'Phone', revoked: false }])
+  // A label may use every printable ASCII character up to the full length.
+  const widest = response()
+  await login.pair(request('POST', passwordHeaders(PASSWORD, { 'ocean-device-label': ` !~${'x'.repeat(124)}` })), widest.response, LISTENER)
+  expect(widest.response.statusCode).toBe(200)
+})
+
+it('carries a non-ASCII password through its base64url encoding', async () => {
+  const devices = home()
+  const login = deviceLogin(devices.credentials)
+  await login.passwords.set('пароль-секрет')
+  const reply = response()
+  await login.pair(request('POST', passwordHeaders('пароль-секрет')), reply.response, LISTENER)
+  expect(reply.response.statusCode).toBe(200)
+  expect((await login.tokens.list()).map(device => device.label)).toEqual(['Phone'])
+})
+
+it('answers 401 to a wrong password and 404 with the Host identity when none is set', async () => {
+  const login = deviceLogin(home().credentials)
+  const unset = response()
+  await login.pair(request('POST', passwordHeaders()), unset.response, LISTENER)
+  expect(unset.response.statusCode).toBe(404)
+  expect(unset.writeHead.mock.calls[0]?.[1]).toEqual({
+    ...IDENTITY_HEADERS, 'cache-control': 'no-store', 'ocean-device-pairing': 'password',
+  })
+  await login.passwords.set(PASSWORD)
+  const wrong = response()
+  await login.pair(request('POST', passwordHeaders('wrong password')), wrong.response, LISTENER)
+  expect(wrong.response.statusCode).toBe(401)
+  expect(wrong.writeHead.mock.calls[0]?.[1]).toEqual({ 'cache-control': 'no-store', 'ocean-device-pairing': 'password' })
+  expect(await login.tokens.list()).toEqual([])
+})
+
+it('limits password attempts in their own window, counting right and wrong attempts alike', async () => {
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(1_000)
+  try {
+    const login = deviceLogin(home().credentials, { maxPairingPasswordAttemptsPerWindow: 2 })
+    await login.passwords.set(PASSWORD)
+    const statuses: number[] = []
+    for (const [attempt, password] of [PASSWORD, 'wrong password', PASSWORD, 'wrong password'].entries()) {
+      const reply = response()
+      await login.pair(request('POST', passwordHeaders(password)), reply.response, LISTENER)
+      statuses.push(reply.response.statusCode)
+      if (attempt === 2) expect(reply.writeHead.mock.calls[0]?.[1]).toEqual({
+        'cache-control': 'no-store', 'retry-after': '60', 'ocean-device-pairing': 'password',
+      })
+    }
+    expect(statuses).toEqual([200, 401, 429, 429])
+    // The grant budget is separate: pairing links still have their own window.
+    const grant = response()
+    await login.pair(request('POST', pairHeaders(`${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}.${'A'.repeat(43)}`)), grant.response, LISTENER)
+    expect(grant.response.statusCode).toBe(401)
+    clock.mockReturnValue(61_000)
+    const reopened = response()
+    await login.pair(request('POST', passwordHeaders(PASSWORD)), reopened.response, LISTENER)
+    expect(reopened.response.statusCode).toBe(200)
+  } finally {
+    clock.mockRestore()
+  }
+})
+
+it('fences password pairing like grant pairing and rejects a malformed label, bearer, or mode', async () => {
+  const login = deviceLogin(home().credentials)
+  const missingLabel = passwordHeaders()
+  delete missingLabel['ocean-device-label']
+  const missingBearer = passwordHeaders()
+  delete missingBearer.authorization
+  const cases: [string, string, Record<string, string>, number][] = [
+    ['GET', 'method', passwordHeaders(), 405],
+    ['POST', 'untrusted origin', passwordHeaders(PASSWORD, { origin: 'https://evil.example' }), 403],
+    ['POST', 'protocol', passwordHeaders(PASSWORD, { 'ocean-device-protocol': '2' }), 409],
+    ['POST', 'host identity', passwordHeaders(PASSWORD, { 'ocean-device-host': 'other-host' }), 412],
+    ['POST', 'missing label', missingLabel, 400],
+    ['POST', 'blank label', passwordHeaders(PASSWORD, { 'ocean-device-label': '   ' }), 400],
+    ['POST', 'non-ASCII label', passwordHeaders(PASSWORD, { 'ocean-device-label': 'Телефон' }), 400],
+    ['POST', 'overlong label', passwordHeaders(PASSWORD, { 'ocean-device-label': 'x'.repeat(129) }), 400],
+    ['POST', 'missing bearer', missingBearer, 401],
+    ['POST', 'bearer outside base64url', passwordHeaders(PASSWORD, { authorization: 'Bearer not+base64/url=' }), 400],
+    ['POST', 'unknown mode', passwordHeaders(PASSWORD, { 'ocean-device-pairing': 'otp' }), 400],
+  ]
+  for (const [method, label, headers, status] of cases) {
+    const reply = response()
+    await login.pair(request(method, headers), reply.response, LISTENER)
+    expect(reply.response.statusCode, label).toBe(status)
+    // Every refusal of a request that selected password pairing names the mode, except the one that named no known mode.
+    const named = reply.writeHead.mock.calls[0]?.[1] as Record<string, string>
+    expect('ocean-device-pairing' in named, label).toBe(label !== 'unknown mode')
+  }
+  expect(await login.tokens.list()).toEqual([])
+})
+
+it('contains a credential-store failure during password pairing as 503 without record details', async () => {
+  const devices = home()
+  const login = deviceLogin(devices.credentials)
+  await login.passwords.set(PASSWORD)
+  const read = vi.spyOn(devices.passwords, 'readRecord').mockRejectedValue(new Error('private store detail'))
+  const unreadable = response()
+  await login.pair(request('POST', passwordHeaders()), unreadable.response, LISTENER)
+  expect(unreadable.response.statusCode).toBe(503)
+  expect(unreadable.writeHead).toHaveBeenCalledWith(503, { 'cache-control': 'no-store', 'ocean-device-pairing': 'password' })
+  read.mockRestore()
+  const verify = vi.spyOn(login.passwords, 'verify').mockRejectedValue(new Error('private store detail'))
+  const unchecked = response()
+  await login.pair(request('POST', passwordHeaders()), unchecked.response, LISTENER)
+  expect(unchecked.response.statusCode).toBe(503)
+  verify.mockRestore()
+  const modify = vi.spyOn(devices.tokens, 'modifyRecord').mockRejectedValue(new Error('private store detail'))
+  const unwritable = response()
+  await login.pair(request('POST', passwordHeaders()), unwritable.response, LISTENER)
+  expect(unwritable.response.statusCode).toBe(503)
+  modify.mockRestore()
 })

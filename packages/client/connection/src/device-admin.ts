@@ -4,6 +4,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { dirname, isAbsolute } from 'node:path'
 import { z } from 'zod'
 import { DEVICE_SCOPES } from './device-scopes.ts'
+import { pairingPassword } from './device-pairing-password.ts'
 import { deviceId } from './device-tokens.ts'
 import { DeviceAdministrationError } from './rpc-host.ts'
 
@@ -12,6 +13,7 @@ const command = z.discriminatedUnion('action', [
   z.object({ action: z.literal('list') }),
   z.object({ action: z.literal('create'), label: z.string().trim().min(1).max(128), scopes }),
   z.object({ action: z.literal('pair'), label: z.string().trim().min(1).max(128), scopes, ttlSeconds: z.number().int().min(30).max(3_600).optional() }),
+  z.object({ action: z.literal('password'), password: pairingPassword.nullable() }),
   z.object({ action: z.literal('revoke'), id: deviceId }),
   z.object({ action: z.literal('rotate'), id: deviceId }),
 ])

@@ -515,6 +515,8 @@ export interface ConnectionConfig {
   maxDeviceTransportsPerDevice?: number
   /** Maximum credential exchanges per authenticated device per window. */
   maxDeviceExchangesPerWindow?: number
+  /** Maximum password pairing attempts across all callers per exchange window; wrong and right attempts both count. Default: 5. */
+  maxPairingPasswordAttemptsPerWindow?: number
   /** Window for device credential exchange attempts in milliseconds. */
   deviceExchangeWindowMs?: number
   /** Absolute local administrator socket in an owner-only directory. */

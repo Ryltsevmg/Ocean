@@ -1,8 +1,8 @@
 /** Node client for device authentication and authenticated unary requests. */
 import { HarnessError } from '@ocean/ocean-error'
 import {
-  CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_PAIR_PATH, DEVICE_PROTOCOL_HEADER,
-  DEVICE_PROTOCOL_VERSION,
+  CONNECT_PATH, DEVICE_BOOTSTRAP_PATH, DEVICE_EPOCH_HEADER, DEVICE_HOST_HEADER, DEVICE_LABEL_HEADER, DEVICE_PAIR_PATH,
+  DEVICE_PAIRING_HEADER, DEVICE_PAIRING_PASSWORD, DEVICE_PROTOCOL_HEADER, DEVICE_PROTOCOL_VERSION,
   type HostEpoch, type HostId, type HostIdentity,
 } from './connect-protocol.ts'
 
@@ -10,7 +10,7 @@ import {
 export type DeviceClientErrorCode = 'DEVICE_ADDRESS_INVALID' | 'DEVICE_AUTH_REJECTED' | 'DEVICE_RATE_LIMITED'
   | 'DEVICE_CAPACITY_EXCEEDED' | 'DEVICE_HOST_CHANGED' | 'DEVICE_IDENTITY_INVALID' | 'DEVICE_BOOTSTRAP_INVALID'
   | 'DEVICE_BOOTSTRAP_FAILED' | 'DEVICE_AUTH_FAILED' | 'DEVICE_CONNECTION_FAILED' | 'DEVICE_SIGN_IN_REQUIRED'
-  | 'DEVICE_PAIRING_REJECTED' | 'DEVICE_PAIRING_UNSUPPORTED'
+  | 'DEVICE_PAIRING_REJECTED' | 'DEVICE_PAIRING_UNSUPPORTED' | 'DEVICE_PAIRING_PASSWORD_UNSET'
 
 /** An authentication or transport failure with a secret-free diagnostic. */
 export class DeviceClientError extends HarnessError {
@@ -120,14 +120,7 @@ export class DeviceClient {
    */
   async login(token: string, signal: AbortSignal, expectedHostId?: string): Promise<HostIdentity> {
     const expected = expectedHostId ?? this.identity?.id
-    if (expected !== undefined) {
-      const preflight = await this.fetchResponse(this.connectUrl(), {
-        method: 'HEAD', redirect: 'error', signal,
-        headers: { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION },
-      })
-      this.requireLogin(preflight)
-      this.checkHost(readIdentity(preflight), expected)
-    }
+    if (expected !== undefined) await this.requirePinnedHost(expected, signal)
     const response = await this.fetchResponse(this.connectUrl(), {
       method: 'POST', redirect: 'error', signal,
       headers: {
@@ -166,22 +159,41 @@ export class DeviceClient {
       await response.body?.cancel()
       this.requirePairing(response)
     }
-    let host: HostIdentity
-    try { host = readIdentity(response) } catch (cause) {
-      // A Host without the pairing route can answer any other document with 200.
+    return this.readPairedDevice(response, 'Ocean Host does not support pairing links')
+  }
+
+  /**
+   * Exchange the pairing password for a device token that holds every scope. The password is reusable, so a caller that
+   * knows the Host identity passes `expectedHostId`, or probes first, to check it before the password leaves this device.
+   * @param options - Password, the label the Host gives the new device, cancellation, and an optional pinned Host identity.
+   * @returns The new device, its token, and the Host identity that issued it.
+   * @throws {DeviceClientError} `DEVICE_PAIRING_REJECTED` when the Host has a pairing password and this is not it,
+   *   `DEVICE_PAIRING_PASSWORD_UNSET` when the Host has none, `DEVICE_PAIRING_UNSUPPORTED` when the Host ignores password pairing.
+   */
+  async pairWithPassword(options: {
+    password: string
+    label: string
+    signal?: AbortSignal
+    expectedHostId?: string
+  }): Promise<PairedDevice> {
+    const signal = options.signal ?? new AbortController().signal
+    const expected = options.expectedHostId ?? this.identity?.id
+    if (expected !== undefined) await this.requirePinnedHost(expected, signal)
+    const response = await this.fetchResponse(new URL(DEVICE_PAIR_PATH.slice(1), this.base), {
+      method: 'POST', redirect: 'error', signal,
+      headers: {
+        authorization: `Bearer ${Buffer.from(options.password, 'utf8').toString('base64url')}`,
+        [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION,
+        [DEVICE_PAIRING_HEADER]: DEVICE_PAIRING_PASSWORD,
+        [DEVICE_LABEL_HEADER]: options.label,
+        ...(expected === undefined ? {} : { [DEVICE_HOST_HEADER]: expected }),
+      },
+    })
+    if (response.status !== 200) {
       await response.body?.cancel()
-      throw new DeviceClientError('DEVICE_PAIRING_UNSUPPORTED', 'Ocean Host does not support pairing links', { cause })
+      this.requirePasswordPairing(response)
     }
-    let body: unknown
-    try { body = await response.json() } catch (cause) {
-      throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a device token', { cause })
-    }
-    const id = typeof body === 'object' && body !== null && 'id' in body ? body.id : undefined
-    const token = typeof body === 'object' && body !== null && 'token' in body ? body.token : undefined
-    if (typeof id !== 'string' || typeof token !== 'string' || token.length !== 80) {
-      throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a device token')
-    }
-    return { id, token, host }
+    return this.readPairedDevice(response, 'Ocean Host does not support password pairing')
   }
 
   /**
@@ -331,11 +343,59 @@ export class DeviceClient {
     if (response.status === 404 || response.status === 405) {
       throw new DeviceClientError('DEVICE_PAIRING_UNSUPPORTED', 'Ocean Host does not support pairing links')
     }
-    if (response.status === 409) throw new DeviceProtocolVersionError()
-    if (response.status === 412) throw new DeviceClientError('DEVICE_HOST_CHANGED', 'Ocean Host identity changed')
-    if (response.status === 429) throw new DeviceClientError('DEVICE_RATE_LIMITED', 'Ocean device sign-in is rate limited')
-    if (response.status === 503) throw new DeviceSessionUnavailableError()
-    throw new DeviceClientError('DEVICE_AUTH_FAILED', `Ocean pairing failed (HTTP ${response.status})`)
+    throw this.pairingRefusal(response) ?? new DeviceClientError('DEVICE_AUTH_FAILED', `Ocean pairing failed (HTTP ${response.status})`)
+  }
+
+  private requirePasswordPairing(response: Response): never {
+    // A Host that ignored the header read the bearer as a pairing grant, whatever status it then answered.
+    if (response.headers.get(DEVICE_PAIRING_HEADER) !== DEVICE_PAIRING_PASSWORD) {
+      throw new DeviceClientError('DEVICE_PAIRING_UNSUPPORTED', 'Ocean Host does not support password pairing')
+    }
+    if (response.status === 401) {
+      throw new DeviceClientError('DEVICE_PAIRING_REJECTED', 'Ocean pairing password was rejected. Check the password set on the Host')
+    }
+    if (response.status === 404) throw new DeviceClientError('DEVICE_PAIRING_PASSWORD_UNSET', 'Ocean Host has no pairing password')
+    throw this.pairingRefusal(response)
+      ?? new DeviceClientError('DEVICE_AUTH_FAILED', `Ocean password pairing failed (HTTP ${response.status})`)
+  }
+
+  /** Classify a refusal shared by both pairing modes; undefined when the status depends on the mode. */
+  private pairingRefusal(response: Response): HarnessError | undefined {
+    if (response.status === 409) return new DeviceProtocolVersionError()
+    if (response.status === 412) return new DeviceClientError('DEVICE_HOST_CHANGED', 'Ocean Host identity changed')
+    if (response.status === 429) return new DeviceClientError('DEVICE_RATE_LIMITED', 'Ocean device sign-in is rate limited')
+    if (response.status === 503) return new DeviceSessionUnavailableError()
+    return undefined
+  }
+
+  /** Read the device a `200` pairing reply issued; `unsupported` names the pairing mode a reply without identity lacks. */
+  private async readPairedDevice(response: Response, unsupported: string): Promise<PairedDevice> {
+    let host: HostIdentity
+    try { host = readIdentity(response) } catch (cause) {
+      // A Host without the pairing route can answer any other document with 200.
+      await response.body?.cancel()
+      throw new DeviceClientError('DEVICE_PAIRING_UNSUPPORTED', unsupported, { cause })
+    }
+    let body: unknown
+    try { body = await response.json() } catch (cause) {
+      throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a device token', { cause })
+    }
+    const id = typeof body === 'object' && body !== null && 'id' in body ? body.id : undefined
+    const token = typeof body === 'object' && body !== null && 'token' in body ? body.token : undefined
+    if (typeof id !== 'string' || typeof token !== 'string' || token.length !== 80) {
+      throw new DeviceClientError('DEVICE_IDENTITY_INVALID', 'Ocean Host did not return a device token')
+    }
+    return { id, token, host }
+  }
+
+  /** Confirm by an anonymous preflight that the address still reaches the pinned Host, before a secret is sent there. */
+  private async requirePinnedHost(expected: string, signal: AbortSignal): Promise<void> {
+    const preflight = await this.fetchResponse(this.connectUrl(), {
+      method: 'HEAD', redirect: 'error', signal,
+      headers: { [DEVICE_PROTOCOL_HEADER]: DEVICE_PROTOCOL_VERSION },
+    })
+    this.requireLogin(preflight)
+    this.checkHost(readIdentity(preflight), expected)
   }
 
   private checkHost(identity: HostIdentity, expected: string | undefined = this.identity?.id): void {
