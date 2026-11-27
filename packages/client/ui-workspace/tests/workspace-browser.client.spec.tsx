@@ -7,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { allowAllAccess, bindSnapshotSelector, makeTranslate } from '@ocean/ocean-client-test-runtime'
 import type { SessionListState, SessionSummary } from '@ocean/ocean-api-session-controller/client'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
+import { RemoteError } from '@ocean/ocean-typert-protocol'
 import type {
   WorkspaceId, WorkspaceSnapshot, WorkspaceView,
 } from '@ocean/ocean-api-workspace-controller/client'
@@ -41,6 +44,11 @@ beforeEach(() => {
 // The seat's key domain is workspace ∪ common; the stub mirrors the real
 // lookup chain (namespace, then common vocabulary, then the key).
 const t: WorkspaceBrowserProps['t'] = makeTranslate(zh, commonZh)
+/** The common refusal explanation for one missing scope, as the stub seat resolves it. */
+const scopeRefusal = (scope: string): string => commonZh['remoteAccess.denied.scope'].replace('{scope}', scope)
+const refusedList = (reason: string): RemoteError<'remote-access/denied'> => new RemoteError(
+  'remote-access/denied', `remote access: session/list: access denied (${reason})`, { action: 'session/list', reason },
+)
 
 const sid = (id: string) => id as SessionId
 const wid = (id: string) => id as WorkspaceId
@@ -1911,6 +1919,36 @@ describe('WorkspaceBrowser', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('explains a refused list pull in place of the empty placeholder, in both modes', () => {
+    const b = mount({ useSessions: hook(sessionState([], { phase: 'pending', error: refusedList('scope:sessions:read') })) })
+    // A refused pull is not an empty list: the placeholder gives way to the shared explanation.
+    expect(screen.queryByText('暂无会话')).toBeNull()
+    expect(screen.getByRole('alert').textContent).toBe(scopeRefusal('sessions:read'))
+    b.store.actions.setGroupBy('flat')
+    rerender(b, {})
+    expect(screen.queryByText('暂无会话')).toBeNull()
+    expect(screen.getByRole('alert').textContent).toBe(scopeRefusal('sessions:read'))
+  })
+
+  it('names an owner-only refusal and any other failure by its own message', () => {
+    const b = mount({ useSessions: hook(sessionState([], { error: refusedList('no-allow') })) })
+    expect(screen.getByRole('alert').textContent).toBe(commonZh['remoteAccess.denied.owner'])
+    rerender(b, { useSessions: hook(sessionState([], { error: new RemoteError('gateway/internal', 'list unavailable', {}) })) })
+    expect(screen.getByRole('alert').textContent).toBe('list unavailable')
+    expect(screen.queryByText('暂无会话')).toBeNull()
+  })
+
+  it('keeps listed rows under a notice outside the tree when a refresh fails', () => {
+    mount({
+      useSessions: hook(sessionState([summary('session-one', 10)], { error: refusedList('scope:sessions:read') })),
+      useWorkspaces: hook(workspaceState([workspace('alpha', ['session-one'])])),
+    })
+    const notice = screen.getByRole('alert')
+    expect(notice.textContent).toBe(scopeRefusal('sessions:read'))
+    expect(screen.getAllByRole('treeitem').length).toBeGreaterThan(0)
+    expect(within(screen.getByRole('tree')).queryByRole('alert')).toBeNull()
   })
 
   it.each(['clear', 'escape', 'outside'] as const)('animates %s search dismissal without carrying spacing motion through the rail', (dismissal) => {

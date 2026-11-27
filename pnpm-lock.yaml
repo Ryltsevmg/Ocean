@@ -1703,6 +1703,9 @@ importers:
       '@ocean/ocean-api-gateway':
         specifier: workspace:*
         version: link:../gateway
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../remote-access
       '@ocean/ocean-brand':
         specifier: workspace:*
         version: link:../../util/brand
@@ -1712,6 +1715,9 @@ importers:
       '@ocean/ocean-client-store':
         specifier: workspace:*
         version: link:../../client/store
+      '@ocean/ocean-client-ui-primitives':
+        specifier: workspace:*
+        version: link:../../client/ui-primitives
       '@ocean/ocean-fs':
         specifier: workspace:*
         version: link:../../fs/fs
@@ -4390,6 +4396,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -4411,6 +4420,9 @@ importers:
       '@ocean/ocean-client-ui-workspace':
         specifier: workspace:*
         version: link:../ui-workspace
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       '@testing-library/react':
         specifier: ^16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -5014,6 +5026,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -5062,6 +5077,9 @@ importers:
       '@ocean/ocean-remote-mock':
         specifier: workspace:*
         version: link:../../test-support/remote-mock
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
@@ -5222,9 +5240,15 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-client-store':
         specifier: workspace:*
         version: link:../store
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       '@ocean/ocean-util-code-language':
         specifier: workspace:*
         version: link:../../util/code-language
@@ -6340,6 +6364,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -6484,6 +6511,9 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@ocean/ocean-api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
       '@ocean/ocean-api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
@@ -6532,6 +6562,9 @@ importers:
       '@ocean/ocean-session':
         specifier: workspace:*
         version: link:../../core/session
+      '@ocean/ocean-typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
       '@testing-library/react':
         specifier: ^16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

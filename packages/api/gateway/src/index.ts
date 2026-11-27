@@ -5,7 +5,7 @@
  * @module @ocean/ocean-api-gateway
  */
 
-import { actionsOfScopes } from './device-scope-actions.ts'
+import { actionsOfScopes, scopeRefusalReason } from './device-scope-actions.ts'
 import { randomUUID } from 'node:crypto'
 import { Context, Service, symbols } from '@deepseek-ai/cordis'
 import type {
@@ -253,6 +253,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
       // A live login's scopes; no live login means the device was revoked or its login ended, so nothing is allowed.
       globalActions: principal => actionsOfScopes(this.ctx.get('connection')?.deviceScopes?.(principal.deviceId) ?? []),
       bindings: () => [],
+      explain: request => scopeRefusalReason(request.action),
     })
     ctx.on('internal/service', () => {
       this.srcClaims = undefined

@@ -41,6 +41,8 @@ export const zh = {
   'markdown.truncatedCharacters': '… 已截断，共 {total} 字符',
   'number.thousand': '{value}K',
   'number.million': '{value}M',
+  'remoteAccess.denied.scope': '此设备无权在 Host 上执行此操作。请让 Host 所有者为其授予 {scope} 权限。',
+  'remoteAccess.denied.owner': '只有 Host 所有者才能执行此操作，已连接的设备无法执行。',
 } satisfies Record<string, string>
 
 /** The common vocabulary key union (zh is the key-set source of truth). */

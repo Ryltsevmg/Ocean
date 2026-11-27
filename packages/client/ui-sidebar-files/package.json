@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
+    "@ocean/ocean-api-remote-access": "workspace:*",
     "@ocean/ocean-api-remotes": "workspace:*",
     "@ocean/ocean-api-workspace-files": "workspace:*",
     "@ocean/ocean-client-locale": "workspace:*",

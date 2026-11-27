@@ -154,6 +154,37 @@
 
 10b. Вкладки браузера Host. Здесь нужно отдельное исследование, которого не проводилось: какие вкладки открывает агент на Host (пакеты `browser-use`, `tool-browser-desktop`), можно ли получить кадры и ввод через CDP, и как их показать в существующем `ui-sidebar-browser`. Часть сценария T3 Code — «Open on this device»: страница `localhost` хоста открывается в браузере клиента, — покрывается пунктом 10a без стриминга.
 
+### Шаг 11. Управление Host из клиента устройства
+
+Клиент, вошедший на Host устройством со всеми правами, работает без SSH и CLI: ключ модели, воркспейс, сессия, файлы и терминал. Разведка 2026-11-27 — чтение кода и живой прогон Web-клиента в headless-Chromium: до правок против Host `1.1.0` на `bigpc`, после — против сборки этой ветки, запущенной там же с отдельным `OCEAN_HOME` и портом `8443`.
+
+| Действие | Состояние до шага | Где |
+|---|---|---|
+| Ключ модели | Работало: диалог «Add an API key to get started» пишет ключ через `credentials/set` в `~/.ocean/.credentials.yaml`, провайдер его читает; Models показывает «API key configured»; Backspace в поле и Apply удаляют ключ через `credentials/unset` | `packages/client/ui-settings-models/src/client/operations.ts` |
+| Воркспейс и сессия | Работало: Host-пикер (`directoryPicker/list`), `workspace/create`, `session/create`, `session/prompt` | `packages/api/workspace-controller`, `packages/api/session-controller` |
+| Файлы: дерево, чтение, предпросмотр, поиск, скачивание, загрузка вложением | Работало | `packages/api/workspace-files` |
+| Терминал | Сломано: клиент вызывает `terminal/environment` первым действием, а `terminal:operate` перечислял только `list`, `create`, `close`, `attach` | `packages/api/gateway/src/device-scope-actions.ts` |
+| «New folder» в пикере каталога | Сломано: `directoryPicker/createDirectory` вне прав | там же |
+| Предпросмотр Office, карточка Permission в General, поиск моделей в Models | Сломано: `officeKit/*`, `permissionPresets/catalog`, `llm/discoverModels` вне прав | там же |
+| Отказ по праву | Сырая строка `remote access: <endpoint>: access denied (no-allow)` в терминале, файлах, чате, пикере и карточке Permission; список сессий выглядел пустым, пикер воркспейсов грузился бесконечно; ни один модуль клиента не ветвился по `remote-access/denied` | `packages/api/gateway/src/index.ts`, экраны в `packages/client` |
+| Переименовать, удалить, переупорядочить, архивировать и закрепить сессии и воркспейсы, fork | Скрыто у устройства: действия вне прав | `packages/client/ui-workspace` |
+| Редактирование, создание, переименование и удаление файлов | Отсутствует у всех, включая владельца: `workspaceFiles` не имеет мутирующих методов | `packages/api/workspace-files/src/index.ts` |
+
+Сделано 11a, карта прав. Двадцать два действия добавлены в существующие права, новые права не вводились: `terminal:operate` получил `terminal/environment`, `terminal/shells`, `terminal/watch`, `terminal/retain`, `terminal/rename`; `files:read` — `officeKit/render`, `officeKit/generation`; `files:write` — `directoryPicker/createDirectory`; `sessions:write` — `session/fork`, `session/updateQueue` и `workspace/rename`, `workspace/delete`, `workspace/insertBefore`, `workspace/insertSessionBefore`, `workspace/archiveSession`, `workspace/unarchiveSession`, `workspace/pinSession`, `workspace/unpinSession`; `settings:manage` — `llm/discoverModels`, `permissionPresets/catalog`, `event:llm/adapters-updated`, `event:credentials/record-updated`. `workspace/delete` снимает регистрацию воркспейса, файлы и сессии сохраняет.
+
+Сделано 11b, объяснение отказа. Политика устройств в шлюзе получила `explain`: причина отказа называет недостающее право (`scope:terminal:operate`, несколько — через `|`), действие вне всяких прав остаётся `no-allow`. `accessRefusal` и `accessRefusalText` в `@ocean/ocean-client-ui-primitives` переводят отказ в общий словарь `common`: `remoteAccess.denied.scope` с именем права либо `remoteAccess.denied.owner`, девять языков. Терминал, панель файлов, чат, пикер каталога и карточка Permission показывают его вместо сырой строки; список сессий и пикер воркспейсов — вместо пустого списка и бесконечной загрузки, а прочий сбой — своим сообщением.
+
+Проверено вживую на сборке ветки. Устройство со всеми правами: «New folder → Create» создаёт каталог на Host, «Open» открывает его воркспейсом, терминал в его сессии выполняет команду на Host (`Linux x86_64`, `bigpc`). Устройство только с `files:read`: над списком сессий стоит «This device isn't allowed to do this on the Host. Ask the Host owner to grant it the sessions:read right.». Устройство только с `sessions:read`: пикер воркспейсов и диалог «Add workspace» называют право `files:read`, терминал в открытой сессии — право `terminal:operate`. Не проверялось вживую: клиент Desktop (те же пакеты клиента, но сборка приложения не запускалась) и ответ модели в сессии — для него нужен настоящий ключ, введённый пользователем.
+
+Осталось за решением владельца. Устройство со всеми правами по-прежнему не может:
+
+- устанавливать, обновлять и удалять плагины (`pluginManager/*`, `pluginInventory/list`) — это загрузка кода на Host, нужно отдельное право либо явное включение в `settings:manage`;
+- пользоваться сессионными возможностями вне карты — целями (`goals/*`), расписаниями (`schedule/*`), фоновыми задачами (`job/*`), командами `/` (`commands/*`), скиллами (`skills/list`), пресетами (`agentPresets/*`), сабагентами (`subagents/*`), командами (`agentTeams/setEnabled`), обратной связью (`messageFeedback/*`, `sessionFeedback/record`); по JSDoc все они привязаны к одной сессии или агенту и могут уйти в `sessions:read` и `sessions:write` одним изменением карты;
+- управлять аккаунтом (`account/*`) и устройствами (`devices/*`) — намеренно только владельцу;
+- открывать файлы и каталоги в приложении на рабочем столе Host (`session/openWorkspacePath`, `session/canOpenWorkspacePath`, `session/workspacePathApplications`, `settings/openSettingsDocument`) — действие на машине Host бессмысленно для удалённого клиента.
+
+Отдельно от прав: редактирование файлов в клиенте отсутствует у всех; ошибка хода `MISSING_CREDENTIAL` в чате показывается сырой диагностикой Host с общей подсказкой «Choose another model», без действия «открыть Models».
+
 ### Остаётся вне работы
 
 Облачный ретранслятор и несколько пользователей с изоляцией данных.

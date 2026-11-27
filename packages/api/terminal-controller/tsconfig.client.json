@@ -24,7 +24,13 @@
       "path": "../gateway/tsconfig.client.json"
     },
     {
+      "path": "../../api/remote-access/tsconfig.client.json"
+    },
+    {
       "path": "../../client/store"
+    },
+    {
+      "path": "../../client/ui-primitives"
     },
     {
       "path": "../../core/session"

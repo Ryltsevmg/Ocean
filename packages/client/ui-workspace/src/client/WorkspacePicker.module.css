@@ -5,13 +5,15 @@
 }
 
 .modalError,
-.menuStatus {
+.menuStatus,
+.menuError {
   margin-top: 8px;
   font-size: 12px;
   line-height: 18px;
 }
 
-.modalError {
+.modalError,
+.menuError {
   color: var(--dsw-alias-state-error-primary);
 }
 

@@ -176,10 +176,11 @@ export class ClientTerminals extends Service {
    * @param sessionId - target Session.
    * @param signal - the menu request lifetime.
    * @returns installed shells and the currently usable browser preference.
+   * @throws the Remote failure itself, so the guide can explain an access refusal by its code.
    */
   async launchShells(sessionId: SessionId, signal: AbortSignal): Promise<TerminalLaunchShells> {
     const result = await this.remote.shells(sessionId, signal)
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw result.error
     const previous = preferredShell()
     return { shells: result.value, selectedShell: result.value.find(shell => shell.path === previous)?.path ?? result.value[0]?.path }
   }

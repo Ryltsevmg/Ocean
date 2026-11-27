@@ -141,7 +141,7 @@ export function apply(ctx: ClientContext): void {
     return true
   }
 
-  const catalog = new PermissionCatalogDirectory(ctx)
+  const catalog = new PermissionCatalogDirectory(ctx, ctx.locale.bind('common'))
   ctx.effect(() => () => { catalog.dispose() }, 'ui-permission: process catalog directory')
   ctx.effect(
     // Only an invalidation makes displayed options stale; publishing the result

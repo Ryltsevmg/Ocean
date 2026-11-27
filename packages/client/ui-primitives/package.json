@@ -23,7 +23,9 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@ocean/ocean-api-remote-access": "workspace:*",
     "@ocean/ocean-client-store": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
     "@deepseek-ai/cordis": "workspace:~",
     "@ocean/ocean-util-code-language": "workspace:*",
     "react": "^18.2.0",

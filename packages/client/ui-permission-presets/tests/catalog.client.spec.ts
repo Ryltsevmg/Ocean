@@ -3,9 +3,15 @@ import { describe, expect, it, vi } from 'vitest'
 import type {
   ConnectionGeneration, ConnectionHandle,
 } from '@ocean/ocean-client-connection/client'
-import { TestRemote } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
+import { makeTranslate, RemoteError, TestRemote } from '@ocean/ocean-client-test-runtime'
 import type { PermissionCatalog } from '@ocean/ocean-permission-presets/client'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 import { PermissionCatalogDirectory } from '../src/client/catalog.ts'
+
+/** The common vocabulary `apply` binds for the directory. */
+const t = makeTranslate(commonEn)
 
 const FIRST: PermissionCatalog = {
   defaultPreset: 'read-only', defaultOptions: [{ value: 'read-only', name: 'read-only' }, { value: 'workspace-write', name: 'workspace-write' }, { value: 'danger-full-access', name: 'danger-full-access' }],
@@ -76,7 +82,7 @@ describe('PermissionCatalogDirectory', () => {
         },
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     await expect(directory.load()).rejects.toThrow('catalog temporarily unavailable')
     expect(directory.store.getSnapshot()).toEqual({ value: null })
     await Promise.resolve()
@@ -105,7 +111,7 @@ describe('PermissionCatalogDirectory', () => {
       },
     })
 
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     expect(calls).toBe(2)
     second.resolve({ ok: true, value: SECOND })
     await vi.waitFor(() => { expect(directory.store.getSnapshot().value).toEqual(SECOND) })
@@ -135,7 +141,7 @@ describe('PermissionCatalogDirectory', () => {
         },
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     await expect(directory.load()).resolves.toEqual(FIRST)
     response = 'rpc-failure'
     remote.emit('permission-presets/catalog-changed', [])
@@ -167,7 +173,7 @@ describe('PermissionCatalogDirectory', () => {
         },
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     await expect(directory.load()).resolves.toEqual(FIRST)
 
     remote.emit('permission-presets/catalog-changed', [])
@@ -196,7 +202,7 @@ describe('PermissionCatalogDirectory', () => {
         },
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     expect(directory.invalidations.getSnapshot()).toEqual({ count: 0 })
 
     generation.set(undefined)
@@ -234,7 +240,7 @@ describe('PermissionCatalogDirectory', () => {
         },
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     await expect(directory.load()).resolves.toEqual(FIRST)
 
     generation.set(1)
@@ -269,7 +275,7 @@ describe('PermissionCatalogDirectory', () => {
         },
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
     const before = directory.store.getSnapshot()
     const lateGenerationListener = generation.captureListener()
     directory.dispose()
@@ -301,9 +307,30 @@ describe('PermissionCatalogDirectory', () => {
         }),
       },
     })
-    const directory = new PermissionCatalogDirectory(ctx)
+    const directory = new PermissionCatalogDirectory(ctx, t)
 
     await expect(directory.load()).rejects.toThrow('catalog/missing: missing catalog')
+    directory.dispose()
+  })
+
+  it('explains a refused device call in the common vocabulary and keeps every other failure as code and message', async () => {
+    const ctx = new Context()
+    installConnection(ctx, 1)
+    let reason = 'scope:sessions:read'
+    const refused = (why: string): RemoteError<'remote-access/denied'> => new RemoteError(
+      'remote-access/denied', `remote access: permissionPresets/catalog: access denied (${why})`,
+      { action: 'permissionPresets/catalog', reason: why },
+    )
+    new TestRemote(ctx, {
+      permissionPresets: { catalog: () => Promise.resolve({ ok: false as const, error: refused(reason) }) },
+    })
+    const directory = new PermissionCatalogDirectory(ctx, t)
+
+    await expect(directory.load()).rejects.toThrow(commonEn['remoteAccess.denied.scope'].replace('{scope}', 'sessions:read'))
+    reason = 'no-allow'
+    await expect(directory.load()).rejects.toThrow(commonEn['remoteAccess.denied.owner'])
+    reason = 'resource-invalid'
+    await expect(directory.load()).rejects.toThrow('remote-access/denied: remote access: permissionPresets/catalog: access denied (resource-invalid)')
     directory.dispose()
   })
 })

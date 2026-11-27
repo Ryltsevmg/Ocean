@@ -2,13 +2,32 @@
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ConnectionHandle } from '@ocean/ocean-client-connection/client'
+import { accessRefusal, accessRefusalText } from '@ocean/ocean-client-ui-primitives'
+import type { TranslateNS } from '@ocean/ocean-client-ui-slots'
 import { createSnapshotStore, type SnapshotStore } from '@ocean/ocean-client-store'
 import type { PermissionCatalog } from '@ocean/ocean-permission-presets/client'
+import type { RemoteFailure } from '@ocean/ocean-typert-protocol'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 
 /** Observable complete catalog for the current Host generation. */
 export interface PermissionCatalogState {
   /** Last complete catalog for this generation, or null before one succeeds. */
   value: PermissionCatalog | null
+}
+
+/**
+ * One failed catalog read as `load()` rejects with it. A device call the Host
+ * refused is explained in the common vocabulary, naming the right the device
+ * lacks or the Host owner; any other failure keeps its code and message.
+ * @param failure - the settled Remote failure.
+ * @param t - common-vocabulary translate.
+ * @returns the message the surfaces report.
+ */
+function failureText(failure: RemoteFailure, t: TranslateNS<'common'>): string {
+  const refusal = accessRefusal(failure)
+  if (refusal === undefined) return `${failure.code}: ${failure.message}`
+  return accessRefusalText(refusal, t)
 }
 
 /** One latest-result-wins catalog reader for the whole browser process. */
@@ -40,8 +59,9 @@ export class PermissionCatalogDirectory {
    * Subscribe to both invalidation sources before the first read, closing the
    * install/read race.
    * @param ctx - root Client context carrying Remote and Connection.
+   * @param t - common-vocabulary translate, for a refused device call.
    */
-  constructor(private readonly ctx: ClientContext) {
+  constructor(private readonly ctx: ClientContext, private readonly t: TranslateNS<'common'>) {
     this.connection = ctx.get('connection') as ConnectionHandle
     this.stopCatalog = ctx.remote.$on('permission-presets/catalog-changed', () => {
       this.invalidate()
@@ -133,7 +153,7 @@ export class PermissionCatalogDirectory {
     this.failure = new Error('permission catalog has no complete value')
     const operation = this.ctx.remote.permissionPresets.catalog()
       .then((result) => {
-        if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`)
+        if (!result.ok) throw new Error(failureText(result.error, this.t))
         if (!this.accepts(epoch, generationId)) return
         this.store.set({ value: result.value })
       })

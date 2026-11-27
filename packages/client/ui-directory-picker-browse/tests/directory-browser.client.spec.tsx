@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { makeTranslate } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
 import type { DirectoryListing } from '@ocean/ocean-api-remotes/client'
 import { DirectoryBrowser } from '../src/client/DirectoryBrowser.tsx'
 
@@ -1619,6 +1621,45 @@ describe('DirectoryBrowser', () => {
     fireEvent.change(input, { target: { value: 'fresh' } })
     fireEvent.keyDown(input, { key: 'Enter' })
     await waitFor(() => { expect(screen.getByRole('alert').textContent).toBe('level vanished') })
+  })
+
+  /** The Host refusal ui-workspace wraps for the dialog: the Remote failure rides `rpcError`. */
+  function refusedCreate(reason: string): Error {
+    const wire = `remote access: directoryPicker/createDirectory: access denied (${reason})`
+    return Object.assign(new Error(`directory browse failed: remote-access/denied: ${wire}`), {
+      rpcError: { code: 'remote-access/denied', message: wire, details: { action: 'directoryPicker/createDirectory', reason } },
+    })
+  }
+
+  async function createFolder(b: ReturnType<typeof mount>, rejection: Error): Promise<void> {
+    await waitFor(() => { expect(screen.getByRole('listitem')).toBeTruthy() })
+    b.createDirectory.mockRejectedValueOnce(rejection)
+    fireEvent.click(screen.getByRole('button', { name: 'browser.newFolder' }))
+    const input = screen.getByLabelText('browser.folderName')
+    fireEvent.change(input, { target: { value: 'fresh' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+  }
+
+  it('names the right a refused device call lacks, in the common vocabulary', async () => {
+    const b = mount({ t: makeTranslate(commonEn) })
+    await createFolder(b, refusedCreate('scope:files:write'))
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe(commonEn['remoteAccess.denied.scope'].replace('{scope}', 'files:write'))
+    })
+  })
+
+  it('says an action no device scope lists is the Host owner\'s alone', async () => {
+    const b = mount({ t: makeTranslate(commonEn) })
+    await createFolder(b, refusedCreate('no-allow'))
+    await waitFor(() => { expect(screen.getByRole('alert').textContent).toBe(commonEn['remoteAccess.denied.owner']) })
+  })
+
+  it('keeps the wire message of a refusal the Gateway explained otherwise', async () => {
+    const b = mount({ t: makeTranslate(commonEn) })
+    await createFolder(b, refusedCreate('resource-invalid'))
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe('remote access: directoryPicker/createDirectory: access denied (resource-invalid)')
+    })
   })
 
   it('drops a stale child listing that resolves after a crumb jump', async () => {

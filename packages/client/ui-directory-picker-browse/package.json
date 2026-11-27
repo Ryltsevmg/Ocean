@@ -46,6 +46,7 @@
     "@deepseek-ai/cordis": "workspace:~"
   },
   "devDependencies": {
+    "@ocean/ocean-api-remote-access": "workspace:*",
     "@ocean/ocean-api-remotes": "workspace:*",
     "@ocean/ocean-client-locale": "workspace:*",
     "@ocean/ocean-client-test-runtime": "workspace:*",
@@ -53,6 +54,7 @@
     "@ocean/ocean-client-ui-renderer": "workspace:*",
     "@ocean/ocean-client-ui-slots": "workspace:*",
     "@ocean/ocean-client-ui-workspace": "workspace:*",
+    "@ocean/ocean-typert-protocol": "workspace:*",
     "@testing-library/react": "^16.3.3",
     "@deepseek-ai/cordis": "workspace:~",
     "react": "^18.2.0",

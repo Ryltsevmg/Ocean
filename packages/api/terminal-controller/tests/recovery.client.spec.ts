@@ -685,8 +685,10 @@ it('discovers menu choices without creating a process and remembers a choice bef
   expect(h.remote.create).toHaveBeenLastCalledWith(
     sessionId, expect.objectContaining({ shellPath: info.shell.path }), expect.any(AbortSignal),
   )
-  vi.mocked(h.remote.shells).mockResolvedValueOnce(failure('host offline'))
-  await expect(service.launchShells(sessionId, new AbortController().signal)).rejects.toThrow('host offline')
+  const offline = new RemoteError('gateway/bad-request', 'host offline', {})
+  vi.mocked(h.remote.shells).mockResolvedValueOnce({ ok: false, error: offline })
+  // The guide explains an access refusal by its code, so the Remote failure crosses unchanged.
+  expect(await service.launchShells(sessionId, new AbortController().signal).catch((error: unknown) => error)).toBe(offline)
   vi.mocked(h.remote.shells).mockResolvedValue(success([]))
   expect((await service.launchShells(sessionId, new AbortController().signal)).selectedShell).toBeUndefined()
   await h.view().refresh()

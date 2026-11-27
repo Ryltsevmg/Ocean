@@ -12,8 +12,11 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { SlotRegistry } from '@ocean/ocean-client-ui-renderer/client'
 import type { SessionId } from '@ocean/ocean-session/types'
 import { LocaleRuntime } from '@ocean/ocean-client-locale/client'
-import { TestRemote } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
+import { RemoteError, TestRemote } from '@ocean/ocean-client-test-runtime'
 import { remoteDefaultResponses } from '@ocean/ocean-client-test-runtime/src/assembly/remote-default-responses.ts'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 import { RemoteMock } from '@ocean/ocean-remote-mock'
 import { apply as settingsApply, inject as settingsInject } from '@ocean/ocean-client-ui-settings/client'
 import type { CommandDecoration, PopupSelectSpec } from '@ocean/ocean-client-ui-commands/client'
@@ -56,9 +59,19 @@ async function bench() {
   let catalog = CATALOG
   let catalogCalls = 0
   let catalogFailure: string | undefined
+  /** Reason of a refused `permissionPresets/catalog` call, or none. */
+  let catalogRefusal: string | undefined
   const permissionPresets = {
     catalog: () => {
       catalogCalls += 1
+      if (catalogRefusal !== undefined) {
+        return Promise.resolve({
+          ok: false as const,
+          error: new RemoteError('remote-access/denied', `remote access: permissionPresets/catalog: access denied (${catalogRefusal})`, {
+            action: 'permissionPresets/catalog', reason: catalogRefusal,
+          }),
+        })
+      }
       if (catalogFailure !== undefined) {
         return Promise.resolve({
           ok: false as const,
@@ -132,6 +145,7 @@ async function bench() {
       remote.emit('permission-presets/catalog-changed', [])
     },
     setCatalogFailure: (message: string | undefined) => { catalogFailure = message },
+    setCatalogRefusal: (reason: string | undefined) => { catalogRefusal = reason },
     setResult: (r: { ok: boolean; matched?: boolean }) => { commandResult = r },
     decoration: () => decoration,
     shell: () => shell,
@@ -290,6 +304,24 @@ describe('ui-permission browser plugin', () => {
     await vi.waitFor(() => { expect(shell.state.getSnapshot().status).toBe('ready') })
     expect(shell.state.getSnapshot().options.map(option => option.id))
       .toEqual(['read-only', 'workspace-write', 'danger-full-access', 'auto'])
+  })
+
+  it('reports a refused catalog read in the General row with the common vocabulary', async () => {
+    const b = await bench()
+    b.locale.register('common', 'en', commonEn)
+    const injected = b.permissionRow()!.inject?.() as PermissionRowInjected | undefined
+    // An action no device scope lists is the Host owner's alone.
+    b.setCatalogRefusal('no-allow')
+    b.remote.emit('permission-presets/catalog-changed', [])
+    await injected!.load()
+    expect(injected!.hooks.permission.getSnapshot()).toMatchObject({ status: 'error', error: commonEn['remoteAccess.denied.owner'] })
+    // A refused call naming scopes names the right the device lacks.
+    b.setCatalogRefusal('scope:sessions:read')
+    b.remote.emit('permission-presets/catalog-changed', [])
+    await injected!.load()
+    expect(injected!.hooks.permission.getSnapshot()).toMatchObject({
+      status: 'error', error: commonEn['remoteAccess.denied.scope'].replace('{scope}', 'sessions:read'),
+    })
   })
 
   it('closes an open picker only when the catalog is invalidated', async () => {

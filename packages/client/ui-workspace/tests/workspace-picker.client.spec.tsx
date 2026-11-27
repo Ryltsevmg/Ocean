@@ -10,6 +10,9 @@ import type {
 import type {} from '@ocean/ocean-client-locale/client'
 import { allowAllAccess, bindSnapshotSelector, makeTranslate } from '@ocean/ocean-client-test-runtime'
 import { zh as commonZh } from '@ocean/ocean-client-locale/src/locales/zh.ts'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
+import { RemoteError } from '@ocean/ocean-typert-protocol'
 import type { SessionStatusSnapshot } from '@ocean/ocean-client-ui-session/client'
 import type { DirectoryFlowOwnerProps, WorkspacePickerProps } from '../src/client/contract/slots.ts'
 import { WorkspacePicker } from '../src/client/WorkspacePicker.tsx'
@@ -24,6 +27,8 @@ afterEach(cleanup)
 // The seat's key domain is workspace ∪ common; the stub mirrors the real
 // lookup chain (namespace, then common vocabulary, then the key).
 const t: WorkspacePickerProps['t'] = makeTranslate(zh, commonZh)
+/** The common refusal explanation for one missing scope, as the stub seat resolves it. */
+const scopeRefusal = (scope: string): string => commonZh['remoteAccess.denied.scope'].replace('{scope}', scope)
 
 const wid = (id: string) => id as WorkspaceId
 function workspace(id: string, title = id): WorkspaceView {
@@ -41,6 +46,13 @@ const sessions: SessionListState = {
 const noPendingInteraction: SessionStatusSnapshot = new Map()
 const workspaceState = (items: readonly WorkspaceView[]): WorkspaceSnapshot => ({
   items, archivedSessionIds: [], pinnedSessionIds: [], state: 'idle', phase: 'ready', error: null,
+})
+/** A Workspace list read the Gateway refused for `reason`, never reaching a baseline. */
+const refusedList = (reason: string): WorkspaceSnapshot => ({
+  ...workspaceState([]), phase: 'pending', state: 'error',
+  error: new RemoteError('remote-access/denied', `remote access: workspace/follow: access denied (${reason})`, {
+    action: 'workspace/follow', reason,
+  }),
 })
 function anchor(): { current: HTMLElement } {
   const element = document.createElement('button')
@@ -89,12 +101,13 @@ function mount(
   items: readonly WorkspaceView[] = [workspace('alpha', 'Alpha')],
   createWorkspace = vi.fn(),
   occupancy = occupancySource(),
+  snapshot?: WorkspaceSnapshot,
 ) {
   const onPick = vi.fn()
   const onClose = vi.fn()
   const anchorRef = anchor()
   const { probe, renderSlot } = flowProbe()
-  const renderPicker = (nextItems: readonly WorkspaceView[]) => (
+  const renderPicker = (nextItems: readonly WorkspaceView[], nextSnapshot = snapshot) => (
     <WorkspacePicker
       open
       anchorRef={anchorRef}
@@ -102,7 +115,7 @@ function mount(
       useSessionStatus={hook(noPendingInteraction)}
       useSessionRetainInfo={() => undefined}
       usePanelInfo={usePanelInfo} useContextMenu={contextMenuHook()} useResource={useResource}
-      useWorkspaces={hook(workspaceState(nextItems))}
+      useWorkspaces={hook(nextSnapshot ?? workspaceState(nextItems))}
       {...allowAllAccess}
       onPick={onPick}
       onClose={onClose}
@@ -119,6 +132,13 @@ function mount(
     view, onPick, onClose, createWorkspace, probe, occupancy,
     rerenderItems: (nextItems: readonly WorkspaceView[]) => { view.rerender(renderPicker(nextItems)) },
   }
+}
+
+/** The menu keeps its entries over a failed list read; the status line explains instead of loading. */
+function expectRefusedListRead(): void {
+  expect(screen.queryByRole('status')).toBeNull()
+  expect(screen.getByRole('menuitem', { name: '添加工作区…' })).toBeTruthy()
+  expect(screen.queryByTestId('directory-flow')).toBeNull()
 }
 
 function chooseAdd(): void {
@@ -262,6 +282,27 @@ describe('WorkspacePicker', () => {
     expect(screen.getByRole('status').textContent).toBe('正在加载工作区…')
     expect(screen.queryByTestId('directory-flow')).toBeNull()
     expect(screen.getByRole('menuitem', { name: '添加工作区…' })).toBeTruthy()
+  })
+
+  it('explains a refused list read instead of loading forever', () => {
+    mount([], vi.fn(), occupancySource(), refusedList('scope:files:read'))
+    expectRefusedListRead()
+    expect(screen.getByRole('alert').textContent).toBe(scopeRefusal('files:read'))
+  })
+
+  it('explains an owner-only refusal of the list read', () => {
+    mount([], vi.fn(), occupancySource(), refusedList('no-allow'))
+    expectRefusedListRead()
+    expect(screen.getByRole('alert').textContent).toBe(commonZh['remoteAccess.denied.owner'])
+  })
+
+  it('reports any other list read failure by its own message', () => {
+    mount([], vi.fn(), occupancySource(), {
+      ...workspaceState([]), phase: 'pending', state: 'error',
+      error: new RemoteError('gateway/internal', 'stream failed', {}),
+    })
+    expectRefusedListRead()
+    expect(screen.getByRole('alert').textContent).toBe('stream failed')
   })
 
   it('shows no popover at all when nothing is listed and nothing can be added', () => {

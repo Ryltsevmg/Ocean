@@ -29,8 +29,10 @@ import type {
 } from '@ocean/ocean-api-session-controller/client'
 import type { WorkspaceId, WorkspaceView } from '@ocean/ocean-api-workspace-controller/client'
 import { workspaceDisplayTitle } from '@ocean/ocean-api-workspace-controller/default-workspace'
+import type { RemoteFailure } from '@ocean/ocean-typert-protocol'
 import type { SessionId } from '@ocean/ocean-session/types'
 import type { PropsRenderSlots } from '@ocean/ocean-client-ui-slots'
+import { remoteFailureText } from '../remote-failure.ts'
 import type { WorkspaceBrowserProps } from '../contract/slots.ts'
 import type { ArchivedFilter, GroupNode, SessionNode, SessionOrderBy, SessionRowState } from '../tree.ts'
 import {
@@ -310,6 +312,18 @@ function EmptySessions({ rowState, onLeaveArchivedOnly, t }: Pick<SessionTreePro
   )
 }
 
+/**
+ * In-place notice for a failed list pull. With nothing listed it takes the
+ * empty placeholder's centered place; beside listed rows it stays compact.
+ */
+function ListError({ failure, centered, t }: { failure: RemoteFailure; centered: boolean; t: WorkspaceBrowserProps['t'] }) {
+  return (
+    <div className={clsx(centered ? css.emptyState : css.empty, css.listError)} role="alert">
+      {remoteFailureText(failure, t)}
+    </div>
+  )
+}
+
 /** The scrolling session tree; unmounting drops the sessions subscription and the session watermarks. */
 function SessionTree({
   list, useSessionStatus, startSession, open, workspaces, ungroupedSessionIds,
@@ -468,7 +482,8 @@ function SessionTree({
     && workspaceDrag?.over?.id === rootGroups[0].workspaceId
     && workspaceDrag.over.half === 'before'
 
-  const rowKeys: string[] = groups.length === 0 ? ['empty'] : []
+  // The empty placeholder only stands in for a list that has no rows; a failed pull shows its notice instead.
+  const rowKeys: string[] = groups.length === 0 && list.error == null ? ['empty'] : []
   const renderGroup = (group: GroupNode, depth: number): ReactNode => {
     const workspaceId = group.workspaceId
     const children = childrenByParent.get(group.key) ?? []
@@ -657,6 +672,7 @@ function SessionTree({
   return (
     <HoverCardGroup className={clsx(css.treeBody, css.wide)}>
       {workspaceDropAtListStart && <span className={css.listTopDropIndicator} aria-hidden="true" />}
+      {list.error != null && <ListError failure={list.error} centered={groups.length === 0} t={t} />}
       <AnimatedRows
         className={clsx(css.list, workspaceDropAtListStart && css.listTopDropActive)}
         role="tree"
@@ -665,7 +681,7 @@ function SessionTree({
         ready={list.phase === 'ready' && workspaceReady && !nativeDragActive}
         resetKey={JSON.stringify([animationResetKey, watermarkMotionKey])}
       >
-        {groups.length === 0 && (
+        {groups.length === 0 && list.error == null && (
           <EmptySessions rowState={rowState} onLeaveArchivedOnly={onLeaveArchivedOnly} t={t} />
         )}
         {groupRows}
@@ -723,15 +739,16 @@ function FlatList({
   const now = Date.now()
   return (
     <HoverCardGroup className={clsx(css.treeBody, css.wide)}>
+      {list.error != null && <ListError failure={list.error} centered={rows.length === 0} t={t} />}
       <AnimatedRows
         className={clsx(css.list, css.flatList)}
         role="tree"
         label={t('section.sessions')}
-        rowKeys={rows.length === 0 ? ['empty'] : rows.map(row => `session:${row.id}`)}
+        rowKeys={rows.length > 0 ? rows.map(row => `session:${row.id}`) : list.error == null ? ['empty'] : []}
         ready={list.phase === 'ready' && workspaceReady && drag === null}
         resetKey={animationResetKey}
       >
-        {rows.length === 0 && (
+        {rows.length === 0 && list.error == null && (
           <EmptySessions rowState={rowState} onLeaveArchivedOnly={onLeaveArchivedOnly} t={t} />
         )}
         {rows.map((node) => {

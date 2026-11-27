@@ -423,7 +423,7 @@ describe('portForward namespace', () => {
     const frames = await collect(await open(ctx, port, ended(), undefined, device(PHONE)))
     expect(frames).toEqual([{ type: 'connected', port }, { type: 'data', data: ok.toString('base64') }, { type: 'end' }])
     await expect(open(ctx, port, ended(), undefined, device('other'))).rejects.toMatchObject({
-      code: 'remote-access/denied', details: { action: 'portForward/open', reason: 'no-allow' },
+      code: 'remote-access/denied', details: { action: 'portForward/open', reason: 'scope:terminal:operate' },
     })
   })
 

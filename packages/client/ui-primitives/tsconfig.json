@@ -12,7 +12,13 @@
   ],
   "references": [
     {
+      "path": "../../api/remote-access/tsconfig.client.json"
+    },
+    {
       "path": "../store"
+    },
+    {
+      "path": "../../typert/protocol"
     },
     {
       "path": "../../util/code-language"

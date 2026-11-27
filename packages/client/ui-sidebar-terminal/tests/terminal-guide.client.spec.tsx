@@ -3,8 +3,12 @@ import { contextMenuHook } from '@ocean/ocean-client-test-runtime'
 /** Guide shell discovery, direct launch and cancellation stay within the entry lifetime. */
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { allowAllAccess, makeTranslate } from '@ocean/ocean-client-test-runtime'
+import { allowAllAccess, makeTranslate, RemoteError } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
+import type { AccessRefusalText } from '@ocean/ocean-client-ui-primitives'
 import type { TerminalLaunchShells } from '@ocean/ocean-api-terminal-controller/client'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
 import type { GlobalStandardProps, SessionStandardProps } from '@ocean/ocean-client-ui-slots'
 import type { SessionId } from '@ocean/ocean-session/types'
 import type { PaneId, TabId } from '@ocean/ocean-client-ui-dockkit'
@@ -47,7 +51,7 @@ function mount(description: string | undefined = en.description, shortcut?: Guid
   const props: TerminalGuideProps = {
     ...standard,
     useShortcuts: <T,>(selector: (entries: readonly ShortcutCatalogEntry[]) => T): T => selector(shortcuts),
-    entryId: 'new', kind: 'terminal', title: en.new, description, t: makeTranslate(en),
+    entryId: 'new', kind: 'terminal', title: en.new, description, t: makeTranslate(en, commonEn),
     useTabInfo: () => ({ sidebar: { expanded: true, fullscreen: false }, panel: { id: 'pane-guide' as PaneId, isFloating: false },
       tab: { id: 'tab-guide' as TabId, kind: 'guide', contentId: 'sidebar://guide', title: 'Start',
         visible: true, signal: new AbortController().signal,
@@ -117,11 +121,26 @@ it('loads on demand, remembers a selected shell before opening, and cancels on m
   expect(h.loadShells.mock.calls[1]![0].aborted).toBe(true)
 })
 
-it.each([new Error('offline'), 'offline'])('offers an in-place retry after discovery fails: %s', async (error) => {
+it.each([new Error('offline'), 'offline', new RemoteError('gateway/bad-request', 'offline', {})])('offers an in-place retry after discovery fails: %s', async (error) => {
   const h = mount()
   h.loadShells.mockRejectedValueOnce(error)
   h.open()
   await h.view.findByText('Terminal error: offline')
+  fireEvent.click(h.view.getByRole('menuitem', { name: en.retry }))
+  await h.view.findByRole('menuitem', { name: 'bash' })
+  expect(h.loadShells).toHaveBeenCalledTimes(2)
+  expect(h.openTab).not.toHaveBeenCalled()
+})
+
+it.each([
+  ['a missing scope', { action: 'terminal/shells', reason: 'scope:terminal:operate' }, { key: 'remoteAccess.denied.scope', scope: 'terminal:operate' }],
+  ['an owner-only action', { action: 'terminal/shells', reason: 'no-allow' }, { key: 'remoteAccess.denied.owner' }],
+] satisfies readonly (readonly [string, { readonly action: string; readonly reason: string }, AccessRefusalText])[])('explains %s with the shared access text instead of the wire diagnostic and still retries in place', async (_name, details, refusal) => {
+  const h = mount()
+  h.loadShells.mockRejectedValueOnce(new RemoteError('remote-access/denied', `remote access: ${details.action}: access denied (${details.reason})`, details))
+  h.open()
+  await h.view.findByText('scope' in refusal ? commonEn['remoteAccess.denied.scope'].replace('{scope}', refusal.scope) : commonEn['remoteAccess.denied.owner'])
+  expect(h.view.queryByText(/remote access:/u)).toBeNull()
   fireEvent.click(h.view.getByRole('menuitem', { name: en.retry }))
   await h.view.findByRole('menuitem', { name: 'bash' })
   expect(h.loadShells).toHaveBeenCalledTimes(2)

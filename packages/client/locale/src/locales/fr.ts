@@ -44,4 +44,6 @@ export const fr = {
   'markdown.truncatedCharacters': '… tronqué à {total} caractères',
   'number.thousand': '{value} k',
   'number.million': '{value} M',
+  'remoteAccess.denied.scope': 'Cet appareil n\'est pas autorisé à faire cela sur le Host. Demandez au propriétaire du Host de lui accorder le droit {scope}.',
+  'remoteAccess.denied.owner': 'Seul le propriétaire du Host peut faire cela ; un appareil connecté ne le peut pas.',
 } satisfies Record<keyof typeof en, string>

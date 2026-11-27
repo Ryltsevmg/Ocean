@@ -4,7 +4,7 @@ import type { RemoteAccessAction } from '@ocean/ocean-api-remote-access'
 
 /**
  * The actions of each scope. A device holds the union of its scopes; a device created
- * before scopes holds every scope, which equals the single set earlier releases allowed.
+ * before scopes holds every scope.
  */
 export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteAccessAction[]>> = {
   'sessions:read': [
@@ -17,18 +17,41 @@ export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteA
   'sessions:write': [
     'session/create', 'session/rename', 'session/prompt', 'session/cancel', 'session/control', 'session/selectModel',
     'session/initializeDefaultModel', 'userQuestions/attachWait', 'userQuestions/answer',
+    'session/fork', 'session/updateQueue', 'workspace/rename', 'workspace/delete', 'workspace/insertBefore',
+    'workspace/insertSessionBefore', 'workspace/archiveSession', 'workspace/unarchiveSession',
+    'workspace/pinSession', 'workspace/unpinSession',
   ],
   'files:read': [
     'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
     'workspaceFiles/search', 'workspaceFiles/changes', 'directoryPicker/list', 'workspace/follow',
+    'officeKit/render', 'officeKit/generation',
   ],
-  'files:write': ['fileUploads/upload', 'workspace/create', 'workspace/initializeDefault'],
-  'terminal:operate': ['terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach', 'portForward/open'],
+  'files:write': [
+    'fileUploads/upload', 'workspace/create', 'workspace/initializeDefault', 'directoryPicker/createDirectory',
+  ],
+  'terminal:operate': [
+    'terminal/list', 'terminal/create', 'terminal/close', 'terminal/attach', 'portForward/open',
+    'terminal/environment', 'terminal/shells', 'terminal/watch', 'terminal/retain', 'terminal/rename',
+  ],
   'settings:manage': [
     'settings/describe', 'settings/update', 'settings/replace', 'settings/mutate', 'event:settings/document-updated',
     'credentials/describe', 'credentials/set', 'credentials/unset', 'event:credentials/reference-updated',
     'llm/listProviders', 'llm/listConfigurableProviders',
+    'llm/discoverModels', 'permissionPresets/catalog', 'event:llm/adapters-updated', 'event:credentials/record-updated',
   ],
+}
+
+/**
+ * Name the scopes that list `action`, for the reason a refused device call reports.
+ * @param action - the refused Remote endpoint or `event:<name>`.
+ * @returns `scope:<name>` for every scope listing the action, several joined by `|` in
+ *   declaration order; `undefined` when no scope lists it, which leaves `no-allow`.
+ */
+export function scopeRefusalReason(action: RemoteAccessAction): string | undefined {
+  const scopes = Object.entries(DEVICE_SCOPE_ACTIONS)
+    .filter(([, actions]) => actions.includes(action))
+    .map(([scope]) => `scope:${scope}`)
+  return scopes.length === 0 ? undefined : scopes.join('|')
 }
 
 /**
