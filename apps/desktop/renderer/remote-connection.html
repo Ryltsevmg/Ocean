@@ -13,23 +13,41 @@
       <h1 id="title"></h1>
       <p id="hint" class="hint"></p>
     </header>
-    <div class="field" id="address-field">
-      <label><span id="address-label"></span><input id="address" type="text" inputmode="url" list="saved-addresses" placeholder="https://" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <datalist id="saved-addresses"></datalist>
-      <button id="forget" class="link" type="button" hidden></button>
+    <section id="machines" class="machines">
+      <h2 id="machines-label"></h2>
+      <div id="machine-list" role="list"></div>
+      <div class="status">
+        <p id="discover-status" class="hint" role="status"></p>
+        <button id="refresh" type="button"></button>
+      </div>
+    </section>
+    <div class="field" id="password-field" hidden>
+      <label><span id="password-label"></span><input id="password" type="password" autocomplete="off"></label>
+      <button id="back" class="link" type="button"></button>
     </div>
-    <div class="field" id="ssh-field">
-      <label><span id="ssh-label"></span><input id="ssh-host" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <p id="ssh-hint" class="hint"></p>
-      <button id="ssh-start" type="button"></button>
+    <details id="other-ways">
+      <summary id="other-ways-summary"></summary>
+      <div class="fields">
+        <div class="field" id="address-field">
+          <label><span id="address-label"></span><input id="address" type="text" inputmode="url" placeholder="https://" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        </div>
+        <label id="token-row"><span id="token-label"></span><input id="token" type="password" autocomplete="off"></label>
+        <div class="field" id="remember-field">
+          <label id="remember-row" class="remember"><input id="remember" type="checkbox"><span id="remember-label"></span></label>
+          <p id="save-hint" class="hint" hidden></p>
+          <p id="host-identity" class="hint" hidden></p>
+        </div>
+        <div class="field" id="ssh-field">
+          <label><span id="ssh-label"></span><input id="ssh-host" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <p id="ssh-hint" class="hint"></p>
+          <button id="ssh-start" type="button"></button>
+        </div>
+      </div>
+    </details>
+    <div class="feedback">
+      <p id="failure" role="alert" hidden></p>
+      <button id="forget-unreadable" class="link" type="button" hidden></button>
     </div>
-    <label id="token-row"><span id="token-label"></span><input id="token" type="password" autocomplete="off"></label>
-    <div class="field" id="remember-field">
-      <label id="remember-row" class="remember"><input id="remember" type="checkbox"><span id="remember-label"></span></label>
-      <p id="save-hint" class="hint" hidden></p>
-      <p id="host-identity" class="hint" hidden></p>
-    </div>
-    <div class="feedback"><p id="failure" role="alert" hidden></p></div>
     <footer>
       <button id="close" type="button"></button>
       <button id="connect" type="submit" disabled></button>

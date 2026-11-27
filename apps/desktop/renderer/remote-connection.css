@@ -2,21 +2,31 @@
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px; min-height: 100dvh; color: CanvasText; background: Canvas; }
 form { display: flex; flex-direction: column; gap: 16px; min-height: calc(100dvh - 48px); }
-label, header, .field { display: grid; gap: 8px; }
+label, header, .field, .machines, .fields { display: grid; gap: 8px; }
 header, .field { gap: 4px; }
 h1 { margin: 0; font-size: 16px; font-weight: 500; }
+h2 { margin: 0; font-size: 13px; font-weight: 500; color: GrayText; }
 .hint { margin: 0; color: GrayText; font-size: 13px; }
 .hint.warning { color: CanvasText; }
 #host-identity { overflow-wrap: anywhere; }
 input, button { font: inherit; }
 input[type="text"], input[type="password"] { width: 100%; min-width: 0; padding: 8px 10px; }
 .remember { display: flex; align-items: center; }
-.remember[hidden] { display: none; }
 .link { justify-self: start; padding: 0; border: 0; background: none; color: LinkText; }
 .link:hover { text-decoration: underline; }
+/* About six rows; the window is not resizable, so a longer list scrolls here instead of pushing the other ways and the footer out of it. */
+#machine-list { display: grid; max-height: 300px; overflow-y: auto; border-top: 1px solid ButtonBorder; }
+.machine { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid ButtonBorder; }
+.machine .name { min-width: 0; overflow-wrap: anywhere; }
+.badge { padding: 0 8px; border: 1px solid ButtonBorder; border-radius: 999px; corner-shape: round; font-size: 13px; line-height: 18px; color: GrayText; white-space: nowrap; }
+.status { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#other-ways { display: grid; gap: 8px; }
+#other-ways > summary { cursor: pointer; }
+#other-ways > .fields { padding-left: 20px; }
 footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 button { max-width: 100%; padding: 6px 12px; overflow-wrap: anywhere; }
 #connect { margin-left: auto; border-color: AccentColor; background: AccentColor; color: AccentColorText; }
 #connect:disabled { border-color: ButtonBorder; background: ButtonFace; color: GrayText; }
 .feedback { flex: 1; min-height: 3em; overflow-wrap: anywhere; }
 #failure { margin: 0; }
+[hidden] { display: none !important; }

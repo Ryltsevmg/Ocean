@@ -2,9 +2,9 @@
 import { expect, it } from 'vitest'
 import { HarnessError } from '@ocean/ocean-error'
 import { DeviceClientError, DeviceProtocolVersionError, type DeviceClientErrorCode } from '@ocean/ocean-client-connection/device'
-import { resolveDesktopLocale } from '../src/locale.ts'
+import { en, resolveDesktopLocale } from '../src/locale.ts'
 import { RemoteConnectionStoreError } from '../src/remote-connection-store.ts'
-import { remoteErrorResult } from '../src/remote-result.ts'
+import { remoteErrorResult, remotePasswordErrorResult } from '../src/remote-result.ts'
 import { RemoteSshError, type RemoteSshErrorCode, type RemoteSshStep } from '../src/remote-ssh.ts'
 
 const messages = resolveDesktopLocale('en-US').messages
@@ -35,6 +35,18 @@ it.each([
   expect(error).toBeInstanceOf(HarnessError)
   expect(error.name).toBe('RemoteConnectionStoreError')
   expect(remoteErrorResult(error, messages)).toMatchObject({ kind: 'failed', code })
+})
+
+it('names the machine without a pairing password and a wrong password for the password pairing', () => {
+  const address = 'https://ocean.example/mount/'
+  expect(remotePasswordErrorResult(new DeviceClientError('DEVICE_PAIRING_PASSWORD_UNSET', 'Ocean Host has no pairing password'), address, messages))
+    .toEqual({ kind: 'failed', code: 'DEVICE_PAIRING_PASSWORD_UNSET', message: en.remotePasswordUnset.replace('{address}', address) })
+  expect(remotePasswordErrorResult(new DeviceClientError('DEVICE_PAIRING_REJECTED', 'Ocean pairing password was rejected'), address, messages))
+    .toEqual({ kind: 'failed', code: 'DEVICE_PAIRING_REJECTED', message: messages.remotePasswordWrong })
+  // Every other failure reads as in the link pairing and the token sign-in.
+  expect(remotePasswordErrorResult(new DeviceClientError('DEVICE_RATE_LIMITED', 'rate limited'), address, messages))
+    .toEqual(remoteErrorResult(new DeviceClientError('DEVICE_RATE_LIMITED', 'rate limited'), messages))
+  expect(remotePasswordErrorResult(new Error('fixture-secret'), address, messages)).toEqual({ kind: 'failed', code: 'DESKTOP_REMOTE_FAILED', message: messages.remoteSwitchFailed })
 })
 
 it('distinguishes protocol versions and timeouts from unknown failures', () => {

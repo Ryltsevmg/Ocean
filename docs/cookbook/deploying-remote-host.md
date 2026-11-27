@@ -88,7 +88,7 @@ docker run --name ocean --init --network host --stop-timeout 60 \
 
 Run the [device commands](../../apps/cli/README.md) as the service account against its active socket. Use `create <label>` for each device, `list` to inspect status, `rotate <id>` to replace a token, and `revoke <id>` to disable it. Send the output of `create` and `rotate` through a private channel. In the systemd and container examples, use the socket path visible to the command you run.
 
-To add a device without copying its token, create a one-time pairing link instead of `create`. The link works once and expires after ten minutes unless `--ttl` says otherwise. Send it through a private channel, then open it on the device or paste it into Desktop’s **Connect to remote Host** dialog.
+To add a device without copying its token, create a one-time pairing link instead of `create`. The link works once and expires after ten minutes unless `--ttl` says otherwise. Send it through a private channel, then open it on the device or paste it into the address field under **Other ways to connect** in Desktop’s **Connect to remote Host** window.
 
 ```sh
 ocean remote-device --socket /run/ocean/admin.sock pair laptop --url https://ocean.example/
@@ -99,6 +99,8 @@ When you cannot open a shell on the server to make a link for each device, set o
 ```sh
 ocean remote-device --socket /run/ocean/admin.sock password --password-stdin
 ```
+
+On the device, Desktop lists a Host it reaches over Tailscale in the **Connect to remote Host** window with a **Tailscale** badge and **Pair**. **Pair** asks for the pairing password, exchanges it for a device token labeled with the device’s host name, signs in, and saves the token when secure storage is available; the password itself is not kept. A wrong password, a Host without one, and a rate limit are reported separately, and a Host the window does not list is still reached by pasting a pairing link into the address field under **Other ways to connect**.
 
 Replace `DEVICE_ID` with an identifier from `list`.
 

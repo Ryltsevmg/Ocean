@@ -97,6 +97,8 @@ if (process.isMainFrame && location.href === `${SCHEME}://shell/remote-connectio
     startSsh: (host: string) => ipcRenderer.invoke(DESKTOP_IPC.remoteSshStart, host),
     pairLink: (link: string) => ipcRenderer.invoke(DESKTOP_IPC.remotePairLink, link),
     pair: () => ipcRenderer.invoke(DESKTOP_IPC.remotePair),
+    discover: () => ipcRenderer.invoke(DESKTOP_IPC.remoteDiscover),
+    pairPassword: (address: string, password: string) => ipcRenderer.invoke(DESKTOP_IPC.remotePairPassword, address, password),
     close: () => ipcRenderer.invoke(DESKTOP_IPC.remoteClose),
   })
 }

@@ -17,6 +17,7 @@ import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
 import { RemoteConnectionStore } from '../src/remote-connection-store.ts'
 import { runOperationReportJob } from '../src/operation-report-job.ts'
+import type { DiscoveryRun } from '../src/remote-discovery.ts'
 
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } | null }
 type InvokeHandler = (event: InvokeEvent, ...args: unknown[]) => unknown
@@ -29,6 +30,14 @@ vi.mock('../src/web-document.ts', () => ({
   removeLegacyHostCookies: harness.removeLegacyHostCookies,
 }))
 vi.mock('../src/operation-report-job.ts', () => ({ runOperationReportJob: vi.fn(async () => ({ appended: false, timedOut: false, cancelled: false })) }))
+// Machine discovery runs `tailscale` through the provisioning hook and labels a password-paired
+// device with the hostname; both are replaced so no test spawns a process or reads this machine's name.
+const sshRunner = vi.hoisted(() => ({ run: vi.fn<DiscoveryRun>(async () => ({ status: null, stdout: '', stderr: '', error: new Error('spawn ssh ENOENT') })) }))
+vi.mock('../src/remote-ssh.ts', async importOriginal => ({
+  ...await importOriginal<typeof import('../src/remote-ssh.ts')>(),
+  remoteSsh: { run: sshRunner.run },
+}))
+vi.mock('node:os', async importOriginal => ({ ...await importOriginal<typeof import('node:os')>(), hostname: harness.hostname }))
 // Report persistence has its own unit tests; here it resolves within microtasks so the fatal
 // dialog never outlives the test that triggered it.
 vi.mock('../src/crash-report.ts', async importOriginal => ({
@@ -240,6 +249,7 @@ const harness = await vi.hoisted(async () => {
     failWindow(error: Error) { windowFailure = error },
     windows, views, hosts, handlers, app, FakeWindow, FakeView, FakeHost, powerMonitor, nativeTheme, analytics,
     trays, FakeTray, backgroundNotice, shellDialog,
+    hostname: vi.fn((): string => 'desktop-test'),
     // Storage reports encryption as unavailable until a test turns it on to seed a saved machine.
     safeStorage: {
       isEncryptionAvailable: (): boolean => false,
@@ -2310,7 +2320,10 @@ describe('desktop main startup', () => {
     const event = { sender: window.webContents, senderFrame: window.webContents.mainFrame }
     const send = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', send)
-    for (const channel of [DESKTOP_IPC.remoteForm, DESKTOP_IPC.remoteConnect, DESKTOP_IPC.remoteForget, DESKTOP_IPC.remoteClose]) {
+    for (const channel of [
+      DESKTOP_IPC.remoteForm, DESKTOP_IPC.remoteConnect, DESKTOP_IPC.remoteForget, DESKTOP_IPC.remoteClose,
+      DESKTOP_IPC.remoteDiscover, DESKTOP_IPC.remotePairPassword,
+    ]) {
       const handle = harness.handlers.get(channel)!
       for (const invalid of [
         { sender: local.webContents, senderFrame: event.senderFrame },
@@ -2467,6 +2480,168 @@ describe('desktop main startup', () => {
       const first = harness.windows.at(-1)!
       harness.app.emit('second-instance', {}, ['Ocean', link.replace('Phone', 'Tablet')])
       await vi.waitFor(() => { expect(first.isDestroyed()).toBe(true) })
+    })
+  })
+
+  describe('machine discovery and password pairing', () => {
+    const identity = (host: string) => ({ 'ocean-device-protocol': '1', 'ocean-device-host': host, 'ocean-device-epoch': 'launch' })
+    const password = 'correct horse battery staple'
+    const token = `${'c'.repeat(8)}-cccc-4ccc-8ccc-${'c'.repeat(12)}.${'D'.repeat(43)}`
+    const tailscale = JSON.stringify({
+      Self: { ID: 'nMac', DNSName: 'macbook-air.tail71ee4f.ts.net.', Online: true },
+      Peer: {
+        nBigpc: { ID: 'nBigpc', DNSName: 'bigpc.tail71ee4f.ts.net.', Online: true },
+        nSilent: { ID: 'nSilent', DNSName: 'silent.tail71ee4f.ts.net.', Online: true },
+        nOld: { ID: 'nOld', DNSName: 'old.tail71ee4f.ts.net.', Online: false },
+        nAir: { ID: 'nAir', DNSName: 'air.tail71ee4f.ts.net.', Online: true },
+      },
+    })
+
+    /** A home directory whose SSH files name the paired machine, one more destination, and one known host. */
+    function homeWithSsh(): string {
+      const userData = harness.app.getPath('userData')
+      const home = join(userData, 'home')
+      mkdirSync(join(home, '.ssh'), { recursive: true })
+      writeFileSync(join(home, '.ssh', 'config'), 'Host bigpc\n  HostName bigpc.tail71ee4f.ts.net\nHost dev\n')
+      writeFileSync(join(home, '.ssh', 'known_hosts'), 'github.com ssh-rsa AAAAB3NzaC1yc2E\n')
+      harness.app.getPath.mockImplementation(name => name === 'home' ? home : name === 'userData' ? userData : join(userData, `desktop-test-${name}`))
+      return home
+    }
+
+    /** Answer the probes of the online peers: bigpc on 10443 as the saved machine, air on 443 as a stranger. */
+    function stubPeers(requests: string[]): void {
+      vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => {
+        const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+        requests.push(`${url.hostname}${url.port === '' ? ':443' : `:${url.port}`}`)
+        if (url.pathname !== '/connect') return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+        if (url.hostname === 'bigpc.tail71ee4f.ts.net' && url.port === '10443') return new Response(null, { status: 204, headers: identity('host-bigpc') })
+        if (url.hostname === 'air.tail71ee4f.ts.net' && url.port === '') return new Response(null, { status: 204, headers: identity('host-air') })
+        throw new TypeError('fetch failed')
+      }))
+    }
+
+    async function openedDialog() {
+      await readyForUpdate()
+      await harness.windows[0]!.shown.promise
+      const menu = applicationMenuItems().find(item => item.label === en.remoteConnectMenu)!
+      ;(menu as { click: () => void }).click()
+      const dialog = harness.windows.at(-1)!
+      await vi.waitFor(() => { expect(dialog.urls).toContain('dsh-app://shell/remote-connection.html') })
+      return { dialog, event: { sender: dialog.webContents, senderFrame: dialog.webContents.mainFrame } }
+    }
+
+    it('lists saved machines with their discovered Tailscale route, SSH destinations, and Tailscale machines without a token', async () => {
+      homeWithSsh()
+      vi.spyOn(harness.safeStorage, 'isEncryptionAvailable').mockReturnValue(true)
+      const store = new RemoteConnectionStore(harness.app.getPath('userData'), harness.safeStorage)
+      await store.save({ address: 'https://bigpc.tail71ee4f.ts.net:10443/', hostId: 'host-bigpc', token: 'saved-token' })
+      sshRunner.run.mockResolvedValue({ status: 0, stdout: tailscale })
+      const requests: string[] = []
+      stubPeers(requests)
+      const { event, dialog } = await openedDialog()
+      const discover = harness.handlers.get(DESKTOP_IPC.remoteDiscover)!
+      expect(await discover(event)).toEqual({
+        kind: 'discovered', tailscaleAvailable: true,
+        // The SSH alias of the paired machine is not offered: that machine already has a token.
+        ssh: [{ host: 'dev', label: 'dev' }, { host: 'github.com', label: 'github.com' }],
+        tailscale: [
+          { address: 'https://bigpc.tail71ee4f.ts.net:10443/', hostId: 'host-bigpc', known: true },
+          { address: 'https://air.tail71ee4f.ts.net/', hostId: 'host-air', known: false },
+        ],
+      })
+      expect(sshRunner.run.mock.calls).toEqual([['tailscale', ['status', '--json']]])
+      // Every online peer is asked on 443 first; a peer that answers on no port is asked on each candidate.
+      expect(requests.slice(0, 3)).toEqual(['bigpc.tail71ee4f.ts.net:443', 'silent.tail71ee4f.ts.net:443', 'air.tail71ee4f.ts.net:443'])
+      expect(requests.filter(request => request.startsWith('silent.'))).toHaveLength(4)
+      expect(dialog.isDestroyed()).toBe(false)
+      // The form lists the saved machine without its token.
+      const form = await harness.handlers.get(DESKTOP_IPC.remoteForm)!(event)
+      expect(form).toMatchObject({ machines: [{ hostId: 'host-bigpc', routes: ['https://bigpc.tail71ee4f.ts.net:10443/'] }] })
+      expect(JSON.stringify(form)).not.toContain('saved-token')
+    })
+
+    it('reports Tailscale as unavailable when no CLI answers and still lists the SSH destinations', async () => {
+      homeWithSsh()
+      sshRunner.run.mockResolvedValue({ status: null, stdout: '' })
+      const send = vi.fn<typeof fetch>()
+      vi.stubGlobal('fetch', send)
+      const { event } = await openedDialog()
+      expect(await harness.handlers.get(DESKTOP_IPC.remoteDiscover)!(event)).toEqual({
+        kind: 'discovered', tailscaleAvailable: false, tailscale: [],
+        ssh: [{ host: 'bigpc', label: 'bigpc' }, { host: 'dev', label: 'dev' }, { host: 'github.com', label: 'github.com' }],
+      })
+      // This Desktop runs on Windows, where no app bundle copy exists to try.
+      expect(sshRunner.run.mock.calls).toEqual([['tailscale', ['status', '--json']]])
+      expect(send).not.toHaveBeenCalled()
+    })
+
+    it('refuses malformed password-pairing arguments before sending anything', async () => {
+      const send = vi.fn<typeof fetch>()
+      vi.stubGlobal('fetch', send)
+      const { event } = await openedDialog()
+      const pairPassword = harness.handlers.get(DESKTOP_IPC.remotePairPassword)!
+      for (const args of [[undefined, password], ['x'.repeat(2049), password], ['https://ocean.example/', ''], ['https://ocean.example/', 42], ['https://ocean.example/', 'x'.repeat(257)]]) {
+        expect(await pairPassword(event, ...args)).toMatchObject({ kind: 'failed', code: 'DESKTOP_REMOTE_INVALID_INPUT' })
+      }
+      expect(send).not.toHaveBeenCalled()
+    })
+
+    /** Answer a password pairing, the login, and the bootstrap, recording the headers of the pairing request. */
+    function stubPasswordHost(requests: string[], reply: () => Response): void {
+      vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input, init) => {
+        const url = input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url)
+        const method = init?.method ?? 'GET'
+        requests.push(`${method} ${url.pathname}`)
+        if (url.pathname.endsWith('/connect/pair')) {
+          requests.push(`pairing ${String(new Headers(init?.headers).get('ocean-device-pairing'))} label ${String(new Headers(init?.headers).get('ocean-device-label'))} bearer ${String(new Headers(init?.headers).get('authorization'))}`)
+          return reply()
+        }
+        if (url.pathname.endsWith('/connect') && method === 'POST') {
+          return new Response(null, { status: 204, headers: { ...identity('paired-host'), 'set-cookie': '__Host-ocean-device=login; Secure; HttpOnly' } })
+        }
+        return Response.json([{ kind: 'global', name: '__OCEAN_BOOT__', value: { release: { version: '1.2.3' } } }])
+      }))
+    }
+
+    it('exchanges a pairing password for a token under the hostname label, signs in with it, and keeps the password in the main process', async () => {
+      const requests: string[] = []
+      stubPasswordHost(requests, () => Response.json({ id: 'device-id', token }, { headers: identity('paired-host') }))
+      const { event, dialog } = await openedDialog()
+      const result = await harness.handlers.get(DESKTOP_IPC.remotePairPassword)!(event, 'https://ocean.example/mount/', password)
+      expect(result).toMatchObject({ kind: 'connected' })
+      expect(requests.slice(0, 3)).toEqual([
+        'POST /mount/connect/pair',
+        `pairing password label desktop-test bearer Bearer ${Buffer.from(password, 'utf8').toString('base64url')}`,
+        'POST /mount/connect',
+      ])
+      expect(JSON.stringify(result)).not.toContain(password)
+      expect(harness.views).toHaveLength(1)
+      expect(dialog.isDestroyed()).toBe(true)
+    })
+
+    it('labels a device whose hostname is not printable ASCII with the fixed Desktop name', async () => {
+      harness.hostname.mockReturnValueOnce('макбук')
+      const requests: string[] = []
+      stubPasswordHost(requests, () => Response.json({ id: 'device-id', token }, { headers: identity('paired-host') }))
+      const { event } = await openedDialog()
+      expect(await harness.handlers.get(DESKTOP_IPC.remotePairPassword)!(event, 'https://ocean.example/', password)).toMatchObject({ kind: 'connected' })
+      expect(requests[1]).toBe(`pairing password label Ocean Desktop bearer Bearer ${Buffer.from(password, 'utf8').toString('base64url')}`)
+    })
+
+    it.each([
+      [404, 'DEVICE_PAIRING_PASSWORD_UNSET', en.remotePasswordUnset.replace('{address}', 'https://ocean.example/mount/')],
+      [401, 'DEVICE_PAIRING_REJECTED', en.remotePasswordWrong],
+      [429, 'DEVICE_RATE_LIMITED', en.remoteRateLimited],
+    ] as const)('reports a %s of the pairing password without exposing it, and keeps the form open', async (status, code, message) => {
+      const requests: string[] = []
+      stubPasswordHost(requests, () => new Response(null, { status, headers: { ...identity('paired-host'), 'ocean-device-pairing': 'password' } }))
+      const { event, dialog } = await openedDialog()
+      const result = await harness.handlers.get(DESKTOP_IPC.remotePairPassword)!(event, 'https://ocean.example/mount/', password)
+      expect(result).toEqual({ kind: 'failed', code, message })
+      expect(JSON.stringify(result)).not.toContain(password)
+      expect(requests.filter(request => request.startsWith('POST'))).toEqual(['POST /mount/connect/pair'])
+      expect(harness.views).toHaveLength(0)
+      expect(dialog.isDestroyed()).toBe(false)
     })
   })
 

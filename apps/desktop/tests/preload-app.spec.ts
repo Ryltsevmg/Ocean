@@ -255,6 +255,8 @@ it.each([
       load(): Promise<unknown>
       connect(address: string, token: string, remember: boolean): Promise<unknown>
       forget(address: string): Promise<unknown>
+      discover(): Promise<unknown>
+      pairPassword(address: string, password: string): Promise<unknown>
       close(): Promise<unknown>
     } | undefined
   expect(api !== undefined).toBe(exposed)
@@ -262,10 +264,13 @@ it.each([
   await api.load()
   await api.connect('https://host.example/', 'fixture-token', false)
   await api.forget('https://host.example/')
+  await api.discover()
+  await api.pairPassword('https://host.example/', 'fixture-password')
   await api.close()
   expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
     [DESKTOP_IPC.remoteForm], [DESKTOP_IPC.remoteConnect, 'https://host.example/', 'fixture-token', false],
-    [DESKTOP_IPC.remoteForget, 'https://host.example/'], [DESKTOP_IPC.remoteClose],
+    [DESKTOP_IPC.remoteForget, 'https://host.example/'], [DESKTOP_IPC.remoteDiscover],
+    [DESKTOP_IPC.remotePairPassword, 'https://host.example/', 'fixture-password'], [DESKTOP_IPC.remoteClose],
   ])
 })
 

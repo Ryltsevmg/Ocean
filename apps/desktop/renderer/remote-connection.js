@@ -1,75 +1,191 @@
 const form = document.querySelector('form')
 const address = document.querySelector('#address')
-const addresses = document.querySelector('#saved-addresses')
 const token = document.querySelector('#token')
 const remember = document.querySelector('#remember')
 const connect = document.querySelector('#connect')
-const forget = document.querySelector('#forget')
+const password = document.querySelector('#password')
 const closeButton = document.querySelector('#close')
 const failure = document.querySelector('#failure')
+const forgetUnreadable = document.querySelector('#forget-unreadable')
 const title = document.querySelector('#title')
 const hint = document.querySelector('#hint')
+const machinesSection = document.querySelector('#machines')
+const machinesLabel = document.querySelector('#machines-label')
+const machineList = document.querySelector('#machine-list')
+const discoverStatus = document.querySelector('#discover-status')
+const refresh = document.querySelector('#refresh')
+const passwordField = document.querySelector('#password-field')
+const back = document.querySelector('#back')
+const otherWays = document.querySelector('#other-ways')
 const rememberRow = document.querySelector('#remember-row')
 const saveHint = document.querySelector('#save-hint')
 const identity = document.querySelector('#host-identity')
 const sshField = document.querySelector('#ssh-field')
 const sshHost = document.querySelector('#ssh-host')
 const sshStart = document.querySelector('#ssh-start')
-const addressField = document.querySelector('#address-field')
-const tokenRow = document.querySelector('#token-row')
-const rememberField = document.querySelector('#remember-field')
 const bridge = globalThis.oceanRemoteForm
 
 const view = await bridge.load()
+const messages = view.messages
 for (const name of ['address', 'token', 'remember']) {
-  document.querySelector(`#${name}-label`).textContent = view.messages[name]
+  document.querySelector(`#${name}-label`).textContent = messages[name]
 }
-title.textContent = view.messages.title
-hint.textContent = view.messages.hint
-connect.textContent = view.messages.connect
-forget.textContent = view.messages.forget
-closeButton.textContent = view.messages.cancel
-saveHint.textContent = view.messages.saveUnavailable
-for (const name of ['label', 'hint', 'start']) document.querySelector(`#ssh-${name}`).textContent = view.messages[`ssh${name[0].toUpperCase()}${name.slice(1)}`]
+title.textContent = messages.title
+hint.textContent = messages.hint
+connect.textContent = messages.connect
+closeButton.textContent = messages.cancel
+forgetUnreadable.textContent = messages.forget
+saveHint.textContent = messages.saveUnavailable
+machinesLabel.textContent = messages.machines
+refresh.textContent = messages.refresh
+document.querySelector('#other-ways-summary').textContent = messages.otherWays
+document.querySelector('#password-label').textContent = messages.password
+back.textContent = messages.back
+for (const name of ['label', 'hint', 'start']) document.querySelector(`#ssh-${name}`).textContent = messages[`ssh${name[0].toUpperCase()}${name.slice(1)}`]
 saveHint.hidden = view.canSave
 rememberRow.hidden = !view.canSave
-failure.textContent = view.notice ?? view.messages.failure
+failure.textContent = view.notice ?? messages.failure
 failure.hidden = view.notice === undefined
+forgetUnreadable.hidden = !view.unreadable
 remember.disabled = !view.canSave
 if (view.address !== undefined) {
   address.value = view.address
 }
 /** Address of a pairing link waiting for the user's confirmation, or undefined in the ordinary form. */
 let pairing = view.pairing?.address
+/** Tailscale machine whose pairing password is being entered, or undefined in the list. */
+let passwordTarget
+/** Saved machines as last read, each with its identity and routes; tokens never reach this document. */
+let machines = view.machines
+let unreadable = view.unreadable
+let sshTargets = []
+let tailscaleHosts = []
+let connected = false
+let discovering = false
+
+/** The route a saved machine is offered at: its most recently saved address, else the one it was just discovered at. */
+function savedRoute(machine) {
+  return tailscaleHosts.find(host => host.known && host.hostId === machine.hostId)?.address ?? machine.routes.at(-1)
+}
+/** A route without its scheme, as the list captions it. */
+function routeLabel(route) {
+  try { return new URL(route).host } catch (_error) { return route }
+}
+/**
+ * Build the machine list: saved machines first, then SSH destinations, then Tailscale machines
+ * without a saved token. Each row carries one action.
+ */
+function renderMachines() {
+  const rows = [
+    ...machines.map(machine => {
+      const route = savedRoute(machine)
+      return {
+        caption: routeLabel(route), badge: messages.savedBadge, action: messages.connect,
+        run: () => perform(() => bridge.connect(route, '', remember.checked)),
+        forget: () => forgetMachine(machine),
+      }
+    }),
+    ...sshTargets.map(target => ({
+      caption: target.label, badge: messages.sshBadge, action: messages.setup,
+      run: (button) => provisionOverSsh(target.host, button),
+    })),
+    ...tailscaleHosts.filter(host => !host.known).map(host => ({
+      caption: routeLabel(host.address), badge: messages.tailscaleBadge, action: messages.pair,
+      run: () => { showPassword(host.address) },
+    })),
+  ]
+  machineList.replaceChildren(...rows.map(row => {
+    const item = document.createElement('div')
+    item.setAttribute('role', 'listitem')
+    item.className = 'machine'
+    const name = document.createElement('span')
+    name.className = 'name'
+    name.textContent = row.caption
+    const badge = document.createElement('span')
+    badge.className = 'badge'
+    badge.textContent = row.badge
+    const action = document.createElement('button')
+    action.type = 'button'
+    action.textContent = row.action
+    action.addEventListener('click', () => { void row.run(action) })
+    item.append(name, badge, action)
+    if (row.forget !== undefined) {
+      const forget = document.createElement('button')
+      forget.type = 'button'
+      forget.className = 'link'
+      forget.textContent = messages.forgetMachine
+      forget.addEventListener('click', () => { void row.forget() })
+      item.append(forget)
+    }
+    return item
+  }))
+}
+/** Focus the action of the first machine, so the keyboard starts in the list. */
+function focusFirstMachine() {
+  machineList.querySelector('button')?.focus()
+}
+/**
+ * The footer submits the address form, which only Other ways shows: with the section collapsed
+ * in the list state it has nothing to submit, and each machine row carries its own action.
+ */
+function syncFooter() {
+  const inList = passwordTarget === undefined && pairing === undefined && !connected
+  connect.disabled = form.getAttribute('aria-busy') === 'true' || (inList && !otherWays.open)
+}
+otherWays.addEventListener('toggle', syncFooter)
+/** Enable or disable every control that a pending or finished connection takes out of use. */
+function setBusy(busy) {
+  form.setAttribute('aria-busy', String(busy))
+  const settled = busy || connected
+  syncFooter()
+  address.disabled = settled
+  token.disabled = settled
+  password.disabled = settled
+  remember.disabled = settled || !view.canSave
+  forgetUnreadable.disabled = settled
+  refresh.disabled = settled || discovering
+  sshStart.disabled = settled
+  sshHost.disabled = settled
+  for (const button of machineList.querySelectorAll('button')) button.disabled = settled
+  connect.textContent = busy ? messages.connecting : connected ? messages.done : passwordTarget === undefined ? messages.connect : messages.pair
+}
 function showPairing(target) {
   pairing = target
-  hint.textContent = view.messages.pairHint.replace('{address}', target)
-  for (const field of [addressField, tokenRow, rememberField, sshField]) field.hidden = true
-  forget.hidden = true
+  passwordTarget = undefined
+  hint.textContent = messages.pairHint.replace('{address}', target)
+  for (const section of [machinesSection, passwordField, otherWays]) section.hidden = true
+  forgetUnreadable.hidden = true
   failure.hidden = true
   address.value = ''
+  connect.textContent = messages.connect
   connect.disabled = false
   connect.focus()
 }
-const saved = new Set(view.addresses)
-let unreadable = view.unreadable
-let connected = false
-function refreshSavedAddresses() {
-  addresses.replaceChildren(...Array.from(saved, value => {
-    const option = document.createElement('option')
-    option.value = value
-    return option
-  }))
-  updateForget()
+/** Ask for the pairing password of a Tailscale machine that has no saved token. */
+function showPassword(target) {
+  passwordTarget = target
+  hint.textContent = messages.passwordHint.replace('{address}', target)
+  for (const section of [machinesSection, otherWays]) section.hidden = true
+  passwordField.hidden = false
+  forgetUnreadable.hidden = true
+  failure.hidden = true
+  connect.textContent = messages.pair
+  connect.disabled = false
+  password.focus()
 }
-function selectedAddress() {
-  const url = URL.parse(address.value)
-  if (url === null || url.search || url.hash || url.username || url.password) return undefined
-  if (!url.pathname.endsWith('/')) url.pathname += '/'
-  return saved.has(url.href) ? url.href : undefined
-}
-function updateForget() {
-  forget.hidden = !unreadable && selectedAddress() === undefined
+/** Leave the password prompt for the list; nothing was sent. */
+function showList() {
+  passwordTarget = undefined
+  syncFooter()
+  password.value = ''
+  hint.textContent = messages.hint
+  machinesSection.hidden = false
+  passwordField.hidden = true
+  otherWays.hidden = false
+  forgetUnreadable.hidden = !unreadable
+  failure.hidden = true
+  connect.textContent = messages.connect
+  focusFirstMachine()
 }
 function validAddress() {
   if (address.value.trim() === '') return true
@@ -93,8 +209,8 @@ async function probeAddress() {
   const shortId = result.hostId.slice(0, 8)
   const routes = result.routes ?? []
   identity.textContent = result.known && routes.length > 0
-    ? view.messages.hostRoutes.replace('{id}', shortId).replace('{routes}', routes.join(', '))
-    : view.messages.hostIdentity.replace('{id}', shortId)
+    ? messages.hostRoutes.replace('{id}', shortId).replace('{routes}', routes.join(', '))
+    : messages.hostIdentity.replace('{id}', shortId)
   identity.hidden = false
 }
 address.addEventListener('input', () => {
@@ -102,49 +218,75 @@ address.addEventListener('input', () => {
     address.removeAttribute('aria-invalid')
     failure.hidden = true
   }
-  updateForget()
   clearTimeout(probeTimer)
   probeTimer = setTimeout(() => { void probeAddress() }, 400)
 })
-refreshSavedAddresses()
-connect.disabled = false
+renderMachines()
+syncFooter()
 if (pairing !== undefined) showPairing(pairing)
-else if (view.notice === undefined) address.focus()
-else token.focus()
+else focusFirstMachine()
+
+/** Ask the main process which machines are reachable now, and list them. */
+async function discover() {
+  if (discovering || connected) return
+  discovering = true
+  discoverStatus.textContent = messages.discovering
+  refresh.disabled = true
+  let result
+  try { result = await bridge.discover() } catch (_error) {
+    // A discovery that cannot run leaves the saved machines listed and says nothing about the others.
+    result = undefined
+  }
+  discovering = false
+  refresh.disabled = connected
+  if (result === undefined) {
+    discoverStatus.textContent = ''
+    return
+  }
+  sshTargets = result.ssh
+  tailscaleHosts = result.tailscale
+  discoverStatus.textContent = result.tailscaleAvailable ? '' : messages.tailscaleMissing
+  renderMachines()
+  if (document.activeElement === document.body) focusFirstMachine()
+}
+refresh.addEventListener('click', () => { void discover() })
 
 async function perform(action) {
   failure.hidden = true
-  failure.textContent = view.messages.failure
-  connect.disabled = true
-  forget.disabled = true
-  address.disabled = true
-  token.disabled = true
-  remember.disabled = true
-  form.setAttribute('aria-busy', 'true')
-  connect.textContent = view.messages.connecting
+  failure.textContent = messages.failure
+  setBusy(true)
   try {
     const result = await action()
     connected = result.kind === 'connected'
-    failure.textContent = result.message ?? view.messages.failure
+    failure.textContent = result.message ?? messages.failure
     failure.hidden = result.kind !== 'failed' && result.message === undefined
-    if (connected) forget.hidden = true
+    if (connected) forgetUnreadable.hidden = true
   } catch (_error) { failure.hidden = false }
   finally {
-    form.setAttribute('aria-busy', 'false')
-    connect.disabled = false
-    forget.disabled = false
-    address.disabled = connected
-    token.disabled = connected
-    remember.disabled = connected || !view.canSave
+    setBusy(false)
     closeButton.hidden = connected
-    connect.textContent = connected ? view.messages.done : view.messages.connect
     if (connected) connect.focus()
   }
 }
 
+/** Remove the most recently saved route of a machine; the machine leaves with its last route. */
+async function forgetMachine(machine) {
+  await perform(async () => {
+    const route = machine.routes.at(-1)
+    const removed = await bridge.forget(route)
+    if (removed.kind === 'forgotten') {
+      const routes = machine.routes.filter(saved => saved !== route)
+      machines = routes.length > 0 ? machines.map(saved => saved === machine ? { ...saved, routes } : saved) : machines.filter(saved => saved !== machine)
+      tailscaleHosts = tailscaleHosts.map(host => routes.length === 0 && host.hostId === machine.hostId ? { ...host, known: false } : host)
+      renderMachines()
+    }
+    return removed
+  })
+}
+
 function closeDialog() {
   void bridge.close().catch(() => {
-    failure.textContent = view.messages.failure
+    failure.textContent = messages.failure
     failure.hidden = false
   })
 }
@@ -153,36 +295,37 @@ function closeDialog() {
  * the address it became reachable at. The Host mints the pairing link itself, so no
  * token is typed here.
  */
-async function startOverSsh() {
-  const host = sshHost.value.trim()
-  if (host === '') {
-    sshHost.focus()
-    return
-  }
+async function provisionOverSsh(host, button) {
   failure.hidden = true
-  sshStart.disabled = true
-  sshHost.disabled = true
-  const label = sshStart.textContent
-  sshStart.textContent = view.messages.sshStarting
+  button.disabled = true
+  const label = button.textContent
+  button.textContent = messages.sshStarting
   form.setAttribute('aria-busy', 'true')
   try {
     const result = await bridge.startSsh(host)
     if (result.kind === 'pairing') showPairing(result.address)
     else {
-      failure.textContent = result.message ?? view.messages.failure
+      failure.textContent = result.message ?? messages.failure
       failure.hidden = false
     }
   } catch (_error) {
-    failure.textContent = view.messages.failure
+    failure.textContent = messages.failure
     failure.hidden = false
   } finally {
     form.setAttribute('aria-busy', 'false')
-    sshStart.disabled = false
-    sshHost.disabled = false
-    sshStart.textContent = label
+    button.disabled = connected
+    button.textContent = label
   }
 }
-sshStart.addEventListener('click', () => { void startOverSsh() })
+sshStart.addEventListener('click', () => {
+  const host = sshHost.value.trim()
+  if (host === '') {
+    sshHost.focus()
+    return
+  }
+  sshHost.disabled = true
+  void provisionOverSsh(host, sshStart).finally(() => { sshHost.disabled = connected })
+})
 closeButton.addEventListener('click', closeDialog)
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return
@@ -200,6 +343,17 @@ form.addEventListener('submit', event => {
     void perform(() => bridge.pair())
     return
   }
+  if (passwordTarget !== undefined) {
+    const target = passwordTarget
+    const secret = password.value
+    password.value = ''
+    if (secret === '') {
+      password.focus()
+      return
+    }
+    void perform(() => bridge.pairPassword(target, secret))
+    return
+  }
   const entered = address.value.trim()
   if (entered.startsWith('ocean://')) {
     void perform(async () => {
@@ -211,7 +365,7 @@ form.addEventListener('submit', event => {
   }
   if (!validAddress()) {
     address.setAttribute('aria-invalid', 'true')
-    failure.textContent = view.messages.invalidAddress
+    failure.textContent = messages.invalidAddress
     failure.hidden = false
     address.focus()
     return
@@ -220,17 +374,17 @@ form.addEventListener('submit', event => {
   token.value = ''
   void perform(() => bridge.connect(address.value, secret, remember.checked))
 })
-forget.addEventListener('click', () => {
-  const selection = selectedAddress()
-  if (selection === undefined && !unreadable) return
+back.addEventListener('click', showList)
+forgetUnreadable.addEventListener('click', () => {
+  if (!unreadable) return
   void perform(async () => {
-    const removed = await bridge.forget(selection)
+    const removed = await bridge.forget()
     if (removed.kind === 'forgotten') {
-      if (selection !== undefined) saved.delete(selection)
       unreadable = false
-      address.value = ''
-      refreshSavedAddresses()
+      forgetUnreadable.hidden = true
+      failure.hidden = true
     }
     return removed
   })
 })
+void discover()
