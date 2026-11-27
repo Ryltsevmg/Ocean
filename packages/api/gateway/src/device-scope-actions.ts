@@ -39,6 +39,13 @@ export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteA
     'credentials/describe', 'credentials/set', 'credentials/unset', 'event:credentials/reference-updated',
     'llm/listProviders', 'llm/listConfigurableProviders',
     'llm/discoverModels', 'permissionPresets/catalog', 'event:llm/adapters-updated', 'event:credentials/record-updated',
+    'pluginInventory/list', 'pluginRegistryProbe/fastest',
+    'pluginManager/listBundles', 'pluginManager/listPlugins', 'pluginManager/readBundleDetail', 'pluginManager/inspect',
+    'pluginManager/listVersions', 'pluginManager/listPublishedCatalog', 'pluginManager/registries', 'pluginManager/setBundleEnabled',
+    'pluginManager/setPluginEnabled', 'pluginManager/installBundle', 'pluginManager/installPublishedBundle',
+    'pluginManager/updateBundle', 'pluginManager/removeBundle', 'pluginManager/waitForInstall', 'pluginManager/cancelInstall',
+    'event:plugin-manager/changed', 'event:plugin-manager/install-log', 'event:plugin-manager/install-state',
+    'event:plugin-manager/update-state',
   ],
 }
 

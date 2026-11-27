@@ -330,6 +330,13 @@ it('lists the union of every scope in full and without a repeat', () => {
     'terminal/environment', 'terminal/shells', 'terminal/watch', 'terminal/retain', 'terminal/rename',
     'llm/discoverModels', 'permissionPresets/catalog', 'event:llm/adapters-updated', 'event:credentials/record-updated',
     'commands/execute',
+    'pluginInventory/list', 'pluginRegistryProbe/fastest',
+    'pluginManager/listBundles', 'pluginManager/listPlugins', 'pluginManager/readBundleDetail', 'pluginManager/inspect',
+    'pluginManager/listVersions', 'pluginManager/listPublishedCatalog', 'pluginManager/registries', 'pluginManager/setBundleEnabled',
+    'pluginManager/setPluginEnabled', 'pluginManager/installBundle', 'pluginManager/installPublishedBundle',
+    'pluginManager/updateBundle', 'pluginManager/removeBundle', 'pluginManager/waitForInstall', 'pluginManager/cancelInstall',
+    'event:plugin-manager/changed', 'event:plugin-manager/install-log', 'event:plugin-manager/install-state',
+    'event:plugin-manager/update-state',
   ].sort())
   expect(actionsOfScopes(['files:write']).has('fileUploads/upload')).toBe(true)
 })
@@ -374,6 +381,17 @@ const MAPPED_ACTIONS: ReadonlyArray<readonly [action: RemoteAccessAction, scope:
   ['terminal/retain', 'terminal:operate'], ['terminal/rename', 'terminal:operate'],
   ['llm/discoverModels', 'settings:manage'], ['permissionPresets/catalog', 'settings:manage'],
   ['event:llm/adapters-updated', 'settings:manage'], ['event:credentials/record-updated', 'settings:manage'],
+  ['pluginInventory/list', 'settings:manage'], ['pluginRegistryProbe/fastest', 'settings:manage'],
+  ['pluginManager/listBundles', 'settings:manage'], ['pluginManager/listPlugins', 'settings:manage'],
+  ['pluginManager/readBundleDetail', 'settings:manage'], ['pluginManager/inspect', 'settings:manage'],
+  ['pluginManager/listVersions', 'settings:manage'], ['pluginManager/listPublishedCatalog', 'settings:manage'],
+  ['pluginManager/registries', 'settings:manage'], ['pluginManager/setBundleEnabled', 'settings:manage'],
+  ['pluginManager/setPluginEnabled', 'settings:manage'], ['pluginManager/installBundle', 'settings:manage'],
+  ['pluginManager/installPublishedBundle', 'settings:manage'], ['pluginManager/updateBundle', 'settings:manage'],
+  ['pluginManager/removeBundle', 'settings:manage'], ['pluginManager/waitForInstall', 'settings:manage'],
+  ['pluginManager/cancelInstall', 'settings:manage'],
+  ['event:plugin-manager/changed', 'settings:manage'], ['event:plugin-manager/install-log', 'settings:manage'],
+  ['event:plugin-manager/install-state', 'settings:manage'], ['event:plugin-manager/update-state', 'settings:manage'],
 ]
 
 describe('device scope refusal reason', () => {
@@ -383,6 +401,16 @@ describe('device scope refusal reason', () => {
     const decide = (deviceId: string) => ctx.remoteAccess.decide({ principal: deviceOf(deviceId), action, resources: [GLOBAL] })
     expect(decide(DEVICE)).toEqual({ kind: 'allow' })
     expect(decide('lacking')).toEqual({ kind: 'deny', reason: `scope:${scope}` })
+  })
+
+  it('keeps the plugin version exemptions owner-only for a device holding every scope', async () => {
+    const { ctx } = await setup()
+    holdScopes(ctx, { [DEVICE]: DEVICE_SCOPES })
+    for (const action of ['pluginManager/listVersionExemptions', 'pluginManager/setVersionExemption'] as const) {
+      expect(ctx.remoteAccess.decide({ principal: deviceOf(DEVICE), action, resources: [GLOBAL] }), action).toEqual({
+        kind: 'deny', reason: 'no-allow',
+      })
+    }
   })
 
   it('leaves no-allow for an action no scope lists', () => {

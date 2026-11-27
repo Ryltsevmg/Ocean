@@ -5,7 +5,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Schema from '@deepseek-ai/schemastery'
 import { Context } from '@deepseek-ai/cordis'
-import { bindSnapshotSelector, RemoteError } from '@ocean/ocean-client-test-runtime'
+import { bindSnapshotSelector, makeTranslate, RemoteError } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
 import type {
   CredentialInfo, RemoteResult, SettingsNamespaceView,
 } from '@ocean/ocean-api-remotes/client'
@@ -32,6 +33,8 @@ import { settingsSchema } from './settings-schema.client.ts'
 afterEach(cleanup)
 
 const t: ModelsSectionInjected['t'] = key => en[key]
+/** The common vocabulary `apply` binds for the page's Host operations. */
+const commonT = makeTranslate(commonEn)
 const OPENAI_TARGET = { provider: 'openai', displayName: 'openai' }
 const openaiCopy = (template: string): string => providerCopy(template, OPENAI_TARGET)
 const DEEPSEEK_TARGET = { provider: 'deepseek-official', displayName: 'DeepSeek' }
@@ -261,7 +264,7 @@ const operations = new WeakMap<object, ModelsOperations>()
 function operationsWith(face: object): ModelsOperations {
   const existing = operations.get(face)
   if (existing !== undefined) return existing
-  const bound = createModelsOperations(ctxWith(face))
+  const bound = createModelsOperations(ctxWith(face), commonT)
   operations.set(face, bound)
   return bound
 }

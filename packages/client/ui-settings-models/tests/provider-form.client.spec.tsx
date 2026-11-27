@@ -4,8 +4,11 @@ import { act, within, cleanup, fireEvent, render, screen, waitFor } from '@testi
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Schema from '@deepseek-ai/schemastery'
 import { Context } from '@deepseek-ai/cordis'
-import { bindSnapshotSelector, RemoteError } from '@ocean/ocean-client-test-runtime'
-import type { SettingsNamespaceView } from '@ocean/ocean-api-remotes/client'
+import { bindSnapshotSelector, makeTranslate, RemoteError } from '@ocean/ocean-client-test-runtime'
+import { en as commonEn } from '@ocean/ocean-client-locale/src/locales/en.ts'
+// Type-only: the `remote-access/denied` entry of RemoteErrorDetailsMap.
+import type {} from '@ocean/ocean-api-remote-access/types'
+import type { RemoteFailure, SettingsNamespaceView } from '@ocean/ocean-api-remotes/client'
 import type { JsonValue } from '@ocean/ocean-util-values'
 import { ModelsSection, providerCopy } from '../src/client/ModelsSection.tsx'
 import type { ModelsSectionInjected, ModelsSectionProps } from '../src/client/ModelsSection.tsx'
@@ -21,6 +24,8 @@ import { settingsSchema } from './settings-schema.client.ts'
 afterEach(cleanup)
 
 const t: ModelsSectionInjected['t'] = key => en[key]
+/** The common vocabulary `apply` binds for the page's Host operations. */
+const commonT = makeTranslate(commonEn)
 
 const PROTOCOLS = ['openai-completions', 'openai-responses', 'anthropic-messages', 'google-generative-ai']
 const LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
@@ -175,7 +180,7 @@ const operations = new WeakMap<object, ModelsOperations>()
 function operationsWith(face: object): ModelsOperations {
   const existing = operations.get(face)
   if (existing !== undefined) return existing
-  const bound = createModelsOperations(ctxWith(face))
+  const bound = createModelsOperations(ctxWith(face), commonT)
   operations.set(face, bound)
   return bound
 }
@@ -1419,6 +1424,33 @@ describe('hand-declared providers', () => {
 
     await screen.findByText('connection refused')
     expect(screen.queryByText(en.customBaseUrlInvalid)).toBeNull()
+  })
+
+  /** One refused device interrogation, as the Gateway reports it to a device. */
+  const deviceRefused = (reason: string): RemoteError<'remote-access/denied'> => new RemoteError(
+    'remote-access/denied', `remote access: llm/discoverModels: access denied (${reason})`,
+    { action: 'llm/discoverModels', reason },
+  )
+  /** Each settled interrogation failure and the one line the create card reports for it. */
+  const REFUSED_INTERROGATIONS: ReadonlyArray<readonly [cause: string, error: () => RemoteFailure, reported: string]> = [
+    [
+      'a device lacking the right the action needs', () => deviceRefused('scope:settings:manage'),
+      commonEn['remoteAccess.denied.scope'].replace('{scope}', 'settings:manage'),
+    ],
+    ['an action no device scope grants', () => deviceRefused('no-allow'), commonEn['remoteAccess.denied.owner']],
+    ['a Host failure', () => new RemoteError('gateway/internal', 'connection refused', {}), 'connection refused'],
+  ]
+
+  it.each(REFUSED_INTERROGATIONS)('reports %s under the model list as the user reads it, not as the wire spells it', async (_cause, error, reported) => {
+    const discover = vi.fn(() => Promise.resolve({ ok: false as const, error: error() }))
+    mountCard({}, { discover })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'http://localhost:11434/v1' } })
+    fireEvent.click(screen.getByText(en.fetchModels))
+
+    await screen.findByText(reported)
+    expect(screen.queryByText(/remote access: llm\/discoverModels/)).toBeNull()
+    // The refusal is a detour, not a dead end: hand-entry is still offered.
+    expect(screen.getByRole('button', { name: en.addModel })).toBeTruthy()
   })
 
   it('derives a reference the credential seam accepts for every id it admits', () => {

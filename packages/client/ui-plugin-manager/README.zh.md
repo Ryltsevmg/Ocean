@@ -68,6 +68,8 @@ Host 通过普通 fetch 代理向 `https://registry.npmjs.org/-/ping` 和 `https
 
 准备和下载期间，**取消安装**会请求 Host 停止运行并等待确认。加载组合包的阶段不可取消。点击 ×、按 Escape 或点击遮罩会立即隐藏对话框，并在可以取消时请求取消。**查看安装任务**会重新打开同一任务并保留输出；结果待定或尚未确认时不能发起另一项安装。确认取消后回到 spec 输入界面并显示 toast；manifest 与 lockfile 已恢复，已下载文件可能保留。安装响应丢失后会请求恢复结果；**核对安装状态**和重连会重试该请求。Host 已无活动请求时，**未能获取安装结果**允许检查插件列表后返回编辑。早于接收确认的取消请求会等待并自动重试；取消失败可手动重试。隐藏的任务通过 toast 通知结果，不会重新弹出对话框。
 
+`serve` profile 不启用 HMR：在其中安装会照常保存并选中组合包、流式传输日志和进度，其结果报告 `restart-required` 及 `no-hmr` 原因，对话框因此要求重启；列表显示该组合包已开启，但它的组件没有活动条目，其浏览器半边在 Host 进程重启之前不会被提供。
+
 Host 将网络失败或超时归因于 GitHub 地址，且提供 npmmirror 时，对话框显示**无法访问 GitHub**，超时时显示**连接 GitHub 超时**，提供**改用国内镜像**和**取消**。选择镜像后回到空的包名输入框，记住所选安装源，不自动开始下一次安装。安装已在使用 npmmirror 时（无论是选中、手动输入，还是 pnpm 自身配置指向它），按钮改为**试试其他方式**，同样回到空的包名输入框并展开**插件安装引导和示例**，安装源保持不变。其他失败保留原有诊断和操作。镜像提供注册表中的包及依赖，不代替 GitHub 仓库下载。
 
 ### 更新组合包
@@ -122,7 +124,7 @@ ctx.slots.inject('plugins.detail.section', () => ctx.slots.register({
 
 标签页通过 `installPublished({ name, version, sha256, title })` 在共享对话框中安装并启用来自已验证渠道的插件。对话框显示已确认的名称和版本，即使取消或失败也不提供 spec 或安装源编辑控件。Host 在每次尝试时重新验证同一发布版本，包括脚本获准后的重试；进度、取消和响应丢失后的结果恢复沿用标准安装控件。
 
-访问控制：插件入口、页面、刷新提示、Host 变更订阅与 `pluginNavigation` 只在当前 Peer 可以调用 `pluginManager/listBundles` 时存在；之后每次授权都会重读已加载过的列表，撤权期间 `pluginChanges` 不更新。owner 始终有权限。
+访问控制：插件入口、页面、刷新提示、Host 变更订阅与 `pluginNavigation` 只在当前 Peer 可以调用 `pluginManager/listBundles` 时存在；之后每次授权都会重读已加载过的列表，撤权期间 `pluginChanges` 不更新。owner 始终有权限；活动登录持有 `settings:manage` 权限范围的连接设备同样有权限，该范围也授予本页其余的清单与管理器调用，读取或授予版本豁免除外，它们仍归 owner（见 [Gateway 设备策略](../../api/gateway/README.zh.md)）。
 
 -----
 
