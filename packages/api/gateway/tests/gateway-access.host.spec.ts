@@ -329,6 +329,7 @@ it('lists the union of every scope in full and without a repeat', () => {
     'officeKit/render', 'officeKit/generation', 'directoryPicker/createDirectory',
     'terminal/environment', 'terminal/shells', 'terminal/watch', 'terminal/retain', 'terminal/rename',
     'llm/discoverModels', 'permissionPresets/catalog', 'event:llm/adapters-updated', 'event:credentials/record-updated',
+    'commands/execute',
   ].sort())
   expect(actionsOfScopes(['files:write']).has('fileUploads/upload')).toBe(true)
 })
@@ -366,6 +367,7 @@ const MAPPED_ACTIONS: ReadonlyArray<readonly [action: RemoteAccessAction, scope:
   ['workspace/delete', 'sessions:write'], ['workspace/insertBefore', 'sessions:write'], ['workspace/insertSessionBefore', 'sessions:write'],
   ['workspace/archiveSession', 'sessions:write'], ['workspace/unarchiveSession', 'sessions:write'],
   ['workspace/pinSession', 'sessions:write'], ['workspace/unpinSession', 'sessions:write'],
+  ['commands/execute', 'sessions:write'],
   ['officeKit/render', 'files:read'], ['officeKit/generation', 'files:read'],
   ['directoryPicker/createDirectory', 'files:write'],
   ['terminal/environment', 'terminal:operate'], ['terminal/shells', 'terminal:operate'], ['terminal/watch', 'terminal:operate'],

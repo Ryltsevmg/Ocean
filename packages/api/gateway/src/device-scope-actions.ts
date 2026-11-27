@@ -20,6 +20,7 @@ export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteA
     'session/fork', 'session/updateQueue', 'workspace/rename', 'workspace/delete', 'workspace/insertBefore',
     'workspace/insertSessionBefore', 'workspace/archiveSession', 'workspace/unarchiveSession',
     'workspace/pinSession', 'workspace/unpinSession',
+    'commands/execute',
   ],
   'files:read': [
     'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
