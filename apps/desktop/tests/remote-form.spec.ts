@@ -338,6 +338,16 @@ it('keeps the address, token, and SSH fields collapsed under Other ways to conne
   }
 })
 
+it('keeps the footer disabled while Other ways is collapsed, and enables it once the section opens', async () => {
+  const view = await render()
+  expect(view.field('connect').disabled).toBe(true)
+  const details = view.document.querySelector<HTMLDetailsElement>('#other-ways')!
+  details.open = true
+  await vi.waitFor(() => { expect(view.field('connect').disabled).toBe(false) })
+  details.open = false
+  await vi.waitFor(() => { expect(view.field('connect').disabled).toBe(true) })
+})
+
 it('asks for confirmation of a pairing link before sending its grant and hides the list and the other ways', async () => {
   const view = await render({ pairing: { address: 'https://ocean.example/mount/' } })
   expect(view.document.querySelector('#hint')!.textContent)

@@ -124,11 +124,20 @@ function renderMachines() {
 function focusFirstMachine() {
   machineList.querySelector('button')?.focus()
 }
+/**
+ * The footer submits the address form, which only Other ways shows: with the section collapsed
+ * in the list state it has nothing to submit, and each machine row carries its own action.
+ */
+function syncFooter() {
+  const inList = passwordTarget === undefined && pairing === undefined && !connected
+  connect.disabled = form.getAttribute('aria-busy') === 'true' || (inList && !otherWays.open)
+}
+otherWays.addEventListener('toggle', syncFooter)
 /** Enable or disable every control that a pending or finished connection takes out of use. */
 function setBusy(busy) {
   form.setAttribute('aria-busy', String(busy))
   const settled = busy || connected
-  connect.disabled = busy
+  syncFooter()
   address.disabled = settled
   token.disabled = settled
   password.disabled = settled
@@ -167,6 +176,7 @@ function showPassword(target) {
 /** Leave the password prompt for the list; nothing was sent. */
 function showList() {
   passwordTarget = undefined
+  syncFooter()
   password.value = ''
   hint.textContent = messages.hint
   machinesSection.hidden = false
@@ -212,7 +222,7 @@ address.addEventListener('input', () => {
   probeTimer = setTimeout(() => { void probeAddress() }, 400)
 })
 renderMachines()
-connect.disabled = false
+syncFooter()
 if (pairing !== undefined) showPairing(pairing)
 else focusFirstMachine()
 
