@@ -67,6 +67,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
     "@ocean/ocean-api-remotes": "workspace:*",
+    "semver": "^7.8.5",
     "@ocean/ocean-client-locale": "workspace:*",
     "@ocean/ocean-client-ui-plugin-manager": "workspace:*",
     "@ocean/ocean-client-ui-primitives": "workspace:*",

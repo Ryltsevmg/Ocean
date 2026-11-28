@@ -36,8 +36,11 @@ test('the manifest names the bundle row and the patch that mounts it', async () 
   assert.ok(patch.includes(`name: '${pkg.name}'`), 'the patch row must name this package')
 })
 
-test('the manifest requires the shipped Ocean runtime', () => {
-  assert.equal(pkg.engines.ocean, '1.0.0')
+test('the manifest requires the shipped Ocean runtime', async () => {
+  // A release bump raises this range to the repository's line; a stale pin disables the bundle at startup.
+  const root = JSON.parse(await readFile(new URL('../../../../package.json', import.meta.url), 'utf8'))
+  const { satisfies } = await import('semver')
+  assert.equal(satisfies(root.version, pkg.engines.ocean), true, `${root.version} must satisfy ${pkg.engines.ocean}`)
 })
 
 test('every source export target exists', async () => {
