@@ -348,6 +348,30 @@ it('keeps the footer disabled while Other ways is collapsed, and enables it once
   await vi.waitFor(() => { expect(view.field('connect').disabled).toBe(true) })
 })
 
+it('hides the machine list while Other ways is open and shows it again once the section collapses', async () => {
+  const view = await render()
+  const machines = view.document.querySelector<HTMLElement>('#machines')!
+  expect(machines.contains(view.document.querySelector('#discover-status'))).toBe(true)
+  expect(machines.hidden).toBe(false)
+  const details = view.document.querySelector<HTMLDetailsElement>('#other-ways')!
+  details.open = true
+  await vi.waitFor(() => { expect(machines.hidden).toBe(true) })
+  expect(view.field('connect').disabled).toBe(false)
+  details.open = false
+  await vi.waitFor(() => { expect(machines.hidden).toBe(false) })
+})
+
+it('returns from the password prompt to a hidden list while Other ways is open', async () => {
+  const view = await render({ machines: [], discover: { tailscale: [{ address: 'https://air.tail71ee4f.ts.net/', hostId: 'air-host', known: false }] } })
+  view.document.querySelector<HTMLDetailsElement>('#other-ways')!.open = true
+  click(view, 'Pair')
+  expect(view.document.querySelector<HTMLElement>('#machines')!.hidden).toBe(true)
+  view.document.querySelector<HTMLButtonElement>('#back')!.click()
+  expect(view.document.querySelector<HTMLElement>('#other-ways')!.hidden).toBe(false)
+  expect(view.document.querySelector<HTMLElement>('#machines')!.hidden).toBe(true)
+  expect(view.field('connect').disabled).toBe(false)
+})
+
 it('asks for confirmation of a pairing link before sending its grant and hides the list and the other ways', async () => {
   const view = await render({ pairing: { address: 'https://ocean.example/mount/' } })
   expect(view.document.querySelector('#hint')!.textContent)
