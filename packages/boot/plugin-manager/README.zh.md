@@ -111,7 +111,7 @@ CLI 提供 `ocean plugin --profile <profile> version-exemptions`、`allow-versio
 
 已安装的组合包从其目录读取，不访问网络。当前安装提供、尚未安装的官方组合包按其提供的版本从 npm 文件 CDN 读取；以开发链接形式提供的组合包没有文档。结果不被缓存，因此重新安装的组合包显示其自身的文档。
 
-`GET /api/plugin-manager/detail-file?bundle=<name>&document=<path>&path=<destination>`（加上 `&sources=<cdn>,...` 时先请求这些 CDN）向已通过认证的 owner 连接提供组合包文档旁的图片。目标路径相对于该文档；以 `/` 开头时相对于包根目录。只提供包内的 PNG、JPEG、GIF、WebP、AVIF 和 SVG 文件，响应带有 `Content-Security-Policy: sandbox`、`X-Content-Type-Options: nosniff` 和 `Cache-Control: no-store`；其他路径或未列出的组合包返回 404。
+`GET /api/plugin-manager/detail-file?bundle=<name>&document=<path>&path=<destination>`（加上 `&sources=<cdn>,...` 时先请求这些 CDN）向已通过认证的 owner 连接和设备提供组合包文档旁的图片。目标路径相对于该文档；以 `/` 开头时相对于包根目录。只提供包内的 PNG、JPEG、GIF、WebP、AVIF 和 SVG 文件，响应带有 `Content-Security-Policy: sandbox`、`X-Content-Type-Options: nosniff` 和 `Cache-Control: no-store`；其他路径或未列出的组合包返回 404。
 
 失败：`listBundles()` 未列出或无法解析其目录的组合包为 `plugin-manager/unknown-bundle`；无效语言为 `plugin-manager/invalid-language`；`plugin-manager/detail-unavailable` 携带 `reason`，取值为 `too-large`、`network`，或在 locale 文件或 `meta.detail` 格式错误、指定的文件不存在时为 `invalid`。图片路由对这些失败依次返回 404、413、502 和 400。
 

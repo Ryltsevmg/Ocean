@@ -17,10 +17,11 @@ afterEach(() => { vi.unstubAllGlobals() })
 class RecordingConnection extends Service {
   /** The instance the latest fixture mounted. */
   static current: RecordingConnection | undefined
-  readonly routes = new Map<string, (request: Request) => Promise<Response>>()
+  /** The registered routes by path, as the manager declared them. */
+  readonly routes = new Map<string, { readonly allowRemoteDevice?: true; readonly fetch: (request: Request) => Promise<Response> }>()
   readonly fetch = {
-    register: (route: { path: string; fetch: (request: Request) => Promise<Response> }) => {
-      this.routes.set(route.path, route.fetch)
+    register: (route: { path: string; allowRemoteDevice?: true; fetch: (request: Request) => Promise<Response> }) => {
+      this.routes.set(route.path, route)
       return () => Promise.resolve(void this.routes.delete(route.path))
     },
   }
@@ -73,7 +74,7 @@ async function fixture(config: Config = {}) {
   const registry = vi.spyOn(operations, 'readProfileRegistry').mockResolvedValue('https://registry.npmjs.org/')
   onTestFinished(() => { registry.mockRestore() })
   const connection = RecordingConnection.current as RecordingConnection
-  const image = (query: string) => (connection.routes.get('/api/plugin-manager/detail-file') as (request: Request) => Promise<Response>)(
+  const image = (query: string) => (connection.routes.get('/api/plugin-manager/detail-file') as { fetch: (request: Request) => Promise<Response> }).fetch(
     new Request(`http://ocean.local/api/plugin-manager/detail-file?${query}`))
   return { manager: ctx.pluginManager, image, connection }
 }
@@ -114,6 +115,11 @@ it('serves images beside a bundle document without caching and refuses other pat
   expect([served.status, served.headers.get('content-type')]).toEqual([200, 'image/svg+xml'])
   expect(await served.text()).toContain('<svg')
   expect([...connection.routes.keys()]).toEqual(['/api/plugin-manager/detail-file'])
+})
+
+it('lets a device Peer read description images, as it may already list the bundles', async () => {
+  const { connection } = await fixture()
+  expect(connection.routes.get('/api/plugin-manager/detail-file')?.allowRemoteDevice).toBe(true)
 })
 
 it('reads an offered official bundle from the npm CDNs at its offered version, npmmirror first when asked', async () => {
