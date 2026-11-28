@@ -124,15 +124,24 @@ function renderMachines() {
 function focusFirstMachine() {
   machineList.querySelector('button')?.focus()
 }
+/** Whether the list state is showing: no pairing link, password prompt, or finished connection. */
+const inList = () => passwordTarget === undefined && pairing === undefined && !connected
 /**
  * The footer submits the address form, which only Other ways shows: with the section collapsed
  * in the list state it has nothing to submit, and each machine row carries its own action.
  */
 function syncFooter() {
-  const inList = passwordTarget === undefined && pairing === undefined && !connected
-  connect.disabled = form.getAttribute('aria-busy') === 'true' || (inList && !otherWays.open)
+  connect.disabled = form.getAttribute('aria-busy') === 'true' || (inList() && !otherWays.open)
 }
-otherWays.addEventListener('toggle', syncFooter)
+/**
+ * The list and its discovery status leave the window while Other ways is open in the list state:
+ * the manual form and the footer need the height. The pairing, password and done states hide the
+ * list themselves.
+ */
+function syncList() {
+  machinesSection.hidden = !inList() || otherWays.open
+}
+otherWays.addEventListener('toggle', () => { syncList(); syncFooter() })
 /** Enable or disable every control that a pending or finished connection takes out of use. */
 function setBusy(busy) {
   form.setAttribute('aria-busy', String(busy))
@@ -177,9 +186,9 @@ function showPassword(target) {
 function showList() {
   passwordTarget = undefined
   syncFooter()
+  syncList()
   password.value = ''
   hint.textContent = messages.hint
-  machinesSection.hidden = false
   passwordField.hidden = true
   otherWays.hidden = false
   forgetUnreadable.hidden = !unreadable
