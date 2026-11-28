@@ -184,9 +184,10 @@
 
 Вживую установка с устройства не проверялась; проверка — спецификации карты прав шлюза и компонента диалога Models.
 
+Сделано 11e (2026-11-28), сессионные возможности устройства. Решение владельца: возможности, привязанные к одной сессии или агенту, входят в существующие права без новых scope — чтение в `sessions:read`, изменение в `sessions:write`. `sessions:read` получил `goals/get`, `schedule/catalog|list|view|history|deliveryLimits`, `job/list|follow`, `skills/list`, `agentPresets/list|read`, `messageFeedback/list` и события `goal/activation-changed`, `schedule/changed`, `agent-preset/selected`; `sessions:write` — `goals/create|edit|clear|complete|pause|resume`, `schedule/create|edit|run|deleteInactive`, `job/kill`, `agentPresets/select`, `subagents/prompt|interruptByUser`, `agentTeams/setEnabled`, `messageFeedback/put|delete`, `sessionFeedback/record`. Имена сверены скриптовой выборкой `@Remote`-декораторов девяти владельцев: 30 методов, 30 в карте, расхождений нет. `schedule/deleteInactive` — единственная массовая операция (отдельного удаления одного расписания нет), включена как путь удаления. Вживую не проверялась.
+
 Осталось за решением владельца. Устройство со всеми правами по-прежнему не может:
 
-- пользоваться сессионными возможностями вне карты — целями (`goals/*`), расписаниями (`schedule/*`), фоновыми задачами (`job/*`), скиллами (`skills/list`), пресетами (`agentPresets/*`), сабагентами (`subagents/*`), командами (`agentTeams/setEnabled`), обратной связью (`messageFeedback/*`, `sessionFeedback/record`); по JSDoc все они привязаны к одной сессии или агенту и могут уйти в `sessions:read` и `sessions:write` одним изменением карты;
 - управлять аккаунтом (`account/*`) и устройствами (`devices/*`) — намеренно только владельцу;
 - открывать файлы и каталоги в приложении на рабочем столе Host (`session/openWorkspacePath`, `session/canOpenWorkspacePath`, `session/workspacePathApplications`, `settings/openSettingsDocument`) — действие на машине Host бессмысленно для удалённого клиента.
 

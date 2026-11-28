@@ -337,6 +337,13 @@ it('lists the union of every scope in full and without a repeat', () => {
     'pluginManager/updateBundle', 'pluginManager/removeBundle', 'pluginManager/waitForInstall', 'pluginManager/cancelInstall',
     'event:plugin-manager/changed', 'event:plugin-manager/install-log', 'event:plugin-manager/install-state',
     'event:plugin-manager/update-state',
+    'goals/get', 'schedule/catalog', 'schedule/list', 'schedule/view', 'schedule/history', 'schedule/deliveryLimits',
+    'job/list', 'job/follow', 'skills/list', 'agentPresets/list', 'agentPresets/read', 'messageFeedback/list',
+    'event:goal/activation-changed', 'event:schedule/changed', 'event:agent-preset/selected',
+    'goals/create', 'goals/edit', 'goals/clear', 'goals/complete', 'goals/pause', 'goals/resume',
+    'schedule/create', 'schedule/edit', 'schedule/run', 'schedule/deleteInactive', 'job/kill',
+    'agentPresets/select', 'subagents/prompt', 'subagents/interruptByUser', 'agentTeams/setEnabled',
+    'messageFeedback/put', 'messageFeedback/delete', 'sessionFeedback/record',
   ].sort())
   expect(actionsOfScopes(['files:write']).has('fileUploads/upload')).toBe(true)
 })
@@ -392,6 +399,17 @@ const MAPPED_ACTIONS: ReadonlyArray<readonly [action: RemoteAccessAction, scope:
   ['pluginManager/cancelInstall', 'settings:manage'],
   ['event:plugin-manager/changed', 'settings:manage'], ['event:plugin-manager/install-log', 'settings:manage'],
   ['event:plugin-manager/install-state', 'settings:manage'], ['event:plugin-manager/update-state', 'settings:manage'],
+  ...([
+    'goals/get', 'schedule/catalog', 'schedule/list', 'schedule/view', 'schedule/history', 'schedule/deliveryLimits',
+    'job/list', 'job/follow', 'skills/list', 'agentPresets/list', 'agentPresets/read', 'messageFeedback/list',
+    'event:goal/activation-changed', 'event:schedule/changed', 'event:agent-preset/selected',
+  ] satisfies readonly RemoteAccessAction[]).map(action => [action, 'sessions:read'] as const),
+  ...([
+    'goals/create', 'goals/edit', 'goals/clear', 'goals/complete', 'goals/pause', 'goals/resume',
+    'schedule/create', 'schedule/edit', 'schedule/run', 'schedule/deleteInactive', 'job/kill',
+    'agentPresets/select', 'subagents/prompt', 'subagents/interruptByUser', 'agentTeams/setEnabled',
+    'messageFeedback/put', 'messageFeedback/delete', 'sessionFeedback/record',
+  ] satisfies readonly RemoteAccessAction[]).map(action => [action, 'sessions:write'] as const),
 ]
 
 describe('device scope refusal reason', () => {
