@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-fs-local",
   "description": "Local-filesystem implementation of the Ocean filesystem seam (ctx.fs)",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },

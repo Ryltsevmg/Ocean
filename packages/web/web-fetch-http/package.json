@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-web-fetch-http",
   "description": "Anonymous HTTP(S) fetch provider for the Ocean web capability seam (ctx.web)",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },

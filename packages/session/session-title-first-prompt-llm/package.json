@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-session-title-first-prompt-llm",
   "description": "First-message LLM provider plugin for Ocean session titles",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-client-ui-settings-agent-loop",
   "description": "Settings page of the agent loop on the ocean web client's Plugins page: the parallel tool-call cap of the agent-loop namespace",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },
