@@ -17,8 +17,11 @@ const LAPTOP = '11111111-1111-4111-8111-111111111111' as DeviceId
  * Mount the browser half over a scripted Remote and an access answer the test
  * controls.
  * @param allowed - whether the calling Peer may read the inventory.
+ * @param list - the inventory read; defaults to one active device.
  */
-async function bench(allowed = true): Promise<{
+async function bench(allowed = true, list: Mock<DevicesRemote['list']> = vi.fn<DevicesRemote['list']>(() => Promise.resolve({
+  ok: true, value: [{ id: LAPTOP, label: 'Laptop', revoked: false }],
+}))): Promise<{
   ctx: Context
   list: Mock<DevicesRemote['list']>
   revoke: Mock<DevicesRemote['revoke']>
@@ -29,9 +32,6 @@ async function bench(allowed = true): Promise<{
   const locale = new LocaleRuntime(ctx)
   locale.setLocale('zh')
   ctx.provide('locale', locale)
-  const list = vi.fn<DevicesRemote['list']>(() => Promise.resolve({
-    ok: true, value: [{ id: LAPTOP, label: 'Laptop', revoked: false }],
-  }))
   const revoke = vi.fn<DevicesRemote['revoke']>(() => Promise.resolve({ ok: true, value: { id: LAPTOP, revoked: true } }))
   new TestRemote(ctx, { devices: { list, revoke } })
   const whenAccess = vi.fn((_action: string, callback: () => () => void) => allowed ? callback() : () => {})
@@ -98,7 +98,8 @@ describe('ui-settings-devices apply', () => {
     face.revoke(LAPTOP)
 
     await vi.waitFor(() => { expect(revoke).toHaveBeenCalledExactlyOnceWith({ id: LAPTOP }) })
-    expect(list).toHaveBeenCalledOnce()
+    // One read before the section registered, then the one the test asked for.
+    expect(list).toHaveBeenCalledTimes(2)
     const state: DevicesState = face.hooks.devices.getSnapshot()
     expect(state.devices).toEqual([{ id: LAPTOP, label: 'Laptop', revoked: true }])
   })
@@ -126,6 +127,59 @@ describe('ui-settings-devices apply', () => {
     declareShell(slots)
 
     await ctx.plugin({ inject: [...inject], apply }).await()
+
+    expect(slots.entries('settings.section')).toHaveLength(0)
+  })
+
+  it('registers nothing on a Host without a device registry', async () => {
+    const list = vi.fn<DevicesRemote['list']>(() => Promise.resolve({
+      ok: false, error: new RemoteError('devices/unavailable', 'no device registry', {}),
+    }))
+    const { ctx } = await bench(true, list)
+    const slots = ctx.get('slots') as SlotRegistry
+    declareShell(slots)
+
+    await ctx.plugin({ inject: [...inject], apply }).await()
+    await vi.waitFor(() => { expect(list).toHaveBeenCalledOnce() })
+    await new Promise<void>((resolve) => { setTimeout(resolve, 20) })
+
+    expect(slots.entries('settings.section')).toHaveLength(0)
+  })
+
+  const brokenRead: DevicesRemote['list'] = () => Promise.reject(new Error('socket gone'))
+  const refusedRead: DevicesRemote['list'] = () => Promise.resolve({
+    ok: false, error: new RemoteError('devices/not-found', 'gone', { id: LAPTOP }),
+  })
+  it.each([
+    ['a carrier failure', brokenRead],
+    ['another refusal', refusedRead],
+  ] as const)('keeps the section registered after %s on the first read, so it can offer Retry', async (_name, answer) => {
+    const list = vi.fn<DevicesRemote['list']>(answer)
+    const { ctx } = await bench(true, list)
+    const slots = ctx.get('slots') as SlotRegistry
+    declareShell(slots)
+
+    await ctx.plugin({ inject: [...inject], apply }).await()
+    await vi.waitFor(() => { expect(slots.entries('settings.section')).toHaveLength(1) })
+
+    const state: DevicesState = faceOf(slots.entries('settings.section')[0]!).hooks.devices.getSnapshot()
+    expect(state.status).toBe('failed')
+    expect(state.unmanaged).toBeUndefined()
+  })
+
+  it('registers nothing when the first read settles after the fiber was disposed', async () => {
+    let settle: ((value: Awaited<ReturnType<DevicesRemote['list']>>) => void) | undefined
+    const list = vi.fn<DevicesRemote['list']>(() => new Promise((resolve) => { settle = resolve }))
+    const { ctx } = await bench(true, list)
+    const slots = ctx.get('slots') as SlotRegistry
+    declareShell(slots)
+    const fiber = ctx.plugin({ inject: [...inject], apply })
+    await fiber.await()
+    await vi.waitFor(() => { expect(list).toHaveBeenCalledOnce() })
+
+    await fiber.dispose()
+    settle?.({ ok: true, value: [] })
+    await new Promise<void>((resolve) => { setTimeout(resolve, 20) })
 
     expect(slots.entries('settings.section')).toHaveLength(0)
   })

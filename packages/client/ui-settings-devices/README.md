@@ -22,7 +22,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-The section registers into `settings.section` under the id `devices`, between General and Models, and shows for the owner of the Host. It renders five states: loading while the first read runs, the inventory, the empty inventory, a failed read with a Retry button, and — inside the inventory — a per-row confirmation before revocation, the in-flight "Revoking…" state, and a per-row failure message with the row left as it was.
+The section registers into `settings.section` under the id `devices`, between General and Models, and shows for the owner of the Host. Before registering it reads the inventory once and registers nothing when the Host answers `devices/unavailable`, because it runs without a device registry; any other outcome registers the section, so a failed read can still offer Retry. It renders five states: loading while the first read runs, the inventory, the empty inventory, a failed read with a Retry button, and — inside the inventory — a per-row confirmation before revocation, the in-flight "Revoking…" state, and a per-row failure message with the row left as it was.
 
 Each row shows the device label, the leading eight characters of its registry identifier (the full value is the element's tooltip), whether it is active or revoked, and the rights it holds; a device created before rights existed holds every right and says so instead of showing an empty list. Only an active device offers Revoke. A successful revocation marks the row revoked immediately, because the Host's receipt already means the durable write committed and the device's live transports were closed; a refusal or a carrier failure keeps the row and offers another attempt.
 
@@ -45,7 +45,7 @@ No direct effect; no copy here reaches a model request.
 
 - Pairing a new device and rotating its token stay on the local administrator socket (`ocean remote-device`); this section reads and revokes only.
 - The inventory is read, not streamed: a revocation performed in another window becomes visible on the next mount or Retry.
-- A Host in owner-login mode has no device registry, so the section reports a load failure there instead of hiding itself.
+- A Host that loses its device registry after the section registered shows the explanation in place of the inventory; the section does not unregister.
 
 <a id="dev-note"></a>
 ### Dev Note
