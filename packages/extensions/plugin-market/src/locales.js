@@ -40,6 +40,12 @@ export const en = {
   cancelled: 'The plugin change was cancelled.',
   transportError: 'Ocean could not confirm the change. Check the plugin state before trying again.',
   changeDiagnostic: '{message} ({diagnostic})',
+  codeCopy: 'Copy',
+  codeCopied: 'Copied',
+  codeBlock: 'Code',
+  codeWrap: 'Wrap lines',
+  codeUnwrap: 'No wrap',
+  footnotes: 'Footnotes',
 }
 
 /** @typedef {keyof typeof en} MarketKey */
@@ -86,6 +92,12 @@ export const ru = {
   cancelled: 'Изменение плагина отменено.',
   transportError: 'Ocean не смог подтвердить изменение. Проверьте состояние плагина перед повторной попыткой.',
   changeDiagnostic: '{message} ({diagnostic})',
+  codeCopy: 'Копировать',
+  codeCopied: 'Скопировано',
+  codeBlock: 'Код',
+  codeWrap: 'Переносить строки',
+  codeUnwrap: 'Без переноса',
+  footnotes: 'Сноски',
 }
 
 /** @type {Record<MarketKey, string>} */
@@ -130,4 +142,10 @@ export const zh = {
   cancelled: '插件更改已取消',
   transportError: 'Ocean 未能确认更改。请先检查插件状态，再重试',
   changeDiagnostic: '{message}（{diagnostic}）',
+  codeCopy: '复制',
+  codeCopied: '已复制',
+  codeBlock: '代码',
+  codeWrap: '自动换行',
+  codeUnwrap: '不换行',
+  footnotes: '脚注',
 }

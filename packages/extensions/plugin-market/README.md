@@ -25,6 +25,8 @@ Open Plugins → Catalogue in Ocean Web or Desktop to find bundles approved and 
 
 The catalogue reads the public channel when opened and on Refresh. A newly published offer appears after a successful read without rebuilding Ocean. Removing an offer removes its card from the catalogue but never uninstalls an existing copy.
 
+Each card shows the published package's artwork and its short description. **Details** opens the same identity, state, short description, and the long Markdown description the index carries, with code blocks and tables. The document's own leading heading is dropped, because the dialog title already names the plugin; a package that publishes no long description, or one that holds nothing but that heading, shows the card text alone, and a release without artwork keeps the shared default glyph.
+
 **Install** is available only for a current, compatible offer and an absent package. Script approvals and restart notices use the standard installation dialog. Use Installed to manage packages that are not in the catalogue, or Add plugin to provide your own source.
 
 <a id="understand-the-implementation"></a>
@@ -60,8 +62,10 @@ None; the package does not assemble or send provider requests.
 <a id="known-limitations-and-deferred-work"></a>
 
 - The catalogue does not scan Git repositories or registries. Only offers with a reviewed archive in the public release channel appear.
+- One theme offer covers every palette: `@local/ocean-theme-picker` applies any bundled theme from its own settings. The per-palette bundles in the plugin workspace stay unpublished on purpose, because a card for each of them would repeat one plugin's purpose twenty-eight times.
 - Publication and removal do not update or modify packages already installed in profiles.
 - Published-archive upgrades are not automatic.
+- The long description is the text the index carries, not a live read of the installed package: an offer published without one shows no details section even after installation. The index omits a document's relative images, because it serves no package files, so a document that holds nothing but images publishes no long description at all.
 - Controls are available in English, Russian and Simplified Chinese. Offer titles and descriptions are the publisher’s localized text, shown in the active UI language with an English fallback; a language switch re-resolves the visible cards without re-reading the channel.
 
 <a id="dev-note"></a>

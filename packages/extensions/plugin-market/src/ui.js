@@ -43,12 +43,18 @@ const styles = {
   list: { display: 'flex', flexDirection: 'column', gap: 10 },
   card: { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', border, borderRadius: 10, minWidth: 0 },
   cardHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px 10px', flexWrap: 'wrap' },
+  cardIdentity: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
+  artwork: { display: 'inline-flex', flex: 'none', alignItems: 'center', justifyContent: 'center', width: 36, height: 36,
+    border: '0.5px solid var(--dsw-alias-border-l3)', borderRadius: 'var(--dsw-radius-lg)', color: 'var(--dsw-alias-label-secondary)' },
+  artworkImage: { display: 'block', width: 30, height: 30, objectFit: 'contain' },
   cardTitle: { fontSize: 13, fontWeight: 500, margin: 0, minWidth: 0, overflowWrap: 'anywhere' },
   summary: { fontSize: 12, lineHeight: 1.5, margin: 0, overflowWrap: 'anywhere' },
   meta: { display: 'flex', alignItems: 'center', gap: '4px 12px', fontSize: 11, opacity: 0.85, flexWrap: 'wrap', overflowWrap: 'anywhere', minWidth: 0 },
   name: { fontFamily: 'ui-monospace, monospace', minWidth: 0 },
   actions: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   dialogBody: { display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 },
+  dialogHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
+  detail: { fontSize: 13, lineHeight: 1.55, minWidth: 0, overflowWrap: 'anywhere' },
   button,
   link: { ...button, borderColor: 'transparent', paddingInline: 4 },
 }
@@ -56,12 +62,42 @@ const styles = {
 /**
  * Build the catalogue tab with the shared modal, which owns initial focus and normal return focus.
  * @param {typeof import('react')} React the shared React instance.
- * @param {typeof import('@ocean/ocean-client-ui-primitives').Modal} Modal the shared client modal.
+ * @param {typeof import('@ocean/ocean-client-ui-primitives')} primitives the shared client primitives: the modal, the
+ * Markdown renderer of a long description, and the default plugin artwork.
  * @param {string} [dialogClass] the scrollable details styling; absent uses the shared modal alone.
  * @returns The catalogue tab component, ready to register in the Plugins page.
  */
-export function createMarketTab(React, Modal, dialogClass) {
+export function createMarketTab(React, primitives, dialogClass) {
   const h = React.createElement
+  const { Modal, MarkdownText, PluginArtworkDefault } = primitives
+
+  /** @param {{icon: string | undefined}} props */
+  function Artwork({ icon }) {
+    const [failed, setFailed] = React.useState(/** @type {string | undefined} */ (undefined))
+    return h('span', { style: styles.artwork, 'aria-hidden': 'true' },
+      icon === undefined || icon === failed
+        ? h(PluginArtworkDefault, { size: 30 })
+        : h('img', { src: icon, width: 30, height: 30, alt: '', style: styles.artworkImage, onError: () => { setFailed(icon) } }),
+    )
+  }
+
+  /**
+   * Markdown chrome for a published long description; the reference must stay stable while the strings do.
+   * @param {MarketTranslate} t the active dictionary.
+   * @returns the renderer labels.
+   */
+  function useMarkdownLabels(t) {
+    const copy = t('codeCopy')
+    const copied = t('codeCopied')
+    const code = t('codeBlock')
+    const wrap = t('codeWrap')
+    const unwrap = t('codeUnwrap')
+    const footnotes = t('footnotes')
+    return React.useMemo(() => ({
+      code: { copyLabel: copy, copiedLabel: copied, toolbarLabels: { codeLabel: code, wrapLabel: wrap, unwrapLabel: unwrap } },
+      footnotes,
+    }), [copy, copied, code, wrap, unwrap, footnotes])
+  }
 
   /** @param {Controls & {card: Card, onDetails?: () => void}} props */
   function CardActions({ card, t, state, actions, installPublished, openPackage, onDetails }) {
@@ -128,6 +164,20 @@ export function createMarketTab(React, Modal, dialogClass) {
     )
   }
 
+  /** @param {{card: Card, t: MarketTranslate, state: MarketSnapshot}} props */
+  function DetailBody({ card, t, state }) {
+    const labels = useMarkdownLabels(t)
+    return h('div', { style: styles.dialogBody },
+      h('div', { style: styles.dialogHead },
+        h(Artwork, { icon: card.icon }),
+        h('span', { style: badgeStyle(card.badge) }, t(card.badge)),
+      ),
+      h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
+      h('p', { style: styles.summary }, card.description),
+      card.detail === undefined ? null : h('div', { style: styles.detail }, h(MarkdownText, { text: card.detail, labels, omitHtml: true })),
+      h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t }))
+  }
+
   /** @param {Controls & {card: Card | undefined, onClose: () => void}} props */
   function DetailsDialog({ card, t, state, onClose, installPublished, openPackage, actions }) {
     if (card === undefined) return null
@@ -138,18 +188,17 @@ export function createMarketTab(React, Modal, dialogClass) {
         installPublished: target => { onClose(); installPublished(target) },
         openPackage: name => { onClose(); openPackage(name) },
       }),
-    },
-    h('div', { style: styles.dialogBody },
-      h('span', { style: badgeStyle(card.badge) }, t(card.badge)),
-      h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
-      h('p', { style: styles.summary }, card.description),
-      h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t })))
+    }, h(DetailBody, { card, t, state }))
   }
 
   /** @param {Controls & {card: Card, onDetails: () => void}} props */
   function MarketCard({ card, t, state, ...rest }) {
     return h('article', { style: styles.card },
-      h('div', { style: styles.cardHead }, h('h3', { style: styles.cardTitle }, card.title), h('span', { style: badgeStyle(card.badge) }, t(card.badge))),
+      h('div', { style: styles.cardHead },
+        h('div', { style: styles.cardIdentity },
+          h(Artwork, { icon: card.icon }),
+          h('h3', { style: styles.cardTitle }, card.title)),
+        h('span', { style: badgeStyle(card.badge) }, t(card.badge))),
       h('p', { style: styles.summary }, card.description),
       h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
       h(CardNotes, { card, t }),

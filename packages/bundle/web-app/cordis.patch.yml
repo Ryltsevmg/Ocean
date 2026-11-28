@@ -17,7 +17,7 @@
 
 - id: plugin-manager
   config:
-    publishedCatalogUrl: https://raw.githubusercontent.com/Ryltsevmg/Ocean/plugin-catalog/v1/current.json
+    publishedCatalogUrl: https://raw.githubusercontent.com/Ryltsevmg/Ocean/plugin-catalog/v2/current.json
 
 - id: typert-gateway
   config:

@@ -88,3 +88,13 @@ test('search uses the resolved title, description and name in the active languag
   for (const query of ['ОПИСАНИЮ', 'Одобренный Плагин', '@ocean/approved']) assert.deepEqual(filterCards(ru, query), ru)
   assert.deepEqual(filterCards(ru, 'by description'), [])
 })
+
+test('a long description drops the document’s leading heading and keeps its body', () => {
+  const described = { ...plugin, detail: { en: '# Approved plugin\n\nBody text.', ru: '# Одобренный плагин\n\nТекст.' } }
+  assert.equal(cardFor(described, undefined, ready).detail, 'Body text.')
+  assert.equal(cardFor(described, undefined, { ...ready, resolveText: resolver('ru') }).detail, 'Текст.')
+  // A document that is only its heading, or none at all, leaves no section to show.
+  assert.equal(cardFor({ ...plugin, detail: '# Approved plugin' }, undefined, ready).detail, undefined)
+  assert.equal(cardFor({ ...plugin, detail: '  \n# Approved plugin\n  ' }, undefined, ready).detail, undefined)
+  assert.equal(cardFor(plugin, undefined, ready).detail, undefined)
+})

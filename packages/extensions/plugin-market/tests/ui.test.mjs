@@ -17,6 +17,14 @@ function Modal({ title, onClose, closeLabel, children, footer }) {
   return h('div', { role: 'dialog', 'aria-label': title, tabIndex: -1 },
     h('button', { onClick: onClose }, closeLabel), children, footer)
 }
+// The Markdown renderer and default artwork are shared primitives; the catalogue only decides where they appear.
+function MarkdownText({ text }) {
+  return h('div', { 'data-markdown': '' }, text)
+}
+function PluginArtworkDefault() {
+  return h('svg', { 'data-default-artwork': '' })
+}
+const primitives = { Modal, MarkdownText, PluginArtworkDefault }
 
 async function fixture(t, { response = { status: 'ready', plugins: [plugin] }, bundles = [], dictionary = en } = {}) {
   const dom = new JSDOM('<!doctype html><body></body>')
@@ -53,7 +61,7 @@ async function fixture(t, { response = { status: 'ready', plugins: [plugin] }, b
     },
   }
   market = createMarketController(api, text => typeof text === 'string' ? text : text.en)
-  const { MarketTab } = createMarketTab(React, Modal)
+  const { MarketTab } = createMarketTab(React, primitives)
   let latestLoad
   const actions = {
     ...market,
@@ -137,3 +145,29 @@ for (const dictionary of [en, ru, zh]) {
     assert.equal(within(panel).queryByText(dictionary.empty), null)
   })
 }
+
+test('a published icon and long description reach the card and its details', async t => {
+  const detail = { en: '# Approved\n\nA long description.', ru: '# Одобрено\n\nДлинное описание.' }
+  const published = { ...plugin, icon: 'data:image/svg+xml;base64,PHN2Zy8+', detail }
+  const { panel } = await fixture(t, { response: { status: 'ready', plugins: [published] } })
+  const article = getByRole(panel, 'article')
+  assert.equal(article.querySelector('img').getAttribute('src'), published.icon)
+  assert.equal(within(article).getByText(plugin.description).textContent, plugin.description)
+  assert.equal(article.querySelector('[data-markdown]'), null)
+
+  fireEvent.click(within(article).getByRole('button', { name: en.details }))
+  const dialog = getByRole(panel, 'dialog')
+  // The document's own level-one heading is dropped: the dialog title already names the plugin.
+  assert.equal(dialog.querySelector('[data-markdown]').textContent, 'A long description.')
+  // The short description stays as the lead above the long one.
+  assert.ok(within(dialog).getByText(plugin.description))
+})
+
+test('a release without artwork keeps the shared default glyph and no long section', async t => {
+  const { panel } = await fixture(t)
+  const article = getByRole(panel, 'article')
+  assert.equal(article.querySelector('img'), null)
+  assert.ok(article.querySelector('[data-default-artwork]'))
+  fireEvent.click(within(article).getByRole('button', { name: en.details }))
+  assert.equal(getByRole(panel, 'dialog').querySelector('[data-markdown]'), null)
+})

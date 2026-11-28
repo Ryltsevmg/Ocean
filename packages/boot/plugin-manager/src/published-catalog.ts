@@ -14,9 +14,13 @@ const GITHUB = 'https://github.com'
 const RAW = 'https://raw.githubusercontent.com'
 const REPOSITORY = 'Ryltsevmg/Ocean'
 const RELEASE_ASSETS = 'https://release-assets.githubusercontent.com'
-const MAX_CATALOG_BYTES = 512 * 1024
+/** The version-2 index carries each offer's artwork and long description beside its metadata. */
+const MAX_CATALOG_BYTES = 2 * 1024 * 1024
 const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
+/** Largest inline icon data URL accepted from an offer. */
+const MAX_ICON_BYTES = 400 * 1024
 const DIGEST = /^[a-f0-9]{64}$/u
+const DATA_ICON = /^data:image\/(?:png|jpeg|svg\+xml|webp);base64,[a-z0-9+/]+=*$/iu
 
 function exactVersion(value: string): boolean {
   const version = semver.parse(value)
@@ -32,13 +36,18 @@ const Entry = z.strictObject({
   version: z.string().max(128).refine(exactVersion),
   title: localizedText(120),
   description: localizedText(2048),
+  /** Inline artwork, so a catalogue card needs no second request; bounded by `MAX_ICON_BYTES`. */
+  icon: z.string().max(MAX_ICON_BYTES).regex(DATA_ICON).optional(),
+  /** Long Markdown description shown on the plugin's details page, in the languages the publisher supplied. */
+  detail: localizedText(32 * 1024).optional(),
   ocean: z.string().min(1).max(128).refine(value => semver.validRange(value) !== null),
   platforms: z.array(z.enum(['darwin', 'linux', 'win32'])).min(1).max(3)
     .refine(values => new Set(values).size === values.length).optional(),
   archive: z.string().max(512),
   sha256: z.string().regex(DIGEST),
 })
-const Index = z.strictObject({ schemaVersion: z.literal(1), plugins: z.array(Entry).max(128) })
+// Version 1 is the metadata-only index that clients without artwork and long descriptions read.
+const Index = z.strictObject({ schemaVersion: z.union([z.literal(1), z.literal(2)]), plugins: z.array(Entry).max(128) })
 type Offer = z.infer<typeof Entry>
 
 /** Runtime configuration for the trusted catalog reader, not supplied by a client request. */
@@ -235,6 +244,8 @@ export class PublishedCatalogSource {
   private display(offers: readonly Offer[]): PublishedCatalog['plugins'] {
     return offers.map(offer => ({
       name: offer.name, version: offer.version, sha256: offer.sha256, title: offer.title, description: offer.description,
+      ...(offer.icon === undefined ? {} : { icon: offer.icon }),
+      ...(offer.detail === undefined ? {} : { detail: offer.detail }),
       compatible: this.compatible(offer),
     }))
   }

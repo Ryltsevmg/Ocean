@@ -249,4 +249,4 @@ preset 提供一条目录项。没有其他 skill 的会话还会收到目录的
 
 Web 组合包含账号 Remote 控制器和账号设置页面。
 
-所有 Web 与 Desktop 组合均在共用插件页面中提供[内置插件目录](../../extensions/plugin-market/README.zh.md)。主机从 `Ryltsevmg/Ocean` 的 `plugin-catalog` 分支读取公开的 `v1/current.json`，获取已审核条目。[发布流程](../../../scripts/release/plugin-catalog.md)生成索引，无需向用户开放私有源码仓库。
+所有 Web 与 Desktop 组合均在共用插件页面中提供[内置插件目录](../../extensions/plugin-market/README.zh.md)。主机从 `Ryltsevmg/Ocean` 的 `plugin-catalog` 分支读取公开的 `v2/current.json`，获取已审核条目；该索引携带每个条目的图标和长说明。早于 schema 版本 2 的已发布客户端读取其旁的纯元数据 `v1/current.json`。[发布流程](../../../scripts/release/plugin-catalog.md)生成索引，无需向用户开放私有源码仓库。

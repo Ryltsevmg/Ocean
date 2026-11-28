@@ -3,7 +3,7 @@ window.__ModuleLoader__.load({
   id: '@ocean/ocean-plugin-market',
   factory(require) {
     const React = require('react')
-    const { Modal } = require('@ocean/ocean-client-ui-primitives')
+    const primitives = require('@ocean/ocean-client-ui-primitives')
 
     // ---- src/catalog.js ----
 /** Client projection of the Host's verified publication metadata. */
@@ -53,6 +53,17 @@ const badges = /** @type {const} */ ({
 })
 
 /**
+ * Drop a document's leading level-one heading. A package writes its name there, and the details view already shows that
+ * name as its own title; a document that is nothing but that heading has no body to show.
+ * @param {string} markdown the resolved long description.
+ * @returns the body to render, or undefined when nothing is left.
+ */
+function detailBody(markdown) {
+  const body = markdown.replace(/^\s*#[ \t][^\n]*\n*/u, '').trimEnd()
+  return body.trim() === '' ? undefined : body
+}
+
+/**
  * Project a release and its matching profile record. Compatibility describes the published release, not the installed copy.
  * @param {PublishedPlugin} plugin a release the Host lists in the catalogue.
  * @param {BundleInfo | undefined} bundle the matching local bundle, if found.
@@ -83,6 +94,8 @@ function cardFor(plugin, bundle, { fresh, inventoryReady, resolveText }) {
 
   return {
     name, title, description, compatible, publishedVersion, state, actions, error,
+    icon: plugin.icon,
+    detail: plugin.detail === undefined ? undefined : detailBody(resolveText(plugin.detail)),
     search: [title, description, name].join(' ').toLowerCase(),
     version: readable ? bundle.version : undefined,
     installed: readable,
@@ -295,6 +308,12 @@ const en = {
   cancelled: 'The plugin change was cancelled.',
   transportError: 'Ocean could not confirm the change. Check the plugin state before trying again.',
   changeDiagnostic: '{message} ({diagnostic})',
+  codeCopy: 'Copy',
+  codeCopied: 'Copied',
+  codeBlock: 'Code',
+  codeWrap: 'Wrap lines',
+  codeUnwrap: 'No wrap',
+  footnotes: 'Footnotes',
 }
 
 /** @typedef {keyof typeof en} MarketKey */
@@ -341,6 +360,12 @@ const ru = {
   cancelled: 'Изменение плагина отменено.',
   transportError: 'Ocean не смог подтвердить изменение. Проверьте состояние плагина перед повторной попыткой.',
   changeDiagnostic: '{message} ({diagnostic})',
+  codeCopy: 'Копировать',
+  codeCopied: 'Скопировано',
+  codeBlock: 'Код',
+  codeWrap: 'Переносить строки',
+  codeUnwrap: 'Без переноса',
+  footnotes: 'Сноски',
 }
 
 /** @type {Record<MarketKey, string>} */
@@ -385,6 +410,12 @@ const zh = {
   cancelled: '插件更改已取消',
   transportError: 'Ocean 未能确认更改。请先检查插件状态，再重试',
   changeDiagnostic: '{message}（{diagnostic}）',
+  codeCopy: '复制',
+  codeCopied: '已复制',
+  codeBlock: '代码',
+  codeWrap: '自动换行',
+  codeUnwrap: '不换行',
+  footnotes: '脚注',
 }
 
     // ---- src/ui.js ----
@@ -432,12 +463,18 @@ const styles = {
   list: { display: 'flex', flexDirection: 'column', gap: 10 },
   card: { display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', border, borderRadius: 10, minWidth: 0 },
   cardHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px 10px', flexWrap: 'wrap' },
+  cardIdentity: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
+  artwork: { display: 'inline-flex', flex: 'none', alignItems: 'center', justifyContent: 'center', width: 36, height: 36,
+    border: '0.5px solid var(--dsw-alias-border-l3)', borderRadius: 'var(--dsw-radius-lg)', color: 'var(--dsw-alias-label-secondary)' },
+  artworkImage: { display: 'block', width: 30, height: 30, objectFit: 'contain' },
   cardTitle: { fontSize: 13, fontWeight: 500, margin: 0, minWidth: 0, overflowWrap: 'anywhere' },
   summary: { fontSize: 12, lineHeight: 1.5, margin: 0, overflowWrap: 'anywhere' },
   meta: { display: 'flex', alignItems: 'center', gap: '4px 12px', fontSize: 11, opacity: 0.85, flexWrap: 'wrap', overflowWrap: 'anywhere', minWidth: 0 },
   name: { fontFamily: 'ui-monospace, monospace', minWidth: 0 },
   actions: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   dialogBody: { display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 },
+  dialogHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
+  detail: { fontSize: 13, lineHeight: 1.55, minWidth: 0, overflowWrap: 'anywhere' },
   button,
   link: { ...button, borderColor: 'transparent', paddingInline: 4 },
 }
@@ -445,12 +482,42 @@ const styles = {
 /**
  * Build the catalogue tab with the shared modal, which owns initial focus and normal return focus.
  * @param {typeof import('react')} React the shared React instance.
- * @param {typeof import('@ocean/ocean-client-ui-primitives').Modal} Modal the shared client modal.
+ * @param {typeof import('@ocean/ocean-client-ui-primitives')} primitives the shared client primitives: the modal, the
+ * Markdown renderer of a long description, and the default plugin artwork.
  * @param {string} [dialogClass] the scrollable details styling; absent uses the shared modal alone.
  * @returns The catalogue tab component, ready to register in the Plugins page.
  */
-function createMarketTab(React, Modal, dialogClass) {
+function createMarketTab(React, primitives, dialogClass) {
   const h = React.createElement
+  const { Modal, MarkdownText, PluginArtworkDefault } = primitives
+
+  /** @param {{icon: string | undefined}} props */
+  function Artwork({ icon }) {
+    const [failed, setFailed] = React.useState(/** @type {string | undefined} */ (undefined))
+    return h('span', { style: styles.artwork, 'aria-hidden': 'true' },
+      icon === undefined || icon === failed
+        ? h(PluginArtworkDefault, { size: 30 })
+        : h('img', { src: icon, width: 30, height: 30, alt: '', style: styles.artworkImage, onError: () => { setFailed(icon) } }),
+    )
+  }
+
+  /**
+   * Markdown chrome for a published long description; the reference must stay stable while the strings do.
+   * @param {MarketTranslate} t the active dictionary.
+   * @returns the renderer labels.
+   */
+  function useMarkdownLabels(t) {
+    const copy = t('codeCopy')
+    const copied = t('codeCopied')
+    const code = t('codeBlock')
+    const wrap = t('codeWrap')
+    const unwrap = t('codeUnwrap')
+    const footnotes = t('footnotes')
+    return React.useMemo(() => ({
+      code: { copyLabel: copy, copiedLabel: copied, toolbarLabels: { codeLabel: code, wrapLabel: wrap, unwrapLabel: unwrap } },
+      footnotes,
+    }), [copy, copied, code, wrap, unwrap, footnotes])
+  }
 
   /** @param {Controls & {card: Card, onDetails?: () => void}} props */
   function CardActions({ card, t, state, actions, installPublished, openPackage, onDetails }) {
@@ -517,6 +584,20 @@ function createMarketTab(React, Modal, dialogClass) {
     )
   }
 
+  /** @param {{card: Card, t: MarketTranslate, state: MarketSnapshot}} props */
+  function DetailBody({ card, t, state }) {
+    const labels = useMarkdownLabels(t)
+    return h('div', { style: styles.dialogBody },
+      h('div', { style: styles.dialogHead },
+        h(Artwork, { icon: card.icon }),
+        h('span', { style: badgeStyle(card.badge) }, t(card.badge)),
+      ),
+      h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
+      h('p', { style: styles.summary }, card.description),
+      card.detail === undefined ? null : h('div', { style: styles.detail }, h(MarkdownText, { text: card.detail, labels, omitHtml: true })),
+      h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t }))
+  }
+
   /** @param {Controls & {card: Card | undefined, onClose: () => void}} props */
   function DetailsDialog({ card, t, state, onClose, installPublished, openPackage, actions }) {
     if (card === undefined) return null
@@ -527,18 +608,17 @@ function createMarketTab(React, Modal, dialogClass) {
         installPublished: target => { onClose(); installPublished(target) },
         openPackage: name => { onClose(); openPackage(name) },
       }),
-    },
-    h('div', { style: styles.dialogBody },
-      h('span', { style: badgeStyle(card.badge) }, t(card.badge)),
-      h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
-      h('p', { style: styles.summary }, card.description),
-      h(CardNotes, { card, t }), h(ChangeNotice, { notice: state.notice, t })))
+    }, h(DetailBody, { card, t, state }))
   }
 
   /** @param {Controls & {card: Card, onDetails: () => void}} props */
   function MarketCard({ card, t, state, ...rest }) {
     return h('article', { style: styles.card },
-      h('div', { style: styles.cardHead }, h('h3', { style: styles.cardTitle }, card.title), h('span', { style: badgeStyle(card.badge) }, t(card.badge))),
+      h('div', { style: styles.cardHead },
+        h('div', { style: styles.cardIdentity },
+          h(Artwork, { icon: card.icon }),
+          h('h3', { style: styles.cardTitle }, card.title)),
+        h('span', { style: badgeStyle(card.badge) }, t(card.badge))),
       h('p', { style: styles.summary }, card.description),
       h(BundleMeta, { card, t, pending: state.busy?.name === card.name }),
       h(CardNotes, { card, t }),
@@ -632,14 +712,15 @@ function remoteApi(ctx) {
 }
 
 /**
- * Build the browser plugin from the shared React and modal implementations.
+ * Build the browser plugin from the shared React and primitive implementations.
  * @param {typeof import('react')} React the module loader's React.
- * @param {typeof import('@ocean/ocean-client-ui-primitives').Modal} Modal the shared client modal.
+ * @param {typeof import('@ocean/ocean-client-ui-primitives')} primitives the shared client primitives: the modal, the
+ * Markdown renderer, and the default plugin artwork.
  * @param {string} [dialogClass] the scrollable details styling; absent uses the shared modal alone.
  * @returns {{ inject: string[], apply: (ctx: import('@deepseek-ai/cordis').Context) => void }} the Cordis client plugin.
  */
-function createMarket(React, Modal, dialogClass) {
-  const { MarketTab } = createMarketTab(React, Modal, dialogClass)
+function createMarket(React, primitives, dialogClass) {
+  const { MarketTab } = createMarketTab(React, primitives, dialogClass)
   return {
     inject: ['slots', 'locale', 'remote', 'remote.pluginManager'],
     apply(ctx) {
@@ -669,6 +750,6 @@ function createMarket(React, Modal, dialogClass) {
   }
 }
 
-    return createMarket(React, Modal)
+    return createMarket(React, primitives)
   },
 })

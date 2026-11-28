@@ -134,6 +134,10 @@ export interface PublishedPluginOffer extends PublishedPluginTarget {
   readonly title: LocalizedText
   /** Display description; the Client resolves it to the active UI language, with the required English fallback. */
   readonly description: LocalizedText
+  /** Inline `data:image/…` artwork the catalogue card shows, when the package declares one. */
+  readonly icon?: string
+  /** Long Markdown description the details view shows, in the languages the publisher supplied. */
+  readonly detail?: LocalizedText
   readonly compatible: boolean
 }
 

@@ -14,7 +14,7 @@ test('the generated bundle keeps no top-level exports and is one loader factory'
   assert.equal(/^export /mu.test(bundle), false)
   assert.match(bundle, /window\.__ModuleLoader__\.load\(/u)
   assert.match(bundle, /id: '@ocean\/ocean-plugin-market'/u)
-  assert.match(bundle, /return createMarket\(React, Modal\)/u)
+  assert.match(bundle, /return createMarket\(React, primitives\)/u)
   assert.match(bundle, /name: 'plugins\.tab'/u)
   for (const module of MODULES) assert.ok(bundle.includes(`// ---- ${module} ----`), `missing ${module}`)
 })

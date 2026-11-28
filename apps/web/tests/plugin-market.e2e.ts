@@ -20,6 +20,8 @@ const PRIVATE_NAME = 'e2e-private-catalog-bundle'
 const VERSION = '1.2.3'
 const TITLE = 'Approved fixture plugin'
 const DESCRIPTION = 'A public install offer for the test catalogue.'
+const DETAIL = '# Approved fixture plugin\n\nThe long description the catalogue details view renders.'
+const ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiI+PHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiBmaWxsPSIjNjc5RUZFIi8+PC9zdmc+'
 
 async function bundle(dir: string, name: string, version: string, entry = false): Promise<void> {
   await mkdir(dir)
@@ -70,7 +72,10 @@ async function catalogueFixture() {
   if (address === null || typeof address === 'string') throw new Error('The test catalogue has no TCP listener')
   const origin = `http://127.0.0.1:${address.port}`
   function offer(digest = sha256) {
-    return { name: NAME, version: VERSION, title: TITLE, description: DESCRIPTION, ocean: '*', archive: origin + archivePath(digest), sha256: digest }
+    return {
+      name: NAME, version: VERSION, title: TITLE, description: DESCRIPTION, icon: ICON, detail: { en: DETAIL },
+      ocean: '*', archive: origin + archivePath(digest), sha256: digest,
+    }
   }
 
   const overlay = join(scratch, 'catalogue.overlay.yml')
@@ -148,6 +153,13 @@ it('installs only a published offer and leaves it installed after withdrawal', a
   expect(await card.count()).toBe(1)
   expect(f.indexRequests()).toBeGreaterThan(initialReads)
   await card.getByText(DESCRIPTION, { exact: true }).waitFor()
+  // The card carries the published artwork and the details view the long description.
+  expect(await card.locator('img').first().getAttribute('src')).toBe(ICON)
+  await card.getByRole('button', { name: 'Details', exact: true }).click()
+  const details = f.page.getByRole('dialog', { name: TITLE, exact: true })
+  await details.getByText('The long description the catalogue details view renders.').waitFor()
+  await details.getByRole('button', { name: 'Close', exact: true }).click()
+  await details.waitFor({ state: 'hidden' })
   const install = card.getByRole('button', { name: 'Install', exact: true })
   const offerAria = [await heading.ariaSnapshot(), await install.ariaSnapshot()]
   await install.click()

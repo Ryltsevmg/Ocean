@@ -95,7 +95,7 @@ it('admits new offers, retains only display data on failure, and accepts an auth
 it('refuses a catalog beyond its byte limit before reading it any further', async () => {
   const c = await channel()
   // The padding also breaks the strict schema, so only the byte limit can be what stopped this read.
-  c.setIndex({ schemaVersion: 1, plugins: [], padding: 'x'.repeat(600 * 1024) })
+  c.setIndex({ schemaVersion: 1, plugins: [], padding: 'x'.repeat(2 * 1024 * 1024) })
   expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
   expect(c.downloads()).toBe(0)
 })
@@ -105,6 +105,39 @@ it('accepts localized display text with a required English fallback, and plain s
   expect((await c.source.list()).plugins[0]).toMatchObject({ title: { en: 'Example', ru: 'Пример' }, compatible: true })
   c.setIndex({ schemaVersion: 1, plugins: [{ ...c.offer, title: 'Plain title', description: 'Plain description' }] })
   expect((await c.source.list()).plugins[0]).toMatchObject({ title: 'Plain title', description: 'Plain description' })
+})
+
+it('carries the artwork and long description of a version-2 offer, and reads a version-1 index unchanged', async () => {
+  const c = await channel()
+  const icon = 'data:image/svg+xml;base64,PHN2Zy8+'
+  const detail = { en: '# Example\n\nA long description.', ru: '# Пример' }
+  c.setIndex({ schemaVersion: 2, plugins: [{ ...c.offer, icon, detail }] })
+  expect((await c.source.list()).plugins[0]).toEqual({
+    ...target, title: c.offer.title, description: c.offer.description, icon, detail, compatible: true,
+  })
+  // An index without them stays valid: the artwork and the long description are optional.
+  c.setIndex({ schemaVersion: 2, plugins: [c.offer] })
+  expect((await c.source.list()).plugins[0]).not.toHaveProperty('icon')
+  expect((await c.source.list()).plugins[0]).not.toHaveProperty('detail')
+})
+
+it.each([
+  { icon: 'https://example.test/icon.svg' },
+  { icon: 'data:image/gif;base64,R0lGOD' },
+  { icon: `data:image/svg+xml;base64,${'A'.repeat(400 * 1024)}` },
+  { detail: { ru: 'Только русский' } },
+  { detail: { en: 'x'.repeat(32 * 1024 + 1) } },
+])('refuses artwork or a long description the catalogue cannot serve (%j)', async (change) => {
+  const c = await channel()
+  c.setIndex({ schemaVersion: 2, plugins: [{ ...c.offer, ...change }] })
+  expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
+  expect(c.downloads()).toBe(0)
+})
+
+it('refuses an index whose schema version it does not know', async () => {
+  const c = await channel()
+  c.setIndex({ schemaVersion: 3, plugins: [c.offer] })
+  expect(await c.source.list()).toEqual({ status: 'unavailable', plugins: [] })
 })
 
 it.each([
