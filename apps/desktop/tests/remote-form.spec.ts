@@ -273,6 +273,9 @@ it('asks for the pairing password of a Tailscale machine, pairs with it, and ret
   expect(view.document.querySelector('#hint')!.textContent).toBe(view.messages.remotePasswordHint.replace('{address}', 'https://air.tail71ee4f.ts.net/'))
   expect(view.document.querySelector('#password-label')!.textContent).toBe(view.messages.remotePasswordLabel)
   expect(view.field('connect').textContent).toBe(view.messages.remotePairAction)
+  // The password prompt keeps the footer: it is the Pair button.
+  expect(view.field('connect').hidden).toBe(false)
+  expect(view.field('connect').disabled).toBe(false)
   expect(view.document.activeElement).toBe(view.field('password'))
   expect(view.document.querySelector('#back')!.textContent).toBe(view.messages.remotePasswordBack)
 
@@ -297,6 +300,7 @@ it('asks for the pairing password of a Tailscale machine, pairs with it, and ret
   expect(view.document.querySelector<HTMLElement>('#other-ways')!.hidden).toBe(false)
   expect(view.document.querySelector('#hint')!.textContent).toBe(view.messages.remoteDialogHint)
   expect(view.field('connect').textContent).toBe(view.messages.remoteConnect)
+  expect(view.field('connect').hidden).toBe(true)
   expect(rows(view)).toHaveLength(1)
   expect(view.document.activeElement).toBe(view.document.querySelector('#machine-list button'))
 })
@@ -338,14 +342,17 @@ it('keeps the address, token, and SSH fields collapsed under Other ways to conne
   }
 })
 
-it('keeps the footer disabled while Other ways is collapsed, and enables it once the section opens', async () => {
+it('hides the footer while the machine list shows, and shows it enabled once Other ways opens', async () => {
   const view = await render()
+  expect(view.field('connect').hidden).toBe(true)
   expect(view.field('connect').disabled).toBe(true)
   const details = view.document.querySelector<HTMLDetailsElement>('#other-ways')!
   details.open = true
-  await vi.waitFor(() => { expect(view.field('connect').disabled).toBe(false) })
+  await vi.waitFor(() => { expect(view.field('connect').hidden).toBe(false) })
+  expect(view.field('connect').disabled).toBe(false)
   details.open = false
-  await vi.waitFor(() => { expect(view.field('connect').disabled).toBe(true) })
+  await vi.waitFor(() => { expect(view.field('connect').hidden).toBe(true) })
+  expect(view.field('connect').disabled).toBe(true)
 })
 
 it('hides the machine list while Other ways is open and shows it again once the section collapses', async () => {

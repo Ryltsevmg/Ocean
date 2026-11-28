@@ -128,9 +128,11 @@ function focusFirstMachine() {
 const inList = () => passwordTarget === undefined && pairing === undefined && !connected
 /**
  * The footer submits the address form, which only Other ways shows: with the section collapsed
- * in the list state it has nothing to submit, and each machine row carries its own action.
+ * in the list state it has nothing to submit, and each machine row carries its own action. A
+ * disabled footer over the list reads as a broken button in the dark theme, so it is hidden there.
  */
 function syncFooter() {
+  connect.hidden = inList() && !otherWays.open
   connect.disabled = form.getAttribute('aria-busy') === 'true' || (inList() && !otherWays.open)
 }
 /**
@@ -167,6 +169,7 @@ function showPairing(target) {
   failure.hidden = true
   address.value = ''
   connect.textContent = messages.connect
+  connect.hidden = false
   connect.disabled = false
   connect.focus()
 }
@@ -179,6 +182,7 @@ function showPassword(target) {
   forgetUnreadable.hidden = true
   failure.hidden = true
   connect.textContent = messages.pair
+  connect.hidden = false
   connect.disabled = false
   password.focus()
 }
