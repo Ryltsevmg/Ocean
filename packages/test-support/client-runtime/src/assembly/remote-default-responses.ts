@@ -7,10 +7,14 @@
  * @module @ocean/ocean-client-test-runtime/src/assembly/remote-default-responses
  */
 import { ok, openStream, type RemoteTable } from '@ocean/ocean-remote-mock'
+import { RemoteError } from '@ocean/ocean-typert-protocol'
 
 /** Default responses of the boot-time Remote endpoints; a spec loads it first and layers its own table on top. */
 export const remoteDefaultResponses: RemoteTable = {
   unary: {
+    // ui-settings-devices first read at apply: the assembled client is an owner, and an owner-login Host has no
+    // device registry, so the section stays unregistered exactly as it does on the Desktop's local Host.
+    'devices/list': { ok: false, error: new RemoteError('devices/unavailable', 'no device registry', {}) },
     // api-session-controller `sessions.handleConnected()` on `connection/reset`.
     'session/list': ok({ items: [] }),
     // ui-workspace startup with no entries; first-use initialization is ineligible.

@@ -1,9 +1,11 @@
 /**
  * The Devices settings page, browser half: the Host device inventory and
  * per-device revocation over the generated `devices` namespace. The section
- * installs only while the calling Peer may read that inventory, so a browser
- * that authenticated as a remote device — which the Gateway never allows to
- * administer devices — is not offered a page that could only fail.
+ * installs only while the calling Peer may read that inventory and only on a
+ * Host that has a device registry, so a browser that authenticated as a
+ * remote device — which the Gateway never allows to administer devices — and
+ * an owner on a Host without device mode are not offered a page that could
+ * only fail.
  */
 
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
@@ -40,6 +42,10 @@ export const inject = ['slots', 'locale', 'remote', 'remote.devices', 'remoteAcc
 
 /**
  * Mount the Devices settings page while the calling Peer may read the inventory.
+ * The first read decides whether there is a page at all: a Host that runs
+ * without a device registry answers `devices/unavailable`, and nothing it
+ * could show is worth a section. Any other outcome registers the section, so
+ * a failed read can still offer Retry.
  * @param ctx - the browser plugin context.
  */
 export function apply(ctx: ClientContext): void {
@@ -53,12 +59,25 @@ export function apply(ctx: ClientContext): void {
     reload: () => { void devices.reload() },
     revoke: (id: DeviceId) => { void devices.revoke(id) },
   })
-  ctx.remoteAccess.whenAccess('devices/list', () => ctx.slots.inject('settings.section', () => ctx.slots.register({
-    name: 'settings.section',
-    id: 'devices',
-    order: 12,
-    label: () => t('title'),
-    locale: NS,
-    inject: face,
-  }, DevicesSection)))
+  ctx.remoteAccess.whenAccess('devices/list', () => ctx.effect(() => {
+    let stopped = false
+    let unregister: (() => void) | undefined
+    void devices.reload().then(() => {
+      // The read settles after its fiber may be gone; a late answer registers nothing.
+      if (stopped) return
+      if (devices.state.getSnapshot().unmanaged === true) return
+      unregister = ctx.slots.inject('settings.section', () => ctx.slots.register({
+        name: 'settings.section',
+        id: 'devices',
+        order: 12,
+        label: () => t('title'),
+        locale: NS,
+        inject: face,
+      }, DevicesSection))
+    })
+    return () => {
+      stopped = true
+      unregister?.()
+    }
+  }, 'ui-settings-devices: section'))
 }

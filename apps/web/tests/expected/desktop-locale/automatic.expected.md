@@ -3,7 +3,6 @@
   - navigation:
     - button "通用设置"
     - button "模型"
-    - button "设备"
     - button "内置插件"
     - button "Agent 预设"
     - button "意见反馈"
