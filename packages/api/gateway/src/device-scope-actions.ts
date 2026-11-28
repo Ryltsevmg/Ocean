@@ -11,8 +11,11 @@ export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteA
     'session/list', 'session/search', 'session/page', 'session/events', 'session/follow', 'session/state', 'session/wait',
     'session/attachment', 'session/observeEvent', 'session/observeState', 'session/observeProjections', 'session/projections',
     'session/modelCatalog',
+    'goals/get', 'schedule/catalog', 'schedule/list', 'schedule/view', 'schedule/history', 'schedule/deliveryLimits',
+    'job/list', 'job/follow', 'skills/list', 'agentPresets/list', 'agentPresets/read', 'messageFeedback/list',
     'event:api-session/activity', 'event:api-session/added', 'event:api-session/error',
     'event:api-session/removed', 'event:api-session/status',
+    'event:goal/activation-changed', 'event:schedule/changed', 'event:agent-preset/selected',
   ],
   'sessions:write': [
     'session/create', 'session/rename', 'session/prompt', 'session/cancel', 'session/control', 'session/selectModel',
@@ -21,6 +24,10 @@ export const DEVICE_SCOPE_ACTIONS: Readonly<Record<DeviceScope, readonly RemoteA
     'workspace/insertSessionBefore', 'workspace/archiveSession', 'workspace/unarchiveSession',
     'workspace/pinSession', 'workspace/unpinSession',
     'commands/execute',
+    'goals/create', 'goals/edit', 'goals/clear', 'goals/complete', 'goals/pause', 'goals/resume',
+    'schedule/create', 'schedule/edit', 'schedule/run', 'schedule/deleteInactive', 'job/kill',
+    'agentPresets/select', 'subagents/prompt', 'subagents/interruptByUser', 'agentTeams/setEnabled',
+    'messageFeedback/put', 'messageFeedback/delete', 'sessionFeedback/record',
   ],
   'files:read': [
     'workspaceFiles/list', 'workspaceFiles/read', 'workspaceFiles/readBytes', 'workspaceFiles/stat',
