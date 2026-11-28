@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-util-workspace-path",
   "description": "Browser-safe Workspace path and display helpers",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },

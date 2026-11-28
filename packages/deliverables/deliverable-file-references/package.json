@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-deliverable-file-references",
   "description": "Shared model guidance for file links and deliverables across Ocean hosts",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },

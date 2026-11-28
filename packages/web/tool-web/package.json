@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-tool-web",
   "description": "Model-facing web tools (web_search, web_fetch) over the Ocean web capability seam (ctx.web)",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@ocean/ocean-client-ui-brand-official",
   "description": "Official Ocean brand artwork and click-triggered home background",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publishConfig": {
     "access": "public"
   },
